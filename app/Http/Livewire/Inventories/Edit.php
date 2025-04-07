@@ -1,0 +1,469 @@
+<?php
+
+namespace App\Http\Livewire\Inventories;
+
+use Carbon\Carbon;
+use App\Models\Tax;
+use App\Models\Bill;
+use App\Models\Store;
+use App\Models\Vendor;
+use App\Models\Account;
+use App\Models\Product;
+use Livewire\Component;
+use App\Models\Currency;
+use App\Models\Purchase;
+use App\Models\Inventory;
+use App\Models\BillExpense;
+use App\Models\Measurement;
+use Livewire\WithFileUploads;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Session;
+
+class Edit extends Component
+{
+    use WithFileUploads;
+
+
+    public $stores;
+    public $store_id;
+    public $purchases;
+    public $selectedPurchase;
+    public $purchase_order;
+    public $purchase_products;
+    public $currencies;
+    public $exchange_rate;
+    public $exchange_amount;
+    public $selectedCurrency;
+    public $selected_currency;
+    public $vendor_types;
+    public $vendors;
+    public $vendor_id;
+  
+    public $purchase_date;
+    public $total;
+    public $residual_value;
+    public $weight ;
+    public $measurement ;
+    public $measurements;
+    public $life;
+    public $depreciation_type;
+    public $warranty_exp_date;
+    public $condition;
+    public $inventory_number;
+   
+    public $purchase_type;
+    public $description;
+    public $user_id;
+    // Items Vars
+
+    public $products;
+    public $selectedProduct ;
+    public $serial_number ;
+    public $tax_rate ;
+    public $selectedTax ;
+    public $qty  ;
+    public $item_description  ;
+    public $amount ;
+    public $tax_amount;
+    public $tax_id;
+    public $tax;
+    public $tax_accounts;
+    public $balance;
+
+    public $to_bills;
+  
+    public $income_accounts;
+    public $expense_accounts;
+    public $income_account_id;
+    public $expense_account_id;
+    public $selectedAccount;
+    //store vars
+
+    public $status;
+    public $store_name;
+    public $country;
+    public $city;
+    public $suburb;
+    public $street_address;
+
+    // vendor vars
+
+    public $contact_name;
+    public $contact_surname;
+    public $contact_email;
+    public $contact_phonenumber;
+    public $vendor_name;
+    public $phonenumber;
+    public $worknumber;
+    public $email;
+    public $website;
+
+
+    public $expires_at;
+    public $title;
+    public $file;
+
+    public $inputs ;
+    public $i = 1;
+    public $n = 1;
+
+    public function add($i)
+    {
+        $i = $i + 1;
+        $this->i = $i;
+        array_push($this->inputs ,$i);
+    }
+
+    public function remove($i)
+    {
+        unset($this->inputs[$i]);
+    }
+
+    public $documentInputs ;
+    public $m = 1;
+    public $o = 1;
+    public function documentsAdd($m)
+    {
+        $m = $m + 1;
+        $this->m = $m;
+        array_push($this->documentInputs ,$m);
+    }
+
+    public function documentsRemove($m)
+    {
+        unset($this->documentInputs[$m]);
+    }
+
+    private function resetInputFields(){
+        $this->store_name = '';
+        $this->vendor_name = '';
+        $this->country = '';
+        $this->city = '';
+        $this->suburb = '';
+        $this->street_address = '';
+    }
+
+    public function storeStore(){
+        $store = new Store;
+        $store->user_id = Auth::user()->id;
+        $store->name = $this->store_name;
+        $store->country = $this->country;
+        $store->city = $this->city;
+        $store->suburb = $this->suburb;
+        $store->street_address = $this->street_address;
+        $store->status = '1';
+        $store->save();
+        $this->dispatchBrowserEvent('hide-storeModal');
+        $this->resetInputFields();
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Store Created Successfully!!"
+        ]);
+    }
+
+    public function mount($inventory){
+        $this->products = Product::with('brand')->orderBy('name','asc')->where('department','inventory')->where('status',True)->where('buy',True)->get()->sortBy('brand.name');
+        $this->vendors = Vendor::orderBy('name','asc')->get();
+        $this->currencies = Currency::latest()->get();
+        $this->stores = Store::orderBy('name','asc')->get();
+        $this->measurements = Measurement::orderBy('name','asc')->get();
+        $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
+            return $query->where('name','Expenses');
+        })->orderBy('name','asc')->get();
+        $this->income_accounts = Account::whereHas('account_type', function($q){
+            $q->where('name', 'Income');
+         })->orderBy('name','asc')->get();
+         $this->tax_accounts = Account::whereHas('account_type', function ($query) {
+            return $query->where('name','Sales Taxes');
+        })->orderBy('name','asc')->get();
+        $this->vendor_id = $inventory->vendor_id;
+        $this->selectedCurrency = $inventory->currency_id;
+        $this->balance = $inventory->balance;
+        $this->stores = Store::latest()->get();
+      
+        $this->category_id = $inventory->category_id;
+        $this->purchase_date = $inventory->purchase_date;
+        $this->qty = $inventory->qty;
+        $this->amount = $inventory->amount;
+        $product = $inventory->product;
+        $this->selectedProduct = $inventory->product_id;
+        $this->selectedAccount = $inventory->account_id;
+        $this->item_description = $product->description;
+        if ($invetory->bill) {
+            $this->to_bills = True;
+        }else{
+            $this->to_bills = False;
+        }
+        $this->weight = $inventory->weight;
+        $this->measurement = $inventory->measurement;
+        $this->store_id = $inventory->store_id;
+        $this->status = $inventory->status;
+        $this->rate = $inventory->rate;
+        $this->residual_value = $inventory->residual_value;
+        $this->purchase_type = $inventory->purchase_type;
+        $this->selectedTax = $inventory->tax_id;
+        $tax = Account::find($inventory->tax_id);
+        if (isset($tax)) {
+            $this->tax_rate = $tax->rate;
+        }
+       
+        $this->description = $inventory->description;
+        $this->depreciation_type = $inventory->depreciation_type;
+        $this->inventory_number = $inventory->inventory_number;
+        $this->part_number = $inventory->part_number;
+        $this->serial_number = $inventory->serial_number;
+        $this->selectedPurchase = $inventory->purchase_id;
+        $this->purchase_order = Purchase::find($inventory->purchase_id);
+        if (isset($this->purchase_order)) {
+            $this->purchase_products = $this->purchase_order->purchase_products; 
+        }
+        $this->condition = $inventory->condition;
+        $this->warranty_exp_date = $inventory->warranty_exp_date;
+        $this->life = $inventory->life;
+        $this->inventory_id = $inventory->id;
+    }
+
+    public function updatedSelectedPurchase($id)
+    {
+        if (!is_null($id) ) {
+            $purchase_order = Purchase::find($id);
+            if(isset($purchase_order)){
+                $this->selectedCurrency = $purchase_order->currency_id;
+                $this->vendor_id = $purchase_order->vendor_id;
+                $this->selectedAccount = $purchase_order->account_id;
+                $this->purchase_products = $purchase_order->purchase_products;
+            }
+        }
+    }
+
+    public function updatedSelectedProduct($id){
+        if (!is_null($id)) {
+            $product = Product::find($id);
+            if (isset($product)) {
+                if ($product->price) {
+                    $this->amount = $product->price;
+                    $this->item_description = $product->description;
+                }
+                $this->qty = 1;
+          
+                if ($product->tax_id) {
+                    $this->selectedTax = $product->tax_id;
+                    $tax = Account::find($product->tax_id);
+                    if (isset($tax)) {
+                        $this->tax_rate = $tax->rate;
+                    }
+                    
+                }  
+            }
+           
+        }
+    }
+
+    public function updatedSelectedTax($id){
+        if(!is_null($id)){
+            $tax = Account::find($id);
+            if (isset($tax)) {
+                $this->tax_rate = $tax->rate;
+            }else{
+                $this->tax_rate = "";
+            }
+           
+        }
+    }
+
+    public function updated($value){
+        $this->validateOnly($value);
+    }
+
+    protected $rules = [
+        
+        'selectedProduct' => 'required',
+        'qty' => 'required',
+        'amount' => 'required',
+        'purchase_date' => 'required',
+       
+    ];
+
+    public function billNumber(){
+
+        if (isset(Auth::user()->company)) {
+            $str = Auth::user()->company->name;
+            $words = explode(' ', $str);
+            if (isset($words[1][0])) {
+                $initials = $words[0][0].$words[1][0];
+            }else {
+                $initials = $words[0][0];
+            }
+        }elseif (isset(Auth::user()->employee->company)) {
+            $str = Auth::user()->employee->company->name;
+            $words = explode(' ', $str);
+            if (isset($words[1][0])) {
+                $initials = $words[0][0].$words[1][0];
+            }else {
+                $initials = $words[0][0];
+            }
+        }
+
+        $bill = Bill::latest()->orderBy('id','desc')->first();
+
+        if (!$bill) {
+            $bill_number =  $initials .'B'. str_pad(1, 5, "0", STR_PAD_LEFT);
+        }else {
+            $number = $bill->id + 1;
+            $bill_number =  $initials .'B'. str_pad($number, 5, "0", STR_PAD_LEFT);
+        }
+
+        return  $bill_number;
+
+
+    }
+
+
+
+    public function update(){
+
+        $inventory = Inventory::find($this->inventory_id);
+        $inventory->user_id = Auth::user()->id;
+        $inventory->vendor_id = $this->vendor_id ? $this->vendor_id : null;
+        $inventory->store_id = $this->store_id ? $this->store_id : null;
+        $inventory->product_id = $this->selectedProduct ? $this->selectedProduct : null;
+        $inventory->currency_id = $this->selectedCurrency ?  $this->selectedCurrency : null;
+        $inventory->amount = $this->amount;
+        $inventory->qty = $this->qty;
+        $inventory->measurement = $this->measurement;
+        $inventory->weight = $this->weight;
+        $inventory->balance = $this->weight;
+
+        $inventory->tax_rate = $this->tax_rate;
+        $inventory->tax_id = $this->selectedTax;
+
+        if (isset($this->tax_rate) && is_numeric($this->tax_rate) && isset($this->selectedTax)) {
+            if (isset($this->amount)) {
+                $inventory->tax_amount = ($this->amount * ($this->tax_rate / 100 ));
+                $inventory->subtotal_incl = ($this->amount * ($this->tax_rate / 100 )) + $this->amount;
+            }
+        }else{
+            $inventory->tax_amount = 0;
+            $inventory->subtotal_incl = $this->amount;
+        }
+       
+        $inventory->account_id = $this->selectedAccount;
+        $inventory->residual_value = $this->residual_value;
+        $inventory->depreciation_type = $this->depreciation_type;
+        $inventory->purchase_date = $this->purchase_date;
+        $inventory->purchase_type = $this->purchase_type;
+        $inventory->purchase_id = $this->selectedPurchase ? $this->selectedPurchase : null;
+        $inventory->condition = $this->condition;
+        $inventory->serial_number = $this->serial_number;
+        $inventory->warranty_exp_date = $this->warranty_exp_date;
+        $inventory->life = $this->life;
+        $inventory->description = $this->description;
+        $inventory->status = $this->status;
+        $inventory->disposed = 0;
+        $inventory->update();
+
+        if ($inventory->bill) {
+                      
+            $bill = $inventory->bill;
+            $bill->user_id = Auth::user()->id;
+            $bill->bill_number = $this->billNumber();
+            $bill->inventory_id = $inventory->id;
+            $bill->category = "Inventory Item";
+            $bill->bill_date = $inventory->purchase_date;
+            $account_type = Account::find($inventory->account_id)->account_type;
+            $bill->account_id = $inventory->account_id;
+            if (isset($account_type)) {
+                $bill->account_type_id = $account_type->id;
+            }
+            $bill->currency_id = $inventory->currency_id;
+            $bill->authorized_by_id = Auth::user()->id;
+            $bill->authorization = "pending";
+         
+            $bill->total = $inventory->subtotal_incl;
+            $bill->balance = $inventory->subtotal_incl;
+            $bill->to_be_paid = True;
+            $bill->update();
+
+            $bill_expense = $bill->bill_expenses->first();
+            $bill_expense->bill_id = $bill->id;
+            $bill_expense->currency_id = $bill->currency_id;
+            $account_type = Account::find($bill->account_id)->account_type;
+            $bill_expense->account_id = $bill->account_id;
+            if (isset($account_type)) {
+                $bill_expense->account_type_id = $account_type->id;
+            }
+            $bill_expense->product_id = $inventory->product_id;
+            $bill_expense->qty = 1;
+            $bill_expense->amount = $inventory->amount;
+            $bill_expense->subtotal = $inventory->subtotal;
+            $bill_expense->tax_amount = $inventory->tax_amount;
+            $bill_expense->subtotal_incl = $inventory->subtotal_incl;
+            $bill_expense->update();
+
+            }else{
+                $bill = new Bill;
+                $bill->user_id = Auth::user()->id;
+                $bill->bill_number = $this->billNumber();
+                $bill->inventory_id = $inventory->id;
+                $bill->category = "Inventory Item";
+                $bill->bill_date = $inventory->purchase_date;
+                $account_type = Account::find($inventory->account_id)->account_type;
+                $bill->account_id = $inventory->account_id;
+                if (isset($account_type)) {
+                    $bill->account_type_id = $account_type->id;
+                }
+                $bill->currency_id = $inventory->currency_id;
+                $bill->authorized_by_id = Auth::user()->id;
+                $bill->authorization = "pending";
+             
+                $bill->total = $inventory->subtotal_incl;
+                $bill->balance = $inventory->subtotal_incl;
+                $bill->to_be_paid = True;
+                $bill->save();
+
+                $bill_expense = new BillExpense;
+                $bill_expense->bill_id = $bill->id;
+                $bill_expense->currency_id = $bill->currency_id;
+                $account_type = Account::find($bill->account_id)->account_type;
+                $bill_expense->account_id = $bill->account_id;
+                if (isset($account_type)) {
+                    $bill_expense->account_type_id = $account_type->id;
+                }
+                $bill_expense->product_id = $inventory->product_id;
+                $bill_expense->qty = 1;
+                $bill_expense->amount = $inventory->amount;
+                $bill_expense->subtotal = $inventory->subtotal;
+                $bill_expense->tax_amount = $inventory->tax_amount;
+                $bill_expense->subtotal_incl = $inventory->subtotal_incl;
+                $bill_expense->save();
+            }
+
+        Session::flash('success','Invetory Updated Successfully!!');
+        return redirect(route('inventories.index'));
+       
+    }
+
+    public function render()
+    {
+
+        if ((isset($this->exchange_rate) && $this->exchange_rate > 0)  &&  ( isset($this->total) && $this->total > 0 )) {
+
+            $this->exchange_amount = $this->exchange_rate * $this->total;
+
+        }
+        $this->measurements = Measurement::orderBy('name','asc')->get();
+        $this->products = Product::with('brand')->orderBy('name','asc')->where('department','inventory')->where('status',True)->where('buy',True)->get()->sortBy('brand.name');
+        $this->purchases = Purchase::where('status',1)->where('created_at', '>=', Carbon::now()->subMonth())->where('authorization','approved')->orderBy('created_at','desc')->get();
+        $this->vendors = Vendor::orderBy('name','asc')->get();
+        $this->currencies = Currency::orderBy('name','asc')->get();
+        $this->stores = Store::orderBy('name','asc')->get();
+        return view('livewire.inventories.edit',[
+            'products' => $this->products,
+            'purchases' => $this->purchases,
+            'vendors' => $this->vendors,
+            'currencies' => $this->currencies,
+            'stores' => $this->stores,
+            'measurements' => $this->measurements,
+        ]);
+    }
+}

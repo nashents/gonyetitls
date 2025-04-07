@@ -1,0 +1,61 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Contracts\Auditable;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
+class Broker extends Model implements Auditable
+{
+    use HasFactory, SoftDeletes;
+
+    use \OwenIt\Auditing\Auditable;
+    
+    public function documents(){
+        return $this->hasMany('App\Models\Document');
+    }
+
+    public function trips(){
+        return $this->hasMany('App\Models\Trip');
+    }
+    public function trip_returns(){
+        return $this->hasMany('App\Models\TripReturn');
+    }
+    public function user(){
+        return $this->belongsTo('App\Models\User');
+    }
+    public function company(){
+        return $this->belongsTo('App\Models\Company');
+    }
+    public function drivers(){
+        return $this->belongsToMany('App\Models\Driver');
+    }
+    public function horses(){
+        return $this->belongsToMany('App\Models\Horse');
+    }
+    public function trailers(){
+        return $this->belongsToMany('App\Models\Trailer');
+    }
+    public function vehicles(){
+        return $this->belongsToMany('App\Models\Vehicle');
+    }
+    public function cargos(){
+        return $this->belongsToMany('App\Models\Cargo');
+    }
+    protected $fillable = [
+        'user_id',
+        'name',
+        'contact_name',
+        'contact_surname',
+        'email',
+        'phonenumber',
+        'worknumber',
+        'broker_number',
+        'country',
+        'city',
+        'suburb',
+        'street_address',
+    ];
+}

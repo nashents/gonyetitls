@@ -1,0 +1,17 @@
+<?php
+
+namespace App\Models;
+
+use Malhal\Geographical\Geographical;
+use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Contracts\Auditable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
+class Distance extends Model implements Auditable
+{
+    use \OwenIt\Auditing\Auditable;
+    use HasFactory;
+    use Geographical;
+
+    protected static $kilometers = true;
+}

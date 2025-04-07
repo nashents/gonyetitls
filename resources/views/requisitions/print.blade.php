@@ -1,0 +1,177 @@
+@extends('layouts.main')
+@section('extra-css')
+@if (Auth::user()->employee->company)
+<link rel="shortcut icon" type = "image/png" href="{!! asset('images/uploads/'.Auth::user()->employee->company->logo)!!}">
+@elseif (Auth::user()->company)
+<link rel="shortcut icon" type = "image/png" href="{!! asset('images/uploads/'.Auth::user()->company->logo)!!}">
+@endif
+@endsection
+@section('title')
+Purchase Order Print | @if (Auth::user()->employee->company)
+{{Auth::user()->employee->company->name}}
+@elseif (Auth::user()->company)
+{{Auth::user()->company->name}}
+@endif
+@endsection
+@section('content')
+
+<div class="container">
+    <div class="card">
+        <div class="card-body">
+            <div id="invoice">
+                <x-loading/>
+               
+                <div class="invoice overflow-auto">
+                    <div style="min-width: 600px">
+                        <header>
+                            <div class="row">
+                                <div class="col">
+                                    <a href="javascript:;">
+                                                    <img src="{{asset('images/uploads/'.$company->logo)}}" width="200" alt="">
+                                                </a>
+                                </div>
+                                <div class="col company-details">
+                                  
+                                    <h4 class="name" >
+                                        <a target="_blank" href="javascript:;" style="color:  {{$company->color ? $company->color : "#000000" }}">
+                                            {{$company->name}}
+                                        </a>
+                                    </h4>
+                                    <div>{{$company->street_address}} {{$company->suburb}} <br>
+                                        {{$company->city}}, {{$company->country}}</div>
+                                    <div>
+                                        {{$company->phonenumber}}
+                                        @if ($company->second_phonenumber)
+                                        | {{$company->second_phonenumber}}
+                                        @endif
+                                        @if ($company->third_phonenumber)
+                                        | {{$company->third_phonenumber}}
+                                        @endif
+                                    </div>
+                                  
+                                    
+                                    <div>{{$company->email}}</div>
+                                    @if ($company->second_email)
+                                    <div>{{$company->second_email}}</div>
+                                    @endif
+                                    @if ($company->third_email)
+                                    <div>{{$company->third_email}}</div>
+                                    <br>
+                                    @endif
+                                    <div>
+                                     
+                                            VAT No.: {{$company->vat_number}}
+                                       
+                                    </div>
+                                    <div>
+                                      
+                                            TIN.: {{$company->tin_number}}
+                                       
+                                    </div>
+                                </div>
+                            </div>
+                            
+                        </header>
+                        <main>
+                            <div class="row contacts">
+                                <div class="col invoice-to" >
+                                    <div class="text-gray-light">Request From</div>
+                                    <h4 class="to">{{$requisition->department ? $requisition->department->name : ""}}</h4>
+                                  
+                                  
+                                </div>
+                                <div class="col invoice-details">
+                                    <div class="date" style="padding-bottom: 3px"> <strong>Requisition No.:</strong> {{$requisition->requisition_number}}</div>
+                                    <div class="date" style="padding-bottom: 3px"><strong>Date:</strong> {{$requisition->date}}</div>
+                                    <div class="date" style="padding-bottom: 3px"><strong>Currency:</strong> {{$requisition->currency ? $requisition->currency->name : ""}}</div>
+                                    
+                                </div>
+                            </div>
+                        
+                            <table class="table table-striped">
+        
+                                <tbody>
+                                    <tr>
+                                        <th class="text-center"><strong>Requisition#</strong></th>
+                                        <td class="text-center"> {{$requisition->requisition_number}}</td>
+                                    </tr>
+                                    <tr>
+                                        <th class="text-center"><strong>CreatedBy</strong></th>
+                                        <td class="text-center"> {{$requisition->user ? $requisition->user->name : ""}} {{$requisition->user ? $requisition->user->surname : ""}}</td>
+                                    </tr>
+                                    <tr>
+                                        <th class="text-center"><strong>RequestedBy</strong></th>
+                                        <td class="text-center"> 
+                                            {{$requisition->employee ? $requisition->employee->name : ""}} {{$requisition->employee ? $requisition->employee->surname : ""}}
+                                            <br>
+                                            {{$requisition->department ? $requisition->department->name : ""}}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th class="text-center"><strong>Requisition For</strong></th>
+                                        <td class="text-center"> {{$requisition->description}}</td>
+                                    </tr>
+                                    <tr>
+                                        <th class="text-center"><strong>Date</strong></th>
+                                        <td class="text-center"> {{$requisition->date}}</td>
+                                    </tr>
+                                    <tr>
+                                        <th class="text-center"><strong>Currency</strong></th>
+                                        <td class="text-center"> {{$requisition->currency ? $requisition->currency->name : ""}}</td>
+                                    </tr>
+                                    <tr>
+                                        <th class="text-center"><strong>Total</strong></th>
+                                        <td class="text-center"> {{$requisition->currency ? $requisition->currency->symbol : ""}}{{number_format($requisition->total,2)}}</td>
+                                    </tr>
+                                    <tr>
+                                        <th class="text-center"><strong>Paid</strong></th>
+                                        <td class="text-center"> {{$requisition->currency ? $requisition->currency->symbol : ""}}{{number_format($requisition->paid,2)}}</td>
+                                    </tr>
+                                    <tr>
+                                        <th class="text-center"><strong>Status</strong></th>
+                                        <td class="text-center"> <span class="label label-{{($requisition->status == 'Paid') ? 'success' : (($requisition->status == 'Partial') ? 'warning' : 'danger') }}">{{ $requisition->status }}</span></td>
+                                    </tr>
+                                    <tr>
+                                        <th class="text-center"><strong>Authorization</strong></th>
+                                        <td class="text-center"> <span class="badge bg-{{($requisition->authorization == 'approved') ? 'success' : (($requisition->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($requisition->authorization == 'approved') ? 'approved' : (($requisition->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
+                                    </tr>
+                                    <tr>
+                                        <th class="text-center"><strong>Authorized By</strong></th>
+                                        @php
+                                            $authorized_by = App\Models\User::find($requisition->authorized_by_id);
+                                        @endphp
+                                        <td class="text-center"> 
+                                            @if ($authorized_by)
+                                                {{$authorized_by->name}} {{$authorized_by->surname}}
+                                            @endif
+                                        </td>
+                                    </tr>
+                                </tbody>
+        
+                            </table>
+                        
+                        </main>
+                     
+                        <center> 
+                            <footer style=" bottom: 0px; left: 0px; right: 0px; ">
+                                
+                                <br>
+                                <strong style="font-size: 18px;">Powered By</strong> <img src="{{asset('images/basilmark-logo.png')}}" alt="" style="width: 20%; height:20%">    
+                            </footer>
+                        </center>  
+                    </div>
+                    <!--DO NOT DELETE THIS div. IT is responsible for showing footer always at the bottom-->
+                    <div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section('extra-js')
+<script>
+    window.addEventListener("load", window.print());
+    </script>
+@endsection
+
+@endsection
