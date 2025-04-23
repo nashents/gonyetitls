@@ -185,6 +185,7 @@ class DeliveryNotes extends Component
 
     public function mount($trip){
         $this->trip = $trip;
+        $this->trip_id = $trip->id;
         $this->delivery_note = $this->trip->delivery_note;
         $this->cargo_type = $this->trip->cargo ? $this->trip->cargo->type : "";
         $this->user = Auth::user();
@@ -214,7 +215,6 @@ class DeliveryNotes extends Component
 
     private function resetInputFields(){
 
-        $this->trip_id = Null;
         $this->trip_status = Null;
         $this->selectedStatus = Null;
         $this->currency_id = Null;
@@ -281,7 +281,7 @@ class DeliveryNotes extends Component
     public function status($id){
     
       $trip = Trip::withTrashed()->find($id);
-      $this->trip_id = $trip->id;
+      $this->trip_id = $id;
       $this->trip_status = $trip->trip_status;
       $this->selectedStatus = $trip->trip_status;
       $this->currency_id = $trip->currency_id;
@@ -436,7 +436,7 @@ class DeliveryNotes extends Component
 
     public function update(){
 
-      $trip = Trip::withTrashed()->find($this->trip_id);
+      $trip = Trip::find($this->trip_id);
       $trip->trip_status = $this->selectedStatus;
       $trip->trip_status_date = $this->trip_status_date;
       $trip->trip_status_description = $this->trip_status_description;

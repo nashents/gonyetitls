@@ -137,14 +137,14 @@ class Index extends Component
 
 
     public function mount(){
-
+        $this->resetPage();
         $departments = Auth::user()->employee->departments;
         foreach ($departments as $department) {
             $this->department_ids[] = $department->id;
         }
         $this->company = Auth::user()->employee->company;
         $this->requisition_filter = "created_at";
-        $this->resetPage();
+       
         $this->employees = Employee::orderBy('surname','asc')->get()->sortBy('name');
       
         $this->bookings = Booking::orderBy('created_at','desc')->where('authorization','approved')->where('status',True)->get();
@@ -390,12 +390,19 @@ class Index extends Component
         }
         if (in_array('Finance', $department_names) || in_array('Super Admin', $role_names)){
             if (isset($this->from) && isset($this->to)) {
-                if (isset($this->search)) {
+                if (filled($this->search)) {
                     return view('livewire.requisitions.index',[
                         'requisitions' => Requisition::query()->with('employee','department','trip','currency','payments')->whereBetween($this->requisition_filter,[$this->from, $this->to] )
                         ->where('requisition_number','like', '%'.$this->search.'%')
+                        ->orWhere('subject','like', '%'.$this->search.'%')
+                        ->orWhere('description','like', '%'.$this->search.'%')
                         ->orWhere('status','like', '%'.$this->search.'%')
                         ->orWhere('date','like', '%'.$this->search.'%')
+                        ->orWhereHas('requisition_items', function ($query) {
+                            $query->whereHas('expense', function ($q) {
+                                $q->where('name', 'like', '%' . $this->search . '%');
+                            });
+                        })
                         ->orWhereHas('trip', function ($query) {
                             return $query->where('trip_number', 'like', '%'.$this->search.'%');
                         })
@@ -422,14 +429,21 @@ class Index extends Component
                 }
                
             }
-            elseif (isset($this->search)) {
+            elseif (filled($this->search)) {
                
                 return view('livewire.requisitions.index',[
                     'requisitions' => Requisition::query()->with('employee','department','trip','currency','payments')->whereMonth($this->requisition_filter, date('m'))
                     ->whereYear($this->requisition_filter, date('Y'))
                     ->where('requisition_number','like', '%'.$this->search.'%')
+                    ->orWhere('subject','like', '%'.$this->search.'%')
+                    ->orWhere('description','like', '%'.$this->search.'%')
                     ->orWhere('status','like', '%'.$this->search.'%')
                     ->orWhere('date','like', '%'.$this->search.'%')
+                    ->orWhereHas('requisition_items', function ($query) {
+                        $query->whereHas('expense', function ($q) {
+                            $q->where('name', 'like', '%' . $this->search . '%');
+                        });
+                    })
                     ->orWhereHas('trip', function ($query) {
                         return $query->where('trip_number', 'like', '%'.$this->search.'%');
                     })
@@ -462,18 +476,22 @@ class Index extends Component
         }else{
 
             //not super admin
-
-           
-
             if (isset($this->from) && isset($this->to)) {
-                if (isset($this->search)) {
+                if (filled($this->search)) {
                     return view('livewire.requisitions.index',[
                         'requisitions' => Requisition::query()->with('employee','department','trip','currency','payments')->whereBetween($this->requisition_filter,[$this->from, $this->to] )
                         ->where('user_id',Auth::user()->id)
                         ->orWhereIn('department_id', $this->department_ids)
                         ->where('requisition_number','like', '%'.$this->search.'%')
+                        ->orWhere('subject','like', '%'.$this->search.'%')
+                        ->orWhere('description','like', '%'.$this->search.'%')
                         ->orWhere('status','like', '%'.$this->search.'%')
                         ->orWhere('date','like', '%'.$this->search.'%')
+                        ->orWhereHas('requisition_items', function ($query) {
+                            $query->whereHas('expense', function ($q) {
+                                $q->where('name', 'like', '%' . $this->search . '%');
+                            });
+                        })
                         ->orWhereHas('trip', function ($query) {
                             return $query->where('trip_number', 'like', '%'.$this->search.'%');
                         })
@@ -503,16 +521,25 @@ class Index extends Component
                 }
                
             }
-            elseif (isset($this->search)) {
+            elseif (filled($this->search)) {
                
                 return view('livewire.requisitions.index',[
                     'requisitions' => Requisition::query()->with('employee','department','trip','currency','payments')->whereMonth($this->requisition_filter, date('m'))
+                    ->whereYear($this->requisition_filter, date('Y'))
                     ->where('user_id',Auth::user()->id)
                     ->orWhereIn('department_id', $this->department_ids)
-                    ->whereYear($this->requisition_filter, date('Y'))
                     ->where('requisition_number','like', '%'.$this->search.'%')
+                    ->orWhere('subject','like', '%'.$this->search.'%')
+                    ->orWhere('description','like', '%'.$this->search.'%')
                     ->orWhere('status','like', '%'.$this->search.'%')
+                    ->orWhere('subject','like', '%'.$this->search.'%')
+                    ->orWhere('description','like', '%'.$this->search.'%')
                     ->orWhere('date','like', '%'.$this->search.'%')
+                    ->orWhereHas('requisition_items', function ($query) {
+                        $query->whereHas('expense', function ($q) {
+                            $q->where('name', 'like', '%' . $this->search . '%');
+                        });
+                    })
                     ->orWhereHas('trip', function ($query) {
                         return $query->where('trip_number', 'like', '%'.$this->search.'%');
                     })

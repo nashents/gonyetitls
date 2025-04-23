@@ -52,8 +52,6 @@ use Illuminate\Support\Facades\Session;
 
 class Edit extends Component
 {
-
-   
     use WithFileUploads;
 
     public $trip;
@@ -1344,6 +1342,8 @@ public function removeAllowance($x)
 
 
       public function update(){
+
+        $this->validate();
         
         DB::transaction(function () {
 
@@ -1580,7 +1580,7 @@ public function removeAllowance($x)
             if (isset($fuel)) {
             
                     $container = Container::find($this->selectedContainer);
-
+                   
                     $fuel->horse_id = $this->selectedHorse ? $this->selectedHorse : Null;
                     $fuel->vehicle_id = $this->selectedVehicle ? $this->selectedVehicle : Null;
                     $fuel->currency_id = $this->selectedFuelCurrency;
@@ -1626,20 +1626,22 @@ public function removeAllowance($x)
                             $bill->to_be_paid = False;
                         }
                         $bill->update();
-        
-                        $bill_expense = $bill->bill_expenses->first();
-                        if (isset($bill_expense)) {
+
+                        $fuel_expense = Expense::where('name','Fuel Topup')->first();
+                        if($fuel_expense){
                             $bill_expense = BillExpense::where('bill_id', $bill->id)->where('expense_id', $fuel_expense->id)->first();
-                            $bill_expense->currency_id = $bill->currency_id;
-                            $bill_expense->qty = $fuel->quantity;
-                            $bill_expense->amount = $fuel->unit_price;
-                            $bill_expense->subtotal = $fuel->amount;
-                            $bill_expense->update();
+                            if($bill_expense){
+                                $bill_expense->currency_id = $bill->currency_id;
+                                $bill_expense->qty = $fuel->quantity;
+                                $bill_expense->amount = $fuel->unit_price;
+                                $bill_expense->subtotal = $fuel->amount;
+                                $bill_expense->update();
+                            }
                         }
-                      
+                    
                     }
             
-                    $fuel_expense = Expense::where('name','Fuel Topup')->get()->first();
+                  
             
                     $trip_expense = TripExpense::where('fuel_id',$fuel->id)->where('trip_id',$trip->id)->first();
                     
@@ -1667,7 +1669,7 @@ public function removeAllowance($x)
           }else{
 
           
-
+               
                 $container = Container::find($this->selectedContainer);
         
                 $fuel = new Fuel;
@@ -1706,12 +1708,13 @@ public function removeAllowance($x)
 
                 $fuel->save();
         
-                $fuel_expense = Expense::where('name','Fuel Topup')->get()->first();
+              
         
                 $trip_expense = new TripExpense;
                 $trip_expense->user_id = $this->user->id;
                 $trip_expense->trip_id = $trip->id;
                 $trip_expense->fuel_id = $fuel->id;
+                $fuel_expense = Expense::where('name','Fuel Topup')->first();
                 if (isset($fuel_expense)) {
                     $trip_expense->expense_id = $fuel_expense->id;
                 }

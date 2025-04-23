@@ -35,4 +35,6 @@ class Brand extends Model implements Auditable
         'category_id',
         'status',
     ];
+
+    
 }

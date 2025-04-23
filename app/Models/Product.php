@@ -72,4 +72,14 @@ class Product extends Model implements Auditable
     public function vehicle_make(){
         return $this->belongsTo('App\Models\VehicleMake');
     }
+
+    protected $fillable = [
+        'user_id',
+        'product_number',
+        'category_id',
+        'brand_id',
+        'name',
+        'department',
+        'status',
+    ];
 }

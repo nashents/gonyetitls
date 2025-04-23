@@ -57,21 +57,24 @@ class Index extends Component
         }
     }
 
-    public function updated($value){
-        $this->validateOnly($value);
-    }
-    protected $rules = [
-        'selectedCategory' => 'required',
-        'name' => 'required|unique:brands,name,NULL,id,deleted_at,NULL|string|min:2',
-    ];
-
     private function resetInputFields(){
         $this->name = '';
         $this->selectedCategory= '';
         $this->category_value_id = '';
     }
 
+    public function updated($value){
+        $this->validateOnly($value);
+    }
+    protected $rules = [
+        'selectedCategory' => 'nullable',
+        'name' => 'required|unique:brands,name,NULL,id,deleted_at,NULL|string|min:2',
+    ];
+
+ 
+
     public function store(){
+        $this->validate();
         if (isset($this->name)) {
             foreach ($this->name as $key => $value) {
                 $brand = new Brand;

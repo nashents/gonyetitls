@@ -171,7 +171,7 @@ class Edit extends Component
         $this->email =   $employee->email ;
         $this->old_email =   $employee->email ;
         $this->pin = $employee->pin;
-        $this->gender = $employee->gender;
+        $this->gender = ucfirst($employee->gender);
         $this->frequency = $employee->frequency;
         $this->salary = $employee->salary;
         $this->currency_id = $employee->currency_id;
@@ -207,68 +207,28 @@ class Edit extends Component
         $this->selected_departments = $employee->departments;
       }
 
-      private function resetInputFields(){
-          $this->name = '';
-          $this->middle_name = '';
-          $this->surname = '';
-          $this->dob = '';
-          $this->gender = '';
-          $this->phonenumber = '';
-          $this->email = '';
-          $this->idnumber = '';
-          $this->grade = '';
-          $this->post = '';
-          $this->selectedCountry = '';
-          $this->city = '';
-          $this->province_id = '';
-          $this->suburb = '';
-          $this->company_id = '';
-          $this->frequency = '';
-          $this->salary = '';
-          $this->currency_id = '';
-          $this->street_address = '';
-          $this->start_date = '';
-          $this->end_date = '';
-          $this->leave_days = '';
-          $this->accrual_rate = '';
-          $this->expiry_date = '';
-          $this->expiration = '';
-          $this->duration = '';
-          $this->contact = '';
-          $this->next_of_kin = '';
-          $this->relationship = '';
-      }
       public function updated($value){
           $this->validateOnly($value);
       }
       protected $messages =[
-        'title.*.required' => 'Title field is required',
-        'file.*.required' => 'File field is required',
-        'department_id.required' => 'Select department',
-        'branch_id.required' => 'Select branch',
+        'department_id.required' => 'Select Department',
+        'branch_id.nullable' => 'Select Branch',
         'role_id.required' => 'Select Role',
-        'currency_id.required' => 'Select Currency',
+      ];
 
-    ];
-   protected function rules(){
-        return[
-            'name' => 'required|alpha|min:2',
-            'surname' => 'required|alpha|min:2',
-            'gender' => 'required',
-            'dob' => 'required|date',
-            'email' => 'unique:users,email,'.$this->user_id,
-            'phonenumber' => 'unique:users,phonenumber,'.$this->user_id,
-            'idnumber' => 'required|string|max:15',
-            'branch_id' => 'required',
-            'role_id' => 'required',
-            'currency_id' => 'required',
-            'department_id' => 'required',
-            'title.0' => 'nullable|string',
-            'file.0' => 'nullable|file|mimes:docx,doc,pdf,xls,xlsx,pptx|max:10000',
-            'title.*' => 'required',
-            'file.*' => 'required|file|mimes:docx,doc,pdf,xls,xlsx,pptx|max:10000',
-        ];
-    }
+      protected $rules = [
+          'name' => 'required|alpha|min:2',
+          'middle_name' => 'nullable|alpha|min:2',
+          'surname' => 'required|alpha|min:2',
+          'dob' => 'nullable|date',
+          'email' => 'nullable|email|unique:users,email,NULL,id,deleted_at,NULL',
+          'phonenumber' => 'nullable|unique:employees,phonenumber,NULL,id,deleted_at,NULL|max:13',
+          'transporter_id' => 'required',
+          'department_id' => 'required',
+          'file.0' => 'nullable|file|mimes:docx,doc,pdf,xls,xlsx,pptx|max:10000',
+          'file.*' => 'required|file|mimes:docx,doc,pdf,xls,xlsx,pptx|max:10000',
+      ];
+
     public function generatePIN($digits = 4){
         $i = 0; //counter
         $pin = ""; //our default pin is blank.
@@ -422,7 +382,6 @@ class Edit extends Component
         }
         
           Session::flash('success','Employee updated successfully');
-          $this->resetInputFields();
           return redirect()->route('employees.index');
 
           });

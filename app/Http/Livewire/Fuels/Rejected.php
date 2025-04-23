@@ -183,10 +183,20 @@ class Rejected extends Component
         
                     }
                     
-                    if(($container->balance >= $fuel->quantity) && $container->purchase_type == "Bulk Buy"){
-                        $container->balance = $container->balance - $fuel->quantity;
+                    if($container->purchase_type == "Bulk Buy"){
+                       
+                        if(isset($container->balance) && is_numeric($container->balance) && (isset($fuel->quantity) && is_numeric($fuel->quantity)) ){
+                            if($container->balance >= $fuel->quantity){
+                                $container->balance = $container->balance - $fuel->quantity;
+                            } 
+                        }
+                      
                         if(isset($container->account_balance)){
-                            $container->account_balance = $container->account_balance - $fuel->amount;
+                            if(isset($container->account_balance) && is_numeric($container->account_balance) && (isset($fuel->amount) && is_numeric($fuel->amount)) ){
+                                if($container->account_balance >= $fuel->amount){
+                                    $container->account_balance = $container->account_balance - $fuel->amount;
+                                }
+                            }
                         }
                         $container->update();
                     }
@@ -424,16 +434,20 @@ class Rejected extends Component
                 }
             }
             
-            if(($container->balance >= $fuel->quantity) && $container->purchase_type == "Bulk Buy"){
+            if($container->purchase_type == "Bulk Buy"){
+                       
                 if(isset($container->balance) && is_numeric($container->balance) && (isset($fuel->quantity) && is_numeric($fuel->quantity)) ){
-                    $container->balance = $container->balance - $fuel->quantity;
+                    if($container->balance >= $fuel->quantity){
+                        $container->balance = $container->balance - $fuel->quantity;
+                    } 
                 }
               
                 if(isset($container->account_balance)){
                     if(isset($container->account_balance) && is_numeric($container->account_balance) && (isset($fuel->amount) && is_numeric($fuel->amount)) ){
-                        $container->account_balance = $container->account_balance - $fuel->amount;
+                        if($container->account_balance >= $fuel->amount){
+                            $container->account_balance = $container->account_balance - $fuel->amount;
+                        }
                     }
-                  
                 }
                 $container->update();
             }

@@ -16,6 +16,9 @@ class Employee extends Model implements Auditable
     public function vehicle_assignment(){
         return $this->hasMany('App\Models\VehicleAssignment');
     }
+    public function movements(){
+        return $this->hasMany('App\Models\Movement');
+    }
     public function payroll_salaries(){
         return $this->hasMany('App\Models\PayrollSalary');
     }

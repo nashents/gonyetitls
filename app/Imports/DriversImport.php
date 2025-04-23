@@ -107,6 +107,41 @@ WithChunkReading
 
 
     }
+
+    private function parseExcelDate($value)
+    {
+        if (!isset($value)) {
+            return null;
+        }
+
+        // If it's a numeric Excel date serial
+        if (is_numeric($value)) {
+            try {
+                return Carbon::instance(\PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($value)->format('Y-m-d'));
+            } catch (\Exception $e) {
+                return null;
+            }
+        }
+
+        // If it's a string in strict YYYY-MM-DD format
+        if (is_string($value)) {
+            try {
+                $parsed = Carbon::createFromFormat('Y-m-d', $value);
+                return $parsed && $parsed->format('Y-m-d') === $value ? $parsed : null;
+            } catch (\Exception $e) {
+                return null;
+            }
+        }
+
+        return null;
+    }
+
+    private function parseGender($value)
+    {
+        $gender = ucfirst(strtolower(trim($value)));
+
+        return in_array($gender, ['Male', 'Female']) ? $gender : null;
+    }
    
 
     /**
@@ -152,17 +187,17 @@ WithChunkReading
       
         $employee->name    = $row['name'];
         $employee->surname     = $row['surname'];
-        $employee->gender     = $row['gender'];
-        $employee->dob     = $row['dob'];
+        $employee->gender = $this->parseGender($row['gender']);
+        $employee->dob = $this->parseExcelDate($row['dob']);
         $employee->email    = $row['email'];
         $employee->phonenumber    = $row['phonenumber'];
         $employee->idnumber    = $row['idnumber'];
         $employee->country    = $row['country'];
         $employee->city    = $row['city'];
         $employee->suburb    = $row['suburb'];
-        $employee->duration    = $row['contract_duration'];
-        $employee->start_date    = $row['start_date'];
-        $employee->expiration    = $row['expiry_date'];
+        $employee->duration = is_numeric($row['contract_duration']) ? (int) $row['contract_duration'] : null;
+        $employee->start_date = $this->parseExcelDate($row['start_date']);
+        $employee->expiration = $this->parseExcelDate($row['expiry_date']);
         $employee->street_address    = $row['streetaddress'];
         $employee->next_of_kin    = $row['nextofkin'];
         $employee->relationship    = $row['relationship'];
@@ -205,8 +240,8 @@ WithChunkReading
        $employee->employee_number   = $this->employeeNumber();
        $employee->name    = $row['name'];
        $employee->surname     = $row['surname'];
-       $employee->gender     = $row['gender'];
-       $employee->dob     = $row['dob'];
+       $employee->gender = $this->parseGender($row['gender']);
+       $employee->dob = $this->parseExcelDate($row['dob']);
        $employee->email    = $row['email'];
        $employee->pin    = $pin;
        $employee->phonenumber    = $row['phonenumber'];
@@ -214,9 +249,9 @@ WithChunkReading
        $employee->country    = $row['country'];
        $employee->city    = $row['city'];
        $employee->suburb    = $row['suburb'];
-       $employee->duration    = $row['contract_duration'];
-       $employee->start_date    = $row['start_date'];
-       $employee->expiration    = $row['expiry_date'];
+       $employee->duration = is_numeric($row['contract_duration']) ? (int) $row['contract_duration'] : null;
+       $employee->start_date = $this->parseExcelDate($row['start_date']);
+       $employee->expiration = $this->parseExcelDate($row['expiry_date']);
        $employee->street_address    = $row['streetaddress'];
        $employee->next_of_kin    = $row['nextofkin'];
        $employee->relationship    = $row['relationship'];

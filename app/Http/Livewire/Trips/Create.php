@@ -64,6 +64,29 @@ class Create extends Component
 {
     use WithFileUploads;
 
+    public $trip_types;
+    public $selectedTripType;
+    public $trip_ref;
+    public $trip_groups;
+    public $trip_group_id;
+    //searching existing trips
+    public $searchTrip;
+    public $trips;
+    public $selectedTrip;
+    public $selectedBorder;
+    public $clearing_agents;
+    public $clearing_agent_id;
+
+
+    public $searchHorse;
+    public $searchVehicle;
+    public $searchTrailer;
+    public $searchDriver;
+  
+    
+    protected $queryString = ['searchTrip','searchVehicle','searchHorse','searchTrailer','searchDriver'];
+
+
     public $trip;
     public $trip_id;
     public $trip_number;
@@ -71,7 +94,7 @@ class Create extends Component
     public $selectedRoute;
     public $transporters;
     public $selectedTransporter;
-    public $trip_groups;
+  
     public $trip_group;
     public $starting_mileage;
     public $ending_mileage;
@@ -80,23 +103,22 @@ class Create extends Component
     public $exchange_transporter_freight;
     public $exchange_customer_turnover;
     public $exchange_transporter_cost_of_sales = 0;
-    public $trip_group_id;
+ 
     public $horse_fuel_total;
     public $vehicle_fuel_total;
     public $cd3_number;
     public $cd1_number;
     public $manifest_number;
-    public $trip_types;
+
     public $trip_type_name;
     public $horse_selected;
     public $vehicle_selected;
     public $freight_calculation;
     public $calculation_measurement;
     public $selectedFuelCurrency;
-    public $selectedTripType;
+  
     public $customer_updates = 0;
-    public $clearing_agents;
-    public $clearing_agent_id;
+  
     public $consignees;
     public $consignee_id;
     public $agents;
@@ -111,7 +133,7 @@ class Create extends Component
     public $measurement;
     public $container;
     public $container_id;
-    public $trip_ref;
+   
     public $with_trailer;
     public $cargo_details;
     public $horses;
@@ -156,7 +178,7 @@ class Create extends Component
     public $all_horses = False;
 
     public $borders;
-    public $selectedBorder;
+    
     public $quotations;
     public $selectedQuotation;
     public $cargos;
@@ -189,8 +211,8 @@ class Create extends Component
     public $transporter_freight;
     public $profit;
   
-    public $selectedTrip;
-    public $trips;
+
+
     public $net_profit;
     public $truck_stops;
     public $truck_stop_id;
@@ -232,14 +254,7 @@ class Create extends Component
 //fuel order variables
 
 
-    public $searchHorse;
-    public $searchVehicle;
-    public $searchTrailer;
-    public $searchDriver;
-    public $searchTrip;
-    
-    protected $queryString = ['searchTrip','searchVehicle','searchHorse','searchTrailer','searchDriver'];
-
+   
     //driver allowances 
 
     public $allowances;
@@ -886,12 +901,14 @@ public function removeAllowance($x)
           $this->validateOnly($value);
       }
 
-      
       protected $messages =[
         'customer_id.required' => 'Please select a customer',
         'selectedHorse.required' => 'Please select a horse',
         'selectedVehicle.required' => 'Please select a vehicle',
+        'selectedTransporter.required' => 'Please select a transporter',
         'driver_id.required' => 'Please select a driver',
+        'trailer_id.0.required' => 'Please select a driver',
+        'trailer_id.*.required' => 'Please select a driver',
         'selectedCargo.required' => 'Please select your cargo',
         'selectedTo.required' => 'Please select a starting point ',
         'selectedFrom.required' => 'Please select your destination ',
@@ -902,7 +919,8 @@ public function removeAllowance($x)
           'selectedHorse' => 'required',
           'selectedVehicle' => 'required',
           'selectedTransporter' => 'required',
-          'trailer_id' => 'required',
+          'trailer_id.0' => 'required',
+          'trailer_id.*' => 'required',
           'driver_id' => 'required',
           'selectedTripType' => 'required',
           'selectedCargo' => 'required',
@@ -918,10 +936,8 @@ public function removeAllowance($x)
           'cd1_number' => 'nullable|unique:trips,cd1_number,NULL,id,deleted_at,NULL|string|min:2',
           'selectedStatus' => 'required',
           'selectedContainer' => 'required',
-          'selectedCategory' => 'required',
-          'date' => 'required',
-          'odometer' => 'required',
-          'fuel_quantity' => 'required',
+          'start_date' => 'required',
+         
       ];
 
      
@@ -1102,6 +1118,7 @@ public function removeAllowance($x)
 
     public function store(){
 
+        $this->validate();
         //start trip creation logic
         // try{
         DB::transaction(function () {

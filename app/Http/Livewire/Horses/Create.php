@@ -177,35 +177,18 @@ class Create extends Component
     public function updated($value){
         $this->validateOnly($value);
     }
-    protected $messages =[
-
-      'title.*.required' => 'Title field is required',
-      'file.*.required' => 'File field is required',
-      'transporter_id.required' => 'Select Transporter',
-
-
-  ];
-    protected $rules = [
-        'fleet_number' => 'required',
-        'selectedMake' => 'required',
-        'horse_model_id' => 'required',
-        'year' => 'required',
-        'color' => 'required',
-        'no_of_wheels' => 'required',
-        'condition' => 'required',
-        'chasis_number' => 'required|unique:horses,chasis_number,NULL,id,deleted_at,NULL',
-        'engine_number' => 'required|unique:horses,engine_number,NULL,id,deleted_at,NULL',
-        'registration_number' => 'required|unique:horses,registration_number,NULL,id,deleted_at,NULL',
-        'fuel_type' => 'required',
-        'horse_type_id' => 'required',
-        'transporter_id' => 'required',
-        'horse_group_id' => 'required',
-        'images.*' => 'required|image',
-        'title.0' => 'nullable|string',
-        'file.0' => 'nullable|file|mimes:docx,doc,pdf,xls,xlsx,pptx|max:10000',
-        'title.*' => 'required',
-        'file.*' => 'required|file|mimes:docx,doc,pdf,xls,xlsx,pptx|max:10000',
+    protected $messages = [
+        'transporter_id.required' => 'Transporter field is required',
+  
     ];
+      protected $rules = [
+        
+          'transporter_id' => 'required',
+          'chasis_number' => 'nullable|unique:horses,chasis_number,NULL,id,deleted_at,NULL',
+          'engine_number' => 'nullable|unique:horses,engine_number,NULL,id,deleted_at,NULL',
+          'registration_number' => 'required|unique:horses,registration_number,NULL,id,deleted_at,NULL',
+        
+      ];
 
     public function updatedSelectedMake($make)
     {

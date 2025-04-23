@@ -197,7 +197,7 @@ WithChunkReading
 
     public function rules(): array{
         return[
-            '*.transporter_number' => ['required'],
+            // '*.transporter_number' => ['required'],
             // '*.registration_number' => ['nullable','unique:vehicles,registration_number,NULL,id,deleted_at,NULL'],
             // '*.chasis_number' => ['nullable','unique:vehicles,chasis_number,NULL,id,deleted_at,NULL'],
             // '*.fleet_number' => ['nullable','unique:vehicles,vehicle_number,NULL,id,deleted_at,NULL'],

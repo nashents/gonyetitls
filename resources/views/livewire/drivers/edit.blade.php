@@ -62,13 +62,13 @@
                                                  <div class="col-sm-10">
                                                     <div class="radio">
                                                         <label>
-                                                        <input type="radio" wire:model.debounce.300ms="gender" id="optionsRadios1" value="male" required/>
+                                                        <input type="radio" wire:model.debounce.300ms="gender" id="optionsRadios1" value="Male" required/>
                                                         Male
                                                         </label>
                                                     </div>
                                                     <div class="radio">
                                                         <label>
-                                                        <input type="radio"  wire:model.debounce.300ms="gender" id="optionsRadios2" value="female" required/>
+                                                        <input type="radio"  wire:model.debounce.300ms="gender" id="optionsRadios2" value="Female" required/>
                                                         Female
                                                         </label>
                                                     </div>

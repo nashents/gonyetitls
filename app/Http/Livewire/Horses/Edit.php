@@ -213,32 +213,17 @@ class Edit extends Component
     public function updated($value){
         $this->validateOnly($value);
     }
-    protected $messages =[
-
-      'title.*.required' => 'Title field is required',
-      'file.*.required' => 'File field is required',
-      'transporter_id.required' => 'File field is required',
+    protected $messages = [
+      'transporter_id.required' => 'Transporter field is required',
 
   ];
     protected $rules = [
-        'fleet_number' => 'required',
-        'selectedMake' => 'required',
-        'horse_model_id' => 'required',
+      
         'transporter_id' => 'required',
-        'year' => 'required',
-        'color' => 'required',
-        'chasis_number' => 'required|unique:horses,chasis_number,NULL,id,deleted_at,NULL',
-        'engine_number' => 'required|unique:horses,engine_number,NULL,id,deleted_at,NULL',
+        'chasis_number' => 'nullable|unique:horses,chasis_number,NULL,id,deleted_at,NULL',
+        'engine_number' => 'nullable|unique:horses,engine_number,NULL,id,deleted_at,NULL',
         'registration_number' => 'required|unique:horses,registration_number,NULL,id,deleted_at,NULL',
-        'no_of_wheels' => 'required',
-        'horse_type' => 'required',
-        'mileage' => 'required',
-        'horse_group' => 'required',
-        'images.*' => 'required|image',
-        'title.0' => 'nullable|string',
-        'file.0' => 'nullable|file|mimes:docx,doc,pdf,xls,xlsx,pptx|max:10000',
-        'title.*' => 'required',
-        'file.*' => 'required|file|mimes:docx,doc,pdf,xls,xlsx,pptx|max:10000',
+      
     ];
 
     public function updatedSelectedMake($make)

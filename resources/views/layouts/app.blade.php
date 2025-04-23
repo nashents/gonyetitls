@@ -104,6 +104,17 @@
 @stack('scripts')
     
     <script type="text/javascript">
+            window.addEventListener('show-updateInvoicesModal', event => {
+                $('#updateInvoicesModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-updateInvoicesModal', event => {
+                $('#updateInvoicesModal').modal('hide');
+            })
+    </script>
+
+    <script type="text/javascript">
             window.addEventListener('show-expenseDeleteModal', event => {
                 $('#expenseDeleteModal').modal('show');
             })

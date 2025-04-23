@@ -513,6 +513,57 @@ class Index extends Component
         }
     }
 
+    public function showInvoiceUpdate(){
+        $this->dispatchBrowserEvent('show-updateInvoicesModal');
+    }
+    public function updateAllInvoices(){
+
+        $invoices = Invoice::whereNotNull('accrual_balance')->orderBy('id','asc')->orderBy('created_at','asc')->get();
+        if($invoices){
+            foreach($invoices as $invoice){
+                if((isset($invoice->customer_id) && isset($invoice->currency_id))){
+                    if (!is_null($invoice->accrual_balance)) {
+                     $last_payment = Payment::where('created_at', '<', $invoice->created_at)
+                                            ->where('customer_id', $invoice->customer_id)
+                                            ->where('currency_id', $invoice->currency_id)
+                                            ->whereNotNull('invoice_id') // Ensure payment is linked to an invoice
+                                            ->whereNotNull('accrual_balance') // Ensure accrual balance exists
+                                            ->orderByDesc('date') // Prioritize latest transaction date
+                                            ->orderByDesc('created_at') // If same date, get most recently recorded
+                                            ->orderByDesc('id') // If same creation time, get latest ID
+                                            ->first();
+    
+                                        // If no valid payment exists, retrieve the last invoice with the highest accrual balance
+                    $last_invoice = null;
+                    if (!$last_payment) {
+                        $last_invoice = Invoice::where('authorization', 'approved')
+                            ->where('customer_id', $invoice->customer_id)
+                            ->where('currency_id', $invoice->currency_id)
+                            ->whereNotNull('accrual_balance') // Ensure accrual balance exists
+                            ->orderByDesc('accrual_balance') // Prioritize highest balance
+                            ->orderByDesc('date') // If tie, use latest invoice date
+                            ->orderByDesc('id') // If tie, use latest ID
+                            ->first();
+                    }
+    
+                  
+                    // Determine the last accrual balance, prioritizing payments over invoices
+                    $previous_balance = $last_payment && is_numeric($last_payment->accrual_balance) 
+                        ? $last_payment->accrual_balance 
+                        : ($last_invoice && is_numeric($last_invoice->accrual_balance) ? $last_invoice->accrual_balance : 0);
+    
+                    // Compute and set the new accrual balance
+                    $invoice->accrual_balance = $previous_balance + $invoice->total;
+                    $invoice->update(); // Save the updated invoice
+                       
+                    }
+                }
+            }
+        }
+
+        $this->dispatchBrowserEvent('hide-updateInvoicesModal');
+    }
+    
     public function showPayment($id){
         $this->invoice_id = $id ;
         $this->invoice = Invoice::find($id);

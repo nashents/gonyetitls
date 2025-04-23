@@ -6,12 +6,21 @@ use App\Models\Account;
 use App\Models\Expense;
 use Livewire\Component;
 use App\Models\Currency;
+use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
 class Index extends Component
 {
 
+
+    use WithPagination;
+
+    protected $paginationTheme = 'bootstrap';
+    public $search;
+    protected $queryString = ['search'];
+    public $from;
+    public $to;
 
 
     public $accounts;
@@ -139,9 +148,12 @@ class Index extends Component
 
     public function render()
     {
-        $this->expenses = Expense::latest()->get();
-        return view('livewire.expenses.index',[
-            'expenses' => $this->expenses
-        ]);
+        if (filled($this->search)) {
+            # code...
+        }else{
+            return view('livewire.expenses.index',[
+                'expenses' => Expense::latest()->get()
+            ]);
+        }
     }
 }

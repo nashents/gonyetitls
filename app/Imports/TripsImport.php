@@ -80,6 +80,34 @@ WithBatchInserts
    
        }
 
+       private function parseExcelDate($value)
+       {
+           if (!isset($value)) {
+               return null;
+           }
+   
+           // If it's a numeric Excel date serial
+           if (is_numeric($value)) {
+               try {
+                   return Carbon::instance(\PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($value)->format('Y-m-d'));
+               } catch (\Exception $e) {
+                   return null;
+               }
+           }
+   
+           // If it's a string in strict YYYY-MM-DD format
+           if (is_string($value)) {
+               try {
+                   $parsed = Carbon::createFromFormat('Y-m-d', $value);
+                   return $parsed && $parsed->format('Y-m-d') === $value ? $parsed : null;
+               } catch (\Exception $e) {
+                   return null;
+               }
+           }
+   
+           return null;
+       }
+
        public function limit(): int
     {
         return 500; // Import only the first 100 rows
@@ -141,8 +169,8 @@ WithBatchInserts
             $trip->company_id = $this->company->id;
             $trip->trip_type_id = $trip_type ? $trip_type->id : Null;
             $trip->trip_ref = $row['trip_reference'];
-            $trip->start_date = isset($row['start_date']) ? Carbon::instance(\PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($row['start_date'])) : null;
-            $trip->end_date = isset($row['offloading_date']) ? Carbon::instance(\PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($row['offloading_date'])) : null;
+            $trip->start_date = $this->parseExcelDate($row['start_date']);
+            $trip->end_date = $this->parseExcelDate($row['end_date']);
             $trip->transporter_id     = $transporter ? $transporter->id : Null;
             $trip->horse_id     = $horse ? $horse->id : Null;
             if (isset($this->trailer_ids)) {

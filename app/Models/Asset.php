@@ -37,6 +37,9 @@ class Asset extends Model implements Auditable
     public function asset_assignments(){
         return $this->hasMany('App\Models\AssetAssignment');
     }
+    public function movements(){
+        return $this->hasMany('App\Models\Movement');
+    }
     public function fuels(){
         return $this->hasMany('App\Models\Fuel');
     }

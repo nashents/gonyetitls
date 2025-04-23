@@ -19,6 +19,9 @@ class Branch extends Model implements Auditable
     public function emails(){
         return $this->hasMany('App\Models\Email');
     }
+    public function movements(){
+        return $this->hasMany('App\Models\Movement');
+    }
     public function employees(){
         return $this->hasMany('App\Models\Employee');
     }

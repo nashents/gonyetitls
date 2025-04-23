@@ -15,6 +15,9 @@ class Tyre extends Model implements Auditable
     public function driver(){
         return $this->belongsTo('App\Models\Driver');
     }
+    public function movements(){
+        return $this->hasMany('App\Models\Movement');
+    }
     public function currency(){
         return $this->belongsTo('App\Models\Currency');
     }
@@ -58,5 +61,24 @@ class Tyre extends Model implements Auditable
     public function user(){
         return $this->belongsTo('App\Models\User');
     }
+
+    protected $fillable = [
+        'currency_id',
+        'store_id',
+        'product_id',
+        'serial_number',
+        'amount',
+        'subtotal',
+        'subtotal_incl',
+        'total',
+        'type',
+        'width',
+        'aspect_ratio',
+        'diameter',
+        'qty',
+        'purchase_date',
+        'status',
+        'disposed',
+    ];
 
 }

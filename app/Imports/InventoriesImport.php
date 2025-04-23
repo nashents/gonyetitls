@@ -110,12 +110,46 @@ WithBatchInserts
    
        }
 
+       private function parseExcelDate($value)
+       {
+           if (!isset($value)) {
+               return null;
+           }
+   
+           // If it's a numeric Excel date serial
+           if (is_numeric($value)) {
+               try {
+                   return Carbon::instance(\PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($value)->format('Y-m-d'));
+               } catch (\Exception $e) {
+                   return null;
+               }
+           }
+   
+           // If it's a string in strict YYYY-MM-DD format
+           if (is_string($value)) {
+               try {
+                   $parsed = Carbon::createFromFormat('Y-m-d', $value);
+                   return $parsed && $parsed->format('Y-m-d') === $value ? $parsed : null;
+               } catch (\Exception $e) {
+                   return null;
+               }
+           }
+   
+           return null;
+       }
+
     public function collection(Collection $rows)
     {
 
 
        foreach($rows as $row){
         if($row->filter()->isNotEmpty()){
+
+            $store = Null;
+            $category = Null;
+            $sub_category = Null;
+            $brand = Null;
+            $currency = Null;
 
             $storeName = trim($row['store_name']);
             if (filled($storeName)) {
@@ -181,10 +215,7 @@ WithBatchInserts
                             if ($this->store) {
                                 $inventory->store_id = $this->store->id;
                             }
-                            if($row['purchase_date'] != ""){
-                                $inventory->purchase_date = isset($row['purchase_date']) ?  Carbon::instance(\PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($row['purchase_date'])->format('Y-m-d')) : Null;
-                            }
-            
+                            $inventory->purchase_date = $this->parseExcelDate($row['purchase_date']);
                             $inventory->weight = $row['item_contents'] ? $row['item_contents'] : 1;
                             $inventory->balance = $row['balance'] ? $row['balance'] : 1;
                             $inventory->measurement = $row['measurement'];
@@ -228,16 +259,10 @@ WithBatchInserts
                             if ($this->currency) {
                                 $inventory->currency_id = $this->currency->id;
                             }
-                        
                             if ($this->store) {
                                 $inventory->store_id = $this->store->id;
                             }
-
-                            if($row['purchase_date'] != ""){
-                                $inventory->purchase_date = isset($row['purchase_date']) ?  Carbon::instance(\PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($row['purchase_date'])->format('Y-m-d')) : Null;
-                            }
-                           
-            
+                            $inventory->purchase_date = $this->parseExcelDate($row['purchase_date']);
                             $inventory->weight = $row['item_contents'] ? $row['item_contents'] : 1;
                             $inventory->balance = $row['balance'] ? $row['balance'] : 1;
                             $inventory->measurement = $row['measurement'];

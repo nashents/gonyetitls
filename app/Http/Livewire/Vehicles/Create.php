@@ -96,6 +96,7 @@ class Create extends Component
         $this->engine_number = '';
         $this->fuel_type = '';
         $this->registration_number = '';
+    
 
     }
     public function mount(){

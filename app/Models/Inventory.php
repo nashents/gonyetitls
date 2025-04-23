@@ -15,6 +15,9 @@ class Inventory extends Model implements Auditable
     public function bill_expenses(){
         return $this->HasMany('App\Models\BillExpense');
     }
+    public function movements(){
+        return $this->hasMany('App\Models\Movement');
+    }
     public function store(){
         return $this->belongsTo('App\Models\Store');
     }

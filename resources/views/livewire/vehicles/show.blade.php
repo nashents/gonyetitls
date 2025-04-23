@@ -245,6 +245,7 @@
                                     <th class="w-10 text-center line-height-35">Condition</th>
                                     <td class="w-20 line-height-35">{{$vehicle->condition}}</td>
                                 </tr>
+                              
                                 <tr>
                                     <th class="w-10 text-center line-height-35">Vehicle Type</th>
                                     <td class="w-20 line-height-35"> {{$vehicle->vehicle_type ? $vehicle->vehicle_type->name : ""}}</td>

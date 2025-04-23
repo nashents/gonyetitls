@@ -15,6 +15,9 @@ class Trailer extends Model implements Auditable
     public function trailer_documents(){
         return $this->hasMany('App\Models\TrailerDocument');
     }
+    public function movements(){
+        return $this->hasMany('App\Models\Movement');
+    }
     public function mileages(){
         return $this->hasMany('App\Models\Mileage');
     }

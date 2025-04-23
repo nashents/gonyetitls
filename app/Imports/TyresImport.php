@@ -13,6 +13,7 @@ use App\Models\Trailer;
 use App\Models\Vehicle;
 use App\Models\Category;
 use App\Models\Currency;
+use App\Models\Movement;
 use App\Models\TyreDispatch;
 use App\Models\TyreAssignment;
 use Illuminate\Support\Collection;
@@ -118,6 +119,34 @@ WithBatchInserts
 
     }
 
+    private function parseExcelDate($value)
+    {
+        if (!isset($value)) {
+            return null;
+        }
+
+        // If it's a numeric Excel date serial
+        if (is_numeric($value)) {
+            try {
+                return Carbon::instance(\PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($value)->format('Y-m-d'));
+            } catch (\Exception $e) {
+                return null;
+            }
+        }
+
+        // If it's a string in strict YYYY-MM-DD format
+        if (is_string($value)) {
+            try {
+                $parsed = Carbon::createFromFormat('Y-m-d', $value);
+                return $parsed && $parsed->format('Y-m-d') === $value ? $parsed : null;
+            } catch (\Exception $e) {
+                return null;
+            }
+        }
+
+        return null;
+    }
+
 
     /**
     * @param array $row
@@ -130,611 +159,191 @@ WithBatchInserts
         return 500; // Import only the first 100 rows
     }
 
+    public function assignTyre(Collection $row, $horse, $trailer, $vehicle, $tyre)
+        {
+            if (!isset($row['horse_reg_number']) && !isset($row['vehicle_reg_number']) && !isset($row['trailer_reg_number'])) {
+                return;
+            }
+
+            $tyre = $tyre;
+            $tyreAssignment = $tyre->tyre_assignment;
+
+            $assignment = isset($tyreAssignment)
+                ? TyreAssignment::find($tyreAssignment->id)
+                : new TyreAssignment;
+
+            if (!isset($tyreAssignment)) {
+                $assignment->user_id = Auth::user()->id;
+            }
+
+            $assignment->tyre_id = $tyre->id;
+
+            if (isset($row['horse_reg_number']) && $horse) {
+                $assignment->type = 'Horse';
+                $assignment->horse_id = $horse->id;
+            } elseif (isset($row['vehicle_reg_number']) && $vehicle) {
+                $assignment->type = 'Vehicle';
+                $assignment->vehicle_id = $vehicle->id;
+            } elseif (isset($row['trailer_reg_number']) && $trailer) {
+                $assignment->type = 'Trailer';
+                $assignment->trailer_id = $trailer->id;
+            }
+
+            $assignment->date_fitted = $this->parseExcelDate($row['date_fitted']);
+            $assignment->starting_odometer = $row['fitting_mileage'];
+            $assignment->current_mileage = $row['current_mileage'];
+            $assignment->position = $row['position'];
+            $assignment->axle = $row['axle'];
+            $assignment->status = 1;
+
+            isset($tyreAssignment) ? $assignment->update() : $assignment->save();
+
+            $movement = Movement::firstOrNew(['tyre_assignment_id' => $assignment->id]);
+
+            $movement->user_id = $assignment->user_id;
+            $movement->tyre_id = $assignment->tyre_id;
+            
+            if (isset($row['horse_reg_number']) && $horse) {
+                $movement->location = 'Horse';
+                $movement->horse_id = $horse->id;
+            } elseif (isset($row['vehicle_reg_number']) && $vehicle) {
+                $movement->location = 'Vehicle';
+                $movement->vehicle_id = $vehicle->id;
+            } elseif (isset($row['trailer_reg_number']) && $trailer) {
+                $movement->location = 'Trailer';
+                $movement->trailer_id = $trailer->id;
+            }
+            
+            $movement->current_mileage = $row['current_mileage'];
+            $movement->mileage_moved = $row['fitting_mileage'];
+            $movement->date = $this->parseExcelDate($row['date_fitted']);
+            $movement->save();
+
+
+            if ($assignment) {
+                $tyreDispatch = $assignment->tyre_dispatch;
+
+                $dispatch = isset($tyreDispatch)
+                    ? TyreDispatch::find($tyreDispatch->id)
+                    : new TyreDispatch;
+
+                $dispatch->tyre_assignment_id = $assignment->id;
+                $dispatch->tyre_id = $tyre->id;
+                $dispatch->tyre_number = $tyre->tyre_number;
+                $dispatch->serial_number = $tyre->serial_number;
+                $dispatch->width = $tyre->width;
+                $dispatch->aspect_ratio = $tyre->aspect_ratio;
+                $dispatch->diameter = $tyre->diameter;
+
+                if ($horse) {
+                    $dispatch->horse_id = $horse->id;
+                } elseif ($vehicle) {
+                    $dispatch->vehicle_id = $vehicle->id;
+                } elseif ($trailer) {
+                    $dispatch->trailer_id = $trailer->id;
+                }
+
+                isset($tyreDispatch) ? $dispatch->update() : $dispatch->save();
+            }
+
+            $tyre = Tyre::find($tyre->id);
+            $tyre->status = 0;
+            $tyre->disposed = 0;
+            $tyre->update();
+
+           
+        }
+
+
     public function collection(Collection $rows)
     {
        foreach($rows as $row){
-        if($row->filter()->isNotEmpty()){     
-    
-        $this->tyre = Tyre::where('serial_number','LIKE','%'.$row['serial_number'].'%')->first();  
-       
-        $brandName = trim($row['brand_name']);
-        if (filled($brandName)) {
-            $brand = Brand::firstOrCreate(
-                ['name' => $brandName], 
-                ['status' => 1]
-            );
-            $this->brand = $brand;
-        }
-        
-        $storeName = trim($row['store_name']);
-        if (filled($storeName)) {
-            $store = Store::firstOrCreate(
-                ['name' => $storeName], 
-                ['status' => 1]
-            );
-            $this->store = $store;
-        }
-        $categoryName = trim($row['category']);
-        if (filled($categoryName)) {
-            $category = Category::firstOrCreate(
-                ['name' => $categoryName], 
-                ['status' => 1]
-            );
-            $this->category = $category;
-        }
-     
-      
-        
-        $this->horse = Horse::where('registration_number','LIKE','%'.$row['horse_reg_number'].'%')->first();  
-        $this->vehicle = Vehicle::where('registration_number','LIKE','%'. $row['vehicle_reg_number'].'%')->first();
-        $this->trailer = Trailer::where('registration_number','LIKE','%'. $row['trailer_reg_number'].'%')->first();
-        $this->product = Product::where('department','tyre')->where('name','Like', '%'.$row['product_name'].'%')->first();
-        $this->currency = Currency::where('name','LIKE','%'.$row['currency'].'%')->first();
-        
 
-        if (isset($this->tyre)) {
-
-            if (isset($this->product)) {
-
-                $tyre = Tyre::find($this->tyre->id);
-
-                if ($this->currency) {
-                    $tyre->currency_id = $this->currency->id;
-                }
-
-                if ($this->store) {
-                    $tyre->store_id = $this->store->id;
-                }
-
-                $tyre->product_id = $this->product->id;
-                $tyre->serial_number = $row['serial_number'];
-                $tyre->amount = $row['unit_price'];
-                $tyre->subtotal = $row['unit_price'];
-                $tyre->subtotal_incl = $row['unit_price'];
-                $tyre->total = $row['unit_price'];
-                $tyre->type = $row['type'];
-                $tyre->width = $row['width'];
-                $tyre->aspect_ratio = $row['aspect_ratio'];
-                $tyre->diameter = $row['diameter'];
-                $tyre->qty = 1;
-                // if(filled($row['purchase_date'])){
-                //     $dateString = $row['purchase_date'];
-                //     $dateTimeObject = new DateTime($dateString);
-                //     $tyre->purchase_date = isset($dateTimeObject) ?  Carbon::instance(\PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($dateTimeObject)->format('Y-m-d')) : Null;
-                // }
-                $tyre->status = 1;
-                $tyre->disposed = 0;
-                $tyre->update();
-
-                if (isset($row['horse_reg_number']) || isset($row['vehicle_reg_number']) || isset($row['trailer_reg_number'])) {
-
-                    $assignment = $tyre->tyre_assignment;
-
-                    if (isset($assignment)){  
-                            $assignment->tyre_id = $this->tyre->id;
-                            if(isset($row['horse_reg_number'])){
-                                $assignment->type = "Horse";
-                                  if ($this->horse) {
-                                    $assignment->horse_id = $this->horse->id;
-                                }
-                            }elseif(isset($row['vehicle_reg_number'])){
-                                $assignment->type = "Vehicle";
-                                 if ($this->vehicle) {
-                                    $assignment->vehicle_id = $this->vehicle->id;
-                                }
-                            }elseif(isset($row['trailer_reg_number'])){
-                                $assignment->type = "Trailer";
-                                 if ($this->trailer) {
-                                    $assignment->trailer_id = $this->trailer->id;
-                                }
-                            }
-                            $assignment->starting_odometer = $row['starting_mileage'];
-                            $assignment->position = $row['position'];
-                            $assignment->axle = $row['axle'];
-                            $assignment->status = 1;
-                            $assignment->update();
-
-                            if (isset($assignment)) {
-                                $tyre_dispatch = $assignment->tyre_dispatch;
-
-                                if (isset($tyre_dispatch)) {
-                                    $dispatch = TyreDispatch::find($tyre_dispatch->id);
-                                    $dispatch->tyre_assignment_id = $assignment->id;
-                                    $dispatch->tyre_id = $this->tyre->id;
-                                    $dispatch->tyre_number = $this->tyre->tyre_number;
-                                    $dispatch->serial_number = $this->tyre->serial_number;
-                                    $dispatch->width = $this->tyre->width;
-                                    $dispatch->aspect_ratio = $this->tyre->aspect_ratio;
-                                    $dispatch->diameter =  $this->tyre->diameter;
-                                      if ($this->horse) {
-                                        $dispatch->horse_id = $this->horse->id;
-                                    }elseif(isset($this->vehicle)){
-                                        $dispatch->vehicle_id = $this->vehicle->id;
-                                    }elseif(isset($this->trailer)){
-                                        $dispatch->trailer_id = $this->trailer->id;
-                                    }
-                                    $dispatch->update();
-                                }else {
-                                    $dispatch = new TyreDispatch;
-                                    $dispatch->tyre_assignment_id = $assignment->id;
-                                    $dispatch->tyre_id = $this->tyre->id;
-                                    $dispatch->tyre_number = $this->tyre->tyre_number;
-                                    $dispatch->serial_number = $this->tyre->serial_number;
-                                    $dispatch->width = $this->tyre->width;
-                                    $dispatch->aspect_ratio = $this->tyre->aspect_ratio;
-                                    $dispatch->diameter =  $this->tyre->diameter;
-                                      if ($this->horse) {
-                                        $dispatch->horse_id = $this->horse->id;
-                                    }elseif(isset($this->vehicle)){
-                                        $dispatch->vehicle_id = $this->vehicle->id;
-                                    }elseif(isset($this->trailer)){
-                                        $dispatch->trailer_id = $this->trailer->id;
-                                    }
-                                    $dispatch->save();
-                                }
+                if($row->filter()->isNotEmpty()){     
                         
-                            }
-        
-                            $tyre = Tyre::find($this->tyre->id);
-                            $tyre->status = 0;
-                            $tyre->disposed = 0;
-                            $tyre->update();
-
-                    }else {
-                            $assignment = new TyreAssignment;
-                            $assignment->user_id = Auth::user()->id;
-                            $assignment->tyre_id = $this->tyre->id;
-
-                            if(isset($row['horse_reg_number'])){
-                                $assignment->type = "Horse";
-                                  if ($this->horse) {
-                                    $assignment->horse_id = $this->horse->id;
-                                }
-                            }elseif(isset($row['vehicle_reg_number'])){
-                                $assignment->type = "Vehicle";
-                                 if ($this->vehicle) {
-                                    $assignment->vehicle_id = $this->vehicle->id;
-                                }
-                            }elseif(isset($row['trailer_reg_number'])){
-                                $assignment->type = "Trailer";
-                                 if ($this->trailer) {
-                                    $assignment->trailer_id = $this->trailer->id;
-                                }
-                            }
-
-                            $assignment->starting_odometer = $row['starting_mileage'];
-                            $assignment->position = $row['position'];
-                            $assignment->axle = $row['axle'];
-                            $assignment->status = 1;
-                            $assignment->save();
-
-                            if (isset($assignment)) {
-                                $dispatch = new TyreDispatch;
-                                $dispatch->tyre_assignment_id = $assignment->id;
-                                $dispatch->tyre_id = $this->tyre->id;
-                                $dispatch->tyre_number = $this->tyre->tyre_number;
-                                $dispatch->serial_number = $this->tyre->serial_number;
-                                $dispatch->width = $this->tyre->width;
-                                $dispatch->aspect_ratio = $this->tyre->aspect_ratio;
-                                $dispatch->diameter =  $this->tyre->diameter;
-
-                                  if ($this->horse) {
-                                    $dispatch->horse_id = $this->horse->id;
-                                }elseif(isset($this->vehicle)){
-                                    $dispatch->vehicle_id = $this->vehicle->id;
-                                }elseif(isset($this->trailer)){
-                                    $dispatch->trailer_id = $this->trailer->id;
-                                }
-                                $dispatch->save();
-                            }
-        
+                    $store = null;
+                    $currency = null;
+                    $product = null;
+                    $category = null;
+                    $horse = null;
+                    $vehicle = null;
+                    $trailer = null;
+                    // Lookup related assets
+                    $horse   = Horse::where('registration_number', 'LIKE', '%' . $row['horse_reg_number'] . '%')->first();
+                    $vehicle = Vehicle::where('registration_number', 'LIKE', '%' . $row['vehicle_reg_number'] . '%')->first();
+                    $trailer = Trailer::where('registration_number', 'LIKE', '%' . $row['trailer_reg_number'] . '%')->first();
                     
-                            $tyre = Tyre::find($tyre->id);
-                            $tyre->status = 0;
-                            $tyre->disposed = 0;
-                            $tyre->update();
-
-                    }
-
-                }
-
-            }
-            // new product of exsting tyre
-            else {
-       
-                $product = new Product;
-                $product->user_id = Auth::user()->id;
-                $product->product_number = $this->productNumber();
-                if ($this->category) {
-                    $product->category_id = $this->category->id;
-                }
-
-                if ($this->brand) {
-                    $product->brand_id = $this->brand->id;
-                }
-               
-                $product->name = $row['product_name'];
-                $product->department = 'tyre';
-                $product->status = '1';
-                $product->save(); 
-                 
-                $tyre = Tyre::find($this->tyre->id);
-
-                if ($this->currency) {
-                    $tyre->currency_id = $this->currency->id;
-                }
-                if ($this->store) {
-                    $tyre->store_id = $this->store->id;
-                }
-                
-                $tyre->product_id = $product->id;
-                $tyre->serial_number = $row['serial_number'];
-                $tyre->amount = $row['unit_price'];
-                $tyre->subtotal = $row['unit_price'];
-                $tyre->subtotal_incl = $row['unit_price'];
-                $tyre->total = $row['unit_price'];
-                $tyre->type = $row['type'];
-                $tyre->width = $row['width'];
-                $tyre->aspect_ratio = $row['aspect_ratio'];
-                $tyre->diameter = $row['diameter'];
-                $tyre->qty = 1;
-                // if(filled($row['purchase_date'])){
-                //     $dateString = $row['purchase_date'];
-                //     $dateTimeObject = new DateTime($dateString);
-                //     $tyre->purchase_date = isset($dateTimeObject) ?  Carbon::instance(\PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($dateTimeObject)->format('Y-m-d')) : Null;
-                // }
-                $tyre->status = 1;
-                $tyre->disposed = 0;
-                $tyre->update();
-
-                    if (isset($row['horse_reg_number']) || isset($row['vehicle_reg_number']) || isset($row['trailer_reg_number'])) {
-
-                            $tyre_assignment = $this->tyre->tyre_assignment;
-                            
-                            if (isset($tyre_assignment)) {
-                            
-                            $assignment = TyreAssignment::find($tyre_assignment->id);
-                            $assignment->tyre_id = $this->tyre->id;
-
-                            if(isset($row['horse_reg_number'])){
-                                $assignment->type = "Horse";
-                                  if ($this->horse) {
-                                    $assignment->horse_id = $this->horse->id;
-                                }
-                            }elseif(isset($row['vehicle_reg_number'])){
-                                $assignment->type = "Vehicle";
-                                 if ($this->vehicle) {
-                                    $assignment->vehicle_id = $this->vehicle->id;
-                                }
-                            }elseif(isset($row['trailer_reg_number'])){
-                                $assignment->type = "Trailer";
-                                 if ($this->trailer) {
-                                    $assignment->trailer_id = $this->trailer->id;
-                                }
-                            }
-
-                            $assignment->starting_odometer = $row['starting_mileage'];
-                            $assignment->position = $row['position'];
-                            $assignment->axle = $row['axle'];
-                            $assignment->status = 1;
-                            $assignment->update();
-
-                            if (isset($assignment)) {
-                                $tyre_dispatch = $assignment->tyre_dispatch;
-
-                                if (isset($tyre_dispatch)) {
-                                    $dispatch = TyreDispatch::find($tyre_dispatch->id);
-                                    $dispatch->tyre_assignment_id = $assignment->id;
-                                    $dispatch->tyre_id = $this->tyre->id;
-                                    $dispatch->tyre_number = $this->tyre->tyre_number;
-                                    $dispatch->serial_number = $this->tyre->serial_number;
-                                    $dispatch->width = $this->tyre->width;
-                                    $dispatch->aspect_ratio = $this->tyre->aspect_ratio;
-                                    $dispatch->diameter =  $this->tyre->diameter;
-                                      if ($this->horse) {
-                                        $dispatch->horse_id = $this->horse->id;
-                                    }elseif(isset($this->vehicle)){
-                                        $dispatch->vehicle_id = $this->vehicle->id;
-                                    }elseif(isset($this->trailer)){
-                                        $dispatch->trailer_id = $this->trailer->id;
-                                    }
-                                    $dispatch->update();
-                                }else{
-                                    $dispatch =  new TyreDispatch;
-                                    $dispatch->tyre_assignment_id = $assignment->id;
-                                    $dispatch->tyre_id = $this->tyre->id;
-                                    $dispatch->tyre_number = $this->tyre->tyre_number;
-                                    $dispatch->serial_number = $this->tyre->serial_number;
-                                    $dispatch->width = $this->tyre->width;
-                                    $dispatch->aspect_ratio = $this->tyre->aspect_ratio;
-                                    $dispatch->diameter =  $this->tyre->diameter;
-                                      if ($this->horse) {
-                                        $dispatch->horse_id = $this->horse->id;
-                                    }elseif(isset($this->vehicle)){
-                                        $dispatch->vehicle_id = $this->vehicle->id;
-                                    }elseif(isset($this->trailer)){
-                                        $dispatch->trailer_id = $this->trailer->id;
-                                    }
-                                    $dispatch->save();
-                                }
-                        
-                            }
-        
-                            $tyre = Tyre::find($this->tyre->id);
-                            $tyre->status = 0;
-                            $tyre->disposed = 0;
-                            $tyre->update();
-
-                            }else {
-                            
-                            $assignment = new TyreAssignment;
-                            $assignment->user_id = Auth::user()->id;
-                            $assignment->tyre_id = $this->tyre->id;
-
-                            if(isset($row['horse_reg_number'])){
-                                $assignment->type = "Horse";
-                                  if ($this->horse) {
-                                    $assignment->horse_id = $this->horse->id;
-                                }
-                            }elseif(isset($row['vehicle_reg_number'])){
-                                $assignment->type = "Vehicle";
-                                 if ($this->vehicle) {
-                                    $assignment->vehicle_id = $this->vehicle->id;
-                                }
-                            }elseif(isset($row['trailer_reg_number'])){
-                                $assignment->type = "Trailer";
-                                 if ($this->trailer) {
-                                    $assignment->trailer_id = $this->trailer->id;
-                                }
-                            }
-
-                            $assignment->starting_odometer = $row['starting_mileage'];
-                            $assignment->position = $row['position'];
-                            $assignment->axle = $row['axle'];
-                            $assignment->status = 1;
-                            $assignment->save();
-
-                            if (isset($assignment)) {
-                                $dispatch = new TyreDispatch;
-                                $dispatch->tyre_assignment_id = $assignment->id;
-                                $dispatch->tyre_id = $this->tyre->id;
-                                $dispatch->tyre_number = $this->tyre->tyre_number;
-                                $dispatch->serial_number = $this->tyre->serial_number;
-                                $dispatch->width = $this->tyre->width;
-                                $dispatch->aspect_ratio = $this->tyre->aspect_ratio;
-                                $dispatch->diameter =  $this->tyre->diameter;
-
-                                  if ($this->horse) {
-                                    $dispatch->horse_id = $this->horse->id;
-                                }elseif(isset($this->vehicle)){
-                                    $dispatch->vehicle_id = $this->vehicle->id;
-                                }elseif(isset($this->trailer)){
-                                    $dispatch->trailer_id = $this->trailer->id;
-                                }
-                                $dispatch->save();
-                            }
-        
+                    // Handle Product (with fallback if not found)
+                    $productName = trim($row['product_name']);
+                    $product = Product::where('department', 'tyre')
+                        ->where('name',$productName)
+                        ->first() ?? new Product(['department' => 'tyre', 'name' => $productName]);
                     
-                            $tyre = Tyre::find($tyre->id);
-                            $tyre->status = 0;
-                            $tyre->disposed = 0;
-                            $tyre->update();
+                    if (!$product->exists) {
+                        $product->user_id = Auth::id();
+                        $product->product_number = $this->productNumber();
 
+                        if (filled($row['category'])) {
+                            $categoryName = trim($row['category']);
+                            if (filled($categoryName)) {
+                                $category = Category::firstOrCreate(['name' => $categoryName], ['status' => 1]);
+                                $product->category_id = $category->id;
                             }
-
-                    }
- 
-            }
-
-        }
-        // new tyre
-        else {
-
-        
-            if (isset($this->product)) {
-               
-                $tyre = new Tyre;
-                $tyre->user_id = Auth::user()->id;
-                $tyre->tyre_number = $this->tyreNumber();
-
-                if ($this->currency) {
-                    $tyre->currency_id = $this->currency->id;
-                }
-                if ($this->store) {
-                    $tyre->store_id = $this->store->id;
-                }
-                
-                $tyre->product_id = $this->product->id;
-                $tyre->serial_number = $row['serial_number'];
-                $tyre->amount = $row['unit_price'];
-                $tyre->subtotal = $row['unit_price'];
-                $tyre->subtotal_incl = $row['unit_price'];
-                $tyre->total = $row['unit_price'];
-                $tyre->type = $row['type'];
-                $tyre->width = $row['width'];
-                $tyre->aspect_ratio = $row['aspect_ratio'];
-                $tyre->diameter = $row['diameter'];
-                $tyre->qty = 1;
-                // if(filled($row['purchase_date'])){
-                //     $dateString = $row['purchase_date'];
-                //     $dateTimeObject = new DateTime($dateString);
-                //     $tyre->purchase_date = isset($dateTimeObject) ?  Carbon::instance(\PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($dateTimeObject)->format('Y-m-d')) : Null;
-                // }
-                $tyre->status = 1;
-                $tyre->disposed = 0;
-                $tyre->save();
-
-                if (isset($row['horse_reg_number']) || isset($row['vehicle_reg_number']) || isset($row['trailer_reg_number'])) {
-
-                    $assignment = new TyreAssignment;
-                    $assignment->user_id = Auth::user()->id;
-                    $assignment->tyre_id = $tyre->id;
-
-                    if(isset($row['horse_reg_number'])){
-                        $assignment->type = "Horse";
-                          if ($this->horse) {
-                            $assignment->horse_id = $this->horse->id;
                         }
-                    }elseif(isset($row['vehicle_reg_number'])){
-                        $assignment->type = "Vehicle";
-                         if ($this->vehicle) {
-                            $assignment->vehicle_id = $this->vehicle->id;
-                        }
-                    }elseif(isset($row['trailer_reg_number'])){
-                        $assignment->type = "Trailer";
-                         if ($this->trailer) {
-                            $assignment->trailer_id = $this->trailer->id;
-                        }
-                    }
-
-                    $assignment->starting_odometer = $row['starting_mileage'];
-                    $assignment->position = $row['position'];
-                    $assignment->axle = $row['axle'];
-                    $assignment->status = 1;
-                    $assignment->save();
-
-                    if (isset($assignment)) {
-                        $tyre = Tyre::find($tyre->id);
-                        $dispatch = new TyreDispatch;
-                        $dispatch->tyre_assignment_id = $assignment->id;
-                        $dispatch->tyre_id = $tyre->id;
-                        $dispatch->tyre_number = $tyre->tyre_number;
-                        $dispatch->serial_number = $tyre->serial_number;
-                        $dispatch->width = $tyre->width;
-                        $dispatch->aspect_ratio = $tyre->aspect_ratio;
-                        $dispatch->diameter =  $tyre->diameter;
-
-                          if ($this->horse) {
-                            $dispatch->horse_id = $this->horse->id;
-                        }elseif(isset($this->vehicle)){
-                            $dispatch->vehicle_id = $this->vehicle->id;
-                        }elseif(isset($this->trailer)){
-                            $dispatch->trailer_id = $this->trailer->id;
+                      
+                        if (filled($row['brand_name'])) {
+                            $brandName = trim($row['brand_name']);
+                            if (filled($brandName)) {
+                                $brand = Brand::firstOrCreate(['name' => $brandName], ['status' => 1]);
+                                $product->brand_id =   $brand->id;
+                            }
                         }
                        
-                        $dispatch->save();
+                        $product->status = 1;
+                        $product->save();
                     }
-  
-            
-                    $tyre = Tyre::find($tyre->id);
-                    $tyre->status = 0;
-                    $tyre->disposed = 0;
-                    $tyre->update();
-                }
-
-            }else {
-            
-                $product = new Product;
-                $product->user_id = Auth::user()->id;
-                $product->product_number = $this->productNumber();
-                if ($this->category) {
-                    $product->category_id = $this->category->id;
-                }
-
-                if ($this->brand) {
-                    $product->brand_id = $this->brand->id;
-                }
-               
-                $product->name = $row['product_name'];
-                $product->department = 'tyre';
-                $product->status = '1';
-                $product->save(); 
-                 
-              
-                $tyre = new Tyre;
-                $tyre->user_id = Auth::user()->id;
-                $tyre->tyre_number = $this->tyreNumber();
-
-                 if ($this->currency) {
-                    $tyre->currency_id = $this->currency->id;
-                }
-
-                if ($this->store) {
-                    $tyre->store_id = $this->store->id;
-                }
-                
-
-                $tyre->product_id = $product->id;
-                $tyre->serial_number = $row['serial_number'];
-                $tyre->amount = $row['unit_price'];
-                $tyre->subtotal = $row['unit_price'];
-                $tyre->subtotal_incl = $row['unit_price'];
-                $tyre->total = $row['unit_price'];
-                $tyre->type = $row['type'];
-                $tyre->width = $row['width'];
-                $tyre->aspect_ratio = $row['aspect_ratio'];
-                $tyre->diameter = $row['diameter'];
-                $tyre->qty = 1;
-                // if(filled($row['purchase_date'])){
-                //     $dateString = $row['purchase_date'];
-                //     $dateTimeObject = new DateTime($dateString);
-                //     $tyre->purchase_date = isset($dateTimeObject) ?  Carbon::instance(\PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($dateTimeObject)->format('Y-m-d')) : Null;
-                // }
-                $tyre->status = 1;
-                $tyre->disposed = 0;
-                $tyre->save();
-
-                if (isset($row['horse_reg_number']) || isset($row['vehicle_reg_number']) || isset($row['trailer_reg_number'])) {
-
-                    $assignment = new TyreAssignment;
-                    $assignment->user_id = Auth::user()->id;
-                    $assignment->tyre_id = $tyre->id;
-
-                    if(isset($row['horse_reg_number'])){
-                        $assignment->type = "Horse";
-                          if ($this->horse) {
-                            $assignment->horse_id = $this->horse->id;
-                        }
-                    }elseif(isset($row['vehicle_reg_number'])){
-                        $assignment->type = "Vehicle";
-                         if ($this->vehicle) {
-                            $assignment->vehicle_id = $this->vehicle->id;
-                        }
-                    }elseif(isset($row['trailer_reg_number'])){
-                        $assignment->type = "Trailer";
-                         if ($this->trailer) {
-                            $assignment->trailer_id = $this->trailer->id;
-                        }
-                    }
-
-                    $assignment->starting_odometer = $row['starting_mileage'];
-                    $assignment->position = $row['position'];
-                    $assignment->axle = $row['axle'];
-                    $assignment->status = 1;
-                    $assignment->save();
-            
-                    $tyre = Tyre::find($tyre->id);
                     
-                    $dispatch = new TyreDispatch;
-                    $dispatch->tyre_assignment_id = $assignment->id;
-                    $dispatch->tyre_id = $tyre->id;
-                    $dispatch->tyre_number = $tyre->tyre_number;
-                    $dispatch->serial_number = $tyre->serial_number;
-                    $dispatch->width = $tyre->width;
-                    $dispatch->aspect_ratio = $tyre->aspect_ratio;
-                    $dispatch->diameter =  $tyre->diameter;
+                    // Handle Currency
+                    $currency = Currency::where('name', 'LIKE', '%' . $row['currency'] . '%')->first();
+                    
+                    if (filled($row['store_name'])) {
+                        // Handle Store
+                   $storeName = trim($row['store_name']);
+                   if (filled($storeName)) {
+                       $store = Store::firstOrCreate(['name' => $storeName], ['status' => 1]);
+                   }
+                   }
 
-                      if ($this->horse) {
-                        $dispatch->horse_id = $this->horse->id;
-                    }elseif(isset($this->vehicle)){
-                        $dispatch->vehicle_id = $this->vehicle->id;
-                    }elseif(isset($this->trailer)){
-                        $dispatch->trailer_id = $this->trailer->id;
-                    }
-                   
-                    $dispatch->save();
-            
-                    $tyre = Tyre::find($tyre->id);
-                    $tyre->status = 0;
-                    $tyre->disposed = 0;
-                    $tyre->update();
+                    // Handle Tyre
+                    $serial_number = trim($row['serial_number']);
+                    $tyre = Tyre::firstOrNew(['serial_number' => $serial_number]);
+                    $tyre->fill([
+                        'currency_id'              => $currency ? $currency->id : null,
+                        'store_id'                 => $store ? $store->id : null,
+                        'product_id'               => $product ? $product->id : null,
+                        'serial_number'            => $serial_number,
+                        'amount'                   => $row['unit_price'],
+                        'subtotal'                 => $row['unit_price'],
+                        'subtotal_incl'            => $row['unit_price'],
+                        'total'                    => $row['unit_price'],
+                        'type'                     => $row['type'],
+                        'width'                    => $row['width'],
+                        'aspect_ratio'             => $row['aspect_ratio'],
+                        'diameter'                 => $row['diameter'],
+                        'qty'                      => 1,
+                        'purchase_date'            => $this->parseExcelDate($row['purchase_date']),
+                        'status'                   => 1,
+                        'disposed'                 => 0,
+                    ]);
+                    
+                    $tyre->save();
+                    
+                    // Assign the tyre to something (horse/trailer/etc.)
+                    $this->assignTyre($row, $horse, $trailer, $vehicle, $tyre);
+
                 }
- 
-            }
         }
     
-    }
-       }
     }
 
     public function rules(): array{

@@ -16,6 +16,9 @@ class Department extends Model implements Auditable
     public function user(){
         return $this->belongsTo('App\Models\User');
     }
+    public function movements(){
+        return $this->hasMany('App\Models\Movement');
+    }
     public function asset_assignment(){
         return $this->hasMany('App\Models\AssetAssignment');
     }

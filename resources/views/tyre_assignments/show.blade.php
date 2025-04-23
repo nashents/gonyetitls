@@ -9,7 +9,7 @@
     @endif
 @endsection
 @section('title')
-    Tyre Assignment|@if (Auth::user()->employee->company)
+    Tyre Assignments | @if (Auth::user()->employee->company)
     {{Auth::user()->employee->company->name}}
     @elseif (Auth::user()->company)
     {{Auth::user()->company->name}}

@@ -20,7 +20,7 @@
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="customer"><a href="{{ route('trip_types.index') }}" target="_blank" style="color: blue">Trip Types</a><span class="required" style="color: red">*</span></label>
-                                          <select class="form-control" wire:model.debounce.500ms="selectedTripType" required>
+                                          <select class="form-control" wire:model.debounce.300ms="selectedTripType" required>
                                               <option value="">Select Trip Type</option>
                                               @foreach ($trip_types as $trip_type)
                                                   <option value="{{$trip_type->id}}">{{$trip_type->name}}</option>
@@ -63,8 +63,8 @@
                                 @if ($trip_type_name == "Return")
                                 <div class="form-group">
                                     <label for="trips">All Trips</label>
-                                    <input type="text"wire:model.debounce.500ms="searchTrip"  placeholder="Search with trip#, trip reference , horse reg#..." class="form-control">
-                                    <select class="form-control" wire:model.debounce.500ms="selectedTrip" size="4">
+                                    <input type="text"wire:model.debounce.300ms="searchTrip"  placeholder="Search with trip#, trip reference , horse reg#..." class="form-control">
+                                    <select class="form-control" wire:model.debounce.300ms="selectedTrip" size="4">
                                         <option value="">Select Initial Trip </option>
                                         @foreach ($trips as $trip)
                                             <option value="{{$trip->id}}">{{$trip->trip_number}}{{$trip->trip_ref ? '/'.$trip->trip_ref : ""}} | {{$trip->start_date}} | {{$trip->customer ? $trip->customer->name : ""}} | {{$trip->horse ? $trip->horse->registration_number : ""}} | 
@@ -91,7 +91,7 @@
                                             <div class="col-md-6">
                                                 <div class="form-group">
                                                     <label for="stops"><a href="{{ route('borders.index') }}" target="_blank" style="color: blue">Border(s)</a></label>
-                                                    <select class="form-control" wire:model.debounce.500ms="selectedBorder.0" >
+                                                    <select class="form-control" wire:model.debounce.300ms="selectedBorder.0" >
                                                         <option value="">Select Border </option>
                                                           @if (!is_null($selectedTripType))
                                                           @foreach ($borders as $border)
@@ -123,7 +123,7 @@
                                             @foreach ($border_inputs as $key => $value)
                                             <div class="row">
                                                 <div class="col-md-6">
-                                                    <select class="form-control" wire:model.debounce.500ms="selectedBorder.{{ $value }}" >
+                                                    <select class="form-control" wire:model.debounce.300ms="selectedBorder.{{ $value }}" >
                                                         <option value="">Select Border</option>
                                                           @if (!is_null($selectedTripType))
                                                           @foreach ($borders as $border)
@@ -223,7 +223,7 @@
                                     <div class="col-md-5">
                                         <div class="form-group">
                                             <label for="exampleInputEmail13"><a href="{{ route('transporters.index') }}" target="_blank" style="color: blue">Transporter(s)</a></label>
-                                       <select wire:model.debounce.500ms="selectedTransporter" class="form-control" >
+                                       <select wire:model.debounce.300ms="selectedTransporter" class="form-control" >
                                            <option value="">Select Transporter</option>
                                            @foreach ($transporters as $transporter)
                                            <option value="{{$transporter->id}}">{{$transporter->name}}</option>
@@ -236,7 +236,7 @@
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="customer"><a href="{{ route('brokers.index') }}" target="_blank" style="color: blue">Broker(s)</a></label>
-                                          <select class="form-control" wire:model.debounce.500ms="selectedBroker">
+                                          <select class="form-control" wire:model.debounce.300ms="selectedBroker">
                                               <option value="">Select Broker</option>
                                               @foreach ($brokers as $broker)
                                                   <option value="{{$broker->id}}">{{$broker->name}}</option>
@@ -254,20 +254,20 @@
                                             <div class="form-group" >
                                                 <label for="name">Mode of Transport?</label>
                                                 <label class="radio-inline">
-                                                    <input type="radio" wire:model.debounce.500ms="mode_of_transport" value="Horse" name="optradio" >Horse
+                                                    <input type="radio" wire:model.debounce.300ms="mode_of_transport" value="Horse" name="optradio" >Horse
                                                 </label>
                                                 <label class="radio-inline">
-                                                    <input type="radio" wire:model.debounce.500ms="mode_of_transport" value="Vehicle" name="optradio">Vehicle
+                                                    <input type="radio" wire:model.debounce.300ms="mode_of_transport" value="Vehicle" name="optradio">Vehicle
                                                 </label>
                                             </div>
                                         @endif
                                         @if (isset($mode_of_transport) && $mode_of_transport == "Horse")
                                         <div class="form-group">
                                             <label for="horse"><a href="{{ route('horses.index') }}" target="_blank" style="color: blue">Horse(s)</a><span class="required" style="color: red">*</span></label>
-                                            <input type="checkbox" wire:model.debounce.500ms="all_horses"   class="line-style" />
+                                            <input type="checkbox" wire:model.debounce.300ms="all_horses"   class="line-style" />
                                             <label for="one" class="radio-label">Select from all horses</label>
-                                            <input type="text" wire:model.debounce.500ms="searchHorse" placeholder="Search with reg..." class="form-control">
-                                            <select class="form-control" wire:model.debounce.500ms="selectedHorse"  required size="4">
+                                            <input type="text" wire:model.debounce.300ms="searchHorse" placeholder="Search with reg..." class="form-control">
+                                            <select class="form-control" wire:model.debounce.300ms="selectedHorse"  required size="4">
                                                 <option value="">Select Horse </option>
                                               @if (!is_null($selectedTransporter) || !is_null($selectedBroker))
                                               @foreach ($horses as $horse)
@@ -283,10 +283,10 @@
                                         
                                         <div class="form-group">
                                             <label for="horse"><a href="{{ route('vehicles.index') }}" target="_blank" style="color: blue">Vehicle(s)</a><span class="required" style="color: red">*</span></label>
-                                            <input type="checkbox" wire:model.debounce.500ms="all_vehicles"   class="line-style" />
+                                            <input type="checkbox" wire:model.debounce.300ms="all_vehicles"   class="line-style" />
                                             <label for="one" class="radio-label">Select from all vehicles</label>
-                                            <input type="text" wire:model.debounce.500ms="searchVehicle" placeholder="Search with reg..." class="form-control">
-                                            <select class="form-control" wire:model.debounce.500ms="selectedVehicle"  required size="4">
+                                            <input type="text" wire:model.debounce.300ms="searchVehicle" placeholder="Search with reg..." class="form-control">
+                                            <select class="form-control" wire:model.debounce.300ms="selectedVehicle"  required size="4">
                                                 <option value="">Select Vehicle </option>
                                                 @if (!is_null($selectedTransporter) || !is_null($selectedBroker))
                                               @foreach ($vehicles as $vehicle)
@@ -304,7 +304,7 @@
                                         @if (!isset($with_trailer))
                                             <div class="row">
                                                 <div class="mb-10">
-                                                    <input type="checkbox" wire:model.debounce.500ms="with_trailer"   class="line-style" />
+                                                    <input type="checkbox" wire:model.debounce.300ms="with_trailer"   class="line-style" />
                                                     <label for="one" class="radio-label">With Trailer</label>
                                                     @error('with_trailer') <span class="text-danger error">{{ $message }}</span>@enderror
                                                 </div>
@@ -316,9 +316,9 @@
                                             <div class="col-md-12">
                                             <div class="form-group">
                                                 <label for="stops"><a href="{{ route('trailers.index') }}" target="_blank" style="color: blue">Trailer(s)</a><span class="required" style="color: red">*</span></label>
-                                                <input type="checkbox" wire:model.debounce.500ms="all_trailers"   class="line-style" />
+                                                <input type="checkbox" wire:model.debounce.300ms="all_trailers"   class="line-style" />
                                                 <label for="one" class="radio-label">Select from all trailers</label>
-                                                    <input type="text" wire:model.debounce.500ms="searchTrailer" placeholder="Search with reg..." class="form-control">
+                                                    <input type="text" wire:model.debounce.300ms="searchTrailer" placeholder="Search with reg..." class="form-control">
                                                     <select class="form-control" wire:model.defer="trailer_id.0" size="4" required>
                                                       <option value="">Select Trailer </option>
                                                       @if (!is_null($selectedTransporter) || !is_null($selectedBroker))
@@ -373,9 +373,9 @@
                                         <div class="row">
                                             <div class="form-group">
                                                 <label for="driver"><a href="{{ route('drivers.index') }}" target="_blank" style="color: blue">Driver(s)</a><span class="required" style="color: red">*</span></label> 
-                                                <input type="checkbox" wire:model.debounce.500ms="all_drivers"   class="line-style" />
+                                                <input type="checkbox" wire:model.debounce.300ms="all_drivers"   class="line-style" />
                                                 <label for="one" class="radio-label">Select from all drivers</label>
-                                                <input type="text" wire:model.debounce.500ms="searchDriver" placeholder="Search with name..." class="form-control" >
+                                                <input type="text" wire:model.debounce.300ms="searchDriver" placeholder="Search with name..." class="form-control" >
                                                 <select class="form-control" wire:model.defer="driver_id" required size="4">
                                                     <option value="">Select Driver</option>
                                                     @if (!is_null($selectedTransporter) || !is_null($selectedBroker))
@@ -391,7 +391,7 @@
                                             </div>
                                             <div class="form-group">
                                                 <label for="notes">Driver Notes</label>
-                                              <input type="text" wire:model.debounce.500ms="notes"  class="form-control" placeholder="Driver Notes / Instructions">
+                                              <input type="text" wire:model.debounce.300ms="notes"  class="form-control" placeholder="Driver Notes / Instructions">
                                                 @error('notes') <span class="text-danger error">{{ $message }}</span>@enderror
                                             </div>
                                             @foreach ($allowance_inputs as $key => $value)
@@ -424,7 +424,7 @@
                                                 <div class="col-md-3">
                                                     <div class="form-group">
                                                         <label for="currency">Currency </label>
-                                                        <select class="form-control" wire:model.debounce.500ms="selectedAllowanceCurrency.{{ $value }}" >
+                                                        <select class="form-control" wire:model.debounce.300ms="selectedAllowanceCurrency.{{ $value }}" >
                                                             <option value="">Select Ccy</option>
                                                                 @foreach ($currencies as $currency)
                                                                 <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
@@ -436,7 +436,7 @@
                                                 <div class="col-md-2">
                                                     <div class="form-group">
                                                         <label for="">Amt</label>
-                                                        <input type="number" step="any" class="form-control" wire:model.debounce.500ms="allowance_amount.{{ $value }}"  />
+                                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="allowance_amount.{{ $value }}"  />
                                                         @error('allowance_amount.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
                                                     </div>
                                                 </div>
@@ -454,7 +454,7 @@
                                                     <div class="col-md-6">
                                                         <div class="form-group">
                                                             <label for="customer">Conversion Rate</label>
-                                                            <input type="number" step="any" min="0"  class="form-control" wire:model.debounce.500ms="allowance_exchange_rate.{{$value}}" wire:key="{{ $key }}"  placeholder="Conversion Rate" >
+                                                            <input type="number" step="any" min="0"  class="form-control" wire:model.debounce.300ms="allowance_exchange_rate.{{$value}}" wire:key="{{ $key }}"  placeholder="Conversion Rate" >
                                                             <small style="color: green">The conversion is from the selected currency to {{$company->currency ? $company->currency->name : ""}}</small>
                                                             @error('allowance_exchange_rate.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
                                                         </div> 
@@ -462,7 +462,7 @@
                                                     <div class="col-md-6">
                                                         <div class="form-group">
                                                             <label for="customer">Amount in {{ $company->currency ? $company->currency->name : "" }}</label>
-                                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.500ms="allowance_exchange_amount.{{$value}}" wire:key="{{ $key }}" placeholder="Converted Amount" disabled>
+                                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="allowance_exchange_amount.{{$value}}" wire:key="{{ $key }}" placeholder="Converted Amount" disabled>
                                                             @error('allowance_exchange_amount.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
                                                         </div> 
                                                     </div>
@@ -549,7 +549,7 @@
 
                                 <h5 class="underline mt-30">Empty Runs /  Dead Head </h5>
                                 <div class="mb-10">
-                                   <input type="checkbox" wire:model.debounce.500ms="emptyrun_origin"   class="line-style" />
+                                   <input type="checkbox" wire:model.debounce.300ms="emptyrun_origin"   class="line-style" />
                                    <label for="one" class="radio-label">Empty Run - Origin</label>
                                    @error('emptyrun_origin') <span class="text-danger error">{{ $message }}</span>@enderror
                                </div>
@@ -561,21 +561,21 @@
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="">Starting Mileage</label>
-                                            <input type="number" step="any" class="form-control" wire:model.debounce.500ms="emptyrun_origin_starting_mileage"  />
+                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="emptyrun_origin_starting_mileage"  />
                                             @error('emptyrun_origin_starting_mileage') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="">Ending Mileage</label>
-                                            <input type="number" step="any" class="form-control" wire:model.debounce.500ms="emptyrun_origin_ending_mileage"  />
+                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="emptyrun_origin_ending_mileage"  />
                                             @error('emptyrun_origin_ending_mileage') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="">Distance<span class="required" style="color: red">*</span></label>
-                                            <input type="number" step="any" class="form-control" wire:model.debounce.500ms="emptyrun_origin_distance"  required/>
+                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="emptyrun_origin_distance"  required/>
                                             @error('emptyrun_origin_distance') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
@@ -584,14 +584,14 @@
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="">Fuel Quantity</label>
-                                            <input type="number" step="any" class="form-control" wire:model.debounce.500ms="emptyrun_origin_fuel_quantity"  />
+                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="emptyrun_origin_fuel_quantity"  />
                                             @error('emptyrun_origin_fuel_quantity') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="customer"><a href="{{ route('currencies.index') }}" target="_blank" style="color: blue">Currencies</a></label>
-                                          <select class="form-control" wire:model.debounce.500ms="emptyrun_origin_currency_id"  >
+                                          <select class="form-control" wire:model.debounce.300ms="emptyrun_origin_currency_id"  >
                                               <option value="">Select Currency</option>
                                               @foreach ($currencies as $currency)
                                                     <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
@@ -604,7 +604,7 @@
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="">Fuel Amount</label>
-                                            <input type="number" step="any" class="form-control" wire:model.debounce.500ms="emptyrun_origin_fuel_amount"  />
+                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="emptyrun_origin_fuel_amount"  />
                                             @error('emptyrun_origin_fuel_amount') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
@@ -612,7 +612,7 @@
                                @endif
                               
                                 <div class="mb-10">
-                                   <input type="checkbox" wire:model.debounce.500ms="emptyrun_destination"   class="line-style" />
+                                   <input type="checkbox" wire:model.debounce.300ms="emptyrun_destination"   class="line-style" />
                                    <label for="one" class="radio-label">Empty Run - Destination</label>
                                    @error('emptyrun_destination') <span class="text-danger error">{{ $message }}</span>@enderror
                                </div>
@@ -624,21 +624,21 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="">Starting Mileage</label>
-                                        <input type="number" step="any" class="form-control" wire:model.debounce.500ms="emptyrun_destination_starting_mileage"  />
+                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="emptyrun_destination_starting_mileage"  />
                                         @error('emptyrun_destination_starting_mileage') <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="">Ending Mileage</label>
-                                        <input type="number" step="any" class="form-control" wire:model.debounce.500ms="emptyrun_destination_ending_mileage"  />
+                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="emptyrun_destination_ending_mileage"  />
                                         @error('emptyrun_destination_ending_mileage') <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="">Distance<span class="required" style="color: red">*</span></label>
-                                        <input type="number" step="any" class="form-control" wire:model.debounce.500ms="emptyrun_destination_distance"  required/>
+                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="emptyrun_destination_distance"  required/>
                                         @error('emptyrun_destination_distance') <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>
                                 </div>
@@ -647,14 +647,14 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="">Fuel Quantity</label>
-                                        <input type="number" step="any" class="form-control" wire:model.debounce.500ms="emptyrun_destination_fuel_quantity"  />
+                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="emptyrun_destination_fuel_quantity"  />
                                         @error('emptyrun_destination_fuel_quantity') <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="customer"><a href="{{ route('currencies.index') }}" target="_blank" style="color: blue">Currencies</a></label>
-                                      <select class="form-control" wire:model.debounce.500ms="emptyrun_destination_currency_id"  >
+                                      <select class="form-control" wire:model.debounce.300ms="emptyrun_destination_currency_id"  >
                                           <option value="">Select Currency</option>
                                           @foreach ($currencies as $currency)
                                                 <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
@@ -679,7 +679,7 @@
                                     <div class="col-md-3">
                                         <div class="form-group">
                                             <label for="customer"><a href="{{ route('destinations.index') }}" target="_blank" style="color: blue">From</a><span class="required" style="color: red">*</span></label>
-                                          <select class="form-control" wire:model.debounce.500ms="selectedFrom" required>
+                                          <select class="form-control" wire:model.debounce.300ms="selectedFrom" required>
                                               <option value="">Select From Location</option>
                                               @foreach ($destinations as $destination)
                                                   <option value="{{$destination->id}}">{{$destination->country ? $destination->country->name : ""}} {{$destination->city}}</option>
@@ -692,7 +692,7 @@
                                     <div class="col-md-3">
                                         <div class="form-group">
                                             <label for="customer"><a href="{{ route('loading_points.index') }}" target="_blank" style="color: blue">Loading Point(s)</a></label>
-                                              <select class="form-control" wire:model.debounce.500ms="loading_point_id" >
+                                              <select class="form-control" wire:model.debounce.300ms="loading_point_id" >
                                               <option value="">Select Loading Point</option>
                                               @foreach ($loading_points as $loading_point)
                                               <option value="{{$loading_point->id}}">{{ucfirst($loading_point->name)}}</option>
@@ -705,7 +705,7 @@
                                     <div class="col-md-3">
                                         <div class="form-group">
                                             <label for="destination"><a href="{{ route('destinations.index') }}" target="_blank" style="color: blue">To</a><span class="required" style="color: red">*</span></label>
-                                          <select class="form-control" wire:model.debounce.500ms="selectedTo" required>
+                                          <select class="form-control" wire:model.debounce.300ms="selectedTo" required>
                                               <option value="">Select To Location</option>
                                               @foreach ($destinations as $destination)
                                                   <option value="{{$destination->id}}">{{$destination->country ? $destination->country->name : ""}} {{ucfirst($destination->city)}}</option>
@@ -718,7 +718,7 @@
                                     <div class="col-md-3">
                                         <div class="form-group">
                                             <label for="destination"><a href="{{ route('offloading_points.index') }}" target="_blank" style="color: blue">Offloading Point(s)</a></label>
-                                          <select class="form-control" wire:model.debounce.500ms="offloading_point_id" >
+                                          <select class="form-control" wire:model.debounce.300ms="offloading_point_id" >
                                               <option value="">Select Offloading Point</option>
                                               @foreach ($offloading_points as $offloading_point)
                                                   <option value="{{$offloading_point->id}}">{{ucfirst($offloading_point->name)}}</option>
@@ -733,7 +733,7 @@
                                     <div class="col-md-3">
                                         <div class="form-group">
                                             <label for="route"><a href="{{ route('routes.index') }}" target="_blank" style="color: blue">Route(s)</a></label>
-                                          <select class="form-control" wire:model.debounce.500ms="selectedRoute" >
+                                          <select class="form-control" wire:model.debounce.300ms="selectedRoute" >
                                               <option value="">Select Route</option>
                                               @foreach ($routes as $route)
                                                   <option value="{{$route->id}}">{{ucfirst($route->name)}}</option>
@@ -817,7 +817,7 @@
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="end_date">Starting Mileage</label>
-                                            <input type="number" step="any" min="1" class="form-control" wire:model.debounce.500ms="starting_mileage" placeholder="Mileage @ Loading Point" >
+                                            <input type="number" step="any" min="1" class="form-control" wire:model.debounce.300ms="starting_mileage" placeholder="Mileage @ Loading Point" >
                                             @error('starting_mileage') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
@@ -841,14 +841,14 @@
                                     <div class="col-md-2">
                                         <div class="form-group">
                                             <label for="distance">Distance</label>
-                                            <input type="number" min="1" step="any" class="form-control" wire:model.debounce.500ms="distance" placeholder="Trip Approx Distance"  >
+                                            <input type="number" min="1" step="any" class="form-control" wire:model.debounce.300ms="distance" placeholder="Trip Approx Distance"  >
                                             @error('distance') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
                                     <div class="col-md-2">
                                         <div class="form-group">
                                             <label for="end_date">Fuel Qty</label>
-                                            <input type="number" step="any" class="form-control" wire:model.debounce.500ms="trip_fuel" placeholder="Trip Approx Fuel">
+                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="trip_fuel" placeholder="Trip Approx Fuel">
                                             @error('trip_fuel') <span class="text-danger error">{{ $message }}</span>@enderror
                                             @if ($horse_selected)
                                                 <small> <a href="{{ route('horses.show',$horse_selected->id) }}" target="_blank" style="color: blue">Horse {{ $horse_selected->registration_number }}</a> Fuel Tank Balance: {{ $fuel_balance }} Litres</small>
@@ -868,7 +868,7 @@
 
                                 <h5 class="underline mt-30">Cargo Details</h5>
                                 <div class="mb-10">
-                                   <input type="checkbox" wire:model.debounce.500ms="with_cargos"   class="line-style" />
+                                   <input type="checkbox" wire:model.debounce.300ms="with_cargos"   class="line-style" />
                                    <label for="one" class="radio-label">With Cargo</label>
                                    @error('with_cargos') <span class="text-danger error">{{ $message }}</span>@enderror
                                </div>
@@ -877,7 +877,7 @@
                                     <div class="col-md-3">
                                         <div class="form-group">
                                             <label for="customer"><a href="{{ route('cargos.index') }}" target="_blank" style="color: blue">Cargo(s)</a><span class="required" style="color: red">*</span></label>
-                                          <select class="form-control" wire:model.debounce.500ms="selectedCargo" required>
+                                          <select class="form-control" wire:model.debounce.300ms="selectedCargo" required>
                                               <option value="">Select Cargo</option>
                                               @foreach ($cargos as $cargo)
                                                   <option value="{{$cargo->id}}">{{$cargo->name}}</option>
@@ -890,14 +890,14 @@
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="weight">Additional Info</label>
-                                            <input type="text"  class="form-control" wire:model.debounce.500ms="cargo_details" placeholder="Additional Cargo Details">
+                                            <input type="text"  class="form-control" wire:model.debounce.300ms="cargo_details" placeholder="Additional Cargo Details">
                                             @error('cargo_details') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
                                     <div class="col-md-5">
                                         <div class="form-group">
                                             <label for="weight">Weight/Tonnage</label>
-                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.500ms="weight" placeholder="Measured in Tons" >
+                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="weight" placeholder="Measured in Tons" >
                                             @error('weight') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     
@@ -914,14 +914,14 @@
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="quantity">Quantity</label>
-                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.500ms="quantity" placeholder="Enter Cargo Quantity" >
+                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="quantity" placeholder="Enter Cargo Quantity" >
                                             @error('quantity') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="customer"><a href="{{ route('measurements.index') }}" target="_blank" style="color: blue">Measurements</a></label>
-                                          <select class="form-control" wire:model.debounce.500ms="measurement" >
+                                          <select class="form-control" wire:model.debounce.300ms="measurement" >
                                               <option value="">Select Measurement</option>
                                                   @foreach ($solid_measurements as $measurement)
                                                       <option value="{{ $measurement->name }}">{{ $measurement->name }}</option>
@@ -935,21 +935,21 @@
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="litreage">Litreage @ Ambient</label>
-                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.500ms="litreage" placeholder="Enter Litreage @ Ambient Temperature" >
+                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="litreage" placeholder="Enter Litreage @ Ambient Temperature" >
                                             @error('litreage') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="litreage">Litreage @ 20 Degrees</label>
-                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.500ms="litreage_at_20" placeholder="Enter Litreage @ 20 Degrees">
+                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="litreage_at_20" placeholder="Enter Litreage @ 20 Degrees">
                                             @error('litreage_at_20') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="customer"><a href="{{ route('measurements.index') }}" target="_blank" style="color: blue">Measurements</a></label>
-                                          <select class="form-control" wire:model.debounce.500ms="measurement" >
+                                          <select class="form-control" wire:model.debounce.300ms="measurement" >
                                               <option value="">Select Measurement</option>
                                               @foreach ($liquid_measurements as $measurement)
                                               <option value="{{ $measurement->name }}">{{ $measurement->name }}</option>
@@ -973,13 +973,13 @@
                                     <div class="row">
                                         <div class="col-md-8">
                                             <div class="mb-10">
-                                                <input type="radio" wire:model.debounce.500ms="freight_calculation" value="flat_rate"  class="line-style" required />
+                                                <input type="radio" wire:model.debounce.300ms="freight_calculation" value="flat_rate"  class="line-style" required />
                                                 <label for="one" class="radio-label">Flat Rate</label>
-                                                <input type="radio" wire:model.debounce.500ms="freight_calculation" value="rate_weight"  class="line-style" required />
+                                                <input type="radio" wire:model.debounce.300ms="freight_calculation" value="rate_weight"  class="line-style" required />
                                                 <label for="one" class="radio-label">Rate * Weight/Litreage</label>
-                                                <input type="radio" wire:model.debounce.500ms="freight_calculation" value="rate_weight_distance"  class="line-style" required />
+                                                <input type="radio" wire:model.debounce.300ms="freight_calculation" value="rate_weight_distance"  class="line-style" required />
                                                 <label for="one" class="radio-label">Rate * Distance * Weight/Litreage</label>
-                                                <input type="radio" wire:model.debounce.500ms="freight_calculation" value="rate_distance"  class="line-style" required />
+                                                <input type="radio" wire:model.debounce.300ms="freight_calculation" value="rate_distance"  class="line-style" required />
                                                 <label for="one" class="radio-label">Rate * Distance</label>
                                                 @error('freight_calculation') <span class="text-danger error">{{ $message }}</span>@enderror
                                             </div>
@@ -988,13 +988,13 @@
                                                     <div class="mb-10">
                                                         <caption style="color: green">Select what to use to calculate freight<span class="required" style="color: red">*</span>.</caption> <br>
                                                         @if ($cargo_type == "Solid")
-                                                        <input type="radio" wire:model.debounce.500ms="calculation_measurement" value="weight"  class="line-style" required />
+                                                        <input type="radio" wire:model.debounce.300ms="calculation_measurement" value="weight"  class="line-style" required />
                                                         <label for="one" class="radio-label">Weight</label>
                                                         @endif
                                                         @if ($cargo_type == "Liquid")
-                                                        <input type="radio" wire:model.debounce.500ms="calculation_measurement" value="litreage_at_ambient"  class="line-style" required />
+                                                        <input type="radio" wire:model.debounce.300ms="calculation_measurement" value="litreage_at_ambient"  class="line-style" required />
                                                         <label for="one" class="radio-label">Litreage @ Ambient Temp</label>
-                                                        <input type="radio" wire:model.debounce.500ms="calculation_measurement" value="litreage_at_20"  class="line-style" required />
+                                                        <input type="radio" wire:model.debounce.300ms="calculation_measurement" value="litreage_at_20"  class="line-style" required />
                                                         <label for="one" class="radio-label">Litreage @ 20 Degrees</label>  
                                                         @endif
                                                         @error('calculation_measurement') <span class="text-danger error">{{ $message }}</span>@enderror
@@ -1006,7 +1006,7 @@
                                         <div class="col-md-4">
                                             <div class="form-group">
                                                 <label for="customer"><a href="{{ route('currencies.index') }}" target="_blank" style="color: blue">Currencies</a><span class="required" style="color: red">*</span></label>
-                                              <select class="form-control" wire:model.debounce.500ms="selectedCurrency" required {{ !isset($company->currency_id) ? "disabled" : ""  }} >
+                                              <select class="form-control" wire:model.debounce.300ms="selectedCurrency" required {{ !isset($company->currency_id) ? "disabled" : ""  }} >
                                                   <option value="">Select Currency</option>
                                                   @foreach ($currencies as $currency)
                                                   <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
@@ -1024,7 +1024,7 @@
                                                 @if ($selectedCurrency != $company->currency_id)
                                                 <div class="form-group">
                                                     <label for="customer">Conversion Rate</label>
-                                                    <input type="number" step="any" min="0" class="form-control" wire:model.debounce.500ms="exchange_rate"  placeholder="Exchange Rate {{$selected_currency ? "From ".$selected_currency->name : ""}} {{$company->currency ? "To ".$company->currency->name : ""}}" >
+                                                    <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="exchange_rate"  placeholder="Exchange Rate {{$selected_currency ? "From ".$selected_currency->name : ""}} {{$company->currency ? "To ".$company->currency->name : ""}}" >
                                                     @error('exchange_rate') <span class="text-danger error">{{ $message }}</span>@enderror
                                                     <small style="color: green">{{$selected_currency ? " 1 ".$selected_currency->name." is how much in" : ""}} {{$company->currency ? $company->currency->name." ?" : ""}}</small>
                                                     <small>{{$exchange_customer_freight ? "The customer converted amount is: ".$exchange_customer_freight : ""}}</small> <br>
@@ -1040,10 +1040,10 @@
                                     <div class="form-group" >
                                         <label for="name">Customer Rates</label>
                                         <label class="radio-inline">
-                                            <input type="radio" wire:model.debounce.500ms="with_customer_rates" value="rates" name="optradio_customer" >Predefined Rates
+                                            <input type="radio" wire:model.debounce.300ms="with_customer_rates" value="rates" name="optradio_customer" >Predefined Rates
                                           </label>
                                           <label class="radio-inline">
-                                            <input type="radio" wire:model.debounce.500ms="with_customer_rates" value="custom" name="optradio_customer">Custom Rate
+                                            <input type="radio" wire:model.debounce.300ms="with_customer_rates" value="custom" name="optradio_customer">Custom Rate
                                           </label>
                                     </div>
 
@@ -1053,7 +1053,7 @@
                                                 @if ($with_customer_rates == "rates")
                                                 <div class="form-group">
                                                     <label for="customer"><a href="{{ route('rates.index') }}" target="_blank" style="color: blue">Rates</a><span class="required" style="color: red">*</span></label>
-                                                  <select class="form-control" wire:model.debounce.500ms="selectedDefinedCustomerRate" required>
+                                                  <select class="form-control" wire:model.debounce.300ms="selectedDefinedCustomerRate" required>
                                                       <option value="">Select Rate</option>
                                                       @foreach ($defined_customer_rates as $rate)
                                                           {{ $this->getDestination($rate->from) ? $this->getDestination($rate->from)->country->name : ""}}
@@ -1069,7 +1069,7 @@
                                                 @elseif($with_customer_rates == "custom")
                                                 <div class="form-group">
                                                     <label for="weight">Rate</label>
-                                                    <input type="number" step="any" min="0" class="form-control"  wire:model.debounce.500ms="rate" placeholder="Enter Rate" >
+                                                    <input type="number" step="any" min="0" class="form-control"  wire:model.debounce.300ms="rate" placeholder="Enter Rate" >
                                                     @error('rate') <span class="text-danger error">{{ $message }}</span>@enderror
                                                 </div>
                                                 @endif
@@ -1079,7 +1079,7 @@
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label for="weight">Freight</label>
-                                                <input type="number" step="any" min="0" class="form-control"  wire:model.debounce.500ms="freight" placeholder="Enter Freight"  >
+                                                <input type="number" step="any" min="0" class="form-control"  wire:model.debounce.300ms="freight" placeholder="Enter Freight"  >
                                                 @error('freight') <span class="text-danger error">{{ $message }}</span>@enderror
                                             </div>
                                         </div>
@@ -1089,7 +1089,7 @@
                                    
                                     <h5 class="underline mt-10">Transporter Freight Agreement</h5>
                                     <div class="mb-10">
-                                        <input type="checkbox" wire:model.debounce.500ms="transporter_agreement"   class="line-style" />
+                                        <input type="checkbox" wire:model.debounce.300ms="transporter_agreement"   class="line-style" />
                                         <label for="one" class="radio-label">Transporter</label>
                                         @error('transporter_agreement') <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>
@@ -1097,10 +1097,10 @@
                                     <div class="form-group" >
                                         <label for="name">Transporter Rates</label>
                                         <label class="radio-inline">
-                                            <input type="radio" wire:model.debounce.500ms="with_transporter_rates" value="rates" name="optradio_transporter" >Predefined Rates
+                                            <input type="radio" wire:model.debounce.300ms="with_transporter_rates" value="rates" name="optradio_transporter" >Predefined Rates
                                           </label>
                                           <label class="radio-inline">
-                                            <input type="radio" wire:model.debounce.500ms="with_transporter_rates" value="custom" name="optradio_transporter">Custom Rate
+                                            <input type="radio" wire:model.debounce.300ms="with_transporter_rates" value="custom" name="optradio_transporter">Custom Rate
                                           </label>
                                     </div>
                                     <div class="row">
@@ -1110,7 +1110,7 @@
                                                 @if ($with_transporter_rates == "rates")
                                                 <div class="form-group">
                                                     <label for="customer"><a href="{{ route('rates.index') }}" target="_blank" style="color: blue">Rates</a><span class="required" style="color: red">*</span></label>
-                                                  <select class="form-control" wire:model.debounce.500ms="selectedDefinedTransporterRate" required>
+                                                  <select class="form-control" wire:model.debounce.300ms="selectedDefinedTransporterRate" required>
                                                       <option value="">Select Rate</option>
                                                       @foreach ($defined_transporter_rates as $rate)
                                                         <option value="{{$rate->id}}">{{ $rate->freight_calculation }} {{ $rate->cargo ? $rate->cargo->name : "" }} {{ $rate->weight ? $rate->weight."tons" : ""}} {{ $rate->litreage ? $rate->litreage."litres" : ""}} | {{ $this->getDestination($rate->from)->country ? $this->getDestination($rate->from)->country->name : "" }} {{ $this->getDestination($rate->from)->city}} {{ $rate->loading_point ? $rate->loading_point->name : "" }}  - {{ $this->getDestination($rate->to)->country ? $this->getDestination($rate->to)->country->name : "" }} {{ $this->getDestination($rate->to)->city}} {{$rate->offloading_point ? $rate->offloading_point->name : ""}} {{$rate->distance ? $rate->distance."Kms" : ""}} | {{$rate->currency ? $rate->currency->name : ""}} {{$rate->currency ? $rate->currency->symbol : ""}}{{$rate->rate}}</option>
@@ -1122,7 +1122,7 @@
                                                 @elseif($with_transporter_rates == "custom")
                                                 <div class="form-group">
                                                     <label for="weight">Rate</label>
-                                                    <input type="number" step="any" min="0" max="{{ $rate }}"  class="form-control"  wire:model.debounce.500ms="transporter_rate" placeholder="Enter Transporter Rate" >
+                                                    <input type="number" step="any" min="0" max="{{ $rate }}"  class="form-control"  wire:model.debounce.300ms="transporter_rate" placeholder="Enter Transporter Rate" >
                                                     @error('transporter_rate') <span class="text-danger error">{{ $message }}</span>@enderror
                                                     @if ($transporter_rate > $rate)
                                                     <small style="color: red"> Transporter agreed rate cannot be greater than customer agreed rate.</small>
@@ -1134,7 +1134,7 @@
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label for="weight">Freight</label>
-                                                <input type="number" step="any" min="0"  max="{{ $freight }}" class="form-control"  wire:model.debounce.500ms="transporter_freight" placeholder=" Transporter Freight" />
+                                                <input type="number" step="any" min="0"  max="{{ $freight }}" class="form-control"  wire:model.debounce.300ms="transporter_freight" placeholder=" Transporter Freight" />
                                                 @error('transporter_freight') <span class="text-danger error">{{ $message }}</span>@enderror
                                                 @if ($transporter_freight > $freight)
                                                     <small style="color: red"> Transporter agreed freight cannot be greater than customer agreed freight.</small>
@@ -1153,13 +1153,13 @@
                                 <div class="row">
                                     <div class="col-md-8">
                                         <div class="mb-10">
-                                            <input type="radio" wire:model.debounce.500ms="freight_calculation" value="flat_rate"  class="line-style" required/>
+                                            <input type="radio" wire:model.debounce.300ms="freight_calculation" value="flat_rate"  class="line-style" required/>
                                             <label for="one" class="radio-label">Flat Rate</label>
-                                            <input type="radio" wire:model.debounce.500ms="freight_calculation" value="rate_weight"  class="line-style" required/>
+                                            <input type="radio" wire:model.debounce.300ms="freight_calculation" value="rate_weight"  class="line-style" required/>
                                             <label for="one" class="radio-label">Rate * Weight/Litreage</label>
-                                            <input type="radio" wire:model.debounce.500ms="freight_calculation" value="rate_weight_distance"  class="line-style" required />
+                                            <input type="radio" wire:model.debounce.300ms="freight_calculation" value="rate_weight_distance"  class="line-style" required />
                                             <label for="one" class="radio-label">Rate * Distance * Weight/Litreage</label>
-                                            <input type="radio" wire:model.debounce.500ms="freight_calculation" value="rate_distance"  class="line-style" required />
+                                            <input type="radio" wire:model.debounce.300ms="freight_calculation" value="rate_distance"  class="line-style" required />
                                             <label for="one" class="radio-label">Rate * Distance</label>
                                             @error('freight_calculation') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
@@ -1168,13 +1168,13 @@
                                             <div class="mb-10">
                                                 <caption style="color: green">Select what to use to calculate freight<span class="required" style="color: red">*</span>.</caption> <br>
                                                 @if ($cargo_type == "Solid")
-                                                <input type="radio" wire:model.debounce.500ms="calculation_measurement" value="weight"  class="line-style" required />
+                                                <input type="radio" wire:model.debounce.300ms="calculation_measurement" value="weight"  class="line-style" required />
                                                 <label for="one" class="radio-label">Weight</label>
                                                 @endif
                                                 @if ($cargo_type == "Liquid")
-                                                <input type="radio" wire:model.debounce.500ms="calculation_measurement" value="litreage_at_ambient"  class="line-style" required />
+                                                <input type="radio" wire:model.debounce.300ms="calculation_measurement" value="litreage_at_ambient"  class="line-style" required />
                                                 <label for="one" class="radio-label">Litreage @ Ambient Temp</label>
-                                                <input type="radio" wire:model.debounce.500ms="calculation_measurement" value="litreage_at_20"  class="line-style" required />
+                                                <input type="radio" wire:model.debounce.300ms="calculation_measurement" value="litreage_at_20"  class="line-style" required />
                                                 <label for="one" class="radio-label">Litreage @ 20 Degrees</label>  
                                                 @endif
                                                 @error('calculation_measurement') <span class="text-danger error">{{ $message }}</span>@enderror
@@ -1185,7 +1185,7 @@
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="customer"><a href="{{ route('currencies.index') }}" target="_blank" style="color: blue">Currencies</a><span class="required" style="color: red">*</span></label>
-                                          <select class="form-control" wire:model.debounce.500ms="selectedCurrency" required {{ !isset($company->currency_id) ? "disabled" : ""  }} >
+                                          <select class="form-control" wire:model.debounce.300ms="selectedCurrency" required {{ !isset($company->currency_id) ? "disabled" : ""  }} >
                                               <option value="">Select Currency</option>
                                               @foreach ($currencies as $currency)
                                               <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
@@ -1204,7 +1204,7 @@
                                             @if ($selectedCurrency != $company->currency_id)
                                             <div class="form-group">
                                                 <label for="customer">Conversion Rate</label>
-                                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.500ms="exchange_rate"  placeholder="Exchange Rate {{$selected_currency ? "From ".$selected_currency->name : ""}} {{$company->currency ? "To ".$company->currency->name : ""}}" >
+                                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="exchange_rate"  placeholder="Exchange Rate {{$selected_currency ? "From ".$selected_currency->name : ""}} {{$company->currency ? "To ".$company->currency->name : ""}}" >
                                                 @error('exchange_rate') <span class="text-danger error">{{ $message }}</span>@enderror
                                                 <small style="color: green">{{$selected_currency ? " 1 ".$selected_currency->name." is how much in" : ""}} {{$company->currency ? $company->currency->name." ?" : ""}}</small>
                                                 <small>{{$exchange_customer_freight ? "The customer converted amount is: ".$exchange_customer_freight : ""}}</small> <br>
@@ -1221,10 +1221,10 @@
                                 <div class="form-group" >
                                     <label for="name">Customer Rates</label>
                                     <label class="radio-inline">
-                                        <input type="radio" wire:model.debounce.500ms="with_customer_rates" value="rates" name="optradio_customer" >Predefined Rates
+                                        <input type="radio" wire:model.debounce.300ms="with_customer_rates" value="rates" name="optradio_customer" >Predefined Rates
                                       </label>
                                       <label class="radio-inline">
-                                        <input type="radio" wire:model.debounce.500ms="with_customer_rates" value="custom" name="optradio_customer">Custom Rate
+                                        <input type="radio" wire:model.debounce.300ms="with_customer_rates" value="custom" name="optradio_customer">Custom Rate
                                       </label>
                                 </div>
                                 <div class="row">
@@ -1234,7 +1234,7 @@
                                             @if ($with_customer_rates == "rates")
                                             <div class="form-group">
                                                 <label for="customer"><a href="{{ route('rates.index') }}" target="_blank" style="color: blue">Rates</a><span class="required" style="color: red">*</span></label>
-                                              <select class="form-control" wire:model.debounce.500ms="selectedDefinedCustomerRate" required>
+                                              <select class="form-control" wire:model.debounce.300ms="selectedDefinedCustomerRate" required>
                                                   <option value="">Select Rate</option>
                                                   @foreach ($defined_customer_rates as $rate)
                                                   <option value="{{$rate->id}}">{{ $rate->freight_calculation }} {{ $rate->cargo ? $rate->cargo->name : "" }} {{ $rate->weight ? $rate->weight."tons" : ""}} {{ $rate->litreage ? $rate->litreage."litres" : ""}} | {{ $this->getDestination($rate->from)->country ? $this->getDestination($rate->from)->country->name : "" }} {{ $this->getDestination($rate->from)->city}} {{ $rate->loading_point ? $rate->loading_point->name : "" }}  - {{ $this->getDestination($rate->to)->country ? $this->getDestination($rate->to)->country->name : "" }} {{ $this->getDestination($rate->to)->city}} {{$rate->offloading_point ? $rate->offloading_point->name : ""}} {{$rate->distance ? $rate->distance."Kms" : ""}} | {{$rate->currency ? $rate->currency->name : ""}} {{$rate->currency ? $rate->currency->symbol : ""}}{{$rate->rate}}</option>
@@ -1249,7 +1249,7 @@
                                             @elseif($with_customer_rates == "custom")
                                             <div class="form-group">
                                                 <label for="weight">Rate</label>
-                                                <input type="number" step="any" min="0" class="form-control"  wire:model.debounce.500ms="rate" placeholder="Enter Rate" >
+                                                <input type="number" step="any" min="0" class="form-control"  wire:model.debounce.300ms="rate" placeholder="Enter Rate" >
                                                 @error('rate') <span class="text-danger error">{{ $message }}</span>@enderror
                                             </div>
                                             @endif
@@ -1259,7 +1259,7 @@
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="weight">Freight</label>
-                                            <input type="number" step="any" min="0" class="form-control"  wire:model.debounce.500ms="freight" placeholder="Freight"  >
+                                            <input type="number" step="any" min="0" class="form-control"  wire:model.debounce.300ms="freight" placeholder="Freight"  >
                                             @error('freight') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
@@ -1269,7 +1269,7 @@
                                
                                 <h5 class="underline mt-10">Transporter Freight Agreement</h5>
                                 <div class="mb-10">
-                                    <input type="checkbox" wire:model.debounce.500ms="transporter_agreement"   class="line-style" />
+                                    <input type="checkbox" wire:model.debounce.300ms="transporter_agreement"   class="line-style" />
                                     <label for="one" class="radio-label">Transporter</label>
                                     @error('transporter_agreement') <span class="text-danger error">{{ $message }}</span>@enderror
                                 </div>
@@ -1277,10 +1277,10 @@
                                 <div class="form-group" >
                                     <label for="name">Transporter Rates</label>
                                     <label class="radio-inline">
-                                        <input type="radio" wire:model.debounce.500ms="with_transporter_rates" value="rates" name="optradio_transporter" >Predefined Rates
+                                        <input type="radio" wire:model.debounce.300ms="with_transporter_rates" value="rates" name="optradio_transporter" >Predefined Rates
                                       </label>
                                       <label class="radio-inline">
-                                        <input type="radio" wire:model.debounce.500ms="with_transporter_rates" value="custom" name="optradio_transporter">Custom Rate
+                                        <input type="radio" wire:model.debounce.300ms="with_transporter_rates" value="custom" name="optradio_transporter">Custom Rate
                                       </label>
                                 </div>
                                 <div class="row">
@@ -1290,7 +1290,7 @@
                                             @if ($with_transporter_rates == "rates")
                                             <div class="form-group">
                                                 <label for="customer"><a href="{{ route('rates.index') }}" target="_blank" style="color: blue">Rates</a><span class="required" style="color: red">*</span></label>
-                                              <select class="form-control" wire:model.debounce.500ms="selectedDefinedTransporterRate" required>
+                                              <select class="form-control" wire:model.debounce.300ms="selectedDefinedTransporterRate" required>
                                                   <option value="">Select Rate</option>
                                                   @foreach ($defined_transporter_rates as $rate)
                                                   <option value="{{$rate->id}}">{{ $rate->freight_calculation }} {{ $rate->cargo ? $rate->cargo->name : "" }} {{ $rate->weight ? $rate->weight."tons" : ""}} {{ $rate->litreage ? $rate->litreage."litres" : ""}} | {{ $this->getDestination($rate->from)->country ? $this->getDestination($rate->from)->country->name : "" }} {{ $this->getDestination($rate->from)->city}} {{ $rate->loading_point ? $rate->loading_point->name : "" }}  - {{ $this->getDestination($rate->to)->country ? $this->getDestination($rate->to)->country->name : "" }} {{ $this->getDestination($rate->to)->city}} {{$rate->offloading_point ? $rate->offloading_point->name : ""}} {{$rate->distance ? $rate->distance."Kms" : ""}} | {{$rate->currency ? $rate->currency->name : ""}} {{$rate->currency ? $rate->currency->symbol : ""}}{{$rate->rate}}</option>
@@ -1302,7 +1302,7 @@
                                             @elseif($with_transporter_rates == "custom")
                                             <div class="form-group">
                                                 <label for="weight">Rate</label>
-                                                <input type="number" step="any" min="0" max="{{ $rate }}"  class="form-control"  wire:model.debounce.500ms="transporter_rate" placeholder="Enter Transporter Rate" >
+                                                <input type="number" step="any" min="0" max="{{ $rate }}"  class="form-control"  wire:model.debounce.300ms="transporter_rate" placeholder="Enter Transporter Rate" >
                                                 @if ($transporter_rate > $rate)
                                                      <small style="color: red"> Transporter agreed rate cannot be greater than customer agreed rate.</small>
                                                  @endif
@@ -1314,7 +1314,7 @@
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="weight">Freight</label>
-                                            <input type="number" step="any" min="0" max="{{ $freight }}" class="form-control"  wire:model.debounce.500ms="transporter_freight" placeholder=" Transporter Freight" />
+                                            <input type="number" step="any" min="0" max="{{ $freight }}" class="form-control"  wire:model.debounce.300ms="transporter_freight" placeholder=" Transporter Freight" />
                                             @if ($transporter_freight > $freight)
                                                 <small style="color: red"> Transporter agreed freight cannot be greater than customer agreed freight.</small>
                                             @endif
@@ -1350,7 +1350,7 @@
                                     <div class="col-md-7">
                                         <div class="form-group">
                                             <label for="street_address">Comments</label>
-                                           <input type="text" wire:model.debounce.500ms="comments" class="form-control" placeholder="Enter Trip Comments">
+                                           <input type="text" wire:model.debounce.300ms="comments" class="form-control" placeholder="Enter Trip Comments">
                                             @error('comments') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
@@ -1359,7 +1359,7 @@
 
                                     <h5 class="underline mt-30"><a href="{{ route('expenses.index') }}" target="_blank" style="color: blue">Trip Expense(s)</a></h5>
                                     <div class="mb-10">
-                                        <input type="checkbox" wire:model.debounce.500ms="trip_expenses"   class="line-style" />
+                                        <input type="checkbox" wire:model.debounce.300ms="trip_expenses"   class="line-style" />
                                         <label for="one" class="radio-label">Trip Expenses</label>
                                         @error('trip_expenses') <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>
@@ -1417,7 +1417,7 @@
                                                 <td>
                                                     @if (isset($expense_id[$key]) && ($expense_id[$key] == $expense->id))
                                                     <div class="form-group">
-                                                        <select class="form-control" wire:model.debounce.500ms="expense_currency_id.{{$key}}"  wire:key="{{ $key }}"  {{ !isset($company->currency_id) ? "disabled" : ""  }} required>
+                                                        <select class="form-control" wire:model.debounce.300ms="expense_currency_id.{{$key}}"  wire:key="{{ $key }}"  {{ !isset($company->currency_id) ? "disabled" : ""  }} required>
                                                             <option value="">Select Currency </option>
                                                             @foreach ($currencies as $currency)
                                                             <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
@@ -1427,7 +1427,7 @@
                                                     </div>
                                                     @else
                                                     <div class="form-group">
-                                                        <select class="form-control" wire:model.debounce.500ms="expense_currency_id.{{$key}}"  wire:key="{{ $key }}"  {{ !isset($company->currency_id) ? "disabled" : ""  }}>
+                                                        <select class="form-control" wire:model.debounce.300ms="expense_currency_id.{{$key}}"  wire:key="{{ $key }}"  {{ !isset($company->currency_id) ? "disabled" : ""  }}>
                                                             <option value="">Select Currency </option>
                                                             @foreach ($currencies as $currency)
                                                             <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
@@ -1445,7 +1445,7 @@
                                                             <div class="col-md-6">
                                                                 <div class="form-group">
                                                                     <label for="customer">Conversion Rate</label>
-                                                                    <input type="number" step="any" min="0"  class="form-control" wire:model.debounce.500ms="expense_exchange_rate.{{$key}}" wire:key="{{ $key }}"  placeholder="Conversion Rate" >
+                                                                    <input type="number" step="any" min="0"  class="form-control" wire:model.debounce.300ms="expense_exchange_rate.{{$key}}" wire:key="{{ $key }}"  placeholder="Conversion Rate" >
                                                                     <small style="color: green">The conversion is from the selected currency to {{$company->currency ? $company->currency->name : ""}}</small>
                                                                     @error('expense_exchange_rate.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
                                                                 </div> 
@@ -1453,7 +1453,7 @@
                                                             <div class="col-md-6">
                                                                 <div class="form-group">
                                                                     <label for="customer">Amount in {{ $company->currency ? $company->currency->name : "" }}</label>
-                                                                    <input type="number" step="any" min="0" class="form-control" wire:model.debounce.500ms="expense_exchange_amount.{{$key}}" wire:key="{{ $key }}" placeholder="Converted Amount" disabled>
+                                                                    <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="expense_exchange_amount.{{$key}}" wire:key="{{ $key }}" placeholder="Converted Amount" disabled>
                                                                     @error('expense_exchange_amount.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
                                                                 </div> 
                                                             </div>
@@ -1461,7 +1461,7 @@
                                                             <div class="col-md-6">
                                                                 <div class="form-group">
                                                                     <label for="customer">Conversion Rate</label>
-                                                                    <input type="number" step="any" min="0" class="form-control"  wire:model.debounce.500ms="expense_exchange_rate.{{$key}}" wire:key="{{ $key }}"  placeholder="Conversion Rate" >
+                                                                    <input type="number" step="any" min="0" class="form-control"  wire:model.debounce.300ms="expense_exchange_rate.{{$key}}" wire:key="{{ $key }}"  placeholder="Conversion Rate" >
                                                                     <small style="color: green">The conversion is from the selected currency to {{$company->currency ? $company->currency->name : ""}}</small>
                                                                     @error('expense_exchange_rate.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
                                                                 </div> 
@@ -1469,7 +1469,7 @@
                                                             <div class="col-md-6">
                                                                 <div class="form-group">
                                                                     <label for="customer">Amount in{{ $company->currency ? $company->currency->name : "" }}</label>
-                                                                    <input type="number" step="any" min="0" class="form-control" wire:model.debounce.500ms="expense_exchange_amount.{{$key}}" wire:key="{{ $key }}" placeholder="Converted Amount" disabled>
+                                                                    <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="expense_exchange_amount.{{$key}}" wire:key="{{ $key }}" placeholder="Converted Amount" disabled>
                                                                     @error('expense_exchange_amount.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
                                                                 </div> 
                                                             </div>
@@ -1482,12 +1482,12 @@
                                                 <td> 
                                                     @if (isset($expense_id[$key]) && ($expense_id[$key] == $expense->id))
                                                     <div class="form-group">
-                                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.500ms="amount.{{$key}}"  wire:key="{{ $key }}"  placeholder="Enter Expense Amount" required/>
+                                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="amount.{{$key}}"  wire:key="{{ $key }}"  placeholder="Enter Expense Amount" required/>
                                                         @error('amount.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
                                                         </div>
                                                     @else
                                                     <div class="form-group">
-                                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.500ms="amount.{{$key}}"  wire:key="{{ $key }}"  placeholder="Enter Expense Amount" />
+                                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="amount.{{$key}}"  wire:key="{{ $key }}"  placeholder="Enter Expense Amount" />
                                                         @error('amount.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
                                                         </div>
                                                     @endif
@@ -1507,7 +1507,7 @@
 
                              <h5 class="underline mt-30">Fuel Order Details</h5>
                              <div class="mb-10">
-                                <input type="checkbox" wire:model.debounce.500ms="fuel_order"   class="line-style" />
+                                <input type="checkbox" wire:model.debounce.300ms="fuel_order"   class="line-style" />
                                 <label for="one" class="radio-label">Fuel Order</label>
                                 @error('fuel_order') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
@@ -1516,7 +1516,7 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="vendors">Fueling Station<span class="required" style="color: red">*</span></label>
-                                       <select wire:model.debounce.500ms="selectedContainer" class="form-control" required>
+                                       <select wire:model.debounce.300ms="selectedContainer" class="form-control" required>
                                            <option value="">Select Fueling Station</option>
                                           @foreach ($containers as $container)
                                               <option value="{{$container->id}}">{{$container->name}}</option>
@@ -1558,7 +1558,7 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="currencies">Currencies</label>
-                                        <select class="form-control" wire:model.debounce.500ms="selectedFuelCurrency" {{ !isset($company->currency_id) ? "disabled" : ""  }}>
+                                        <select class="form-control" wire:model.debounce.300ms="selectedFuelCurrency" {{ !isset($company->currency_id) ? "disabled" : ""  }}>
                                             <option value="">Select Currency </option>
                                             @foreach ($currencies as $currency)
                                             <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
@@ -1571,7 +1571,7 @@
                                         @if ($selectedFuelCurrency != $company->currency_id)
                                         <div class="form-group">
                                             <label for="customer">Conversion Rate</label>
-                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.500ms="fuel_exchange_rate"  placeholder="Exchange Rate {{$selected_currency ? "From ".$selected_currency->name : ""}} {{$company->currency ? "To ".$company->currency->name : ""}}" >
+                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="fuel_exchange_rate"  placeholder="Exchange Rate {{$selected_currency ? "From ".$selected_currency->name : ""}} {{$company->currency ? "To ".$company->currency->name : ""}}" >
                                             @error('fuel_exchange_rate') <span class="text-danger error">{{ $message }}</span>@enderror
                                             <small style="color: green">{{$selected_currency ? " 1 ".$selected_currency->name." is how much in" : ""}} {{$company->currency ? $company->currency->name." ?" : ""}}</small>
                                             <small>{{$fuel_exchange_amount ? "The fuel converted amount is: ".$fuel_exchange_amount : ""}}</small> <br>       
@@ -1585,7 +1585,7 @@
                                         <label for="quantity">Quantity</label>
                                         @if (isset($selected_container))
                                             @if ($selected_container->purchase_type == "Bulk Buy")
-                                                <input type="number" step="any" min="0"  max="{{$container_balance}}" class="form-control"  wire:model.debounce.500ms="fuel_quantity" placeholder="Enter Fillup Quantity"  />
+                                                <input type="number" step="any" min="0"  max="{{$container_balance}}" class="form-control"  wire:model.debounce.300ms="fuel_quantity" placeholder="Enter Fillup Quantity"  />
                                                 @if (isset($horse_selected))
                                                 @if (isset($fuel_tank_capacity))
                                                     <small style="color: green">{{$horse_selected->registration_number}} Tank Capacity: {{$fuel_tank_capacity}} Litres. </small> <br>
@@ -1595,7 +1595,7 @@
                                                 @endif 
                                             @endif
                                             @else
-                                                <input type="number" step="any" min="0"  class="form-control"  wire:model.debounce.500ms="fuel_quantity" placeholder="Enter Fillup Quantity"  />
+                                                <input type="number" step="any" min="0"  class="form-control"  wire:model.debounce.300ms="fuel_quantity" placeholder="Enter Fillup Quantity"  />
                                                 @if (isset($horse_selected))
                                                     @if (isset($fuel_tank_capacity))
                                                         <small style="color: green">{{$horse_selected->registration_number}} Tank Capacity: {{$fuel_tank_capacity}} Litres. </small> <br>
@@ -1647,14 +1647,14 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="unit_price">Rate</label>
-                                        <input type="number" step="any" min="0" class="form-control" step="any" min="0"  wire:model.debounce.500ms="unit_price" placeholder="Enter Pump Price/Litre" />
+                                        <input type="number" step="any" min="0" class="form-control" step="any" min="0"  wire:model.debounce.300ms="unit_price" placeholder="Enter Pump Price/Litre" />
                                         @error('unit_price') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="amount">Total</label>
-                                        <input type="number" step="any" min="0" class="form-control"  wire:model.debounce.500ms="fuel_amount" placeholder="Enter Fuel Total" />
+                                        <input type="number" step="any" min="0" class="form-control"  wire:model.debounce.300ms="fuel_amount" placeholder="Enter Fuel Total" />
                                         @error('fuel_amount') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
@@ -1666,14 +1666,14 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="unit_price">Transporter Rate</label>
-                                        <input type="number" step="any" min="0" class="form-control" step="any" min="0"  wire:model.debounce.500ms="transporter_price" placeholder="Enter Transporter Price/Litre" />
+                                        <input type="number" step="any" min="0" class="form-control" step="any" min="0"  wire:model.debounce.300ms="transporter_price" placeholder="Enter Transporter Price/Litre" />
                                         @error('transporter_price') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="amount">Transporter Total</label>
-                                        <input type="number" step="any" min="0" class="form-control"  wire:model.debounce.500ms="transporter_total" placeholder="Enter Transporter Fuel Total" />
+                                        <input type="number" step="any" min="0" class="form-control"  wire:model.debounce.300ms="transporter_total" placeholder="Enter Transporter Fuel Total" />
                                         @error('transporter_total') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
@@ -1685,14 +1685,14 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="odometer">Horse Mileage<span class="required" style="color: red">*</span></label>
-                                        <input type="number" step="any" class="form-control" wire:model.debounce.500ms="odometer" required placeholder="Enter Horse Mileage" required/>
+                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="odometer" required placeholder="Enter Horse Mileage" required/>
                                         @error('odometer') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="file">Comments</label>
-                                       <input type="text" wire:model.debounce.500ms="fuel_comments" class="form-control" placeholder="Fuel Order Comments">
+                                       <input type="text" wire:model.debounce.300ms="fuel_comments" class="form-control" placeholder="Fuel Order Comments">
                                         @error('fuel_comments') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
@@ -1704,7 +1704,7 @@
 
                             <h5 class="underline mt-30">Send trip updates to customer(s)</h5>
                             <div class="mb-10">
-                                <input type="checkbox" wire:model.debounce.500ms="customer_updates"   class="line-style" />
+                                <input type="checkbox" wire:model.debounce.300ms="customer_updates"   class="line-style" />
                                 <label for="one" class="radio-label">Customer notifications</label>
                                 @error('customer_updates') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
@@ -1807,7 +1807,7 @@
                 <div class="modal-body">
                     <div class="form-group">
                         <label for="name">Name<span class="required" style="color: red">*</span></label>
-                        <input type="text" class="form-control" wire:model.debounce.500ms="expense_name" placeholder="Enter Expense Name" required >
+                        <input type="text" class="form-control" wire:model.debounce.300ms="expense_name" placeholder="Enter Expense Name" required >
                         @error('expense_name') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
                 </div>

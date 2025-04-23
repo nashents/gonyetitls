@@ -3,6 +3,7 @@
 namespace App\Http\Livewire\Accounts;
 
 use Carbon\Carbon;
+use App\Models\Vendor;
 use App\Models\Account;
 use App\Models\Payment;
 use Livewire\Component;
@@ -57,6 +58,8 @@ class Index extends Component
     public $bank_account_id;
     public $customers;
     public $customer_id;
+    public $vendors;
+    public $vebdor_id;
     public $categories;
     public $category_id;
     public $active_group;
@@ -82,6 +85,7 @@ class Index extends Component
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->bank_accounts = collect();
         $this->customers = Customer::orderBy('name','asc')->get();
+        $this->vendors = Vendor::orderBy('name','asc')->get();
         $this->account_types =  AccountType::orderBy('name','asc')->get();
         // $this->grouped_account_types = $this->account_types->groupBy('group');
     }
@@ -472,6 +476,7 @@ class Index extends Component
         $this->account_types =  AccountType::orderBy('name','asc')->get();
         $this->bank_accounts = BankAccount::where('currency_id',$this->selectedCurrency)->orderBy('name','asc')->get();
         $this->customers = Customer::orderBy('name','asc')->get();
+        $this->vendors = Vendor::orderBy('name','asc')->get();
         
         if (isset($this->search)) {
                
@@ -487,6 +492,7 @@ class Index extends Component
                     ->orderBy('name','asc')->paginate(10),
                     'bank_accounts' => $this->bank_accounts,
                     'customers' => $this->customers,
+                    'vendors' => $this->vendors,
                     'account_types' => $this->account_types,
                    
                  
@@ -497,6 +503,7 @@ class Index extends Component
                 'accounts' => Account::orderBy('name','asc')->paginate(10),
                 'bank_accounts' => $this->bank_accounts,
                 'customers' => $this->customers,
+                'vendors' => $this->vendors,
                 'account_types' => $this->account_types,
             ]);
         }

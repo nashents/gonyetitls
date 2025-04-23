@@ -507,17 +507,23 @@
                         <tr>
                             <th style="width: 30%; padding-left:20px;"> Allowable Weight Loss</th>
                             <td>
+                                @if ($trip->allowable_loss_weight)
                                 <span class="label label-success">
                                     {{ $trip->allowable_loss_weight ? $trip->allowable_loss_weight."Tons" : "" }}
                                 </span>
+                                @endif
+                               
                             </td>
                         </tr>
                         <tr>
                             <th style="width: 30%; padding-left:20px;">  Chargeable Weight Loss</th>
                             <td>
+                                @if ($chargeable_weight_loss)
                                 <span class="label label-danger">
                                     {{  $chargeable_weight_loss ?  $chargeable_weight_loss." Tons" : "" }}
                                 </span>
+                                @endif
+                               
                             </td>
                         </tr>
                         @if (isset($cargo_type) && $cargo_type === "Solid")
@@ -526,7 +532,7 @@
                             <td>
                                 @if ($quantity_loss)
                                     @if ($quantity_loss > 0)
-                                        <div class="label label-danger" style="color: red">
+                                        <div class="label label-danger" >
                                         {{ abs($quantity_loss) }} {{$delivery_note ? $delivery_note->measurement : ""}}
                                         </div>
                                     @elseif ($quantity_loss == 0)
@@ -547,7 +553,7 @@
                         <tr>
                             <th style="width: 30%; padding-left:20px;">  Allowable Quantity Loss</th>
                             <td>
-                                @if (isset($trip->allowable_loss_quantity))
+                                @if ($trip->allowable_loss_quantity)
                                     <span class="label label-success">
                                     {{ $trip->allowable_loss_quantity ? $trip->allowable_loss_quantity : "" }} {{$delivery_note ? $delivery_note->measurement : ""}}
                                     </span>
@@ -557,7 +563,7 @@
                         <tr>
                             <th style="width: 30%; padding-left:20px;">  Chargeable Quantity Loss</th>
                             <td>
-                                @if (isset($chargeable_quantity_loss))
+                                @if ($chargeable_quantity_loss)
                                 <span class="label label-success">
                                     {{  $chargeable_quantity_loss ?  $chargeable_quantity_loss : "" }} {{$delivery_note ? $delivery_note->measurement : ""}}
                                 </span>
@@ -570,7 +576,7 @@
                             <td>
                                 @if ($litreage_loss)
                                     @if ($litreage_loss > 0)
-                                        <div class="label label-danger" style="color: red">
+                                        <div class="label label-danger" >
                                         {{ abs($litreage_loss) }} {{$delivery_note ? $delivery_note->measurement : ""}}
                                         </div>
                                     @elseif ($litreage_loss == 0)
@@ -592,7 +598,7 @@
                             <td>
                                 @if ($litreage_at_20_loss)
                                     @if ($litreage_at_20_loss > 0)
-                                        <div class="label label-danger" style="color: red">
+                                        <div class="label label-danger" >
                                         {{ abs($litreage_at_20_loss) }} {{$delivery_note ? $delivery_note->measurement : ""}}
                                         </div>
                                     @elseif ($litreage_at_20_loss == 0)
@@ -605,7 +611,7 @@
                                         </div>
                                     @endif
                                 @else
-                                    No Litreage @ Ambient Temperature Loss Recorded
+                                    No Litreage @ 20 Degrees Loss Recorded
                                 @endif
                             </td>
                         </tr>
@@ -622,7 +628,7 @@
                         <tr>
                             <th style="width: 30%; padding-left:20px;">  Chargeable Litreage Loss</th>
                             <td>
-                                @if (isset($chargeable_litreage_loss))
+                                @if ($chargeable_litreage_loss)
                                 <span class="label label-success">
                                     {{  $chargeable_litreage_loss ?  $chargeable_litreage_loss : "" }} {{$delivery_note ? $delivery_note->measurement : ""}}
                                 </span>
@@ -663,7 +669,7 @@
                                 <th style="width: 30%; padding-left:20px;">   Freight Loss</th>
                                 <td>
                                     @if (is_numeric($freight_loss) && $freight_loss > 0)
-                                    <div class="label label-danger" style="color: red">
+                                    <div class="label label-danger" >
                                         {{ $trip->currency ? $trip->currency->name : "" }} {{ $trip->currency ? $trip->currency->symbol : "" }}{{ number_format($freight_loss,2) }}
                                     </div>
                                     @elseif (is_numeric($freight_loss) && $freight_loss == 0)

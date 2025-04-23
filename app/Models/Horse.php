@@ -15,6 +15,9 @@ class Horse extends Model implements Auditable
     public function horse_documents(){
         return $this->hasMany('App\Models\HorseDocument');
     }
+    public function movements(){
+        return $this->hasMany('App\Models\Movement');
+    }
     public function mileages(){
         return $this->hasMany('App\Models\Mileage');
     }

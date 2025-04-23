@@ -247,6 +247,7 @@
                                 <th class="w-10 text-center line-height-35">Fuel Measurement</th>
                                 <td class="w-20 line-height-35">{{$horse->fuel_measurement}}</td>
                             </tr>
+                         
                             <tr>
                                 <th class="w-10 text-center line-height-35">Horse Type</th>
                                 <td class="w-20 line-height-35"> {{$horse->horse_type ? $horse->horse_type->name : ""}}</td>

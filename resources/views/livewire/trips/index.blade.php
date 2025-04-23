@@ -226,12 +226,25 @@
                                             {{$trip->trip_type ? $trip->trip_type->name : ""}}
                                         </td>
                                         <td>  {{ $trip->user->employee ? $trip->user->employee->name : "" }} {{ $trip->user->employee ? $trip->user->employee->surname : "" }}</td>
-                                       <td>
-                                            {{ \Carbon\Carbon::parse($trip->start_date)->format('Y-m-d')}}
+                                        <td>
+                                            @php
+                                            $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
+                                            @endphp
+                                            @if ((preg_match($pattern, $trip->start_date)) )
+                                                {{ \Carbon\Carbon::parse($trip->start_date)->format('d M Y g:i A')}}
+                                            @else
+                                            {{$trip->start_date}}
+                                            @endif    
                                             <hr style="margin-top:5px; margin-bottom:5px">
-                                            {{ \Carbon\Carbon::parse($trip->start_date)->format('Y-m-d')}}
+                                            @php
+                                            $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
+                                            @endphp
+                                            @if ((preg_match($pattern, $trip->end_date)) )
+                                                {{ \Carbon\Carbon::parse($trip->end_date)->format('d M Y g:i A')}}
+                                            @else
+                                            {{$trip->end_date}}
+                                            @endif    
                                         </td>
-                                        
                                        
                                         <td>
                                             {{ucfirst($trip->customer ? $trip->customer->name : "")}}

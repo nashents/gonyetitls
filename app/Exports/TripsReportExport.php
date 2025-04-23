@@ -10,6 +10,7 @@ use App\Models\InvoiceItem;
 use App\Models\TripExpense;
 use App\Models\TripDocument;
 use App\Models\TripLocation;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Events\AfterSheet;
 use Maatwebsite\Excel\Concerns\FromQuery;

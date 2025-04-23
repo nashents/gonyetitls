@@ -52,20 +52,22 @@ class Destinations extends Component
     }
 
     private function resetInputFields(){
-        $this->destination_id = "" ;
-        $this->offloading_point_id = "";
-        $this->measurement_id = "";
-        $this->weight = "";
-        $this->quantity = "";
-        $this->litreage = "";
-        $this->litreage_at_20 = "";
-        $this->offloading_date = "";
+        $this->destination_id = [] ;
+        $this->offloading_point_id = [];
+        $this->measurement_id = [];
+        $this->weight = [];
+        $this->quantity = [];
+        $this->litreage = [];
+        $this->litreage_at_20 = [];
+        $this->offloading_date = [];
 
     }
 
     public function updated($value){
         $this->validateOnly($value);
     }
+
+    
     protected $rules = [
         'destination_id' => 'required',
         'offloading_point_id' => 'required',
@@ -84,6 +86,9 @@ class Destinations extends Component
     }
 
     public function store(){
+
+        $this->validate();
+
         // try{
         if (isset($this->destination_id)) {
             foreach ($this->destination_id as $key => $value) {
@@ -124,42 +129,42 @@ class Destinations extends Component
                 $trip_destination->save();
 
 
-                $delivery_note = $this->trip->delivery_note;
-                if (isset($delivery_note)) {
-                    if (isset($this->weight[$key]) && !is_null($delivery_note->offloaded_weight)) {
-                        $delivery_note->offloaded_weight = $delivery_note->offloaded_weight + $this->weight[$key];
-                    }else {
-                        if (isset($this->weight[$key])) {
-                            $delivery_note->offloaded_weight = $this->weight[$key];
-                        }
-                    }
-                    if (isset($this->quantity[$key]) && !is_null($delivery_note->offloaded_quantity)) {
-                        $delivery_note->offloaded_quantity = $delivery_note->offloaded_quantity +  $this->quantity[$key];
-                    }else {
-                        if(isset($this->quantity[$key])){
-                            $delivery_note->offloaded_quantity = $this->quantity[$key];
-                        }
+                // $delivery_note = $this->trip->delivery_note;
+                // if (isset($delivery_note)) {
+                //     if (isset($this->weight[$key]) && !is_null($delivery_note->offloaded_weight)) {
+                //         $delivery_note->offloaded_weight = $delivery_note->offloaded_weight + $this->weight[$key];
+                //     }else {
+                //         if (isset($this->weight[$key])) {
+                //             $delivery_note->offloaded_weight = $this->weight[$key];
+                //         }
+                //     }
+                //     if (isset($this->quantity[$key]) && !is_null($delivery_note->offloaded_quantity)) {
+                //         $delivery_note->offloaded_quantity = $delivery_note->offloaded_quantity +  $this->quantity[$key];
+                //     }else {
+                //         if(isset($this->quantity[$key])){
+                //             $delivery_note->offloaded_quantity = $this->quantity[$key];
+                //         }
                        
-                    }
-                    if (isset($this->litreage[$key]) && !is_null($delivery_note->offloaded_litreage)) {
-                        $delivery_note->offloaded_litreage = $delivery_note->offloaded_litreage + $this->litreage[$key];
-                    }else {
-                        if (isset($this->litreage[$key])) {
-                            $delivery_note->offloaded_litreage =  $this->litreage[$key];
-                        }
+                //     }
+                //     if (isset($this->litreage[$key]) && !is_null($delivery_note->offloaded_litreage)) {
+                //         $delivery_note->offloaded_litreage = $delivery_note->offloaded_litreage + $this->litreage[$key];
+                //     }else {
+                //         if (isset($this->litreage[$key])) {
+                //             $delivery_note->offloaded_litreage =  $this->litreage[$key];
+                //         }
                        
-                    }
-                    if (isset($this->litreage_at_20[$key]) && !is_null($delivery_note->offloaded_litreage_at_20)) {
-                        $delivery_note->offloaded_litreage_at_20 = $delivery_note->offloaded_litreage_at_20 + $this->litreage_at_20[$key];
-                    }else {
-                        if (isset($this->litreage_at_20[$key])) {
-                            $delivery_note->offloaded_litreage_at_20 = $this->litreage_at_20[$key];
-                        }
+                //     }
+                //     if (isset($this->litreage_at_20[$key]) && !is_null($delivery_note->offloaded_litreage_at_20)) {
+                //         $delivery_note->offloaded_litreage_at_20 = $delivery_note->offloaded_litreage_at_20 + $this->litreage_at_20[$key];
+                //     }else {
+                //         if (isset($this->litreage_at_20[$key])) {
+                //             $delivery_note->offloaded_litreage_at_20 = $this->litreage_at_20[$key];
+                //         }
                        
-                    }
-                    // $delivery_note->updated_from_offloading_points = 1;
-                    $delivery_note->update();
-                }
+                //     }
+                //     // $delivery_note->updated_from_offloading_points = 1;
+                //     $delivery_note->update();
+                // }
 
             }
         }

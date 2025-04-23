@@ -129,88 +129,30 @@ class Create extends Component
         }
       }
 
-      private function resetInputFields(){
-          $this->name = '';
-          $this->middle_name = '';
-          $this->surname = '';
-          $this->dob = '';
-          $this->gender = '';
-          $this->phonenumber = '';
-          $this->email = '';
-          $this->currency_id = '';
-          $this->salary = '';
-          $this->frequency = '';
-          $this->idnumber = '';
-          $this->post = '';
-          $this->selectedCountry = '';
-          $this->city = '';
-          $this->province_id = '';
-          $this->suburb = '';
-          $this->street_address = '';
-          $this->start_date = '';
-          $this->end_date = '';
-          $this->leave_days = '';
-          $this->accrual_rate = '';
-          $this->expiry_date = '';
-          $this->expiration = '';
-          $this->duration = '';
-          $this->contact = '';
-          $this->next_of_kin = '';
-          $this->relationship = '';
-          $this->title = "";
-          $this->file = "";
-          $this->expires_at = "";
-      }
+    
       public function updated($value){
           $this->validateOnly($value);
       }
+
       protected $messages =[
-
-        'title.*.required' => 'Title field is required',
-        'file.*.required' => 'File field is required',
         'department_id.required' => 'Select Department',
-        'branch_id.required' => 'Select Branch',
+        'branch_id.nullable' => 'Select Branch',
         'role_id.required' => 'Select Role',
-        'currency_id.required' => 'Select Currency',
+      ];
 
-    ];
       protected $rules = [
           'name' => 'required|alpha|min:2',
           'middle_name' => 'nullable|alpha|min:2',
           'surname' => 'required|alpha|min:2',
-          'gender' => 'required',
-          'dob' => 'required|date',
-          'email' => 'required|email|unique:users,email,NULL,id,deleted_at,NULL',
-          'phonenumber' => 'required||unique:employees,phonenumber,NULL,id,deleted_at,NULL|max:13',
-          'idnumber' => 'required|string|unique:employees,idnumber,NULL,id,deleted_at,NULL|max:15',
-          'selectedCountry' => 'required|string',
-          'city' => 'required',
-          'province_id' => 'required',
-          'suburb' => 'required',
-          'street_address' => 'required',
-          'start_date' => 'required',
-          'end_date' => 'required',
-          'company_id' => 'required',
-          'leave_days' => 'required',
-          'accrual_rate' => 'required',
-          'job_title' => 'required',
-          'expiration' => 'required',
-          'next_of_kin' => 'required',
-          'relationship' => 'required',
-          'contact' => 'required',
-          'duration' => 'required',
-          'branch_id' => 'required',
-          'currency_id' => 'required',
-          'salary' => 'required',
-          'frequency' => 'required',
-          'selectedDepartment' => 'required',
-          'expiry_date.0' => 'nullable',
-          'title.0' => 'nullable|string',
+          'dob' => 'nullable|date',
+          'email' => 'nullable|email|unique:users,email,NULL,id,deleted_at,NULL',
+          'phonenumber' => 'nullable|unique:employees,phonenumber,NULL,id,deleted_at,NULL|max:13',
+          'transporter_id' => 'required',
+          'department_id' => 'required',
           'file.0' => 'nullable|file|mimes:docx,doc,pdf,xls,xlsx,pptx|max:10000',
-          'expiry_date.*' => 'required',
-          'title.*' => 'required',
           'file.*' => 'required|file|mimes:docx,doc,pdf,xls,xlsx,pptx|max:10000',
       ];
+
 
       public function generatePIN($digits = 4){
         $i = 0; //counter
@@ -398,11 +340,8 @@ class Create extends Component
                      # code...
           
           }
-          
-
-
+        
           Session::flash('success','Employee Created Successfully!!');
-          $this->resetInputFields();
           return redirect()->route('employees.index');
 
       });

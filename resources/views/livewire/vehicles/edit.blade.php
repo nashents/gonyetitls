@@ -235,7 +235,7 @@
                                     </div>
                                 </div>
                                 <div class="row">
-                                    <div class="col-md-3">
+                                    <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="make">Fuel Measurement</label>
                                             <select name="" class="form-control" wire:model.debounce.300ms="fuel_measurement">
@@ -247,25 +247,14 @@
                                             @error('fuel_measurement') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
-                                    <div class="col-md-3">
-                                        <div class="form-group">
-                                            <label for="model">Track Usage</label>
-                                            <select name="" class="form-control" wire:model.debounce.300ms="track_usage" >
-                                                <option value="">Select Track Usage</option>
-                                                <option value="mile">Mile</option>
-                                                <option value="kilometer">Kilometer</option>
-                                            </select>
-                                            @error('track_usage') <span class="text-danger error">{{ $message }}</span>@enderror
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
+                                    <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="model">Fuel Consumption (Empty)</label>
                                             <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="fuel_consumption_empty_standard" placeholder="Standard fuel consumption of horse when empty" >
                                             @error('fuel_consumption_empty_standard') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
-                                    <div class="col-md-3">
+                                    <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="model">Fuel Consumption (Loaded)</label>
                                             <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="fuel_consumption_loaded_standard" placeholder="Standard fuel consumption of horse when loaded" >
