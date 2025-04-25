@@ -398,13 +398,17 @@ class Index extends Component
                         ->orWhere('description','like', '%'.$this->search.'%')
                         ->orWhere('status','like', '%'.$this->search.'%')
                         ->orWhere('date','like', '%'.$this->search.'%')
+                        ->orWhere('total','like', '%'.$this->search.'%')
                         ->orWhereHas('requisition_items', function ($query) {
                             $query->whereHas('expense', function ($q) {
                                 $q->where('name', 'like', '%' . $this->search . '%');
                             });
                         })
                         ->orWhereHas('trip', function ($query) {
-                            return $query->where('trip_number', 'like', '%'.$this->search.'%');
+                            $query->where('trip_number', 'like', '%' . $this->search . '%')
+                                  ->orWhereHas('horse', function ($q) {
+                                      $q->where('registration_number', 'like', '%' . $this->search . '%');
+                                  });
                         })
                         ->orWhereHas('employee', function ($query) {
                             return $query->where(DB::raw("concat(name, ' ', surname)"), 'LIKE', "%".$this->search."%");
@@ -439,13 +443,17 @@ class Index extends Component
                     ->orWhere('description','like', '%'.$this->search.'%')
                     ->orWhere('status','like', '%'.$this->search.'%')
                     ->orWhere('date','like', '%'.$this->search.'%')
+                    ->orWhere('total','like', '%'.$this->search.'%')
                     ->orWhereHas('requisition_items', function ($query) {
                         $query->whereHas('expense', function ($q) {
                             $q->where('name', 'like', '%' . $this->search . '%');
                         });
                     })
                     ->orWhereHas('trip', function ($query) {
-                        return $query->where('trip_number', 'like', '%'.$this->search.'%');
+                        $query->where('trip_number', 'like', '%' . $this->search . '%')
+                              ->orWhereHas('horse', function ($q) {
+                                  $q->where('registration_number', 'like', '%' . $this->search . '%');
+                              });
                     })
                     ->orWhereHas('employee', function ($query) {
                         return $query->where(DB::raw("concat(name, ' ', surname)"), 'LIKE', "%".$this->search."%");
@@ -487,13 +495,17 @@ class Index extends Component
                         ->orWhere('description','like', '%'.$this->search.'%')
                         ->orWhere('status','like', '%'.$this->search.'%')
                         ->orWhere('date','like', '%'.$this->search.'%')
+                        ->orWhere('total','like', '%'.$this->search.'%')
                         ->orWhereHas('requisition_items', function ($query) {
                             $query->whereHas('expense', function ($q) {
                                 $q->where('name', 'like', '%' . $this->search . '%');
                             });
                         })
                         ->orWhereHas('trip', function ($query) {
-                            return $query->where('trip_number', 'like', '%'.$this->search.'%');
+                            $query->where('trip_number', 'like', '%' . $this->search . '%')
+                                  ->orWhereHas('horse', function ($q) {
+                                      $q->where('registration_number', 'like', '%' . $this->search . '%');
+                                  });
                         })
                         ->orWhereHas('employee', function ($query) {
                             return $query->where(DB::raw("concat(name, ' ', surname)"), 'LIKE', "%".$this->search."%");
@@ -532,16 +544,18 @@ class Index extends Component
                     ->orWhere('subject','like', '%'.$this->search.'%')
                     ->orWhere('description','like', '%'.$this->search.'%')
                     ->orWhere('status','like', '%'.$this->search.'%')
-                    ->orWhere('subject','like', '%'.$this->search.'%')
-                    ->orWhere('description','like', '%'.$this->search.'%')
                     ->orWhere('date','like', '%'.$this->search.'%')
+                    ->orWhere('total','like', '%'.$this->search.'%')
                     ->orWhereHas('requisition_items', function ($query) {
                         $query->whereHas('expense', function ($q) {
                             $q->where('name', 'like', '%' . $this->search . '%');
                         });
                     })
                     ->orWhereHas('trip', function ($query) {
-                        return $query->where('trip_number', 'like', '%'.$this->search.'%');
+                        $query->where('trip_number', 'like', '%' . $this->search . '%')
+                              ->orWhereHas('horse', function ($q) {
+                                  $q->where('registration_number', 'like', '%' . $this->search . '%');
+                              });
                     })
                     ->orWhereHas('employee', function ($query) {
                         return $query->where(DB::raw("concat(name, ' ', surname)"), 'LIKE', "%".$this->search."%");

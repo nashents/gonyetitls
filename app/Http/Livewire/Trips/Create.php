@@ -63,9 +63,10 @@ use KMLaravel\GeographicalCalculator\Facade\GeoFacade;
 class Create extends Component
 {
     use WithFileUploads;
-
+    protected $queryString = ['searchTrip','searchVehicle','searchHorse','searchTrailer','searchDriver'];
     public $trip_types;
     public $selectedTripType;
+    public $trip_type_name;
     public $trip_ref;
     public $trip_groups;
     public $trip_group_id;
@@ -73,167 +74,107 @@ class Create extends Component
     public $searchTrip;
     public $trips;
     public $selectedTrip;
+    public $borders;
     public $selectedBorder;
+    public $border_inputs = [];
+    public $b = 1;
+    public $c = 1;
+
+    public function borderAdd($b)
+    {
+        $b = $b + 1;
+        $this->b = $b;
+        array_push($this->border_inputs ,$b);
+    }
+
+    public function borderRemove($b)
+    {
+        unset($this->border_inputs[$b]);
+    }
     public $clearing_agents;
     public $clearing_agent_id;
-
-
-    public $searchHorse;
-    public $searchVehicle;
-    public $searchTrailer;
-    public $searchDriver;
-  
-    
-    protected $queryString = ['searchTrip','searchVehicle','searchHorse','searchTrailer','searchDriver'];
-
-
-    public $trip;
-    public $trip_id;
-    public $trip_number;
-    public $routes;
-    public $selectedRoute;
+    public $cd3_number;
+    public $manifest_number;
+    public $cd1_number;
+    public $selectedStatus;
     public $transporters;
     public $selectedTransporter;
-  
-    public $trip_group;
-    public $starting_mileage;
-    public $ending_mileage;
-    public $exchange_rate;
-    public $exchange_customer_freight;
-    public $exchange_transporter_freight;
-    public $exchange_customer_turnover;
-    public $exchange_transporter_cost_of_sales = 0;
- 
-    public $horse_fuel_total;
-    public $vehicle_fuel_total;
-    public $cd3_number;
-    public $cd1_number;
-    public $manifest_number;
-
-    public $trip_type_name;
-    public $horse_selected;
-    public $vehicle_selected;
-    public $freight_calculation;
-    public $calculation_measurement;
-    public $selectedFuelCurrency;
-  
-    public $customer_updates = 0;
-  
-    public $consignees;
-    public $consignee_id;
-    public $agents;
-    public $agent_id;
     public $brokers;
-    public $quantity;
     public $selectedBroker;
-    public $customers;
-    public $customer_id;
-    public $containers;
-    public $measurements;
-    public $measurement;
-    public $container;
-    public $container_id;
-   
-    public $with_trailer;
-    public $cargo_details;
+    public $mode_of_transport;
+    //horse vars
+    public $all_horses = False;
     public $horses;
-    public $horse;
-    public $vehicles;
-    public $vehicle;
-    public $trip_fuel;
-    public $fuel_balance;
-    public $fuel_tank_capacity;
     public $selectedHorse;
+    public $searchHorse;
+    //vehicle vars
+    public $all_vehicles = False;
+    public $vehicles;
+    public $searchVehicle;
     public $selectedVehicle;
+    //trailers vars
+    public $with_trailer;
+    public $all_trailers = False;
+    public $searchTrailer;
     public $trailers;
     public $trailer_id;
+    public $trailer_inputs = [];
+    public $t = 1;
+    public $s = 1;
+    public function trailerAdd($t)
+    {
+        $t = $t + 1;
+        $this->t = $t;
+        array_push($this->trailer_inputs ,$t);
+    }
+    public function trailerRemove($t)
+    {
+        unset($this->trailer_inputs[$t]);
+    }
+    // driver vars
+    public $all_drivers = False;
+    public $searchDriver;
     public $drivers;
     public $driver_id;
     public $notes;
-    public $duration;
-  
-    public $stops;
-    public $currencies;
-    public $selectedCurrency;
-    public $selected_currency;
-    public $amount = [];
-    public $selectedCargo;
-    public $cost_of_sales = 0;
-    public $turnover = 0;
+    //driver allowance vars
+    public $allowance_inputs = [];
+    public $x = 1;
+    public $z = 1;
+    public function addAllowance($x)
+    {
+        $x = $x + 1;
+        $this->x = $x;
+        array_push($this->allowance_inputs ,$x);
+    }
+    public function removeAllowance($x)
+    {
+        unset($this->allowance_inputs[$x]);
+    }
+    public $allowances;
+    public $allowance_id;
+    public $allowance_category;
+    public $selectedAllowanceCurrency;
+    public $allowance_currency_id;
+    public $allowance_amount;
+    public $allowance_exchange_rate;
+    public $allowance_exchange_amount;
 
-    public $lat1;
-    public $long1;
-    public $lat2;
-    public $long2;
+    public $allowance;
+    public $allowance_title;
+    public $allowance_description;
 
-    public $rank_names;
-    public $role_names;
-    public $department_names;
-    public $liquid_measurements;
-    public $solid_measurements;
+    public $customers;
+    public $customer_id;
+    public $consignees;
+    public $consignee_id;
+    // Agent Vars
+    public $agents;
+    public $agent_id;
+    public $commission;
+    public $commission_amount;
 
-    public $all_drivers = False;
-    public $all_trailers = False;
-    public $all_vehicles = False;
-    public $all_horses = False;
-
-    public $borders;
-    
-    public $quotations;
-    public $selectedQuotation;
-    public $cargos;
-    public $cargo;
-    public $cargo_type;
-    public $destinations;
-    public $destination_id;
-    public $selectedFrom;
-    public $selectedTo;
-    public $offloading_points;
-    public $offloading_point_id;
-    public $loading_points;
-    public $loading_point_id;
-    public $start_date;
-    public $end_date;
-    public $weight;
-    public $litreage;
-    public $litreage_at_20;
-    public $rate;
-    public $transporter_rate;
-    public $mode_of_transport;
-    public $with_customer_rates;
-    public $with_transporter_rates;
-    public $defined_customer_rates;
-    public $selectedDefinedCustomerRate;
-    public $defined_transporter_rates;
-    public $selectedDefinedTransporterRate;
-    public $comments;
-    public $freight;
-    public $transporter_freight;
-    public $profit;
-  
-
-
-    public $net_profit;
-    public $truck_stops;
-    public $truck_stop_id;
-
-    public $expense_currency_id = [];
-    public $expense_exchange_rate;
-    public $expense_exchange_amount;
-    public $expenses;
-    public $expense_id;
-    public $expense_name;
-    public $category;
-    public $total_transporter_expenses = 0;
-    public $total_customer_expenses = 0;
-    public $total_expenses = 0;
-
-    public $distance;
-    public $payment_status;
-    public $selectedStatus;
-    public $return_trip;
-
-    public $emptyrun_destination;
+ 
     public $emptyrun_origin;
     public $emptyrun_origin_starting_mileage;
     public $emptyrun_origin_ending_mileage;
@@ -241,155 +182,166 @@ class Create extends Component
     public $emptyrun_origin_fuel_quantity;
     public $emptyrun_origin_fuel_amount;
     public $emptyrun_origin_currency_id;
-    public $emptyrun_destination_currency_id;
+    public $emptyrun_destination;
     public $emptyrun_destination_starting_mileage;
     public $emptyrun_destination_ending_mileage;
     public $emptyrun_destination_distance;
     public $emptyrun_destination_fuel_quantity;
+    public $emptyrun_destination_currency_id;
     public $emptyrun_destination_fuel_amount;
 
-// Agent & Commission Variables
-    public $commission;
-    public $commission_amount;
-//fuel order variables
+    // location vars
+    public $destinations;
+    public $destination_id;
+    public $selectedFrom;
+    public $loading_points;
+    public $loading_point_id;
+    public $selectedTo;
+    public $offloading_points;
+    public $offloading_point_id;
+    public $routes;
+    public $selectedRoute;
+    //truck stop vars
+    public $truck_stops;
+    public $truck_stop_id;
+    public $inputs = [];
+    public $i = 1;
+    public $n = 1;
+    public function add($i)
+    {
+        $i = $i + 1;
+        $this->i = $i;
+        array_push($this->inputs ,$i);
+    }
+    public function remove($i)
+    {
+        unset($this->inputs[$i]);
+    }
 
+    public $start_date;
+    public $end_date;
+    public $starting_mileage;
+    public $ending_mileage;
+    public $distance;
+    public $trip_fuel;
 
-   
-    //driver allowances 
+    //cargo vars
+    public $with_cargos = True;
+    public $selectedCargo;
+    public $cargos;
+    public $cargo;
+    public $cargo_type;
+    public $cargo_details;
+    public $weight;
+    public $quantity;
+    public $measurements;
+    public $measurement;
+    public $liquid_measurements;
+    public $solid_measurements;
+    public $litreage;
+    public $litreage_at_20;
 
-    public $allowances;
-    public $allowance_id;
-    public $allowance;
-    public $allowance_title;
-    public $allowance_description;
-    public $selectedAllowanceCurrency;
-    public $selected_allowance_currency;
-    public $allowance_amount;
-    public $allowance_category;
-    public $allowance_exchange_rate;
-    public $allowance_exchange_amount;
+    //freight vars
+    public $freight_calculation;
+    public $calculation_measurement;
+    public $currencies;
+    public $selectedCurrency;
+    public $selected_currency;
+    public $exchange_rate;
+    public $exchange_customer_freight;
+    public $exchange_transporter_freight;
+    
+    //rates
+    public $with_customer_rates;
+    public $defined_customer_rates;
+    public $defined_transporter_rates;
+    public $selectedDefinedCustomerRate;
+    public $rate;
+    public $transporter_rate;
+    public $freight;
+    public $transporter_freight;
+    public $transporter_agreement = False;
+    public $with_transporter_rates;
+    public $selectedDefinedTransporterRate;
+    public $payment_status;
+    public $comments;
 
-    public $allowable_loss_weight;
-    public $allowable_loss_litreage;
-    public $allowable_loss_quantity;
+    //trip expenses
+    public $trip_expenses = False;
+    public $expenses;
+    public $expense_id;
+    public $category;
+    public $expense_currency_id = [];
+    public $amount = [];
+    public $expense_exchange_rate;
+    public $expense_exchange_amount;
+    public $fuel_order = False;
 
-   
+    //fuel vars
+    public $selectedContainer;
+    public $containers;
+    public $selected_container;
+    public $fuel_category;
+    public $date;
+    public $selectedFuelCurrency;
+    public $selected_fuel_currency;
     public $fuel_exchange_rate;
     public $fuel_exchange_amount;
-    public $fuel_category;
+    public $fuel_quantity = 0 ;
+    public $horse_selected;
+    public $vehicle_selected;
+    public $fuel_tank_capacity;
+    public $fuel_balance;
+    public $horse_fuel_total;
+    public $vehicle_fuel_total;
+    public $container_balance;
     public $unit_price = 0;
     public $fuel_amount;
     public $transporter_price = 0;
     public $transporter_total;
-    public $fuel_profit;
-    public $fuel_quantity = 0 ;
     public $odometer;
-    public $container_balance;
-    public $date;
-    public $fillup = 1;
-    public $invoice_number;
+    public $fuel_comments;
+    public $customer_updates = False;
     public $fuel_consumption_loaded_standard;
     public $fuel_consumption_empty_standard;
-    public $fuel_distance;
-    public $file;
-    public $fuel_comments;
-    public $selected_container;
-    public $type = 'Trip';
+    public $fuel_profit;
 
-    public $user_id;
-    public $selectedContainer;
-    public $selectedCategory;
-    public $with_cargos = True;
-    public $fuel_order = False;
-    public $trip_expenses = False;
-    public $transporter_agreement = False;
-    
-    public $allowable_loss_percentage;
+
+    //Google Maps Api
+    public $duration;
+  
+    public $cost_of_sales = 0;
+    public $turnover = 0;
+    public $net_profit;
+    public $total_transporter_expenses = 0;
+    public $total_customer_expenses = 0;
+    public $total_expenses = 0;
+
+    public $rank_names;
+    public $role_names;
+    public $department_names;
     public $company;
     public $employee;
     public $user;
-
-// return trip details
-
-public $inputs = [];
-public $i = 1;
-public $n = 1;
-
-public function add($i)
-{
-    $i = $i + 1;
-    $this->i = $i;
-    array_push($this->inputs ,$i);
-}
-
-public function remove($i)
-{
-    unset($this->inputs[$i]);
-}
-
-public $border_inputs = [];
-public $b = 1;
-public $c = 1;
-
-public function borderAdd($b)
-{
-    $b = $b + 1;
-    $this->b = $b;
-    array_push($this->border_inputs ,$b);
-}
-
-public function borderRemove($b)
-{
-    unset($this->border_inputs[$b]);
-}
-
-public $trailer_inputs = [];
-public $t = 1;
-public $s = 1;
-
-public function trailerAdd($t)
-{
-    $t = $t + 1;
-    $this->t = $t;
-    array_push($this->trailer_inputs ,$t);
-}
-
-public function trailerRemove($t)
-{
-    unset($this->trailer_inputs[$t]);
-}
-
-public $allowance_inputs = [];
-public $x = 1;
-public $z = 1;
-
-public function addAllowance($x)
-{
-    $x = $x + 1;
-    $this->x = $x;
-    array_push($this->allowance_inputs ,$x);
-}
-
-public function removeAllowance($x)
-{
-    unset($this->allowance_inputs[$x]);
-}
+ 
+    
+ 
 
     public function updatedSelectedContainer($id)
     {
         if (!is_null($id) ) {
-            $this->container = Container::find($id);
+            $container = Container::find($id);
             $this->selected_container = Container::find($id);
-            $top_ups = TopUp::where('container_id',$id)->where('rate','!=', NULL)->where('rate','!=',"")->where('currency_id',$this->container->currency_id)->get();
+            $top_ups = TopUp::where('container_id',$id)->where('rate','!=', NULL)->where('rate','!=',"")->where('currency_id',$container->currency_id)->get();
             
-            $topups_price_total = TopUp::where('container_id',$this->container->id)->where('rate','!=', NULL)->where('rate','!=',"")->where('rate', 'REGEXP', '^[0-9]+$')->where('currency_id',$this->container->currency_id)->get()->sum('rate');
+            $topups_price_total = TopUp::where('container_id',$container->id)->where('rate','!=', NULL)->where('rate','!=',"")->where('rate', 'REGEXP', '^[0-9]+$')->where('currency_id',$container->currency_id)->get()->sum('rate');
             $topups_count = $top_ups->count();
             if ((isset($topups_count) && $topups_count > 0) && (isset($topups_price_total) && $topups_price_total > 0)) {
                 $this->unit_price = number_format($topups_price_total/$topups_count,2);
             }
             
-            $this->container_balance = $this->container->balance;
-            $this->selectedFuelCurrency = $this->container->currency_id;
+            $this->container_balance = $container->balance;
+            $this->selectedFuelCurrency = $container->currency_id;
         }
     }
 
@@ -400,7 +352,7 @@ public function removeAllowance($x)
     }
     public function updatedSelectedFuelCurrency($id){
         if(!is_null($id)){
-            $this->selected_currency = Currency::find($id);
+            $this->selected_fuel_currency = Currency::find($id);
         }
     }
     
@@ -545,6 +497,18 @@ public function removeAllowance($x)
     {
             if (!is_null($id)) {
                 $this->trip_type_name = TripType::find($id)->name;
+                if(isset($this->trip_type_name) && $this->trip_type_name === "Return"){
+
+                    $this->trips = Trip::select('id', 'trip_number', 'trip_ref', 'customer_id', 'horse_id', 'from', 'to', 'loading_point_id', 'offloading_point_id')
+                    ->with([
+                        'customer:id,name',
+                        'horse:id,registration_number',
+                        'loading_point:id,name',
+                        'offloading_point:id,name'
+                    ])
+                    ->orderBy('start_date', 'desc')
+                    ->get();
+                }
             }
     }
 
@@ -552,20 +516,20 @@ public function removeAllowance($x)
     public function updatedSelectedHorse($id)
     {
         if (!is_null($id) ) {
-            $this->horse = Horse::find($id);
+            $horse = Horse::find($id);
             $this->horse_selected = Horse::find($id);
            
             $assignment = Assignment::where('horse_id',$id)
                                     ->where('status', 1)->first();
 
-            $trailer_assignments = $this->horse->trailer_assignments->where('status',1);
+            $trailer_assignments = $horse->trailer_assignments->where('status',1);
                                     
-            $this->odometer = $this->horse->mileage;
-            $this->fuel_tank_capacity = $this->horse->fuel_tank_capacity;
-            $this->starting_mileage = $this->horse->mileage;
-            $this->fuel_consumption_loaded_standard = $this->horse->fuel_consumption_loaded_standard;
-            $this->fuel_consumption_empty_standard = $this->horse->fuel_consumption_empty_standard;
-            $this->fuel_balance = $this->horse->fuel_balance;
+            $this->odometer = $horse->mileage;
+            $this->fuel_tank_capacity = $horse->fuel_tank_capacity;
+            $this->starting_mileage = $horse->mileage;
+            $this->fuel_consumption_loaded_standard = $horse->fuel_consumption_loaded_standard;
+            $this->fuel_consumption_empty_standard = $horse->fuel_consumption_empty_standard;
+            $this->fuel_balance = $horse->fuel_balance;
             if (isset( $assignment)) {
                 $driver = $assignment->driver;
                 $this->driver_id = $driver->id;
@@ -584,19 +548,19 @@ public function removeAllowance($x)
     public function updatedSelectedVehicle($id)
     {
         if (!is_null($id) ) {
-            $this->vehicle = Vehicle::find($id);
+            $vehicle = Vehicle::find($id);
             $this->vehicle_selected = Vehicle::find($id);
             $this->selectedVehicle= $id;
            
             $assignment = VehicleAssignment::where('vehicle_id',$id)
                                     ->where('status', 1)->first();
                                     
-            $this->odometer = $this->vehicle->mileage;
-            $this->fuel_tank_capacity = $this->vehicle->fuel_tank_capacity;
-            $this->starting_mileage = $this->vehicle->mileage;
-            $this->fuel_consumption_loaded_standard = $this->vehicle->fuel_consumption_loaded_standard;
-            $this->fuel_consumption_empty_standard = $this->vehicle->fuel_consumption_empty_standard;
-            $this->fuel_balance = $this->vehicle->fuel_balance;
+            $this->odometer = $vehicle->mileage;
+            $this->fuel_tank_capacity = $vehicle->fuel_tank_capacity;
+            $this->starting_mileage = $vehicle->mileage;
+            $this->fuel_consumption_loaded_standard = $vehicle->fuel_consumption_loaded_standard;
+            $this->fuel_consumption_empty_standard = $vehicle->fuel_consumption_empty_standard;
+            $this->fuel_balance = $vehicle->fuel_balance;
             if (isset( $assignment)) {
                 $driver = $assignment->employee;
                 $this->driver_id = $driver->id;
@@ -782,28 +746,18 @@ public function removeAllowance($x)
 
     private function resetInputFields(){
         $this->allowance_title = '';
+        $this->allowance_currency_id = '';
     }
 
+   
     
-    public function storeTripGroup(){
-        $trip_group = new TripGroup;
-        $trip_group->name = $this->trip_group;
-        $trip_group->status = 1;
-        $trip_group->save();
-        $this->trip_group_id = $trip_group->id;
-        $this->dispatchBrowserEvent('hide-trip_groupModal');
-        $this->dispatchBrowserEvent('alert',[
-            'type'=>'success',
-            'message'=>"Trip Group Created Successfully Successfully!!"
-        ]);
-        
-    }
+   
     public function storeAllowance(){
 
         $allowance = new Allowance;
         $allowance->user_id =  $this->user->id;
         $allowance->name = $this->allowance_title;
-        $allowance->currency_id = $this->selectedAllowanceCurrency;
+        $allowance->currency_id = $this->allowance_currency_id;
         $allowance->amount = $this->allowance_amount;
         $allowance->description = $this->allowance_description;
         $allowance->save();
@@ -827,7 +781,6 @@ public function removeAllowance($x)
         $this->user = Auth::user();
         $this->employee =  $this->user->employee;
         $this->company = Company::with('currency')->find( $this->employee->company_id);
-        $this->allowable_loss_percentage = $this->company->allowable_loss_percentage;
         $this->liquid_measurements = Measurement::where('cargo_type','Liquid')->get();
         $this->solid_measurements = Measurement::where('cargo_type','Solid')->get(); 
         $this->emptyrun_destination = False;
@@ -842,11 +795,6 @@ public function removeAllowance($x)
         $this->allowances = Allowance::orderBy('name','asc')->get();
         $this->routes = Route::with('truck_stops:id,name')->where('status',1)->orderBy('name','asc')->get();
         $this->measurements = Measurement::orderBy('name','asc')->get();
-        $this->trips = Trip::query()->with(['breakdowns','breakdown_assignments','trip_destinations','trip_expenses','trip_locations','delivery_note','fuel:id,order_number','transporter:id,name','trip_type:id,name','border:id,name',
-        'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model',
-        'trailers:id,make,model,registration_number','driver.employee:id,name,surname','loading_point:id,name','offloading_point:id,name',
-        'route:id,name,rank','truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name','commission:id,commission,amount'])->orderBy('start_date','desc')->get();
-      
         $this->truck_stops = collect();
         $this->trip_fuel = 0;
         $this->with_customer_rates = "custom";
@@ -916,19 +864,17 @@ public function removeAllowance($x)
     ];
       protected $rules = [
           'customer_id' => 'required',
-          'selectedHorse' => 'required',
-          'selectedVehicle' => 'required',
+          'selectedHorse' => 'nullable',
+          'selectedVehicle' => 'nullable',
           'selectedTransporter' => 'required',
-          'trailer_id.0' => 'required',
-          'trailer_id.*' => 'required',
           'driver_id' => 'required',
           'selectedTripType' => 'required',
           'selectedCargo' => 'required',
           'selectedCurrency' => 'required',
           'selectedFrom' => 'required',
           'selectedTo' => 'required',
-          'litreage_at_20' => 'required',
-          'weight' => 'required',
+          'litreage_at_20' => 'nullable',
+          'weight' => 'nullable',
           'freight' => 'required',
           'start_date' => 'required',
           'manifest_number' => 'nullable|unique:trips,manifest_number,NULL,id,deleted_at,NULL|string|min:2',
@@ -936,14 +882,12 @@ public function removeAllowance($x)
           'cd1_number' => 'nullable|unique:trips,cd1_number,NULL,id,deleted_at,NULL|string|min:2',
           'selectedStatus' => 'required',
           'selectedContainer' => 'required',
+          'expense_id.*' => 'nullable|exists:expenses,id',
           'start_date' => 'required',
          
       ];
 
      
-      public function updatedSelectedAllowanceCurrency($id, $key){
-            $this->selected_allowance_currency[$key] = Currency::find($id);
-      }
 
       public function updatedSelectedDefinedCustomerRate($id){
             if(!is_null($id)){
@@ -1118,7 +1062,7 @@ public function removeAllowance($x)
 
     public function store(){
 
-        $this->validate();
+        // $this->validate();
         //start trip creation logic
         // try{
         DB::transaction(function () {
@@ -1131,7 +1075,6 @@ public function removeAllowance($x)
                 $trip->horse_id = $this->mode_of_transport === "Horse" ? $this->selectedHorse : null;
                 $trip->vehicle_id = $this->mode_of_transport === "Vehicle" ? $this->selectedVehicle : null;
                 $trip->transporter_id = $this->selectedTransporter;
-                $trip->quotation_id = $this->selectedQuotation;
                 $trip->trip_group_id = $this->trip_group_id ?: null;
                 $trip->agent_id = $this->agent_id ?: null;
                 $trip->customer_updates = $this->customer_updates;
@@ -1168,9 +1111,6 @@ public function removeAllowance($x)
                 $trip->end_date = $this->end_date;
                 $trip->rate = $this->rate;
                 $trip->transporter_rate = $this->transporter_rate;
-                $trip->allowable_loss_weight = $this->allowable_loss_weight;
-                $trip->allowable_loss_litreage = $this->allowable_loss_litreage;
-                $trip->allowable_loss_quantity = $this->allowable_loss_quantity;
                 $trip->quantity = $this->quantity;
                 $trip->litreage = $this->litreage;
                 $trip->litreage_at_20 = $this->litreage_at_20;
@@ -1186,7 +1126,6 @@ public function removeAllowance($x)
                 $trip->payment_status = $this->payment_status;
                 $trip->trip_status = $this->selectedStatus;
                 $trip->trip_status_date = $this->start_date;
-                $trip->stops = $this->stops;
                 $trip->route_id = $this->selectedRoute;
                 $trip->distance = $this->distance;
                 $trip->comments = $this->comments;
@@ -1436,7 +1375,8 @@ public function removeAllowance($x)
                         $trip_expense = new TripExpense;
                         $trip_expense->user_id = $this->user->id;
                         $trip_expense->trip_id = $trip->id;
-                        $trip_expense->expense_id = $this->expense_id[$key] ?? null;
+                        $expenseId = $this->expense_id[$key] ?? null;
+                        $trip_expense->expense_id = (is_null($expenseId) || Expense::where('id', $expenseId)->exists()) ? $expenseId : null;
                         $trip_expense->currency_id = $this->expense_currency_id[$key] ?? null;
                         $trip_expense->category = $this->category[$key] ?? null;
                         $trip_expense->amount = $this->amount[$key] ?? 0;
@@ -1499,7 +1439,7 @@ public function removeAllowance($x)
                     foreach ($notifications as $notification) {
                         if (isset($notification->email)) {   
                             Mail::to($notification->email)->send(new PendingNotificationEmails($company, $notification, $trip));
-                        }elseif($notification->employee){
+                        }elseif(isset($notification->employee->email)){
                             Mail::to($notification->employee->email)->send(new PendingNotificationEmails($company, $notification, $trip));
                         }
                     
@@ -1527,11 +1467,6 @@ public function removeAllowance($x)
       }
       public function updatedWeight(){
 
-        if (isset($this->allowable_loss_percentage) && is_numeric($this->allowable_loss_percentage)) {
-            if ($this->weight != null && $this->weight != "" && is_numeric($this->weight)) {
-                $this->allowable_loss_weight =  $this->weight * ($this->allowable_loss_percentage/100);
-            }
-        }
         $this->calculateFreight();
       }
       public function updatedFreightCalculation(){
@@ -1541,19 +1476,9 @@ public function removeAllowance($x)
           $this->calculateFreight();
       }
       public function updatedQuantity(){
-        if (isset($this->allowable_loss_percentage) && is_numeric($this->allowable_loss_percentage)) {
-            if ($this->quantity != null && $this->quantity != "" && is_numeric($this->quantity)) {
-                $this->allowable_loss_quantity =  $this->quantity * ($this->allowable_loss_percentage/100);
-            }
-        }
           $this->calculateFreight();
       }
       public function updatedLitreageAt20(){
-        if (isset($this->allowable_loss_percentage) && is_numeric($this->allowable_loss_percentage)) {
-            if ($this->litreage_at_20 != null && $this->litreage_at_20 != "" && is_numeric($this->litreage_at_20)) {
-                $this->allowable_loss_litreage =  $this->litreage_at_20 * ($this->allowable_loss_percentage/100);
-            }
-        }
           $this->calculateFreight();
       }
 
@@ -1739,10 +1664,10 @@ public function removeAllowance($x)
     public function updatedSearchTrip(){
 
         if (isset($this->searchTrip)) {
-            $this->trips = Trip::query()->with(['breakdowns','breakdown_assignments','trip_destinations','trip_expenses','trip_locations','delivery_note','fuel:id,order_number','transporter:id,name','trip_type:id,name','border:id,name',
-            'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model',
-            'trailers:id,make,model,registration_number','driver.employee:id,name,surname','loading_point:id,name','offloading_point:id,name',
-            'route:id,name,rank','truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name','commission:id,commission,amount'])
+            $this->trips = Trip::query()->with([ 'customer:id,name',
+            'horse:id,registration_number',
+            'loading_point:id,name',
+            'offloading_point:id,name'])
             ->where('trip_number', 'like', '%'.$this->searchTrip.'%')
             ->orWhere('trip_ref', 'like', '%'.$this->searchTrip.'%')
             ->orWhereHas('horse', function ($query) {
@@ -1841,9 +1766,7 @@ public function removeAllowance($x)
     }
 
 
-    public function updatedFuelBalance(){
-        $this->calculateFuelTotal();
-    }
+    
     public function updatedFuelQuantity(){
         $this->calculateFuelTotal();
         $this->calculateFuelAmount();
@@ -1856,9 +1779,7 @@ public function removeAllowance($x)
                 $this->horse_fuel_total = $this->fuel_balance + $this->fuel_quantity;    
             }elseif(!is_null($this->selectedHorse)){
                 $this->vehicle_fuel_total = $this->fuel_balance + $this->fuel_quantity;    
-            }
-             
-              
+            }    
         }  
     }
 

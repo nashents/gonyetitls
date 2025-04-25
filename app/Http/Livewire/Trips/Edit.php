@@ -158,8 +158,6 @@ class Edit extends Component
 
     public $borders;
     public $selectedBorder;
-    public $quotations;
-    public $selectedQuotation;
     public $cargos;
     public $cargo;
     public $cargo_type;
@@ -235,10 +233,6 @@ class Edit extends Component
     public $selectedAllowanceCurrency;
     public $allowance_amount;
 
-    public $allowable_loss_weight;
-    public $allowable_loss_litreage;
-    public $allowable_loss_quantity;
-
    
     public $fuel_exchange_rate;
     public $fuel_exchange_amount;
@@ -260,10 +254,7 @@ class Edit extends Component
     public $file;
     public $fuel_comments;
     public $selected_container;
-    public $type = 'Trip';
-  
-
-    public $user_id;
+ 
     public $selectedContainer;
     public $selectedCategory;
     public $with_cargos;
@@ -278,88 +269,72 @@ class Edit extends Component
     public $employee;
     public $user;
 
-// return trip details
-
-public $inputs = [];
-public $i = 1;
-public $n = 1;
-
-public function add($i)
-{
-    $i = $i + 1;
-    $this->i = $i;
-    array_push($this->inputs ,$i);
-}
-
-public function remove($i)
-{
-    unset($this->inputs[$i]);
-}
-
-public $border_inputs = [];
-public $b = 1;
-public $c = 1;
-
-public function borderAdd($b)
-{
-    $b = $b + 1;
-    $this->b = $b;
-    array_push($this->border_inputs ,$b);
-}
-
-public function borderRemove($b)
-{
-    unset($this->border_inputs[$b]);
-}
-
-public $trailer_inputs = [];
-public $t = 1;
-public $s = 1;
-
-public function trailerAdd($t)
-{
-    $t = $t + 1;
-    $this->t = $t;
-    array_push($this->trailer_inputs ,$t);
-}
-
-public function trailerRemove($t)
-{
-    unset($this->trailer_inputs[$t]);
-}
-
-public $allowance_inputs = [];
-public $x = 1;
-public $z = 1;
-
-public function addAllowance($x)
-{
-    $x = $x + 1;
-    $this->x = $x;
-    array_push($this->allowance_inputs ,$x);
-}
-
-public function removeAllowance($x)
-{
-    unset($this->allowance_inputs[$x]);
-}
 
 
+    public $inputs = [];
+    public $i = 1;
+    public $n = 1;
 
-
-    public function storeTripGroup(){
-        $trip_group = new TripGroup;
-        $trip_group->name = $this->trip_group;
-        $trip_group->status = 1;
-        $trip_group->save();
-        $this->trip_group_id = $trip_group->id;
-        $this->dispatchBrowserEvent('hide-trip_groupModal');
-        $this->dispatchBrowserEvent('alert',[
-            'type'=>'success',
-            'message'=>"Trip Group Created Successfully Successfully!!"
-        ]);
-        
+    public function add($i)
+    {
+        $i = $i + 1;
+        $this->i = $i;
+        array_push($this->inputs ,$i);
     }
+
+    public function remove($i)
+    {
+        unset($this->inputs[$i]);
+    }
+
+    public $border_inputs = [];
+    public $b = 1;
+    public $c = 1;
+
+    public function borderAdd($b)
+    {
+        $b = $b + 1;
+        $this->b = $b;
+        array_push($this->border_inputs ,$b);
+    }
+
+    public function borderRemove($b)
+    {
+        unset($this->border_inputs[$b]);
+    }
+
+    public $trailer_inputs = [];
+    public $t = 1;
+    public $s = 1;
+
+    public function trailerAdd($t)
+    {
+        $t = $t + 1;
+        $this->t = $t;
+        array_push($this->trailer_inputs ,$t);
+    }
+
+    public function trailerRemove($t)
+    {
+        unset($this->trailer_inputs[$t]);
+    }
+
+    public $allowance_inputs = [];
+    public $x = 1;
+    public $z = 1;
+
+    public function addAllowance($x)
+    {
+        $x = $x + 1;
+        $this->x = $x;
+        array_push($this->allowance_inputs ,$x);
+    }
+
+    public function removeAllowance($x)
+    {
+        unset($this->allowance_inputs[$x]);
+    }
+
 
     public function updatedSelectedTrip($id){
         if(!is_null($id)){
@@ -555,6 +530,19 @@ public function removeAllowance($x)
     {
             if (!is_null($id)) {
                 $this->trip_type_name = TripType::find($id)->name;
+
+                if(isset($this->trip_type_name) && $this->trip_type_name === "Return"){
+
+                    $this->trips = Trip::select('id', 'trip_number', 'trip_ref', 'customer_id', 'horse_id', 'from', 'to', 'loading_point_id', 'offloading_point_id')
+                    ->with([
+                        'customer:id,name',
+                        'horse:id,registration_number',
+                        'loading_point:id,name',
+                        'offloading_point:id,name'
+                    ])
+                    ->orderBy('start_date', 'desc')
+                    ->get();
+                }
              
             }
     }
@@ -642,15 +630,7 @@ public function removeAllowance($x)
         }
     }
 
-    public function updatedSelectedQuotation($quotation){
-        if (!is_null($quotation)) {
-          $quotation = Quotation::find($quotation);
-          if (isset($quotation)) {
-            $this->customer_id = $quotation->customer ? $quotation->customer->id : "";
-          }
-          
-        }
-}
+
 
     public function updatedSelectedTransporter($id)
     {
@@ -767,10 +747,6 @@ public function removeAllowance($x)
         $this->user = Auth::user();
         $this->employee =  $this->user->employee;
         $this->company = Company::with('currency')->find( $this->employee->company_id);
-        $this->trips = Trip::query()->with(['breakdowns','breakdown_assignments','trip_destinations','trip_expenses','trip_locations','delivery_note','fuel:id,order_number','transporter:id,name','trip_type:id,name','border:id,name',
-        'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model',
-        'trailers:id,make,model,registration_number','driver.employee:id,name,surname','loading_point:id,name','offloading_point:id,name',
-        'route:id,name,rank','truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name','commission:id,commission,amount'])->where('id','!=', $this->trip->id)->orderBy('start_date','desc')->get();
         $this->defined_customer_rates = Rate::where('category','Customer')->with('loading_point:id,name','offloading_point:id,name')->latest()->get();
         $this->defined_transporter_rates = Rate::where('category','Transporter')->with('loading_point:id,name','offloading_point:id,name')->latest()->get();
         $this->containers = Container::where('balance','>',0)->orderBy('name','asc')->latest()->get();
@@ -778,7 +754,6 @@ public function removeAllowance($x)
         $this->offloading_points = OffloadingPoint::orderBy('name','asc')->get();
         $this->loading_points = LoadingPoint::orderBy('name','asc')->get();
         $this->trip_groups = TripGroup::where('status',1)->latest()->get();
-        $this->quotations = Quotation::orderBy('quotation_number','desc')->get();
         $this->routes = Route::with('truck_stops:id,name')->orderBy('name','asc')->get();
         $this->agents = Agent::orderBy('name','asc')->get();
         $this->truck_stops = TruckStop::orderBy('name','asc')->get();
@@ -990,11 +965,7 @@ public function removeAllowance($x)
          $this->loading_point_id = $this->trip->loading_point_id;
          $this->offloading_point_id = $this->trip->offloading_point_id;
          $this->selectedTo = $this->trip->to;
-         $this->allowable_loss_weight = $this->trip->allowable_loss_weight;
-         $this->allowable_loss_litreage = $this->trip->allowable_loss_litreage;
-         $this->allowable_loss_quantity = $this->trip->allowable_loss_quantity;
          $this->start_date = $this->trip->start_date;
-         $this->selectedQuotation = $this->trip->quotation_id;
          $this->end_date = $this->trip->end_date;
          $this->weight = $this->trip->weight;
          $this->litreage = $this->trip->litreage;
@@ -1342,9 +1313,7 @@ public function removeAllowance($x)
 
 
       public function update(){
-
-        $this->validate();
-        
+ 
         DB::transaction(function () {
 
         //   try{
@@ -1392,9 +1361,6 @@ public function removeAllowance($x)
           $trip->end_date = $this->end_date;
           $trip->rate = $this->rate;
           $trip->transporter_rate = $this->transporter_rate;
-          $trip->allowable_loss_weight = $this->allowable_loss_weight;
-          $trip->allowable_loss_litreage = $this->allowable_loss_litreage;
-          $trip->allowable_loss_quantity = $this->allowable_loss_quantity;
           $trip->quantity = $this->quantity;
           $trip->litreage = $this->litreage;
           $trip->litreage_at_20 = $this->litreage_at_20;
@@ -1942,30 +1908,17 @@ public function removeAllowance($x)
     }
     public function updatedWeight(){
 
-        if (isset($this->allowable_loss_percentage) && is_numeric($this->allowable_loss_percentage)) {
-            if ($this->weight != null && $this->weight != "" && is_numeric($this->weight)) {
-                $this->allowable_loss_weight =  $this->weight * ($this->allowable_loss_percentage/100);
-            }
-        }
         $this->calculateFreight();
     }
     public function updatedFreightCalculation(){
         $this->calculateFreight();
     }
     public function updatedQuantity(){
-        if (isset($this->allowable_loss_percentage) && is_numeric($this->allowable_loss_percentage)) {
-            if ($this->quantity != null && $this->quantity != "" && is_numeric($this->quantity)) {
-                $this->allowable_loss_quantity =  $this->quantity * ($this->allowable_loss_percentage/100);
-            }
-        }
+       
         $this->calculateFreight();
     }
     public function updatedLitreageAt20(){
-        if (isset($this->allowable_loss_percentage) && is_numeric($this->allowable_loss_percentage)) {
-            if ($this->litreage_at_20 != null && $this->litreage_at_20 != "" && is_numeric($this->litreage_at_20)) {
-                $this->allowable_loss_litreage =  $this->litreage_at_20 * ($this->allowable_loss_percentage/100);
-            }
-        }
+       
         $this->calculateFreight();
     }
 
@@ -2077,10 +2030,10 @@ public function removeAllowance($x)
         public function updatedSearchTrip(){
 
             if (isset($this->searchTrip)) {
-                $this->trips = Trip::query()->with(['breakdowns','breakdown_assignments','trip_destinations','trip_expenses','trip_locations','delivery_note','fuel:id,order_number','transporter:id,name','trip_type:id,name','border:id,name',
-                'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model',
-                'trailers:id,make,model,registration_number','driver.employee:id,name,surname','loading_point:id,name','offloading_point:id,name',
-                'route:id,name,rank','truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name','commission:id,commission,amount'])
+                $this->trips = Trip::query()->with([ 'customer:id,name',
+                'horse:id,registration_number',
+                'loading_point:id,name',
+                'offloading_point:id,name'])
                 ->where('trip_number', 'like', '%'.$this->searchTrip.'%')
                 ->orWhere('trip_ref', 'like', '%'.$this->searchTrip.'%')
                 ->orWhereHas('horse', function ($query) {
