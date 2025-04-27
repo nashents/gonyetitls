@@ -1324,7 +1324,6 @@ class Edit extends Component
           $trip->horse_id = $this->mode_of_transport === "Horse" ? $this->selectedHorse : null;
           $trip->vehicle_id = $this->mode_of_transport === "Vehicle" ? $this->selectedVehicle : null;
           $trip->transporter_id = $this->selectedTransporter;
-          $trip->quotation_id = $this->selectedQuotation;
           $trip->trip_group_id = $this->trip_group_id ?: null;
           $trip->agent_id = $this->agent_id ?: null;
           $trip->customer_updates = $this->customer_updates;

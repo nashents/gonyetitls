@@ -328,7 +328,11 @@
                         <tbody>
                             @forelse ($driver_allowances as $driver_allowance)
                           <tr>
-                            <td>{{$driver_allowance->trip ? $driver_allowance->trip->trip_number : ""}} <strong>From:</strong> {{$driver_allowance->trip->loading_point ? $driver_allowance->trip->loading_point->name : ""}} <strong>To:</strong> {{$driver_allowance->trip->offloading_point ? $driver_allowance->trip->offloading_point->name : ""}}</td>
+                            <td>
+                                @if ($driver_allowance->trip)
+                                {{$driver_allowance->trip ? $driver_allowance->trip->trip_number : ""}} <strong>From:</strong> {{$driver_allowance->trip->loading_point ? $driver_allowance->trip->loading_point->name : ""}} <strong>To:</strong> {{$driver_allowance->trip->offloading_point ? $driver_allowance->trip->offloading_point->name : ""}}
+                                @endif
+                            </td>
                             <td>{{$driver_allowance->trip ? $driver_allowance->trip->start_date : ""}} </td>
                             <td>{{$driver_allowance->allowance ? $driver_allowance->allowance->name : ""}}</td>                            
                             <td>{{$driver_allowance->currency ? $driver_allowance->currency->name : ""}}</td>  
@@ -394,7 +398,11 @@
                           <tr>
                             <td>{{$recovery->recovery_number}}</td>
                             <td>{{$recovery->date}}</td>
-                            <td>{{$recovery->trip ? $recovery->trip->trip_number : ""}} <strong>From:</strong> {{$recovery->trip->loading_point ? $recovery->trip->loading_point->name : ""}} <strong>To:</strong> {{$recovery->trip->offloading_point ? $recovery->trip->offloading_point->name : ""}}</td>
+                            <td>
+                                @if ($recovery->trip)
+                                {{$recovery->trip ? $recovery->trip->trip_number : ""}} <strong>From:</strong> {{$recovery->trip->loading_point ? $recovery->trip->loading_point->name : ""}} <strong>To:</strong> {{$recovery->trip->offloading_point ? $recovery->trip->offloading_point->name : ""}}        
+                                @endif
+                            </td>
                             <td>{{$recovery->deduction ? $recovery->deduction->name : ""}}</td>
                             <td>{{$recovery->currency ? $recovery->currency->name : ""}}</td>  
                             <td>
