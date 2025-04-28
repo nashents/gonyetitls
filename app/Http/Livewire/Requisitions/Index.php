@@ -219,7 +219,7 @@ class Index extends Component
                 ])
                 ->whereYear('start_date',date('Y'))
                 ->where('authorization','approved')
-                ->where('status','!=','Cancelled')
+                ->where('trip_status','!=','Cancelled')
                 ->orderBy('start_date', 'desc')
                 ->get();
             }elseif($value == 'Booking'){
