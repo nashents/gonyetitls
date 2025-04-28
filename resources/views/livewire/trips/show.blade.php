@@ -23,13 +23,13 @@
 
                             <!-- Nav tabs -->
                             <ul class="nav nav-tabs border-bottom border-primary" role="tablist">
-                                <li role="presentation" class="{{$active_tab == "trip" ? "active" : "" }}"><a class="" href="#{{$active_tab}}" aria-controls="trip" role="tab" data-toggle="tab" wire:click.prevent="setActive('trip')">Trip Details</a></li>
-                                <li role="presentation" class="{{$active_tab == "destinations" ? "active" : "" }}"><a class="" href="#destinations" aria-controls="destinations" role="tab" data-toggle="tab" wire:click.prevent="setActive('destinations')">Offloading Points</a></li>
-                                <li role="presentation" class="{{$active_tab == "documents" ? "active" : "" }}"><a class="" href="#documents" aria-controls="documents" role="tab" data-toggle="tab" wire:click.prevent="setActive('documents')">Trip Documents</a></li>
-                                <li role="presentation" class="{{$active_tab == "expenses" ? "active" : "" }}"><a class="" href="#expenses" aria-controls="expenses" role="tab" data-toggle="tab" wire:click.prevent="setActive('expenses')">Trip Expenses</a></li>
-                                <li role="presentation" class="{{$active_tab == "delivery_note" ? "active" : "" }}"><a class="" href="#delivery_note" aria-controls="delivery_note" role="tab" data-toggle="tab" wire:click.prevent="setActive('delivery_note')">Offloading Details</a></li>
-                                <li role="presentation" class="{{$active_tab == "locations" ? "active" : "" }}"><a class="" href="#locations" aria-controls="locations" role="tab" data-toggle="tab" wire:click.prevent="setActive('locations')">Location Updates</a></li>
-                                <li role="presentation" class="{{$active_tab == "breakdowns" ? "active" : "" }}"><a class="" href="#breakdowns" aria-controls="breakdowns" role="tab" data-toggle="tab" wire:click.prevent="setActive('breakdowns')">Incident(s)</a></li>
+                                <li role="presentation" class="{{$active_tab == "trip" ? "active" : "" }}"><a class="" href="#{{$active_tab}}" aria-controls="trip" role="tab" data-toggle="tab" >Trip Details</a></li>
+                                <li role="presentation" class="{{$active_tab == "destinations" ? "active" : "" }}"><a class="" href="#destinations" aria-controls="destinations" role="tab" data-toggle="tab" >Offloading Points</a></li>
+                                <li role="presentation" class="{{$active_tab == "documents" ? "active" : "" }}"><a class="" href="#documents" aria-controls="documents" role="tab" data-toggle="tab" >Trip Documents</a></li>
+                                <li role="presentation" class="{{$active_tab == "expenses" ? "active" : "" }}"><a class="" href="#expenses" aria-controls="expenses" role="tab" data-toggle="tab" >Trip Expenses</a></li>
+                                <li role="presentation" class="{{$active_tab == "delivery_note" ? "active" : "" }}"><a class="" href="#delivery_note" aria-controls="delivery_note" role="tab" data-toggle="tab" >Offloading Details</a></li>
+                                <li role="presentation" class="{{$active_tab == "locations" ? "active" : "" }}"><a class="" href="#locations" aria-controls="locations" role="tab" data-toggle="tab" >Location Updates</a></li>
+                                <li role="presentation" class="{{$active_tab == "breakdowns" ? "active" : "" }}"><a class="" href="#breakdowns" aria-controls="breakdowns" role="tab" data-toggle="tab" >Incident(s)</a></li>
                             </ul>
                             <!-- Tab panes -->
                             <div class="tab-content bg-white pt-30">
@@ -462,6 +462,7 @@
                                                             <tr>
                                                                 <th scope="row">Acutual Distance</th>
                                                                 <td>
+                                                                    
                                                                     {{$actual_distance ? $actual_distance." Kms" : ""}}
                                                                 </td>
                                                             </tr>

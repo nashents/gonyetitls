@@ -206,7 +206,7 @@ class Show extends Component
         $this->user = Auth::user();
         $this->employee =  $this->user->employee;
         $this->company = $this->employee->company;
-      
+        $this->default_currency = $this->company->currency;
         $departments = $this->employee->departments;
         foreach($departments as $department){
             $this->department_names[] = $department->name;
@@ -219,12 +219,56 @@ class Show extends Component
         foreach($ranks as $rank){
             $this->rank_names[] = $rank->name;
         }
+      
 
         $this->trip_id = $id;
-        $this->trip = Trip::find($id);
+        $this->trip = Trip::with(['breakdowns','breakdown_assignments','trip_destinations','trip_expenses','trip_locations','delivery_note','fuel:id,order_number','transporter:id,name','trip_type:id,name','border:id,name',
+        'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model',
+        'trailers:id,make,model,registration_number','driver.employee:id,name,surname','loading_point:id,name','offloading_point:id,name',
+        'route:id,name,rank','truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name','commission:id,commission,amount'])->find($id);
+     
+      
+        $this->initial_fuel = $this->trip->fuels->where('fillup',1)->first();
+        $this->emptyrun_origin  = EmptyRun::where('trip_id',$this->trip->id)->where('emptyrun_origin',True)->first();
+        $this->emptyrun_destination  = EmptyRun::where('trip_id',$this->trip->id)->where('emptyrun_destination',True)->first();
+        $this->from = Destination::with('country:id,name')->find($this->trip->from);
+        $this->to = Destination::with('country:id,name')->find($this->trip->to);
+      
         $this->delivery_note = $this->trip->delivery_note;
+
+        $this->pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
+
+        if ($this->delivery_note){
+            if ($this->delivery_note->offloaded_date){
+
+                if (preg_match($this->pattern, $this->delivery_note->offloaded_date)){
+                    $this->actual_offloading_date = Carbon::parse($this->delivery_note->offloaded_date)->format('d M Y g:i A');
+                }else{
+                    $this->actual_offloading_date = $this->delivery_note->offloaded_date;
+                }
+               
+
+            }
+        }
+        if ((isset($this->trip->starting_mileage) && $this->trip->starting_mileage > 0) && (isset($this->trip->ending_mileage) && $this->trip->ending_mileage > 0)) {
+            $this->actual_distance =   $this->trip->ending_mileage - $this->trip->starting_mileage;
+        }
+
+        if(isset($this->actual_distance) & is_numeric($this->actual_distance) && $this->actual_distance > 0){
+            if (is_numeric($this->trip->cost_of_sales) && $this->trip->cost_of_sales > 0) {
+                $this->cpk = $this->trip->cost_of_sales / $this->actual_distance;
+            }
+        }
+
+        if (preg_match($this->pattern, $this->trip->end_date) ){
+            $this->estimated_offloading_date =  Carbon::parse($this->trip->end_date)->format('d M Y g:i A');
+        }else{
+            $this->estimated_offloading_date = $this->trip->end_date;
+        }
+
         $this->authorizer = User::find($this->trip->authorized_by_id);
         $this->trip_expenses = $this->trip->trip_expenses;
+        
         if(isset($this->trip_expenses)){
             foreach ($this->trip_expenses as $expense) {
                 
@@ -254,9 +298,7 @@ class Show extends Component
   
     }
 
-    public function setActive($tab){
-        $this->active_tab = $tab;
-    }
+   
 
     public function billNumber(){
 
@@ -918,297 +960,10 @@ class Show extends Component
       }
 
 
+
+
     public function render()
     {
-
-        if ($this->freight_calculation == "rate_weight") {
-            if ($this->cargo_type == "Solid") {
-                if(is_numeric($this->offloaded_rate) && is_numeric($this->offloaded_weight)){
-                    $this->offloaded_freight = $this->offloaded_rate * $this->offloaded_weight;
-                }
-               
-            }elseif($this->cargo_type == "Liquid"){
-                if(is_numeric($this->offloaded_rate) && (is_numeric($this->offloaded_litreage_at_20) || is_numeric($this->offloaded_litreage))){
-                    if($this->calculation_measurement == "litreage_at_20"){
-                        $this->offloaded_freight = $this->offloaded_rate * $this->offloaded_litreage_at_20;
-                    }elseif($this->calculation_measurement == "litreage_at_ambient"){
-                        $this->offloaded_freight = $this->offloaded_rate * $this->offloaded_litreage;
-                    }
-                   
-                }
-                
-            }
-        }
-        elseif ($this->freight_calculation == "rate_distance") {
-            if (is_numeric($this->offloaded_rate)  && is_numeric($this->offloaded_distance)) {
-                $this->offloaded_freight = $this->offloaded_rate * $this->offloaded_distance;
-            }
-        }
-        elseif ($this->freight_calculation == "rate_weight_distance") {
-            if ($this->cargo_type == "Solid") {
-                if(is_numeric($this->offloaded_rate) && is_numeric($this->offloaded_weight) && is_numeric($this->offloaded_distance)){
-                    $this->offloaded_freight = $this->offloaded_rate * $this->offloaded_weight * $this->offloaded_distance;
-                }
-               
-            }elseif($this->cargo_type == "Liquid"){
-                if(is_numeric($this->offloaded_rate) && (is_numeric($this->offloaded_litreage_at_20) || is_numeric($this->offloaded_litreage) ) && is_numeric($this->offloaded_distance)){
-                    if($this->calculation_measurement == "litreage_at_20"){
-                        $this->offloaded_freight = $this->offloaded_rate * $this->offloaded_litreage_at_20 * $this->offloaded_distance ;
-                    }elseif($this->calculation_measurement == "litreage_at_ambient"){
-                        $this->offloaded_freight = $this->offloaded_rate * $this->offloaded_litreage * $this->offloaded_distance ;
-                    }
-                   
-                }
-               
-            }
-        }
-        elseif ($this->freight_calculation == "flat_rate") {
-            if ($this->cargo_type == "Solid") {
-                if(is_numeric($this->offloaded_rate)){
-                    $this->offloaded_freight = $this->offloaded_rate;
-                }
-               
-            }elseif($this->cargo_type == "Liquid"){
-                if(is_numeric($this->offloaded_rate)){
-                    $this->offloaded_freight = $this->offloaded_rate;
-                }
-            }   
-        }
-
-        if ($this->freight_calculation == "rate_weight") {
-            if ($this->cargo_type == "Solid") {
-                if(is_numeric($this->transporter_offloaded_rate) && is_numeric($this->offloaded_weight)){
-                    $this->transporter_offloaded_freight = $this->transporter_offloaded_rate * $this->offloaded_weight;
-                }
-               
-            }elseif($this->cargo_type == "Liquid"){
-                if(is_numeric($this->transporter_offloaded_rate) && (is_numeric($this->offloaded_litreage_at_20) || is_numeric($this->offloaded_litreage) )){
-                    if($this->calculation_measurement == "litreage_at_20"){
-                        $this->transporter_offloaded_freight = $this->transporter_offloaded_rate * $this->offloaded_litreage_at_20;
-                    }elseif($this->calculation_measurement == "litreage_at_ambient"){
-                        $this->transporter_offloaded_freight = $this->transporter_offloaded_rate * $this->offloaded_litreage;
-                    }
-                 
-                }
-              
-            } 
-        }
-        elseif ($this->freight_calculation == "rate_distance") {
-            if(is_numeric($this->transporter_offloaded_rate) && is_numeric($this->offloaded_distance)){
-                $this->transporter_offloaded_freight = $this->transporter_offloaded_rate * $this->offloaded_distance;
-            }
-        }
-        elseif ($this->freight_calculation == "rate_weight_distance") {
-            if ($this->cargo_type == "Solid") {
-                if(is_numeric($this->transporter_offloaded_rate) && is_numeric($this->offloaded_weight) && is_numeric($this->offloaded_distance)){
-                    $this->transporter_offloaded_freight = $this->transporter_offloaded_rate * $this->offloaded_weight * $this->offloaded_distance;
-                }
-              
-            }elseif($this->cargo_type == "Liquid"){
-                if(is_numeric($this->transporter_offloaded_rate) && (is_numeric($this->offloaded_litreage_at_20) || is_numeric($this->offloaded_litreage) ) && is_numeric($this->offloaded_distance)){
-                    if($this->calculation_measurement == "litreage_at_20"){
-                        $this->transporter_offloaded_freight = $this->transporter_offloaded_rate * $this->offloaded_litreage_at_20 * $this->offloaded_distance;
-                    }elseif($this->calculation_measurement == "litreage_at_ambient"){
-                        $this->transporter_offloaded_freight = $this->transporter_offloaded_rate * $this->offloaded_litreage * $this->offloaded_distance;
-                    } 
-                }
-              
-            } 
-        }
-        elseif ($this->freight_calculation == "flat_rate") {
-            $this->transporter_offloaded_freight = $this->transporter_offloaded_rate;
-        }
-
-        ///loaded calculations
-
-        if ($this->freight_calculation == "rate_weight") {
-            if ($this->cargo_type == "Solid") {
-                if(is_numeric($this->loaded_rate) && is_numeric($this->loaded_weight)){
-                    $this->loaded_freight = $this->loaded_rate * $this->loaded_weight;
-                }
-               
-            }elseif($this->cargo_type == "Liquid"){
-                if(is_numeric($this->offloaded_rate) && (is_numeric($this->loaded_litreage_at_20) || is_numeric($this->loaded_litreage))){
-                    if($this->calculation_measurement == "litreage_at_20"){
-                        $this->loaded_freight = $this->loaded_rate * $this->loaded_litreage_at_20;
-                    }elseif($this->calculation_measurement == "litreage_at_ambient"){
-                        $this->loaded_freight = $this->loaded_rate * $this->loaded_litreage;
-                    } 
-                   
-                }
-                
-            }
-        }
-        elseif ($this->freight_calculation == "rate_distance") {
-            if (is_numeric($this->loaded_rate)  && is_numeric($this->distance)) {
-                $this->loaded_freight = $this->loaded_rate * $this->distance;
-            }
-        }
-        elseif ($this->freight_calculation == "rate_weight_distance") {
-            if ($this->cargo_type == "Solid") {
-                if(is_numeric($this->loaded_rate) && is_numeric($this->loaded_weight) && is_numeric($this->distance)){
-                    $this->loaded_freight = $this->loaded_rate * $this->loaded_weight * $this->distance;
-                }
-               
-            }elseif($this->cargo_type == "Liquid"){
-                if(is_numeric($this->loaded_rate) && (is_numeric($this->loaded_litreage_at_20) || is_numeric($this->loaded_litreage)) && is_numeric($this->distance)){
-                    if($this->calculation_measurement == "litreage_at_20"){
-                        $this->loaded_freight = $this->loaded_rate * $this->loaded_litreage_at_20 * $this->distance ;
-                    }elseif($this->calculation_measurement == "litreage_at_ambient"){
-                        $this->loaded_freight = $this->loaded_rate * $this->loaded_litreage * $this->distance ;
-                    } 
-                   
-                }
-               
-            }
-        }
-        elseif ($this->freight_calculation == "flat_rate") {
-            if ($this->cargo_type == "Solid") {
-                if(is_numeric($this->loaded_rate)){
-                    $this->loaded_freight = $this->loaded_rate;
-                }
-               
-            }elseif($this->cargo_type == "Liquid"){
-                if(is_numeric($this->offloaded_rate)){
-                    $this->loaded_freight = $this->loaded_rate;
-                }
-            }   
-        }
-
-        if ($this->freight_calculation == "rate_weight") {
-            if ($this->cargo_type == "Solid") {
-                if(is_numeric($this->transporter_loaded_rate) && is_numeric($this->loaded_weight)){
-                    $this->transporter_loaded_freight = $this->transporter_loaded_rate * $this->loaded_weight;
-                }
-               
-            }elseif($this->cargo_type == "Liquid"){
-                if(is_numeric($this->transporter_loaded_rate) && (is_numeric($this->loaded_litreage_at_20) || is_numeric($this->loaded_litreage))){
-                    if($this->calculation_measurement == "litreage_at_20"){
-                        $this->transporter_loaded_freight = $this->transporter_loaded_rate * $this->loaded_litreage_at_20;
-                    }elseif($this->calculation_measurement == "litreage_at_ambient"){
-                        $this->transporter_loaded_freight = $this->transporter_loaded_rate * $this->loaded_litreage;
-                    } 
-                   
-                }
-              
-            } 
-        }
-        elseif ($this->freight_calculation == "rate_distance") {
-            if(is_numeric($this->transporter_loaded_rate) && is_numeric($this->distance)){
-                $this->transporter_loaded_freight = $this->transporter_loaded_rate * $this->distance;
-            }
-        }
-        elseif ($this->freight_calculation == "rate_weight_distance") {
-            if ($this->cargo_type == "Solid") {
-                if(is_numeric($this->transporter_loaded_rate) && is_numeric($this->loaded_weight) && is_numeric($this->distance)){
-                    $this->transporter_loaded_freight = $this->transporter_loaded_rate * $this->loaded_weight * $this->distance;
-                }
-              
-            }elseif($this->cargo_type == "Liquid"){
-                if(is_numeric($this->transporter_loaded_rate) && (is_numeric($this->loaded_litreage_at_20) || is_numeric($this->loaded_litreage)) && is_numeric($this->distance)){
-                    if($this->calculation_measurement == "litreage_at_20"){
-                        $this->transporter_loaded_freight = $this->transporter_loaded_rate * $this->loaded_litreage_at_20 * $this->distance;
-                    }elseif($this->calculation_measurement == "litreage_at_ambient"){
-                        $this->transporter_loaded_freight = $this->transporter_loaded_rate * $this->loaded_litreage * $this->distance;
-                    } 
-                   
-                }
-              
-            } 
-        }
-        elseif ($this->freight_calculation == "flat_rate") {
-            $this->transporter_loaded_freight = $this->transporter_loaded_rate;
-        }
-
-        $this->trip = Trip::withTrashed()->with(['breakdowns','breakdown_assignments','trip_destinations','trip_expenses','trip_locations','delivery_note','fuel:id,order_number','transporter:id,name','trip_type:id,name','border:id,name',
-        'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model',
-        'trailers:id,make,model,registration_number','driver.employee:id,name,surname','loading_point:id,name','offloading_point:id,name',
-        'route:id,name,rank','truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name','commission:id,commission,amount'])->find($this->trip_id);
-
-        $this->default_currency = $this->company->currency;
-
-        $this->emptyrun_origin  = EmptyRun::where('trip_id',$this->trip->id)->where('emptyrun_origin',True)->first();
-        $this->emptyrun_destination  = EmptyRun::where('trip_id',$this->trip->id)->where('emptyrun_destination',True)->first();
-
-
-
-        $this->trip_expenses = $this->trip->trip_expenses;
-
-        $this->initial_fuel = $this->trip->fuels->where('fillup',1)->first();
-
-        $this->cargo_type = $this->trip->cargo ? $this->trip->cargo->type : "";
-
-
-        
-
-  
-
-
-        if ((isset($this->trip->starting_mileage) && $this->trip->starting_mileage > 0) && (isset($this->trip->ending_mileage) && $this->trip->ending_mileage > 0)) {
-            $this->actual_distance =   $this->trip->ending_mileage - $this->trip->starting_mileage;
-        }
-
-        if(isset($this->actual_distance) & is_numeric($this->actual_distance) && $this->actual_distance > 0){
-            if (is_numeric($this->trip->cost_of_sales) && $this->trip->cost_of_sales > 0) {
-                $this->cpk = $this->trip->cost_of_sales / $this->actual_distance;
-            }
-            
-        }
-
-        $this->pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
-
-        if ($this->delivery_note){
-            if ($this->delivery_note->offloaded_date){
-
-                if (preg_match($this->pattern, $this->delivery_note->offloaded_date)){
-                    $this->actual_offloading_date = Carbon::parse($this->delivery_note->offloaded_date)->format('d M Y g:i A');
-                }else{
-                    $this->actual_offloading_date = $this->delivery_note->offloaded_date;
-                }
-               
-
-            }
-        }
-
-      
-        if (preg_match($this->pattern, $this->trip->end_date) ){
-            $this->estimated_offloading_date =  Carbon::parse($this->trip->end_date)->format('d M Y g:i A');
-        }else{
-            $this->estimated_offloading_date = $this->trip->end_date;
-        }
-      
-       
-    
-        $this->from = Destination::with('country:id,name')->find($this->trip->from);
-        $this->to = Destination::with('country:id,name')->find($this->trip->to);
-        $this->customer_total = TripExpense::with('trip','currency:id,name')->where('currency_id',$this->trip->currency_id)
-        ->where('trip_id',$this->trip->id)
-        ->where('category', 'customer')->where('amount','!=','')->where('amount','!=', Null)->sum('amount');
-        $this->transporter_total = TripExpense::with('trip','currency:id,name')->where('currency_id',$this->trip->currency_id)
-        ->where('trip_id',$this->trip->id)
-        ->where('category', 'transporter')->where('amount','!=','')->where('amount','!=', Null)->sum('amount');
-
-        $this->currency = Currency::with('trips')->find($this->trip->currency_id); 
-        $this->currency_id = $this->trip->currency_id; 
-        $this->currencies = Currency::with('trips')->orderBy('name','asc')->get(); 
-        $this->measurements = Measurement::orderBy('name','asc')->get(); 
-        $this->measurement = $this->trip->measurement; 
-
-       
-       
-         
-        return view('livewire.trips.show',[
-            'trip' => $this->trip,
-          
-            'from' => $this->from,
-            'to' => $this->to,
-            'customer_total' => $this->customer_total,
-            'transporter_total' => $this->transporter_total,
-            'currency' => $this->currency,
-            'currency_id' => $this->currency_id,
-            'currencies' => $this->currencies,
-            'measurement' => $this->measurement,
-            'measurements' => $this->measurements,
-        ]);
+        return view('livewire.trips.show');
     }
 }
