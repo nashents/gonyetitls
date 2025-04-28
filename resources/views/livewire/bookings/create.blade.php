@@ -146,15 +146,15 @@
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
-                                            <label for="number">In Date</label>
-                                            <input type="date" class="form-control" wire:model.debounce.300ms="in_date" placeholder="Enter In Date" >
+                                            <label for="number">In Date<span class="required" style="color: red">*</span></label>
+                                            <input type="date" class="form-control" wire:model.debounce.300ms="in_date" placeholder="Enter In Date" required>
                                             @error('in_date') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
-                                            <label for="number">In Time</label>
-                                            <input type="time" class="form-control" wire:model.debounce.300ms="in_time" placeholder="Enter In Time" >
+                                            <label for="number">In Time<span class="required" style="color: red">*</span></label>
+                                            <input type="time" class="form-control" wire:model.debounce.300ms="in_time" placeholder="Enter In Time" required>
                                             @error('in_time') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>

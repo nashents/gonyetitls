@@ -147,7 +147,7 @@ class Index extends Component
        
         $this->employees = Employee::orderBy('surname','asc')->get()->sortBy('name');
       
-        $this->bookings = Booking::orderBy('created_at','desc')->where('authorization','approved')->where('status',True)->get();
+    
         $this->departments = Department::orderBy('name','asc')->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->expenses = Expense::orderBy('name','asc')->get();
@@ -205,6 +205,28 @@ class Index extends Component
 
     }
 
+
+    public function updatedRequisitionFor($value){
+        if (!is_null($value)) {
+            if($value == 'Trip'){
+                $this->trips =  Trip::select('id', 'trip_number', 'trip_ref', 'customer_id', 'driver_id', 'horse_id', 'from', 'to', 'loading_point_id', 'offloading_point_id')
+                ->with([
+                    'customer:id,name',
+                    'driver',
+                    'horse:id,registration_number',
+                    'loading_point:id,name',
+                    'offloading_point:id,name'
+                ])
+                ->whereYear('start_date',date('Y'))
+                ->where('authorization','approved')
+                ->where('status','!=','Cancelled')
+                ->orderBy('start_date', 'desc')
+                ->get();
+            }elseif($value == 'Booking'){
+                $this->bookings = Booking::orderBy('created_at','desc')->whereYear('in_date',date('Y'))->where('authorization','approved')->where('status',True)->get();
+            }
+        }
+    }
     
 
     public function store(){
@@ -375,7 +397,6 @@ class Index extends Component
         $this->departments = Department::orderBy('name','asc')->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->expenses = Expense::orderBy('name','asc')->get();
-        $this->trips = Trip::orderBy('created_at','desc')->where('authorization','approved')->where('trip_status','!=','cancelled')->get();
         $departments = $employee->departments;
         foreach($departments as $department){
             $department_names[] = $department->name;
@@ -420,7 +441,7 @@ class Index extends Component
                         'employees' => $this->employees,
                         'departments' => $this->departments,
                         'currencies' => $this->currencies,
-                        'trips' => $this->trips,
+                      
                     ]);
                 }else {
                     return view('livewire.requisitions.index',[
@@ -428,7 +449,7 @@ class Index extends Component
                         'employees' => $this->employees,
                         'departments' => $this->departments,
                         'currencies' => $this->currencies,
-                        'trips' => $this->trips,
+                      
                     ]);
                 }
                
@@ -465,7 +486,7 @@ class Index extends Component
                     'employees' => $this->employees,
                     'departments' => $this->departments,
                     'currencies' => $this->currencies,
-                    'trips' => $this->trips,
+                   
                 ]);
             }
             else {
@@ -476,7 +497,7 @@ class Index extends Component
                     'employees' => $this->employees,
                     'departments' => $this->departments,
                     'currencies' => $this->currencies,
-                    'trips' => $this->trips,
+                   
                 ]);
               
             }
@@ -517,7 +538,7 @@ class Index extends Component
                         'employees' => $this->employees,
                         'departments' => $this->departments,
                         'currencies' => $this->currencies,
-                        'trips' => $this->trips,
+                       
                     ]);
                 }else {
                     return view('livewire.requisitions.index',[
@@ -528,7 +549,7 @@ class Index extends Component
                         'employees' => $this->employees,
                         'departments' => $this->departments,
                         'currencies' => $this->currencies,
-                        'trips' => $this->trips,
+                     
                     ]);
                 }
                
@@ -567,7 +588,7 @@ class Index extends Component
                     'employees' => $this->employees,
                     'departments' => $this->departments,
                     'currencies' => $this->currencies,
-                    'trips' => $this->trips,
+                   
                 ]);
             }
             else {
@@ -581,7 +602,7 @@ class Index extends Component
                     'employees' => $this->employees,
                     'departments' => $this->departments,
                     'currencies' => $this->currencies,
-                    'trips' => $this->trips,
+                  
                 ]);
               
             }
