@@ -23,17 +23,17 @@
 
                             <!-- Nav tabs -->
                             <ul class="nav nav-tabs border-bottom border-primary" role="tablist">
-                                <li role="presentation" class="{{$active_tab == "trip" ? "active" : "" }}"><a class="" href="#{{$active_tab}}" aria-controls="trip" role="tab" data-toggle="tab" >Trip Details</a></li>
-                                <li role="presentation" class="{{$active_tab == "destinations" ? "active" : "" }}"><a class="" href="#destinations" aria-controls="destinations" role="tab" data-toggle="tab" >Offloading Points</a></li>
-                                <li role="presentation" class="{{$active_tab == "documents" ? "active" : "" }}"><a class="" href="#documents" aria-controls="documents" role="tab" data-toggle="tab" >Trip Documents</a></li>
-                                <li role="presentation" class="{{$active_tab == "expenses" ? "active" : "" }}"><a class="" href="#expenses" aria-controls="expenses" role="tab" data-toggle="tab" >Trip Expenses</a></li>
-                                <li role="presentation" class="{{$active_tab == "delivery_note" ? "active" : "" }}"><a class="" href="#delivery_note" aria-controls="delivery_note" role="tab" data-toggle="tab" >Offloading Details</a></li>
-                                <li role="presentation" class="{{$active_tab == "locations" ? "active" : "" }}"><a class="" href="#locations" aria-controls="locations" role="tab" data-toggle="tab" >Location Updates</a></li>
-                                <li role="presentation" class="{{$active_tab == "breakdowns" ? "active" : "" }}"><a class="" href="#breakdowns" aria-controls="breakdowns" role="tab" data-toggle="tab" >Incident(s)</a></li>
+                                <li role="presentation" class="active"><a class="" href="#trips" aria-controls="trip" role="tab" data-toggle="tab" >Trip Details</a></li>
+                                <li role="presentation" ><a class="" href="#destinations" aria-controls="destinations" role="tab" data-toggle="tab" >Offloading Points</a></li>
+                                <li role="presentation" ><a class="" href="#documents" aria-controls="documents" role="tab" data-toggle="tab" >Trip Documents</a></li>
+                                <li role="presentation" ><a class="" href="#expenses" aria-controls="expenses" role="tab" data-toggle="tab" >Trip Expenses</a></li>
+                                <li role="presentation" ><a class="" href="#delivery_note" aria-controls="delivery_note" role="tab" data-toggle="tab" >Offloading Details</a></li>
+                                <li role="presentation" ><a class="" href="#locations" aria-controls="locations" role="tab" data-toggle="tab" >Location Updates</a></li>
+                                <li role="presentation" ><a class="" href="#breakdowns" aria-controls="breakdowns" role="tab" data-toggle="tab" >Incident(s)</a></li>
                             </ul>
                             <!-- Tab panes -->
                             <div class="tab-content bg-white pt-30">
-                                <div role="tabpanel" class="tab-pane {{$active_tab == "trip" ? "active" : "" }}" id="trip">
+                                <div role="tabpanel" class="tab-pane active" id="trip">
                                     <div class="col-md-12 p-n">
                                         <div class="col-md-12">
                                             <div class="panel panel-info">
@@ -412,13 +412,13 @@
                                                             <tr>
                                                                 <th scope="row">Estimated Offloading Date</th>
                                                                 <td>
-                                                                    {{$estimated_offloading_date}}
+                                                                    {{$trip->end_date}}
                                                                 </td>
                                                             </tr>
                                                             <tr>
                                                                 <th scope="row">Actual Offloading Date</th>
                                                                 <td>
-                                                                    {{$actual_offloading_date}}
+                                                                    {{$delivery_note->offloaded_date}}
                                                                 </td>
                                                             </tr>
                                                             @if (isset($trip->start_date) && isset($trip->end_date))
@@ -947,7 +947,7 @@
                                 <!-- /.tab-pane -->
 
 
-                                <div role="tabpanel" class="tab-pane {{$active_tab == "destinations" ? "active" : "" }}" id="destinations">
+                                <div role="tabpanel" class="tab-pane " id="destinations">
                                     <div class="col-md-12 p-n">
                                         <div class="col-md-12">
                                             <div class="panel panel-info">
@@ -967,7 +967,7 @@
 
                                     </div>
                                 </div>
-                                <div role="tabpanel" class="tab-pane {{$active_tab == "documents" ? "active" : "" }}" id="documents">
+                                <div role="tabpanel" class="tab-pane " id="documents">
                                     <div class="col-md-12 p-n">
                                         <div class="col-md-12">
                                             <div class="panel panel-info">
@@ -989,7 +989,7 @@
                                     </div>
                                 </div>
                            
-                                <div role="tabpanel" class="tab-pane {{$active_tab == "expenses" ? "active" : "" }}" id="expenses">
+                                <div role="tabpanel" class="tab-pane" id="expenses">
                                     <div class="col-md-12 p-n">
                                         <div class="col-md-12">
                                             <div class="panel panel-info">
@@ -1007,10 +1007,10 @@
                                     </div>
                                 </div>
                              
-                                <div role="tabpanel" class="tab-pane {{$active_tab == "delivery_note" ? "active" : "" }}" id="delivery_note">
+                                <div role="tabpanel" class="tab-pane " id="delivery_note">
                                     @livewire('trips.delivery-notes', ['trip' => $trip])
                                 </div>
-                                <div role="tabpanel" class="tab-pane {{$active_tab == "locations" ? "active" : "" }}" id="locations">
+                                <div role="tabpanel" class="tab-pane " id="locations">
                                     <div class="col-md-12 p-n">
                                         <div class="col-md-12">
                                             <div class="panel panel-info">
@@ -1029,7 +1029,7 @@
 
                                     </div>
                                 </div>
-                                <div role="tabpanel" class="tab-pane {{$active_tab == "breakdowns" ? "active" : "" }}" id="breakdowns">
+                                <div role="tabpanel" class="tab-pane " id="breakdowns">
                                     <div class="col-md-12 p-n">
                                         <div class="col-md-12">
                                             <div class="panel panel-info">
@@ -1112,38 +1112,6 @@
     </div>
     <!--Trip Status Modal-->
  
-<!-- Modal -->
-    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="paymentStatusModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-edit"></i> Update Payment Status <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
-                </div>
-                <form wire:submit.prevent="updateStatus()" >
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="name">Payment Status<span class="required" style="color: red">*</span></label>
-                    <select class="form-control" wire:model.debounce.300ms="payment_status" required>
-                        <option value="">Select Payment Status</option>
-                        <option value="Pending">Pending</option>
-                        <option value="Partial Payment">Partial Payment</option>
-                        <option value="Half Payment">Half Payment</option>
-                        <option value="Full Payment">Full Payment</option>
-                    </select>
-                        @error('payment_status') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <div class="btn-group" role="group">
-                        <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
-                        <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-refresh"></i>Update</button>
-                    </div>
-                    <!-- /.btn-group -->
-                </div>
-            </form>
-            </div>
-        </div>
-    </div>
 
  
 </div>

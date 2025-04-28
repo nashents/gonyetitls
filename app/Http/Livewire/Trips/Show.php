@@ -193,15 +193,9 @@ class Show extends Component
     public $rank_names;
    
 
-    public $title;
-    public $file;
-
-    public $inputs = [];
-    public $i = 1;
-    public $n = 1;
 
     public function mount($id){
-        $this->active_tab = "trip";
+      
       
         $this->user = Auth::user();
         $this->employee =  $this->user->employee;
@@ -219,15 +213,12 @@ class Show extends Component
         foreach($ranks as $rank){
             $this->rank_names[] = $rank->name;
         }
-      
-
         $this->trip_id = $id;
         $this->trip = Trip::with(['breakdowns','breakdown_assignments','trip_destinations','trip_expenses','trip_locations','delivery_note','fuel:id,order_number','transporter:id,name','trip_type:id,name','border:id,name',
         'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model',
         'trailers:id,make,model,registration_number','driver.employee:id,name,surname','loading_point:id,name','offloading_point:id,name',
         'route:id,name,rank','truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name','commission:id,commission,amount'])->find($id);
-     
-      
+    
         $this->initial_fuel = $this->trip->fuels->where('fillup',1)->first();
         $this->emptyrun_origin  = EmptyRun::where('trip_id',$this->trip->id)->where('emptyrun_origin',True)->first();
         $this->emptyrun_destination  = EmptyRun::where('trip_id',$this->trip->id)->where('emptyrun_destination',True)->first();
@@ -238,36 +229,18 @@ class Show extends Component
 
         $this->pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
 
-        if ($this->delivery_note){
-            if ($this->delivery_note->offloaded_date){
-
-                if (preg_match($this->pattern, $this->delivery_note->offloaded_date)){
-                    $this->actual_offloading_date = Carbon::parse($this->delivery_note->offloaded_date)->format('d M Y g:i A');
-                }else{
-                    $this->actual_offloading_date = $this->delivery_note->offloaded_date;
-                }
-               
-
-            }
-        }
+       
         if ((isset($this->trip->starting_mileage) && $this->trip->starting_mileage > 0) && (isset($this->trip->ending_mileage) && $this->trip->ending_mileage > 0)) {
             $this->actual_distance =   $this->trip->ending_mileage - $this->trip->starting_mileage;
-        }
-
-        if(isset($this->actual_distance) & is_numeric($this->actual_distance) && $this->actual_distance > 0){
-            if (is_numeric($this->trip->cost_of_sales) && $this->trip->cost_of_sales > 0) {
-                $this->cpk = $this->trip->cost_of_sales / $this->actual_distance;
+            if($this->actual_distance && is_numeric($this->actual_distance) && $this->actual_distance > 0){
+                if (is_numeric($this->trip->cost_of_sales) && $this->trip->cost_of_sales > 0) {
+                    $this->cpk = $this->trip->cost_of_sales / $this->actual_distance;
+                }
             }
-        }
-
-        if (preg_match($this->pattern, $this->trip->end_date) ){
-            $this->estimated_offloading_date =  Carbon::parse($this->trip->end_date)->format('d M Y g:i A');
-        }else{
-            $this->estimated_offloading_date = $this->trip->end_date;
         }
 
         $this->authorizer = User::find($this->trip->authorized_by_id);
-        $this->trip_expenses = $this->trip->trip_expenses;
+        $this->trip_expenses = TripExpense::select('id','currency_id','amount','exchange_amount','category')->where('trip_id',$id)->get();
         
         if(isset($this->trip_expenses)){
             foreach ($this->trip_expenses as $expense) {
@@ -942,14 +915,7 @@ class Show extends Component
 
         }
 
-//     }
-//     catch(\Exception $e){
-//     // Set Flash Message
-//     $this->dispatchBrowserEvent('alert',[
-//         'type'=>'error',
-//         'message'=>"Something goes wrong while updating trip!!"
-//     ]);
-// }
+
 
       }
 
