@@ -28,8 +28,6 @@ class CreateTyreAssignmentsTable extends Migration
             $table->string('type')->nullable();
             $table->string('starting_odometer')->nullable();
             $table->string('ending_odometer')->nullable();
-            $table->string('date_fitted')->nullable();
-            $table->string('current_mileage')->nullable();
             $table->string('axle')->nullable();
             $table->string('position')->nullable();
             $table->text('description')->nullable();
