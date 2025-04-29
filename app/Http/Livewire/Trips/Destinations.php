@@ -71,7 +71,7 @@ class Destinations extends Component
     protected $rules = [
         'destination_id' => 'required',
         'offloading_point_id' => 'required',
-        'measurement_id' => 'required',
+        // 'measurement_id' => 'required',
         'offloading_date' => 'required',
     ];
 
