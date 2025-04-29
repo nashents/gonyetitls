@@ -266,7 +266,7 @@
                                             @else
                                             <div class="form-group">
                                                 <label for="name">Qty<span class="required" style="color: red">*</span></label>
-                                                <input type="number" min="1" class="form-control" wire:model.debounce.300ms="qty.0"  required/>
+                                                <input type="number" min="1" class="form-control" wire:model.debounce.300ms="qty.{{$value}}"  required/>
                                                 @error('qty.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                             @endif
