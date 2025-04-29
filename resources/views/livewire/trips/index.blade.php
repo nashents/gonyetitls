@@ -79,78 +79,75 @@
                             </div>
                             <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
                                 <div class="panel-title">
-                                    <h5>Trips Management</h5>
                                     <div class="row">
-                                    <div class="col-lg-3">
-                                    <div class="input-group">
-                                      <span class="input-group-addon">Filter By</span>
-                                      <select wire:model.debounce.300ms="trip_filter" class="form-control" aria-label="..." >
-                                        <option value="created_at">Trip Created At</option>
-                                        <option value="offloaded_date">Trip Offloading Date</option>
-                                        <option value="start_date">Trip Start Date</option>
-                                      </select>
-                                    </div>
-                                        <!-- /input-group -->
-                                    </div>
-                                    <div class="col-lg-2" style="margin-right: 7px">
-                                        <div class="input-group">
-                                            <span class="input-group-addon">
-                                      From
-                                      </span>
-                                      <input type="date" wire:model.debounce.300ms="from"  class="form-control" aria-label="...">
+                                        <div class="col-lg-3">
+                                            <div class="input-group">
+                                            <span class="input-group-addon">Filter By</span>
+                                            <select wire:model.debounce.300ms="trip_filter" class="form-control" aria-label="..." >
+                                                <option value="created_at">Trip Created At</option>
+                                                <option value="offloaded_date">Trip Offloading Date</option>
+                                                <option value="start_date">Trip Start Date</option>
+                                            </select>
+                                            </div>
+                                            <!-- /input-group -->
                                         </div>
-                                        <!-- /input-group -->
-                                    </div>
-                                    <div class="col-lg-2" style="margin-left: 7px">
-                                        <div class="input-group">
-                                            <span class="input-group-addon">
-                                      To
-                                      </span>
-                                      <input type="date" wire:model.debounce.300ms="to"  class="form-control" aria-label="...">
+                                        <div class="col-lg-2" style="margin-right: 7px">
+                                            <div class="input-group">
+                                                <span class="input-group-addon">
+                                                    From
+                                                </span>
+                                                <input type="date" wire:model.debounce.300ms="from"  class="form-control" aria-label="...">
+                                            </div>
+                                            <!-- /input-group -->
                                         </div>
-                                        <!-- /input-group -->
+                                        <div class="col-lg-2" style="margin-left: 7px">
+                                            <div class="input-group">
+                                                <span class="input-group-addon">
+                                                    To
+                                                </span>
+                                                <input type="date" wire:model.debounce.300ms="to"  class="form-control" aria-label="...">
+                                            </div>
+                                            <!-- /input-group -->
+                                        </div>
                                     </div>
-                                   
-                                    <!-- /input-group -->
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-12">
-                                        <a href="{{ route('trips.create') }}"  class="btn btn-default btn-wide" aria-haspopup="true" aria-expanded="true"><i class="fa fa-plus-square-o"></i>Trip</a>
-                                        <a href="" data-toggle="modal" data-target="#tripsImportModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import</a>
-                                        <a href="#" wire:click="exportTripsExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
-                                        <a href="#" wire:click="exportTripsCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
-                                        <a href="#" wire:click="exportTripsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
+                                    <div class="row mt-7">
+                                        <div class="col-md-12">
+                                            <a href="{{ route('trips.create') }}"  class="btn btn-default btn-wide" aria-haspopup="true" aria-expanded="true"><i class="fa fa-plus-square-o"></i>Trip</a>
+                                            <a href="" data-toggle="modal" data-target="#tripsImportModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import</a>
+                                            <a href="#" wire:click="exportTripsExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
+                                            <a href="#" wire:click="exportTripsCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
+                                            <a href="#" wire:click="exportTripsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
+                                        </div>
                                     </div>
-                                   
-                                </div>
+                                    <div class="row mt-10">
+                                        <div class="col-md-12">
+                                            <div class="dropdown">
+                                                <button class="btn btn-default border-primary btn-rounded btn-wide dropdown-toggle" type="button" id="menu12" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                                                    <i class="fa fa-bars"></i> More Actions
+                                                    <span class="caret"></span>
+                                                </button>
+                                                <ul class="dropdown-menu bg-gray" aria-labelledby="menu12" style="float: right;" >
+                                                    <li><a href="#"  wire:click="editLocations()"><i class="fa fa-refresh"></i>Bulk Status Update</a></li>
+                                                    <li><a href="{{ route('trip_groups.index') }}"><i class="fa fa-map-marker"></i>Trip Tracking</a></li>
+                                                    @if (isset($from) && isset($to))
+                                                        <li><a href="{{ route('trips.summary.range',['from' => $from, 'to' => $to,'trip_filter'=>$trip_filter]) }}" ><i class="fa fa-download"></i>Trips Summary</a></li>
+                                                    @elseif (isset($from) && isset($to) && isset($search))
+                                                        <li><a href="{{ route('trips.summary.all',['from' => $from, 'to' => $to, 'search' => $search,'trip_filter'=> $trip_filter]) }}" ><i class="fa fa-download"></i>Trips Summary</a></li>
+                                                    @elseif (isset($search))
+                                                    <li><a href="{{ route('trips.summary.search',['search' => $search,'trip_filter'=>$trip_filter]) }}" ><i class="fa fa-download"></i>Trips Summary</a></li>
+                                                    @else
+                                                    <li><a href="{{ route('trips.summary',['trip_filter'=>$trip_filter]) }}" ><i class="fa fa-download"></i>Trips Summary</a></li>
+                                                    @endif
+                                                    <li><a href="#" wire:click="exportPodTrackerExcel()"><i class="fa fa-download"></i>POD Tracker</a></li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                       
+                                    </div>
                                
-                                
                                 </div>
                                 <br>
                                 <div class="col-md-5" style="float: right; padding-right:0px">
-                                    <div class="dropdown" style="float: right;">
-                                        <button class="btn btn-default border-primary btn-rounded btn-wide dropdown-toggle" type="button" id="menu12" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-                                            <i class="fa fa-bars"></i> Trip Actions
-                                            <span class="caret"></span>
-                                        </button>
-                                        <ul class="dropdown-menu bg-gray" aria-labelledby="menu12" style="float: right;" >
-                                            <li><a href="#"  wire:click="editLocations()"><i class="fa fa-refresh"></i>Status Updates</a></li>
-                                            <li><a href="#" wire:click="exportPodTrackerExcel()"><i class="fa fa-file"></i>POD Tracker</a></li>
-                                            <li><a href="{{ route('trip_groups.index') }}"><i class="fa fa-map-marker"></i>Trip Tracking</a></li>
-                                            @if (isset($from) && isset($to))
-                                                <li><a href="{{ route('trips.summary.range',['from' => $from, 'to' => $to,'trip_filter'=>$trip_filter]) }}" ><i class="fa fa-line-chart"></i>Data Summary</a></li>
-                                            @elseif (isset($from) && isset($to) && isset($search))
-                                                <li><a href="{{ route('trips.summary.all',['from' => $from, 'to' => $to, 'search' => $search,'trip_filter'=> $trip_filter]) }}" ><i class="fa fa-line-chart"></i>Data Summary</a></li>
-                                            @elseif (isset($search))
-                                            <li><a href="{{ route('trips.summary.search',['search' => $search,'trip_filter'=>$trip_filter]) }}" ><i class="fa fa-line-chart"></i>Data Summary</a></li>
-                                            @else
-                                            <li><a href="{{ route('trips.summary',['trip_filter'=>$trip_filter]) }}" ><i class="fa fa-line-chart"></i>Data Summary</a></li>
-                                            @endif
-                                           
-                                        </ul>
-                                    </div>
-                                   <br>
-                                   <br>
                                     <div class="form-group">
                                         <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search: trip#, date(yyyy-mm-dd), transporter,customer,VRN/HRN,CreatedBy,POD#...">
                                     </div>

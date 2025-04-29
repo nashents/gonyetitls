@@ -30,13 +30,12 @@ class Expenses extends Component
     public $selectedAllowance;
     public $trip_expenses;
     public $trip_expense_id;
-    public $usd;
     public $edit;
-    public $rtgs;
     public $exchange_rate;
     public $exchange_amount;
     public $turnover;
     public $cost_of_sales;
+
 
 
     public $name;
@@ -495,22 +494,7 @@ class Expenses extends Component
             })->get();
              
         $this->trip_expenses = TripExpense::where('trip_id',$this->trip->id)->get();
-        
-        $trip = Trip::find($this->trip->id);
 
-        if (isset($trip->amount)) {
-            $this->usd = $this->trip_expenses
-            ->where('currency_id', 1)->latest()->get()->sum('amount');
-        }
-        if (isset($trip->amount)) {
-            $this->rtgs = $this->trip_expenses
-            ->where('currency_id', 2)->latest()->get()->sum('amount');
-        }
-
-        return view('livewire.trips.expenses',[
-            'trip_expenses' => $this->trip_expenses,
-            'usd'=> $this->usd,
-            'rtgs'=> $this->rtgs,
-        ]);
+        return view('livewire.trips.expenses');
     }
 }

@@ -39,10 +39,8 @@ class Show extends Component
 {
 
     public $trip_id;
-
     public $company;
     public $trip;
-    public $trip_number;
 
     public $driver_id;
     public $horse_id;
@@ -65,7 +63,7 @@ class Show extends Component
     public $start_date;
     public $transporter_id;
     public $subtotal;
-    public $cpk;
+
     public $total = 0;
 
     public $clearing_agent;
@@ -140,7 +138,7 @@ class Show extends Component
 
   
     public $status;
-    public $actual_distance;
+
     public $actual_offloading_date;
     public $estimated_offloading_date;
     
@@ -173,12 +171,15 @@ class Show extends Component
     public $trip_status_description;
     public $selectedDeliveryNote;
     public $freight_calculation;
+
+    public $cpk = 0;
+    public $actual_distance = 0;
     public $total_expenses = 0;
     public $total_customer_expenses = 0;
     public $total_transporter_expenses = 0;
     public $cost_of_sales = 0;
-    public $grossprofit;
     public $turnover = 0;
+    public $grossprofit;
     public $cargo_type;
     public $active_tab;
     public $delivery_note;
@@ -188,48 +189,40 @@ class Show extends Component
     public $authorizer;
     public $employee;
     public $user;
-    public $role_names;
-    public $department_names;
-    public $rank_names;
+    public $role_names = [];
+    public $department_names = [];
+    public $rank_names = [];
    
 
-
-    public function mount($id){
-      
-      
+    private function initializeUserDetails() {
         $this->user = Auth::user();
-        $this->employee =  $this->user->employee;
+        $this->employee = $this->user->employee;
         $this->company = $this->employee->company;
         $this->default_currency = $this->company->currency;
-        $departments = $this->employee->departments;
-        foreach($departments as $department){
+    
+        foreach($this->employee->departments as $department) {
             $this->department_names[] = $department->name;
         }
-        $roles = $this->user->roles;
-        foreach($roles as $role){
+    
+        foreach($this->user->roles as $role) {
             $this->role_names[] = $role->name;
         }
-        $ranks = $this->employee->ranks;
-        foreach($ranks as $rank){
+    
+        foreach($this->employee->ranks as $rank) {
             $this->rank_names[] = $rank->name;
         }
+    }
+
+    private function initializeTrip($id){
         $this->trip_id = $id;
-        $this->trip = Trip::with(['breakdowns','breakdown_assignments','trip_destinations','trip_expenses','trip_locations','delivery_note','fuel:id,order_number','transporter:id,name','trip_type:id,name','border:id,name',
+        $this->trip = Trip::with(['breakdowns','breakdown_assignments','trip_destinations','trip_expenses','trip_locations','delivery_note','fuel:id,order_number','fuels','transporter:id,name','trip_type:id,name','border:id,name',
         'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model',
         'trailers:id,make,model,registration_number','driver.employee:id,name,surname','loading_point:id,name','offloading_point:id,name',
         'route:id,name,rank','truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name','commission:id,commission,amount'])->find($id);
-    
-        $this->initial_fuel = $this->trip->fuels->where('fillup',1)->first();
-        $this->emptyrun_origin  = EmptyRun::where('trip_id',$this->trip->id)->where('emptyrun_origin',True)->first();
-        $this->emptyrun_destination  = EmptyRun::where('trip_id',$this->trip->id)->where('emptyrun_destination',True)->first();
-        $this->from = Destination::with('country:id,name')->find($this->trip->from);
-        $this->to = Destination::with('country:id,name')->find($this->trip->to);
-      
-        $this->delivery_note = $this->trip->delivery_note;
+    }
 
-        $this->pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
-
-       
+    private function calculateActualDistance(){
+        
         if ((isset($this->trip->starting_mileage) && $this->trip->starting_mileage > 0) && (isset($this->trip->ending_mileage) && $this->trip->ending_mileage > 0)) {
             $this->actual_distance =   $this->trip->ending_mileage - $this->trip->starting_mileage;
             if($this->actual_distance && is_numeric($this->actual_distance) && $this->actual_distance > 0){
@@ -238,37 +231,47 @@ class Show extends Component
                 }
             }
         }
+    }
 
-        $this->authorizer = User::find($this->trip->authorized_by_id);
+    private function loadExpenses($id){
         $this->trip_expenses = TripExpense::select('id','currency_id','amount','exchange_amount','category')->where('trip_id',$id)->get();
         
         if(isset($this->trip_expenses)){
             foreach ($this->trip_expenses as $expense) {
-                
-                if ($expense->currency_id == $this->company->currency_id) {
-                    if ($expense->category == "Transporter") {
-                        $this->total_transporter_expenses = $this->total_transporter_expenses + $expense->amount;
-                    }
-                    elseif ($expense->category == "Customer") {
-                        $this->total_customer_expenses = $this->total_customer_expenses + $expense->amount;
-                    }
-                    elseif ($expense->category == "Self") {
-                        $this->total_expenses = $this->total_expenses + $expense->amount;
-                    }
-                }else{
-                    if ($expense->category == "Transporter") {
-                        $this->total_transporter_expenses = $this->total_transporter_expenses + $expense->exchange_amount;
-                    }
-                    elseif ($expense->category == "Customer") {
-                        $this->total_customer_expenses = $this->total_customer_expenses + $expense->exchange_amount;
-                    }
-                    elseif ($expense->category == "Self") {
-                        $this->total_expenses = $this->total_expenses + $expense->exchange_amount;
-                    }
+                $amount = $expense->currency_id == $this->company->currency_id ? $expense->amount : $expense->exchange_amount;
+            
+                switch ($expense->category) {
+                    case 'Transporter':
+                        $this->total_transporter_expenses += $amount;
+                        break;
+                    case 'Customer':
+                        $this->total_customer_expenses += $amount;
+                        break;
+                    case 'Self':
+                        $this->total_expenses += $amount;
+                        break;
                 }
             }
         }
-  
+    }
+
+
+    public function mount($id){
+        $this->initializeUserDetails();
+        $this->initializeTrip($id);
+        $this->calculateActualDistance();
+        $this->loadExpenses($id);
+        
+    
+        $this->initial_fuel = $this->trip->fuels->where('fillup',1)->first();
+        $this->emptyrun_origin  = EmptyRun::where('trip_id',$this->trip->id)->where('emptyrun_origin',True)->first();
+        $this->emptyrun_destination  = EmptyRun::where('trip_id',$this->trip->id)->where('emptyrun_destination',True)->first();
+        $this->from = Destination::with('country:id,name')->find($this->trip->from);
+        $this->to = Destination::with('country:id,name')->find($this->trip->to);
+      
+        $this->delivery_note = $this->trip->delivery_note;
+        $this->pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
+        $this->authorizer = User::find($this->trip->authorized_by_id);
     }
 
    
@@ -677,10 +680,6 @@ class Show extends Component
                 $transport_order->save();
              
                 $this->trip_id = $trip->id;
-                $this->driver_id = $trip->driver_id;
-                $this->horse_id = $trip->horse_id;
-                $this->transporter_id = $trip->transporter_id;
-                $this->start_date = $trip->start_date;
                 $user = $trip->user;
                 $name =  $user->employee ? $user->employee->name : "";
                 $surname = $user->employee ? $user->employee->surname : "";
@@ -693,7 +692,6 @@ class Show extends Component
                 }else{
                     $this->litreage = $trip->litreage;
                 }
-                $this->measurement = $trip->measurement;
                 $this->cargo = $trip->cargo ? $trip->cargo->name : "";
                 $this->weight = $trip->weight;
                 $this->delivery_point = $trip->offloading_point ? $trip->offloading_point->name : "";
@@ -711,10 +709,10 @@ class Show extends Component
                 if ( isset($this->loading_point_email) && $this->loading_point_email != "") {
                     $data = array(
                         'email'=> $this->loading_point_email,
-                        'date'=> $this->start_date,
-                        'horse'=> Horse::find($this->horse_id),
-                        'driver'=> Driver::find($this->driver_id),
-                        'transporter'=> Transporter::find($this->transporter_id),
+                        'date'=> $trip->start_date,
+                        'horse'=> Horse::find($trip->horse_id),
+                        'driver'=> Driver::find($trip->driver_id),
+                        'transporter'=> Transporter::find($trip->transporter_id),
                         'trip'=> Trip::find($this->trip_id),
                         'regnumbers'=> $this->trailer_reg_numbers ? $this->trailer_reg_numbers : "",
                         'authorized_by'=> $this->authorized_by,
@@ -724,7 +722,7 @@ class Show extends Component
                         'cargo'=> $this->cargo,
                         'litreage'=> $this->litreage,
                         'quantity'=> $this->quantity,
-                        'measurement'=> $this->measurement,
+                        'measurement'=> $trip->measurement,
                         'weight'=> $this->weight,
                        );
         
@@ -909,10 +907,6 @@ class Show extends Component
                 ]);
                 return redirect()->route('trips.rejected');
             }
-          
-
-
-
         }
 
 

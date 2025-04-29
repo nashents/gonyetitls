@@ -13,14 +13,7 @@ class Orders extends Component
 
 
     public function mount(){
-        $period = Auth::user()->employee->company->period;
-        if (isset( $period)) {
-            if ($period != "all") {
-                $this->orders = TransportOrder::whereYear('created_at',$period)->latest()->get();
-            }else {
-                $this->orders = TransportOrder::latest()->get();
-            }
-        }
+        $this->orders = TransportOrder::whereYear('created_at', date('Y'))->latest()->get();
       }
 
     public function render()

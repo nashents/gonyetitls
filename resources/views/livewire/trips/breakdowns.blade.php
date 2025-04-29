@@ -176,7 +176,6 @@
                 </div>
                 <form wire:submit.prevent="store()" >
                 <div class="modal-body">
-                   
                     <div class="form-group">
                         <label for="title">Trips<span class="required" style="color: red">*</span></label>
                             <select class="form-control" wire:model.debounce.300ms="trip_id" required disabled>

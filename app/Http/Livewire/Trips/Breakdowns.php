@@ -55,10 +55,15 @@ class Breakdowns extends Component
     public function mount($trip){
         $this->trip = $trip;
         $this->trip_id = $trip->id;
-        $this->trips = Trip::with(['breakdowns','breakdown_assignments','trip_destinations','trip_expenses','trip_locations','delivery_note','fuel:id,order_number','transporter:id,name','trip_type:id,name','border:id,name',
-        'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model',
-        'trailers:id,make,model,registration_number','driver.employee:id,name,surname','loading_point:id,name','offloading_point:id,name',
-        'route:id,name,rank','truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name','commission:id,commission,amount'])->orderBy('trip_number','desc')->get();
+        $this->trips = Trip::select('id', 'trip_number', 'trip_ref', 'customer_id', 'from', 'to', 'loading_point_id', 'offloading_point_id')
+                    ->with([
+                        'customer:id,name',
+                        'loading_point:id,name',
+                        'offloading_point:id,name'
+                    ])
+                    ->orderBy('start_date', 'desc')
+                    ->get();
+                    
         $this->breakdowns = $this->trip->breakdowns;
         $this->breakdown_assignments = $this->trip->breakdown_assignments;
         $this->transporters = Transporter::orderBy('name','asc')->get();

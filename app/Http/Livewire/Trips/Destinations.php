@@ -271,12 +271,10 @@ class Destinations extends Component
     {
         $this->trip_destinations = TripDestination::where('trip_id',$this->trip->id)->latest()->get();
         $this->destinations = Destination::orderBy('city','asc')->get();
-        $this->measurements = Measurement::orderBy('name','asc')->get();
         $this->offloading_points = OffloadingPoint::orderBy('name','asc')->get();
         return view('livewire.trips.destinations',[
             'trip_destinations' => $this->trip_destinations,
             'destinations' => $this->destinations,
-            'measurements' => $this->measurements,
             'offloading_points' => $this->offloading_points,
         ]);
     }
