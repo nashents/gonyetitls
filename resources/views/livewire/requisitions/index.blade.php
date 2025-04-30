@@ -330,7 +330,8 @@
                             @if ($requisition_for == "Trip")
                                 <div class="form-group">
                                     <label for="country">Trips</label>
-                                <select wire:model.lazy="trip_id" class="form-control" >
+                                    <input type="text" wire:model.lazy="searchTrip" placeholder="Search with trip#, trip ref, horse reg#..." class="form-control">
+                                <select wire:model.lazy="trip_id" class="form-control" size="8">
                                     <option value="">Select Trip</option>
                                     @foreach ($trips as $trip)
                                     <option value="{{ $trip->id }}">{{ $trip->trip_number }} | {{ $trip->horse ? $trip->horse->registration_number : "" }} 
@@ -339,14 +340,14 @@
                                         @endif
                                          | {{ $trip->customer ? $trip->customer->name : "" }} | {{ $trip->loading_point ? $trip->loading_point->name : "" }} - {{ $trip->offloading_point ? $trip->offloading_point->name : "" }}</option>
                                     @endforeach
-                                    
                                 </select>
                                     @error('trip_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             @elseif($requisition_for == "Booking")
                                 <div class="form-group">
                                     <label for="country">Garage Bookings</label>
-                                <select wire:model.lazy="booking_id" class="form-control" >
+                                    <input type="text" wire:model.lazy="searchBooking" placeholder="Search with booking#, horse, vehicle, trailer reg#..." class="form-control">
+                                <select wire:model.lazy="booking_id" class="form-control" size="8">
                                     <option value="">Select Booking</option>
                                     @foreach ($bookings as $booking)
                                         <option value="{{ $booking->id }}">{{ $booking->booking_number }} | 

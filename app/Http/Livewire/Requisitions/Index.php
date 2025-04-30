@@ -28,7 +28,9 @@ class Index extends Component
 
     protected $paginationTheme = 'bootstrap';
     public $search;
-    protected $queryString = ['search'];
+    public $searchTrip;
+    public $searchBooking;
+    protected $queryString = ['search','searchTrip','searchBooking'];
     public $from;
     public $to;
 
@@ -138,6 +140,7 @@ class Index extends Component
 
     public function mount(){
         $this->resetPage();
+        $this->reset(['search', 'searchTrip', 'searchBooking']);
         $departments = Auth::user()->employee->departments;
         foreach ($departments as $department) {
             $this->department_ids[] = $department->id;
@@ -170,6 +173,48 @@ class Index extends Component
         'amount.*' => 'required',
     ];
 
+
+    public function updatedSearchTrip(){
+
+        if (isset($this->searchTrip)) {
+            $this->trips = Trip::query()->with([ 'customer:id,name',
+            'horse:id,registration_number',
+            'loading_point:id,name',
+            'offloading_point:id,name'])
+            ->where('trip_number', 'like', '%'.$this->searchTrip.'%')
+            ->orWhere('trip_ref', 'like', '%'.$this->searchTrip.'%')
+            ->orWhereHas('horse', function ($query) {
+                return $query->where('registration_number', 'like', '%'.$this->searchTrip.'%');
+            })
+            ->orderBy('id','desc')->get();
+        }
+
+    }
+    public function updatedSearchBooking(){
+
+        if (isset($this->searchBooking)) {
+            $this->bookings = Booking::query()->with([
+            'horse:id,registration_number',
+            'trailer:id,registration_number',
+            'vehicle:id,registration_number',
+            'employee:id,name,surname'])
+            ->where('booking_number', 'like', '%'.$this->searchBooking.'%')
+            ->orWhereHas('horse', function ($query) {
+                return $query->where('registration_number', 'like', '%'.$this->searchBooking.'%');
+            })
+            ->orWhereHas('trailer', function ($query) {
+                return $query->where('registration_number', 'like', '%'.$this->searchBooking.'%');
+            })
+            ->orWhereHas('vehicle', function ($query) {
+                return $query->where('registration_number', 'like', '%'.$this->searchBooking.'%');
+            })
+            ->orWhereHas('employee', function ($query) {
+                return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->searchBooking.'%');
+            })
+            ->orderBy('id','desc')->get();
+        }
+
+    }
 
     public function requisitionNumber(){
 
@@ -220,10 +265,10 @@ class Index extends Component
                 ->whereYear('start_date',date('Y'))
                 ->where('authorization','approved')
                 ->where('trip_status','!=','Cancelled')
-                ->orderBy('start_date', 'desc')
+                ->orderBy('id', 'desc')
                 ->get();
             }elseif($value == 'Booking'){
-                $this->bookings = Booking::orderBy('created_at','desc')->whereYear('in_date',date('Y'))->where('authorization','approved')->where('status',True)->get();
+                $this->bookings = Booking::whereYear('in_date',date('Y'))->where('authorization','approved')->where('status',True)->orderBy('id','desc')->get();
             }
         }
     }
