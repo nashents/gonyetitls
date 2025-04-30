@@ -388,7 +388,7 @@ class Show extends Component
 
       public function updateAuthorization(){
       // try{
-
+        DB::transaction(function () {
       $trip = Trip::find($this->trip_id);
       $trip->authorized_by_id = Auth::user()->id;
       $trip->authorization = $this->authorize;
@@ -935,7 +935,7 @@ class Show extends Component
     //     ]);
     // }
 
-
+    });
 
       }
 

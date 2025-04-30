@@ -243,6 +243,7 @@ class Pending extends Component
 
       public function update(){
         // try{
+          DB::transaction(function () {
 
         $trip = Trip::find($this->trip_id);
         $trip->authorized_by_id = Auth::user()->id;
@@ -790,6 +791,7 @@ class Pending extends Component
 //     ]);
 // }
 
+    });
       }
 
 
@@ -807,6 +809,7 @@ class Pending extends Component
       }
 
       public function authorizeSelectedRows(){
+        DB::transaction(function () {
 
            $selected_trips = Trip::WhereIn('id',$this->selectedRows)->get();
            
@@ -1324,6 +1327,8 @@ class Pending extends Component
             $this->reset(['selectedRows','selectPageRows']);
             
            }
+
+        });
 
       }
 

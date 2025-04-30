@@ -244,6 +244,9 @@ public function updatingSearch()
     }
 
       public function update(){
+
+        DB::transaction(function () {
+
         try {
        
         $trip = Trip::find($this->trip_id);
@@ -744,14 +747,17 @@ public function updatingSearch()
                 }
 
         }
-    }
-    catch(\Exception $e){
-    // Set Flash Message
-    $this->dispatchBrowserEvent('alert',[
-        'type'=>'error',
-        'message'=>"Something goes wrong while updating trip!!"
-    ]);
-}
+        }
+        catch(\Exception $e){
+        // Set Flash Message
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'error',
+            'message'=>"Something goes wrong while updating trip!!"
+        ]);
+        }
+      
+        });
+
       }
 
 
@@ -772,6 +778,9 @@ public function updatingSearch()
       }
 
       public function authorizeSelectedRows(){
+
+        DB::transaction(function () {
+
            $selected_trips = Trip::WhereIn('id',$this->selectedRows)->get();
            
            if (isset($selected_trips)) {
@@ -1323,6 +1332,8 @@ public function updatingSearch()
 
             
            }
+
+        });
 
       }
 
