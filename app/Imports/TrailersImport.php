@@ -72,11 +72,11 @@ WithChunkReading
         if($row->filter()->isNotEmpty()){
 
 
-            $trailer = Trailer::where('registration_number',$row['registration_number'])->get()->first();
+            $trailer = Trailer::where('registration_number',$row['registration_number'])->first();
 
             if (isset($trailer)) {
 
-                $transporter = Transporter::where('transporter_number',$row['transporter_number'])->get()->first();
+                $transporter = Transporter::where('transporter_number',$row['transporter_number'])->first();
                 if (isset($transporter)) {
                     $transporter_id = $transporter->id;
                 }    
@@ -104,7 +104,7 @@ WithChunkReading
                 
                 
             } else {
-                $transporter = Transporter::where('transporter_number',$row['transporter_number'])->get()->first();
+                $transporter = Transporter::where('transporter_number',$row['transporter_number'])->first();
                 if (isset($transporter)) {
                     $transporter_id = $transporter->id;
                 }    

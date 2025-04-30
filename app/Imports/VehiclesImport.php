@@ -71,22 +71,22 @@ WithChunkReading
 
         if($row->filter()->isNotEmpty()){
         
-            $vehicle = Vehicle::where('registration_number',$row['registration_number'])->get()->first();
+            $vehicle = Vehicle::where('registration_number',$row['registration_number'])->first();
 
         if (isset($vehicle)) {
 
-            $transporter = Transporter::where('transporter_number', $row['transporter_number'])->get()->first();
+            $transporter = Transporter::where('transporter_number', $row['transporter_number'])->first();
             if (isset($transporter)) {
                 $transporter_id = $transporter->id;
             }   
             if (isset($transporter_id) && $transporter_id != "") {
                 $vehicle->transporter_id     = $transporter_id;
             } 
-            $make = VehicleMake::where('name', $row['make'])->get()->first();
+            $make = VehicleMake::where('name', $row['make'])->first();
             if (isset($make)) {
                 $make_id = $make->id;
             }    
-            $model = VehicleModel::where('name', $row['model'])->get()->first();
+            $model = VehicleModel::where('name', $row['model'])->first();
             if (isset($model)) {
                 $model_id = $model->id;
             }   
@@ -131,16 +131,16 @@ WithChunkReading
            
         } else {
 
-            $transporter = Transporter::where('transporter_number', $row['transporter_number'])->get()->first();
+            $transporter = Transporter::where('transporter_number', $row['transporter_number'])->first();
             if (isset($transporter)) {
                 $transporter_id = $transporter->id;
             }    
             
-            $make = VehicleMake::where('name', $row['make'])->get()->first();
+            $make = VehicleMake::where('name', $row['make'])->first();
             if (isset($make)) {
                 $make_id = $make->id;
             }  
-            $model = VehicleModel::where('name', $row['model'])->get()->first();
+            $model = VehicleModel::where('name', $row['model'])->first();
             if (isset($model)) {
                 $model_id = $model->id;
             } 

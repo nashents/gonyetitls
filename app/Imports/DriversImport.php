@@ -155,7 +155,7 @@ WithChunkReading
         if($row->filter()->isNotEmpty()){
         $pin =  $this->generatePIN();
         
-        $transporter = Transporter::where('transporter_number',$row['transporter_number'])->get()->first();
+        $transporter = Transporter::where('transporter_number',$row['transporter_number'])->first();
       
         if (isset($transporter)) {
             $transporter_id = $transporter->id;

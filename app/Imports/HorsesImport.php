@@ -78,19 +78,19 @@ WithChunkReading
        foreach($rows as $row){
         if($row->filter()->isNotEmpty()){
 
-            $horse = Horse::where('registration_number',$row['registration_number'])->get()->first();
+            $horse = Horse::where('registration_number',$row['registration_number'])->first();
 
             if (isset($horse)) {
                
-                $transporter = Transporter::where('transporter_number', $row['transporter_number'])->get()->first();
+                $transporter = Transporter::where('transporter_number', $row['transporter_number'])->first();
                 if (isset($transporter)) {
                     $transporter_id = $transporter->id;
                 }    
-                $make = HorseMake::where('name', $row['make'])->get()->first();
+                $make = HorseMake::where('name', $row['make'])->first();
                 if (isset($make)) {
                     $make_id = $make->id;
                 }    
-                $model = HorseModel::where('name', $row['model'])->get()->first();
+                $model = HorseModel::where('name', $row['model'])->first();
                 if (isset($model)) {
                     $model_id = $model->id;
                 }    
@@ -136,15 +136,15 @@ WithChunkReading
       
             } else {
                
-            $transporter = Transporter::where('transporter_number', $row['transporter_number'])->get()->first();
+            $transporter = Transporter::where('transporter_number', $row['transporter_number'])->first();
             if (isset($transporter)) {
                 $transporter_id = $transporter->id;
             }    
-            $make = HorseMake::where('name', $row['make'])->get()->first();
+            $make = HorseMake::where('name', $row['make'])->first();
             if (isset($make)) {
                 $make_id = $make->id;
             }    
-            $model = HorseModel::where('name', $row['model'])->get()->first();
+            $model = HorseModel::where('name', $row['model'])->first();
             if (isset($model)) {
                 $model_id = $model->id;
             }    
