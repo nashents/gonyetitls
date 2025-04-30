@@ -338,6 +338,10 @@ class Show extends Component
         $this->validateOnly($value);
     }
 
+    protected $rules = [
+        'authorize' => 'required',    
+    ];
+
 
       public function paymentStatus($id){
         $trip = Trip::withTrashed()->find($id);
