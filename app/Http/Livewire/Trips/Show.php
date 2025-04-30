@@ -338,22 +338,6 @@ class Show extends Component
         $this->validateOnly($value);
     }
 
-   
-    protected $messages =[
-
-        'title.*.required' => 'Title field is required',
-        'file.*.required' => 'File field is required',
-
-
-    ];
-
-      protected $rules = [
-
-          'title.0' => 'nullable|string',
-          'file.0' => 'nullable|file|mimes:docx,doc,pdf,xls,xlsx,pptx|max:10000',
-          'title.*' => 'required',
-          'file.*' => 'required|file|mimes:docx,doc,pdf,xls,xlsx,pptx|max:10000',
-      ];
 
       public function paymentStatus($id){
         $trip = Trip::withTrashed()->find($id);
