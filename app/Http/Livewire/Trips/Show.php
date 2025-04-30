@@ -31,6 +31,7 @@ use App\Models\LoadingPoint;
 use App\Mail\TripUpdatesMail;
 use App\Models\TransportOrder;
 use App\Mail\TransportOrderMail;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Redirect;
