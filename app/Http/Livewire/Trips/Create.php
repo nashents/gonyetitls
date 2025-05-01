@@ -1650,20 +1650,87 @@ class Create extends Component
    
 
     public function updatedSearchHorse(){
-        $this->search();
+        if ($this->selectedStatus && ($this->selectedStatus == "Scheduled" || $this->selectedStatus == "Offloaded" || $this->selectedStatus == "Cancelled") ) {
+            if ($this->selectedTransporter) {
+                $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$this->selectedTransporter)
+                                     ->where('registration_number', 'like', '%'.$this->searchHorse.'%')->where('archive',0)->get();
+            }else{
+                $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('registration_number', 'like', '%'.$this->searchHorse.'%')->where('archive',0)->get();
+            }
+              
+            }else{
+                if (isset($this->selectedTransporter)) {
+                    $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$this->selectedTransporter)
+                                         ->where('registration_number', 'like', '%'.$this->searchHorse.'%')->where('status', 1)->where('archive',0)->where('service',0)->get();
+                }else{
+                    $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('registration_number', 'like', '%'.$this->searchHorse.'%')->where('status', 1)->where('archive',0)->where('service',0)->get();
+                }
+                
+            }
     }
     public function updatedSearchVehicle(){
-        $this->search();
-    }
+        if ($this->selectedStatus && ($this->selectedStatus == "Scheduled" || $this->selectedStatus == "Offloaded" || $this->selectedStatus == "Cancelled") ) {
+            if ($this->selectedTransporter) {
+                $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('transporter_id',$this->selectedTransporter)->where('archive',0)
+                                     ->where('registration_number', 'like', '%'.$this->searchVehicle.'%')->get();
+            }else{
+                $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('registration_number', 'like', '%'.$this->searchVehicle.'%')->where('archive',0)->get();
+            }
+            }else{
+                if (isset($this->selectedTransporter)) {
+                    $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('transporter_id',$this->selectedTransporter)->where('status', 1)->where('archive',0)->where('service',0)
+                                         ->where('registration_number', 'like', '%'.$this->searchVehicle.'%')->get();
+                }else{
+                    $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('registration_number', 'like', '%'.$this->searchVehicle.'%')->where('status', 1)->where('archive',0)->where('service',0)->get();
+                } 
+            }
+        }
     public function updatedSearchDriver(){
-        $this->search();
+        if ($this->selectedStatus && ($this->selectedStatus == "Scheduled" || $this->selectedStatus == "Offloaded" || $this->selectedStatus == "Cancelled") ) { 
+                if ($this->selectedTransporter) {
+                $this->drivers = Driver::query()->with('employee:id,name,surname')->where('transporter_id',$this->selectedTransporter)
+                                    ->whereHas('employee', function ($query) {
+                    return $query->where('name', 'like', '%'.$this->searchDriver.'%');
+                })->where('archive',0)->get();
+                }else {
+                    $this->drivers = Driver::query()->with('employee:id,name,surname')->whereHas('employee', function ($query) {
+                        return $query->where('name', 'like', '%'.$this->searchDriver.'%');
+                    })->where('archive',0)->get();
+                }
+            }else{
+                if ($this->selectedTransporter) {
+                    $this->drivers = Driver::query()->with('employee:id,name,surname')->where('transporter_id',$this->selectedTransporter)
+                                        ->whereHas('employee', function ($query) {
+                        return $query->where('name', 'like', '%'.$this->searchDriver.'%');
+                    })->where('status', 1)->where('archive',0)->get();
+                }else {
+                    $this->drivers = Driver::query()->with('employee:id,name,surname')->whereHas('employee', function ($query) {
+                        return $query->where('name', 'like', '%'.$this->searchDriver.'%');
+                    })->where('status', 1)->where('archive',0)->get();
+                }
+             
+            }
     }
     public function updatedSearchTrailer(){
-        $this->search();
+        if ($this->selectedStatus && ($this->selectedStatus == "Scheduled" || $this->selectedStatus == "Offloaded" || $this->selectedStatus == "Cancelled") ) {
+            if ($this->selectedTransporter) {
+                $this->trailers =  Trailer::where('transporter_id',$this->selectedTransporter)
+                                        ->where('registration_number', 'like', '%'.$this->searchTrailer.'%')->where('archive',0)->get();
+            }else {
+                $this->trailers = Trailer::where('registration_number', 'like', '%'.$this->searchTrailer.'%')->where('archive',0)->get();
+            }
+           
+            }else{
+                if ($this->selectedTransporter) {
+                    $this->trailers =  Trailer::where('transporter_id',$this->selectedTransporter)
+                                            ->where('registration_number', 'like', '%'.$this->searchTrailer.'%')->where('status', 1)->where('service',0)->where('archive',0)->get();
+                }else {
+                    $this->trailers = Trailer::where('registration_number', 'like', '%'.$this->searchTrailer.'%')->where('status', 1)->where('service',0)->where('archive',0)->get();
+                }
+            }
     }
-    public function updatedSearchTrip(){
 
-        if (isset($this->searchTrip)) {
+    public function updatedSearchTrip(){
             $this->trips = Trip::query()->with([ 'customer:id,name',
             'horse:id,registration_number',
             'loading_point:id,name',
@@ -1674,96 +1741,11 @@ class Create extends Component
                 return $query->where('registration_number', 'like', '%'.$this->searchTrip.'%');
             })
             ->orderBy('start_date','desc')->get();
-        }
+     
 
     }
 
-    public function search(){
-        if (isset($this->selectedStatus) && ($this->selectedStatus == "Scheduled" || $this->selectedStatus == "Offloaded" || $this->selectedStatus == "Cancelled") ) {
-
-            if (isset($this->searchHorse)) {
-               
-                if (isset($this->selectedTransporter)) {
-                    $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$this->selectedTransporter)
-                                         ->where('registration_number', 'like', '%'.$this->searchHorse.'%')->where('archive',0)->get();
-                }else{
-                    $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('registration_number', 'like', '%'.$this->searchHorse.'%')->where('archive',0)->get();
-                }
-                
-            }
-           
-            if (isset($this->searchVehicle)) {
-                if (isset($this->selectedTransporter)) {
-                    $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('transporter_id',$this->selectedTransporter)->where('archive',0)
-                                         ->where('registration_number', 'like', '%'.$this->searchVehicle.'%')->get();
-                }else{
-                    $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('registration_number', 'like', '%'.$this->searchVehicle.'%')->where('archive',0)->get();
-                }
-                
-            }
-            if (isset($this->searchTrailer)) {
-                if (isset($this->selectedTransporter)) {
-                    $this->trailers =  Trailer::where('transporter_id',$this->selectedTransporter)
-                                            ->where('registration_number', 'like', '%'.$this->searchTrailer.'%')->where('archive',0)->get();
-                }else {
-                    $this->trailers = Trailer::where('registration_number', 'like', '%'.$this->searchTrailer.'%')->where('archive',0)->get();
-                }
-            }
-            if (isset($this->searchDriver)) {
-                if (isset($this->selectedTransporter)) {
-                    $this->drivers = Driver::query()->with('employee:id,name,surname')->where('transporter_id',$this->selectedTransporter)
-                                        ->whereHas('employee', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->searchDriver.'%');
-                    })->where('archive',0)->get();
-            }else {
-                $this->drivers = Driver::query()->with('employee:id,name,surname')->whereHas('employee', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->searchDriver.'%');
-                })->where('archive',0)->get();
-            }
-            }
-            }else{
-                if (isset($this->searchHorse)) {
-               
-                    if (isset($this->selectedTransporter)) {
-                        $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$this->selectedTransporter)
-                                             ->where('registration_number', 'like', '%'.$this->searchHorse.'%')->where('status', 1)->where('archive',0)->where('service',0)->get();
-                    }else{
-                        $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('registration_number', 'like', '%'.$this->searchHorse.'%')->where('status', 1)->where('archive',0)->where('service',0)->get();
-                    }
-                    
-                }
-               
-                if (isset($this->searchVehicle)) {
-                    if (isset($this->selectedTransporter)) {
-                        $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('transporter_id',$this->selectedTransporter)->where('status', 1)->where('archive',0)->where('service',0)
-                                             ->where('registration_number', 'like', '%'.$this->searchVehicle.'%')->get();
-                    }else{
-                        $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('registration_number', 'like', '%'.$this->searchVehicle.'%')->where('status', 1)->where('archive',0)->where('service',0)->get();
-                    }
-                    
-                }
-                if (isset($this->searchTrailer)) {
-                    if (isset($this->selectedTransporter)) {
-                        $this->trailers =  Trailer::where('transporter_id',$this->selectedTransporter)
-                                                ->where('registration_number', 'like', '%'.$this->searchTrailer.'%')->where('status', 1)->where('service',0)->where('archive',0)->get();
-                    }else {
-                        $this->trailers = Trailer::where('registration_number', 'like', '%'.$this->searchTrailer.'%')->where('status', 1)->where('service',0)->where('archive',0)->get();
-                    }
-                }
-                if (isset($this->searchDriver)) {
-                    if (isset($this->selectedTransporter)) {
-                        $this->drivers = Driver::query()->with('employee:id,name,surname')->where('transporter_id',$this->selectedTransporter)
-                                            ->whereHas('employee', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->searchDriver.'%');
-                        })->where('status', 1)->where('archive',0)->get();
-                }else {
-                    $this->drivers = Driver::query()->with('employee:id,name,surname')->whereHas('employee', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->searchDriver.'%');
-                    })->where('status', 1)->where('archive',0)->get();
-                }
-                }
-            }
-    }
+    
 
 
     

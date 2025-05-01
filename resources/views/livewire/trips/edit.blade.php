@@ -8,6 +8,8 @@
                         <div class="panel-heading">
                             <div class="panel-title">
                                 <h5>Edit Trip Schedule</h5>
+                                <small style="color: green">After you insert your search query press enter for the search results to appear.</small> <br>
+                                <small style="color: green">Asterisk <span style="color: red">(*)</span> sign indicates all mandatory fields. You should and cannot save trip form without completing those fields.</small>
                             </div>
                         </div>
                         <div class="panel-body">
