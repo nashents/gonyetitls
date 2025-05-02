@@ -148,9 +148,7 @@ class Index extends Component
         $this->company = Auth::user()->employee->company;
         $this->requisition_filter = "created_at";
        
-        $this->employees = Employee::orderBy('surname','asc')->get()->sortBy('name');
-      
-    
+        $this->employees = Employee::where('archive',0)->where('status',1)->orderBy('surname','asc')->get()->sortBy('name');
         $this->departments = Department::orderBy('name','asc')->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->expenses = Expense::orderBy('name','asc')->get();
@@ -438,9 +436,7 @@ class Index extends Component
         
         $user = Auth::user();
         $employee = $user->employee;
-        $this->employees = Employee::orderBy('surname','asc')->get()->sortBy('name');
-        $this->departments = Department::orderBy('name','asc')->get();
-        $this->currencies = Currency::orderBy('name','asc')->get();
+      
         $this->expenses = Expense::orderBy('name','asc')->get();
         $departments = $employee->departments;
         foreach($departments as $department){
@@ -483,17 +479,11 @@ class Index extends Component
                             return $query->where('name', 'like', '%'.$this->search.'%');
                         })
                         ->orderBy($this->requisition_filter,'desc')->paginate(10),
-                        'employees' => $this->employees,
-                        'departments' => $this->departments,
-                        'currencies' => $this->currencies,
                       
                     ]);
                 }else {
                     return view('livewire.requisitions.index',[
                         'requisitions' => requisition::query()->with('employee','department','trip','currency','payments')->whereBetween($this->requisition_filter,[$this->from, $this->to] )->orderBy($this->requisition_filter,'desc')->paginate(10),
-                        'employees' => $this->employees,
-                        'departments' => $this->departments,
-                        'currencies' => $this->currencies,
                       
                     ]);
                 }
@@ -528,9 +518,7 @@ class Index extends Component
                         return $query->where('name', 'like', '%'.$this->search.'%');
                     })
                     ->orderBy($this->requisition_filter,'desc')->paginate(10),
-                    'employees' => $this->employees,
-                    'departments' => $this->departments,
-                    'currencies' => $this->currencies,
+                  
                    
                 ]);
             }
@@ -539,10 +527,6 @@ class Index extends Component
                 return view('livewire.requisitions.index',[
                     'requisitions' => Requisition::query()->with('employee','department','trip','currency','payments')->whereMonth($this->requisition_filter, date('m'))
                     ->whereYear($this->requisition_filter, date('Y'))->orderBy($this->requisition_filter,'desc')->paginate(10),
-                    'employees' => $this->employees,
-                    'departments' => $this->departments,
-                    'currencies' => $this->currencies,
-                   
                 ]);
               
             }
@@ -580,9 +564,7 @@ class Index extends Component
                             return $query->where('name', 'like', '%'.$this->search.'%');
                         })
                         ->orderBy($this->requisition_filter,'desc')->paginate(10),
-                        'employees' => $this->employees,
-                        'departments' => $this->departments,
-                        'currencies' => $this->currencies,
+                       
                        
                     ]);
                 }else {
@@ -591,9 +573,7 @@ class Index extends Component
                         ->where('user_id',Auth::user()->id)
                         ->orWhereIn('department_id', $this->department_ids)
                         ->whereBetween($this->requisition_filter,[$this->from, $this->to] )->orderBy($this->requisition_filter,'desc')->paginate(10),
-                        'employees' => $this->employees,
-                        'departments' => $this->departments,
-                        'currencies' => $this->currencies,
+                       
                      
                     ]);
                 }
@@ -630,9 +610,6 @@ class Index extends Component
                         return $query->where('name', 'like', '%'.$this->search.'%');
                     })
                     ->orderBy($this->requisition_filter,'desc')->paginate(10),
-                    'employees' => $this->employees,
-                    'departments' => $this->departments,
-                    'currencies' => $this->currencies,
                    
                 ]);
             }
@@ -644,10 +621,6 @@ class Index extends Component
                     ->orWhereIn('department_id', $this->department_ids)
                     ->whereMonth($this->requisition_filter, date('m'))
                     ->whereYear($this->requisition_filter, date('Y'))->orderBy($this->requisition_filter,'desc')->paginate(10),
-                    'employees' => $this->employees,
-                    'departments' => $this->departments,
-                    'currencies' => $this->currencies,
-                  
                 ]);
               
             }

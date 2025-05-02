@@ -23,7 +23,7 @@
 
                             <!-- Nav tabs -->
                             <ul class="nav nav-tabs border-bottom border-primary" role="tablist">
-                                <li role="presentation" class="active"><a class="" href="#trips" aria-controls="trip" role="tab" data-toggle="tab" >Trip Details</a></li>
+                                <li role="presentation" class="active"><a class="" href="#trips" aria-controls="trips" role="tab" data-toggle="tab" >Trip Details</a></li>
                                 <li role="presentation" ><a class="" href="#destinations" aria-controls="destinations" role="tab" data-toggle="tab" >Offloading Points</a></li>
                                 <li role="presentation" ><a class="" href="#documents" aria-controls="documents" role="tab" data-toggle="tab" >Trip Documents</a></li>
                                 <li role="presentation" ><a class="" href="#expenses" aria-controls="expenses" role="tab" data-toggle="tab" >Trip Expenses</a></li>
@@ -33,7 +33,7 @@
                             </ul>
                             <!-- Tab panes -->
                             <div class="tab-content bg-white pt-30">
-                                <div role="tabpanel" class="tab-pane active" id="trip">
+                                <div role="tabpanel" class="tab-pane active" id="trips">
                                     <div class="col-md-12 p-n">
                                         <div class="col-md-12">
                                             <div class="panel panel-info">

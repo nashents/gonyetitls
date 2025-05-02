@@ -412,28 +412,30 @@ class Expenses extends Component
                 $bill = $trip_expense->bill;
                
                 if (isset($bill)) {   
-              
-                $bill->trip_id = $this->trip->id;
-                $bill->horse_id = $this->trip->horse_id;
-                $bill->driver_id = $this->trip->driver_id;
-                $bill->bill_date = $this->trip->start_date;
-                $bill->currency_id = $this->trip->currency_id;
-                $bill->subtotal = $trip_expense->amount;
-                $bill->total = $trip_expense->amount;
-                $bill->balance = $trip_expense->amount;
-                $bill->update();
-    
-                $bill_expense = BillExpense::where('bill_id',$bill->id)
-                                            ->where('expense_id',$this->selectedExpense)->orWhere('allowance_id',$this->selectedAllowance)->get()->first();
-                $bill_expense->user_id = Auth::user()->id;
-                $bill_expense->bill_id = $bill->id;
-                $bill_expense->currency_id = $bill->currency_id;
-                $bill_expense->expense_id = $trip_expense->expense_id;
-                $bill_expense->qty = 1;
-                $bill_expense->amount = $trip_expense->amount;
-                $bill_expense->subtotal = $trip_expense->amount;
-                $bill_expense->subtotal_incl = $trip_expense->amount;
-                $bill_expense->update();
+                
+                    $bill->trip_id = $this->trip->id;
+                    $bill->horse_id = $this->trip->horse_id;
+                    $bill->driver_id = $this->trip->driver_id;
+                    $bill->bill_date = $this->trip->start_date;
+                    $bill->currency_id = $this->trip->currency_id;
+                    $bill->subtotal = $trip_expense->amount;
+                    $bill->total = $trip_expense->amount;
+                    $bill->balance = $trip_expense->amount;
+                    $bill->update();
+        
+                    $bill_expense = BillExpense::where('bill_id',$bill->id)
+                                                ->where('expense_id',$this->selectedExpense)->orWhere('allowance_id',$this->selectedAllowance)->get()->first();
+                    $bill_expense->user_id = Auth::user()->id;
+                    $bill_expense->bill_id = $bill->id;
+                    $bill_expense->currency_id = $bill->currency_id;
+                    $bill_expense->expense_id = $trip_expense->expense_id;
+                    $bill_expense->qty = 1;
+                    $bill_expense->amount = $trip_expense->amount;
+                    $bill_expense->subtotal = $trip_expense->amount;
+                    $bill_expense->subtotal_incl = $trip_expense->amount;
+                    $bill_expense->update();
+
+                }
 
                 $this->recalculateExpenses($this->trip->id);
 
@@ -443,8 +445,6 @@ class Expenses extends Component
                     'type'=>'success',
                     'message'=>"Expense Updated Successfully!!"
                 ]);
-            
-            }
            
 
             }
@@ -457,8 +457,7 @@ class Expenses extends Component
             $this->dispatchBrowserEvent('show-expenseDeleteModal');
         }
 
-        public function delete(){
-
+        public function deleteExpense(){
             $bill = $this->trip_expense->bill;
             if (isset($bill)) {
                 $bill_expenses = $bill->bill_expenses;
@@ -467,10 +466,9 @@ class Expenses extends Component
                         $bill_expense->delete();
                     }
                 }
-               
+                $bill->delete();
             }
             
-            $bill->delete();
 
            $this->trip_expense->delete();
 

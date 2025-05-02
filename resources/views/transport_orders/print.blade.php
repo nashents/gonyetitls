@@ -64,6 +64,7 @@
                             <div class="row contacts">
                                 <div class="col invoice-to">
                                     <div class="text-gray-light">TRANSPORTATION ORDER FOR</div>
+                                    @if ($customer)
                                     <h5 class="to">{{$customer->name}}</h5>
                                     <div class="address"> 
                                         @if ($customer->street_address)
@@ -75,6 +76,7 @@
                                         {{$customer->city}} {{$customer->country}}
                                     </div>
                                     <div class="email"><a href="mailto:{{$customer->email}}">{{$customer->email}}</a> </div>
+                                    @endif
                                 </div>
                                 <div class="col invoice-details">
                                     <div class="date"> <strong>Trip Number:</strong> {{$transport_order->trip ? $transport_order->trip->trip_number : ""}}{{ $transport_order->trip ? '/'.$transport_order->trip->trip_ref : ""  }}</div>

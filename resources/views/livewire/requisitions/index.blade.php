@@ -333,13 +333,15 @@
                                     <input type="text" wire:model.lazy="searchTrip" placeholder="Search with trip#, trip ref, horse reg#..." class="form-control">
                                 <select wire:model.lazy="trip_id" class="form-control" size="8">
                                     <option value="">Select Trip</option>
-                                    @foreach ($trips as $trip)
-                                    <option value="{{ $trip->id }}">{{ $trip->trip_number }} | {{ $trip->horse ? $trip->horse->registration_number : "" }} 
-                                        @if ($trip->driver)
-                                        {{ $trip->driver->employee ? $trip->driver->employee->name : "" }} {{ $trip->driver->employee ? $trip->driver->employee->surname : "" }}
-                                        @endif
-                                         | {{ $trip->customer ? $trip->customer->name : "" }} | {{ $trip->loading_point ? $trip->loading_point->name : "" }} - {{ $trip->offloading_point ? $trip->offloading_point->name : "" }}</option>
-                                    @endforeach
+                                    @if (isset($trips))
+                                        @foreach ($trips as $trip)
+                                        <option value="{{ $trip->id }}">{{ $trip->trip_number }} | {{ $trip->horse ? $trip->horse->registration_number : "" }} 
+                                            @if ($trip->driver)
+                                            {{ $trip->driver->employee ? $trip->driver->employee->name : "" }} {{ $trip->driver->employee ? $trip->driver->employee->surname : "" }}
+                                            @endif
+                                            | {{ $trip->customer ? $trip->customer->name : "" }} | {{ $trip->loading_point ? $trip->loading_point->name : "" }} - {{ $trip->offloading_point ? $trip->offloading_point->name : "" }}</option>
+                                        @endforeach
+                                    @endif
                                 </select>
                                     @error('trip_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
@@ -554,14 +556,15 @@
                                     <label for="country">Trips</label>
                                 <select wire:model.lazy="trip_id" class="form-control" >
                                     <option value="">Select Trip</option>
-                                    @foreach ($trips as $trip)
-                                    <option value="{{ $trip->id }}">{{ $trip->trip_number }} | {{ $trip->horse ? $trip->horse->registration_number : "" }}
-                                        @if ($trip->driver)
-                                        {{ $trip->driver->employee ? $trip->driver->employee->name : "" }} {{ $trip->driver->employee ? $trip->driver->employee->surname : "" }}
-                                        @endif
-                                         | {{ $trip->customer ? $trip->customer->name : "" }} | {{ $trip->loading_point ? $trip->loading_point->name : "" }} - {{ $trip->offloading_point ? $trip->offloading_point->name : "" }}</option>
-                                    @endforeach
-                                    
+                                    @if (isset($trips))
+                                        @foreach ($trips as $trip)
+                                        <option value="{{ $trip->id }}">{{ $trip->trip_number }} | {{ $trip->horse ? $trip->horse->registration_number : "" }}
+                                            @if ($trip->driver)
+                                            {{ $trip->driver->employee ? $trip->driver->employee->name : "" }} {{ $trip->driver->employee ? $trip->driver->employee->surname : "" }}
+                                            @endif
+                                            | {{ $trip->customer ? $trip->customer->name : "" }} | {{ $trip->loading_point ? $trip->loading_point->name : "" }} - {{ $trip->offloading_point ? $trip->offloading_point->name : "" }}</option>
+                                        @endforeach
+                                    @endif
                                 </select>
                                     @error('trip_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>

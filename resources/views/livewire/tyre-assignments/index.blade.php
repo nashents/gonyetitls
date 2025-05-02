@@ -257,6 +257,8 @@
                                 <label for="name">Wheel Positions<span class="required" style="color: red">*</span></label>
                               <select class="form-control" wire:model.debounce.300ms="position" required>
                                 <option value="">Select Wheel Position</option>
+                                <option value="Front Left">Front Left Inside</option>
+                                <option value="Front Right">Front Left Inside</option>
                                 <option value="Front Left Inside">Front Left Inside</option>
                                 <option value="Front Left Outside">Front Left Outside</option>
                                 <option value="Front Right Inside">Front Right Inside</option>
@@ -439,6 +441,8 @@
                                 <label for="name">Wheel Positions<span class="required" style="color: red">*</span></label>
                               <select class="form-control" wire:model.debounce.300ms="position" required>
                                 <option value="">Select Wheel Position</option>
+                                <option value="Front Left">Front Left Inside</option>
+                                <option value="Front Right">Front Left Inside</option>
                                 <option value="Front Left Inside">Front Left Inside</option>
                                 <option value="Front Left Outside">Front Left Outside</option>
                                 <option value="Front Right Inside">Front Right Inside</option>

@@ -192,7 +192,11 @@
                                         @endif
                                         
                                          <td><span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
-                                         <td>  {{ $user->employee ? $user->employee->name : "" }} {{ $user->employee ? $user->employee->surname : "" }}</td>
+                                         <td> 
+                                            @if ($user)
+                                            {{ $user->employee ? $user->employee->name : "" }} {{ $user->employee ? $user->employee->surname : "" }}
+                                            @endif
+                                        </td>
                                          <td class="w-10 line-height-35 table-dropdown">
                                             <div class="dropdown">
                                                 <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -281,7 +285,11 @@
                                         @endif
                                         
                                          <td><span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
-                                         <td>  {{ $user->employee ? $user->employee->name : "" }} {{ $user->employee ? $user->employee->surname : "" }}</td>
+                                         <td> 
+                                            @if ($user)
+                                            {{ $user->employee ? $user->employee->name : "" }} {{ $user->employee ? $user->employee->surname : "" }}
+                                            @endif
+                                        </td>
                                          <td class="w-10 line-height-35 table-dropdown">
                                             <div class="dropdown">
                                                 <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -369,7 +377,11 @@
                                     @endif
                                    
                                      <td><span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
-                                     <td>  {{ $user->employee ? $user->employee->name : "" }} {{ $user->employee ? $user->employee->surname : "" }}</td>
+                                     <td> 
+                                        @if ($user)
+                                        {{ $user->employee ? $user->employee->name : "" }} {{ $user->employee ? $user->employee->surname : "" }}
+                                        @endif
+                                    </td>
                                      <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -457,7 +469,11 @@
                                         <td class="table-accent"><span class="label label-light label-wide">{{$trip->trip_status}}</span></td>
                                         @endif
                                         
-                                        <td>  {{ $user->employee ? $user->employee->name : "" }} {{ $user->employee ? $user->employee->surname : "" }}</td> 
+                                        <td> 
+                                            @if ($user)
+                                            {{ $user->employee ? $user->employee->name : "" }} {{ $user->employee ? $user->employee->surname : "" }}
+                                            @endif
+                                        </td>
                                         <td><span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
                                          <td class="w-10 line-height-35 table-dropdown">
                                             <div class="dropdown">
@@ -548,7 +564,11 @@
                                         @endif
                                        
                                          <td><span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
-                                         <td>  {{ $user->employee ? $user->employee->name : "" }} {{ $user->employee ? $user->employee->surname : "" }}</td>
+                                         <td> 
+                                            @if ($user)
+                                            {{ $user->employee ? $user->employee->name : "" }} {{ $user->employee ? $user->employee->surname : "" }}
+                                            @endif
+                                        </td>
                                          <td class="w-10 line-height-35 table-dropdown">
                                             <div class="dropdown">
                                                 <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -636,7 +656,11 @@
                                         @endif
                                        
                                          <td><span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
-                                         <td>  {{ $user->employee ? $user->employee->name : "" }} {{ $user->employee ? $user->employee->surname : "" }}</td>
+                                         <td> 
+                                            @if ($user)
+                                            {{ $user->employee ? $user->employee->name : "" }} {{ $user->employee ? $user->employee->surname : "" }}
+                                            @endif
+                                        </td>
                                          <td class="w-10 line-height-35 table-dropdown">
                                             <div class="dropdown">
                                                 <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -724,7 +748,11 @@
                                         @endif
                                        
                                          <td><span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
-                                         <td>  {{ $user->employee ? $user->employee->name : "" }} {{ $user->employee ? $user->employee->surname : "" }}</td>
+                                         <td> 
+                                            @if ($user)
+                                            {{ $user->employee ? $user->employee->name : "" }} {{ $user->employee ? $user->employee->surname : "" }}
+                                            @endif
+                                        </td>
                                          <td class="w-10 line-height-35 table-dropdown">
                                             <div class="dropdown">
                                                 <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -814,7 +842,11 @@
                                         @endif
                                        
                                          <td><span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
-                                         <td>  {{ $user->employee ? $user->employee->name : "" }} {{ $user->employee ? $user->employee->surname : "" }}</td>
+                                         <td> 
+                                            @if ($user)
+                                            {{ $user->employee ? $user->employee->name : "" }} {{ $user->employee ? $user->employee->surname : "" }}
+                                            @endif
+                                        </td>
                                          <td class="w-10 line-height-35 table-dropdown">
                                             <div class="dropdown">
                                                 <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -904,7 +936,11 @@
                                         @endif      
                                        
                                          <td><span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
-                                         <td>  {{ $user->employee ? $user->employee->name : "" }} {{ $user->employee ? $user->employee->surname : "" }}</td>
+                                         <td> 
+                                            @if ($user)
+                                            {{ $user->employee ? $user->employee->name : "" }} {{ $user->employee ? $user->employee->surname : "" }}
+                                            @endif
+                                        </td>
                                          <td class="w-10 line-height-35 table-dropdown">
                                             <div class="dropdown">
                                                 <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
