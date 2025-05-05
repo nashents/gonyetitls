@@ -13,6 +13,7 @@ use App\Models\Trailer;
 use App\Models\Vehicle;
 use Livewire\Component;
 use App\Models\Currency;
+use App\Models\Movement;
 use App\Models\Purchase;
 use App\Models\TyreCount;
 use App\Models\TyreDetail;
@@ -370,6 +371,7 @@ class Create extends Component
                 $tyre->save();
 
                 if ($this->tyre_assignment == True) {
+
                 $assignment = new TyreAssignment;
                 $assignment->user_id = Auth::user()->id;
                 $assignment->tyre_id = $tyre->id;
@@ -393,6 +395,26 @@ class Create extends Component
                 $assignment->axle = $this->axle;
                 $assignment->status = 1;
                 $assignment->save();
+
+                $movement = Movement::firstOrNew(['tyre_assignment_id' => $assignment->id]);
+                $movement->user_id = $assignment->user_id;
+                $movement->tyre_id = $assignment->tyre_id;
+                
+                if ($assignment->horse_id) {
+                    $movement->location = 'Horse';
+                    $movement->horse_id = $assignment->horse_id;
+                } elseif ($assignment->vehicle_id) {
+                    $movement->location = 'Vehicle';
+                    $movement->vehicle_id = $assignment->vehicle_id;
+                } elseif ($assignment->trailer_id) {
+                    $movement->location = 'Trailer';
+                    $movement->trailer_id = $assignment->vehicle_id;
+                }
+                
+                $movement->current_mileage = $assignment->current_mileage;
+                $movement->mileage_moved = $assignment->starting_odometer;
+                $movement->date =   $assignment->date_fitted;
+                $movement->save();
 
                 $mileage = new Mileage;
                 $mileage->user_id = Auth::user()->id;

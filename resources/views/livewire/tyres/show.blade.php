@@ -20,6 +20,21 @@
                                 <th class="w-10 text-center line-height-35">Tyre Number</th>
                                 <td class="w-20 line-height-35">{{$tyre->tyre_number}} </td>
                             </tr>
+                            @if ($tyre->tyre_assignment)
+                                <tr>
+                                    <th class="w-10 text-center line-height-35">Tyre Assignment</th>
+                                    <td class="w-20 line-height-35">
+                                        @if ($tyre->tyre_assignment->horse)
+                                            Horse: {{$tyre->tyre_assignment->horse ? $tyre->tyre_assignment->horse->registration_number : ""}} {{$tyre->tyre_assignment->horse->fleet_number ? "(".$tyre->tyre_assignment->horse->fleet_number.")" : ""}}
+                                        @elseif($tyre->tyre_assignment->trailer)        
+                                            Trailer: {{$tyre->tyre_assignment->trailer ? $tyre->tyre_assignment->trailer->registration_number : ""}} {{$tyre->tyre_assignment->trailer->fleet_number ? "(".$tyre->tyre_assignment->trailer->fleet_number.")" : ""}}
+                                        @elseif($tyre->tyre_assignment->vehicle)        
+                                            Vehicle: {{$tyre->tyre_assignment->vehicle ? $tyre->tyre_assignment->vehicle->registration_number : ""}} {{$tyre->tyre_assignment->vehicle->fleet_number ? "(".$tyre->tyre_assignment->vehicle->fleet_number.")" : ""}}
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endif
+                           
                             <tr>
                                 <th class="w-10 text-center line-height-35">CreatedBy</th>
                                 <td class="w-20 line-height-35">{{$tyre->user ? $tyre->user->name : ""}} {{$tyre->user ? $tyre->user->surname : ""}} </td>
@@ -106,7 +121,7 @@
                             </tr>
                             <tr>
                                 <th class="w-10 text-center line-height-35">Status</th>
-                                <td class="w-20 line-height-35"><span class="badge bg-{{$tyre->status == 1 ? "success" : "danger"}}">{{$tyre->status == 1 ? "Unassigned" : "Assigned"}}</span></td>
+                                <td class="w-20 line-height-35"> <span class="badge bg-{{$tyre->status == 1 ? "warning" : "success"}}">{{$tyre->status == 1 ? "Unassigned" : "Assigned"}}</span>        </td>
                             </tr>
                         </tbody>
                     </table>

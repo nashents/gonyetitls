@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use Carbon\Carbon;
 use App\Mail\SendMail;
 use App\Models\Fitness;
 use Illuminate\Console\Command;
@@ -45,14 +46,41 @@ class FitnessReminderCommand extends Command
     public function handle()
     {
 
-        $fitnesses = Fitness::where('reminder_at','<=', now()->toDateTimeString())
-                            ->where('expires_at','>=', now()->toDateTimeString())->get();
+        $fitnesses = Fitness::whereDate('first_reminder_at','<=', Carbon::today())
+        ->where('first_reminder_at_status', FALSE)
+        ->where('expires_at','>=', now()->toDateTimeString())
+        ->where('closed', 0)
+        ->orWhereDate('second_reminder_at','<=', Carbon::today())
+        ->where('second_reminder_at_status', FALSE)
+        ->where('expires_at','>=', now()->toDateTimeString())
+        ->where('closed', 0)
+        ->orWhereDate('third_reminder_at','<=', Carbon::today())
+        ->where('third_reminder_at_status', FALSE)
+        ->where('expires_at','>=', now()->toDateTimeString())
+        ->where('closed', 0)
+        ->get();
 
-        foreach ($fitnesses as $fitness) {
-            $company = $fitness->company;
-            if (isset($company->email) && isset($fitness->user->email) && ($company->noreply)) {
-                Mail::to($company->email)->send(new SendReminderEmails($fitness, $company));
+        if ($fitnesses) {
+            foreach ($fitnesses as $fitness) {
+                if ($fitness->user->email) {
+                    Mail::to($fitness->user->email)->send(new SendReminderEmails($fitness));
+                }
+
+                if ($fitness->first_reminder_at <=  Carbon::today() ) {
+                    $fitness->first_reminder_at_status = True;
+                   
+                }
+                if ($fitness->second_reminder_at <=  Carbon::today() ) {
+                    $fitness->second_reminder_at_status = True;
+                    
+                }
+                if ($fitness->third_reminder_at <=  Carbon::today() ) {
+                    $fitness->third_reminder_at_status = True;
+                   
+                }
+                $fitness->update();
             }
         }
+       
     }
 }

@@ -23,9 +23,9 @@ class SendReminderEmails extends Mailable implements ShouldQueue
     public $fitness;
     public $user;
 
-    public function __construct(Fitness $fitness,Company $company)
+    public function __construct(Fitness $fitness)
     {
-        $this->company = $company;
+        $this->company = $fitness->company;
         $this->fitness = $fitness;
         $this->user = $fitness->user;
     }
@@ -39,6 +39,6 @@ class SendReminderEmails extends Mailable implements ShouldQueue
     {
         return $this->view('emails.reminders')
                     ->from($this->company->noreply)
-                    ->cc($this->fitness->user->email);
+                    ->cc($this->company->email);
     }
 }

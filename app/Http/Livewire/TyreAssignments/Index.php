@@ -8,6 +8,7 @@ use App\Models\Mileage;
 use App\Models\Trailer;
 use App\Models\Vehicle;
 use Livewire\Component;
+use App\Models\Movement;
 use App\Models\TyreDetail;
 use App\Models\TyreDispatch;
 use Livewire\WithPagination;
@@ -38,6 +39,8 @@ class Index extends Component
     public $position;
     public $axle;
     public $starting_odometer;
+    public $date_fitted;
+    public $current_mileage;
     public $ending_odometer;
     public $description;
     public $status;
@@ -102,8 +105,30 @@ class Index extends Component
         $assignment->position = $this->position;
         $assignment->axle = $this->axle;
         $assignment->description = $this->description;
+        $assignment->date_fitted = $this->date_fitted;
+        $assignment->current_mileage = $this->current_mileage;
         $assignment->status = 1;
         $assignment->save();
+
+        $movement = Movement::firstOrNew(['tyre_assignment_id' => $assignment->id]);
+        $movement->user_id = $assignment->user_id;
+        $movement->tyre_id = $assignment->tyre_id;
+        
+        if ($assignment->horse_id) {
+            $movement->location = 'Horse';
+            $movement->horse_id = $assignment->horse_id;
+        } elseif ($assignment->vehicle_id) {
+            $movement->location = 'Vehicle';
+            $movement->vehicle_id = $assignment->vehicle_id;
+        } elseif ($assignment->trailer_id) {
+            $movement->location = 'Trailer';
+            $movement->trailer_id = $assignment->vehicle_id;
+        }
+        
+        $movement->current_mileage = $assignment->current_mileage;
+        $movement->mileage_moved = $assignment->starting_odometer;
+        $movement->date =   $assignment->date_fitted;
+        $movement->save();
 
         $mileage = new Mileage;
         $mileage->user_id = Auth::user()->id;
@@ -199,6 +224,26 @@ class Index extends Component
                 }
                
                 $assignment->update();
+
+                $movement = Movement::firstOrNew(['tyre_assignment_id' => $assignment->id]);
+                $movement->user_id = $assignment->user_id;
+                $movement->tyre_id = $assignment->tyre_id;
+                
+                if ($assignment->horse_id) {
+                    $movement->location = 'Horse';
+                    $movement->horse_id = $assignment->horse_id;
+                } elseif ($assignment->vehicle_id) {
+                    $movement->location = 'Vehicle';
+                    $movement->vehicle_id = $assignment->vehicle_id;
+                } elseif ($assignment->trailer_id) {
+                    $movement->location = 'Trailer';
+                    $movement->trailer_id = $assignment->vehicle_id;
+                }
+                
+                $movement->current_mileage = $assignment->current_mileage;
+                $movement->mileage_moved = $assignment->starting_odometer;
+                $movement->date =   $assignment->date_fitted;
+                $movement->save();
 
                 $mileage = Mileage::where('tyre_assignment_id',$assignment->id)->first();
                 if (isset($mileage)) {

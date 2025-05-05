@@ -2,6 +2,7 @@
 
 namespace App\Console;
 
+use Carbon\Carbon;
 use Illuminate\Console\Scheduling\Schedule;
 use App\Console\Commands\FitnessReminderCommand;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
@@ -15,6 +16,7 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         FitnessReminderCommand::class,
+        AccrueLeaveDays::class,
     ];
 
     /**
@@ -25,10 +27,14 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('reminder:send')->hourly()
+        $schedule->command('reminder:send')
         ->timezone('Africa/Harare');
-        // $schedule->command('reminder:send')->twiceDaily(9, 14)
-        // ->timezone('Africa/Harare');
+     
+        $schedule->command('employee:accrue-leave')
+        ->daily()
+        ->when(function () {
+            return Carbon::today()->isSameDay(Carbon::now()->endOfMonth());
+        });
     }
 
     /**
