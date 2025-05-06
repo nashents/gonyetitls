@@ -20,8 +20,7 @@
                                     <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search expenses...">
                                 </div>
                             </div>
-
-                            <table id="expensesTable" class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
+                            <table class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
                                     <th class="th-sm">Account Type
@@ -76,11 +75,11 @@
                                             </button>
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{ route('expenses.show', $expense->id) }}"  ><i class="fa fa-eye color-default"></i> View</a></li>
+                                                @if ($expense->user_id != Null)
                                                 <li><a href="#"  wire:click="edit({{$expense->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
-                                                @if ($expense->name == "Transporter Payment" || $expense->name == "VAT")
-                                                @else   
                                                 <li><a href="#" data-toggle="modal" data-target="#expenseDeleteModal{{ $expense->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                                 @endif
+                                               
                                             </ul>
                                         </div>
                                         @include('expenses.delete')
@@ -92,6 +91,13 @@
                                     <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
                                  @endif
                               </table>
+                              <nav class="text-center" style="float: right">
+                                <ul class="pagination rounded-corners">
+                                    @if (isset($expenses))
+                                        {{ $expenses->links() }} 
+                                    @endif 
+                                </ul>
+                            </nav>  
 
                             <!-- /.col-md-12 -->
                         </div>

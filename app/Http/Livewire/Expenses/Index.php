@@ -25,7 +25,7 @@ class Index extends Component
 
     public $accounts;
     public $account_id;
-    public $expenses;
+    private $expenses;
     public $status;
     public $name;
     public $amount;
@@ -39,7 +39,8 @@ class Index extends Component
     public $user_id;
 
     public function mount(){
-        $this->expenses = Expense::latest()->get();
+        $this->resetPage();
+        $this->reset(['search']);
         $this->currencies = Currency::latest()->get();
         $this->accounts = Account::latest()->get();
     }
@@ -149,10 +150,25 @@ class Index extends Component
     public function render()
     {
         if (filled($this->search)) {
-            # code...
+            return view('livewire.expenses.index',[
+                'expenses' => Expense::query()->with('currency','account')
+                ->where('name','like', '%'.$this->search.'%')
+                ->orWhere('type','like', '%'.$this->search.'%')
+                ->orWhere('amount','like', '%'.$this->search.'%')
+                ->orWhere('frequency','like', '%'.$this->search.'%')
+                ->orWhere('description','like', '%'.$this->search.'%')
+                ->orWhereHas('currency', function ($query) {
+                    return $query->where('name', 'like', '%'.$this->search.'%');
+                })
+                ->orWhereHas('account', function ($query) {
+                    return $query->where('name', 'like', '%'.$this->search.'%');
+                })
+                ->orderBy('name','asc')->paginate(10),
+            ]);
+
         }else{
             return view('livewire.expenses.index',[
-                'expenses' => Expense::latest()->get()
+                'expenses' => Expense::orderBy('name','asc')->paginate(10)
             ]);
         }
     }

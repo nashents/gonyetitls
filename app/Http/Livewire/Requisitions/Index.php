@@ -334,7 +334,7 @@ class Index extends Component
                
             }
         }
-
+        $this->reset(['searchTrip', 'searchBooking']);
         $this->dispatchBrowserEvent('hide-requisitionModal');
         $this->resetInputFields();
         $this->dispatchBrowserEvent('alert',[
@@ -407,7 +407,7 @@ class Index extends Component
         $requisition->subject = $this->subject;
         $requisition->update();
 
-
+        $this->reset(['searchTrip', 'searchBooking']);
         $this->dispatchBrowserEvent('hide-requisitionEditModal');
         $this->resetInputFields();
         $this->dispatchBrowserEvent('alert',[
