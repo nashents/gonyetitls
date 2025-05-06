@@ -538,7 +538,6 @@ class Index extends Component
                 if (filled($this->search)) {
                     return view('livewire.requisitions.index',[
                         'requisitions' => Requisition::query()->with('employee','department','trip','currency','payments')->whereBetween($this->requisition_filter,[$this->from, $this->to] )
-                        ->where('user_id',Auth::user()->id)
                         ->orWhereIn('department_id', $this->department_ids)
                         ->where('requisition_number','like', '%'.$this->search.'%')
                         ->orWhere('subject','like', '%'.$this->search.'%')
@@ -570,8 +569,7 @@ class Index extends Component
                 }else {
                     return view('livewire.requisitions.index',[
                         'requisitions' => Requisition::query()->with('employee','department','trip','currency','payments')
-                        ->where('user_id',Auth::user()->id)
-                        ->orWhereIn('department_id', $this->department_ids)
+                        ->whereIn('department_id', $this->department_ids)
                         ->whereBetween($this->requisition_filter,[$this->from, $this->to] )->orderBy($this->requisition_filter,'desc')->paginate(10),
                        
                      
@@ -584,7 +582,6 @@ class Index extends Component
                 return view('livewire.requisitions.index',[
                     'requisitions' => Requisition::query()->with('employee','department','trip','currency','payments')->whereMonth($this->requisition_filter, date('m'))
                     ->whereYear($this->requisition_filter, date('Y'))
-                    ->where('user_id',Auth::user()->id)
                     ->orWhereIn('department_id', $this->department_ids)
                     ->where('requisition_number','like', '%'.$this->search.'%')
                     ->orWhere('subject','like', '%'.$this->search.'%')
@@ -617,7 +614,6 @@ class Index extends Component
                
                 return view('livewire.requisitions.index',[
                     'requisitions' => Requisition::query()->with('employee','department','trip','currency','payments')
-                    ->where('user_id',Auth::user()->id)
                     ->orWhereIn('department_id', $this->department_ids)
                     ->whereMonth($this->requisition_filter, date('m'))
                     ->whereYear($this->requisition_filter, date('Y'))->orderBy($this->requisition_filter,'desc')->paginate(10),
