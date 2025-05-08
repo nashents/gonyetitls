@@ -22,10 +22,13 @@
                                         @error('bill_number') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
-                                <div class="col-md-5">
+                                <div class="col-md-7">
                                     @if (!isset($bill_for))
                                     <div class="form-group" >
                                         <label for="name">Bill For?</label>
+                                        <label class="radio-inline">
+                                            <input type="radio" wire:model.debounce.300ms="bill_for" value="Asset" name="optradio" >Asset
+                                          </label>
                                         <label class="radio-inline">
                                             <input type="radio" wire:model.debounce.300ms="bill_for" value="Horse" name="optradio" >Driver
                                           </label>
@@ -58,12 +61,23 @@
                                         <div class="form-group">
                                             <label for="country">Vehicle(s)<span class="required" style="color: red">*</span></label>
                                             <select wire:model.debounce.300ms="vehicle_id" class="form-control" required>
-                                                    <option value="">Select Vehicles</option>
+                                                    <option value="">Select Vehicle</option>
                                                 @foreach ($vehicles as $vehicle)
                                                 <option value="{{$vehicle->id}}"> {{$vehicle->registration_number}} {{$vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : ""}} {{$vehicle->vehicle_make ? $vehicle->vehicle_make->name : ""}} {{$vehicle->vehicle_model ? $vehicle->vehicle_model->name : ""}}</option>
                                                 @endforeach
                                             </select>
                                             @error('vehicle_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    @elseif ($bill_for == "Asset")  
+                                        <div class="form-group">
+                                            <label for="country">Asset(s)<span class="required" style="color: red">*</span></label>
+                                            <select wire:model.debounce.300ms="asset_id" class="form-control" required>
+                                                    <option value="">Select Asset</option>
+                                                @foreach ($assets as $asset)
+                                                <option value="{{$asset->id}}"> {{$asset->product->brand ? $asset->product->brand->name : ""}} {{$asset->product ? $asset->product->name : ""}} {{$asset->product ? $asset->product->identification_number : ""}} {{$asset->serial_number ? "SN: ".$asset->serial_number : ""}}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('asset_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
                                     @elseif ($bill_for == "Horse")  
                                     <div class="form-group">
@@ -129,6 +143,10 @@
                                     @endif
                                    
                                 </div>
+                           
+                             
+                            </div>
+                            <div class="row">
                                 <div class="col-md-2">
                                     <div class="form-group">
                                         <label for="country">Currencies<span class="required" style="color: red">*</span></label>
@@ -156,18 +174,14 @@
                                     @endif
                                     @endif
                                 </div>
-                             
-                            </div>
-                            <div class="row">
-                  
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <div class="form-group">
                                         <label for="name">Bill Date<span class="required" style="color: red">*</span></label>
                                         <input type="date" class="form-control" wire:change="billDate()" wire:model.debounce.300ms="bill_date" placeholder="Enter Bill Date" required >
                                         @error('bill_date') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <div class="form-group">
                                         <label for="name">Due Date</label>
                                         <input type="date" class="form-control" wire:model.debounce.300ms="due_date" placeholder="Enter Due Date"  >

@@ -4,6 +4,7 @@ namespace App\Http\Livewire\Bills;
 
 
 use App\Models\Bill;
+use App\Models\Asset;
 use App\Models\Horse;
 use App\Models\Driver;
 use App\Models\Vendor;
@@ -33,6 +34,8 @@ class Create extends Component
     public $bill_for;
     public $vendors;
     public $selectedVendor;
+    public $assets;
+    public $asset_id;
     public $transporters;
     public $transporter_id;
     public $horses;
@@ -153,6 +156,7 @@ class Create extends Component
         })->orderBy('name','asc')->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();
         $this->transporters = Transporter::orderBy('name','asc')->get();
+        $this->assets = Asset::with('product')->get()->sortBy('product.name');
         $this->drivers = Driver::all();
         $this->horses = Horse::orderBy('registration_number','asc')->get();
         $this->trailers = Trailer::orderBy('registration_number','asc')->get();
@@ -305,6 +309,7 @@ class Create extends Component
             $bill->driver_id = Null;
             $bill->vehicle_id = Null;
             $bill->trailer_id = Null;
+            $bill->asset_id = Null;
         }
         elseif ($this->bill_for == "Horse") {
             $bill->category = "Horse";
@@ -313,6 +318,17 @@ class Create extends Component
             $bill->vehicle_id = Null;
             $bill->driver_id = Null;
             $bill->trailer_id = Null;
+            $bill->asset_id = Null;
+        }
+        elseif ($this->bill_for == "Asset") {
+            $bill->category = "Asset";
+            $bill->transporter_id = Null;
+            $bill->asset_id = $this->asset_id;
+            $bill->horse_id = Null;
+            $bill->vehicle_id = Null;
+            $bill->driver_id = Null;
+            $bill->trailer_id = Null;
+            $bill->asset_id = Null;
         }
         elseif ($this->bill_for == "Driver") {
             $bill->category = "Driver";
@@ -321,6 +337,7 @@ class Create extends Component
             $bill->driver_id = $this->driver_id;
             $bill->vehicle_id = Null;
             $bill->trailer_id = Null;
+            $bill->asset_id = Null;
         }
         elseif ($this->bill_for == "Trailer") {
             $bill->category = "Trailer";
@@ -329,6 +346,7 @@ class Create extends Component
             $bill->vehicle_id = Null;
             $bill->driver_id = Null;
             $bill->trailer_id = $this->trailer_id;
+            $bill->asset_id = Null;
         }
         elseif ($this->bill_for == "Vehicle") {
             $bill->category = "Vehicle";
@@ -337,6 +355,7 @@ class Create extends Component
             $bill->vehicle_id = $this->vehicle_id;
             $bill->driver_id = Null;
             $bill->trailer_id = Null;
+            $bill->asset_id = Null;
         }
       
         $bill->currency_id = $this->selectedCurrency;
@@ -441,6 +460,7 @@ class Create extends Component
             })->orderBy('name','asc')->get();
             $this->vendors = Vendor::orderBy('name','asc')->get();
             $this->transporters = Transporter::orderBy('name','asc')->get();
+            $this->assets = Asset::with('product')->get()->sortBy('product.name');
             $this->horses = Horse::orderBy('registration_number','asc')->get();
             $this->trailers = Trailer::orderBy('registration_number','asc')->get();
             $this->vehicles = Vehicle::orderBy('registration_number','asc')->get();
@@ -461,6 +481,7 @@ class Create extends Component
                 'vendors' => $this->vendors,
                 'drivers' => $this->drivers,
                 'transporters' => $this->transporters,
+                'assets' => $this->assets,
                 'products' => $this->products,
                 'horses' => $this->horses,
                 'trailers' => $this->trailers,

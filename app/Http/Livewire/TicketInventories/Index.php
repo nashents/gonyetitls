@@ -47,12 +47,7 @@ class Index extends Component
         // $this->resetPage();
 
         $this->ticket = $ticket;
-        $this->inventory_products = Product::where('department','inventory')->whereHas('inventories', function ($query) {
-            return $query->where('status',true)->where('balance','>',0);
-        })->get()->sortBy('name')->sortBy('product.brand.name');
-        $this->tyre_products = Product::where('department','tyre')->whereHas('tyres', function ($query) {
-            return $query->where('status',true);
-        })->get()->sortBy('name')->sortBy('product.brand.name');
+      
         $this->inventories = collect();
         $this->tyres = collect();
         $this->ticket_inventories = TicketInventory::where('ticket_id', $this->ticket->id)->latest()->get();
@@ -457,25 +452,42 @@ class Index extends Component
 
     public function render()
     {
-        if (isset($this->search_inventory)) {
-            $this->products = Product::query()->with('brand')
-                                     ->where('status', 1)
-                                     ->where('department', 'inventory')
-                                     ->where('name', 'like', '%'.$this->search_inventory.'%')
+        if (filled($this->search_inventory)) {
+            $this->inventory_products = Product::query()->with('brand')
+                                        ->where('department','inventory')
+                                        ->where('status', 1)
+                                        ->whereHas('inventories', function ($query) {
+                                            return $query->where('status',true)->where('balance','>',0);
+                                        })
+                                     ->where('product_number', 'like', '%'.$this->search_inventory.'%')
+                                     ->orWhere('name', 'like', '%'.$this->search_inventory.'%')
                                      ->orWhereHas('brand', function ($query) {
                                         return $query->where('name', 'like', '%'.$this->search_inventory.'%');
                                      })->get();
             
+        }else{
+            $this->inventory_products = Product::where('department','inventory')->whereHas('inventories', function ($query) {
+                return $query->where('status',true)->where('balance','>',0);
+            })->get()->sortBy('name')->sortBy('product.brand.name');
+           
         }
         if (isset($this->search_tyres)) {
-            $this->products = Product::query()->with('brand')
-                                     ->where('status', 1)
-                                     ->where('department', 'tyre')
-                                     ->where('name', 'like', '%'.$this->search_tyres.'%')
-                                     ->orWhereHas('brand', function ($query) {
-                                        return $query->where('name', 'like', '%'.$this->search_tyres.'%');
-                                     })->get();
+            $this->tyre_products = Product::query()->with('brand')
+            ->where('department','inventory')
+            ->where('status', 1)
+            ->whereHas('inventories', function ($query) {
+                return $query->where('status',true)->where('balance','>',0);
+            })
+            ->where('product_number', 'like', '%'.$this->search_tyres.'%')
+            ->orWhere('name', 'like', '%'.$this->search_tyres.'%')
+            ->orWhereHas('brand', function ($query) {
+                return $query->where('name', 'like', '%'.$this->search_tyres.'%');
+            })->get();
             
+        }else{
+            $this->tyre_products = Product::where('department','tyre')->whereHas('tyres', function ($query) {
+                return $query->where('status',true);
+            })->get()->sortBy('name')->sortBy('product.brand.name');
         }
 
         $this->ticket_inventories = TicketInventory::where('ticket_id', $this->ticket->id)->latest()->get();

@@ -413,6 +413,7 @@ class Edit extends Component
             $bill->vehicle_id = Null;
             $bill->trailer_id = Null;
             $bill->driver_id = Null;
+            $bill->asset_id = Null;
         }
         elseif ($this->bill_for == "Horse") {
             $bill->category = "Horse";
@@ -421,6 +422,17 @@ class Edit extends Component
             $bill->vehicle_id = Null;
             $bill->trailer_id = Null;
             $bill->driver_id = Null;
+            $bill->asset_id = Null;
+        }
+        elseif ($this->bill_for == "Asset") {
+            $bill->category = "Asset";
+            $bill->transporter_id = Null;
+            $bill->asset_id = $this->asset_id;
+            $bill->horse_id = Null;
+            $bill->vehicle_id = Null;
+            $bill->trailer_id = Null;
+            $bill->driver_id = Null;
+            $bill->asset_id = Null;
         }
         elseif ($this->bill_for == "Trailer") {
             $bill->category = "Trailer";
@@ -429,6 +441,7 @@ class Edit extends Component
             $bill->vehicle_id = Null;
             $bill->trailer_id = $this->trailer_id;
             $bill->driver_id = Null;
+            $bill->asset_id = Null;
         }
         elseif ($this->bill_for == "Driver") {
             $bill->category = "Driver";
@@ -437,6 +450,7 @@ class Edit extends Component
             $bill->vehicle_id = Null;
             $bill->trailer_id = Null;
             $bill->driver_id = $this->driver_id;
+            $bill->asset_id = Null;
         }
         elseif ($this->bill_for == "Vehicle") {
             $bill->category = "Vehicle";
@@ -445,6 +459,7 @@ class Edit extends Component
             $bill->vehicle_id = $this->vehicle_id;
             $bill->trailer_id = Null;
             $bill->driver_id = Null;
+            $bill->asset_id = Null;
         }
       
         $bill->currency_id = $this->selectedCurrency;
