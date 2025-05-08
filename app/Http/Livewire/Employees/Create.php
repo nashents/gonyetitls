@@ -147,7 +147,7 @@ class Create extends Component
           'dob' => 'nullable|date',
           'email' => 'nullable|email|unique:users,email,NULL,id,deleted_at,NULL',
           'phonenumber' => 'nullable|unique:employees,phonenumber,NULL,id,deleted_at,NULL|max:13',
-          'transporter_id' => 'required',
+          'company_id' => 'required',
           'department_id' => 'required',
           'file.0' => 'nullable|file|mimes:docx,doc,pdf,xls,xlsx,pptx|max:10000',
           'file.*' => 'required|file|mimes:docx,doc,pdf,xls,xlsx,pptx|max:10000',
