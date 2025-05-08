@@ -45,13 +45,12 @@ class Edit extends Component
     public $surname;
     public $gender;
     public $ranks;
-    public $rank_id = [];
+    public $rank_id ;
     public $dob;
     public $address;
     public $post;
-    public $department_id = [];
     public $branch_id;
-    public $role_id = [];
+    public $role_id;
     public $roles;
     public $user_roles;
     public $email;
@@ -211,7 +210,7 @@ class Edit extends Component
           $this->validateOnly($value);
       }
       protected $messages =[
-        'department_id.required' => 'Select Department',
+        'selectedDepartment.required' => 'Select Department',
         'branch_id.nullable' => 'Select Branch',
         'role_id.required' => 'Select Role',
       ];
@@ -224,7 +223,7 @@ class Edit extends Component
           'email' => 'nullable|email|unique:users,email,NULL,id,deleted_at,NULL',
           'phonenumber' => 'nullable|unique:employees,phonenumber,NULL,id,deleted_at,NULL|max:13',
           'company_id' => 'required',
-          'department_id' => 'required',
+          'selectedDepartment' => 'required',
           'file.0' => 'nullable|file|mimes:docx,doc,pdf,xls,xlsx,pptx|max:10000',
           'file.*' => 'required|file|mimes:docx,doc,pdf,xls,xlsx,pptx|max:10000',
       ];

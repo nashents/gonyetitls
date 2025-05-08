@@ -87,7 +87,7 @@ class Create extends Component
     public $accrual_rate;
 
     public $selectedRank = Null;
-    public $selectedDepartment = Null;
+    public $selectedDepartment = [];
     public $job_title;
     public $job_titles;
     public $title;
@@ -135,7 +135,7 @@ class Create extends Component
       }
 
       protected $messages =[
-        'department_id.required' => 'Select Department',
+        'selectedDepartment.required' => 'Select Department',
         'branch_id.nullable' => 'Select Branch',
         'role_id.required' => 'Select Role',
       ];
@@ -148,7 +148,6 @@ class Create extends Component
           'email' => 'nullable|email|unique:users,email,NULL,id,deleted_at,NULL',
           'phonenumber' => 'nullable|unique:employees,phonenumber,NULL,id,deleted_at,NULL|max:13',
           'company_id' => 'required',
-          'department_id' => 'required',
           'file.0' => 'nullable|file|mimes:docx,doc,pdf,xls,xlsx,pptx|max:10000',
           'file.*' => 'required|file|mimes:docx,doc,pdf,xls,xlsx,pptx|max:10000',
       ];
