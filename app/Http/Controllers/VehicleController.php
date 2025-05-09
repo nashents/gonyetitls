@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Session;
 
 class VehicleController extends Controller
@@ -16,6 +18,24 @@ class VehicleController extends Controller
     public function index()
     {
         return view('vehicles.index');
+    }
+
+      public function fetchVehicles()
+    {
+
+        //  \Log::info('VehicleController@fetchVehicles called');
+    
+        
+        $response = Http::withHeaders([
+            'Accept' => 'application/json',
+            'Authorization' => 'Basic ' . base64_encode(env('CARTRACK_API_USERNAME') . ':' . env('CARTRACK_API_ADMIN_PASSWORD')),
+        ])->get(env('CARTRACK_BASEURL'));
+
+        if ($response->successful()) {
+            return response()->json($response->json());
+        }
+
+        return response()->json(['error' => 'Failed to fetch vehicles'], $response->status());
     }
 
     public function archived()

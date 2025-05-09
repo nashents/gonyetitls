@@ -104,6 +104,8 @@ class Index extends Component
         $this->subject = '';
         $this->total = Null;
         $this->subtotal = Null;
+        $this->requisition_for = Null;
+        $this->inputs = [];
     }
     
 
