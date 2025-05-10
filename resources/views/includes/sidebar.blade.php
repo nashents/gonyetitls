@@ -583,7 +583,7 @@
                   @if (in_array('HSEQ', $department_names) || in_array('Super Admin', $role_names))
                 
                 <li class="nav-header">
-                    <span class="">HSEQ</span>
+                    <span class="">SHEQ</span>
                 </li>
                 @if ((in_array('Admin', $role_names) && in_array('HSEQ', $department_names)) || in_array('Super Admin', $role_names))
                 <li class="has-children">
