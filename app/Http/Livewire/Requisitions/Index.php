@@ -106,6 +106,7 @@ class Index extends Component
         $this->subtotal = Null;
         $this->requisition_for = Null;
         $this->inputs = [];
+        
     }
     
 
