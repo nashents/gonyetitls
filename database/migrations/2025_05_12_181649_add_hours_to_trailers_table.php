@@ -14,7 +14,7 @@ class AddHoursToTrailersTable extends Migration
     public function up()
     {
         Schema::table('trailers', function (Blueprint $table) {
-            //
+          $table->string('hours')->nullable();
         });
     }
 
