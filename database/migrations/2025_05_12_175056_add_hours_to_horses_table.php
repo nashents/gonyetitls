@@ -14,7 +14,7 @@ class AddHoursToHorsesTable extends Migration
     public function up()
     {
         Schema::table('horses', function (Blueprint $table) {
-                $table->string('allocation_number')->nullable();
+                $table->string('hours')->nullable();
         });
     }
 
@@ -26,7 +26,7 @@ class AddHoursToHorsesTable extends Migration
     public function down()
     {
         Schema::table('horses', function (Blueprint $table) {
-                $table->dropColumn('allocation_number');
+                $table->dropColumn('hours');
         });
     }
 }
