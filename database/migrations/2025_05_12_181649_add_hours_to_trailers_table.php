@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class AddHoursToTrailerTable extends Migration
+class AddHoursToTrailersTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,8 +13,8 @@ class AddHoursToTrailerTable extends Migration
      */
     public function up()
     {
-        Schema::table('trailer', function (Blueprint $table) {
-           $table->string('hours')->nullable();
+        Schema::table('trailers', function (Blueprint $table) {
+            //
         });
     }
 
@@ -25,8 +25,8 @@ class AddHoursToTrailerTable extends Migration
      */
     public function down()
     {
-        Schema::table('trailer', function (Blueprint $table) {
-              $table->dropColumn('hours');
+        Schema::table('trailers', function (Blueprint $table) {
+         $table->dropColumn('hours');
         });
     }
 }

@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class AddHoursToVehicleTable extends Migration
+class AddHoursToVehiclesTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,8 +13,8 @@ class AddHoursToVehicleTable extends Migration
      */
     public function up()
     {
-        Schema::table('vehicle', function (Blueprint $table) {
-           $table->string('hours')->nullable();
+        Schema::table('vehicles', function (Blueprint $table) {
+          $table->string('hours')->nullable();
         });
     }
 
@@ -25,8 +25,8 @@ class AddHoursToVehicleTable extends Migration
      */
     public function down()
     {
-        Schema::table('vehicle', function (Blueprint $table) {
-            $table->dropColumn('hours');
+        Schema::table('vehicles', function (Blueprint $table) {
+           $table->dropColumn('hours');
         });
     }
 }
