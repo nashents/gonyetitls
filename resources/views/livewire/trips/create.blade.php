@@ -40,7 +40,7 @@
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="trip_ref">Reference#</label>
-                                            <input type="text" class="form-control" wire:model.defer="trip_ref" placeholder="Trip Reference#" {{ $trip_type_name == 'Return' ? 'disabled' : '' }} />
+                                            <input type="text" class="form-control" wire:model.debounce.300ms="trip_ref" placeholder="Trip Reference#" {{ $trip_type_name == 'Return' ? 'disabled' : '' }} />
                                             @error('trip_ref') <span class="text-danger error">{{ $message }}</span> @enderror
                                         </div>
                                     </div>
@@ -51,7 +51,7 @@
                                             <label for="trip_group">
                                                 <a href="{{ route('trip_groups.index') }}" target="_blank" style="color: blue">Trips Tracking Groups</a>
                                             </label>
-                                            <select class="form-control" wire:model.defer="trip_group_id">
+                                            <select class="form-control" wire:model.debounce.300ms="trip_group_id">
                                                 <option value="">Select Trips Tracking Group</option>
                                                 @foreach ($trip_groups as $trip_group)
                                                     <option value="{{ $trip_group->id }}">{{ $trip_group->name }}</option>
@@ -132,7 +132,7 @@
                                                         <label for="clearing_agents">
                                                             <a href="{{ route('clearing_agents.index') }}" target="_blank" style="color: blue">Clearing Agent(s)</a>
                                                         </label>
-                                                        <select class="form-control" wire:model.defer="clearing_agent_id.0">
+                                                        <select class="form-control" wire:model.debounce.300ms="clearing_agent_id.0">
                                                             <option value="">Select Agent</option>
                                                             @if (!is_null($selectedBorder))
                                                                 @foreach ($clearing_agents as $clearing_agent)
@@ -168,7 +168,7 @@
                                                         @error('selectedBorder.' . $value) <span class="text-danger error">{{ $message }}</span> @enderror
                                                     </div>
                                                     <div class="col-md-5">
-                                                        <select class="form-control" wire:model.defer="clearing_agent_id.{{ $value }}">
+                                                        <select class="form-control" wire:model.debounce.300ms="clearing_agent_id.{{ $value }}">
                                                             <option value="">Select Agent</option>
                                                             @if (!is_null($selectedBorder))
                                                                 @foreach ($clearing_agents as $clearing_agent)
@@ -200,7 +200,7 @@
                                                 <div class="col-md-6">
                                                     <div class="form-group">
                                                         <label for="cd3_number">CD3 Number</label>
-                                                        <input type="text" class="form-control" wire:model.defer="cd3_number" placeholder="Enter CD3 Number">
+                                                        <input type="text" class="form-control" wire:model.debounce.300ms="cd3_number" placeholder="Enter CD3 Number">
                                                         @error('cd3_number') <span class="text-danger error">{{ $message }}</span> @enderror
                                                     </div>
                                                 </div>
@@ -209,13 +209,13 @@
                                                     @if ($trip_type_name == 'Outward')
                                                         <div class="form-group">
                                                             <label for="cd1_number">CD1 Number</label>
-                                                            <input type="text" class="form-control" wire:model.defer="cd1_number" placeholder="Enter CD1 Number">
+                                                            <input type="text" class="form-control" wire:model.debounce.300ms="cd1_number" placeholder="Enter CD1 Number">
                                                             @error('cd1_number') <span class="text-danger error">{{ $message }}</span> @enderror
                                                         </div>
                                                     @else
                                                         <div class="form-group">
                                                             <label for="manifest_number">Manifest Number</label>
-                                                            <input type="text" class="form-control" wire:model.defer="manifest_number" placeholder="Enter Manifest Number">
+                                                            <input type="text" class="form-control" wire:model.debounce.300ms="manifest_number" placeholder="Enter Manifest Number">
                                                             @error('manifest_number') <span class="text-danger error">{{ $message }}</span> @enderror
                                                         </div>
                                                     @endif
@@ -228,7 +228,7 @@
                                     <div class="col-md-3">
                                         <div class="form-group">
                                             <label for="customer">Trip Status<span class="required" style="color: red">*</span></label>
-                                          <select class="form-control" wire:model.defer="selectedStatus" required>
+                                          <select class="form-control" wire:model.debounce.300ms="selectedStatus" required>
                                               <option value="">Select Status</option>
                                                   <option value="Scheduled">Scheduled</option>
                                                   <option value="Started">Started</option>
@@ -342,7 +342,7 @@
                                                 <input type="checkbox" wire:model.debounce.300ms="all_trailers"   class="line-style" />
                                                 <label for="one" class="radio-label">Select from all trailers</label>
                                                     <input type="text" wire:model.lazy="searchTrailer" placeholder="Search with reg..." class="form-control">
-                                                    <select class="form-control" wire:model.defer="trailer_id.0" size="4" required>
+                                                    <select class="form-control" wire:model.debounce.300ms="trailer_id.0" size="4" required>
                                                       <option value="">Select Trailer </option>
                                                       @if (!is_null($selectedTransporter) || !is_null($selectedBroker))
                                                         @foreach ($trailers as $trailer)
@@ -360,7 +360,7 @@
                                             @foreach ($trailer_inputs as $key => $value)
                                             <div class="row">
                                                 <div class="col-md-10">
-                                                    <select class="form-control" wire:model.defer="trailer_id.{{ $value }}" size="4" required>
+                                                    <select class="form-control" wire:model.debounce.300ms="trailer_id.{{ $value }}" size="4" required>
                                                         <option value="">Select Trailer {{ $value }}</option>
                                                         @if (!is_null($selectedTransporter) || !is_null($selectedBroker))
                                                           @foreach ($trailers as $trailer)
@@ -399,7 +399,7 @@
                                                 <input type="checkbox" wire:model.debounce.300ms="all_drivers"   class="line-style" />
                                                 <label for="one" class="radio-label">Select from all drivers</label>
                                                 <input type="text" wire:model.lazy="searchDriver" placeholder="Search with name..." class="form-control" >
-                                                <select class="form-control" wire:model.defer="driver_id" required size="4">
+                                                <select class="form-control" wire:model.debounce.300ms="driver_id" required size="4">
                                                     <option value="">Select Driver</option>
                                                     @if (!is_null($selectedTransporter) || !is_null($selectedBroker))
                                                         @foreach ($drivers as $driver)
@@ -422,7 +422,7 @@
                                                 <div class="col-md-3">
                                                     <div class="form-group">
                                                         <label for="driver">Allowance(s)</label>
-                                                    <select class="form-control" wire:model.defer="allowance_id.{{ $value }}">
+                                                    <select class="form-control" wire:model.debounce.300ms="allowance_id.{{ $value }}">
                                                         <option value="">Select Allowance</option>
                                                             @foreach ($allowances as $allowance)
                                                             <option value="{{$allowance->id}}">{{$allowance->name}}</option>
@@ -435,7 +435,7 @@
                                                 <div class="col-md-3">
                                                     <div class="form-group">
                                                         <label for="driver">Category</label>
-                                                    <select class="form-control" wire:model.defer="allowance_category.{{ $value }}">
+                                                    <select class="form-control" wire:model.debounce.300ms="allowance_category.{{ $value }}">
                                                         <option value="">Select Category</option>
                                                         <option value="Customer">Customer</option>
                                                         <option value="Self">Self</option>
@@ -512,7 +512,7 @@
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="customer"><a href="{{ route('customers.index') }}" target="_blank" style="color: blue">Customer(s)</a><span class="required" style="color: red">*</span></label>
-                                          <select class="form-control" wire:model.defer="customer_id" required>
+                                          <select class="form-control" wire:model.debounce.300ms="customer_id" required>
                                               <option value="">Select Customer</option>
                                               @foreach ($customers as $customer)
                                                   <option value="{{$customer->id}}">{{$customer->name}}</option>
@@ -525,7 +525,7 @@
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="name"><a href="{{route('consignees.index')}}" style="color: blue" target="_blank">Consignees</a></label>
-                                            <select class="form-control" wire:model.defer="consignee_id">
+                                            <select class="form-control" wire:model.debounce.300ms="consignee_id">
                                                 <option value="">Select Consignee</option>
                                                 @foreach ($consignees as $consignee)
                                                     <option value="{{$consignee->id}}">{{$consignee->name}}</option>
@@ -539,7 +539,7 @@
                                         <div class="row">
                                             <div class="form-group">
                                                 <label for="exampleInputEmail13"><a href="{{ route('agents.index') }}" target="_blank" style="color: blue">Agent(s)</a></label>
-                                           <select wire:model.defer="agent_id" class="form-control" >
+                                           <select wire:model.debounce.300ms="agent_id" class="form-control" >
                                                <option value="">Select Agent</option>
                                                @foreach ($agents as $agent)
                                                    <option value="{{$agent->id}}">{{$agent->name}} {{$agent->surname}} {{$agent->idnumber}}</option>
@@ -554,14 +554,14 @@
                                             <div class="col-md-6">
                                                 <div class="form-group">
                                                     <label for="">Commission</label>
-                                                    <input type="number" step="any" class="form-control" wire:model.defer="commission" placeholder="%"  />
+                                                    <input type="number" step="any" class="form-control" wire:model.debounce.300ms="commission" placeholder="%"  />
                                                     @error('commission') <span class="text-danger error">{{ $message }}</span>@enderror
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
                                                 <div class="form-group">
                                                     <label for="">Amount</label>
-                                                    <input type="number" step="any" class="form-control" wire:model.defer="commission_amount" placeholder="$" />
+                                                    <input type="number" step="any" class="form-control" wire:model.debounce.300ms="commission_amount" placeholder="$" />
                                                     @error('commission_amount') <span class="text-danger error">{{ $message }}</span>@enderror
                                                 </div>
                                             </div>
@@ -690,7 +690,7 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="">Fuel Amount</label>
-                                        <input type="number" step="any" class="form-control" wire:model.defer="emptyrun_destination_fuel_amount"  />
+                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="emptyrun_destination_fuel_amount"  />
                                         @error('emptyrun_destination_fuel_amount') <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>
                                 </div>
@@ -771,7 +771,7 @@
                                             <div class="form-group">
                                                 <label for="truck_stops"><a href="{{ route('truck_stops.index') }}" target="_blank" style="color: blue">Truck Stop(s)</a></label>
                                                 <div class="col-md-12">
-                                                    <select wire:model.defer="truck_stop_id.0" class="form-control">
+                                                    <select wire:model.debounce.300ms="truck_stop_id.0" class="form-control">
                                                         <option value="">Select Truck Stop</option>
                                                         @if (!is_null($selectedRoute))
                                                         @foreach ($truck_stops as $truck_stop)
@@ -788,7 +788,7 @@
                                             @foreach ($inputs as $key => $value)
                                             
                                                 <div class="col-md-9">
-                                                    <select wire:model.defer="truck_stop_id.{{ $value }}" class="form-control">
+                                                    <select wire:model.debounce.300ms="truck_stop_id.{{ $value }}" class="form-control">
                                                         <option value="">Select Truck Stop </option>
                                                        @if (!is_null($selectedRoute))
                                                             @foreach ($truck_stops as $truck_stop)
@@ -821,14 +821,14 @@
                                     <div class="col-md-3">
                                         <div class="form-group">
                                             <label for="start_date">Trip Start Date<span class="required" style="color: red">*</span></label>
-                                            <input type="datetime-local" class="form-control" wire:model.defer="start_date" placeholder="Enter Start Date" required>
+                                            <input type="datetime-local" class="form-control" wire:model.debounce.300ms="start_date" placeholder="Enter Start Date" required>
                                             @error('start_date') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
                                     <div class="col-md-3">
                                         <div class="form-group">
                                             <label for="end_date">Estimated Trip End Date</label>
-                                            <input type="datetime-local" class="form-control" wire:model.defer="end_date" placeholder="Enter End Date" >
+                                            <input type="datetime-local" class="form-control" wire:model.debounce.300ms="end_date" placeholder="Enter End Date" >
                                             @error('end_date') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
@@ -848,13 +848,13 @@
                                         @if (isset($starting_mileage))
                                         <div class="form-group">
                                             <label for="end_date">Ending Mileage</label>
-                                            <input type="number" step="any" min="{{$starting_mileage}}" class="form-control" wire:model.defer="ending_mileage" placeholder="Mileage @ Offloading Point" >
+                                            <input type="number" step="any" min="{{$starting_mileage}}" class="form-control" wire:model.debounce.300ms="ending_mileage" placeholder="Mileage @ Offloading Point" >
                                             @error('ending_mileage') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                         @else
                                         <div class="form-group">
                                             <label for="end_date">Ending Mileage</label>
-                                            <input type="number" step="any" class="form-control" wire:model.defer="ending_mileage" placeholder="Mileage @ Offloading Point" disabled >
+                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="ending_mileage" placeholder="Mileage @ Offloading Point" disabled >
                                             @error('ending_mileage') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                         @endif
@@ -1177,7 +1177,7 @@
                                     <div class="col-md-5">
                                         <div class="form-group">
                                             <label for="customer">Payment Status</label>
-                                          <select class="form-control" wire:model.defer="payment_status">
+                                          <select class="form-control" wire:model.debounce.300ms="payment_status">
                                               <option value="">Select Status</option>
                                                   <option value="Pending">Pending</option>
                                                   <option value="Partial Payment">Partial Payment</option>
@@ -1228,7 +1228,7 @@
                                               <tr>
                                                 <td>
                                                     <div class="mb-10">
-                                                        <input type="checkbox" wire:model.defer="expense_id.{{$key}}"  wire:key="{{ $key }}" value="{{ $expense->id }}" class="line-style" />
+                                                        <input type="checkbox" wire:model.debounce.300ms="expense_id.{{$key}}"  wire:key="{{ $key }}" value="{{ $expense->id }}" class="line-style" />
                                                         <label for="one" class="radio-label">{{$expense->name}}</label>
                                                         @error('expense_id.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
                                                     </div>
@@ -1236,7 +1236,7 @@
                                                 <td>
                                                     @if (isset($expense_id[$key]) && ($expense_id[$key] == $expense->id))
                                                     <div class="form-group">
-                                                        <select class="form-control" wire:model.defer="category.{{$key}}"  wire:key="{{ $key }}" required>
+                                                        <select class="form-control" wire:model.debounce.300ms="category.{{$key}}"  wire:key="{{ $key }}" required>
                                                             <option value="">Select Category</option>
                                                            <option value="Customer">Customer</option>
                                                            <option value="Self">Self</option>
@@ -1246,7 +1246,7 @@
                                                     </div>
                                                     @else
                                                     <div class="form-group">
-                                                        <select class="form-control" wire:model.defer="category.{{$key}}"  wire:key="{{ $key }}" >
+                                                        <select class="form-control" wire:model.debounce.300ms="category.{{$key}}"  wire:key="{{ $key }}" >
                                                             <option value="">Select Category</option>
                                                            <option value="Customer">Customer</option>
                                                            <option value="Self">Self</option>
@@ -1380,7 +1380,7 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="vendors">Categories<span class="required" style="color: red">*</span></label>
-                                        <select class="form-control" wire:model.defer="fuel_category" required>
+                                        <select class="form-control" wire:model.debounce.300ms="fuel_category" required>
                                             <option value="">Select Category</option>
                                            <option value="Customer">Customer</option>
                                            <option value="Self">Self</option>
@@ -1392,7 +1392,7 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="date">Fillup Date</label>
-                                        <input type="date" class="form-control" wire:model.defer="date" placeholder="Enter FillUp Date"/>
+                                        <input type="date" class="form-control" wire:model.debounce.300ms="date" placeholder="Enter FillUp Date"/>
                                         @error('date') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
@@ -1597,14 +1597,14 @@
                 <div class="modal-body">
                     <div class="form-group">
                         <label for="comment">Name<span class="required" style="color: red">*</span></label>
-                        <input type="text" class="form-control" wire:model.defer="allowance_title" placeholder="New Driver Allowance" required>
+                        <input type="text" class="form-control" wire:model.debounce.300ms="allowance_title" placeholder="New Driver Allowance" required>
                         @error('allowance_title') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="comment">Currency</label>
-                              <select class="form-control" wire:model.defer="allowance_currency_id">
+                              <select class="form-control" wire:model.debounce.300ms="allowance_currency_id">
                                 <option value="">Select Currency</option>
                                 @foreach ($currencies as $currency)
                                 <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
@@ -1616,14 +1616,14 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="comment">Amount</label>
-                                <input type="number" step="any" class="form-control" wire:model.defer="allowance_amount"  >
+                                <input type="number" step="any" class="form-control" wire:model.debounce.300ms="allowance_amount"  >
                                 @error('allowance_amount') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
                     </div>
                     <div class="form-group">
                         <label for="comment">Description</label>
-                      <textarea name="" class="form-control" wire:model.defer="allowance_description" placeholder="Allowance explanation..."  cols="30" rows="3"></textarea>
+                      <textarea name="" class="form-control" wire:model.debounce.300ms="allowance_description" placeholder="Allowance explanation..."  cols="30" rows="3"></textarea>
                         @error('allowance_description') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
 
