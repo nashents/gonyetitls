@@ -255,7 +255,9 @@
                                         </div>
                                         <div class="col-md-1">
                                             <div class="form-group" style="margin-top: 29px; ">
-                                                <a href="#" wire:click.prevent="removeShow({{ $value->id }})"  ><i class="fa fa-trash color-danger"></i></a>
+                                                  @if ($invoice->payments->isEmpty())
+                                                        <a href="#" wire:click.prevent="removeShow({{ $value->id }})" ><i class="fa fa-trash color-danger"></i></a>
+                                                  @endif
                                             </div>
                                         </div>  
                                     </div>
@@ -327,6 +329,7 @@
                                             </div>
                                         </div>
                                     @endforeach
+                                      @if ($invoice->payments->isEmpty())
                                         <div class="row">
                                             <div class="col-md-12">
                                                 <div class="form-group">
@@ -334,6 +337,7 @@
                                                 </div>
                                             </div>
                                         </div>
+                                        @endif
                                     
                                     @elseif(isset($from_trips) && $from_trips == false)
                                     

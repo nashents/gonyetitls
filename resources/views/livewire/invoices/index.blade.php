@@ -178,10 +178,10 @@
                                                 <li><a href="{{route('invoices.preview',$invoice->id)}}"  ><i class="fas fa-file-invoice color-primary"></i> Preview</a></li>
                                                 <li><a href="#" wire:click.prevent="showPayment({{$invoice->id}})"  ><i class="fas fa-credit-card color-primary"></i> Record Payment</a></li>
                                                 @endif
-                                                @if ($invoice->payments->isEmpty())
+                                                {{-- @if ($invoice->payments->isEmpty()) --}}
                                                 <li><a href="{{route('invoices.edit',$invoice->id)}}"  ><i class="fas fa-edit color-success"></i> Edit</a></li>
                                                 <li><a href="#" data-toggle="modal" data-target="#invoiceDeleteModal{{ $invoice->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li> 
-                                                @endif
+                                                {{-- @endif --}}
                                             </ul>
                                         </div>
                                         @include('invoices.delete')
