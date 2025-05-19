@@ -16,7 +16,6 @@ class CreateRehandlingsTable extends Migration
         Schema::create('rehandlings', function (Blueprint $table) {
             $table->id();
             $table->bigInteger('user_id')->unsigned()->nullable();
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->bigInteger('currency_id')->unsigned()->nullable();
             $table->foreign('currency_id')->references('id')->on('currencies')->onDelete('cascade');
             $table->bigInteger('shift_id')->nullable();
