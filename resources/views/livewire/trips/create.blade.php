@@ -871,7 +871,7 @@
                                         @if (isset($starting_hours))
                                         <div class="form-group">
                                             <label for="end_date">Ending Hours</label>
-                                            <input type="number" step="any" min="{{$starstarting_hoursting_mileage}}" class="form-control" wire:model.debounce.300ms="ending_hours" placeholder="Hours @ Offloading Point" >
+                                            <input type="number" step="any" min="{{$starting_hours}}" class="form-control" wire:model.debounce.300ms="ending_hours" placeholder="Hours @ Offloading Point" >
                                             @error('ending_hours') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                         @else
@@ -887,14 +887,14 @@
                                     <div class="col-md-2">
                                         <div class="form-group">
                                             <label for="distance">Distance</label>
-                                            <input type="number" min="1" step="any" class="form-control" wire:model.debounce.300ms="distance" placeholder="Trip Approx Distance"  >
+                                            <input type="number" min="1" step="any" class="form-control" wire:model.debounce.300ms="distance" placeholder="Trip Distance"  >
                                             @error('distance') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
                                     <div class="col-md-2">
                                         <div class="form-group">
                                             <label for="end_date">Fuel Qty</label>
-                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="trip_fuel" placeholder="Trip Approx Fuel">
+                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="trip_fuel" placeholder="Trip Fuel">
                                             @error('trip_fuel') <span class="text-danger error">{{ $message }}</span>@enderror
                                             @if ($horse_selected)
                                                 <small> <a href="{{ route('horses.show',$horse_selected->id) }}" target="_blank" style="color: blue">Horse {{ $horse_selected->registration_number }}</a> Fuel Tank Balance: {{ $fuel_balance }} Litres</small>

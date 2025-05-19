@@ -448,9 +448,21 @@
                                                                 </td>
                                                             </tr>
                                                             <tr>
+                                                                <th scope="row"> Starting Hours</th>
+                                                                <td>
+                                                                    {{$trip->starting_hours ? $trip->starting_hours." Hours" : ""}} 
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
                                                                 <th scope="row">Ending Mileage</th>
                                                                 <td>
                                                                     {{$trip->ending_mileage ? $trip->ending_mileage." Kms" : ""}} 
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <th scope="row">Ending Hours</th>
+                                                                <td>
+                                                                    {{$trip->ending_hours ? $trip->ending_hours." Hours" : ""}} 
                                                                 </td>
                                                             </tr>
                                                             <tr>

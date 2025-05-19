@@ -22,6 +22,7 @@ class Currency extends Model implements Auditable
     public function rate_cards(){
         return $this->hasMany('App\Models\RateCard');
     }
+  
     public function tax_brackets(){
         return $this->hasMany('App\Models\TaxBracket');
     }

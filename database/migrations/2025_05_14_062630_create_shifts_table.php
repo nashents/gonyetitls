@@ -15,8 +15,7 @@ class CreateShiftsTable extends Migration
     {
         Schema::create('shifts', function (Blueprint $table) {
                 $table->id();
-                $table->bigInteger('user_id')->unsigned()->nullable();
-                $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+                $table->bigInteger('user_id')->nullable();
                 $table->bigInteger('driver_id')->unsigned()->nullable();
                 $table->foreign('driver_id')->references('id')->on('drivers')->onDelete('cascade');
                 $table->bigInteger('open_employee_id')->unsigned()->nullable();

@@ -27,17 +27,10 @@ class Index extends Component
 
     public function mount(){
         $this->payrolls = Payroll::latest()->get();
-        $this->salaries = collect();
-        
-        $this->currencies = Currency::orderBy('name','asc')->get();
+        $this->salaries = Salary::all();
     }
 
 
-    public function updatedSelectedCurrency($id){
-        if (!is_null($id)) {
-            $this->salaries = Salary::where('currency_id',$id)->where('status',1)->get();
-        }
-    }
     public function payrollNumber(){
        
         if (isset(Auth::user()->company)) {
@@ -83,16 +76,17 @@ class Index extends Component
         $payroll->user_id = Auth::user()->id;
         $payroll->payroll_number = $this->payrollNumber();
         $payroll->month = $this->month;
-        $payroll->currency_id = $this->selectedCurrency;
         $payroll->year = $this->year;
         $payroll->save();
 
         if (isset($this->salaries)) {
             if ($this->salaries->count()>0) {
                 foreach ($this->salaries as $salary) {
+
                     $payroll_salary = new PayrollSalary;
                     $payroll_salary->payroll_id = $payroll->id;
                     $payroll_salary->salary_id = $salary->id;
+                    $payroll_salary->currency_id = $salary->currency_id;
                     $payroll_salary->employee_id = $salary->employee_id;
                     $payroll_salary->basic = $salary->basic;
                     $payroll_salary->gross = $salary->gross;
@@ -110,6 +104,7 @@ class Index extends Component
                         $payroll_salary_item->amount = $salary_item->amount;
                         $payroll_salary_item->save();
                     }
+                    
                 }
             }
         }
@@ -130,7 +125,6 @@ class Index extends Component
         $this->payroll_id = $id;
         $this->month = $payroll->month;
         $this->year = $payroll->year;
-        $this->selectedCurrency = $payroll->currency_id;
        
         $this->dispatchBrowserEvent('show-payrollEditModal');
     }
@@ -139,7 +133,6 @@ class Index extends Component
         $payroll = Payroll::find($this->payroll_id);
         $payroll->month = $this->month;
         $payroll->year = $this->year;
-        $payroll->currency_id = $this->selectedCurrency;
         $payroll->update();
 
         $payroll_salaries = $payroll->payroll_salaries;

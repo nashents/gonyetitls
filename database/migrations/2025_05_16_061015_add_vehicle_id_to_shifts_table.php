@@ -41,6 +41,7 @@ class AddVehicleIdToShiftsTable extends Migration
              $table->dropColumn('horse_id');
              $table->dropForeign(['cargo_id']); // drops the foreign key constraint
              $table->dropColumn('cargo_id');
+             
         });
     }
 }
