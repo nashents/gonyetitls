@@ -289,7 +289,7 @@
                                             <label for="horse"><a href="{{ route('horses.index') }}" target="_blank" style="color: blue">Horse(s)</a><span class="required" style="color: red">*</span></label>
                                             <input type="checkbox" wire:model.debounce.300ms="all_horses"   class="line-style" />
                                             <label for="one" class="radio-label">Select from all horses</label>
-                                            <input type="text" wire:model.lazy="searchHorse" placeholder="Search with reg..." class="form-control">
+                                            <input type="text" wire:model.debounce.300ms="searchHorse" placeholder="Search with reg..." class="form-control">
                                             <select class="form-control" wire:model.debounce.300ms="selectedHorse"  required size="4">
                                                 <option value="">Select Horse </option>
                                               @if (!is_null($selectedTransporter) || !is_null($selectedBroker))
@@ -308,7 +308,7 @@
                                             <label for="horse"><a href="{{ route('vehicles.index') }}" target="_blank" style="color: blue">Vehicle(s)</a><span class="required" style="color: red">*</span></label>
                                             <input type="checkbox" wire:model.debounce.300ms="all_vehicles"   class="line-style" />
                                             <label for="one" class="radio-label">Select from all vehicles</label>
-                                            <input type="text" wire:model.lazy="searchVehicle" placeholder="Search with reg..." class="form-control">
+                                            <input type="text" wire:model.debounce.300ms="searchVehicle" placeholder="Search with reg..." class="form-control">
                                             <select class="form-control" wire:model.debounce.300ms="selectedVehicle"  required size="4">
                                                 <option value="">Select Vehicle </option>
                                                 @if (!is_null($selectedTransporter) || !is_null($selectedBroker))
@@ -341,7 +341,7 @@
                                                 <label for="trailers"><a href="{{ route('trailers.index') }}" target="_blank" style="color: blue">Trailer(s)</a><span class="required" style="color: red">*</span></label>
                                                 <input type="checkbox" wire:model.debounce.300ms="all_trailers"   class="line-style" />
                                                 <label for="one" class="radio-label">Select from all trailers</label>
-                                                    <input type="text" wire:model.lazy="searchTrailer" placeholder="Search with reg..." class="form-control">
+                                                    <input type="text" wire:model.debounce.300ms="searchTrailer" placeholder="Search with reg..." class="form-control">
                                                     <select class="form-control" wire:model.debounce.300ms="trailer_id.0" size="4" required>
                                                       <option value="">Select Trailer </option>
                                                       @if (!is_null($selectedTransporter) || !is_null($selectedBroker))
@@ -398,7 +398,7 @@
                                                 <label for="driver"><a href="{{ route('drivers.index') }}" target="_blank" style="color: blue">Driver(s)</a><span class="required" style="color: red">*</span></label> 
                                                 <input type="checkbox" wire:model.debounce.300ms="all_drivers"   class="line-style" />
                                                 <label for="one" class="radio-label">Select from all drivers</label>
-                                                <input type="text" wire:model.lazy="searchDriver" placeholder="Search with name..." class="form-control" >
+                                                <input type="text" wire:model.debounce.300ms="searchDriver" placeholder="Search with name..." class="form-control" >
                                                 <select class="form-control" wire:model.debounce.300ms="driver_id" required size="4">
                                                     <option value="">Select Driver</option>
                                                     @if (!is_null($selectedTransporter) || !is_null($selectedBroker))
@@ -837,14 +837,21 @@
                 
                                 <div class="row">
                             
-                                    <div class="col-md-4">
+                                    <div class="col-md-2">
                                         <div class="form-group">
                                             <label for="end_date">Starting Mileage</label>
                                             <input type="number" step="any" min="1" class="form-control" wire:model.debounce.300ms="starting_mileage" placeholder="Mileage @ Loading Point" >
                                             @error('starting_mileage') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label for="end_date">Starting Hours</label>
+                                            <input type="number" step="any" min="1" class="form-control" wire:model.debounce.300ms="starting_hours" placeholder="Hours @ Loading Point" >
+                                            @error('starting_hours') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
                                         @if (isset($starting_mileage))
                                         <div class="form-group">
                                             <label for="end_date">Ending Mileage</label>
@@ -856,6 +863,22 @@
                                             <label for="end_date">Ending Mileage</label>
                                             <input type="number" step="any" class="form-control" wire:model.debounce.300ms="ending_mileage" placeholder="Mileage @ Offloading Point" disabled >
                                             @error('ending_mileage') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                        @endif
+                                       
+                                    </div>
+                                    <div class="col-md-2">
+                                        @if (isset($starting_hours))
+                                        <div class="form-group">
+                                            <label for="end_date">Ending Hours</label>
+                                            <input type="number" step="any" min="{{$starstarting_hoursting_mileage}}" class="form-control" wire:model.debounce.300ms="ending_hours" placeholder="Hours @ Offloading Point" >
+                                            @error('ending_hours') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                        @else
+                                        <div class="form-group">
+                                            <label for="end_date">Ending Hours</label>
+                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="ending_hours" placeholder="Hours @ Offloading Point" disabled >
+                                            @error('ending_hours') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                         @endif
                                        
@@ -1409,7 +1432,7 @@
                                         </select>
                                         @error('selectedFuelCurrency') <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>
-                                    @if (!is_null($selectedCurrency))
+                                    @if (!is_null($selectedFuelCurrency))
                                     @if ($company)
                                         @if ($selectedFuelCurrency != $company->currency_id)
                                         <div class="form-group">
@@ -1451,9 +1474,9 @@
                                             @endif
 
                                             @error('fuel_quantity') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                            @if (isset($trip_fuel) && isset($horse_fuel_total))
+                                            @if ($trip_fuel && $horse_fuel_total)
                                                 @if ($trip_fuel > $horse_fuel_total)
-                                                    <small style="color: red">Total horse fuel is less than trip fuel.</small> <br>
+                                                    <small style="color: red">Total horse fuel is less than estimated trip fuel.</small> <br>
                                                 @endif
                                                 @if ($horse_fuel_total > $fuel_tank_capacity)
                                                     <small style="color: red">{{$horse_fuel_total ? $horse_fuel_total." Litres" : ""}} of fuel exceeds horse tank capacity of {{$fuel_tank_capacity ? $fuel_tank_capacity." Litres" : ""}}.</small> <br>
@@ -1461,7 +1484,7 @@
                                             @endif
 
                                             @if ($selected_container->purchase_type == "Bulk Buy")
-                                                @if (isset($container_balance) && isset($fuel_quantity))
+                                                @if ($container_balance && $fuel_quantity)
                                                     @if ($container_balance < $fuel_quantity)
                                                     <small style="color: red">Fuel order exceeds {{ $container_balance }} litres, which is the fueling station balance.</small> <br>
                                                     @endif
@@ -1525,14 +1548,21 @@
                             @endif
                             <div class="row">
                                 
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="odometer">Horse Mileage<span class="required" style="color: red">*</span></label>
                                         <input type="number" step="any" class="form-control" wire:model.debounce.300ms="odometer" required placeholder="Enter Horse Mileage" required/>
                                         @error('odometer') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="odometer">Engine Hours</label>
+                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="hours" required placeholder="Enter Engine Hours"/>
+                                        @error('hours') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="comments">Comments</label>
                                        <input type="text" wire:model.debounce.300ms="fuel_comments" class="form-control" placeholder="Fuel Order Comments">
@@ -1557,16 +1587,7 @@
                                 <div class="col-md-12">
                                     <div class="btn-group pull-right mt-10" >
                                     <a onclick="goBack()" class="btn bg-gray btn-wide btn-rounded"><i class="fa fa-arrow-left"></i>Back</a>
-                                    @if (isset($horse_fuel_total) &&  $fuel_tank_capacity)
-                                        @if ($horse_fuel_total < $fuel_tank_capacity)
-                                            <button type="submit" class="btn bg-success btn-wide btn-rounded"  wire:loading.attr="disabled" 
-                                            wire:loading.class="opacity-50 cursor-not-allowed" > <i class="fa fa-save"></i>Create</button>
-                                        @endif
-                                    @else    
                                     <button type="submit" class="btn bg-success btn-wide btn-rounded"   > <i class="fa fa-save"></i>Create</button>
-                                    @endif
-                                   
-                                       
                                     </div>
                                 </div>
                             </div>

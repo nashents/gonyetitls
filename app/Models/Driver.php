@@ -16,6 +16,9 @@ class Driver extends Model implements Auditable
     public function brokers(){
         return $this->belongsToMany('App\Models\Broker');
     }
+       public function shifts(){
+        return $this->hasMany('App\Models\Shift');
+    }
     public function employee(){
         return $this->belongsTo('App\Models\Employee');
     }

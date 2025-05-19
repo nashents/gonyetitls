@@ -21,7 +21,7 @@
                                             <span class="input-group-addon">
                                             Filter By
                                             </span>
-                                            <select wire:model.lazy="requisition_filter" class="form-control" aria-label="..." >
+                                            <select wire:model.debounce.300ms="requisition_filter" class="form-control" aria-label="..." >
                                                 <option value="created_at">Requisition Created At</option>
                                             </select>
                                         </div>
@@ -33,7 +33,7 @@
                                             <span class="input-group-addon">
                                                 From
                                             </span>
-                                            <input type="date" wire:model.lazy="from" wire:change="dateRange()" class="form-control" aria-label="...">
+                                            <input type="date" wire:model.debounce.300ms="from" wire:change="dateRange()" class="form-control" aria-label="...">
                                         </div>
                                         <!-- /input-group -->
                                     </div>
@@ -42,7 +42,7 @@
                                             <span class="input-group-addon">
                                                 To
                                             </span>
-                                            <input type="date" wire:model.lazy="to" wire:change="dateRange()" class="form-control" aria-label="...">
+                                            <input type="date" wire:model.debounce.300ms="to" wire:change="dateRange()" class="form-control" aria-label="...">
                                         </div>
                                         <!-- /input-group -->
                                     </div>
@@ -279,21 +279,21 @@
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="name">Subject</label>
-                                    <input type="text" min="1" class="form-control" wire:model.lazy="subject" placeholder="Enter Requisition Subject" />
+                                    <input type="text" min="1" class="form-control" wire:model.debounce.300ms="subject" placeholder="Enter Requisition Subject" />
                                     @error('subject') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="name">Date<span class="required" style="color: red">*</span></label>
-                                    <input type="date" min="1" class="form-control" wire:model.lazy="date" placeholder="Enter Date" required />
+                                    <input type="date" min="1" class="form-control" wire:model.debounce.300ms="date" placeholder="Enter Date" required />
                                     @error('date') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="country">Currencies<span class="required" style="color: red">*</span></label>
-                                   <select wire:model.lazy="currency_id" class="form-control" required >
+                                   <select wire:model.debounce.300ms="currency_id" class="form-control" required >
                                        <option value="">Select Currency</option>
                                        @foreach ($currencies as $currency)
                                        <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
@@ -330,8 +330,8 @@
                             @if ($requisition_for == "Trip")
                                 <div class="form-group">
                                     <label for="country">Trips</label>
-                                    <input type="text" wire:model.lazy="searchTrip" placeholder="Search with trip#, trip ref, horse reg#..." class="form-control">
-                                <select wire:model.lazy="trip_id" class="form-control" size="8">
+                                    <input type="text" wire:model.debounce.300ms="searchTrip" placeholder="Search with trip#, trip ref, horse reg#..." class="form-control">
+                                <select wire:model.debounce.300ms="trip_id" class="form-control" size="8">
                                     <option value="">Select Trip</option>
                                     @if (isset($trips))
                                         @foreach ($trips as $trip)
@@ -348,8 +348,8 @@
                             @elseif($requisition_for == "Booking")
                                 <div class="form-group">
                                     <label for="country">Garage Bookings</label>
-                                    <input type="text" wire:model.lazy="searchBooking" placeholder="Search with booking#, horse, vehicle, trailer reg#..." class="form-control">
-                                <select wire:model.lazy="booking_id" class="form-control" size="8">
+                                    <input type="text" wire:model.debounce.300ms="searchBooking" placeholder="Search with booking#, horse, vehicle, trailer reg#..." class="form-control">
+                                <select wire:model.debounce.300ms="booking_id" class="form-control" size="8">
                                     <option value="">Select Booking</option>
                                     @foreach ($bookings as $booking)
                                         <option value="{{ $booking->id }}">{{ $booking->booking_number }} | 
@@ -475,7 +475,7 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="country">RequestedBy<span class="required" style="color: red">*</span></label>
-                                   <select wire:model.lazy="employee_id" class="form-control" required >
+                                   <select wire:model.debounce.300ms="employee_id" class="form-control" required >
                                        <option value="">Select Employee</option>
                                        @foreach ($employees as $employee)
                                        <option value="{{ $employee->id }}">{{ $employee->name }} {{ $employee->surname }}</option>
@@ -487,7 +487,7 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="country">Departments<span class="required" style="color: red">*</span></label>
-                                   <select wire:model.lazy="department_id" class="form-control" required >
+                                   <select wire:model.debounce.300ms="department_id" class="form-control" required >
                                        <option value="">Select Department</option>
                                        @foreach ($departments as $department)
                                        <option value="{{ $department->id }}">{{ $department->name }}</option>
@@ -503,21 +503,21 @@
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="name">Subject</label>
-                                    <input type="text" min="1" class="form-control" wire:model.lazy="subject" placeholder="Enter Requisition Subject" />
+                                    <input type="text" min="1" class="form-control" wire:model.debounce.300ms="subject" placeholder="Enter Requisition Subject" />
                                     @error('subject') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="name">Date<span class="required" style="color: red">*</span></label>
-                                    <input type="date" min="1" class="form-control" wire:model.lazy="date" placeholder="Enter Date" required />
+                                    <input type="date" min="1" class="form-control" wire:model.debounce.300ms="date" placeholder="Enter Date" required />
                                     @error('date') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="country">Currencies<span class="required" style="color: red">*</span></label>
-                                   <select wire:model.lazy="currency_id" class="form-control" required >
+                                   <select wire:model.debounce.300ms="currency_id" class="form-control" required >
                                        <option value="">Select Currency</option>
                                        @foreach ($currencies as $currency)
                                        <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
@@ -554,7 +554,7 @@
                             @if ($requisition_for == "Trip")
                                 <div class="form-group">
                                     <label for="country">Trips</label>
-                                <select wire:model.lazy="trip_id" class="form-control" >
+                                <select wire:model.debounce.300ms="trip_id" class="form-control" >
                                     <option value="">Select Trip</option>
                                     @if (isset($trips))
                                         @foreach ($trips as $trip)
@@ -571,7 +571,7 @@
                             @elseif($requisition_for == "Booking")
                                 <div class="form-group">
                                     <label for="country">Garage Bookings</label>
-                                <select wire:model.lazy="booking_id" class="form-control" >
+                                <select wire:model.debounce.300ms="booking_id" class="form-control" >
                                     <option value="">Select Booking</option>
                                     @foreach ($bookings as $booking)
                                         <option value="{{ $booking->id }}">{{ $booking->booking_number }} | 
@@ -596,7 +596,7 @@
                         
                         <div class="form-group">
                             <label for="name">Notes<span class="required" style="color: red">*</span></label>
-                            <textarea class="form-control" wire:model.lazy="description" cols="30" rows="4"></textarea>
+                            <textarea class="form-control" wire:model.debounce.300ms="description" cols="30" rows="4"></textarea>
                             @error('description') <span class="error" style="color:red">{{ $message }}</span> @enderror
                         </div>
                     </div>

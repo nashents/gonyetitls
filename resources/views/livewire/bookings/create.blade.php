@@ -34,11 +34,18 @@
                                             @error('selectedHorse') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-2">
                                         <div class="form-group">
                                             <label for="number">Mileage<span class="required" style="color: red">*</span></label>
-                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="mileage" placeholder="Enter Horse Mileage" required>
+                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="mileage" placeholder="Enter Mileage" required>
                                             @error('mileage') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label for="number">Hours</label>
+                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="hours" placeholder="Enter Engine Hours">
+                                            @error('hours') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
                                     <div class="col-md-4">
@@ -208,11 +215,18 @@
                                             @error('selectedVehicle') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-2">
                                         <div class="form-group">
                                             <label for="number">Mileage<span class="required" style="color: red">*</span></label>
-                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="mileage" placeholder="Enter Odometer" required>
+                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="mileage" placeholder="Enter Mileage" required>
                                             @error('mileage') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label for="number">Hours</label>
+                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="hours" placeholder="Enter Engine Hours">
+                                            @error('hours') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
                                     <div class="col-md-4">
@@ -384,11 +398,18 @@
                                             @error('trailer_id') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-2">
                                         <div class="form-group">
-                                            <label for="number">Mileage</label>
-                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="mileage" placeholder="Enter Horse Mileage" >
+                                            <label for="number">Mileage<span class="required" style="color: red">*</span></label>
+                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="mileage" placeholder="Enter Mileage" required>
                                             @error('mileage') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label for="number">Hours</label>
+                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="hours" placeholder="Enter Engine Hours" >
+                                            @error('hours') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
                                     <div class="col-md-4">

@@ -187,8 +187,7 @@
                                             </div>
                                         </div>      
                                 </div>
-                            
-                                
+
                                         @foreach ($inputs as $key => $value)
                                         <div class="row">
                                             <div class="col-md-4">
@@ -332,6 +331,36 @@
                                                 @error('store_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label for="country">Racks</label>
+                                               <select wire:model.debounce.300ms="rack_id" class="form-control">
+                                                   <option value="">Select Rack</option>
+                                                 @foreach ($racks as $rack)
+                                                    <option value="{{$rack->id}}">{{$rack->name}} {{$rack->rack_number}}</option>
+                                                 @endforeach
+                                               </select>
+                                               <small><a href="{{route('racks.index')}}" target="_blank" ><i class="fa fa-plus-square-o"></i> New Rack</a></small><a href="#" wire:click.prevent="refresh('racks')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                                @error('rack_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label for="country">Bins</label>
+                                               <select wire:model.debounce.300ms="bin_id" class="form-control">
+                                                   <option value="">Select Bin</option>
+                                                 @foreach ($bins as $bin)
+                                                    <option value="{{$bin->id}}">{{$bin->name}} {{$bin->bin_number}}</option>
+                                                 @endforeach
+                                               </select>
+                                               <small> <a href="{{route('bins.index')}}" target="_blank"><i class="fa fa-plus-square-o"></i> New Bin</a></small><a href="#" wire:click.prevent="refresh('bins')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
+                                                @error('bin_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            </div>
+                                        </div>
+                                      
+                 
+                                </div>
+                                <div class="row">
                                     <div class="col-md-3">
                                         <div class="form-group">
                                             <label for="condition">Conditions</label>
@@ -357,23 +386,21 @@
                                                 @error('purchase_type') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-4">
+                                    <div class="col-md-2">
                                         <div class="form-group">
                                             <label for="purchase_date">Warranty Expiry Date</label>
                                         <input type="date" class="form-control" wire:model.debounce.300ms="warranty_exp_date" placeholder="Warranty Expiry Date">
                                             @error('warranty_exp_date') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
                                         </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-2">
                                         <div class="form-group">
                                             <label for="purchase_date">Useful Life</label>
                                         <input type="number" step="any" class="form-control" wire:model.debounce.300ms="life" placeholder="Useful Life" >
                                             @error('life') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
                                         </div>
-                                        <div class="col-md-4">
+                                        <div class="col-md-2">
                                             <div class="form-group">
                                                 <label for="condition">Depriciation Types</label>
                                                <select wire:model.debounce.300ms="depreciation_type" class="form-control" >

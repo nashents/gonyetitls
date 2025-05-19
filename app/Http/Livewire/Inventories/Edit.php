@@ -3,8 +3,10 @@
 namespace App\Http\Livewire\Inventories;
 
 use Carbon\Carbon;
+use App\Models\Bin;
 use App\Models\Tax;
 use App\Models\Bill;
+use App\Models\Rack;
 use App\Models\Store;
 use App\Models\Vendor;
 use App\Models\Account;
@@ -26,6 +28,10 @@ class Edit extends Component
 
     public $stores;
     public $store_id;
+    public $bins;
+    public $bin_id;
+    public $racks;
+    public $rack_id;
     public $purchases;
     public $selectedPurchase;
     public $purchase_order;
@@ -50,6 +56,7 @@ class Edit extends Component
     public $warranty_exp_date;
     public $condition;
     public $inventory_number;
+    public $inventory;
    
     public $purchase_type;
     public $description;
@@ -162,10 +169,13 @@ class Edit extends Component
     }
 
     public function mount($inventory){
+        $this->inventory = $inventory;
         $this->products = Product::with('brand')->orderBy('name','asc')->where('department','inventory')->where('status',True)->where('buy',True)->get()->sortBy('brand.name');
         $this->vendors = Vendor::orderBy('name','asc')->get();
         $this->currencies = Currency::latest()->get();
         $this->stores = Store::orderBy('name','asc')->get();
+        $this->racks = Rack::orderBy('name','asc')->get();
+        $this->bins = Bin::orderBy('name','asc')->get();
         $this->measurements = Measurement::orderBy('name','asc')->get();
         $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name','Expenses');
@@ -189,14 +199,18 @@ class Edit extends Component
         $this->selectedProduct = $inventory->product_id;
         $this->selectedAccount = $inventory->account_id;
         $this->item_description = $product->description;
-        if ($invetory->bill) {
+        
+        if ($this->inventory->bill) {
             $this->to_bills = True;
         }else{
             $this->to_bills = False;
         }
+
         $this->weight = $inventory->weight;
         $this->measurement = $inventory->measurement;
         $this->store_id = $inventory->store_id;
+        $this->bin_id = $inventory->bin_id;
+        $this->rack_id = $inventory->rack_id;
         $this->status = $inventory->status;
         $this->rate = $inventory->rate;
         $this->residual_value = $inventory->residual_value;
@@ -271,6 +285,23 @@ class Edit extends Component
         }
     }
 
+          public function refresh($category){
+
+        if($category == "racks"){
+            $this->racks = Rack::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Racks Refreshed Successfully!!."
+            ]);
+        }elseif($category == "bins"){
+            $this->bins = Bin::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Bins Refreshed Successfully!!."
+            ]);
+        }
+    }
+
     public function updated($value){
         $this->validateOnly($value);
     }
@@ -324,10 +355,12 @@ class Edit extends Component
 
         $inventory = Inventory::find($this->inventory_id);
         $inventory->user_id = Auth::user()->id;
-        $inventory->vendor_id = $this->vendor_id ? $this->vendor_id : null;
-        $inventory->store_id = $this->store_id ? $this->store_id : null;
-        $inventory->product_id = $this->selectedProduct ? $this->selectedProduct : null;
-        $inventory->currency_id = $this->selectedCurrency ?  $this->selectedCurrency : null;
+        $inventory->vendor_id = $this->vendor_id ?? null;
+        $inventory->store_id = $this->store_id ?? null;
+        $inventory->bin_id = $this->bin_id ?? null;
+        $inventory->rack_id = $this->rack_id ?? null;
+        $inventory->product_id = $this->selectedProduct ?? null;
+        $inventory->currency_id = $this->selectedCurrency ?? null;
         $inventory->amount = $this->amount;
         $inventory->qty = $this->qty;
         $inventory->measurement = $this->measurement;

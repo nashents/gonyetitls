@@ -21,6 +21,12 @@ class Inventory extends Model implements Auditable
     public function store(){
         return $this->belongsTo('App\Models\Store');
     }
+    public function bin(){
+        return $this->belongsTo('App\Models\Bin');
+    }
+    public function rack(){
+        return $this->belongsTo('App\Models\Rack');
+    }
     public function purchase(){
         return $this->belongsTo('App\Models\Purchase');
     }

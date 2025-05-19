@@ -4,7 +4,9 @@ namespace App\Http\Livewire\Inventories;
 
 
 use Carbon\Carbon;
+use App\Models\Bin;
 use App\Models\Bill;
+use App\Models\Rack;
 use App\Models\Brand;
 use App\Models\Store;
 use App\Models\Branch;
@@ -38,6 +40,10 @@ class Create extends Component
 
     public $stores;
     public $store_id;
+    public $bins;
+    public $bin_id;
+    public $racks;
+    public $rack_id;
     public $purchases;
     public $selectedPurchase;
     public $purchase_products;
@@ -149,6 +155,8 @@ class Create extends Component
 
         $this->products = Product::with('brand')->orderBy('name','asc')->where('department','inventory')->where('status',True)->where('buy',True)->get()->sortBy('brand.name');
         $this->stores = Store::orderBy('name','asc')->get();
+        $this->racks = Rack::orderBy('name','asc')->get();
+        $this->bins = Bin::orderBy('name','asc')->get();
         $this->measurements = Measurement::orderBy('name','asc')->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();
         $this->currencies = Currency::latest()->get();
@@ -172,6 +180,23 @@ class Create extends Component
         $this->city = '';
         $this->suburb = '';
         $this->street_address = '';
+    }
+
+      public function refresh($category){
+
+        if($category == "racks"){
+            $this->racks = Rack::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Racks Refreshed Successfully!!."
+            ]);
+        }elseif($category == "bins"){
+            $this->bins = Bin::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Bins Refreshed Successfully!!."
+            ]);
+        }
     }
 
     public function vendorNumber(){
@@ -509,7 +534,9 @@ class Create extends Component
 
                     $inventory->account_id = $this->selectedAccount;
                     $inventory->residual_value = $this->residual_value;
-                    $inventory->store_id = $this->store_id ? $this->store_id : null;
+                    $inventory->store_id = $this->store_id ?? null;
+                    $inventory->bin_id = $this->bin_id ?? null;
+                    $inventory->rack_id = $this->rack_id ?? null;
                     $inventory->depreciation_type = $this->depreciation_type;
                     $inventory->purchase_date = $this->purchase_date;
                     $inventory->purchase_type = $this->purchase_type;

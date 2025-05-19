@@ -37,28 +37,34 @@ WithCustomStartCell
         $make = $vehicle->vehicle_make? $vehicle->vehicle_make->name : "";
         $model = $vehicle->vehicle_model? $vehicle->vehicle_model->name : "";
         $fleet_number = $vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : "";
-        if ((isset($vehicle->mileage) && $vehicle->mileage > 0) && (isset($vehicle->next_service) && $vehicle->next_service > 0)) {
-            if ($vehicle->mileage >= $vehicle->next_service) {
-                $status = "Due for service";
-            }elseif ($vehicle->mileage < $vehicle->next_service) {
-                $status = "Fit for use";
+        if (((isset($vehicle->mileage) && $vehicle->mileage > 0) && (isset($vehicle->next_service) && $vehicle->next_service > 0)) || ((isset($vehicle->hours) && $vehicle->hours > 0) && (isset($vehicle->next_service_hours) && $vehicle->next_service_hours > 0))) {
+                if (($vehicle->mileage >= $vehicle->next_service) || ($vehicle->hours >= $vehicle->next_service_hours)) {
+                    $status = "Due for service";
+                }elseif (($vehicle->mileage < $vehicle->next_service) || ($vehicle->hours < $vehicle->next_service_hours)) {
+                    $status = "Fit for use";
+                }
+                $difference = $vehicle->next_service - $vehicle->mileage;
+                $hours_difference = $vehicle->next_service_hours - $vehicle->hours;
+            }else {
+                $difference = "";
+                $hours_difference = "";
+                $status = "";
             }
-            $difference = $vehicle->next_service - $vehicle->mileage;
-        }else {
-            $difference = "";
-            $status = "";
-        }
       
        
 
         return   [
             $vehicle->transporter ? $vehicle->transporter->name : "",
             $make." ".$model." ".$vehicle->registration_number ." ". $fleet_number ,
-            $vehicle->prev_service ? $vehicle->prev_service."Kms" : "" ,
             $vehicle->prev_service_date ,
+            $vehicle->prev_service ? $vehicle->prev_service."Kms" : "" ,
+            $vehicle->prev_service_hours ? $vehicle->prev_service_hours."Hours" : "" ,
             $vehicle->mileage ? $vehicle->mileage."Kms" : "" ,
+            $vehicle->hours ? $vehicle->hours."Hours" : "" ,
             $vehicle->next_service ? $vehicle->next_service."Kms" : "" ,
+            $vehicle->next_service_hours ? $vehicle->next_service_hours."Hours" : "" ,
             $difference ? $difference."Kms" : "",
+            $hours_difference ? $hours_difference."Hours" : "",
             $status,
           
              ];

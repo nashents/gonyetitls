@@ -107,6 +107,12 @@ Purchase Order Print | @if (Auth::user()->employee->company)
                                             {{$requisition->department ? $requisition->department->name : ""}}
                                         </td>
                                     </tr>
+                                    @if ($requisition->trip)
+                                        <tr>
+                                            <th class="text-center"><strong>Trip</strong></th>
+                                            <td class="text-center"> <a href="{{route('trips.show',$requisition->trip->id)}}">{{$requisition->trip ? $requisition->trip->trip_number : ""}} {{$requisition->trip->trip_ref ? " / ".$requisition->trip->trip_ref : ""}}</td>
+                                        </tr>
+                                    @endif
                                     <tr>
                                         <th class="text-center"><strong>Requisition For</strong></th>
                                         <td class="text-center"> {{$requisition->description}}</td>

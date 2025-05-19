@@ -120,6 +120,7 @@ WithChunkReading
             $vehicle->manufacturer =  $row['manufacturer'];
             $vehicle->country_of_origin =$row['country_of_origin'];
             $vehicle->mileage =$row['mileage'];
+            $vehicle->hours   = $row['engine_hours'];
             $vehicle->fuel_type =$row['fueltype'];
             $vehicle->fuel_consumption_empty_standard    = $row['fuel_consumption_empty'] ? $row['fuel_consumption_empty'] : 0;
             $vehicle->fuel_consumption_loaded_standard    = $row['fuel_consumption_loaded'] ? $row['fuel_consumption_loaded'] : 0;
@@ -181,6 +182,7 @@ WithChunkReading
             $vehicle->manufacturer =  $row['manufacturer'];
             $vehicle->country_of_origin =$row['country_of_origin'];
             $vehicle->mileage = $row['mileage'];
+            $vehicle->hours   = $row['engine_hours'];
             $vehicle->fuel_type =$row['fueltype'];
             $vehicle->fuel_consumption_empty_standard    = $row['fuel_consumption_empty'] ? $row['fuel_consumption_empty'] : 0;
             $vehicle->fuel_consumption_loaded_standard    = $row['fuel_consumption_loaded'] ? $row['fuel_consumption_loaded'] : 0;

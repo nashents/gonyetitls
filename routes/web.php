@@ -135,8 +135,13 @@ Route::get('inventories/management','InventoryController@manage')->name('invento
 Route::get('inventories/assignment','InventoryController@assignment')->name('inventories.assignment');
 Route::get('inventories/requisition','InventoryController@requisition')->name('inventories.requisition');
 Route::post('/inventories/import','ImportsController@importInventories')->name('inventories.import');
+Route::post('/locations/import','ImportsController@importLocations')->name('locations.import');
+Route::post('/works/import','ImportsController@importWorks')->name('works.import');
+Route::post('/shifts/import','ImportsController@importShifts')->name('shifts.import');
 
 Route::post('/trips/import','ImportsController@importTrips')->name('trips.import');
+Route::post('/racks/import','ImportsController@importRacks')->name('racks.import');
+Route::post('/bins/import','ImportsController@importBins')->name('bins.import');
 
 
 
@@ -400,6 +405,13 @@ Route::get('tickets/{ticket}//export-to-pdf','TicketController@generatePDF')->na
 
 
 Route::get('horses/{horse}/edit','HorseController@edit')->name('horses.edit')->withTrashed();
+Route::resource('bins','BinController');
+Route::resource('racks','RackController');
+Route::resource('shifts','ShiftController');
+Route::resource('rehandlings','RehandlingController');
+Route::resource('route_expense','RouteExpenseController');
+Route::resource('works','WorkController');
+Route::resource('locations','LocationController');
 Route::resource('job_types','JobTypeController');
 Route::resource('tyre_products','TyreProductController');
 Route::get('tickets/{id}/cards','TicketController@cards')->name('tickets.cards');

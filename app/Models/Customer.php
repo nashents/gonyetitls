@@ -16,6 +16,9 @@ class Customer extends Model implements Auditable
     public function contacts(){
         return $this->hasMany('App\Models\Contact');
     }
+    public function shifts(){
+        return $this->hasMany('App\Models\Shift');
+    }
     public function sales(){
         return $this->hasMany('App\Models\Sale');
     }

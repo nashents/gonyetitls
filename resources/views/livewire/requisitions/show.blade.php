@@ -35,7 +35,7 @@
                             @if ($requisition->trip)
                             <tr>
                                 <th class="w-10 text-center line-height-35">Trip</th>
-                                <td class="w-20 line-height-35">{{$requisition->trip ? $requisition->trip->trip_number : ""}}</td>
+                                <td class="w-20 line-height-35"> <a href="{{route('trips.show',$requisition->trip->id)}}">{{$requisition->trip ? $requisition->trip->trip_number : ""}} {{$requisition->trip->trip_ref ? " / ".$requisition->trip->trip_ref : ""}}</td></a> 
                             </tr>
                             @endif
                             

@@ -41,9 +41,22 @@
                                             </th>
                                             <th class="th-sm">VRN
                                             </th>
-                                            <th class="th-sm">Mileage
+                                            <th class="th-sm">Revenue
                                             </th>
-                                            <th class="th-sm">Next Service
+                                            <th class="th-sm">Expenses
+                                            </th>
+                                            <th class="th-sm">CPK
+                                            </th>
+                                            <th class="th-sm">
+                                                Mileage
+                                                <hr style="margin-top:2px; margin-bottom:2px">
+                                                Next Service
+
+                                            </th>
+                                            <th class="th-sm">
+                                                Hours
+                                                <hr style="margin-top:2px; margin-bottom:2px">
+                                                Next Service
                                             </th>
                                             <th class="th-sm">Fitness
                                             </th>
@@ -61,8 +74,39 @@
                                         <td>{{$vehicle->transporter ? $vehicle->transporter->name : ""}}</td>
                                         <td>{{ucfirst($vehicle->vehicle_make ? $vehicle->vehicle_make->name : "")}} {{ucfirst($vehicle->vehicle_model ? $vehicle->vehicle_model->name : "")}}</td>
                                         <td>{{$vehicle->registration_number}} {{$vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : ""}}</td>
-                                        <td>{{$vehicle->mileage ? $vehicle->mileage."Kms" : ""}}</td>
-                                        <td>{{$vehicle->next_service ? $vehicle->next_service."Kms" : ""}}</td>
+                                              <td> 
+                                            @foreach ($currencies as $currency)
+                                                @php
+                                                    $revenue = App\Models\Trip::where('vehicle_id',$vehicle->id)->whereYear('created_at', date('Y'))->where('authorization', 'approved')->where('trip_status','!=', 'Cancelled')
+                                                                                ->where('currency_id',$currency->id)->sum('freight');
+                                                @endphp
+                                                @if (isset($revenue) && $revenue > 0)
+                                                    {{ $currency->name }} {{ $currency->symbol }}{{number_format($revenue,2)}} <br>
+                                                @endif
+                                            @endforeach
+                                        </td>
+                                        <td> 
+                                            @foreach ($currencies as $currency)
+                                                @php
+                                                    $expenses = App\Models\Bill::where('vehicle_id',$vehicle->id)->whereYear('created_at', date('Y'))->where('authorization', 'approved')
+                                                                                ->where('currency_id',$currency->id)->where('total','!=','')->where('total','!=', Null)->sum('total');
+                                                @endphp
+                                                @if (isset($expenses) && $expenses > 0)
+                                                    {{ $currency->name }} {{ $currency->symbol }}{{number_format($expenses,2)}} <br>
+                                                @endif
+                                            @endforeach
+                                        </td>
+                                        <td>{{$this->calculateCPK($vehicle->id)}}</td>
+                                        <td>
+                                            {{$vehicle->mileage ? $vehicle->mileage."Kms" : ""}}
+                                            <hr style="margin-top:2px; margin-bottom:2px">
+                                            {{$vehicle->next_service ? $vehicle->next_service."Kms" : ""}}
+                                        </td>
+                                        <td>
+                                            {{$vehicle->hours ? $vehicle->hours."Hours" : ""}}
+                                            <hr style="margin-top:2px; margin-bottom:2px">
+                                            {{$vehicle->next_service_hours ? $vehicle->next_service_hours."Hours" : ""}}
+                                        </td>
                                         <td><span class="badge bg-{{$vehicle->service == 0 ? "success" : "danger"}}">{{$vehicle->service == 0 ? "Fit for use" : "In Service"}}</span></td>
                                         <td><span class="badge bg-{{$vehicle->status == 1 ? "success" : "danger"}}">{{$vehicle->status == 1 ? "Available" : "Unavailable"}}</span></td>
                                         <td class="w-10 line-height-35 table-dropdown">

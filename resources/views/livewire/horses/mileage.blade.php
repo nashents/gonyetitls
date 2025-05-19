@@ -26,13 +26,22 @@
                                     </th>
                                     <th class="th-sm">Horse
                                     </th>
-                                    <th class="th-sm">Prev Service Mileage
+                                     <th class="th-sm">Prev Service Date
                                     </th>
-                                    <th class="th-sm">Prev Service Date
+                                    <th class="th-sm">
+                                        Prev Mileage
+                                        <hr style="margin-top:2px; margin-bottom:2px">
+                                        Prev Hours
                                     </th>
-                                    <th class="th-sm">Current Mileage
+                                   <th class="th-sm">
+                                        Current Mileage
+                                        <hr style="margin-top:2px; margin-bottom:2px">
+                                        Current Hours
                                     </th>
-                                    <th class="th-sm">Next Service Mileage
+                                    <th class="th-sm">
+                                        Next Mileage
+                                        <hr style="margin-top:2px; margin-bottom:2px">
+                                        Next Hours
                                     </th>
                                     <th class="th-sm">Current - Next Service Diff
                                     </th>
@@ -48,23 +57,41 @@
                                   <tr>
                                     <td>{{$horse->transporter ? $horse->transporter->name : ""}}</td>
                                     <td>{{$horse->horse_make ? $horse->horse_make->name : ""}} {{$horse->horse_model ? $horse->horse_model->name : ""}} {{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}}</td>
-                                    <td>{{$horse->prev_service ? $horse->prev_service."Kms" : ""}}</td>
-                                    <td>{{$horse->prev_service_date}}</td>
-                                    <td>{{$horse->mileage ? $horse->mileage."Kms" : ""}}</td>
-                                    <td>{{$horse->next_service ? $horse->next_service."Kms" : ""}}</td>
+                                      <td>{{$horse->prev_service_date}}</td> 
+                                    <td>
+                                            {{$horse->prev_service ? $horse->prev_service."Kms" : ""}}
+                                            <hr style="margin-top:2px; margin-bottom:2px">
+                                            {{$horse->prev_service_hours ? $horse->prev_service_hours."Hours" : ""}}
+                                    </td>
+                                
+                                  
+                                   <td>
+                                            {{$horse->mileage ? $horse->mileage."Kms" : ""}}
+                                            <hr style="margin-top:2px; margin-bottom:2px">
+                                            {{$horse->hours ? $horse->hours."Hours" : ""}}
+                                    </td>
+                                    <td>
+                                            {{$horse->next_service ? $horse->next_service."Kms" : ""}}
+                                            <hr style="margin-top:2px; margin-bottom:2px">
+                                            {{$horse->next_service_hours ? $horse->next_service_hours."Hours" : ""}}
+                                    </td>
                                     <td>
                                         @if ((isset($horse->mileage) && $horse->mileage > 0) && (isset($horse->next_service) && $horse->next_service > 0))
                                             @php
                                                 $difference = $horse->next_service - $horse->mileage;
+                                                $hours_difference = $horse->next_service_hours - $horse->hours;
                                             @endphp
-                                            {{$difference ? $difference."Kms" : ""}}
+                                            {{$difference ? $difference."Kms" : ""}} 
+                                            @if ($hours_difference)
+                                                 {{$hours_difference ? $hours_difference."Hours" : ""}} 
+                                            @endif
                                         @endif
                                     </td>
                                     <td>
-                                        @if ((isset($horse->mileage) && $horse->mileage > 0) && (isset($horse->next_service) && $horse->next_service > 0))
-                                            @if ($horse->mileage >= $horse->next_service)
+                                        @if (((isset($horse->mileage) && $horse->mileage > 0) && (isset($horse->next_service) && $horse->next_service > 0)) || ((isset($horse->hours) && $horse->hours > 0) && (isset($horse->next_service_hours) && $horse->next_service_hours > 0)))
+                                            @if (($horse->mileage >= $horse->next_service) || ($horse->hours >= $horse->next_service_hours))
                                                 <span class="badge bg-danger">Due for service</span>
-                                            @elseif($horse->mileage < $horse->next_service)
+                                            @elseif(($horse->mileage < $horse->next_service) || ($horse->hours < $horse->next_service_hours))
                                                 <span class="badge bg-success">Fit for use</span>
                                             @endif
                                         @endif

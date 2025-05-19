@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Bookings;
 
+use App\Models\Hour;
 use App\Models\Horse;
 use App\Models\Driver;
 use App\Models\Vendor;
@@ -59,6 +60,7 @@ class Edit extends Component
     public $out_time;
     public $station;
     public $mileage;
+    public $hours;
     public $service_types;
     public $service_type_id;
     public $booking_number;
@@ -93,6 +95,7 @@ class Edit extends Component
         $this->service_type_id = $booking->service_type_id;
         $this->station = $booking->station;
         $this->mileage = $booking->odometer;
+        $this->hours = $booking->hours;
         $this->description = $booking->description;
 
         foreach ($booking->employees as $mechanic) {
@@ -137,6 +140,7 @@ class Edit extends Component
         if (!is_null($horse)) {
            $horse = Horse::find($horse);
            $this->mileage = $horse->mileage;
+           $this->hours = $horse->hours;
            $assignment = Assignment::where('horse_id',$horse)
                                     ->where('status', 1 )->get()->first();
            if ($assignment) {
@@ -151,6 +155,7 @@ class Edit extends Component
         if (!is_null($vehicle)) {
            $vehicle = Vehicle::find($vehicle);
            $this->mileage = $vehicle->mileage;
+           $this->hours = $vehicle->hours;
         }
 
     }
@@ -210,6 +215,7 @@ class Edit extends Component
         $booking->in_time = $this->in_time;
         $booking->station = $this->station;
         $booking->odometer = $this->mileage;
+        $booking->hours = $this->hours;
         $booking->description = $this->description;
         $booking->estimated_out_date = $this->estimated_out_date;
         $booking->type = $this->type;
@@ -236,6 +242,18 @@ class Edit extends Component
             $mileage->date = $this->in_date;
             $mileage->category = "Booking";
             $mileage->update();
+        }
+
+        $hours =  Hour::where('booking_id',$booking->id);
+        if (isset($hours)) {
+            $hours->booking_id = $booking->id;
+            $hours->horse_id = $this->selectedHorse ? $this->selectedHorse : Null;
+            $hours->vehicle_id = $this->selectedVehicle ? $this->selectedVehicle : Null;
+            $hours->trailer_id = $this->trailer_id ? $this->trailer_id : Null;
+            $hours->hours = $this->hours;
+            $hours->date = $this->in_date;
+            $hours->category = "Booking";
+            $hours->update();
         }
        
 

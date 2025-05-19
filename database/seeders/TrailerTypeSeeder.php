@@ -15,7 +15,7 @@ class TrailerTypeSeeder extends Seeder
      */
     public function run()
     {
-        $trailer_groups = ['Tanker', 'Abnormal Load','Link','Flatdeck','Board'];
+        $trailer_groups = ['Tanker', 'Abnormal Load','Link','Flatdeck','Board','Dolly'];
         foreach($trailer_groups as $trailer_group){
             TrailerType::create([
                 'name' => $trailer_group

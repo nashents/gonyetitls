@@ -30,9 +30,11 @@ class Show extends Component
     public $fuel_balance;
     public $fuel_tank_capacity;
     public $mileage;
+    public $hours;
     public $images;
     public $fitnesses;
     public $next_service;
+    public $next_service_hours;
     public $active_option;
     public $horse_trips;
 
@@ -50,7 +52,9 @@ class Show extends Component
         $this->fuel_balance = $this->horse->fuel_balance;
         $this->fuel_tank_capacity = $this->horse->fuel_tank_capacity;
         $this->mileage = $this->horse->mileage;
+        $this->hours = $this->horse->hours;
         $this->next_service = $this->horse->next_service;
+        $this->next_service_hours = $this->horse->next_service_hours;
         $this->images = $this->horse->horse_images;
         $this->fitnesses = $this->horse->fitnesses;
         $this->active_option = "horse";
@@ -112,12 +116,14 @@ class Show extends Component
         $this->horse_id = $id;
         $this->horse = Horse::find($id);
         $this->mileage = $this->horse->mileage;
+        $this->hours = $this->horse->hours;
         $this->dispatchBrowserEvent('show-odometerModal');
     }
     public function nextService($id){
         $this->horse_id = $id;
         $this->horse = Horse::find($id);
         $this->next_service = $this->horse->next_service;
+        $this->next_service_hours = $this->horse->next_service_hours;
         $this->dispatchBrowserEvent('show-nextServiceModal');
     }
 
@@ -125,6 +131,7 @@ class Show extends Component
     public function updateOdometer(){
         $horse = Horse::find($this->horse_id);
         $horse->mileage = $this->mileage;
+        $horse->hours = $this->hours;
         $horse->update();
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
@@ -137,6 +144,7 @@ class Show extends Component
     public function updateNextService(){
         $horse = Horse::find($this->horse_id);
         $horse->next_service = $this->next_service;
+        $horse->next_service_hours = $this->next_service_hours;
         $horse->update();
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
@@ -211,13 +219,12 @@ class Show extends Component
     {
         $this->fuel_balance ;
         $this->mileage ;
-
-       
-       
+        $this->hours ;
 
         return view('livewire.horses.show',[
             'fuel_balance' => $this->fuel_balance,
             'mileage' => $this->mileage,
+            'hours' => $this->hours,
             'bookings' =>  $this->bookings,
             'bills' =>  $this->bills,
             'fuels' =>  $this->fuels,

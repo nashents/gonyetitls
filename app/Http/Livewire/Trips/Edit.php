@@ -4,6 +4,7 @@ namespace App\Http\Livewire\Trips;
 
 use App\Models\Bill;
 use App\Models\Fuel;
+use App\Models\Hour;
 use App\Models\Rate;
 use App\Models\Trip;
 use App\Models\Agent;
@@ -65,6 +66,8 @@ class Edit extends Component
     public $trip_group;
     public $starting_mileage;
     public $ending_mileage;
+    public $starting_hours;
+    public $ending_hours;
     public $exchange_rate;
     public $exchange_customer_freight;
     public $exchange_transporter_freight;
@@ -588,10 +591,12 @@ class Edit extends Component
             $trailer_assignments = $this->horse->trailer_assignments->where('status',1);
                                     
             $this->odometer = $this->horse->mileage;
+            $this->hours = $this->horse->hours;
             $this->fuel_consumption_loaded_standard = $this->horse->fuel_consumption_loaded_standard;
             $this->fuel_consumption_empty_standard = $this->horse->fuel_consumption_empty_standard;
             $this->fuel_tank_capacity = $this->horse->fuel_tank_capacity;
             $this->starting_mileage = $this->horse->mileage;
+            $this->starting_hours = $this->horse->hours;
             $this->fuel_balance = $this->horse->fuel_balance;
             if (isset( $assignment)) {
                 $driver = $assignment->driver;
@@ -617,8 +622,10 @@ class Edit extends Component
                                     ->where('status', 1)->first();
                                     
             $this->odometer = $this->vehicle->mileage;
+            $this->hours = $this->vehicle->hours;
             $this->fuel_tank_capacity = $this->vehicle->fuel_tank_capacity;
             $this->starting_mileage = $this->vehicle->mileage;
+            $this->starting_hours = $this->vehicle->hours;
             $this->fuel_consumption_loaded_standard = $this->vehicle->fuel_consumption_loaded_standard;
             $this->fuel_consumption_empty_standard = $this->vehicle->fuel_consumption_empty_standard;
             $this->fuel_balance = $this->vehicle->fuel_balance;
@@ -957,6 +964,8 @@ class Edit extends Component
          $this->selectedFrom = $this->trip->from;
          $this->starting_mileage = $this->trip->starting_mileage;
          $this->ending_mileage = $this->trip->ending_mileage;
+         $this->starting_hours = $this->trip->starting_hours;
+         $this->ending_hours = $this->trip->ending_hours;
          $this->exchange_rate = $this->trip->exchange_rate;
          $this->exchange_customer_freight = $this->trip->exchange_customer_freight;
          $this->exchange_transporter_freight = $this->trip->exchange_customer_turnover;
@@ -1347,6 +1356,8 @@ class Edit extends Component
           $trip->trip_type_id = $this->selectedTripType;
           $trip->starting_mileage = $this->starting_mileage;
           $trip->ending_mileage = $this->ending_mileage;
+          $trip->starting_hours = $this->starting_hours;
+          $trip->ending_hours = $this->ending_hours;
           $trip->trip_fuel = $this->trip_fuel;
           $trip->defined_customer_rate_id = $this->selectedDefinedCustomerRate;
           $trip->defined_transporter_rate_id = $this->selectedDefinedTransporterRate;
@@ -1388,6 +1399,7 @@ class Edit extends Component
           if($this->emptyrun_destination) $this->saveEmptyRun($trip, false);
 
           $mileage =  Mileage::where('trip_id', $trip->id)->where('position','starting')->where('horse_id',$this->selectedHorse)->orWhere('vehicle_id',$this->selectedVehicle)->first();
+          
           $last_mileage = Mileage::where('horse_id',$this->selectedHorse)->orWhere('vehicle_id',$this->selectedVehicle)->whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
 
           if(isset($mileage)){
@@ -1431,6 +1443,51 @@ class Edit extends Component
             }
           }
        
+          $hours =  Hour::where('trip_id', $trip->id)->where('position','starting')->where('horse_id',$this->selectedHorse)->orWhere('vehicle_id',$this->selectedVehicle)->first();
+          
+          $last_hours = Hour::where('horse_id',$this->selectedHorse)->orWhere('vehicle_id',$this->selectedVehicle)->whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
+
+          if(isset($hours)){
+              $hours->trip_id = $trip->id;
+              $hours->horse_id = $this->selectedHorse ?:  Null;
+              $hours->vehicle_id = $this->selectedVehicle ?: Null;
+              if(isset($last_hours->hours) && ($last_hours->hours < $this->starting_hours)){
+                $hours->hours = $this->starting_hours;
+              }
+              $hours->date = $this->start_date;
+              $hours->position = "starting";
+              $hours->category = "Trip";
+              $hours->update();
+          }else{
+            if(isset($this->starting_hours)){
+                if(isset($last_hours)){
+                    if($last_hours->hours < $this->starting_hours){
+                        $hours = new Hour;
+                        $hours->user_id = $this->user->id;
+                        $hours->trip_id = $trip->id;
+                        $hours->horse_id = $this->selectedHorse ?:  Null;
+                        $hours->vehicle_id = $this->selectedVehicle ?: Null;
+                        $hours->hours = $this->starting_hours;
+                        $hours->date = $this->start_date;
+                        $hours->category = "Trip";
+                        $hours->position = "starting";
+                        $hours->save();
+                    }
+                }else{
+                    $hours = new Hour;
+                    $hours->user_id = $this->user->id;
+                    $hours->trip_id = $trip->id;
+                    $hours->horse_id = $this->selectedHorse ?:  Null;
+                    $hours->vehicle_id = $this->selectedVehicle ?: Null;
+                    $hours->hours = $this->ending_hours;
+                    $hours->date = $this->end_date;
+                    $hours->category = "Trip";
+                    $hours->position = "ending";
+                    $hours->save();
+                }          
+            }
+          }
+       
           $mileage =  Mileage::where('trip_id', $trip->id)->where('position','ending')->where('horse_id',$this->selectedHorse)->orWhere('vehicle_id',$this->selectedVehicle)->first();
           $last_mileage = Mileage::where('horse_id',$this->selectedHorse)->orWhere('vehicle_id',$this->selectedVehicle)->whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
           if(isset($mileage)){
@@ -1470,6 +1527,49 @@ class Edit extends Component
                     $mileage->category = "Trip";
                     $mileage->position = "ending";
                     $mileage->save();
+                }
+            }
+          }
+
+          $hours =  Hour::where('trip_id', $trip->id)->where('position','ending')->where('horse_id',$this->selectedHorse)->orWhere('vehicle_id',$this->selectedVehicle)->first();
+          $last_hours= Hour::where('horse_id',$this->selectedHorse)->orWhere('vehicle_id',$this->selectedVehicle)->whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
+          if(isset($hours)){
+              $hours->trip_id = $trip->id;
+              $hours->horse_id = $this->selectedHorse ?:  Null;
+              $hours->vehicle_id = $this->selectedVehicle ?: Null;
+              if(isset($last_hours->hours) && ($last_hours->hours < $this->ending_hours)){
+                $hours->hours = $this->ending_hours;
+              }
+              $hours->date = $this->start_date;
+              $hours->category = "Trip";
+              $hours->position = "ending";
+              $hours->update();
+          }else{
+            if(isset($this->ending_hours)){
+                if(isset($last_hours)){
+                    if($last_hours->hours < $this->ending_hours){
+                        $hours = new Hour;
+                        $hours->user_id = $this->user->id;
+                        $hours->trip_id = $trip->id;
+                        $hours->horse_id = $this->selectedHorse ?:  Null;
+                        $hours->vehicle_id = $this->selectedVehicle ?: Null;
+                        $hours->hours = $this->ending_hours;
+                        $hours->date = $this->end_date;
+                        $hours->category = "Trip";
+                        $hours->position = "ending";
+                        $hours->save();
+                    }
+                }else{
+                    $hours = new Hour;
+                    $hours->user_id = $this->user->id;
+                    $hours->trip_id = $trip->id;
+                    $hours->horse_id = $this->selectedHorse ?:  Null;
+                    $hours->vehicle_id = $this->selectedVehicle ?: Null;
+                    $hours->hours = $this->ending_hours;
+                    $hours->date = $this->end_date;
+                    $hours->category = "Trip";
+                    $hours->position = "ending";
+                    $hours->save();
                 }
             }
           }
@@ -2123,18 +2223,20 @@ class Edit extends Component
             $this->calculateFuelAmount();
         }
 
+         public function updatedTripFuel(){
+        $this->calculateFuelTotal();
+    }
+
         public function calculateFuelTotal(){
 
-            if((isset($this->fuel_balance) && $this->fuel_balance != null && is_numeric($this->fuel_balance)) && (isset($this->fuel_quantity) && $this->fuel_quantity != null && is_numeric($this->fuel_quantity))){
-                if (!is_null($this->selectedHorse)) {
-                    $this->horse_fuel_total = $this->fuel_balance + $this->fuel_quantity;    
-                }elseif(!is_null($this->selectedHorse)){
-                    $this->vehicle_fuel_total = $this->fuel_balance + $this->fuel_quantity;    
-                }
-                
-                
-            }  
-        }
+        if(($this->fuel_balance && is_numeric($this->fuel_balance)) && ($this->fuel_quantity && is_numeric($this->fuel_quantity))){
+            if (!is_null($this->selectedHorse)) {
+                $this->horse_fuel_total = $this->fuel_balance + $this->fuel_quantity;    
+            }elseif(!is_null($this->selectedVehicle)){
+                $this->vehicle_fuel_total = $this->fuel_balance + $this->fuel_quantity;    
+            }    
+        }  
+    }
 
         public function updatedUnitPrice(){
             $this->calculateFuelAmount();

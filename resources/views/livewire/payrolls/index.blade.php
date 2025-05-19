@@ -105,21 +105,8 @@
                 <div class="modal-body">
                    
                     <div class="row">
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="country">Currencies<span class="required" style="color: red">*</span></label>
-                                <select wire:model.debounce.300ms="selectedCurrency" class="form-control" required>
-                                   <option value="">Select Currency</option>
-                                 @foreach ($currencies as $currency)
-                                 <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>                                      
-                                 @endforeach
-                              
-                               </select>
-                                @error('selectedCurrency') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                               
-                            </div>
-                        </div>
-                        <div class="col-md-4">
+                    
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label for="month">Month<span class="required" style="color: red">*</span></label>
                                <select wire:model.debounce.300ms="month" class="form-control" required >
@@ -140,7 +127,7 @@
                                 @error('month') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div> 
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label for="year">Year<span class="required" style="color: red">*</span></label>
                                <select wire:model.debounce.300ms="year" class="form-control" required >
@@ -181,21 +168,8 @@
                 <form wire:submit.prevent="update()" >
                 <div class="modal-body">
                     <div class="row">
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="country">Currencies<span class="required" style="color: red">*</span></label>
-                                <select wire:model.debounce.300ms="selectedCurrency" class="form-control" required>
-                                   <option value="">Select Currency</option>
-                                 @foreach ($currencies as $currency)
-                                 <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>                                      
-                                 @endforeach
-                              
-                               </select>
-                                @error('selectedCurrency') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                               
-                            </div>
-                        </div>
-                        <div class="col-md-4">
+                       
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label for="month">Month<span class="required" style="color: red">*</span></label>
                                <select wire:model.debounce.300ms="month" class="form-control" required >
@@ -216,7 +190,7 @@
                                 @error('month') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div> 
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label for="year">Year<span class="required" style="color: red">*</span></label>
                                <select wire:model.debounce.300ms="year" class="form-control" required >

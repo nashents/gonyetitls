@@ -13,6 +13,12 @@ class Asset extends Model implements Auditable
 
     use \OwenIt\Auditing\Auditable;
 
+    public function bin(){
+        return $this->belongsTo('App\Models\Bin');
+    }
+    public function rack(){
+        return $this->belongsTo('App\Models\Rack');
+    }
     public function product(){
         return $this->belongsTo('App\Models\Product');
     }

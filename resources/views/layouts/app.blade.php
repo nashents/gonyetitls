@@ -104,6 +104,130 @@
 @stack('scripts')
     
     <script type="text/javascript">
+            window.addEventListener('show-rehandlingModal', event => {
+                $('#rehandlingModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-rehandlingModal', event => {
+                $('#rehandlingModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-rehandlingEditModal', event => {
+                $('#rehandlingEditModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-rehandlingEditModal', event => {
+                $('#rehandlingEditModal').modal('hide');
+            })
+    </script>
+
+    <script type="text/javascript">
+            window.addEventListener('show-shiftModal', event => {
+                $('#shiftModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-shiftModal', event => {
+                $('#shiftModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-shiftEditModal', event => {
+                $('#shiftEditModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-shiftEditModal', event => {
+                $('#shiftEditModal').modal('hide');
+            })
+    </script>
+
+    <script type="text/javascript">
+            window.addEventListener('show-workModal', event => {
+                $('#workModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-workModal', event => {
+                $('#workModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-workEditModal', event => {
+                $('#workEditModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-workEditModal', event => {
+                $('#workEditModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-locationModal', event => {
+                $('#locationModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-locationModal', event => {
+                $('#locationModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-locationEditModal', event => {
+                $('#locationEditModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-locationEditModal', event => {
+                $('#locationEditModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-rackModal', event => {
+                $('#rackModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-rackModal', event => {
+                $('#rackModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-rackEditModal', event => {
+                $('#rackEditModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-rackEditModal', event => {
+                $('#rackEditModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-binModal', event => {
+                $('#binModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-binModal', event => {
+                $('#binModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-binEditModal', event => {
+                $('#binEditModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-binEditModal', event => {
+                $('#binEditModal').modal('hide');
+            })
+    </script>
+
+
+    <script type="text/javascript">
             window.addEventListener('show-updateInvoicesModal', event => {
                 $('#updateInvoicesModal').modal('show');
             })

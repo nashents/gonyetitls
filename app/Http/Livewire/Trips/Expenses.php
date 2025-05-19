@@ -39,7 +39,7 @@ class Expenses extends Component
 
 
     public $name;
-    public $amount;
+    public $amount = [];
     public $currencies;
     public $selectedCurrency;
     public $selected_currency;
@@ -153,19 +153,23 @@ class Expenses extends Component
         'selectedExpense.*' => 'required',
     ];
 
-    public function updatedSelectedExpense($id, $key = Null){
-     
-        if(!is_null($id)){
-            
+    public function updatedSelectedExpense($id, $key = null)
+    {
+        if (!is_null($id)) {
             $expense = Expense::find($id);
-            if($key){
-                $this->amount[$key]= $expense->amount;
-                $this->selectedCurrency[$key]= $expense->currency_id;
-            }else{
-                $this->amount= $expense->amount;
-                $this->selectedCurrency= $expense->currency_id;
+
+            if ($key !== null) {
+                // Make sure $this->amount is an array
+                if (!is_array($this->amount)) {
+                    $this->amount = [];
+                }
+
+                $this->amount[$key] = $expense->amount ?? null;
+                $this->selectedCurrency[$key] = $expense->currency_id ?? null;
+            } else {
+                $this->amount = $expense->amount ?? null;
+                $this->selectedCurrency = $expense->currency_id ?? null;
             }
-           
         }
     }
 

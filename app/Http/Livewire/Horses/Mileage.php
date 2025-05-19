@@ -28,14 +28,14 @@ class Mileage extends Component
 
     public function exportHorsesMileageCSV(Excel $excel){
 
-        return $excel->download(new HorsesMileageExport, 'horses.csv', Excel::CSV);
+        return $excel->download(new HorsesMileageExport, 'horses_mileage_hours_report.csv', Excel::CSV);
     }
     public function exportHorsesMileagePDF(Excel $excel){
 
-        return $excel->download(new HorsesMileageExport, 'horses.pdf', Excel::DOMPDF);
+        return $excel->download(new HorsesMileageExport, 'horses_mileage_hours_report.pdf', Excel::DOMPDF);
     }
     public function exportHorsesMileageExcel(Excel $excel){
-        return $excel->download(new HorsesMileageExport, 'horses.xlsx');
+        return $excel->download(new HorsesMileageExport, 'horses_mileage_hours_report.xlsx');
     }
 
 

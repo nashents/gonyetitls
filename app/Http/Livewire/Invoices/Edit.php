@@ -33,7 +33,6 @@ class Edit extends Component
     public $trips;
     public $selectedTrip = [];
 
-
     public $fiscalize_invoice;
     public $reason;
     public $trip_filter;
@@ -919,7 +918,6 @@ class Edit extends Component
                     $invoice_item->amount = $this->amount[$key];
                 }
                 if ((isset($this->amount[$key]) && is_numeric($this->amount[$key])) && ( isset($this->qty[$key]) && is_numeric($this->qty[$key]) ) ) {
-
                     $item_subtotal = $this->amount[$key]*$this->qty[$key];
                     $invoice_item->subtotal = $item_subtotal;
                     $this->subtotal = $this->subtotal + $item_subtotal;
@@ -971,17 +969,18 @@ class Edit extends Component
         $invoice->total = $this->total;
         $invoice->exchange_rate = $this->exchange_rate;
         $invoice->exchange_amount = $this->exchange_amount;
-        $total_paid = $invoice->payments->where('amount','!=','')->where('amount','!=',Null)->sum('amount');
-        if((isset($total_paid) && is_numeric($total_paid) && $total_paid > 0) && $this->total > $total_paid){
-            $invoice->balance = $this->total - $total_paid;
-           
-        }else{
-            $invoice->balance = $this->total;
-        }
+        
+        $total_paid = $invoice->payments
+        ->whereNotNull('amount')
+        ->where('amount', '!=', '')
+        ->sum('amount');
+
+        $invoice->balance = (is_numeric($total_paid) && $total_paid > 0 && $this->total > $total_paid)
+            ? $this->total - $total_paid
+            : $this->total;
+
         $invoice->update();
 
-        
-        
 
         }elseif (isset($this->from_trips) && $this->from_trips == false) {
     
@@ -1137,15 +1136,17 @@ class Edit extends Component
             $invoice->total = $this->total;
             $invoice->exchange_rate = $this->exchange_rate;
             $invoice->exchange_amount = $this->exchange_amount;
-            $total_paid = $invoice->payments->where('amount','!=','')->where('amount','!=',Null)->sum('amount');
-            if((isset($total_paid) && is_numeric($total_paid) && $total_paid > 0) && $this->total > $total_paid){
-                $invoice->balance = $this->total - $total_paid;
-               
-            }else{
-                $invoice->balance = $this->total;
-            }
-            $invoice->update();
-            
+            $total_paid = $invoice->payments
+            ->whereNotNull('amount')
+            ->where('amount', '!=', '')
+            ->sum('amount');
+
+            $invoice->balance = (is_numeric($total_paid) && $total_paid > 0 && $this->total > $total_paid)
+                ? $this->total - $total_paid
+                : $this->total;
+
+                $invoice->update();
+                
 
 
         }elseif (isset($this->from_inventory) && $this->from_inventory == true) {
@@ -1344,13 +1345,15 @@ class Edit extends Component
             $invoice->total = $this->total;
             $invoice->exchange_rate = $this->exchange_rate;
             $invoice->exchange_amount = $this->exchange_amount;
-            $total_paid = $invoice->payments->where('amount','!=','')->where('amount','!=',Null)->sum('amount');
-            if((isset($total_paid) && is_numeric($total_paid) && $total_paid > 0) && $this->total > $total_paid){
-                $invoice->balance = $this->total - $total_paid;
-               
-            }else{
-                $invoice->balance = $this->total;
-            }
+            $total_paid = $invoice->payments
+            ->whereNotNull('amount')
+            ->where('amount', '!=', '')
+            ->sum('amount');
+
+            $invoice->balance = (is_numeric($total_paid) && $total_paid > 0 && $this->total > $total_paid)
+                ? $this->total - $total_paid
+                : $this->total;
+
             $invoice->update();
         }
     }

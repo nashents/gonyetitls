@@ -80,6 +80,7 @@ class Index extends Component
     public $amount = 0;
     public $quantity = 0 ;
     public $mileage;
+    public $hours;
     public $date;
     public $fillup;
     public $invoice_number;
@@ -102,6 +103,7 @@ class Index extends Component
     public $selected_trip;
     public $selected_container;
     public $previous_mileage;
+    public $previous_hours;
     public $previous_quantity;
     public $fuel_category = "Self";
     public $trip_expenses;
@@ -170,6 +172,7 @@ class Index extends Component
         $this->trips = Trip::with('horse','destination')->where('authorization','approved')->where('horse_id',$id)->orderBy('created_at','desc')->take(100)->get();
         $this->horse_id = $id;
         $this->mileage = $this->horse->mileage;
+        $this->hours = $this->horse->hours;
         $this->fuel_tank_capacity = $this->horse->fuel_tank_capacity;
         }
     }
@@ -229,6 +232,7 @@ class Index extends Component
             $this->trips = Trip::with('vehicle','destination')->where('authorization','approved')->where('vehicle_id',$id)->orderBy('created_at','desc')->take(100)->get();
             $this->vehicle_id = $id;
             $this->mileage = $this->vehicle->mileage;
+            $this->hours = $this->vehicle->hours;
             $this->fuel_tank_capacity = $this->vehicle->fuel_tank_capacity;
         }
     }
@@ -288,6 +292,7 @@ class Index extends Component
         $this->transporter_total = "";
         $this->fuel_profit = "";
         $this->mileage = "";
+        $this->hours = "";
         $this->fillup = "";
         $this->type = "";
         $this->invoice_number = "";
@@ -370,6 +375,7 @@ class Index extends Component
         $fuel->exchange_rate = $this->exchange_rate;
         $fuel->exchange_amount = $this->exchange_amount;
         $fuel->odometer = $this->mileage;
+        $fuel->hours = $this->hours;
         $fuel->fillup = $this->fillup;
         $fuel->type = $this->type;
         $fuel->comments = $this->comments;
@@ -528,7 +534,9 @@ class Index extends Component
     $this->fillup = $fuel->fillup;
     $this->type = $fuel->type;
     $this->mileage = $fuel->odometer;
+    $this->hours = $fuel->hours;
     $this->previous_mileage = $fuel->odometer;
+    $this->previous_hours = $fuel->hours;
     $this->comments = $fuel->comments;
     $this->amount = $fuel->amount;
     $this->unit_price = $fuel->unit_price;
@@ -596,6 +604,7 @@ class Index extends Component
             $fuel->exchange_rate = $this->exchange_rate;
             $fuel->exchange_amount = $this->exchange_amount;
             $fuel->odometer = $this->mileage;
+            $fuel->hours = $this->hours;
             $fuel->fillup = $this->fillup;
             $fuel->type = $this->type;
             $fuel->comments = $this->comments;
@@ -723,6 +732,16 @@ class Index extends Component
                 $mileage->category = "Fuel Order";
                 $mileage->update();
             }
+            $hours = Hour::where('fuel_id',$fuel->id)->first();
+            if(isset($hours)){
+                $hours->fuel_id = $fuel->id;
+                $hours->horse_id = $this->selectedHorse ? $this->selectedHorse : Null;
+                $hours->vehicle_id = $this->selectedVehicle ? $this->selectedVehicle : Null;
+                $hours->hours = $this->hours;
+                $hours->date = $this->date;
+                $hours->category = "Fuel Order";
+                $hours->update();
+            }
             
 
             if($fuel->authorization == "approved"){
@@ -730,8 +749,12 @@ class Index extends Component
                     $horse = Horse::find($fuel->horse_id);
                     $horse->fuel_balance = $horse->fuel_balance + $fuel->quantity;
                     $current_mileage = $horse->mileage - $this->previous_mileage;
+                    $current_hours = $horse->hours - $this->previous_hours;
                     if ($fuel->odometer >  $current_mileage) {
                         $horse->mileage = $fuel->odometer;
+                    }
+                    if ($fuel->hours >  $current_hours) {
+                        $horse->hours = $fuel->hours;
                     }
                   
                     $horse->update();
@@ -739,9 +762,13 @@ class Index extends Component
                 if ($fuel->vehicle) {
                     $vehicle = Vehicle::find($fuel->vehicle_id);
                     $vehicle->fuel_balance = $vehicle->fuel_balance + $fuel->quantity;
-                    $current_mileage = $horse->mileage - $this->previous_mileage;
+                    $current_mileage = $horse->hours - $this->previous_mileage;
+                    $current_hours = $horse->hours - $this->previous_hours;
                     if ($fuel->odometer >  $current_mileage) {
                         $vehicle->mileage = $fuel->odometer;
+                    }
+                    if ($fuel->hours >  $current_hours) {
+                        $vehicle->hours = $fuel->hours;
                     }
                   
                     $vehicle->update();
@@ -807,7 +834,7 @@ class Index extends Component
         $this->selected_horse = Horse::find($this->horse_id);
         if ( $this->selected_horse) {
             $this->fuel_tank_capacity = $this->selected_horse->fuel_tank_capacity;
-            // $this->mileage = $this->selected_horse->mileage;
+          
         }
        
 
@@ -854,6 +881,7 @@ class Index extends Component
                         'containers' => $this->containers,
                         'fuel_tank_capacity'=>$this->fuel_tank_capacity,
                         'mileage'=>$this->mileage,
+                        'hours'=>$this->hours,
                         'selected_horse'=>$this->selected_horse,
                         'fuel_filter'=>$this->fuel_filter,
                     ]);
@@ -869,6 +897,7 @@ class Index extends Component
                         'containers' => $this->containers,
                         'fuel_tank_capacity'=>$this->fuel_tank_capacity,
                         'mileage'=>$this->mileage,
+                        'hours'=>$this->hours,
                         'selected_horse'=>$this->selected_horse,
                         'fuel_filter'=>$this->fuel_filter,
 
@@ -885,6 +914,7 @@ class Index extends Component
                         'containers' => $this->containers,
                         'fuel_tank_capacity'=>$this->fuel_tank_capacity,
                         'mileage'=>$this->mileage,
+                          'hours'=>$this->hours,
                         'selected_horse'=>$this->selected_horse,
                         'fuel_filter'=>$this->fuel_filter,
 
@@ -934,6 +964,7 @@ class Index extends Component
                     'containers' => $this->containers,
                     'fuel_tank_capacity'=>$this->fuel_tank_capacity,
                     'mileage'=>$this->mileage,
+                      'hours'=>$this->hours,
                     'selected_horse'=>$this->selected_horse,
                     'fuel_filter'=>$this->fuel_filter,
                 ]);
@@ -950,6 +981,7 @@ class Index extends Component
                     'containers' => $this->containers,
                     'fuel_tank_capacity'=>$this->fuel_tank_capacity,
                     'mileage'=>$this->mileage,
+                      'hours'=>$this->hours,
                     'selected_horse'=>$this->selected_horse,
                     'fuel_filter'=>$this->fuel_filter,
                 ]);
@@ -968,6 +1000,7 @@ class Index extends Component
                     'containers' => $this->containers,
                     'fuel_tank_capacity'=>$this->fuel_tank_capacity,
                     'mileage'=>$this->mileage,
+                      'hours'=>$this->hours,
                     'selected_horse'=>$this->selected_horse,
                     'fuel_filter'=>$this->fuel_filter,
                 ]);

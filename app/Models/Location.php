@@ -9,15 +9,19 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Location extends Model implements Auditable
 {
-    use \OwenIt\Auditing\Auditable;
+     use \OwenIt\Auditing\Auditable;
     use HasFactory, SoftDeletes;
 
     public function trip(){
         return $this->belongsTo('App\Models\Trip');
-    }
-    
+    } 
     public function driver(){
         return $this->belongsTo('App\Models\Driver');
     }
-
+    public function rehandlings(){
+        return $this->hasMany('App\Models\Rehandling');
+    }
+    public function user(){
+        return $this->belongsTo('App\Models\User');
+    }
 }

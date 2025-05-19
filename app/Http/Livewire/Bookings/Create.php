@@ -65,6 +65,7 @@ class Create extends Component
     public $odometer;
     public $station;
     public $mileage;
+    public $hours;
     public $service_types;
     public $service_type_id;
     public $booking_number;
@@ -125,6 +126,7 @@ class Create extends Component
         if (!is_null($id)) {
            $horse = Horse::find($id);
            $this->mileage = $horse ? $horse->mileage : "";
+           $this->hours = $horse ? $horse->hours : "";
            $assignment = Assignment::where('horse_id',$id)
                                     ->where('status', 1 )->get()->first();
            if ($assignment) {
@@ -139,6 +141,7 @@ class Create extends Component
         if (!is_null($id)) {
            $vehicle = Vehicle::find($id);
            $this->mileage = $vehicle ? $vehicle->mileage : "";
+           $this->hours = $vehicle ? $vehicle->hours : "";
         }
 
     }
@@ -235,10 +238,14 @@ class Create extends Component
         $booking->station = $this->station;
         $booking->type = $this->type;
         $booking->odometer = $this->mileage;
+        $booking->hours = $this->hours;
         $booking->description = $this->description;
         $booking->service_type_id = $this->service_type_id;
         $booking->status = 1;
         $booking->save();
+
+        
+
 
         if ($this->assigned_to == "Mechanic") {
             $booking->employees()->attach($this->mechanic_id);

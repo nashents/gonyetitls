@@ -21,6 +21,9 @@ class Trip extends Model implements Auditable
     public function trip_type(){
         return $this->belongsTo('App\Models\TripType');
     }
+    public function shift(){
+        return $this->belongsTo('App\Models\Shift');
+    }
     public function rate(){
         return $this->belongsTo('App\Models\Rate');
     }

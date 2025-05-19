@@ -15,6 +15,9 @@ class Fuel extends Model implements Auditable
     public function driver(){
         return $this->belongsTo('App\Models\Driver');
     }
+    public function shift(){
+        return $this->belongsTo('App\Models\Shift');
+    }
     public function mileage(){
         return $this->hasOne('App\Models\Mileage');
     }

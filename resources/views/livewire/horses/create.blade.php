@@ -203,7 +203,7 @@
                                     <!-- /.col-md-6 -->
                                 </div>
                                 <div class="row">
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <div class="form-group">
                                             <label for="color">Condition</label>
                                            <select wire:model.debounce.300ms="condition" class="form-control" >
@@ -215,14 +215,21 @@
                                             @error('condition') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <div class="form-group">
                                             <label for="contact13">Mileage</label>
                                             <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="mileage" placeholder="Enter horse Mileage " />
                                             @error('mileage') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="contact13">Engine Hours</label>
+                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="hours" placeholder="Enter horse engine hours " />
+                                            @error('hours') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
                                         <div class="form-group">
                                             <label for="number">Fuel Type</label>
                                            <select name="" class="form-control" wire:model.debounce.300ms="fuel_type" >

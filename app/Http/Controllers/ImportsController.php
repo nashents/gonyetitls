@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Imports\BinsImport;
+use App\Imports\RacksImport;
 use App\Imports\TripsImport;
 use App\Imports\TyresImport;
 use Illuminate\Http\Request;
@@ -37,6 +39,26 @@ class ImportsController extends Controller
         $import = new EmployeesImport;
         $import->import($file);
         Session::flash('success','Employee(s) Imported Successfully!!');
+        return redirect()->back();
+    }
+    public function importRacks(Request $request){
+        $this->validate($request,[
+            'file' => 'required'
+        ]);
+        $file = $request->file;
+        $import = new RacksImport;
+        $import->import($file);
+        Session::flash('success','Rack(s) Imported Successfully!!');
+        return redirect()->back();
+    }
+    public function importBins(Request $request){
+        $this->validate($request,[
+            'file' => 'required'
+        ]);
+        $file = $request->file;
+        $import = new BinsImport;
+        $import->import($file);
+        Session::flash('success','Bin(s) Imported Successfully!!');
         return redirect()->back();
     }
 

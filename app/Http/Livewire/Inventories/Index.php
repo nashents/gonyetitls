@@ -115,6 +115,18 @@ class Index extends Component
                 ->orWhereHas('product.brand', function ($query) {
                     return $query->where('name', 'like', '%'.$this->search.'%');
                 })
+                ->orWhereHas('product.category', function ($query) {
+                    return $query->where('name', 'like', '%'.$this->search.'%');
+                })
+                ->orWhereHas('product.category_value', function ($query) {
+                    return $query->where('name', 'like', '%'.$this->search.'%');
+                })
+                ->orWhereHas('bin', function ($query) {
+                    return $query->where('name', 'like', '%'.$this->search.'%')->orWhere('bin_number', 'like', '%'.$this->search.'%');
+                })
+                ->orWhereHas('rack', function ($query) {
+                    return $query->where('name', 'like', '%'.$this->search.'%')->orWhere('rack_number', 'like', '%'.$this->search.'%');
+                })
                 ->orWhereHas('vehicle_make', function ($query) {
                     return $query->where('name', 'like', '%'.$this->search.'%');
                 })

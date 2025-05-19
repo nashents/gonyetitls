@@ -393,14 +393,21 @@
                     </div>
                  
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label for="mileage">Mileage<span class="required" style="color: red">*</span></label>
                                 <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="mileage" placeholder="Enter Horse Mileage" required>
                                 @error('mileage') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="hours">Hours</label>
+                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="hours" placeholder="Enter Engine Hours" >
+                                @error('hours') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label for="vendors">Fueling Station<span class="required" style="color: red">*</span></label>
                                <select wire:model.debounce.300ms="selectedContainer" class="form-control" required>
@@ -610,14 +617,21 @@
                     </div>
                 
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label for="mileage">Mileage<span class="required" style="color: red">*</span></label>
-                                <input type="text" class="form-control" wire:model.debounce.300ms="mileage" required placeholder="Enter Vehicle Mileage">
+                                <input type="text" class="form-control" wire:model.debounce.300ms="mileage" required placeholder="Enter Vehicle Mileage" required>
                                 @error('mileage') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
-                        <div class="col-md-6">
+                          <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="hours">Hours</label>
+                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="hours" placeholder="Enter Engine Hours" >
+                                @error('hours') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label for="vendors">Fueling Station<span class="required" style="color: red">*</span></label>
                                <select wire:model.debounce.300ms="selectedContainer" class="form-control" required>
@@ -1122,14 +1136,21 @@
                         </div>
                    
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="mileage">Mileage<span class="required" style="color: red">*</span></label>
                                     <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="mileage" placeholder="Enter Horse Mileage" required>
                                     @error('mileage') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                              <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="hours">Hours</label>
+                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="hours" placeholder="Enter Engine Hours" >
+                                @error('hours') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="vendors">Fueling Station<span class="required" style="color: red">*</span></label>
                                    <select wire:model.debounce.300ms="selectedContainer" class="form-control" required>
@@ -1302,14 +1323,21 @@
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="mileage">Mileage<span class="required" style="color: red">*</span></label>
-                                    <input type="text" class="form-control" wire:model.debounce.300ms="mileage" required placeholder="Enter Vehicle Mileage">
+                                    <input type="text" class="form-control" wire:model.debounce.300ms="mileage" required placeholder="Enter Vehicle Mileage" required>
                                     @error('mileage') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                              <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="hours">Hours</label>
+                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="hours" placeholder="Enter Engine Hours" >
+                                @error('hours') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="vendors">Fueling Station<span class="required" style="color: red">*</span></label>
                                    <select wire:model.debounce.300ms="selectedContainer" class="form-control" required>
@@ -1813,14 +1841,21 @@
                         </div>
                      
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="mileage">Mileage<span class="required" style="color: red">*</span></label>
                                     <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="mileage" placeholder="Enter Horse Mileage" required>
                                     @error('mileage') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                              <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="hours">Hours</label>
+                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="hours" placeholder="Enter Engine Hours" >
+                                @error('hours') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="vendors">Fueling Station<span class="required" style="color: red">*</span></label>
                                    <select wire:model.debounce.300ms="selectedContainer" class="form-control" required>
@@ -1988,14 +2023,21 @@
                         </div>
                     
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="mileage">Mileage<span class="required" style="color: red">*</span></label>
                                     <input type="text" class="form-control" wire:model.debounce.300ms="mileage" required placeholder="Enter Vehicle Mileage">
                                     @error('mileage') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                              <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="hours">Hours</label>
+                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="hours" placeholder="Enter Engine Hours" >
+                                @error('hours') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="vendors">Fueling Station<span class="required" style="color: red">*</span></label>
                                    <select wire:model.debounce.300ms="selectedContainer" class="form-control" required>

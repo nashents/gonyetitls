@@ -26,13 +26,22 @@
                                     </th>
                                     <th class="th-sm">Vehicle
                                     </th>
-                                    <th class="th-sm">Prev Service Mileage
+                                                             <th class="th-sm">Prev Service Date
                                     </th>
-                                    <th class="th-sm">Prev Service Date
+                                    <th class="th-sm">
+                                        Prev Mileage
+                                        <hr style="margin-top:2px; margin-bottom:2px">
+                                        Prev Hours
                                     </th>
-                                    <th class="th-sm">Current Mileage
+                                   <th class="th-sm">
+                                        Current Mileage
+                                        <hr style="margin-top:2px; margin-bottom:2px">
+                                        Current Hours
                                     </th>
-                                    <th class="th-sm">Next Service Mileage
+                                    <th class="th-sm">
+                                        Next Mileage
+                                        <hr style="margin-top:2px; margin-bottom:2px">
+                                        Next Hours
                                     </th>
                                     <th class="th-sm">Current - Next Service Diff
                                     </th>
@@ -47,23 +56,41 @@
                                   <tr>
                                     <td>{{$vehicle->transporter ? $vehicle->transporter->name : ""}}</td>
                                     <td>{{$vehicle->vehicle_make ? $vehicle->vehicle_make->name : ""}} {{$vehicle->vehicle_model ? $vehicle->vehicle_model->name : ""}} {{$vehicle->registration_number}} {{$vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : ""}}</td>
-                                    <td>{{$vehicle->prev_service ? $vehicle->prev_service."Kms" : ""}}</td>
-                                    <td>{{$vehicle->prev_service_date}}</td>
-                                    <td>{{$vehicle->mileage ? $vehicle->mileage."Kms" : ""}}</td>
-                                    <td>{{$vehicle->next_service ? $vehicle->next_service."Kms" : ""}}</td>
+                                 <td>{{$vehicle->prev_service_date}}</td> 
+                                    <td>
+                                            {{$vehicle->prev_service ? $vehicle->prev_service."Kms" : ""}}
+                                            <hr style="margin-top:2px; margin-bottom:2px">
+                                            {{$vehicle->prev_service_hours ? $vehicle->prev_service_hours."Hours" : ""}}
+                                    </td>
+                                
+                                  
+                                   <td>
+                                            {{$vehicle->mileage ? $vehicle->mileage."Kms" : ""}}
+                                            <hr style="margin-top:2px; margin-bottom:2px">
+                                            {{$vehicle->hours ? $vehicle->hours."Hours" : ""}}
+                                    </td>
+                                    <td>
+                                            {{$vehicle->next_service ? $vehicle->next_service."Kms" : ""}}
+                                            <hr style="margin-top:2px; margin-bottom:2px">
+                                            {{$vehicle->next_service_hours ? $vehicle->next_service_hours."Hours" : ""}}
+                                    </td>
                                     <td>
                                         @if ((isset($vehicle->mileage) && $vehicle->mileage > 0) && (isset($vehicle->next_service) && $vehicle->next_service > 0))
                                             @php
                                                 $difference = $vehicle->next_service - $vehicle->mileage;
+                                                $hours_difference = $vehicle->next_service_hours - $vehicle->hours;
                                             @endphp
-                                            {{$difference ? $difference."Kms" : ""}}
+                                            {{$difference ? $difference."Kms" : ""}} 
+                                            @if ($hours_difference)
+                                                 {{$hours_difference ? $hours_difference."Hours" : ""}} 
+                                            @endif
                                         @endif
                                     </td>
                                     <td>
-                                        @if ((isset($vehicle->mileage) && $vehicle->mileage > 0) && (isset($vehicle->next_service) && $vehicle->next_service > 0))
-                                            @if ($vehicle->mileage >= $vehicle->next_service)
+                                        @if (((isset($vehicle->mileage) && $vehicle->mileage > 0) && (isset($vehicle->next_service) && $vehicle->next_service > 0)) || ((isset($vehicle->hours) && $vehicle->hours > 0) && (isset($vehicle->next_service_hours) && $vehicle->next_service_hours > 0)))
+                                            @if (($vehicle->mileage >= $vehicle->next_service) || ($vehicle->hours >= $vehicle->next_service_hours))
                                                 <span class="badge bg-danger">Due for service</span>
-                                            @elseif($vehicle->mileage < $vehicle->next_service)
+                                            @elseif(($vehicle->mileage < $vehicle->next_service) || ($vehicle->hours < $vehicle->next_service_hours))
                                                 <span class="badge bg-success">Fit for use</span>
                                             @endif
                                         @endif

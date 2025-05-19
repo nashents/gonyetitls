@@ -52,6 +52,12 @@
                                             Next Service
 
                                         </th>
+                                        <th class="th-sm">
+                                            Hours
+                                            <hr style="margin-top:2px; margin-bottom:2px">
+                                            Next Service
+
+                                        </th>
                                         <th class="th-sm">Fitness
                                         </th>
                                         <th class="th-sm">Availability
@@ -97,6 +103,11 @@
                                             {{$horse->mileage ? $horse->mileage."Kms" : ""}}
                                             <hr style="margin-top:2px; margin-bottom:2px">
                                             {{$horse->next_service ? $horse->next_service."Kms" : ""}}
+                                        </td>
+                                        <td>
+                                            {{$horse->hours ? $horse->hours."Hours" : ""}}
+                                            <hr style="margin-top:2px; margin-bottom:2px">
+                                            {{$horse->next_service_hours ? $horse->next_service_hours."Hours" : ""}}
                                         </td>
                                       
                                           <td><span class="badge bg-{{$horse->service == 0 ? "success" : "danger"}}">{{$horse->service == 0 ? "Fit for use" : "In Service"}}</span></td>

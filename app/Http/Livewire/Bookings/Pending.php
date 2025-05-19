@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Bookings;
 
+use App\Models\Hour;
 use App\Models\Horse;
 use App\Models\Ticket;
 use App\Models\Booking;
@@ -155,6 +156,7 @@ class Pending extends Component
         $ticket->in_time = $booking->in_time;
         $ticket->ticket_number = $this->ticketNumber();
         $ticket->odometer = $booking->odometer;
+        $ticket->hours = $booking->hours;
         $ticket->station = $booking->station;
         $ticket->status = 1;
         $ticket->save();
@@ -164,8 +166,12 @@ class Pending extends Component
             $horse = Horse::find($booking->horse_id);
             $horse->service = 1;
             $current_mileage  = $horse->mileage;
+            $current_hours  = $horse->hours;
             if ($booking->odometer > $current_mileage ) {
                 $horse->mileage = $booking->odometer;
+            }
+            if ($booking->hours > $current_hours ) {
+                $horse->hours = $booking->hours;
             }
           
             $horse->update();
@@ -174,8 +180,12 @@ class Pending extends Component
             $trailer = Trailer::find($booking->trailer_id);
             $trailer->service = 1;
             $current_mileage  = $trailer->mileage;
+            $current_hours  = $trailer->hours;
             if ($booking->odometer > $current_mileage ) {
                 $trailer->mileage = $booking->odometer;
+            }
+            if ($booking->hours > $current_hours ) {
+                $trailer->hours = $booking->hours;
             }
            
             $trailer->update();
@@ -186,6 +196,10 @@ class Pending extends Component
             $current_mileage  = $vehicle->mileage;
             if ($booking->odometer > $current_mileage ) {
                 $vehicle->mileage = $booking->odometer;
+            }
+            $current_hours  = $vehicle->hours;
+            if ($booking->hours > $current_hours ) {
+                $vehicle->hours = $booking->odometer;
             }
           
             $vehicle->update();
@@ -204,6 +218,22 @@ class Pending extends Component
                 $mileage->date = $booking->in_date;
                 $mileage->category = "Garage Booking";
                 $mileage->save();
+            }
+        }
+        
+        $last_hours = Hour::whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
+        if(isset($last_hours)){
+            if($last_hours < $booking->hours){
+                $hours = new Hour;
+                $hours->user_id = Auth::user()->id;
+                $hours->booking_id = $booking->id;
+                $hours->horse_id = $booking->horse_id;
+                $hours->trailer_id = $booking->trailer_id;
+                $hours->vehicle_id = $booking->vehicle_id;
+                $hours->hours = $booking->hours;
+                $hours->date = $booking->in_date;
+                $hours->category = "Booking";
+                $hours->save();
             }
         }
 

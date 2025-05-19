@@ -147,7 +147,7 @@ class Index extends Component
     }
     public function render()
     {
-        $this->bank_accounts = BankAccount::where('employee_id', Null)->latest()->get();
+        $this->bank_accounts = BankAccount::latest()->get();
         return view('livewire.bank-accounts.index',[
             'bank_accounts' =>  $this->bank_accounts
         ]);

@@ -46,18 +46,18 @@
                                     <small class="color-success"><i class="fa fa-arrow-right"></i> <span class="badge bg-{{$horse->status == 1 ? "success" : "danger"}}">{{$horse->status == 1 ? "Active" : "Inactive"}}</span></small>
                                 </td>
                             </tr>
-                            <tr>
-                                <th><a href="#" wire:click="odometer({{$horse->id}})"><i class="fa fa-tachometer-alt color-default"></i> Current Mileage</a></th>
-                                <td>
-                                    <small class="color-success"><i class="fa fa-arrow-right"></i> {{$horse->mileage ? $horse->mileage."Kms" : ""}}</small>
-                                </td>
-                            </tr>
-                            <tr>
-                                <th><a href="#" wire:click="nextService({{$horse->id}})"><i class="fa fa-wrench color-default"></i> Next Service</a></th>
-                                <td>
-                                    <small class="color-success"><i class="fa fa-arrow-right"></i> {{$horse->next_service ? $horse->next_service."Kms" : ""}}</small>
-                                </td>
-                            </tr>
+                              <tr>
+                                    <th><a href="#" wire:click="odometer({{$horse->id}})"><i class="fa fa-tachometer-alt color-default"></i> Mileage & Hours</a></th>
+                                    <td>
+                                        <small class="color-success"><i class="fa fa-arrow-right"></i> {{$horse->mileage ? $horse->mileage."Kms" : ""}} {{$horse->hours ? "& ".$horse->hours." Hours" : ""}}</small>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th><a href="#" wire:click="nextService({{$horse->id}})"><i class="fa fa-wrench color-default"></i> Next Service</a></th>
+                                    <td>
+                                        <small class="color-success"><i class="fa fa-arrow-right"></i> {{$horse->next_service ? $horse->next_service."Kms" : ""}}  {{$horse->next_service_hours ? "& ".$horse->next_service_hours." Hours" : ""}}</small>
+                                    </td>
+                                </tr>
                             <tr>
                                 <th><a href="#" wire:click="fuelTankCapacity({{$horse->id}})"><i class="fas fa-gas-pump color-warning"></i> Tank Capacity</a></th>
                                 <td>
@@ -111,12 +111,21 @@
                 </a>
                 <!-- /.dashboard-stat-2 -->
             </div>
+            <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
+                <a class="dashboard-stat-2 bg-danger" href="#">
+                    <div class="stat-content">
+                        <span>{{$horse->hours ? $horse->hours." Horse" : ""}}</span>
+                    </div>
+                    <span class="stat-footer"><i class="fa fa-arrow-up color-success"></i> HOURS</span>
+                </a>
+                <!-- /.dashboard-stat-2 -->
+            </div>
 
             <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
                 <a class="dashboard-stat-2 bg-primary" href="#">
                     <div class="stat-content">
 
-                        <span class="name">{{($horse->next_service ? $horse->next_service."Kms" : "")}}</span>
+                        <span class="name">{{($horse->next_service ? $horse->next_service."Kms" : "")}} | {{($horse->next_service_hours ? $horse->next_service_hours."Hours" : "")}}</span>
                     </div>
                     <span class="stat-footer"><i class="fa fa-arrow-up color-success"></i> NEXT SERVICE</span>
                 </a>
@@ -124,15 +133,7 @@
             </div>
             <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
 
-            <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                <a class="dashboard-stat-2 bg-danger" href="#">
-                    <div class="stat-content">
-                        <span class="name">{{ucfirst($horse->fuel_type)}}</span>
-                    </div>
-                    <span class="stat-footer"><i class="fa fa-arrow-up color-success"></i> FUEL TYPE</span>
-                </a>
-                <!-- /.dashboard-stat-2 -->
-            </div>
+         
             <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
 
             <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
@@ -247,7 +248,10 @@
                                 <th class="w-10 text-center line-height-35">Fuel Measurement</th>
                                 <td class="w-20 line-height-35">{{$horse->fuel_measurement}}</td>
                             </tr>
-                         
+                         <tr>
+                                    <th class="w-10 text-center line-height-35">Fuel Type</th>
+                                    <td class="w-20 line-height-35">{{$horse->fuel_type}}</td>
+                                </tr>
                             <tr>
                                 <th class="w-10 text-center line-height-35">Horse Type</th>
                                 <td class="w-20 line-height-35"> {{$horse->horse_type ? $horse->horse_type->name : ""}}</td>
@@ -944,16 +948,27 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title" id="modal4Label"><i class="fa fa-edit"></i> Update Horse Mileage <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                    <h4 class="modal-title" id="modal4Label"><i class="fa fa-edit"></i> Update Horse Mileage & Hours <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                 </div>
                 <form wire:submit.prevent="updateOdometer()" >
                 <div class="modal-body">
-
-                    <div class="form-group">
-                        <label for="name">Horse Mileage<span class="required" style="color: red">*</span></label>
-                        <input type="number" step="any" min="1" class="form-control" wire:model.debounce.300ms="mileage" placeholder="Enter Horse Mileage" required />
-                        @error('mileage') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    <div class="row">
+                        <div class="col-md-6">
+                             <div class="form-group">
+                                <label for="name">Horse Mileage<span class="required" style="color: red">*</span></label>
+                                <input type="number" step="any" min="1" class="form-control" wire:model.debounce.300ms="mileage" placeholder="Enter Horse Mileage" required />
+                                @error('mileage') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="name">Horse Hours</label>
+                                <input type="number" step="any" min="1" class="form-control" wire:model.debounce.300ms="hours" placeholder="Enter Horse Engine Hours" />
+                                @error('hours') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
                     </div>
+                   
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">
@@ -974,13 +989,25 @@
                 </div>
                 <form wire:submit.prevent="updateNextService()" >
                 <div class="modal-body">
-
-                    <div class="form-group">
-                        <label for="name">Next Service Mileage<span class="required" style="color: red">*</span></label>
-                        <input type="number" step="any"  min="{{ $horse->mileage }}" class="form-control" wire:model.debounce.300ms="next_service" {{ $horse->mileage ? "" : "disabled" }} placeholder="Enter Horse Next Service Mileage" required />
-                        <small style="color: red">{{ !isset($horse->mileage) ? "Please set horse mileage first before setting horse next mileage" : ""  }}</small>
-                        @error('next_service') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    <div class="row">
+                        <div class="col md-6">
+                              <div class="form-group">
+                                <label for="name">Next Service Mileage<span class="required" style="color: red">*</span></label>
+                                <input type="number" step="any"  min="{{ $horse->mileage }}" class="form-control" wire:model.debounce.300ms="next_service" {{ $horse->mileage ? "" : "disabled" }} placeholder="Enter Horse Next Service Mileage" required />
+                                <small style="color: red">{{ !isset($horse->mileage) ? "Please set horse mileage first before setting horse next mileage" : ""  }}</small>
+                                @error('next_service') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                              </div>
+                        </div>
+                        <div class="col md-6">
+                            <div class="form-group">
+                                <label for="name">Next Service Hours</label>
+                                <input type="number" step="any"  min="{{ $horse->hours }}" class="form-control" wire:model.debounce.300ms="next_service_hours" {{ $horse->hours ? "" : "disabled" }} placeholder="Enter Horse Next Service Engine Hours" />
+                                <small style="color: red">{{ !isset($horse->hours) ? "Please set horse hours first before setting horse next hours" : ""  }}</small>
+                                @error('next_service_hours') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
                     </div>
+                  
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">

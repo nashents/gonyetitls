@@ -57,6 +57,24 @@ class User extends Authenticatable implements Auditable
         }
 
     }
+    public function bins(){
+        return $this->hasMany('App\Models\Bin');
+    }
+    public function racks(){
+        return $this->hasMany('App\Models\Rack');
+    }
+      public function rehandlings(){
+        return $this->hasMany('App\Models\Rehandling');
+    }
+      public function shifts(){
+        return $this->hasMany('App\Models\Shift');
+    }
+      public function works(){
+        return $this->hasMany('App\Models\Work');
+    }
+      public function location(){
+        return $this->hasMany('App\Models\Location');
+    }
     public function tax_brackets(){
         return $this->hasMany('App\Models\TaxBracket');
     }

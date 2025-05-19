@@ -38,15 +38,17 @@ WithCustomStartCell
         $model = $horse->horse_model? $horse->horse_model->name : "";
         $fleet_number = $horse->fleet_number ? "(".$horse->fleet_number.")" : "";
 
-        if ((isset($horse->mileage) && $horse->mileage > 0) && (isset($horse->next_service) && $horse->next_service > 0)) {
-            if ($horse->mileage >= $horse->next_service) {
+        if (((isset($horse->mileage) && $horse->mileage > 0) && (isset($horse->next_service) && $horse->next_service > 0)) || ((isset($horse->hours) && $horse->hours > 0) && (isset($horse->next_service_hours) && $horse->next_service_hours > 0))) {
+            if (($horse->mileage >= $horse->next_service) || ($horse->hours >= $horse->next_service_hours)) {
                 $status = "Due for service";
-            }elseif ($horse->mileage < $horse->next_service) {
+            }elseif (($horse->mileage < $horse->next_service) || ($horse->hours < $horse->next_service_hours)) {
                 $status = "Fit for use";
             }
             $difference = $horse->next_service - $horse->mileage;
+            $hours_difference = $horse->next_service_hours - $horse->hours;
         }else {
             $difference = "";
+            $hours_difference = "";
             $status = "";
         }
       
@@ -55,11 +57,15 @@ WithCustomStartCell
         return   [
             $horse->transporter ? $horse->transporter->name : "",
             $make." ".$model." ".$horse->registration_number ." ". $fleet_number ,
-            $horse->prev_service ? $horse->prev_service."Kms" : "" ,
             $horse->prev_service_date ,
+            $horse->prev_service ? $horse->prev_service."Kms" : "" ,
+            $horse->prev_service_hours ? $horse->prev_service_hours."Hours" : "" ,
             $horse->mileage ? $horse->mileage."Kms" : "" ,
+            $horse->hours ? $horse->hours."Hours" : "" ,
             $horse->next_service ? $horse->next_service."Kms" : "" ,
+            $horse->next_service_hours ? $horse->next_service_hours."Hours" : "" ,
             $difference ? $difference."Kms" : "",
+            $hours_difference ? $hours_difference."Hours" : "",
             $status,
           
              ];
@@ -70,8 +76,9 @@ public function headings(): array{
         return[
             'Transporter',
             'Horse',
-            'Prev Service Mileage',
             'Prev Service Date',
+            'Prev Service Mileage',
+            'Prev Service Hours',
             'Current Mileage',
             'Next Service Mileage',
             'Current - Next Service Mileage Diff',

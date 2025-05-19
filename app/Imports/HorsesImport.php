@@ -125,6 +125,7 @@ WithChunkReading
                 $horse->manufacturer =  $row['manufacturer'];
                 $horse->country_of_origin    = $row['country_of_origin'];
                 $horse->mileage   = $row['mileage'];
+                $horse->hours   = $row['engine_hours'];
                 $horse->fuel_consumption_empty_standard    = $row['fuel_consumption_empty'] ? $row['fuel_consumption_empty'] : 0.5;
                 $horse->fuel_consumption_loaded_standard    = $row['fuel_consumption_loaded'] ? $row['fuel_consumption_loaded'] : 0.5;
                 $horse->update();
@@ -181,6 +182,7 @@ WithChunkReading
             $horse->manufacturer =  $row['manufacturer'];
             $horse->country_of_origin    = $row['country_of_origin'];
             $horse->mileage   = $row['mileage'];
+            $horse->hours   = $row['engine_hours'];
             $horse->fuel_consumption_empty_standard    = $row['fuel_consumption_empty'] ? $row['fuel_consumption_empty'] : 0.5;
             $horse->fuel_consumption_loaded_standard    = $row['fuel_consumption_loaded'] ? $row['fuel_consumption_loaded'] : 0.5;
             $horse->save();

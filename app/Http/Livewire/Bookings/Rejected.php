@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Bookings;
 
+use App\Models\Hour;
 use App\Models\Horse;
 use App\Models\Ticket;
 use App\Models\Booking;
@@ -145,41 +146,54 @@ class Rejected extends Component
             $ticket->trailer_id = $booking->trailer_id;
             $ticket->ticket_number = $this->ticketNumber();
             $ticket->odometer = $booking->odometer;
+            $ticket->hours = $booking->hours;
             $ticket->station = $booking->station;
             $ticket->status = 1;
             $ticket->save();
             $ticket->employees()->attach($this->mechanic_id);
     
-            if(isset($booking->horse_id)){
-                $horse = Horse::find($booking->horse_id);
-                $horse->service = 1;
-                $current_mileage  = $horse->mileage;
-                if ($booking->odometer > $current_mileage ) {
-                    $horse->mileage = $booking->odometer;
-                }
-              
-                $horse->update();
+           if(isset($booking->horse_id)){
+            $horse = Horse::find($booking->horse_id);
+            $horse->service = 1;
+            $current_mileage  = $horse->mileage;
+            $current_hours  = $horse->hours;
+            if ($booking->odometer > $current_mileage ) {
+                $horse->mileage = $booking->odometer;
             }
-            if(isset($booking->trailer_id)){
-                $trailer = Trailer::find($booking->trailer_id);
-                $trailer->service = 1;
-                $current_mileage  = $trailer->mileage;
-                if ($booking->odometer > $current_mileage ) {
-                    $trailer->mileage = $booking->odometer;
-                }
-               
-                $trailer->update();
+            if ($booking->hours > $current_hours ) {
+                $horse->hours = $booking->hours;
             }
-            if(isset($booking->vehicle_id)){
-                $vehicle = Vehicle::find($booking->vehicle_id);
-                $vehicle->service = 1;
-                $current_mileage  = $vehicle->mileage;
-                if ($booking->odometer > $current_mileage ) {
-                    $vehicle->mileage = $booking->odometer;
-                }
-              
-                $vehicle->update();
+          
+            $horse->update();
+        }
+        if(isset($booking->trailer_id)){
+            $trailer = Trailer::find($booking->trailer_id);
+            $trailer->service = 1;
+            $current_mileage  = $trailer->mileage;
+            $current_hours  = $trailer->hours;
+            if ($booking->odometer > $current_mileage ) {
+                $trailer->mileage = $booking->odometer;
             }
+            if ($booking->hours > $current_hours ) {
+                $trailer->hours = $booking->hours;
+            }
+           
+            $trailer->update();
+        }
+        if(isset($booking->vehicle_id)){
+            $vehicle = Vehicle::find($booking->vehicle_id);
+            $vehicle->service = 1;
+            $current_mileage  = $vehicle->mileage;
+            if ($booking->odometer > $current_mileage ) {
+                $vehicle->mileage = $booking->odometer;
+            }
+            $current_hours  = $vehicle->hours;
+            if ($booking->hours > $current_hours ) {
+                $vehicle->hours = $booking->odometer;
+            }
+          
+            $vehicle->update();
+        }
 
             $last_mileage = Mileage::whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
             if(isset($last_mileage)){
@@ -196,6 +210,22 @@ class Rejected extends Component
                     $mileage->save();
                 }
             }
+
+             $last_hours = Hour::whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
+        if(isset($last_hours)){
+            if($last_hours < $booking->hours){
+                $hours = new Hour;
+                $hours->user_id = Auth::user()->id;
+                $hours->booking_id = $booking->id;
+                $hours->horse_id = $booking->horse_id;
+                $hours->trailer_id = $booking->trailer_id;
+                $hours->vehicle_id = $booking->vehicle_id;
+                $hours->hours = $booking->hours;
+                $hours->date = $booking->in_date;
+                $hours->category = "Booking";
+                $hours->save();
+            }
+        }
     
             $this->dispatchBrowserEvent('hide-authorizationModal');
             $this->dispatchBrowserEvent('alert',[

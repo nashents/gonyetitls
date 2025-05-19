@@ -1091,6 +1091,7 @@
                             <li class="{{ request()->routeIs('deductions.index') ? 'active' : '' }}"><a href="{{route('deductions.index')}}" ><i class="fas fa-list "></i> <span>Deductions</span></a></li>
                             <li class="{{ request()->routeIs('destinations.index') ? 'active' : '' }}"><a href="{{route('destinations.index')}}"><i class="fas fa-map-pin"></i> <span>Destinations</span> </a></li>
                             <li class="{{ request()->routeIs('expenses.index') ? 'active' : '' }}"><a href="{{ route('expenses.index') }}"><i class="fas fa-list"></i> <span>Expenses</span> </a></li>
+                            <li class="{{ request()->routeIs('locations.index') ? 'active' : '' }}"><a href="{{route('locations.index')}}" ><i class="fas fa-map-marker"></i> <span>Locations</span></a></li>
                             <li class="{{ request()->routeIs('loading_points.index') ? 'active' : '' }}"><a href="{{route('loading_points.index')}}" ><i class="fas fa-map-marker"></i> <span>Loading Points</span></a></li>
                             <li class="{{ request()->routeIs('offloading_points.index') ? 'active' : '' }}"><a href="{{route('offloading_points.index')}}" ><i class="fas fa-map-marker "></i> <span>Offloading Points</span></a></li>
                             <li class="{{ request()->routeIs('provinces.index') ? 'active' : '' }}"><a href="{{route('provinces.index')}}"><i class="fas fa-globe-africa"></i> <span>Provinces</span> </a></li>
@@ -1101,6 +1102,7 @@
                             @endif
                             <li class="{{ request()->routeIs('trip_types.index') ? 'active' : '' }}"><a href="{{route('trip_types.index')}}"><i class="fas fa-road"></i> <span>Trip Types</span> </a></li>
                             <li class="{{ request()->routeIs('truck_stops.index') ? 'active' : '' }}"><a href="{{route('truck_stops.index')}}" ><i class="fas fa-stop"></i> <span>Truck Stops</span></a></li>
+                            <li class="{{ request()->routeIs('works.index') ? 'active' : '' }}"><a href="{{route('works.index')}}" ><i class="fas fa-list"></i> <span>Jobs</span></a></li>
                           
                         </ul>
                     </li>
@@ -1134,6 +1136,18 @@
                                 </a></li>
                                
                                 @endif
+                        </ul>
+                    </li>
+                    {{-- <li class="has-children {{ request()->routeIs('rehandlings.*') ? 'active' : '' }}">
+                        <a href="#"><i class="fas fa-list"></i> <span>ReHandling</span> <i class="fas fa-angle-right arrow"></i></a>
+                        <ul class="child-nav">
+                            <li><a href="{{route('rehandlings.index')}}" ><i class="fas fa-list "></i> <span>Manage Worksheets</span></a></li>
+                        </ul>
+                    </li> --}}
+                    <li class="has-children {{ request()->routeIs('shifts.*') ? 'active' : '' }}">
+                        <a href="#"><i class="fas fa-clock"></i> <span>Shifts</span> <i class="fas fa-angle-right arrow"></i></a>
+                        <ul class="child-nav">
+                            <li><a href="{{route('shifts.index')}}" ><i class="fas fa-list "></i> <span>Manage Shifts</span></a></li>
                         </ul>
                     </li>
                    
