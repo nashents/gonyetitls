@@ -31,8 +31,7 @@ class CreateShiftsTable extends Migration
                 $table->string('depart_location_time')->nullable();
                 $table->string('arrive_workshop_time')->nullable();
                 $table->string('loads')->nullable();
-                $table->bigInteger('authorized_by_id')->unsigned()->nullable();
-                $table->foreign('authorized_by_id')->references('id')->on('users')->onDelete('cascade');
+                $table->bigInteger('authorized_by_id')->nullable();
                 $table->string('authorization')->default('pending');
                 $table->text('reason')->nullable();
                 $table->boolean('status')->default(1);
