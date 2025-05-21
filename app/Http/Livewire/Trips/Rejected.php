@@ -259,28 +259,28 @@ public function updatingSearch()
             if ($trip->authorization == 'rejected') {
 
                 if ($this->authorize == 'approved') {  
-
-                    $gate_pass = new GatePass;
-                    $gate_pass->user_id = Auth::user()->id;
-                    $gate_pass->gate_pass_number = $this->gate_passNumber();
-                    if (Auth::user()->employee->branch) {
-                        $gate_pass->branch_id = Auth::user()->employee->branch ? Auth::user()->employee->branch->id : "";
-                    }
-                    $gate_pass->type = "Trip";
-                    $gate_pass->trip_id = $trip->id;
-                    $gate_pass->driver_id = $trip->driver_id ? $trip->driver_id : null;
-                    $gate_pass->horse_id = $trip->horse_id ? $trip->horse_id : null;
-                    $gate_pass->exit = $trip->start_date;
-                    $trailers = $trip->trailers;
-        
-                    foreach ($trailers as $trailer) {
-                        $trailer_ids[] = $trailer->id;
-                    }
-        
-                    $gate_pass->save();
-                    if (isset($trailer_ids)) {
-                        $gate_pass->trailers()->sync($trailer_ids);
-                    }
+                    
+                $gate_pass = new GatePass;
+                $gate_pass->user_id = Auth::user()->id;
+                $gate_pass->gate_pass_number = $this->gate_passNumber();
+                if (Auth::user()->employee->branch) {
+                    $gate_pass->branch_id = Auth::user()->employee->branch ? Auth::user()->employee->branch->id : "";
+                }
+                $gate_pass->type = "Trip";
+                $gate_pass->trip_id = $trip->id;
+                $gate_pass->driver_id = $trip->driver_id ? $trip->driver_id : null;
+                $gate_pass->horse_id = $trip->horse_id ? $trip->horse_id : null;
+                $gate_pass->exit = $trip->start_date;
+                $gate_pass->save();
+                
+                $trailers = $trip->trailers;
+                foreach ($trailers as $trailer) {
+                    $trailer_ids[] = $trailer->id;
+                }
+                if (isset($trailer_ids)) {
+                    $gate_pass->trailers()->sync($trailer_ids);
+                }
+           
                    
                     if (isset($trip->vehicle_id)) {
                         $vehicle = Vehicle::find($trip->vehicle_id);

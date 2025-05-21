@@ -120,17 +120,15 @@
                                   <tr>
                                     <th class="th-sm">GatePass#
                                     </th>
-                                   
                                     <th class="th-sm">Trip
                                     </th>
-                                   
+                                     <th class="th-sm">Entry
+                                    </th>
+                                    <th class="th-sm">Exit
+                                    </th>
                                     <th class="th-sm">Workshop
                                     </th>
                                     <th class="th-sm">Logistics
-                                    </th>
-                                    <th class="th-sm">Entry
-                                    </th>
-                                    <th class="th-sm">Exit
                                     </th>
                                     <th class="th-sm">Auth
                                     </th>
@@ -157,15 +155,25 @@
                                              $to = App\Models\Destination::find($trip->to);
                                         @endphp
                                             
-                                            <strong>Trip Number:</strong> <a href="{{route('trips.show',$gate_pass->trip->id)}}" style="color: blue">{{$gate_pass->trip ? $gate_pass->trip->trip_number : ""}}</a>
-                                            <br>
+                                            <strong>Trip Number:</strong>{{$gate_pass->trip ? $gate_pass->trip->trip_number : ""}}
                                             @if ($gate_pass->horse)
+                                            <br>
                                             <strong>Horse:</strong>   {{$gate_pass->horse->horse_make ? $gate_pass->horse->horse_make->name : ""}} {{$gate_pass->horse->horse_model ? $gate_pass->horse->horse_model->name : ""}} {{$gate_pass->horse ? $gate_pass->horse->registration_number : ""}} {{$gate_pass->horse->fleet_number ? "(".$gate_pass->horse->fleet_number.")" : ""}}
                                             @endif
-                                           
+                                            @if ($gate_pass->trailers)
                                             <br>
-                                            <strong>Driver:</strong>  @if (isset($gate_pass->driver))
-                                            {{ucfirst($gate_pass->driver->employee ? $gate_pass->driver->employee->name : "")}} {{ucfirst($gate_pass->driver->employee ? $gate_pass->driver->employee->surname : "")}}
+                                            <strong>Trailers:</strong>
+                                              [
+                                                @foreach ($gate_pass->trailers as $trailer)
+                                                   {{$trailer->registration_number}} 
+                                                @endforeach
+                                              ] 
+                                            @endif
+                                          
+                                            @if (isset($gate_pass->driver))
+                                               <br>
+                                                <strong>Driver:</strong> 
+                                                {{ucfirst($gate_pass->driver->employee ? $gate_pass->driver->employee->name : "")}} {{ucfirst($gate_pass->driver->employee ? $gate_pass->driver->employee->surname : "")}}
                                             @endif
                                             <br>
                                             <strong>From:</strong> {{$trip->loading_point ? $trip->loading_point->name.", " : ""}} {{$from->city}} {{$from->country ? $from->country->name : ""}}    <strong>To:</strong> {{$trip->offloading_point ? $trip->offloading_point->name.", " : ""}} {{$to->city}} {{$to->country ? $to->country->name : ""}}
@@ -175,15 +183,15 @@
                                             <br>
                                         @endif 
                                     </td>
-                                 
-                                    <td><span class="label label-{{($gate_pass->workshop_authorization == 'approved') ? 'success' : (($gate_pass->workshop_authorization == 'rejected') ? 'danger' : 'warning') }}">{{($gate_pass->workshop_authorization == 'approved') ? 'approved' : (($gate_pass->workshop_authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td> 
-                                    <td><span class="label label-{{($gate_pass->logistics_authorization == 'approved') ? 'success' : (($gate_pass->logistics_authorization == 'rejected') ? 'danger' : 'warning') }}">{{($gate_pass->logistics_authorization == 'approved') ? 'approved' : (($gate_pass->logistics_authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td> 
                                     <td>
                                         {{$gate_pass->entry}}
                                     </td>
                                     <td>
                                         {{$gate_pass->exit}}
                                     </td>
+                                    <td><span class="label label-{{($gate_pass->workshop_authorization == 'approved') ? 'success' : (($gate_pass->workshop_authorization == 'rejected') ? 'danger' : 'warning') }}">{{($gate_pass->workshop_authorization == 'approved') ? 'approved' : (($gate_pass->workshop_authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td> 
+                                    <td><span class="label label-{{($gate_pass->logistics_authorization == 'approved') ? 'success' : (($gate_pass->logistics_authorization == 'rejected') ? 'danger' : 'warning') }}">{{($gate_pass->logistics_authorization == 'approved') ? 'approved' : (($gate_pass->logistics_authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td> 
+                                   
                                     <td><span class="label label-{{($gate_pass->authorization == 'approved') ? 'success' : (($gate_pass->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($gate_pass->authorization == 'approved') ? 'approved' : (($gate_pass->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td> 
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
@@ -357,7 +365,7 @@
                     <div class="modal-body">
                         <div class="form-group">
                             <label for="name">Type</label>
-                            <select class="form-control" wire:model.debounce.300ms="type">
+                            <select class="form-control" wire:model.debounce.300ms="type" disabled>
                                 <option value="">Select Type</option>
                                 <option value="Individual">Individual</option>
                                 <option value="Trip">Trip</option>
@@ -462,55 +470,16 @@
                         </div>
                         <div class="row">
                             <div class="col-md-6">
-                                {{-- <div class="row">   --}}
                                     <div class="form-group">
                                         <label for="stops"><a href="{{ route('trailers.index') }}" target="_blank" style="color: blue">Trailer(s)</a></label>
-                                        {{-- <div class="col-md-12">
-                                            
-                                        </div> --}}
-                                        <input type="text" wire:model.debounce.300ms="searchTrailer" placeholder="Search with reg..." class="form-control">
-                                            <select class="form-control" wire:model.debounce.300ms="trailer_id.0" size="4" disabled>
+                                            <select class="form-control" wire:model.debounce.300ms="trailer_id" multiple disabled>
                                               <option value="">Select Trailer </option>
                                                 @foreach ($trailers as $trailer)
                                                     <option value="{{$trailer->id}}">({{$trailer->registration_number}}) {{$trailer->make}} {{$trailer->model}} </option>
                                                 @endforeach
                                             </select>
-                                            @error('trailer_id.0') <span class="text-danger error">{{ $message }}</span>@enderror
-                                           
+                                            @error('trailer_id') <span class="text-danger error">{{ $message }}</span>@enderror     
                                     </div>
-                                {{-- </div> --}}
-                                <br>
-                                
-                                    @foreach ($trailer_inputs as $key => $value)
-                                    <div class="row">
-                                        <div class="col-md-9">
-                                            <select class="form-control" wire:model.debounce.300ms="trailer_id.{{ $value }}" size="4">
-                                                <option value="">Select Trailer {{ $value }}</option>
-                                               
-                                                  @foreach ($trailers as $trailer)
-                                                      <option value="{{$trailer->id}}">({{$trailer->registration_number}}) {{$trailer->make}} {{$trailer->model}} </option>
-                                                  @endforeach
-                                                
-                                              </select>
-                                            @error('trailer_id.'. $value) <span class="text-danger error">{{ $message }}</span>@enderror
-                                        </div>
-                                        <div class="col-md-1">
-                                            <div class="form-group">
-                                                <label for=""></label>
-                                                <button class="btn btn-danger btn-rounded xs"   wire:click.prevent="trailerRemove({{$key}})"> <i class="fa fa-times"></i></button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <br>
-                                    @endforeach
-                                <small>  <a href="{{ route('trailers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Trailer</a></small> 
-                                <div class="row">
-                                    <div class="col-md-12">
-                                        <div class="form-group">
-                                            <button class="btn btn-success btn-rounded btn-sm" style="float: right" wire:click.prevent="trailerAdd({{$t}})"> <i class="fa fa-plus"></i>Trailer</button>
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">

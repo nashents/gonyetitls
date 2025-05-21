@@ -72,7 +72,9 @@
                                   <tr>
                                     <th class="th-sm">Bill#
                                     </th>
-                                    <th class="th-sm">Bill Summary
+                                    <th class="th-sm">Narration
+                                    </th>
+                                    <th class="th-sm">Items
                                     </th>
                                     <th class="th-sm">Date
                                     </th>
@@ -80,7 +82,7 @@
                                     </th>
                                     <th class="th-sm">Subtotal
                                     </th>
-                                    <th class="th-sm">Tax Amt
+                                    <th class="th-sm">Tax
                                     </th>
                                     <th class="th-sm">Total
                                     </th>
@@ -161,6 +163,18 @@
                                        
                                     </td>
                                   
+                                    <td>
+                                        @if ($bill->bill_expenses)
+                                            @foreach ($bill->bill_expenses as $bill_expense)
+                                                @if ($bill_expense->expense)
+                                                    {{$bill_expense->expense ? $bill_expense->expense->name : ""}}
+                                                @elseif($bill_expense->product)
+                                                    {{ $bill_expense->product->brand ? $bill_expense->product->brand->name : ""}} {{ $bill_expense->product ? $bill_expense->product->name : ""}}
+                                                @endif
+                                               @if (!$loop->last),@endif
+                                            @endforeach
+                                        @endif
+                                    </td>
                                     <td>{{$bill->bill_date}}</td>
                                     <td>{{$bill->currency ? $bill->currency->name : ""}}</td> 
                                     <td>

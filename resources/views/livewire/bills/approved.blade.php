@@ -63,23 +63,29 @@
                             <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
-                                    <th class="th-sm">Bill#
+                                                          <th class="th-sm">Bill#
                                     </th>
-                                    <th class="th-sm">Category
+                                    <th class="th-sm">Narration
+                                    </th>
+                                    <th class="th-sm">Items
                                     </th>
                                     <th class="th-sm">Date
                                     </th>
-                                    <th class="th-sm">Currency
+                                    <th class="th-sm">Ccy
+                                    </th>
+                                    <th class="th-sm">Subtotal
+                                    </th>
+                                    <th class="th-sm">Tax
                                     </th>
                                     <th class="th-sm">Total
                                     </th>
                                     <th class="th-sm">Paid
                                     </th>
-                                    <th class="th-sm">Amount Due
+                                    <th class="th-sm">Due
                                     </th>
-                                    <th class="th-sm">Payment Status
+                                    <th class="th-sm">Status
                                     </th>
-                                    <th class="th-sm">Authorization
+                                    <th class="th-sm">Auth
                                     </th>
                                     <th class="th-sm">Action
                                     </th>
@@ -89,26 +95,95 @@
                                 <tbody>
                                     @foreach ($bills as $bill)
                                   <tr>
-                                    <td>{{$bill->bill_number}}</td>
+                                                                   <td>{{$bill->bill_number}}</td>
                                     <td>
                                         @if ($bill->transporter)
-                                            Transporter | <a href="{{ route('transporters.show',$bill->transporter->id) }}" style="color: blue" target="_blank">{{ $bill->transporter->name }}</a> 
-                                        @elseif($bill->vendor && ($bill->container == NULL || $bill->top_up == NULL))
-                                            Vendor | <a href="{{ route('vendors.show',$bill->vendor->id) }}" style="color: blue" target="_blank">{{ $bill->vendor->name }}</a> 
-                                        @elseif ( $bill->container || $bill->top_up)
-                                            Fuel Topup | <a href="{{ route('containers.show', $bill->container->id) }}" style="color: blue" target="_blank">{{ $bill->container->name }}</a> 
+                                            Transporter | <a href="{{ route('transporters.show',$bill->transporter->id) }}" style="color: blue" target="_blank">{{ $bill->transporter ? $bill->transporter->name  : ""}}</a> 
+                                        @elseif($bill->vendor)
+                                            Vendor | <a href="{{ route('vendors.show',$bill->vendor->id) }}" style="color: blue" target="_blank">{{ $bill->vendor ? $bill->vendor->name : "" }}</a> 
+                                            @if ($bill->horse)
+                                                <br>
+                                                Horse | <a href="{{route('horses.show', $bill->horse->id)}}" style="color: blue" target="_blank">{{$bill->horse ? $bill->horse->registration_number : ""}} {{$bill->horse->fleet_number ? "(".$bill->horse->fleet_number.")" : ""}} {{$bill->horse->horse_make ? $bill->horse->horse_make->name : ""}} {{$bill->horse->horse_model ? $bill->horse->horse_model->name : ""}}</a> 
+                                            @elseif ($bill->vehicle)
+                                                <br>
+                                                Vehicle | <a href="{{route('vehicles.show', $bill->vehicle->id)}}" style="color: blue" target="_blank">{{$bill->vehicle ? $bill->vehicle->registration_number : ""}} {{$bill->vehicle->fleet_number ? "(".$bill->vehicle->fleet_number.")" : ""}} {{$bill->vehicle->vehicle_make ? $bill->vehicle->vehicle_make->name : ""}} {{$bill->vehicle->vehicle_model ? $bill->vehicle->vehicle_model->name : ""}}</a> 
+                                            @elseif ($bill->trailer)
+                                                <br>
+                                                Trailer | <a href="{{route('trailers.show', $bill->trailer->id)}}" style="color: blue" target="_blank">{{$bill->trailer ? $bill->trailer->registration_number : ""}} {{$bill->trailer->fleet_number ? "(".$bill->trailer->fleet_number.")" : ""}} {{$bill->trailer->make}} {{$bill->trailer->model}}</a> 
+                                            @elseif ($bill->driver)
+                                                <br>
+                                                Driver | <a href="{{route('drivers.show', $bill->driver->id)}}" style="color: blue" target="_blank">{{$bill->driver->employee ? $bill->driver->employee->name : ""}} {{$bill->driver->employee ? $bill->driver->employee->surname : ""}} </a> 
+                                            @endif
+                                           
+                                          
+                                        @elseif ( $bill->container && $bill->top_up)
+                                            Fuel Topup | <a href="{{ route('containers.show', $bill->container->id) }}" style="color: blue" target="_blank">{{ $bill->container ? $bill->container->name : "" }}</a> 
+                                        @elseif ( $bill->fuel)
+                                            @if ($bill->trip)
+                                            Trip Expense - Fuel Order | <a href="{{ route('fuels.show', $bill->fuel->id) }}" style="color: blue" target="_blank">{{ $bill->fuel ? $bill->fuel->order_number : "" }}</a> | <a href="{{ route('trips.show', $bill->trip->id) }}" style="color: blue" target="_blank">{{ $bill->trip->trip_number }}</a> 
+                                            @else
+                                            Fuel Order | <a href="{{ route('fuels.show', $bill->fuel->id) }}" style="color: blue" target="_blank">{{ $bill->fuel ? $bill->fuel->order_number : "" }}</a> 
+                                            @endif
+                                           
                                         @elseif ( $bill->invoice)
-                                            Invoice VAT | <a href="{{ route('invoices.show', $bill->invoice->id) }}" style="color: blue" target="_blank">{{ $bill->invoice->invoice_number }}</a> 
-                                            @elseif ( $bill->ticket)
-                                            Ticket | <a href="{{ route('tickets.show', $bill->ticket->id) }}" style="color: blue" target="_blank">{{ $bill->ticket->ticket_number }}</a> 
-                                            @elseif ($bill->trip && ($bill->horse || $bill->driver))
+                                            Invoice VAT | <a href="{{ route('invoices.show', $bill->invoice->id) }}" style="color: blue" target="_blank">{{ $bill->invoice ? $bill->invoice->invoice_number : "" }}</a> 
+                                        @elseif ( $bill->ticket)
+                                            Ticket | <a href="{{ route('tickets.show', $bill->ticket->id) }}" style="color: blue" target="_blank">{{  $bill->ticket ? $bill->ticket->ticket_number : "" }}</a> 
+                                        @elseif ($bill->trip && ($bill->horse || $bill->driver || $bill->driver))
                                             Trip Expense | <a href="{{ route('trips.show', $bill->trip->id) }}" style="color: blue" target="_blank">{{ $bill->trip->trip_number }}</a> 
                                         @elseif ($bill->purchase)
                                             {{ $bill->category }} | <a href="{{ route('purchases.show', $bill->purchase->id) }}" style="color: blue" target="_blank">{{ $bill->purchase->purchase_number }}</a> 
+                                        @elseif ($bill->workshop_service)
+                                            Service | {{$bill->workshop_service->account ? $bill->workshop_service->account->name : ""}} | <a href="{{ route('workshop_services.show', $bill->workshop_service->id) }}" style="color: blue" target="_blank">{{ $bill->workshop_service->workshop_service_number }}</a> 
+                                        @elseif ($bill->horse && !$bill->vendor)
+                                           
+                                            Horse | <a href="{{route('horses.show', $bill->horse->id)}}" style="color: blue" target="_blank">{{$bill->horse ? $bill->horse->registration_number : ""}} {{$bill->horse->fleet_number ? "(".$bill->horse->fleet_number.")" : ""}} {{$bill->horse->horse_make ? $bill->horse->horse_make->name : ""}} {{$bill->horse->horse_model ? $bill->horse->horse_model->name : ""}}</a> 
+                                        @elseif ($bill->vehicle && !$bill->vendor)
+                                           
+                                            Vehicle | <a href="{{route('vehicles.show', $bill->vehicle->id)}}" style="color: blue" target="_blank">{{$bill->vehicle ? $bill->vehicle->registration_number : ""}} {{$bill->vehicle->fleet_number ? "(".$bill->vehicle->fleet_number.")" : ""}} {{$bill->vehicle->vehicle_make ? $bill->vehicle->vehicle_make->name : ""}} {{$bill->vehicle->vehicle_model ? $bill->vehicle->vehicle_model->name : ""}}</a> 
+                                        @elseif ($bill->trailer && !$bill->vendor)
+                                           
+                                            Trailer | <a href="{{route('trailers.show', $bill->trailer->id)}}" style="color: blue" target="_blank">{{$bill->trailer ? $bill->trailer->registration_number : ""}} {{$bill->trailer->fleet_number ? "(".$bill->trailer->fleet_number.")" : ""}} {{$bill->trailer->make}} {{$bill->trailer->model}}</a> 
+                                        @elseif ($bill->driver && !$bill->vendor)
+                                          
+                                            Driver | <a href="{{route('drivers.show', $bill->driver->id)}}" style="color: blue" target="_blank">{{$bill->driver->employee ? $bill->driver->employee->name : ""}} {{$bill->driver->employee ? $bill->driver->employee->surname : ""}} </a> 
+                                        @endif
+                                        
+                                        @if ($bill->description)
+                                        <br>
+                                        {{$bill->description}}
+                                        @endif
+                                       
+                                    </td>
+                                  
+                                     <td>
+                                        @if ($bill->bill_expenses)
+                                            @foreach ($bill->bill_expenses as $bill_expense)
+                                                @if ($bill_expense->expense)
+                                                    {{$bill_expense->expense ? $bill_expense->expense->name : ""}}
+                                                @elseif($bill_expense->product)
+                                                    {{ $bill_expense->product->brand ? $bill_expense->product->brand->name : ""}} {{ $bill_expense->product ? $bill_expense->product->name : ""}}
+                                                @endif
+                                               @if (!$loop->last),@endif
+                                            @endforeach
                                         @endif
                                     </td>
                                     <td>{{$bill->bill_date}}</td>
                                     <td>{{$bill->currency ? $bill->currency->name : ""}}</td> 
+                                    <td>
+                                        @if ($bill->subtotal)
+                                        {{$bill->currency ? $bill->currency->symbol : ""}}{{number_format($bill->subtotal,2)}}
+                                        @else
+                                            @if ($bill->total)
+                                                {{$bill->currency ? $bill->currency->symbol : ""}}{{number_format($bill->total,2)}}
+                                            @endif
+                                        @endif
+                                    </td>
+                                    <td>
+                                      
+                                        {{$bill->currency ? $bill->currency->symbol : ""}}{{number_format($bill->tax_amount ? $bill->tax_amount : 0,2)}}
+                                       
+                                    </td>
                                     <td>
                                         @if ($bill->total)
                                              {{$bill->currency ? $bill->currency->symbol : ""}}{{number_format($bill->total,2)}}
@@ -123,7 +198,7 @@
                                         @if ($bill->balance)
                                              {{$bill->currency ? $bill->currency->symbol : ""}}{{number_format($bill->balance,2)}}
                                         @else   
-                                        {{$bill->currency ? $bill->currency->symbol : ""}}0.00
+                                        {{$bill->currency ? $bill->currency->symbol : ""}}{{number_format(0,2) }}
                                         @endif
                                     </td>
                                     <td><span class="label label-{{($bill->status == 'Paid') ? 'success' : (($bill->status == 'Partial') ? 'warning' : 'danger') }}">{{ $bill->status }}</span></td>

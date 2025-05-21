@@ -107,7 +107,14 @@
                                                 </button>
                                                 <ul class="dropdown-menu">
                                                     <li><a href="{{ route('gate_passes.show', $gate_pass->id) }}" ><i class="fa fa-eye color-default"></i> View</a></li>
-                                                    <li><a href="#" wire:click="authorize({{$gate_pass->id}})"><i class="fas fa-gavel color-success"></i> Authorization</a></li>
+                                                    @if ($department === "security")
+                                                        @if ($gate_pass->logistics_authorization == 'approved' && $gate_pass->workshop_authorization == 'approved')
+                                                             <li><a href="#" wire:click="authorize({{$gate_pass->id}})"><i class="fas fa-gavel color-success"></i> Authorization</a></li>
+                                                        @endif
+                                                    @else
+                                                     <li><a href="#" wire:click="authorize({{$gate_pass->id}})"><i class="fas fa-gavel color-success"></i> Authorization</a></li>
+                                                    @endif
+                                                   
                                                 </ul>
                                             </div>
                                             @include('gate_passes.delete')

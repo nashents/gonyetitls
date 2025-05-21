@@ -72,21 +72,15 @@ class Pending extends Component
              foreach($selected_gate_passes as $gate_pass){
 
                     if ($this->department == "logistics") {
-                
                          $gate_pass->logistics_authorized_by_id = Auth::user()->id;
                          $gate_pass->logistics_authorization = $this->authorize;
                          $gate_pass->logistics_authorization_reason = $this->comments;
                          $gate_pass->update();
-        
-                     
                     }elseif ($this->department == "workshop") {
-                        
                          $gate_pass->workshop_authorized_by_id = Auth::user()->id;
                          $gate_pass->workshop_authorization = $this->authorize;
                          $gate_pass->workshop_authorization_reason = $this->comments;                         
-                         $gate_pass->update();
-                
-                        
+                         $gate_pass->update(); 
                     }elseif ($this->department == "security") {
                        
                          $gate_pass->authorized_by_id = Auth::user()->id;
@@ -132,7 +126,7 @@ class Pending extends Component
       }
 
       public function update(){
-        try{
+        // try{
           if (isset($this->department)) {
 
               if ($this->department == "logistics") {
@@ -180,14 +174,14 @@ class Pending extends Component
            }
   
       
-      }
-      catch(\Exception $e){
-          $this->dispatchBrowserEvent('hide-authorizationModal');
-          $this->dispatchBrowserEvent('alert',[
-              'type'=>'error',
-              'message'=>"Something went wrong while trying to authorize Gate Pass!!"
-          ]);
-          }
+    //   }
+    //   catch(\Exception $e){
+    //       $this->dispatchBrowserEvent('hide-authorizationModal');
+    //       $this->dispatchBrowserEvent('alert',[
+    //           'type'=>'error',
+    //           'message'=>"Something went wrong while trying to authorize Gate Pass!!"
+    //       ]);
+    //       }
   
         }
 

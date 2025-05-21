@@ -8,7 +8,7 @@
     @endif
 @endsection
 @section('title')
-    Gate Pass|@if (Auth::user()->employee->company)
+    Gate Passes | @if (Auth::user()->employee->company)
     {{Auth::user()->employee->company->name}}
     @elseif (Auth::user()->company)
     {{Auth::user()->company->name}}

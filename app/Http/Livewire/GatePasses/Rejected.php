@@ -132,7 +132,7 @@ class Rejected extends Component
       }
 
       public function update(){
-        try{
+        // try{
           if (isset($this->department)) {
 
               if ($this->department == "logistics") {
@@ -180,20 +180,16 @@ class Rejected extends Component
            }
   
       
-      }
-      catch(\Exception $e){
-          $this->dispatchBrowserEvent('hide-authorizationModal');
-          $this->dispatchBrowserEvent('alert',[
-              'type'=>'error',
-              'message'=>"Something went wrong while trying to authorize Gate Pass!!"
-          ]);
-          }
+    //   }
+    //   catch(\Exception $e){
+    //       $this->dispatchBrowserEvent('hide-authorizationModal');
+    //       $this->dispatchBrowserEvent('alert',[
+    //           'type'=>'error',
+    //           'message'=>"Something went wrong while trying to authorize Gate Pass!!"
+    //       ]);
+    //       }
   
         }
-
-
-  
-
 
     public function render()
     {

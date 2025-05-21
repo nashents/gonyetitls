@@ -3,9 +3,9 @@
       
         <table id="bill_expensesTable" class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
             <thead >
-                <th class="th-sm">Item
+                <th class="th-sm">Category
                 </th>
-                <th class="th-sm">Expense Account
+                <th class="th-sm">Item
                 </th>
                 <th class="th-sm">Description
                 </th>
@@ -26,12 +26,18 @@
                 @if ($bill_expenses->count()>0)
                 @foreach ($bill_expenses as $bill_expense)
               <tr>
-                <td>{{ $bill_expense->product ? $bill_expense->product->name : ""}}</td>
-                <td>
+                 <td>
                     @if ($bill_expense->account)
                         {{$bill_expense->account ? $bill_expense->account->name : ""}}
                     @endif
                   </td>
+                <td>
+                    @if ($bill_expense->expense)
+                         {{ $bill_expense->expense ? $bill_expense->expense->name : ""}}
+                    @elseif($bill_expense->product)
+                        {{ $bill_expense->product->brand ? $bill_expense->product->brand->name : ""}} {{ $bill_expense->product ? $bill_expense->product->name : ""}}
+                    @endif
+                   </td>
                   <td>{{ $bill_expense->description}}</td>
                   <td>{{ $bill_expense->qty}}</td>
                   <td>

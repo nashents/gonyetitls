@@ -16,7 +16,7 @@
 
                             <tr>
                                 <th class="w-10 text-center line-height-35">Group</th>
-                                <td class="w-20 line-height-35">{{$visitor->group}} </td>
+                                <td class="w-20 line-height-35">{{$visitor->group ? $visitor->group->name : ""}} </td>
                             </tr>
                             <tr>
                                 <th class="w-10 text-center line-height-35">Type</th>

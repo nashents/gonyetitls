@@ -265,13 +265,12 @@ class Pending extends Component
             $gate_pass->driver_id = $trip->driver_id ? $trip->driver_id : null;
             $gate_pass->horse_id = $trip->horse_id ? $trip->horse_id : null;
             $gate_pass->exit = $trip->start_date;
+            $gate_pass->save();
+            
             $trailers = $trip->trailers;
-
             foreach ($trailers as $trailer) {
                 $trailer_ids[] = $trailer->id;
             }
-
-            $gate_pass->save();
             if (isset($trailer_ids)) {
                 $gate_pass->trailers()->sync($trailer_ids);
             }

@@ -5,9 +5,8 @@
         <div class="col-md-10 col-md-offset-1">
             <ul class="nav nav-tabs nav-justified" role="tablist">
                 <li role="presentation" class="active"><a href="#basic" aria-controls="basic" role="tab" data-toggle="tab">Bill Details</a></li>
-                <li role="presentation"><a href="#documents" aria-controls="documents" role="tab" data-toggle="tab">Documents</a></li>
                 <li role="presentation"><a href="#expenses" aria-controls="expenses" role="tab" data-toggle="tab">Bill Expenses</a></li>
-               
+                <li role="presentation"><a href="#documents" aria-controls="documents" role="tab" data-toggle="tab">Documents</a></li>  
             </ul>
             <div class="tab-content bg-white p-15">
                 <div role="tabpanel" class="tab-pane active" id="basic">
@@ -219,12 +218,13 @@
                     </tbody>
                 </table>
                 </div>
+                 <div role="tabpanel" class="tab-pane" id="expenses">
+                    @livewire('bills.expenses', ['id' => $bill->id])
+                  </div>
                 <div role="tabpanel" class="tab-pane" id="documents">
                     @livewire('documents.index', ['id' => $bill->id,'category' =>'bill'])
                   </div>
-                <div role="tabpanel" class="tab-pane" id="expenses">
-                    @livewire('bills.expenses', ['id' => $bill->id])
-                  </div>
+               
             </div>
             <div class="row">
                 <div class="col-md-12" style="float:right;">

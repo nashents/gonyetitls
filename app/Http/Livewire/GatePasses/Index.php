@@ -83,8 +83,9 @@ class Index extends Component
         $this->gates = collect();
         $this->employees = Employee::latest()->get();
         $this->visitors = Visitor::latest()->get();
+        $this->trips = Trip::latest()->whereYear('start_date',date('Y'))->get();
         $this->groups = Group::latest()->get();
-        $this->horses = Horse::latest()->get();
+        $this->horses = Horse::orderBy('registration_number','asc')->get();
         $this->drivers = Driver::with('employee:id,name,surname')->latest()->get();
         $this->trailers = Trailer::latest()->get();
     }
@@ -258,10 +259,21 @@ class Index extends Component
         ]);
     }
 
+
     public function edit($id){
         $gate_pass = GatePass::find($id);
         $this->entry = $gate_pass->entry;
         $this->exit = $gate_pass->exit;
+        $this->trip_id = $gate_pass->trip_id;
+        $trip = Trip::find($gate_pass->trip_id);
+        if($trip){
+            $this->horse_id = $trip->horse_id;
+            $this->driver_id = $trip->driver_id;
+        }
+        $trailers = $gate_pass->trailers;
+        foreach($trailers as $trailer){
+            $this->trailer_id[] = $trailer->id;
+        }
         $this->selectedBranch = $gate_pass->branch_id;
         $this->gate_id = $gate_pass->gate_id;
         $this->reason = $gate_pass->reason;
