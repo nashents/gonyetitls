@@ -151,7 +151,7 @@ class Index extends Component
         $this->company = Auth::user()->employee->company;
         $this->requisition_filter = "created_at";
        
-        $this->employees = Employee::where('archive',0)->where('status',1)->orderBy('surname','asc')->get()->sortBy('name');
+        $this->employees = Employee::where('archive', 0)->where('status',1)->orderBy('surname','asc')->get()->sortBy('name');
         $this->departments = Department::orderBy('name','asc')->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->expenses = Expense::orderBy('name','asc')->get();

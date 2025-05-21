@@ -29,6 +29,9 @@ class Currency extends Model implements Auditable
     public function emptyruns(){
         return $this->hasMany('App\Models\EmptyRun');
     }
+     public function route_expenses(){
+        return $this->hasMany('App\Models\RouteExpense');
+    }
     public function sales(){
         return $this->hasMany('App\Models\Sale');
     }

@@ -21,15 +21,14 @@
                                   <tr>
                                     <th class="th-sm">Name
                                     </th>
-                                    <th class="th-sm">From
+                                    <th class="th-sm">
+                                        From 
+                                        <hr style="margin-top:2px; margin-bottom:2px">
+                                        To
                                     </th>
-                                    <th class="th-sm">To
+                                    <th class="th-sm">Expenses
                                     </th>
-                                    <th class="th-sm">Distance
-                                    </th>
-                                    <th class="th-sm">Tollgates
-                                    </th>
-                                    <th class="th-sm">Rank
+                                    <th class="th-sm">Narration
                                     </th>
                                     <th class="th-sm">Assessment Expires
                                     </th>
@@ -47,21 +46,35 @@
                                     @php
                                         $from = App\Models\Destination::find($route->from);
                                         $to = App\Models\Destination::find($route->to);
+                                        $route_expenses = App\Models\RouteExpense::where('route_id',$route->id)->get()
                                     @endphp
                                     <td>
                                         @if (isset($from))
                                             {{$from->country ? $from->country->name : ""}} {{$from->city}}
                                         @endif
-                                        
+                                        <hr style="margin-top:5px; margin-bottom:5px">  
+                                        @if (isset($to))
+                                            {{$to->country ? $to->country->name : ""}} {{$to->city}}        
+                                        @endif  
                                     </td>
                                     <td>
-                                        @if (isset($to))
-                                        {{$to->country ? $to->country->name : ""}} {{$to->city}}        
+                                        @if ($route_expenses)
+                                            @foreach ($route_expenses as $route_expense)
+                                                {{$route_expense->expense ? $route_expense->expense->name : ""}}@if (!$loop->last), @endif
+                                            @endforeach
                                         @endif
                                     </td>
-                                    <td>{{$route->distance ? $route->distance."Kms" : ""}}</td>
-                                    <td>{{$route->tollgates}}</td>
-                                    <td>{{$route->rank}}</td>
+                                    <td>
+                                        <strong>Distance:</strong> {{$route->distance ? $route->distance."Kms" : ""}} <br>
+                                        <strong>Tollgates:</strong> {{$route->tollgates}} <br>
+                                        <strong>Rank:</strong> {{$route->rank}} <br>
+                                        <strong>Borders:</strong>
+                                            [
+                                                @foreach ($route->borders as $border)
+                                                    {{$border->name}} @if (!$loop->last), @endif
+                                                @endforeach
+                                            ]
+                                    </td>
                                     <td>
                                         @if ($route->expiry_date >= now()->toDateTimeString())
                                         <span class="badge bg-success">{{$route->expiry_date}}</span>

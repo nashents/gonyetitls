@@ -15,6 +15,9 @@ class Route extends Model implements Auditable
     public function trips(){
         return $this->hasMany('App\Models\Trip');
     }
+    public function route_expenses(){
+        return $this->hasMany('App\Models\RouteExpense');
+    }
     public function truck_stops(){
         return $this->hasMany('App\Models\TruckStop');
     }

@@ -1649,9 +1649,6 @@ var MONTHSbar = ["January", "February", "March", "April", "May", "June", "July",
                     "marginTop":0,
                     "marginRight": 80,
                     "dataProvider": [{
-                        "year": "2021",
-                        "value": {{$resignation_2021}}
-                    }, {
                         "year": "2022",
                         "value": {{$resignation_2022}}
                     }, 
@@ -1662,6 +1659,10 @@ var MONTHSbar = ["January", "February", "March", "April", "May", "June", "July",
                     {
                         "year": "2024",
                         "value": {{$resignation_2024}}
+                    },
+                    {
+                        "year": "2025",
+                        "value": {{$resignation_2025}}
                     }
                 ],
                     "valueAxes": [{

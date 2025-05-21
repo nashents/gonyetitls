@@ -171,7 +171,7 @@
                                   </tr>
                                   @empty
                                   <tr>
-                                    <td colspan="9">
+                                    <td colspan="12">
                                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                             No Horse Perfomance Details Found ....
                                         </div>

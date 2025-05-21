@@ -87,12 +87,17 @@
                                         @endif
                                     </td>
                                     <td>
-                                        @if (((isset($vehicle->mileage) && $vehicle->mileage > 0) && (isset($vehicle->next_service) && $vehicle->next_service > 0)) || ((isset($vehicle->hours) && $vehicle->hours > 0) && (isset($vehicle->next_service_hours) && $vehicle->next_service_hours > 0)))
-                                            @if (($vehicle->mileage >= $vehicle->next_service) || ($vehicle->hours >= $vehicle->next_service_hours))
-                                                <span class="badge bg-danger">Due for service</span>
-                                            @elseif(($vehicle->mileage < $vehicle->next_service) || ($vehicle->hours < $vehicle->next_service_hours))
-                                                <span class="badge bg-success">Fit for use</span>
-                                            @endif
+                                       @php
+                                            $mileageDue = isset($vehicle->mileage, $vehicle->next_service) && $vehicle->mileage > 0 && $vehicle->next_service > 0 && $vehicle->mileage >= $vehicle->next_service;
+                                            $hoursDue = isset($vehicle->hours, $vehicle->next_service_hours) && $vehicle->hours > 0 && $vehicle->next_service_hours > 0 && $vehicle->hours >= $vehicle->next_service_hours;
+                                            $mileageOK = isset($vehicle->mileage, $vehicle->next_service) && $vehicle->mileage > 0 && $vehicle->next_service > 0 && $vehicle->mileage < $vehicle->next_service;
+                                            $hoursOK = isset($vehicle->hours, $vehicle->next_service_hours) && $vehicle->hours > 0 && $vehicle->next_service_hours > 0 && $vehicle->hours < $vehicle->next_service_hours;
+                                        @endphp
+
+                                        @if ($mileageDue || $hoursDue)
+                                            <span class="badge bg-danger">Due for service</span>
+                                        @elseif ($mileageOK || $hoursOK)
+                                            <span class="badge bg-success">Fit for use</span>
                                         @endif
                                         
                                     </td>
@@ -103,7 +108,7 @@
                                                 <span class="caret"></span>
                                             </button>
                                             <ul class="dropdown-menu">
-                                                <li><a href="#"  wire:click="edit({{$vehicle->id}})" ><i class="fa fa-refresh color-success"></i> Update</a></li>
+                                                <li><a href="#"  wire:click="edit({{$vehicle->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
                                             </ul>
                                         </div>
                                 </td>

@@ -37,19 +37,27 @@ WithCustomStartCell
         $make = $vehicle->vehicle_make? $vehicle->vehicle_make->name : "";
         $model = $vehicle->vehicle_model? $vehicle->vehicle_model->name : "";
         $fleet_number = $vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : "";
+
+        $mileageDue = isset($vehicle->mileage, $vehicle->next_service) && $vehicle->mileage > 0 && $vehicle->next_service > 0 && $vehicle->mileage >= $vehicle->next_service;
+        $hoursDue = isset($vehicle->hours, $vehicle->next_service_hours) && $vehicle->hours > 0 && $vehicle->next_service_hours > 0 && $vehicle->hours >= $vehicle->next_service_hours;
+        $mileageOK = isset($vehicle->mileage, $vehicle->next_service) && $vehicle->mileage > 0 && $vehicle->next_service > 0 && $vehicle->mileage < $vehicle->next_service;
+        $hoursOK = isset($vehicle->hours, $vehicle->next_service_hours) && $vehicle->hours > 0 && $vehicle->next_service_hours > 0 && $vehicle->hours < $vehicle->next_service_hours;
+
+        if($mileageDue || $hoursDue){
+            $status = "Due for service";
+        }elseif ($mileageOK || $hoursOK) {
+            $status = "Fit for use";
+        }else{
+            $status = "";
+        }
+
         if (((isset($vehicle->mileage) && $vehicle->mileage > 0) && (isset($vehicle->next_service) && $vehicle->next_service > 0)) || ((isset($vehicle->hours) && $vehicle->hours > 0) && (isset($vehicle->next_service_hours) && $vehicle->next_service_hours > 0))) {
-                if (($vehicle->mileage >= $vehicle->next_service) || ($vehicle->hours >= $vehicle->next_service_hours)) {
-                    $status = "Due for service";
-                }elseif (($vehicle->mileage < $vehicle->next_service) || ($vehicle->hours < $vehicle->next_service_hours)) {
-                    $status = "Fit for use";
-                }
-                $difference = $vehicle->next_service - $vehicle->mileage;
-                $hours_difference = $vehicle->next_service_hours - $vehicle->hours;
-            }else {
-                $difference = "";
-                $hours_difference = "";
-                $status = "";
-            }
+            $difference = $vehicle->next_service - $vehicle->mileage;
+            $hours_difference = $vehicle->next_service_hours - $vehicle->hours;
+        }else {
+            $difference = "";
+            $hours_difference = "";
+        }
       
        
 
@@ -75,11 +83,15 @@ public function headings(): array{
         return[
             'Transporter',
             'Vehicle',
-            'Prev Service Mileage',
             'Prev Service Date',
+            'Prev Service Mileage',
+            'Prev Service Hours',
             'Current Mileage',
+            'Current Hours',
             'Next Service Mileage',
+            'Next Service Hours',
             'Current - Next Service Mileage Diff',
+            'Current - Next Service Hours Diff',
             'Status',
         ];
 
@@ -88,7 +100,7 @@ public function headings(): array{
     public function registerEvents(): array{
         return[
             AfterSheet::class    => function(AfterSheet $event) {
-                $event->sheet->getStyle('A7:H7')->applyFromArray([
+                $event->sheet->getStyle('A7:L7')->applyFromArray([
                     'font' => [
                         'bold' => true
                     ],

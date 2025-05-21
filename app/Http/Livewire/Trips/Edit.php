@@ -11,6 +11,7 @@ use App\Models\Agent;
 use App\Models\Cargo;
 use App\Models\Horse;
 use App\Models\Route;
+use App\Models\Shift;
 use App\Models\TopUp;
 use App\Models\Border;
 use App\Models\Broker;
@@ -58,6 +59,9 @@ class Edit extends Component
     public $trip;
     public $trip_id;
     public $trip_number;
+    public $shifts;
+    public $shift;
+    public $selectedShift;
     public $routes;
     public $selectedRoute;
     public $transporters;
@@ -753,6 +757,7 @@ class Edit extends Component
         'route:id,name,rank','truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name','commission:id,commission,amount'])->find($id);
         $this->user = Auth::user();
         $this->employee =  $this->user->employee;
+        $this->shifts = Shift::where('for','Trips')->where('status','1')->latest()->get();
         $this->company = Company::with('currency')->find( $this->employee->company_id);
         $this->defined_customer_rates = Rate::where('category','Customer')->with('loading_point:id,name','offloading_point:id,name')->latest()->get();
         $this->defined_transporter_rates = Rate::where('category','Transporter')->with('loading_point:id,name','offloading_point:id,name')->latest()->get();
@@ -961,6 +966,8 @@ class Edit extends Component
          $this->notes = $this->trip->notes;
          $this->quantity = $this->trip->quantity;
          $this->customer_updates = $this->trip->customer_updates;
+         $this->selectedShift = $this->trip->shift_id;
+         $this->shift = $this->trip->shift;
          $this->selectedFrom = $this->trip->from;
          $this->starting_mileage = $this->trip->starting_mileage;
          $this->ending_mileage = $this->trip->ending_mileage;
@@ -1066,6 +1073,51 @@ class Edit extends Component
                 ->where('archive',0)
                 ->orderBy('employee_name','asc')->get();
             }
+
+        }
+       
+    }
+   
+    public function updatedSelectedShift($id){
+
+        if(!is_null($id)){
+            $shift = Shift::find($id);
+            if($shift){
+
+                $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$shift->transporter_id)
+                ->where('archive',0)
+                ->orderBy('registration_number','asc')->get();
+                $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('transporter_id',$shift->transporter_id)
+                ->where('archive',0)
+                ->orderBy('registration_number','asc')->get();
+                $this->trailers = Trailer::where('transporter_id',$shift->transporter_id)
+                ->where('archive',0)
+                ->orderBy('registration_number','asc')->get();
+                $this->drivers = Driver::query()->with('employee:id,name,surname')->where('transporter_id',$shift->transporter_id)
+                ->withAggregate('employee','name')
+                ->where('archive',0)
+                ->orderBy('employee_name','asc')->get();
+
+                $this->cargos = $transporter->cargos->sortBy('name');
+                $this->selectedStatus = "Scheduled";
+                $trip_type = TripType::where('name','Local')->first();
+                $this->selectedTripType = $trip_type ? $trip_type->id : Null;
+                $this->with_trailer = True;
+
+                $this->selectedTransporter = $shift->transporter_id;
+                if($shift->horse_id){
+                    $this->selectedHorse = $shift->horse_id;
+                    $this->mode_of_transport = "Horse";
+                }elseif($shift->vehicle_id){
+                    $this->mode_of_transport = "Vehicle";
+                    $this->selectedHorse = $shift->vehicle_id;
+                }
+                $this->driver_id = $shift->driver_id;
+              
+                $this->customer_id = $shift->customer_id;
+                $this->selectedCargo = $shift->cargo_id;
+            }
+           
 
         }
        
@@ -1345,6 +1397,8 @@ class Edit extends Component
           $trip->initial_trip_id = $this->trip_type_name === "Return" ? $this->selectedTrip : null;
           $trip->customer_id = $this->customer_id;
           $trip->consignee_id = $this->consignee_id ?: null;
+          $trip->shift_id = $this->selectedShift;
+          $trip->shift = $this->shift;
           $trip->freight_calculation = $this->freight_calculation;
           $trip->calculation_measurement = $this->calculation_measurement;
           $trip->currency_id = $this->selectedCurrency;
@@ -2305,7 +2359,15 @@ class Edit extends Component
                     'type'=>'success',
                     'message'=>"Borders Refreshed Successfully!!."
                 ]);
-            }elseif($category == 'clearing_agents'){
+            }
+             elseif($category == "shifts"){
+            $this->shifts = Shift::where('for','Trips')->where('status',1)->latest()->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Shifts Refreshed Successfully!!."
+            ]);
+        }
+            elseif($category == 'clearing_agents'){
                 $this->clearing_agents = ClearingAgent::orderBy('name','asc')->get();
                 $this->dispatchBrowserEvent('alert',[
                     'type'=>'success',

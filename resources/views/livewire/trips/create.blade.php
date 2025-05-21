@@ -8,7 +8,6 @@
                         <div class="panel-heading">
                             <div class="panel-title">
                                 <h5>New Trip Schedule</h5>
-                                <small style="color: green">After you insert your search query press enter for the search results to appear.</small> <br>
                                 <small style="color: green">Asterisk <span style="color: red">(*)</span> sign indicates all mandatory fields. You should and cannot save trip form without completing those fields.</small>
                             </div>
                             
@@ -18,6 +17,34 @@
                             <form wire:submit.prevent="store()" class="p-20" enctype="multipart/form-data">
                               
                                 <h5 class="underline mt-n">Trip Info</h5>
+                            <div class="mb-20 mt-30">
+                                <input type="checkbox" wire:model.debounce.300ms="shift"   class="line-style" />
+                                <label for="one" class="radio-label">Add trip to a shift</label>
+                                @error('shift') <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
+                            
+                            @if ($shift == True)
+                                <div class="form-group">
+                                    <label for="trip_group">
+                                        <a href="{{ route('shifts.index') }}" target="_blank" style="color: blue">Trip Shifts</a>
+                                    </label>
+                                    <select class="form-control" wire:model.debounce.300ms="selectedShift">
+                                        <option value="">Select Trip Shift</option>
+                                        @foreach ($shifts as $shift)
+                                            <option value="{{ $shift->id }}">{{ $shift->type }} {{ $shift->for }} {{ $shift->date }} {{ $shift->driver->employee ? $shift->driver->employee->name : "" }} {{ $shift->driver->employee ? $shift->driver->employee->surname : "" }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('selectedShift') <span class="text-danger error">{{ $message }}</span> @enderror
+                                    <small>
+                                        <a href="{{ route('shifts.index') }}" target="_blank">
+                                            <i class="fa fa-plus-square-o"></i> New Shift
+                                        </a>
+                                    </small>
+                                    <a href="#" wire:click.prevent="refresh('shifts')" class="float-end">
+                                        <i class="fa fa-refresh" aria-hidden="true"></i>
+                                    </a>
+                                </div>
+                            @endif
                                 <div class="row">
                                     <!-- Trip Type -->
                                     <div class="col-md-4">
@@ -68,6 +95,8 @@
                                             </a>
                                         </div>
                                     </div>
+                                   
+                                   
                                 </div>
                                 
                                 <!-- Return Trip Search -->
@@ -155,7 +184,7 @@
                                 
                                             <!-- Dynamic Borders -->
                                             @foreach ($border_inputs as $key => $value)
-                                                <div class="row">
+                                                <div class="row mt-10">
                                                     <div class="col-md-6">
                                                         <select class="form-control" wire:model.debounce.300ms="selectedBorder.{{ $value }}">
                                                             <option value="">Select Border</option>
@@ -178,7 +207,7 @@
                                                         </select>
                                                         @error('clearing_agent_id.' . $value) <span class="text-danger error">{{ $message }}</span> @enderror
                                                     </div>
-                                                    <div class="col-md-1">
+                                                    <div class="col-md-1" style="margin-left:-20px; margin-top:3px;">
                                                         <button class="btn btn-danger btn-rounded btn-sm" wire:click.prevent="borderRemove({{ $key }})">
                                                             <i class="fa fa-times"></i>
                                                         </button>
@@ -187,7 +216,7 @@
                                             @endforeach
                                 
                                             <!-- Add Border Button -->
-                                            <div class="form-group text-end">
+                                            <div class="form-group text-end mt-10">
                                                 <button class="btn btn-success btn-rounded btn-sm" wire:click.prevent="borderAdd({{ $b }})">
                                                     <i class="fa fa-plus"></i> Border
                                                 </button>
@@ -1221,6 +1250,7 @@
                                         </div>
                                     </div>
                                     </div>
+                              
                                     <hr>
 
                                     <h5 class="underline mt-30"><a href="{{ route('expenses.index') }}" target="_blank" style="color: blue">Trip Expense(s)</a></h5>
@@ -1230,146 +1260,105 @@
                                         @error('trip_expenses') <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>
                                     @if ($trip_expenses == True)
-                                    <div style="height: 400px; overflow: auto">
-                                        <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
-                                            <caption>  <small>  <a href="{{ route('expenses.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Expense</a></small>  </caption> <a href="#" wire:click.prevent="refresh('expenses')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
-                                            <thead>
-                                              <tr>
-                                                <th class="th-sm">Expense
-                                                </th>
-                                                <th class="th-sm">Category
-                                                </th>
-                                                <th class="th-sm">Currency
-                                                </th>
-                                                <th class="th-sm">Amount
-                                                </th>
-                                              </tr>
-                                            </thead>
-                                            @if ($expenses->count()>0)
-                                            <tbody>
-                                                @foreach ($expenses as $key => $expense)
-                                              <tr>
-                                                <td>
-                                                    <div class="mb-10">
-                                                        <input type="checkbox" wire:model.debounce.300ms="expense_id.{{$key}}"  wire:key="{{ $key }}" value="{{ $expense->id }}" class="line-style" />
-                                                        <label for="one" class="radio-label">{{$expense->name}}</label>
-                                                        @error('expense_id.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    @if (isset($expense_id[$key]) && ($expense_id[$key] == $expense->id))
-                                                    <div class="form-group">
-                                                        <select class="form-control" wire:model.debounce.300ms="category.{{$key}}"  wire:key="{{ $key }}" required>
-                                                            <option value="">Select Category</option>
-                                                           <option value="Customer">Customer</option>
-                                                           <option value="Self">Self</option>
-                                                           <option value="Transporter">Transporter</option>
-                                                        </select>
-                                                        @error('category.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
-                                                    </div>
-                                                    @else
-                                                    <div class="form-group">
-                                                        <select class="form-control" wire:model.debounce.300ms="category.{{$key}}"  wire:key="{{ $key }}" >
-                                                            <option value="">Select Category</option>
-                                                           <option value="Customer">Customer</option>
-                                                           <option value="Self">Self</option>
-                                                           <option value="Transporter">Transporter</option>
-                                                        </select>
-                                                        @error('category.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
-                                                    </div>
-                                                    @endif
-                                                   
-                                                </td>
-                                                <td>
-                                                    @if (isset($expense_id[$key]) && ($expense_id[$key] == $expense->id))
-                                                    <div class="form-group">
-                                                        <select class="form-control" wire:model.debounce.300ms="expense_currency_id.{{$key}}"  wire:key="{{ $key }}"  {{ !isset($company->currency_id) ? "disabled" : ""  }} required>
-                                                            <option value="">Select Currency </option>
-                                                            @foreach ($currencies as $currency)
-                                                            <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
+                                        <div style="height: 400px; overflow: auto">
+                                            <table class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
+                                                    <caption>
+                                                        <small>
+                                                            <a href="{{ route('expenses.index') }}" target="_blank">
+                                                                <i class="fa fa-plus-square-o"></i> New Expense
+                                                            </a>
+                                                        </small>
+                                                    </caption>
+                                                    <a href="#" wire:click.prevent="refresh('expenses')" style="float: right">
+                                                        <i class="fa fa-refresh" aria-hidden="true"></i>
+                                                    </a>
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Expense</th>
+                                                            <th>Category</th>
+                                                            <th>Currency</th>
+                                                            <th>Amount</th>
+                                                        </tr>
+                                                    </thead>
+
+                                                    @if ($expenses->count() > 0)
+                                                        <tbody>
+                                                            @foreach ($expenses as $expense)
+                                                                @php $id = $expense->id; @endphp
+                                                                <tr>
+                                                                    <td>
+                                                                        <div class="mb-10">
+                                                                            <input type="checkbox" wire:model="expense_id.{{ $id }}" value="{{ $id }}" class="line-style" />
+                                                                            <label class="radio-label">{{ $expense->name }}</label>
+                                                                            @error('expense_id.' . $id) <span class="text-danger error">{{ $message }}</span> @enderror
+                                                                        </div>
+                                                                    </td>
+
+                                                                    <td>
+                                                                        <div class="form-group">
+                                                                            <select class="form-control" wire:model="category.{{ $id }}">
+                                                                                <option value="">Select Category</option>
+                                                                                <option value="Customer">Customer</option>
+                                                                                <option value="Self">Self</option>
+                                                                                <option value="Transporter">Transporter</option>
+                                                                            </select>
+                                                                            @error('category.' . $id) <span class="text-danger error">{{ $message }}</span> @enderror
+                                                                        </div>
+                                                                    </td>
+
+                                                                    <td>
+                                                                        <div class="form-group">
+                                                                            <select class="form-control" wire:model="expense_currency_id.{{ $id }}" {{ !isset($company->currency_id) ? 'disabled' : '' }}>
+                                                                                <option value="">Select Currency</option>
+                                                                                @foreach ($currencies as $currency)
+                                                                                    <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
+                                                                                @endforeach
+                                                                            </select>
+                                                                            @error('expense_currency_id.' . $id) <span class="text-danger error">{{ $message }}</span> @enderror
+                                                                        </div>
+
+                                                                        @if (isset($expense_currency_id[$id]) && $company && $expense_currency_id[$id] != $company->currency_id)
+                                                                            <div class="row">
+                                                                                <div class="col-md-6">
+                                                                                    <div class="form-group">
+                                                                                        <label>Conversion Rate</label>
+                                                                                        <input type="number" step="any" min="0" class="form-control" wire:model="expense_exchange_rate.{{ $id }}" placeholder="Conversion Rate">
+                                                                                        <small style="color: green">
+                                                                                            Conversion is from selected currency to {{ $company->currency?->name }}
+                                                                                        </small>
+                                                                                        @error('expense_exchange_rate.' . $id) <span class="text-danger error">{{ $message }}</span> @enderror
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div class="col-md-6">
+                                                                                    <div class="form-group">
+                                                                                        <label>Amount in {{ $company->currency?->name }}</label>
+                                                                                        <input type="number" step="any" min="0" class="form-control" wire:model="expense_exchange_amount.{{ $id }}" placeholder="Converted Amount" disabled>
+                                                                                        @error('expense_exchange_amount.' . $id) <span class="text-danger error">{{ $message }}</span> @enderror
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        @endif
+                                                                    </td>
+
+                                                                    <td>
+                                                                        <div class="form-group">
+                                                                            <input type="number" step="any" min="0" class="form-control" wire:model="amount.{{ $id }}" placeholder="Enter Expense Amount" {{ empty($expense_id[$id]) ? 'disabled' : '' }} />
+                                                                            @error('amount.' . $id) <span class="text-danger error">{{ $message }}</span> @enderror
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
                                                             @endforeach
-                                                        </select>
-                                                        @error('expense_currency_id.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
-                                                    </div>
+                                                        </tbody>
                                                     @else
-                                                    <div class="form-group">
-                                                        <select class="form-control" wire:model.debounce.300ms="expense_currency_id.{{$key}}"  wire:key="{{ $key }}"  {{ !isset($company->currency_id) ? "disabled" : ""  }}>
-                                                            <option value="">Select Currency </option>
-                                                            @foreach ($currencies as $currency)
-                                                            <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
-                                                            @endforeach
-                                                        </select>
-                                                        @error('expense_currency_id.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
-                                                    </div>
+                                                        <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{ asset('images/nodata.png') }}" alt="No data">
                                                     @endif
-                                                   
-                                                    @if (isset($expense_currency_id[$key]))
-                                                    @if ($company)
-                                                        @if ($expense_currency_id[$key] != $company->currency_id)
-                                                        <div class="row">
-                                                            @if (isset($expense_id[$key]) && ($expense_id[$key] == $expense->id))
-                                                            <div class="col-md-6">
-                                                                <div class="form-group">
-                                                                    <label for="customer">Conversion Rate</label>
-                                                                    <input type="number" step="any" min="0"  class="form-control" wire:model.debounce.300ms="expense_exchange_rate.{{$key}}" wire:key="{{ $key }}"  placeholder="Conversion Rate" >
-                                                                    <small style="color: green">The conversion is from the selected currency to {{$company->currency ? $company->currency->name : ""}}</small>
-                                                                    @error('expense_exchange_rate.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
-                                                                </div> 
-                                                            </div>
-                                                            <div class="col-md-6">
-                                                                <div class="form-group">
-                                                                    <label for="customer">Amount in {{ $company->currency ? $company->currency->name : "" }}</label>
-                                                                    <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="expense_exchange_amount.{{$key}}" wire:key="{{ $key }}" placeholder="Converted Amount" disabled>
-                                                                    @error('expense_exchange_amount.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
-                                                                </div> 
-                                                            </div>
-                                                            @else
-                                                            <div class="col-md-6">
-                                                                <div class="form-group">
-                                                                    <label for="customer">Conversion Rate</label>
-                                                                    <input type="number" step="any" min="0" class="form-control"  wire:model.debounce.300ms="expense_exchange_rate.{{$key}}" wire:key="{{ $key }}"  placeholder="Conversion Rate" >
-                                                                    <small style="color: green">The conversion is from the selected currency to {{$company->currency ? $company->currency->name : ""}}</small>
-                                                                    @error('expense_exchange_rate.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
-                                                                </div> 
-                                                            </div>
-                                                            <div class="col-md-6">
-                                                                <div class="form-group">
-                                                                    <label for="customer">Amount in{{ $company->currency ? $company->currency->name : "" }}</label>
-                                                                    <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="expense_exchange_amount.{{$key}}" wire:key="{{ $key }}" placeholder="Converted Amount" disabled>
-                                                                    @error('expense_exchange_amount.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
-                                                                </div> 
-                                                            </div>
-                                                            @endif
-                                                        </div>
-                                                        @endif
-                                                    @endif
-                                                @endif  
-                                                </td>
-                                                <td> 
-                                                    @if (isset($expense_id[$key]) && ($expense_id[$key] == $expense->id))
-                                                    <div class="form-group">
-                                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="amount.{{$key}}"  wire:key="{{ $key }}"  placeholder="Enter Expense Amount" required/>
-                                                        @error('amount.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
-                                                        </div>
-                                                    @else
-                                                    <div class="form-group">
-                                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="amount.{{$key}}"  wire:key="{{ $key }}"  placeholder="Enter Expense Amount" />
-                                                        @error('amount.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
-                                                        </div>
-                                                    @endif
-                                                   
-                                            </td>
-                                              </tr>
-                                              @endforeach
-                                            </tbody>
-                                            @else
-                                                <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
-                                             @endif
-                                          </table>
+                                            </table>
                                         </div>
-                                          @endif
+                                    @endif
                                 
-                             <hr>
+                        
+
+                            <hr>
 
                              <h5 class="underline mt-30">Fuel Order Details</h5>
                              <div class="mb-10">

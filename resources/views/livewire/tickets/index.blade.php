@@ -16,6 +16,60 @@
                                 </div>
                             </div>
                             <div class="panel-body p-20" style="overflow-x:auto; width:100%; height:100%;">
+                                         <div class="panel-title">
+                                    <h5>Date Range</h5>
+                                    <div class="row">
+                                    <div class="col-lg-2" style="margin-right: 7px">
+                                        <div class="input-group">
+                                            <span class="input-group-addon">
+                                      From
+                                      </span>
+                                      <input type="date" wire:model.debounce.300ms="from"  class="form-control" aria-label="...">
+                                        </div>
+                                        <!-- /input-group -->
+                                    </div>
+                                    <div class="col-lg-2" style="margin-left: 7px">
+                                        <div class="input-group">
+                                            <span class="input-group-addon">
+                                      To
+                                      </span>
+                                      <input type="date" wire:model.debounce.300ms="to"  class="form-control" aria-label="...">
+                                        </div>
+                                        <!-- /input-group -->
+                                    </div>
+                             
+                                   
+                                    <!-- /input-group -->
+                                </div>
+                              
+                                </div>
+                                <div class="panel-title">
+                                    <a href="#" wire:click="exportTicketsExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
+                                    <a href="#" wire:click="exportTicketsCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
+                                    <a href="#" wire:click="exportTicketsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a> 
+                                    <br>
+                                    <br>
+                                    <div class="col-lg-3" style="margin-left:-15px">
+                                        <div class="input-group">
+                                          <span class="input-group-addon">Ticket Status</span>
+                                          <select wire:model.debounce.300ms="ticket_status" class="form-control" aria-label="..." >
+                                            <option value="all">All</option>
+                                            <option value="0">Closed</option>
+                                            <option value="1">Open</option>
+                                          </select>
+                                        </div>
+                                            <!-- /input-group -->
+                                        </div>
+                                </div>
+
+                          
+
+                                <div class="col-md-5" style="float: right; padding-right:2px">
+                                    <div class="form-group">
+                                        <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search Tickets...">
+                                    </div>
+                                </div>
+
                                 @if ($selectedRows)
                                 <div class="row">
                                     <div class="col-lg-2" >
@@ -205,10 +259,13 @@
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h4 class="modal-title" id="modal4Label"><i class="fas fa-window-close"></i> Close Ticket {{ $ticket->ticket_number }}<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
-                        <p> Assigned to | @foreach ($ticket->employees as $employee)
-                            {{ $employee->name }} {{ $employee->surname }},
-                        @endforeach</p>
+                        @if ($ticket)
+                             <h4 class="modal-title" id="modal4Label"><i class="fas fa-window-close"></i> Close Ticket {{ $ticket ? $ticket->ticket_number : "" }}<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                            <p> Assigned to | @foreach ($ticket->employees as $employee)
+                                {{ $employee->name }} {{ $employee->surname }},
+                            @endforeach</p>
+                        @endif
+                       
                     </div>
                     <form wire:submit.prevent="closeTicket()" >
                     <div class="modal-body">

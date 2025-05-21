@@ -8,7 +8,6 @@
                         <div class="panel-heading">
                             <div class="panel-title">
                                 <h5>Edit Trip Schedule</h5>
-                                <small style="color: green">After you insert your search query press enter for the search results to appear.</small> <br>
                                 <small style="color: green">Asterisk <span style="color: red">(*)</span> sign indicates all mandatory fields. You should and cannot save trip form without completing those fields.</small>
                             </div>
                         </div>
@@ -16,50 +15,85 @@
                             <form wire:submit.prevent="update()" class="p-20" enctype="multipart/form-data">
                                 <div class="row" >
                                 <h5 class="underline mt-n">Trip Info</h5>
+                                                       <div class="mb-10 mt-30">
+                                <input type="checkbox" wire:model.debounce.300ms="shift"   class="line-style" />
+                                <label for="one" class="radio-label">Add trip to a shift</label>
+                                @error('shift') <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
+                            @if ($shift == True)
+                                <div class="form-group">
+                                    <label for="trip_group">
+                                        <a href="{{ route('shifts.index') }}" target="_blank" style="color: blue">Trip Shifts</a>
+                                    </label>
+                                    <select class="form-control" wire:model.debounce.300ms="selectedShift">
+                                        <option value="">Select Trip Shift</option>
+                                        @foreach ($shifts as $shift)
+                                            <option value="{{ $shift->id }}">{{ $shift->type }} {{ $shift->for }} {{ $shift->date }} {{ $shift->driver->employee ? $shift->driver->employee->name : "" }} {{ $shift->driver->employee ? $shift->driver->employee->surname : "" }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('selectedShift') <span class="text-danger error">{{ $message }}</span> @enderror
+                                    <small>
+                                        <a href="{{ route('shifts.index') }}" target="_blank">
+                                            <i class="fa fa-plus-square-o"></i> New Shift
+                                        </a>
+                                    </small>
+                                    <a href="#" wire:click.prevent="refresh('shifts')" class="float-end">
+                                        <i class="fa fa-refresh" aria-hidden="true"></i>
+                                    </a>
+                                </div>
+                            @endif
                                 <div class="row">
+                                    <!-- Trip Type -->
                                     <div class="col-md-4">
                                         <div class="form-group">
-                                            <label for="customer"><a href="{{ route('trip_types.index') }}" target="_blank" style="color: blue">Trip Type(s)</a><span class="required" style="color: red">*</span></label>
-                                          <select class="form-control" wire:model.debounce.300ms="selectedTripType" required>
-                                              <option value="">Select Trip Type</option>
-                                              @foreach ($trip_types as $trip_type)
-                                                  <option value="{{$trip_type->id}}">{{$trip_type->name}}</option>
-                                              @endforeach
-                                          </select>
-                                            @error('selectedTripType') <span class="text-danger error">{{ $message }}</span>@enderror
+                                            <label for="trip_type">
+                                                <a href="{{ route('trip_types.index') }}" target="_blank" style="color: blue">Trip Types</a>
+                                                <span class="required text-danger">*</span>
+                                            </label>
+                                            <select class="form-control" wire:model.debounce.300ms="selectedTripType" required>
+                                                <option value="">Select Trip Type</option>
+                                                @foreach ($trip_types as $trip_type)
+                                                    <option value="{{ $trip_type->id }}">{{ $trip_type->name }}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('selectedTripType') <span class="text-danger error">{{ $message }}</span> @enderror
                                         </div>
                                     </div>
+                                
+                                    <!-- Trip Reference -->
                                     <div class="col-md-4">
-                                        @if ($trip_type_name == "Return")
                                         <div class="form-group">
-                                            <label for="">Reference#</label>
-                                            <input type="text" class="form-control" wire:model.debounce.300ms="trip_ref" placeholder="Trip Reference#" disabled />
-                                            @error('trip_ref') <span class="text-danger error">{{ $message }}</span>@enderror
+                                            <label for="trip_ref">Reference#</label>
+                                            <input type="text" class="form-control" wire:model.debounce.300ms="trip_ref" placeholder="Trip Reference#" {{ $trip_type_name == 'Return' ? 'disabled' : '' }} />
+                                            @error('trip_ref') <span class="text-danger error">{{ $message }}</span> @enderror
                                         </div>
-                                       @else
-                                       <div class="form-group">
-                                            <label for="">Reference#</label>
-                                            <input type="text" class="form-control" wire:model.debounce.300ms="trip_ref" placeholder="Trip Reference#" />
-                                            @error('trip_ref') <span class="text-danger error">{{ $message }}</span>@enderror
-                                        </div>
-                                       @endif
                                     </div>
-                                  
-                              
+                                
+                                    <!-- Trip Group -->
                                     <div class="col-md-4">
                                         <div class="form-group">
-                                            <label for="customer"><a href="{{ route('trip_groups.index') }}" target="_blank" style="color: blue">Trips Tracking Groups</a></label>
-                                          <select class="form-control" wire:model.debounce.300ms="trip_group_id" >
-                                              <option value="">Select Trips Tracking Group</option>
-                                              @foreach ($trip_groups as $trip_group)
-                                                  <option value="{{$trip_group->id}}">{{$trip_group->name}}</option>
-                                              @endforeach
-                                          </select>
-                                            @error('trip_group_id') <span class="text-danger error">{{ $message }}</span>@enderror
-                                            <small>  <a href="{{route('trip_groups.index')}}" target="_blank" ><i class="fa fa-plus-square-o"></i> New Trips Tracking Group</a></small> <a href="#" wire:click.prevent="refresh('tracking_groups')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a><br> 
+                                            <label for="trip_group">
+                                                <a href="{{ route('trip_groups.index') }}" target="_blank" style="color: blue">Trips Tracking Groups</a>
+                                            </label>
+                                            <select class="form-control" wire:model.debounce.300ms="trip_group_id">
+                                                <option value="">Select Trips Tracking Group</option>
+                                                @foreach ($trip_groups as $trip_group)
+                                                    <option value="{{ $trip_group->id }}">{{ $trip_group->name }}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('trip_group_id') <span class="text-danger error">{{ $message }}</span> @enderror
+                                            <small>
+                                                <a href="{{ route('trip_groups.index') }}" target="_blank">
+                                                    <i class="fa fa-plus-square-o"></i> New Trips Tracking Group
+                                                </a>
+                                            </small>
+                                            <a href="#" wire:click.prevent="refresh('tracking_groups')" class="float-end">
+                                                <i class="fa fa-refresh" aria-hidden="true"></i>
+                                            </a>
                                         </div>
                                     </div>
                                 </div>
+                                
                                 @if ($trip_type_name == "Return")
                                 <div class="form-group">
                                     <label for="trips">All Trips</label>
@@ -974,6 +1008,7 @@
                         @error('payment_status') <span class="text-danger error">{{ $message }}</span>@enderror
                     </div>
                 </div>
+                
                                   
 
                                     <div class="col-md-7">
@@ -984,6 +1019,8 @@
                                         </div>
                                     </div>
                                     </div>
+                                
+                 
                                     <hr>
                                     <h5 class="underline mt-30">Fuel Order Details</h5>
                                     <div class="mb-10">

@@ -2,44 +2,50 @@
 
 namespace App\Http\Livewire\Routes;
 
-use Livewire\Component;
+use App\Models\Trip;
 use App\Models\Route;
+use Livewire\Component;
 use App\Exports\TripsExport;
+use Livewire\WithPagination;
 use Maatwebsite\Excel\Excel;
+use App\Exports\RouteTripsExport;
 
 class Trips extends Component
 {
+
+    use WithPagination;
+    protected $paginationTheme = 'bootstrap';
+
     public $routes; 
     public $route_id; 
-    public $trips; 
+    private $trips; 
     public $trip_id;
-    public $search_id;
-    public $from;
-    public $to;
+    
 
     public function exportTripsCSV(Excel $excel){
 
-        return $excel->download(new TripsExport($this->search_id,$this->category,$this->from,$this->to), 'trips.csv', Excel::CSV);
+        return $excel->download(new RouteTripsExport($this->route_id), 'route_trips.csv', Excel::CSV);
     }
     public function exportTripsPDF(Excel $excel){
 
-        return $excel->download(new TripsExport($this->search_id,$this->category,$this->from,$this->to), 'trips.pdf', Excel::DOMPDF);
+        return $excel->download(new RouteTripsExport($this->route_id), 'route_trips.pdf', Excel::DOMPDF);
     }
     public function exportTripsExcel(Excel $excel){
-        return $excel->download(new TripsExport($this->search_id,$this->category,$this->from,$this->to), 'trips.xlsx');
+        return $excel->download(new RouteTripsExport($this->route_id), 'route_trips.xlsx');
     }
     
        public function mount($id){
         $this->route = Route::find($id);
-        $this->search_id = $id;
-        $this->category = 'Route';
-        $this->trips = $this->route->trips;
+        $this->route_id = $id;
+      
     }
     
     public function render()
     {
+
+        
         return view('livewire.routes.trips',[
-            
+           'trips' => Trip::where('route_id',$this->route_id)->whereYear('start_date',date('Y'))->paginate(10)
         ]);
     }
 }

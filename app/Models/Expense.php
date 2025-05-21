@@ -16,6 +16,10 @@ class Expense extends Model implements Auditable
     public function trip_expenses(){
         return $this->hasOne('App\Models\TripExpense');
     }
+
+     public function route_expenses(){
+        return $this->hasMany('App\Models\RouteExpense');
+    }
     
     public function bills(){
         return $this->hasMany('App\Models\Bill');

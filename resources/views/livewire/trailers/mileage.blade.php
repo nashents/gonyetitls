@@ -77,7 +77,7 @@
                                                 <span class="caret"></span>
                                             </button>
                                             <ul class="dropdown-menu">
-                                                <li><a href="#"  wire:click="edit({{$trailer->id}})" ><i class="fa fa-refresh color-success"></i> Update</a></li>
+                                                <li><a href="#"  wire:click="edit({{$trailer->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
                                             </ul>
                                         </div>
                                 </td>

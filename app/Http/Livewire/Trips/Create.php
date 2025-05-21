@@ -10,6 +10,7 @@ use App\Models\Agent;
 use App\Models\Cargo;
 use App\Models\Horse;
 use App\Models\Route;
+use App\Models\Shift;
 use App\Models\TopUp;
 use App\Models\Border;
 use App\Models\Broker;
@@ -46,6 +47,7 @@ use App\Models\TripExpense;
 use App\Models\DeliveryNote;
 use App\Models\LoadingPoint;
 use App\Models\Notification;
+use App\Models\RouteExpense;
 use App\Models\ClearingAgent;
 use Livewire\WithFileUploads;
 use App\Models\AllowanceDriver;
@@ -67,6 +69,9 @@ class Create extends Component
     protected $queryString = ['searchTrip','searchVehicle','searchHorse','searchTrailer','searchDriver'];
     public $trip_types;
     public $selectedTripType;
+    public $shifts;
+    public $shift = False;
+    public $selectedShift;
     public $trip_type_name;
     public $trip_ref;
     public $trip_groups;
@@ -479,9 +484,40 @@ class Create extends Component
     public function updatedSelectedRoute($id)
     {
         if (!is_null($id)) {
-            $this->truck_stops = TruckStop::where('route_id',$id)->orderBy('name','asc')->get();
+            $this->truck_stops = TruckStop::where('route_id', $id)->orderBy('name', 'asc')->get();
+
+            $route_expenses = RouteExpense::where('route_id', $id)->get();
+
+            // Reset existing data
+            $this->expense_id = [];
+            $this->category = [];
+            $this->expense_currency_id = [];
+            $this->amount = [];
+            $this->expense_exchange_rate = [];
+            $this->expense_exchange_amount = [];
+
+            if($route_expenses){
+                $this->trip_expenses = True;
+                foreach ($route_expenses as $route_expense) {
+                    $id = $route_expense->expense_id;
+
+                    $this->expense_id[$id] = $id;
+                    $this->category[$id] = $route_expense->category;
+                    $this->expense_currency_id[$id] = $route_expense->currency_id;
+                    $this->amount[$id] = $route_expense->amount;
+
+                    // Optional: handle exchange rate & converted amount if relevant
+                    if ($route_expense->currency_id != ($this->company->currency_id ?? null)) {
+                        $this->expense_exchange_rate[$id] = $route_expense->exchange_rate;
+                        $this->expense_exchange_amount[$id] = $route_expense->exchange_amount;
+                    }
+                }
+            }
+           
         }
     }
+
+
     public function updatedSelectedCargo($id)
     {
             if (!is_null($id)) {
@@ -631,6 +667,51 @@ class Create extends Component
      
           
         }
+    }
+
+    public function updatedSelectedShift($id){
+
+        if(!is_null($id)){
+            $shift = Shift::find($id);
+            if($shift){
+
+                $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$shift->transporter_id)
+                ->where('archive',0)
+                ->orderBy('registration_number','asc')->get();
+                $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('transporter_id',$shift->transporter_id)
+                ->where('archive',0)
+                ->orderBy('registration_number','asc')->get();
+                $this->trailers = Trailer::where('transporter_id',$shift->transporter_id)
+                ->where('archive',0)
+                ->orderBy('registration_number','asc')->get();
+                $this->drivers = Driver::query()->with('employee:id,name,surname')->where('transporter_id',$shift->transporter_id)
+                ->withAggregate('employee','name')
+                ->where('archive',0)
+                ->orderBy('employee_name','asc')->get();
+
+                $this->cargos = $transporter->cargos->sortBy('name');
+                $this->selectedStatus = "Scheduled";
+                $trip_type = TripType::where('name','Local')->first();
+                $this->selectedTripType = $trip_type ? $trip_type->id : Null;
+                $this->with_trailer = True;
+
+                $this->selectedTransporter = $shift->transporter_id;
+                if($shift->horse_id){
+                    $this->selectedHorse = $shift->horse_id;
+                    $this->mode_of_transport = "Horse";
+                }elseif($shift->vehicle_id){
+                    $this->mode_of_transport = "Vehicle";
+                    $this->selectedHorse = $shift->vehicle_id;
+                }
+                $this->driver_id = $shift->driver_id;
+              
+                $this->customer_id = $shift->customer_id;
+                $this->selectedCargo = $shift->cargo_id;
+            }
+           
+
+        }
+       
     }
 
     public function updatedSelectedBroker($id)
@@ -786,6 +867,7 @@ class Create extends Component
         $this->user = Auth::user();
         $this->employee =  $this->user->employee;
         $this->company = Company::with('currency')->find( $this->employee->company_id);
+        $this->shifts = Shift::where('for','Trips')->where('status','1')->latest()->get();
         $this->liquid_measurements = Measurement::where('cargo_type','Liquid')->get();
         $this->solid_measurements = Measurement::where('cargo_type','Solid')->get(); 
         $this->emptyrun_destination = False;
@@ -1096,6 +1178,8 @@ class Create extends Component
                 $trip->calculation_measurement = $this->calculation_measurement;
                 $trip->currency_id = $this->selectedCurrency;
                 $trip->cd3_number = $this->cd3_number;
+                $trip->shift_id = $this->selectedShift;
+                $trip->shift = $this->shift;
                 $trip->notes = $this->notes;
                 $trip->cd1_number = $this->cd1_number;
                 $trip->manifest_number = $this->manifest_number;
@@ -1954,13 +2038,22 @@ class Create extends Component
                 'type'=>'success',
                 'message'=>"Trip Tracking Groups Refreshed Successfully!!."
             ]);
-        }elseif($category == "borders"){
+        }
+        elseif($category == "shifts"){
+            $this->shifts = Shift::where('for','Trips')->where('status',1)->latest()->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Shifts Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "borders"){
             $this->borders = Border::with('clearing_agents:id,name')->orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Borders Refreshed Successfully!!."
             ]);
-        }elseif($category == 'clearing_agents'){
+        }
+        elseif($category == 'clearing_agents'){
             $this->clearing_agents = ClearingAgent::orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',

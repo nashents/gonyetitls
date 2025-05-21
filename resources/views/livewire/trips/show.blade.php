@@ -297,16 +297,14 @@
                                                                 <th scope="row"> Driver</th>
                                                                 <td>
                                                                     @if ($trip->driver)
-                                                                    <a href="{{ route('employees.show',$trip->driver->employee->id) }}" style="color:blue">  {{$trip->driver->employee ? $trip->driver->employee->name : ""}} {{ $trip->driver->employee ? $trip->driver->employee->surname : ""}}</a>
-                                                                    @else
-                                                                    
+                                                                        <a href="{{ route('employees.show',$trip->driver->employee->id) }}" style="color:blue">  {{$trip->driver->employee ? $trip->driver->employee->name : ""}} {{ $trip->driver->employee ? $trip->driver->employee->surname : ""}}</a>
                                                                     @endif
-                                                                    <br>
                                                                     @if ($trip->notes)
-                                                                    <strong>Driver  Notes | </strong> {{ $trip->notes }}
+                                                                        <br>
+                                                                        <strong>Driver  Notes | </strong> {{ $trip->notes }}
                                                                     @endif
-                                                                    <br>
                                                                     @if ($trip->driver_allowances->count()>0)
+                                                                    <br>
                                                                     <strong>Allowances |</strong> <br>
                                                                         @foreach ($trip->driver_allowances as $driver_allowance)
                                                                             {{$driver_allowance->allowance ? $driver_allowance->allowance->name : ""}} {{$driver_allowance->currency ? $driver_allowance->currency->name : ""}} {{$driver_allowance->currency ? $driver_allowance->currency->symbol : ""}}{{number_format($driver_allowance->amount,2)}}, 
@@ -604,6 +602,20 @@
                                                                                     </td>
                                                                                 </tr>
                                                                             @endif
+                                                                               <tr>
+                                                                                <th scope="row">Trip Expenses</th>
+                                                                                <td>
+                                                                                    @if ($total_transporter_expenses)
+                                                                                    Total Transporter Expenses: {{$this->company->currency ? $this->company->currency->name : ""}} {{$this->company->currency ? $this->company->currency->symbol : ""}}{{number_format($total_transporter_expenses,2)}} <br>
+                                                                                    @endif
+                                                                                    @if ($total_customer_expenses)
+                                                                                        Total Customer Expenses: {{$this->company->currency ? $this->company->currency->name : ""}} {{$this->company->currency ? $this->company->currency->symbol : ""}}{{number_format($total_customer_expenses,2)}} <br>
+                                                                                    @endif
+                                                                                    @if ($total_expenses)
+                                                                                        Total Self Expenses: {{$this->company->currency ? $this->company->currency->name : ""}} {{$this->company->currency ? $this->company->currency->symbol : ""}}{{number_format($total_expenses,2)}} <br>
+                                                                                    @endif
+                                                                                </td>
+                                                                            </tr>
                                                                             <tr>
                                                                                 <th scope="row">Turnover</th>
                                                                                 <td>
@@ -628,20 +640,7 @@
                                                                                     @endif
                                                                                 </td>
                                                                             </tr>
-                                                                            <tr>
-                                                                                <th scope="row">Trip Expenses</th>
-                                                                                <td>
-                                                                                    @if ($total_transporter_expenses)
-                                                                                    Total Transporter Expenses: {{$this->company->currency ? $this->company->currency->name : ""}} {{$this->company->currency ? $this->company->currency->symbol : ""}}{{number_format($total_transporter_expenses,2)}} <br>
-                                                                                    @endif
-                                                                                    @if ($total_customer_expenses)
-                                                                                        Total Customer Expenses: {{$this->company->currency ? $this->company->currency->name : ""}} {{$this->company->currency ? $this->company->currency->symbol : ""}}{{number_format($total_customer_expenses,2)}} <br>
-                                                                                    @endif
-                                                                                    @if ($total_expenses)
-                                                                                        Total Self Expenses: {{$this->company->currency ? $this->company->currency->name : ""}} {{$this->company->currency ? $this->company->currency->symbol : ""}}{{number_format($total_expenses,2)}} <br>
-                                                                                    @endif
-                                                                                </td>
-                                                                            </tr>
+                                                                         
             
                                                                             <tr>
                                                                                 <th scope="row"> Net Profit</th>
@@ -783,6 +782,20 @@
                                                                             </tr>
                                                                         @endif
                                                                         <tr>
+                                                                            <th scope="row">Trip Expenses</th>
+                                                                            <td>
+                                                                                @if ($total_transporter_expenses)
+                                                                                Total Transporter Expenses: {{$this->company->currency ? $this->company->currency->name : ""}} {{$this->company->currency ? $this->company->currency->symbol : ""}}{{number_format($total_transporter_expenses,2)}} <br>
+                                                                                @endif
+                                                                                @if ($total_customer_expenses)
+                                                                                    Total Customer Expenses: {{$this->company->currency ? $this->company->currency->name : ""}} {{$this->company->currency ? $this->company->currency->symbol : ""}}{{number_format($total_customer_expenses,2)}} <br>
+                                                                                @endif
+                                                                                @if ($total_expenses)
+                                                                                    Total Self Expenses: {{$this->company->currency ? $this->company->currency->name : ""}} {{$this->company->currency ? $this->company->currency->symbol : ""}}{{number_format($total_expenses,2)}} <br>
+                                                                                @endif
+                                                                            </td>
+                                                                        </tr>
+                                                                        <tr>
                                                                             <th scope="row">Turnover</th>
                                                                             <td>
                                                                                 @if ($trip->turnover)
@@ -806,20 +819,7 @@
                                                                                 @endif
                                                                             </td>
                                                                         </tr>
-                                                                        <tr>
-                                                                            <th scope="row">Trip Expenses</th>
-                                                                            <td>
-                                                                                @if ($total_transporter_expenses)
-                                                                                Total Transporter Expenses: {{$this->company->currency ? $this->company->currency->name : ""}} {{$this->company->currency ? $this->company->currency->symbol : ""}}{{number_format($total_transporter_expenses,2)}} <br>
-                                                                                @endif
-                                                                                @if ($total_customer_expenses)
-                                                                                    Total Customer Expenses: {{$this->company->currency ? $this->company->currency->name : ""}} {{$this->company->currency ? $this->company->currency->symbol : ""}}{{number_format($total_customer_expenses,2)}} <br>
-                                                                                @endif
-                                                                                @if ($total_expenses)
-                                                                                    Total Self Expenses: {{$this->company->currency ? $this->company->currency->name : ""}} {{$this->company->currency ? $this->company->currency->symbol : ""}}{{number_format($total_expenses,2)}} <br>
-                                                                                @endif
-                                                                            </td>
-                                                                        </tr>
+                                                                        
 
                                                                         <tr>
                                                                             <th scope="row"> Net Profit</th>

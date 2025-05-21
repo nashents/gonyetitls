@@ -38,18 +38,25 @@ WithCustomStartCell
         $model = $horse->horse_model? $horse->horse_model->name : "";
         $fleet_number = $horse->fleet_number ? "(".$horse->fleet_number.")" : "";
 
+        $mileageDue = isset($horse->mileage, $horse->next_service) && $horse->mileage > 0 && $horse->next_service > 0 && $horse->mileage >= $horse->next_service;
+        $hoursDue = isset($horse->hours, $horse->next_service_hours) && $horse->hours > 0 && $horse->next_service_hours > 0 && $horse->hours >= $horse->next_service_hours;
+        $mileageOK = isset($horse->mileage, $horse->next_service) && $horse->mileage > 0 && $horse->next_service > 0 && $horse->mileage < $horse->next_service;
+        $hoursOK = isset($horse->hours, $horse->next_service_hours) && $horse->hours > 0 && $horse->next_service_hours > 0 && $horse->hours < $horse->next_service_hours;
+
+        if($mileageDue || $hoursDue){
+            $status = "Due for service";
+        }elseif ($mileageOK || $hoursOK) {
+            $status = "Fit for use";
+        }else{
+            $status = "";
+        }
+
         if (((isset($horse->mileage) && $horse->mileage > 0) && (isset($horse->next_service) && $horse->next_service > 0)) || ((isset($horse->hours) && $horse->hours > 0) && (isset($horse->next_service_hours) && $horse->next_service_hours > 0))) {
-            if (($horse->mileage >= $horse->next_service) || ($horse->hours >= $horse->next_service_hours)) {
-                $status = "Due for service";
-            }elseif (($horse->mileage < $horse->next_service) || ($horse->hours < $horse->next_service_hours)) {
-                $status = "Fit for use";
-            }
             $difference = $horse->next_service - $horse->mileage;
             $hours_difference = $horse->next_service_hours - $horse->hours;
         }else {
             $difference = "";
             $hours_difference = "";
-            $status = "";
         }
       
        
@@ -80,8 +87,11 @@ public function headings(): array{
             'Prev Service Mileage',
             'Prev Service Hours',
             'Current Mileage',
+            'Current Hours',
             'Next Service Mileage',
+            'Next Service Hours',
             'Current - Next Service Mileage Diff',
+            'Current - Next Service Hours Diff',
             'Status',
         ];
 
@@ -90,7 +100,7 @@ public function headings(): array{
     public function registerEvents(): array{
         return[
             AfterSheet::class    => function(AfterSheet $event) {
-                $event->sheet->getStyle('A7:H7')->applyFromArray([
+                $event->sheet->getStyle('A7:L7')->applyFromArray([
                     'font' => [
                         'bold' => true
                     ],

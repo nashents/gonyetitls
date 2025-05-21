@@ -5,6 +5,7 @@
         <div class="col-md-10 col-md-offset-1">
             <ul class="nav nav-tabs nav-justified" role="tablist">
                 <li role="presentation" class="active"><a href="#basic" aria-controls="basic" role="tab" data-toggle="tab">Route Details</a></li>
+                <li role="presentation"><a href="#expenses" aria-controls="expenses" role="tab" data-toggle="tab">Expenses</a></li>
                 <li role="presentation"><a href="#documents" aria-controls="documents" role="tab" data-toggle="tab">Documents</a></li>
                 <li role="presentation"><a href="#trips" aria-controls="trips" role="tab" data-toggle="tab">Trips</a></li>
             </ul>
@@ -38,7 +39,17 @@
                         </tr>
                         <tr>
                             <th class="w-10 text-center line-height-35">Distance</th>
-                            <td class="w-20 line-height-35">{{$route->distance."Kms"}}</td>
+                            <td class="w-20 line-height-35">{{$route->distance ? $route->distance."Kms" : ""}}</td>
+                        </tr>
+                        <tr>
+                            <th class="w-10 text-center line-height-35">Borders</th>
+                            <td class="w-20 line-height-35">
+                                            [
+                                                @foreach ($route->borders as $border)
+                                                    {{$border->name}}, 
+                                                @endforeach
+                                            ]
+                            </td>
                         </tr>
                         <tr>
                             <th class="w-10 text-center line-height-35">Tollgates</th>
@@ -70,6 +81,9 @@
                     </tbody>
                 </table>
                 </div>
+                <div role="tabpanel" class="tab-pane" id="expenses">
+                    @livewire('routes.expenses',['id' => $route->id])
+                  </div>
                 <div role="tabpanel" class="tab-pane" id="documents">
                     @livewire('documents.index', ['id' => $route->id,'category' =>'route'])
                   </div>

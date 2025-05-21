@@ -181,10 +181,7 @@ class Index extends Component
     }
 
 
-    public function dateRange(){
- 
-        // $this->resetPage();
-    }
+   
     public function updatingSearch()
     {
         $this->resetPage();
@@ -348,8 +345,6 @@ class Index extends Component
 
        
     }
-  
-
 
     public function render()
     {

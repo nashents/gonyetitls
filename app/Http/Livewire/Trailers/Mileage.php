@@ -23,14 +23,14 @@ class Mileage extends Component
 
     public function exportTrailersMileageCSV(Excel $excel){
 
-        return $excel->download(new TrailersMileageExport, 'trailers.csv', Excel::CSV);
+        return $excel->download(new TrailersMileageExport, 'trailers_mileage_report.csv', Excel::CSV);
     }
     public function exportTrailersMileagePDF(Excel $excel){
 
-        return $excel->download(new TrailersMileageExport, 'trailers.pdf', Excel::DOMPDF);
+        return $excel->download(new TrailersMileageExport, 'trailers_mileage_report.pdf', Excel::DOMPDF);
     }
     public function exportTrailersMileageExcel(Excel $excel){
-        return $excel->download(new TrailersMileageExport, 'trailers.xlsx');
+        return $excel->download(new TrailersMileageExport, 'trailers_mileage_report.xlsx');
     }
 
     private function resetInputFields(){

@@ -142,18 +142,18 @@ class Index extends Component
            
 
             if($this->inventory_type == "spares"){
-                $ticket_inventory->weight =  $this->weight;
-                $ticket_inventory->measurement =  $inventory->measurement;
+                $ticket_inventory->weight = $this->weight ? $this->weight : 0;
+                $ticket_inventory->measurement = $inventory->measurement ? $inventory->measurement : "Item";
                 $ticket_inventory->currency_id = $inventory->currency_id;
                 if ((isset($this->weight) && is_numeric($this->weight && $this->weight > 0)) && (isset($inventory->weight) && is_numeric($inventory->weight) && $inventory->weight > 0) && (isset($inventory->subtotal_incl) && is_numeric($inventory->subtotal_incl) && $inventory->subtotal_incl > 0 )) {
                     $amount = ($this->weight / $inventory->weight) * $inventory->subtotal_incl;
-                    $ticket_inventory->amount = $amount;
+                    $ticket_inventory->amount = $amount ? $amount : 0;
                 }
                 $ticket_inventory->exchange_amount = $inventory->exchange_amount;
                 $ticket_inventory->exchange_rate = $inventory->exchange_rate;
             }elseif($this->inventory_type == "tyres"){
                 $ticket_inventory->currency_id = $tyre->currency_id;
-                $ticket_inventory->amount = $tyre->subtotal_incl;
+                $ticket_inventory->amount = $tyre->subtotal_incl ? $tyre->subtotal_incl : 0;
                 $ticket_inventory->exchange_amount = $tyre->exchange_amount;
                 $ticket_inventory->exchange_rate = $tyre->exchange_rate;
             }
@@ -200,7 +200,7 @@ class Index extends Component
             }
             $bill_expense->inventory_id = $this->selectedInventory;
             $bill_expense->qty = 1;
-            $bill_expense->amount = $ticket_inventory->amount;
+            $bill_expense->amount = $ticket_inventory->amount ? $ticket_inventory->amount: 0;
             $bill_expense->subtotal = $ticket_inventory->amount;
             $bill_expense->subtotal_incl = $ticket_inventory->amount;
             $bill_expense->save();
@@ -210,8 +210,8 @@ class Index extends Component
             $requisition->ticket_inventory_id = $ticket_inventory->id;
             if($this->inventory_type == "spares"){
                 $requisition->inventory_id = $this->selectedInventory;
-                $requisition->weight = $this->weight;
-                $requisition->measurement = $inventory->measurement;
+                $requisition->weight = $this->weight ? $this->weight : 0;
+                $requisition->measurement = $inventory->measurement ? $inventory->measurement : "Item";
             }elseif($this->inventory_type == "tyres"){
                 $requisition->tyre_id = $this->selectedTyre;
             }
@@ -228,8 +228,8 @@ class Index extends Component
             $dispatch->inventory_requisition_id = $requisition->id;
             if($this->inventory_type == "spares"){
                 $dispatch->inventory_id = $this->selectedInventory;
-                $dispatch->measurement = $inventory->measurement;
-                $dispatch->weight = $this->weight;
+                $dispatch->measurement = $inventory->measurement ? $inventory->measurement : "Item";
+                $dispatch->weight = $this->weight ? $this->weight : 0;
                 $dispatch->part_number = $inventory->part_number;
             }elseif($this->inventory_type == "tyres"){
                 $dispatch->tyre_id = $this->selectedTyre;
@@ -322,19 +322,19 @@ class Index extends Component
         if($this->inventory_type == "spares"){
             $ticket_inventory->inventory_id =  $this->selectedInventory;
             $ticket_inventory->tyre_id =  Null;
-            $ticket_inventory->measurement =  $inventory->measurement;
-            $ticket_inventory->weight =  $this->weight;
+            $ticket_inventory->weight = $this->weight ? $this->weight : 0;
+            $ticket_inventory->measurement = $inventory->measurement ? $inventory->measurement : "Item";
             $ticket_inventory->currency_id = $inventory->currency_id;
         if ((isset($this->weight) && is_numeric($this->weight && $this->weight > 0)) && (isset($inventory->weight) && is_numeric($inventory->weight) && $inventory->weight > 0) && (isset($inventory->subtotal_incl) && is_numeric($inventory->subtotal_incl) && $inventory->subtotal_incl > 0 )) {
             $amount = ($this->weight / $inventory->weight) * $inventory->subtotal_incl;
-            $ticket_inventory->amount = $amount;
+            $ticket_inventory->amount = $amount ? $amount : 0;
 
             }
         }elseif($this->inventory_type == "tyres"){
             $ticket_inventory->tyre_id =  $this->selectedTyre;
             $ticket_inventory->inventory_id =  Null;
             $ticket_inventory->currency_id = $tyre->currency_id;
-            $ticket_inventory->amount = $tyre->subtotal_incl;
+            $ticket_inventory->amount = $tyre->subtotal_incl ? $tyre->subtotal_incl : 0;
         }
        
         $ticket_inventory->update();
@@ -381,7 +381,7 @@ class Index extends Component
             }
             $bill_expense->inventory_id = $this->selectedInventory;
             $bill_expense->qty = 1;
-            $bill_expense->amount = $ticket_inventory->amount;
+            $bill_expense->amount = $ticket_inventory->amount ? $ticket_inventory->amount: 0;
             $bill_expense->subtotal = $ticket_inventory->amount;
             $bill_expense->subtotal_incl = $ticket_inventory->amount;
             $bill_expense->update();
@@ -394,8 +394,8 @@ class Index extends Component
         $requisition->ticket_inventory_id = $ticket_inventory->id;
             if($this->inventory_type == "spares"){
                 $requisition->inventory_id = $this->selectedInventory;
-                $requisition->weight = $this->weight;
-                $requisition->measurement = $inventory->measurement;
+                $requisition->weight = $this->weight ? $this->weight : 0;
+                $requisition->measurement = $inventory->measurement ? $inventory->measurement : "Item";
             }elseif($this->inventory_type == "tyres"){
                 $requisition->tyre_id = $this->selectedTyre;
             }
@@ -411,8 +411,8 @@ class Index extends Component
         $dispatch->inventory_requisition_id = $requisition->id;
         if($this->inventory_type == "spares"){
             $dispatch->inventory_id = $this->selectedInventory;
-            $dispatch->measurement = $inventory->measurement;
-            $dispatch->weight = $this->weight;
+            $dispatch->measurement = $inventory->measurement ? $inventory->measurement : "Item";
+            $dispatch->weight = $this->weight ? $this->weight : 0;
             $dispatch->part_number = $inventory->part_number;
         }elseif($this->inventory_type == "tyres"){
             $dispatch->tyre_id = $this->selectedTyre;
