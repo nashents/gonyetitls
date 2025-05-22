@@ -1692,7 +1692,9 @@ class Edit extends Component
            
         }
 
-        if ($this->fuel_order == True) {   
+         if($this->shift == False){
+
+              if ($this->fuel_order == True) {   
 
             $fuel = $trip->fuels->where('fillup',1)->first();
 
@@ -1861,6 +1863,10 @@ class Edit extends Component
     
         }
 
+
+         }
+
+      
    
        
         if ($this->trip_expenses == True) {

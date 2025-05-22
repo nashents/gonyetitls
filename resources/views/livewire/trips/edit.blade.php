@@ -1020,7 +1020,7 @@
                                     </div>
                                     </div>
                                 
-                 
+                                @if ($shift == False)
                                     <hr>
                                     <h5 class="underline mt-30">Fuel Order Details</h5>
                                     <div class="mb-10">
@@ -1222,6 +1222,7 @@
                                        </div>
                                    </div>
                                   
+                                   @endif
                                    @endif
 
                                    <hr>

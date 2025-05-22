@@ -7,6 +7,9 @@
 
             <ul class="nav nav-tabs nav-justified" role="tablist">
                 <li role="presentation" class="active"><a href="#basic" aria-controls="basic" role="tab" data-toggle="tab">Shift Details</a></li>
+                   @if ($shift->fuel_order == True)
+                <li role="presentation" ><a href="#fuel" aria-controls="fuel" role="tab" data-toggle="tab">Fuel Order</a></li>
+                @endif
                 @if ($shift->for === "Trips")
                     <li role="presentation"><a href="#trips" aria-controls="trips" role="tab" data-toggle="tab">Trips</a></li>
                 @elseif($shift->for === "Rehandling")
@@ -36,6 +39,10 @@
                                 <td class="w-20 line-height-35">{{$shift->customer ? $shift->customer->name : ""}}</td>
                             </tr>
                             <tr>
+                                <th class="w-10 text-center line-height-35">Cargo</th>
+                                <td class="w-20 line-height-35">{{$shift->cargo ? $shift->cargo->name : ""}}</td>
+                            </tr>
+                            <tr>
                                 <th class="w-10 text-center line-height-35">Transporter</th>
                                 <td class="w-20 line-height-35">{{$shift->transporter ? $shift->transporter->name : ""}}</td>
                             </tr>
@@ -48,9 +55,9 @@
                                 <th class="w-10 text-center line-height-35">Equipment</th>
                                 <td class="w-20 line-height-35">
                                     @if ($shift->horse)
-                                        {{$shift->horse->registration_number}}        
+                                        {{ucfirst($shift->horse->horse_make ? $shift->horse->horse_make->name : "")}} {{ucfirst($shift->horse->horse_model ? $shift->horse->horse_model->name : "")}} ({{ucfirst($shift->horse ? $shift->horse->registration_number : "")}})     
                                     @elseif($shift->vehicle)
-                                        {{$shift->vehicle->registration_number}}     
+                                       {{ucfirst($shift->vehicle->vehicle_make ? $shift->vehicle->vehicle_make->name : "")}} {{ucfirst($shift->vehicle->vehicle_model ? $shift->vehicle->vehicle_model->name : "")}} ({{ucfirst($shift->vehicle ? $shift->vehicle->registration_number : "")}})     
                                     @endif
                                 </td>
                             </tr>
@@ -58,9 +65,97 @@
                                     <th class="w-10 text-center line-height-35">Status</th>
                                     <td class="w-20 line-height-35"><span class="badge bg-{{$shift->status == 1 ? "success" : "danger"}}">{{$shift->status == 1 ? "Active" : "Inactive"}}</span></td>
                                 </tr>
+                    
+                           
+                           
+                       
+                                
                         </tbody>
                     </table>
                 </div>
+                @if ($shift->fuel_order)
+                    <div role="tabpanel" class="tab-pane" id="fuel">
+                         <table class="table table-striped">
+
+                        <tbody class="text-center line-height-35 ">
+
+                        @if ($shift->fuel_order == True)
+                            @php
+                                $fuel = $shift->fuel;
+                            @endphp
+                        @if ($fuel)
+                            <tr>
+                                <th class="w-10 text-center line-height-35">Fuel Order#</th>
+                                <td class="w-20 line-height-35"> {{$fuel->order_number}}</td>
+                            </tr>
+                            <tr>
+                                <th class="w-10 text-center line-height-35"> Refueling Date</th>
+                                <td class="w-20 line-height-35">
+                                    @php
+                                        $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
+                                        @endphp
+                                        @if ((preg_match($pattern, $fuel->date)) )
+                                            {{ \Carbon\Carbon::parse($fuel->date)->format('d M Y g:i A')}}
+                                        @else
+                                        {{$fuel->date}}
+                                        @endif  
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="w-10 text-center line-height-35">Fueling Station</th>
+                                <td class="w-20 line-height-35">{{ucfirst($fuel->container ? $fuel->container->name : "")}}</td>
+                            </tr>
+                            <tr>
+                                <th class="w-10 text-center line-height-35">Quantity</th>
+                                <td class="w-20 line-height-35"> {{$fuel->quantity ? $fuel->quantity."L" : ""}}</td>
+                            </tr>
+                            <tr>
+                                <th class="w-10 text-center line-height-35">Currency</th>
+                                <td class="w-20 line-height-35">{{$fuel->currency ? $fuel->currency->name : ""}}</td>
+                            </tr>
+                            <tr>
+                                <th class="w-10 text-center line-height-35">Rate</th>
+                                <td class="w-20 line-height-35">
+                                    @if ($fuel->unit_price)
+                                        {{$fuel->currency ? $fuel->currency->symbol : ""}}{{number_format($fuel->unit_price,2)}}
+                                    @endif
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="w-10 text-center line-height-35">Total</th>
+                                <td class="w-20 line-height-35">
+                                    @if ($fuel->amount)
+                                        {{$fuel->currency ? $fuel->currency->symbol : ""}}{{number_format($fuel->amount,2)}}
+                                    @endif
+                                </td>
+                            </tr>
+                            @if ($fuel->odometer)
+                            <tr>
+                                <th class="w-10 text-center line-height-35">Mileage</th>
+                                <td class="w-20 line-height-35">{{$fuel->odometer ? $fuel->odometer."Kms" : ""}}</td>
+                            </tr>
+                            @endif
+                            @if ($fuel->hours)
+                            <tr>
+                                <th class="w-10 text-center line-height-35">Engine Hours</th>
+                                <td class="w-20 line-height-35">{{$fuel->hours ? $fuel->hours."Hours" : ""}}</td>
+                            </tr>
+                            @endif
+                            @if ($fuel->comments)
+                            <tr>
+                                <th class="w-10 text-center line-height-35">Fuel Order Comments</th>
+                                <td class="w-20 line-height-35"> {{$fuel->comments? $fuel->comments : "No comment recorded"}}</td>
+                            </tr>
+                            @endif
+                           
+                           
+                        @endif
+                        @endif
+                                
+                        </tbody>
+                    </table>
+                    </div> 
+                @endif
                 @if ($shift->for === "Trips")
                     <div role="tabpanel" class="tab-pane" id="trips">
                     @livewire('shifts.trips', ['id' => $shift->id])

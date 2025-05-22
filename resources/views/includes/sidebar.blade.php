@@ -487,7 +487,7 @@
                             $department_head = App\Models\DepartmentHead::where('department_id',$department->id)->where('employee_id',$employee->id)->first();
                         }
                 @endphp
-                <li class="has-children {{ request()->routeIs('bills.index') ? 'active' : '' }}" >
+                <li class="has-children {{ request()->routeIs('bills.*') ? 'active' : '' }}" >
                     <a href="#"><i class="fas fa-th-list"></i> <span>Bills</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
                         <li><a href="{{route('bills.create')}}" ><i class="fas fa-plus "></i> <span>Create Bill</span></a></li>

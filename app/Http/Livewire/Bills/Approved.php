@@ -214,19 +214,7 @@ catch(\Exception $e){
 
     public function render()
     {
-        $departments = Auth::user()->employee->departments;
-        foreach($departments as $department){
-            $department_names[] = $department->name;
-        }
-        $roles = Auth::user()->roles;
-        foreach($roles as $role){
-            $role_names[] = $role->name;
-        }
-        $ranks = Auth::user()->employee->ranks;
-        foreach($ranks as $rank){
-            $rank_names[] = $rank->name;
-        }
-        if (in_array('Admin', $role_names) || in_array('Super Admin', $role_names)) {
+   
             if (isset($this->from) && isset($this->to)) {
                 if (isset($this->search)) {
                     return view('livewire.bills.approved',[
@@ -234,6 +222,7 @@ catch(\Exception $e){
                         ->whereDate($this->bill_filter, '>=', $this->from)
                         ->whereDate($this->bill_filter, '<=', $this->to)
                         ->where('authorization','approved')
+                        ->where('to_be_paid', True)
                         ->where('bill_number','like', '%'.$this->search.'%')
                         ->orWhere('status','like', '%'.$this->search.'%')
                         ->orWhere('bill_date','like', '%'.$this->search.'%')
@@ -274,6 +263,7 @@ catch(\Exception $e){
                         'bills' => Bill::query()->with('invoice','transporter','container','top_up','trip','horse','driver','purchase','currency','payments')->where('authorization','approved')
                         ->whereDate($this->bill_filter, '>=', $this->from)
                         ->whereDate($this->bill_filter, '<=', $this->to)
+                          ->where('to_be_paid', True)
                         ->orderBy('bill_number','desc')->paginate(10),
                         'bill_filter' => $this->bill_filter,
     
@@ -288,6 +278,7 @@ catch(\Exception $e){
                     'bills' => Bill::query()->with('invoice','transporter','container','top_up','trip','horse','driver','purchase','currency','payments')->whereMonth('created_at', date('m'))
                     ->where('authorization','approved')
                     ->whereYear('created_at', date('Y'))
+                      ->where('to_be_paid', True)
                     ->where('bill_number','like', '%'.$this->search.'%')
                     ->orWhere('status','like', '%'.$this->search.'%')
                     ->orWhere('bill_date','like', '%'.$this->search.'%')
@@ -329,6 +320,7 @@ catch(\Exception $e){
                 return view('livewire.bills.approved',[
                     'bills' => Bill::query()->with('invoice','transporter','container','top_up','trip','horse','driver','purchase','currency','payments')->whereMonth('created_at', date('m'))
                     ->where('authorization','approved')
+                      ->where('to_be_paid', True)
                     ->whereYear($this->bill_filter, date('Y'))->orderBy('bill_number','desc')->paginate(10),
                     'bill_filter' => $this->bill_filter,
 
@@ -336,118 +328,7 @@ catch(\Exception $e){
                 ]);
               
             }
-        }else {
-            if (isset($this->from) && isset($this->to)) {
-                if (isset($this->search)) {
-                    return view('livewire.bills.approved',[
-                        'bills' => Bill::query()->with('invoice','transporter','container','top_up','trip','horse','driver','purchase','currency','payments')
-                        ->whereDate($this->bill_filter, '>=', $this->from)
-                        ->whereDate($this->bill_filter, '<=', $this->to)
-                        ->where('user_id',Auth::user()->id)
-                        ->where('authorization','approved')
-                        ->where('bill_number','like', '%'.$this->search.'%')
-                        ->orWhere('status','like', '%'.$this->search.'%')
-                        ->orWhere('bill_date','like', '%'.$this->search.'%')
-                        ->orWhereHas('horse', function ($query) {
-                            return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('ticket', function ($query) {
-                            return $query->where('ticket_number', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('currency', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('trip', function ($query) {
-                            return $query->where('trip_number', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('invoice', function ($query) {
-                            return $query->where('invoice_number', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('transporter', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('container', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('purchase', function ($query) {
-                            return $query->where('purchase_number', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('vendor', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                        })
-                        ->orderBy('bill_number','desc')->paginate(10),
-                        'bill_filter' => $this->bill_filter,
-    
-                       
-                    ]);
-                }else{
-                    return view('livewire.bills.approved',[
-                        'bills' => Bill::query()->with('invoice','transporter','container','top_up','trip','horse','driver','purchase','currency','payments')->where('authorization','approved')
-                        ->whereDate($this->bill_filter, '>=', $this->from)
-                        ->whereDate($this->bill_filter, '<=', $this->to)
-                        ->where('user_id',Auth::user()->id)->orderBy('bill_number','desc')->paginate(10),
-                        'bill_filter' => $this->bill_filter,
-    
-                       
-                    ]);
-                }
-              
-               
-            }
-            elseif (isset($this->search)) {
-                return view('livewire.bills.approved',[
-                    'bills' => Bill::query()->with('invoice','transporter','container','top_up','trip','horse','driver','purchase','currency','payments')->whereMonth($this->bill_filter, date('m'))
-                    ->where('authorization','approved')
-                    ->whereYear($this->bill_filter, date('Y'))->where('bill_number','like', '%'.$this->search.'%')->where('user_id',Auth::user()->id)
-                    ->where('bill_number','like', '%'.$this->search.'%')
-                    ->orWhere('bill_date','like', '%'.$this->search.'%')
-                    ->orWhere('status','like', '%'.$this->search.'%')
-                   
-                    ->orWhereHas('horse', function ($query) {
-                        return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('currency', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('ticket', function ($query) {
-                        return $query->where('ticket_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('trip', function ($query) {
-                        return $query->where('trip_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('invoice', function ($query) {
-                        return $query->where('invoice_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('transporter', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('container', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('purchase', function ($query) {
-                        return $query->where('purchase_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('vendor', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orderBy('bill_number','desc')->paginate(10),
-                    'bill_filter' => $this->bill_filter,
+        
 
-                   
-                ]);
-            }
-            else {
-                
-                return view('livewire.bills.approved',[
-                    'bills' => Bill::query()->with('invoice','transporter','container','top_up','trip','horse','driver','purchase','currency','payments')->where('authorization','approved')->whereMonth($this->bill_filter, date('m'))
-                    ->whereYear($this->bill_filter, date('Y'))->where('user_id',Auth::user()->id)->orderBy('bill_number','desc')->paginate(10),
-                    'bill_filter' => $this->bill_filter,
-
-                   
-                ]);
-
-            }
-
-        }
     }
 }

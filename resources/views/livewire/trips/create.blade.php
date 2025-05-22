@@ -1359,7 +1359,7 @@
                         
 
                             <hr>
-
+                            @if ($shift == False)
                              <h5 class="underline mt-30">Fuel Order Details</h5>
                              <div class="mb-10">
                                 <input type="checkbox" wire:model.debounce.300ms="fuel_order"   class="line-style" />
@@ -1559,7 +1559,7 @@
                                     </div>
                                 </div>
                             </div>
-                           
+                            @endif
                             @endif
                             
                             <hr>

@@ -30,6 +30,7 @@ class Index extends Component
     public $location;
     public $countries;
     public $description;
+    public $status;
 
     public $updateMode = false;
     public $deleteMode = false;
@@ -58,6 +59,7 @@ class Index extends Component
         $this->long = '';
         $this->lat = '';
         $this->location = '';
+        $this->status = '';
     }
 
     public function exportDestinationsCSV(Excel $excel){
@@ -123,6 +125,7 @@ class Index extends Component
     $this->lat = $destination->lat;
     $this->description = $destination->description;
     $this->destination_id = $destination->id;
+    $this->status = $destination->status;
 
    
 
@@ -222,6 +225,7 @@ class Index extends Component
             $destination->location = $this->location;
             $destination->lat = $this->lat;
             $destination->description = $this->description;
+            $destination->status = $this->status;
             $destination->update();
             $this->dispatchBrowserEvent('hide-destinationEditModal');
             $this->resetInputFields();

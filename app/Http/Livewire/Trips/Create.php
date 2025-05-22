@@ -1460,64 +1460,65 @@ class Create extends Component
                     }
                 }
   
+                if($this->shift == False){
+                    if ($this->fuel_order) {
+                        $fuel_fillup = $trip->fuels->where('fillup', 1)->first();
+                        $container = Container::find($this->selectedContainer);
+                    
+                        $fuel = new Fuel;
+                        $fuel->user_id = $this->user->id;
+                        $fuel->order_number = $this->orderNumber();
+                        $fuel->horse_id = $this->selectedHorse ?? null;
+                        $fuel->vehicle_id = $this->selectedVehicle ?? null;
+                        $fuel->currency_id = $this->selectedFuelCurrency;
+                        $fuel->trip_id = $trip->id;
+                        $fuel->type = isset($this->selectedVehicle) ? "Vehicle" : (isset($this->selectedHorse) ? "Horse" : null);
+                        $fuel->driver_id = $this->driver_id ?? null;
+                        $fuel->container_id = $this->selectedContainer ?? null;
+                        $fuel->date = $this->date;
+                        $fuel->unit_price = $this->unit_price;
+                        $fuel->quantity = $this->fuel_quantity;
+                        $fuel->amount = $this->fuel_amount;
+                        $fuel->transporter_price = $this->transporter_price;
+                        $fuel->transporter_total = $this->transporter_total;
+                        $fuel->profit = $this->fuel_profit;
+                        $fuel->odometer = $this->odometer;
+                        $fuel->category = $this->fuel_category;
+                        $fuel->exchange_amount = $this->fuel_exchange_amount;
+                        $fuel->exchange_rate = $this->fuel_exchange_rate;
+                        $fuel->fillup = 1;
+                        $fuel->status = 1;
+                        $fuel->comments = $this->fuel_comments;
+                        $fuel->save();
+                    
+                        $fuel_expense = Expense::where('name', 'Fuel Topup')->first();
+                    
+                        $trip_expense = new TripExpense;
+                        $trip_expense->user_id = $this->user->id;
+                        $trip_expense->trip_id = $trip->id;
+                        $trip_expense->fuel_id = $fuel->id;
+                        $trip_expense->expense_id = $fuel_expense->id ?? null;
+                        $trip_expense->currency_id = $this->selectedFuelCurrency;
+                        $trip_expense->category = $this->fuel_category;
+                        $trip_expense->amount = $this->fuel_amount;
+                        $trip_expense->exchange_rate = $this->fuel_exchange_rate;
+                        $trip_expense->exchange_amount = $this->fuel_exchange_amount;
 
-                if ($this->fuel_order) {
-
-                    $fuel_fillup = $trip->fuels->where('fillup', 1)->first();
-                    $container = Container::find($this->selectedContainer);
-                
-                    $fuel = new Fuel;
-                    $fuel->user_id = $this->user->id;
-                    $fuel->order_number = $this->orderNumber();
-                    $fuel->horse_id = $this->selectedHorse ?? null;
-                    $fuel->vehicle_id = $this->selectedVehicle ?? null;
-                    $fuel->currency_id = $this->selectedFuelCurrency;
-                    $fuel->trip_id = $trip->id;
-                    $fuel->type = isset($this->selectedVehicle) ? "Vehicle" : (isset($this->selectedHorse) ? "Horse" : null);
-                    $fuel->driver_id = $this->driver_id ?? null;
-                    $fuel->container_id = $this->selectedContainer ?? null;
-                    $fuel->date = $this->date;
-                    $fuel->unit_price = $this->unit_price;
-                    $fuel->quantity = $this->fuel_quantity;
-                    $fuel->amount = $this->fuel_amount;
-                    $fuel->transporter_price = $this->transporter_price;
-                    $fuel->transporter_total = $this->transporter_total;
-                    $fuel->profit = $this->fuel_profit;
-                    $fuel->odometer = $this->odometer;
-                    $fuel->category = $this->fuel_category;
-                    $fuel->exchange_amount = $this->fuel_exchange_amount;
-                    $fuel->exchange_rate = $this->fuel_exchange_rate;
-                    $fuel->fillup = 1;
-                    $fuel->status = 1;
-                    $fuel->comments = $this->fuel_comments;
-                    $fuel->save();
-                
-                    $fuel_expense = Expense::where('name', 'Fuel Topup')->first();
-                
-                    $trip_expense = new TripExpense;
-                    $trip_expense->user_id = $this->user->id;
-                    $trip_expense->trip_id = $trip->id;
-                    $trip_expense->fuel_id = $fuel->id;
-                    $trip_expense->expense_id = $fuel_expense->id ?? null;
-                    $trip_expense->currency_id = $this->selectedFuelCurrency;
-                    $trip_expense->category = $this->fuel_category;
-                    $trip_expense->amount = $this->fuel_amount;
-                    $trip_expense->exchange_rate = $this->fuel_exchange_rate;
-                    $trip_expense->exchange_amount = $this->fuel_exchange_amount;
-
-                    $category = $this->fuel_category ?? null;
-                    $currency_id = $this->selectedFuelCurrency ?? null;
-                    $amount =  $this->fuel_amount ?? 0;
-                    $exchange_amount = $this->fuel_exchange_amount ?? 0;
-                
-                    // Add fuel to totals
-                    $this->addToCategoryTotal(
-                        $category,
-                        $amount = ($currency_id == $this->company->currency_id) ? $amount : $exchange_amount
-                    );
-                
-                    $trip_expense->save();
+                        $category = $this->fuel_category ?? null;
+                        $currency_id = $this->selectedFuelCurrency ?? null;
+                        $amount =  $this->fuel_amount ?? 0;
+                        $exchange_amount = $this->fuel_exchange_amount ?? 0;
+                    
+                        // Add fuel to totals
+                        $this->addToCategoryTotal(
+                            $category,
+                            $amount = ($currency_id == $this->company->currency_id) ? $amount : $exchange_amount
+                        );
+                    
+                        $trip_expense->save();
+                    }
                 }
+                
 
                 if ($this->trip_expenses && $this->expense_id) {
                     foreach ($this->expense_id as $key => $value) {

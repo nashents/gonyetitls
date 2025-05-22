@@ -15,6 +15,9 @@ class Shift extends Model implements Auditable
     public function user(){
         return $this->belongsTo('App\Models\User');
     }
+    public function cargo(){
+        return $this->belongsTo('App\Models\Cargo');
+    }
     public function customer(){
         return $this->belongsTo('App\Models\Customer');
     }

@@ -322,20 +322,32 @@
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label for="name">Assessment Expires</label>
                                 <input type="date" class="form-control" wire:model.debounce.300ms="expiry_date"  />
                                 @error('expiry_date') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label for="name">Description</label>
                                <textarea class="form-control" wire:model.debounce.300ms="description" cols="30" rows="3"></textarea>
                                 @error('description') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
+                         <div class="col-md-4">
+                         <div class="form-group">
+                            <label for="country">Status<span class="required" style="color: red">*</span></label>
+                            <select class="form-control" wire:model.debounce.300ms="status" required>
+                                <option value="">Select Option</option>
+                                <option value="1">Active</option>
+                                <option value="0">Inactive</option>
+                            </select>
+                            @error('status') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        </div>
+                       </div>
+                    </div>
                     </div>
                 </div>
                 <div class="modal-footer">

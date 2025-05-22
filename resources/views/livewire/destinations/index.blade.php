@@ -34,6 +34,8 @@
                                     </th>
                                     <th class="th-sm">Longitude
                                     </th>
+                                    <th class="th-sm">Status
+                                    </th>
                                     <th class="th-sm">Action
                                     </th>
                                   </tr>
@@ -53,6 +55,7 @@
                                     <td>{{$destination->description}}</td>
                                     <td>{{$destination->lat}}</td>
                                     <td>{{$destination->long}}</td>
+                                     <td><span class="badge bg-{{$destination->status == 1 ? "success" : "danger"}}">{{$destination->status == 1 ? "Active" : "Inactive"}}</span></td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -229,20 +232,31 @@
                         @error('location') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label for="description">Latitude<span class="required" style="color: red">*</span></label>
                                 <input type="text" class="form-control" wire:model.debounce.300ms="lat" placeholder="Enter Latitude" required disabled>
                                 @error('lat') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label for="description">Longitude<span class="required" style="color: red">*</span></label>
                                 <input type="text" class="form-control" wire:model.debounce.300ms="long" placeholder="Enter Longitude" required disabled>
                                 @error('long') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
+                       <div class="col-md-4">
+                         <div class="form-group">
+                            <label for="country">Status<span class="required" style="color: red">*</span></label>
+                            <select class="form-control" wire:model.debounce.300ms="status" required>
+                                <option value="">Select Option</option>
+                                <option value="1">Active</option>
+                                <option value="0">Inactive</option>
+                            </select>
+                            @error('status') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        </div>
+                       </div>
                     </div>
                 </div>
                 <div class="modal-footer">

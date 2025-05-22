@@ -372,6 +372,7 @@ class Index extends Component
         $shift->shift_end_time = $this->shift_end_time;
         $shift->customer_id = $this->customer_id;
         $shift->driver_id = $this->driver_id;
+        $shift->cargo_id = $this->cargo_id;
         $shift->transporter_id = $this->selectedTransporter;
         $shift->horse_id = $this->equipment === "Horse" ? $this->selectedHorse : null;
         $shift->vehicle_id = $this->equipment === "Vehicle" ? $this->selectedVehicle : null;
@@ -481,21 +482,41 @@ class Index extends Component
     public function edit($id){
 
     $shift = Shift::find($id);
-    $this->user_id = $shift->user_id;
-    $this->name = $shift->name;
+    $this->for = $shift->for;
+    $this->equipment = $shift->equipment;
     $this->shift_start_time = $shift->shift_start_time;
     $this->shift_end_time = $shift->shift_end_time;
     $this->date = $shift->date;
     $this->type = $shift->type;
-    $this->location = $shift->location;
-    $this->long = $shift->long;
-    $this->status = $shift->status;
-    $this->expiry_date = $shift->expiry_date;
-    $this->description = $shift->description;
+    $this->updatedSelectedTransporter($shift->transporter_id);
+    $this->selectedTransporter = $shift->transporter_id;
+    $this->selectedHorse = $shift->horse_id;
+    $this->cargo_id = $shift->cargo_id;
+    $this->driver_id = $shift->driver_id;
+    $this->selectedVehicle = $shift->vehicle_id;
+    $this->customer_id = $shift->customer_id;
+    $this->depart_workshop_time = $shift->depart_workshop_time;
+    $this->arrive_location_time = $shift->arrive_location_time;
+    $this->depart_location_time = $shift->depart_location_time;
+    $this->arrive_workshop_time = $shift->arrive_workshop_time;
     $this->shift_id = $shift->id;
     $this->fuel_order = $shift->fuel_order;
-    $this->fuel_id = $shift->fuel->id ?? null;
-
+    $this->fuel_order = $shift->fuel_order;
+    $fuel = $shift->fuel;
+    if($fuel){
+    $this->selectedFuelCurrency = $fuel->currency_id;          
+    $this->selectedContainer=  $fuel->container_id;
+    $this->date = $fuel->date;
+    $this->unit_price = $fuel->unit_price;
+    $this->fuel_quantity = $fuel->quantity;
+    $this->fuel_amount = $fuel->amount;
+    $this->mileage = $fuel->odometer;
+    $this->hours = $fuel->hours;
+    $this->fuel_category = $fuel->category;
+    $this->fuel_exchange_amount = $fuel->exchange_amount;
+    $this->fuel_exchange_rate = $fuel->exchange_rate;
+     $this->fuel_comments = $fuel->comments;
+    }
 
     $this->dispatchBrowserEvent('show-shiftEditModal');
 
@@ -506,14 +527,20 @@ class Index extends Component
         if ($this->shift_id) {
             try{
             $shift = Shift::find($this->shift_id);
-             $shift->name = $this->name;
+            $shift->for = $this->for;
+            $shift->type = $this->type;
             $shift->shift_start_time = $this->shift_start_time;
             $shift->shift_end_time = $this->shift_end_time;
             $shift->customer_id = $this->customer_id;
             $shift->driver_id = $this->driver_id;
+            $shift->cargo_id = $this->cargo_id;
+            $shift->transporter_id = $this->selectedTransporter;
+            $shift->horse_id = $this->equipment === "Horse" ? $this->selectedHorse : null;
+            $shift->vehicle_id = $this->equipment === "Vehicle" ? $this->selectedVehicle : null;
+            $shift->equipment = $this->equipment;
+            $shift->fuel_order = $this->fuel_order;
             $shift->open_employee_id = $this->open_employee_id;
             $shift->closing_employee_id = $this->closing_employee_id;
-            $shift->type = $this->type;
             $shift->depart_workshop_time = $this->depart_workshop_time;
             $shift->arrive_location_time = $this->arrive_location_time;
             $shift->depart_location_time = $this->depart_location_time;
@@ -523,28 +550,56 @@ class Index extends Component
             $shift->update();
 
                 if ($this->fuel_order) {
-                $container = Container::find($this->selectedContainer);
-                $fuel = Fuel::find($this->fuel_id);
-                $fuel->horse_id = $this->selectedHorse ?? null;
-                $fuel->vehicle_id = $this->selectedVehicle ?? null;
-                $fuel->currency_id = $this->selectedFuelCurrency;
-                $fuel->shift_id = $shift->id;
-                $fuel->type = isset($this->selectedVehicle) ? "Vehicle" : (isset($this->selectedHorse) ? "Horse" : null);
-                $fuel->driver_id = $this->driver_id ?? null;
-                $fuel->container_id = $this->selectedContainer ?? null;
-                $fuel->date = $this->date;
-                $fuel->unit_price = $this->unit_price;
-                $fuel->quantity = $this->fuel_quantity;
-                $fuel->amount = $this->fuel_amount;
-                $fuel->odometer = $this->mileage;
-                $fuel->hours = $this->hours;
-                $fuel->category = $this->fuel_category;
-                $fuel->exchange_amount = $this->fuel_exchange_amount;
-                $fuel->exchange_rate = $this->fuel_exchange_rate;
-                $fuel->fillup = 1;
-                $fuel->status = 1;
-                $fuel->comments = $this->fuel_comments;
-                $fuel->update();
+                $fuel = $shift->fuel;
+                if($fuel){
+                        $container = Container::find($this->selectedContainer);
+                        $fuel->horse_id = $this->selectedHorse ?? null;
+                        $fuel->vehicle_id = $this->selectedVehicle ?? null;
+                        $fuel->currency_id = $this->selectedFuelCurrency;
+                        $fuel->shift_id = $shift->id;
+                        $fuel->type = isset($this->selectedVehicle) ? "Vehicle" : (isset($this->selectedHorse) ? "Horse" : null);
+                        $fuel->driver_id = $this->driver_id ?? null;
+                        $fuel->container_id = $this->selectedContainer ?? null;
+                        $fuel->date = $this->date;
+                        $fuel->unit_price = $this->unit_price;
+                        $fuel->quantity = $this->fuel_quantity;
+                        $fuel->amount = $this->fuel_amount;
+                        $fuel->odometer = $this->mileage;
+                        $fuel->hours = $this->hours;
+                        $fuel->category = $this->fuel_category;
+                        $fuel->exchange_amount = $this->fuel_exchange_amount;
+                        $fuel->exchange_rate = $this->fuel_exchange_rate;
+                        $fuel->fillup = 1;
+                        $fuel->status = 1;
+                        $fuel->comments = $this->fuel_comments;
+                        $fuel->update();
+                }else{
+                        $container = Container::find($this->selectedContainer);
+                        $fuel = new Fuel;
+                        $fuel->user_id = $shift->user->id;
+                        $fuel->order_number = $this->orderNumber();
+                        $fuel->horse_id = $this->selectedHorse ?? null;
+                        $fuel->vehicle_id = $this->selectedVehicle ?? null;
+                        $fuel->currency_id = $this->selectedFuelCurrency;
+                        $fuel->shift_id = $shift->id;
+                        $fuel->type = isset($this->selectedVehicle) ? "Vehicle" : (isset($this->selectedHorse) ? "Horse" : null);
+                        $fuel->driver_id = $this->driver_id ?? null;
+                        $fuel->container_id = $this->selectedContainer ?? null;
+                        $fuel->date = $this->date;
+                        $fuel->unit_price = $this->unit_price;
+                        $fuel->quantity = $this->fuel_quantity;
+                        $fuel->amount = $this->fuel_amount;
+                        $fuel->odometer = $this->mileage;
+                        $fuel->hours = $this->hours;
+                        $fuel->category = $this->fuel_category;
+                        $fuel->exchange_amount = $this->fuel_exchange_amount;
+                        $fuel->exchange_rate = $this->fuel_exchange_rate;
+                        $fuel->fillup = 1;
+                        $fuel->status = 1;
+                        $fuel->comments = $this->fuel_comments;
+                        $fuel->save();
+                }
+             
             
             }
 

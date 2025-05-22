@@ -169,6 +169,9 @@
                             </select>
                             @error('destination_id.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             <small>  <a href="{{ route('destinations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Destination</a></small> 
+                             <a href="#" wire:click.prevent="refresh('destinations')" class="float-end">
+                                    <i class="fa fa-refresh" aria-hidden="true"></i>
+                            </a>
                         </div>
                     </div>
                     <div class="col-md-4">
@@ -183,6 +186,9 @@
                             </select>
                             @error('offloading_point_id.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             <small>  <a href="{{ route('offloading_points.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Offloading Point</a></small> 
+                             <a href="#" wire:click.prevent="refresh('offloading_points')" class="float-end">
+                                <i class="fa fa-refresh" aria-hidden="true"></i>
+                            </a>
                         </div>
                     </div>
                   
@@ -286,9 +292,12 @@
                                         @foreach ($destinations as $destination)
                                             <option value="{{ $destination->id }}">{{ $destination->country ? $destination->country->name : "" }} {{ $destination->city }}</option>
                                         @endforeach
-                                       
                                     </select>
                                     @error('destination_id.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                      <small>  <a href="{{ route('destinations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Destination</a></small> 
+                                     <a href="#" wire:click.prevent="refresh('destinations')" class="float-end">
+                                                <i class="fa fa-refresh" aria-hidden="true"></i>
+                                            </a>
                                 </div>
                             </div>
                             <div class="col-md-4">
@@ -299,9 +308,12 @@
                                         @foreach ($offloading_points as $offloading_point)
                                             <option value="{{ $offloading_point->id }}">{{ $offloading_point->name }}</option>
                                         @endforeach
-                                       
                                     </select>
                                     @error('offloading_point_id.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                     <small>  <a href="{{ route('offloading_points.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Offloading Point</a></small> 
+                                     <a href="#" wire:click.prevent="refresh('offloading_points')" class="float-end">
+                                                <i class="fa fa-refresh" aria-hidden="true"></i>
+                                            </a>
                                 </div>
                             </div>
                             

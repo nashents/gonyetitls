@@ -266,6 +266,24 @@ class Destinations extends Component
     // }
     }
 
+    public function refresh($category){
+
+        if($category == "destinations"){
+            $this->destinations = Destination::with('country')->where('status',1)->orderBy('city')->get()->sortBy('country.name');
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Destinations Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "offloading_points"){
+            $this->offloading_points =OffloadingPoint::where('status',1)->orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Offloading Points Refreshed Successfully!!."
+            ]);
+        }
+    }
+
 
     public function render()
     {
