@@ -1157,18 +1157,19 @@ class Create extends Component
     }
 
     $notifications = Notification::where('category','Invoice Authorization')->where('status',1)->get();
-    $company = Auth::user()->employee->company;
-    
-    if (isset($notifications)) {
-        foreach ($notifications as $notification) {
-            if (isset($notification->email)) {   
-                Mail::to($notification->email)->send(new PendingNotificationEmails($company, $notification, $invoice));
-            }elseif($notification->employee){
-                Mail::to($notification->employee->email)->send(new PendingNotificationEmails($company, $notification, $invoice));
+        $company =  $this->company;
+        
+        if ($notifications->isNotEmpty()) {
+            foreach ($notifications as $notification) {
+                if($notification && isset($notification->category)){
+                   $email = $notification->email ?? $notification->employee->email ?? null;
+                if($email){
+                    Mail::to($email)->send(new PendingNotificationEmails($company, $notification, $invoice));
+                }
+                }
             }
-           
         }
-    }
+
 
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',

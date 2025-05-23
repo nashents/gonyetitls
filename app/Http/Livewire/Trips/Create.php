@@ -1584,18 +1584,19 @@ class Create extends Component
 
 
                 $notifications = Notification::where('category','Trip Authorization')->where('status',1)->get();
-                $company = $this->company;
+                $company =  $this->company;
                 
-                if (isset($notifications)) {
+                if ($notifications->isNotEmpty()) {
                     foreach ($notifications as $notification) {
-                        if (isset($notification->email)) {   
-                            Mail::to($notification->email)->send(new PendingNotificationEmails($company, $notification, $trip));
-                        }elseif(isset($notification->employee->email)){
-                            Mail::to($notification->employee->email)->send(new PendingNotificationEmails($company, $notification, $trip));
+                        if($notification && isset($notification->category)){
+                        $email = $notification->email ?? $notification->employee->email ?? null;
+                        if($email){
+                            Mail::to($email)->send(new PendingNotificationEmails($company, $notification, $trip));
                         }
-                    
+                        }
                     }
                 }
+
     
    
 

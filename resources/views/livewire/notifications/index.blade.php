@@ -137,6 +137,7 @@
                                 <label for="country">Notification Categories<span class="required" style="color: red">*</span></label>
                                <select wire:model.debounce.300ms="category" class="form-control" required >
                                    <option value="">Select Category</option>
+                                   <option value="Bill Authorization">Bill Authorization</option>
                                    <option value="Credit Note Authorization">Credit Note Authorization</option>
                                    <option value="Fuel Order Authorization">Fuel Order Authorization</option> 
                                    <option value="Garage Booking Authorization">Garage Booking Authorization</option>
@@ -239,6 +240,7 @@
                                 <label for="country">Notification Categories<span class="required" style="color: red">*</span></label>
                                <select wire:model.debounce.300ms="category" class="form-control" required >
                                    <option value="">Select Category</option>
+                                    <option value="Bill Authorization">Bill Authorization</option>
                                    <option value="Credit Note Authorization">Credit Note Authorization</option>
                                    <option value="Fuel Order Authorization">Fuel Order Authorization</option>
                                    <option value="Garage Booking Authorization">Garage Booking Authorization</option>

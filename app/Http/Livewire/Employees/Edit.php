@@ -53,6 +53,7 @@ class Edit extends Component
     public $role_id;
     public $roles;
     public $user_roles;
+    public $personal_email;
     public $email;
     public $old_email;
     public $idnumber;
@@ -168,6 +169,7 @@ class Edit extends Component
         $this->use_email_as_username = $employee->user ? $employee->user->use_email_as_username : "1";
         $this->phonenumber = $employee->phonenumber ;
         $this->email =   $employee->email ;
+        $this->personal_email =   $employee->personal_email ;
         $this->old_email =   $employee->email ;
         $this->pin = $employee->pin;
         $this->gender = ucfirst($employee->gender);
@@ -221,6 +223,7 @@ class Edit extends Component
           'surname' => 'required|alpha|min:2',
           'dob' => 'nullable|date',
           'email' => 'nullable|email|unique:users,email,NULL,id,deleted_at,NULL',
+          'personal_email' => 'nullable|email|unique:employees,personal_email,NULL,id,deleted_at,NULL',
           'phonenumber' => 'nullable|unique:employees,phonenumber,NULL,id,deleted_at,NULL|max:13',
           'company_id' => 'required',
           'selectedDepartment' => 'required',
@@ -249,6 +252,8 @@ class Edit extends Component
   
 
       public function update(){
+
+        $this->validate();
    
         DB::transaction(function () {
            
@@ -275,6 +280,7 @@ class Edit extends Component
           $employee->surname = $this->surname;
           $employee->phonenumber = $this->phonenumber;
           $employee->email = $this->email;
+          $employee->personal_email = $this->personal_email;
           $employee->gender = $this->gender;
           $employee->dob = $this->dob;
 

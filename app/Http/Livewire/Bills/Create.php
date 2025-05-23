@@ -17,7 +17,10 @@ use App\Models\Currency;
 use App\Models\BillAccount;
 use App\Models\BillExpense;
 use App\Models\Transporter;
+use App\Models\Notification;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\PendingNotificationEmails;
 use Illuminate\Support\Facades\Session;
 
 class Create extends Component
@@ -434,6 +437,21 @@ class Create extends Component
         $bill->exchange_rate = $this->exchange_rate;
         $bill->exchange_amount = $this->exchange_amount;
         $bill->update();
+
+        $notifications = Notification::where('category','Bill Authorization')->where('status',1)->get();
+        $company =  $this->company;
+        
+        if ($notifications->isNotEmpty()) {
+            foreach ($notifications as $notification) {
+                if($notification && isset($notification->category)){
+                   $email = $notification->email ?? $notification->employee->email ?? null;
+                if($email){
+                    Mail::to($email)->send(new PendingNotificationEmails($company, $notification, $bill));
+                }
+                }
+            }
+        }
+
 
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',

@@ -558,17 +558,17 @@ class Index extends Component
     
         }
 
-        $notifications = Notification::where('category','Purchase Order Authorization')->where('status',1)->get();
-        $company = Auth::user()->employee->company;
-        
-        if (isset($notifications)) {
+         $notifications = Notification::where('category','Purchase Order Authorization')->where('status',1)->get();
+        $company =  $this->company;
+                
+        if ($notifications->isNotEmpty()) {
             foreach ($notifications as $notification) {
-                if (isset($notification->email)) {   
-                    Mail::to($notification->email)->send(new PendingNotificationEmails($company, $notification, $purchase));
-                }elseif($notification->employee){
-                    Mail::to($notification->employee->email)->send(new PendingNotificationEmails($company, $notification, $purchase));
+                if($notification && isset($notification->category)){
+                $email = $notification->email ?? $notification->employee->email ?? null;
+                if($email){
+                    Mail::to($email)->send(new PendingNotificationEmails($company, $notification, $purchase));
                 }
-               
+                }
             }
         }
 

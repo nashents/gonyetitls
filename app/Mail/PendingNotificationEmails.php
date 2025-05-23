@@ -34,6 +34,6 @@ class PendingNotificationEmails extends Mailable implements ShouldQueue
     {
         return $this->view('emails.pending_notifications')
         ->from($this->company->noreply)
-        ->subject($this->notification->category . ' Email');
+        ->subject($this->notification->category ?? 'Pending Notification' . ' Email');
     }
 }

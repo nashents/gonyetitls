@@ -76,6 +76,7 @@ class Create extends Component
     public $ranks;
     public $rank_id;
     public $email;
+    public $personal_email;
     public $idnumber;
     public $phonenumber;
     public $city;
@@ -146,6 +147,7 @@ class Create extends Component
           'surname' => 'required|alpha|min:2',
           'dob' => 'nullable|date',
           'email' => 'nullable|email|unique:users,email,NULL,id,deleted_at,NULL',
+          'personal_email' => 'nullable|email|unique:employees,personal_email,NULL,id,deleted_at,NULL',
           'phonenumber' => 'nullable|unique:employees,phonenumber,NULL,id,deleted_at,NULL|max:13',
           'company_id' => 'required',
           'file.0' => 'nullable|file|mimes:docx,doc,pdf,xls,xlsx,pptx|max:10000',
@@ -245,6 +247,7 @@ class Create extends Component
           $employee->surname = $this->surname;
           $employee->phonenumber = $this->phonenumber;
           $employee->email = $this->email;
+          $employee->personal_email = $this->personal_email;
           $employee->pin = $pin;
           $employee->gender = $this->gender;
           $employee->dob = $this->dob;

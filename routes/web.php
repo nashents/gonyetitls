@@ -390,10 +390,12 @@ Route::get('fuel-top-ups/authorization/rejected','TopUpController@rejected')->na
 
 Route::get('invoices/customer-statements','InvoiceController@customerStatements')->name('customer_statements.index');
 
+Route::get('invoices/{selectedCustomer?}/{selectedType?}/customer-statements/send-email/','InvoiceController@customerStatementsEmail')->name('customer_statements.email.outstanding');
 Route::get('invoices/{selectedCustomer?}/{selectedType?}/customer-statements/pdf/','InvoiceController@customerStatementsPDF')->name('customer_statements.pdf.outstanding');
 Route::get('invoices/{selectedCustomer?}/{selectedType?}/customer-statements/print/','InvoiceController@customerStatementsPrint')->name('customer_statements.print.outstanding');
 Route::get('invoices/{selectedCustomer?}/{selectedType?}/customer-statements/','InvoiceController@customerStatementsPreview')->name('customer_statements.preview.outstanding');
 
+Route::get('invoices/{selectedCustomer?}/{selectedType?}/{from?}/{to?}/customer-statements/send-email/','InvoiceController@customerStatementsEmail')->name('customer_statements.email.account');
 Route::get('invoices/{selectedCustomer?}/{selectedType?}/{from?}/{to?}/customer-statements/pdf/','InvoiceController@customerStatementsPDF')->name('customer_statements.pdf.account');
 Route::get('invoices/{selectedCustomer?}/{selectedType?}/{from?}/{to?}/customer-statements/print/','InvoiceController@customerStatementsPrint')->name('customer_statements.print.account');
 Route::get('invoices/{selectedCustomer?}/{selectedType?}/{from?}/{to?}/customer-statements/','InvoiceController@customerStatementsPreview')->name('customer_statements.preview.account');

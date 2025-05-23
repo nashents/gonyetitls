@@ -9,7 +9,9 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
+use App\Mail\SendCustomerStatementMail;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Storage;
 
 class InvoiceController extends Controller
 {
@@ -186,7 +188,105 @@ class InvoiceController extends Controller
        
         $pdf = PDF::loadView('customer_statements.customer_statement', $data);
 
+        $fileName = 'customer_statement_' . time() . '.pdf';
+        $filePath = 'myfiles/documents/' . $fileName;
+        Storage::disk('local')->put($filePath, $pdf->output());
+
         return $pdf->download('customer_statement.pdf');
+
+    }
+
+    public function sendEmailWithAttachment($data, $filePath)
+{       $customer = $data['customer'];
+    if ($customer->email) {
+        Mail::to($customer->email)->send(new SendCustomerStatementMail($data, $filePath));
+    }
+   
+}
+
+    public function customerStatementsEmail($selectedCustomer = null, $selectedType = null, $from = null, $to = null){
+        $company = Auth::user()->employee->company;
+        $customer = Customer::find($selectedCustomer);
+        if ( isset($selectedCustomer) && $selectedType == "Outstanding Invoices") {
+            $invoices = Invoice::where('customer_id', $selectedCustomer)
+            ->where('authorization', 'approved')
+            ->where('status', 'Unpaid')
+            ->orWhere('customer_id', $selectedCustomer)
+            ->where('authorization','approved')
+            ->where('status', 'Partial')->get();
+            
+            $data = [
+                'selectedCustomer' => $selectedCustomer,
+                'selectedType' => $selectedType,
+                'from' => $from,
+                'to' => $to,
+                'invoices' => $invoices,
+                'company' => $company,
+                'customer' => $customer,
+            ];
+    
+        }elseif ( isset($selectedCustomer) && $selectedType == "Account Activity") {
+            if (isset($from) && isset($to)) {
+                $invoices = DB::table('invoices')
+                ->select(
+                    DB::raw("'invoice' as transaction_type"),
+                    'invoice_number as number',
+                    'currency_id',
+                    'created_at',
+                    'date as transaction_date',
+                    'total as amount',
+                    'balance',
+                    'accrual_balance',
+                    'created_at')
+                ->where('authorization','approved')
+                ->where('customer_id', $selectedCustomer)
+                ->where('deleted_at', NULL)
+                ->whereBetween('date',[$from, $to] );
+               
+                $results = DB::table('payments')
+                ->select(
+                    DB::raw("'payment' as transaction_type"),
+                    'payment_number as number',
+                    'currency_id',
+                    'created_at',
+                    'date as transaction_date',
+                    'amount',
+                    'balance',
+                    'accrual_balance',
+                    'created_at'
+                    )
+                ->where('customer_id', $selectedCustomer)
+                ->where('deleted_at', NULL)
+                ->whereBetween('date',[$from, $to] )
+                ->union($invoices)
+                ->get();
+
+                // $results = $invoices->union($payments);
+            }
+            $data = [
+                'selectedCustomer' => $selectedCustomer,
+                'selectedType' => $selectedType,
+                'from' => $from,
+                'to' => $to,
+                'invoices' => $invoices,
+                'results' => $results,
+                'company' => $company,
+                'customer' => $customer,
+            ];
+          
+        }
+       
+        $pdf = PDF::loadView('customer_statements.customer_statement', $data);
+
+        $fileName = 'customer_statement_' . time() . '.pdf';
+        $filePath = 'myfiles/documents/' . $fileName;
+        Storage::disk('local')->put($filePath, $pdf->output());
+
+        $this->sendEmailWithAttachment($data, $filePath);
+
+        Session::flash('success','Customer Statement Send Successfully');
+        return redirect()->back();
+        // return response()->json(['message' => 'PDF generated and email sent.']);
 
     }
     public function rejected()

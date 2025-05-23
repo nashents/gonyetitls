@@ -230,16 +230,16 @@ class Create extends Component
         $credit_note->save();
 
         $notifications = Notification::where('category','Credit Note Authorization')->where('status',1)->get();
-        $company = Auth::user()->employee->company;
+        $company =  $this->company;
         
-        if (isset($notifications)) {
+        if ($notifications->isNotEmpty()) {
             foreach ($notifications as $notification) {
-                if (isset($notification->email)) {   
-                    Mail::to($notification->email)->send(new PendingNotificationEmails($company, $notification, $credit_note));
-                }elseif($notification->employee){
-                    Mail::to($notification->employee->email)->send(new PendingNotificationEmails($company, $notification, $credit_note));
+                if($notification && isset($notification->category)){
+                $email = $notification->email ?? $notification->employee->email ?? null;
+                if($email){
+                    Mail::to($email)->send(new PendingNotificationEmails($company, $notification, $credit_note));
                 }
-               
+                }
             }
         }
 
