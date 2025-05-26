@@ -137,6 +137,7 @@ class Pending extends Component
         $inspection->service_type_id = $booking->service_type_id;
         $inspection->booking_id = $booking->id;
         $inspection->horse_id = $booking->horse_id;
+        $inspection->asset_id = $booking->asset_id;
         $inspection->vehicle_id = $booking->vehicle_id;
         $inspection->trailer_id = $booking->trailer_id;
         $inspection->inspection_number = $this->inspectionNumber();
@@ -151,6 +152,7 @@ class Pending extends Component
         $ticket->service_type_id = $booking->service_type_id;
         $ticket->vehicle_id = $booking->vehicle_id;
         $ticket->horse_id = $booking->horse_id;
+        $ticket->asset_id = $booking->asset_id;
         $ticket->trailer_id = $booking->trailer_id;
         $ticket->in_date = $booking->in_date;
         $ticket->in_time = $booking->in_time;

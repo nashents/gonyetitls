@@ -127,6 +127,7 @@ class Rejected extends Component
             $inspection->user_id = $booking->user_id;
             $inspection->booking_id = $booking->id;
             $inspection->horse_id = $booking->horse_id;
+            $inspection->asset_id = $booking->asset_id;
             $inspection->vehicle_id = $booking->vehicle_id;
             $inspection->trailer_id = $booking->trailer_id;
             $inspection->inspection_number = $this->inspectionNumber();
@@ -141,6 +142,7 @@ class Rejected extends Component
             $ticket->service_type_id = $booking->service_type_id;
             $ticket->in_date = $booking->in_date;
             $ticket->in_time = $booking->in_time;
+            $ticket->asset_id = $booking->asset_id;
             $ticket->vehicle_id = $booking->vehicle_id;
             $ticket->horse_id = $booking->horse_id;
             $ticket->trailer_id = $booking->trailer_id;

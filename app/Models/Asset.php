@@ -34,6 +34,9 @@ class Asset extends Model implements Auditable
     public function currency(){
         return $this->belongsTo('App\Models\Currency');
     }
+    public function bookings(){
+        return $this->hasMany('App\Models\Booking');
+    }
     public function asset_details(){
         return $this->hasMany('App\Models\AssetDetail');
     }

@@ -21,6 +21,7 @@ use App\Models\Department;
 use App\Models\BankAccount;
 use Livewire\WithFileUploads;
 use App\Models\DepartmentHead;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -217,19 +218,34 @@ class Edit extends Component
         'role_id.required' => 'Select Role',
       ];
 
-      protected $rules = [
-          'name' => 'required|alpha|min:2',
-          'middle_name' => 'nullable|alpha|min:2',
-          'surname' => 'required|alpha|min:2',
-          'dob' => 'nullable|date',
-          'email' => 'nullable|email|unique:users,email,NULL,id,deleted_at,NULL',
-          'personal_email' => 'nullable|email|unique:employees,personal_email,NULL,id,deleted_at,NULL',
-          'phonenumber' => 'nullable|unique:employees,phonenumber,NULL,id,deleted_at,NULL|max:13',
-          'company_id' => 'required',
-          'selectedDepartment' => 'required',
-          'file.0' => 'nullable|file|mimes:docx,doc,pdf,xls,xlsx,pptx|max:10000',
-          'file.*' => 'required|file|mimes:docx,doc,pdf,xls,xlsx,pptx|max:10000',
-      ];
+      public function rules()
+      {
+          return [
+              'name' => 'required|alpha|min:2',
+              'middle_name' => 'nullable|alpha|min:2',
+              'surname' => 'required|alpha|min:2',
+              'dob' => 'nullable|date',
+              'email' => [
+                  'nullable',
+                  'email',
+                  Rule::unique('users', 'email')->ignore($this->user->id)->whereNull('deleted_at'),
+              ],
+              'personal_email' => [
+                  'nullable',
+                  'email',
+                  Rule::unique('employees', 'personal_email')->ignore($this->employee->id)->whereNull('deleted_at'),
+              ],
+              'phonenumber' => [
+                  'nullable',
+                  Rule::unique('employees', 'phonenumber')->ignore($this->employee->id)->whereNull('deleted_at'),
+                  'max:13',
+              ],
+              'company_id' => 'required',
+              'selectedDepartment' => 'required',
+              'file.0' => 'nullable|file|mimes:docx,doc,pdf,xls,xlsx,pptx|max:10000',
+              'file.*' => 'required|file|mimes:docx,doc,pdf,xls,xlsx,pptx|max:10000',
+          ];
+      }
 
     public function generatePIN($digits = 4){
         $i = 0; //counter

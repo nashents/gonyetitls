@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Bookings;
 
+use App\Models\Asset;
 use App\Models\Horse;
 use App\Models\Driver;
 use App\Models\Vendor;
@@ -30,10 +31,12 @@ class Create extends Component
     use WithFileUploads;
 
     public $trailers;
-    public $trailer_id;
-    public $type = NULL;
+    public $selectedTrailer;
+    public $type = "Horse";
     public $assigned_to = NULL;
     public $horses;
+    public $selectedAsset;
+    public $assets;
     public $selectedHorse;
     public $vehicles;
     public $selectedVehicle;
@@ -45,6 +48,7 @@ class Create extends Component
     public $employee_id;
 
 
+    public $searchAsset;
     public $searchHorse;
     public $searchVehicle;
     public $searchTrailer;
@@ -52,11 +56,11 @@ class Create extends Component
     public $searchMechanic;
     public $searchVendor;
     
-    protected $queryString = ['searchVehicle','searchVendor','searchHorse','searchTrailer','searchEmployee','searchMechanic'];
+    protected $queryString = ['searchVehicle','searchAsset','searchVendor','searchHorse','searchTrailer','searchEmployee','searchMechanic'];
 
-    public $drivers;
-    public $driver_id;
+
     public $in_date;
+    public $company;
     public $in_time;
     public $out_date;
     public $out_time;
@@ -91,34 +95,8 @@ class Create extends Component
 
 
     public function mount(){
-
-        $department = Department::where('name','like', '%'.'Workshop'.'%')->first();
-        $this->mechanics =   $department->employees;
-
-        $this->horses = Horse::where('service', 0)
-        ->orderBy('registration_number','asc')->latest()->get();
-
-        $this->employees = Employee::orderBy('name','asc')->get();
-
-        $this->vehicles = Vehicle::where('service', 0)
-        ->orderBy('registration_number','asc')->latest()->get();
-
-        $this->drivers = Driver::withAggregate('employee','name')
-        ->orderBy('employee_name','asc')->latest()->get();
-
-        $this->trailers = Trailer::where('service', 0)
-        ->orderBy('registration_number','asc')->latest()->get();
-
-
-        $this->vendors = Vendor::orderBy('name','asc')->get();
-
-        // $value = 'Spares & Mechanics';
-        // $this->vendors = Vendor::with(['vendor_type'])
-        // ->whereHas('vendor_type', function($q) use($value) {
-        // $q->where('name', '=', $value);
-        // })->get();
-        
-        $this->service_types = ServiceType::all();
+        $this->company = Auth::user()->employee->company;
+        $this->service_types = ServiceType::orderBy('name','asc')->get();
     
     }
 
@@ -127,41 +105,36 @@ class Create extends Component
            $horse = Horse::find($id);
            $this->mileage = $horse ? $horse->mileage : "";
            $this->hours = $horse ? $horse->hours : "";
-           $assignment = Assignment::where('horse_id',$id)
-                                    ->where('status', 1 )->get()->first();
-           if ($assignment) {
-            $this->driver_id = $assignment->driver_id;
-           }
+        }
+
+    }
+    public function updatedSelectedTrailer($id){
+        if (!is_null($id)) {
+           $trailer = Trailer::find($id);
+           $this->mileage = $trailer ? $trailer->mileage : "";
           
         }
 
     }
     public function updatedSelectedVehicle($id){
-
         if (!is_null($id)) {
            $vehicle = Vehicle::find($id);
            $this->mileage = $vehicle ? $vehicle->mileage : "";
            $this->hours = $vehicle ? $vehicle->hours : "";
         }
-
     }
 
     public function updated($value){
         $this->validateOnly($value);
     }
     protected $messages =[
-      'selectedVehicle.required' => 'Select Vehicle',
       'employee_id.required' => 'Select Employee',
-      'driver_id.required' => 'Select Driver',
-      'selectedHorse.required' => 'Select Horse',
-
+      'service_type_id.required' => 'Select Service Type',
   ];
     protected $rules = [
         'booking_number' => 'required',
         'in_time' => 'required',
         'in_date' => 'required',
-        'estimated_out_date' => 'required',
-        'estimated_out_time' => 'required',
         'station' => 'required',
         'mileage' => 'required',
         'description' => 'required',
@@ -209,24 +182,35 @@ class Create extends Component
         $booking->user_id = Auth::user()->id;
         $booking->assigned_to = $this->assigned_to;
 
-       if ($this->assigned_to == "Vendor") {
-            $booking->vendor_id = $this->vendor_id ? $this->vendor_id : Null;
-        }else {
-            $booking->vendor_id = Null;
-        }
+        $booking->vendor_id = $this->assigned_to === "Vendor" ? ($this->vendor_id ?: null) : null;
 
-        if ($this->type == "Horse") {
-            $booking->horse_id = $this->selectedHorse ? $this->selectedHorse : Null;
-            $booking->vehicle_id = Null;
-            $booking->trailer_id = Null;
-        }elseif ($this->type == "Trailer") {
-            $booking->horse_id = Null;
-            $booking->vehicle_id = Null;
-            $booking->trailer_id = $this->trailer_id ? $this->trailer_id : Null;
-        }elseif ($this->type == "Vehicle") {
-            $booking->horse_id = Null;
-            $booking->vehicle_id = $this->selectedVehicle ? $this->selectedVehicle : Null;
-            $booking->trailer_id = Null;
+        // Reset all IDs
+        $booking->horse_id = null;
+        $booking->vehicle_id = null;
+        $booking->trailer_id = null;
+        $booking->asset_id = null;
+        $booking->odometer = null;
+        $booking->hours = null;
+       
+
+        switch ($this->type) {
+            case "Horse":
+                $booking->odometer = $this->mileage;
+                $booking->hours = $this->hours;
+                $booking->horse_id = $this->selectedHorse ?: null;
+                break;
+            case "Trailer":
+                $booking->odometer = $this->mileage;
+                $booking->trailer_id = $this->selectedTrailer ?: null;
+                break;
+            case "Vehicle":
+                $booking->odometer = $this->mileage;
+                $booking->hours = $this->hours;
+                $booking->vehicle_id = $this->selectedVehicle ?: null;
+                break;
+            case "Asset":
+                $booking->asset_id = $this->selectedAsset ?: null;
+                break;
         }
      
         $booking->employee_id = $this->employee_id ? $this->employee_id : Null;
@@ -237,8 +221,7 @@ class Create extends Component
         $booking->estimated_out_time = $this->estimated_out_time;
         $booking->station = $this->station;
         $booking->type = $this->type;
-        $booking->odometer = $this->mileage;
-        $booking->hours = $this->hours;
+        
         $booking->description = $this->description;
         $booking->service_type_id = $this->service_type_id;
         $booking->status = 1;
@@ -274,30 +257,63 @@ class Create extends Component
     public function render()
     {
 
-        if (isset($this->searchHorse)) {
-            $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('registration_number', 'like', '%'.$this->searchHorse.'%')->get();
-        }
-        if (isset($this->searchVendor)) {
-            $this->vendors = Vendor::where('name', 'LIKE', "%".$this->searchVendor."%")->get();
-        }
-        if (isset($this->searchVehicle)) {
-            $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('registration_number', 'like', '%'.$this->searchVehicle.'%')->get();
-            
-        }
-        if (isset($this->searchTrailer)) {
-            $this->trailers = Trailer::where('registration_number', 'like', '%'.$this->searchTrailer.'%')->get();
+        if (filled($this->searchHorse)) {
+            $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('service', 0)->where('registration_number', 'like', '%'.$this->searchHorse.'%')->get();
+        }else{
+            $this->horses = Horse::with('horse_make:id,name','horse_model:id,name')->where('service', 0)->orderBy('registration_number','asc')->get();
         }
 
-        if (isset($this->searchEmployee)) {
-            $this->employees = Employee::where(DB::raw("concat(name, ' ', surname)"), 'LIKE', "%".$this->searchEmployee."%")
+        if (filled($this->searchVendor)) {
+            $this->vendors = Vendor::where('status',1)->where('name', 'LIKE', "%".$this->searchVendor."%")->get();
+        }else{
+            $this->vendors = Vendor::where('status',1)->orderBy('name','asc')->get();
+        }
+
+        if (filled($this->searchVehicle)) {
+            $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('service', 0)->where('registration_number', 'like', '%'.$this->searchVehicle.'%')->get();
+        }else{
+              $this->vehicles = Vehicle::with('vehicle_make:id,name','vehicle_model:id,name')->where('service', 0)->orderBy('registration_number','asc')->get();
+        }
+
+        if (filled($this->searchAsset)) {
+            $this->assets = Asset::query()->with('product:id,name','product.brand')->where('disposed', 0)->where('status', 1)
+            ->where('serial_number', 'like', '%'.$this->searchAsset.'%')
+            ->orWhereHas('product', function ($query) {
+                    return $query->where('name', 'like', '%'.$this->searchAsset.'%');
+            })
+             ->orWhereHas('product.brand', function ($query) {
+                    return $query->where('name', 'like', '%'.$this->searchAsset.'%');
+            })
             ->get();
+            
+        }else{
+            $this->assets = Asset::with('product')->where('disposed', 0)->where('status', 1)->get()->sortBy('product.name');
+        }
+
+        if (filled($this->searchTrailer)) {
+            $this->trailers = Trailer::where('service', 0)->where('registration_number', 'like', '%'.$this->searchTrailer.'%')->get();
+        }else{
+            $this->trailers = Trailer::where('service', 0)->orderBy('registration_number','asc')->get();
+        }
+
+        if (filled($this->searchEmployee)) {
+            $this->employees = Employee::where('archive',0)->where('status',1)->where(DB::raw("concat(name, ' ', surname)"), 'LIKE', "%".$this->searchEmployee."%")
+            ->get();
+        }else{
+            $this->employees = Employee::where('archive',0)->where('status',1)->orderBy('name')->orderBy('surname')->get();
         }
       
-        if (isset($this->searchMechanic)) {
-            $department = Department::where('name','like', '%'.'Workshop'.'%')->first();
-            $this->mechanics =   $department->employees->where(DB::raw("concat(name, ' ', surname)"), 'LIKE', "%".$this->searchMechanic."%");
+       if (filled($this->searchMechanic)) {
+        $department = Department::where('name', 'like', '%Workshop%')->first();
+
+            $this->mechanics = $department->employees()
+                ->where(DB::raw("CONCAT(name, ' ', surname)"), 'like', '%' . $this->searchMechanic . '%')
+                ->get();
+        } else {
+            $department = Department::where('name', 'like', '%Workshop%')->first();
+
+            $this->mechanics = $department->employees()->get();
         }
-        
 
         return view('livewire.bookings.create');
     }

@@ -4,24 +4,48 @@ namespace App\Http\Livewire\Leaves;
 
 use App\Models\Leave;
 use Livewire\Component;
+use Livewire\WithPagination;
+use App\Models\DepartmentHead;
 use Illuminate\Support\Facades\Auth;
 
 class Approved extends Component
 {
-    public $leaves;
+       use WithPagination;
+    protected $paginationTheme = 'bootstrap';
+    public $search;
+    protected $queryString = ['search'];
+    public $range_from;
+    public $range_to;
+    
+    private $leaves;
     public $leave_id;
-    public $management_leaves;
+    public $decision;
+    public $reason;
+    public $rank_names;
+    public $role_names;
+    public $department_names;
+    public $category;
+    public $hod;
+    public $company;
 
     public function mount(){
 
-        $this->management_leaves = Leave::where('management_id', Auth::user()->id)
-        ->where('user_id' ,'!=', Auth::user()->id)
-        ->where('management_decision', 'approved')->latest()->get();
+         $this->hod = DepartmentHead::where('employee_id', Auth::user()->employee->id)->first();
+        $this->company = Auth::user()->employee->company;
 
-        $this->leaves = Leave::where('hod_decision', 'approved')
-        ->where('department_id' , Auth::user()->employee->departments->first()->id)
-        ->where('user_id' ,'!=', Auth::user()->id)
-        ->where('hod_id', Auth::user()->id)->latest()->get();
+        $ranks = Auth::user()->employee->ranks;
+        foreach($ranks as $rank){
+        $this->rank_names[] = $rank->name;
+        }
+        $roles = Auth::user()->roles;
+        foreach($roles as $role){
+        $this->role_names[] = $role->name;
+        }
+        $departments = Auth::user()->employee->departments;
+        foreach($departments as $department){
+        $this->department_names[] = $department->name;
+        }
+
     }
 
     public function authorize($id){
@@ -78,18 +102,17 @@ class Approved extends Component
     public function render()
     {
 
-        $this->management_leaves = Leave::where('management_id', Auth::user()->id)
-        ->where('user_id' ,'!=', Auth::user()->id)
-        ->where('management_decision', 'approved')->latest()->get();
-
-        $this->leaves = Leave::where('hod_decision', 'approved')
-        ->where('department_id' , Auth::user()->employee->departments->first()->id)
-        ->where('user_id' ,'!=', Auth::user()->id)
-        ->where('hod_id', Auth::user()->id)->latest()->get();
-
-        return view('livewire.leaves.approved',[
-            'leaves' => $this->leaves,
-            'management_leaves' => $this->management_leaves
-        ]);
+           if ((in_array('Admin', $this->role_names) && in_array('Human Resources', $this->department_names)) || (in_array('Management', $this->rank_names) && in_array('Human Resources', $this->department_names)) || in_array('Super Admin', $this->role_names)) {
+            return view('livewire.leaves.approved',[
+                'leaves' => Leave::where('status','approved')
+                ->latest()->paginate(10),
+            ]);
+        }elseif(isset($this->hod)){
+            return view('livewire.leaves.approved',[
+                'leaves' => Leave::where('status','approved')
+                ->where('department_id' , $this->hod->department->id)
+                ->latest()->paginate(10),
+            ]);
+        }
     }
 }

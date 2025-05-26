@@ -45,6 +45,7 @@
                                 <div class="col-md-6">
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
+                                        <li><a href="{{route('leaves.manage')}}"><i class="fa fa-list"></i> All Leave Applications</a></li>
             							<li class="active"> <i class="fa fa-clock-o"></i> Pending Leave Applications</li>
             						</ul>
                                 </div>

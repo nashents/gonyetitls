@@ -11,6 +11,7 @@ class Index extends Component
     public $leave_type_id;
     public $leave_types;
     public $name;
+    public $entitlement;
  
 
     public function mount(){
@@ -19,6 +20,7 @@ class Index extends Component
 
     private function resetInputFields(){
         $this->name = '';
+        $this->entitlement = '';
     }
     public function updated($value){
         $this->validateOnly($value);
@@ -32,6 +34,7 @@ class Index extends Component
         $leave_type = new LeaveType;
         $leave_type->user_id = Auth::user()->id;
         $leave_type->name = $this->name;
+        $leave_type->entitlement = $this->entitlement;
         $leave_type->save();
         $this->dispatchBrowserEvent('hide-leaveTypeModal');
         $this->resetInputFields();
@@ -54,6 +57,7 @@ class Index extends Component
     $this->updateMode = true;
     $this->user_id = $leave_type->user_id;
     $this->name = $leave_type->name;
+    $this->entitlement = $leave_type->entitlement;
     $this->leave_type_id = $leave_type->id;
     $this->dispatchBrowserEvent('show-leaveTypeEditModal');
 
@@ -65,6 +69,7 @@ class Index extends Component
             $leave_type = LeaveType::find($this->leave_type_id);
             $leave_type->update([
                 'name' => $this->name,
+                'entitlement' => $this->entitlement,
             ]);
             $this->dispatchBrowserEvent('hide-leaveTypeEditModal');
             $this->resetInputFields();

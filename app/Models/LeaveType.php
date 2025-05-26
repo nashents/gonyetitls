@@ -17,5 +17,6 @@ class LeaveType extends Model implements Auditable
     }
     protected $fillable = [
         'name',
+        'entitlement',
     ];
 }

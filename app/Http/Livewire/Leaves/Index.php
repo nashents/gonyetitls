@@ -22,8 +22,11 @@ class Index extends Component
     public $range_from;
     public $range_to;
 
+    public $departments;
+    public $department_id;
     public $selectedEmployee;
     public $selected_employee;
+    public $is_backdated = False;
     private $leaves;
     public $leave_id;
     public $user_id;
@@ -62,11 +65,13 @@ class Index extends Component
         $this->from = '';
         $this->reason = '';
         $this->leave_type_id = '';
+        $this->is_backdated = False;
     }
 
     public function mount(){
         $this->selected_employee = Auth::user()->employee;
-         $this->available_leave_days =  $this->selected_employee->leave_days;
+        $this->departments = $this->selected_employee->departments;
+        $this->available_leave_days =  $this->selected_employee->leave_days;
         $this->leave_types = LeaveType::orderBy('name','asc')->get();
         
     }
@@ -74,41 +79,42 @@ class Index extends Component
    
 
     public function store(){
+       
+        if ($this->department_id) {
 
-        $departments = $this->selected_employee->departments;
-        foreach($departments as $department){
-            $department_names[] = $department->name;
-        }
-        $roles = $this->selected_employee->user->roles;
-        foreach($roles as $role){
-            $role_names[] = $role->name;
-        }
-        $ranks = $this->selected_employee->ranks;
-        foreach($ranks as $rank){
-            $rank_names[] = $rank->name;
-        }
-        $employee_department = $this->selected_employee->departments->first();
+            $now = Carbon::now();
+            $start = Carbon::parse($this->from);
+            $end = Carbon::parse($this->to);
 
-        if (isset($employee_department)) {
+            $isBackdated = $start->lt($now->startOfDay()); // Before today
+            $isEmergency = !$isBackdated && $start->lt($now->addHours(24)); // Less than 24hrs ahead
 
             $leave = new Leave;
             $leave->user_id = Auth::user()->id;
             $leave->employee_id = $this->selected_employee->id;
             $leave->to = $this->to;
             $leave->from = $this->from;
+            $leave->is_backdated = $this->is_backdated;
+            $leave->is_emergency = $isEmergency;
             $leave->leave_type_id = $this->leave_type_id;
-            $leave->department_id = $employee_department->id;
+            $leave->department_id = $this->department_id;
             $leave->days = $this->days;
             $leave->reason = $this->reason;
 
+
+            //checking if employee is a department head or a manager
             $hod = DepartmentHead::where('employee_id', $this->selected_employee->id)->first();
+            $ranks = $this->selected_employee->ranks;
+            foreach($ranks as $rank){
+                $rank_names[] = $rank->name;
+            }
              
             if (in_array('Management', $rank_names) || isset($hod)) {
                 $leave->hod_decision = 'approved';
                 $leave->management_decision = 'pending';
             }else {
                 $department_heads = DepartmentHead::all();
-                $department_with_department_head = DepartmentHead::where('department_id',$employee_department->id)->first();
+                $department_with_department_head = DepartmentHead::where('department_id',$this->department_id)->first();
              
                 if ($department_heads->count()>0) {
                     
@@ -134,7 +140,7 @@ class Index extends Component
             $this->resetInputFields();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
-                'message'=>"Application Submitted Successfully!!"
+                'message'=>"Leave Application Submitted Successfully!!"
             ]);
         }else {
             $this->dispatchBrowserEvent('hide-leaveModal');
@@ -182,9 +188,9 @@ class Index extends Component
                 foreach($ranks as $rank){
                     $rank_names[] = $rank->name;
                 }
-                $employee_department = $this->selected_employee->departments->first();
+               
         
-                if (isset($employee_department)) {
+                if ($this->department_id) {
         
                     $leave =  Leave::find($this->leave_id);
                     $leave->user_id = Auth::user()->id;
@@ -192,7 +198,7 @@ class Index extends Component
                     $leave->to = $this->to;
                     $leave->from = $this->from;
                     $leave->leave_type_id = $this->leave_type_id;
-                    $leave->department_id = $employee_department->id;
+                    $leave->department_id = $this->department_id;
                     $leave->days = $this->days;
                     $leave->reason = $this->reason;
         
@@ -203,7 +209,7 @@ class Index extends Component
                         $leave->management_decision = 'pending';
                     }else {
                         $department_heads = DepartmentHead::all();
-                        $department_with_department_head = DepartmentHead::where('department_id',$employee_department->id)->first();
+                        $department_with_department_head = DepartmentHead::where('department_id',$this->department_id)->first();
                      
                         if ($department_heads->count()>0) {
                             

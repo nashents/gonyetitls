@@ -18,6 +18,8 @@
                                   <tr>
                                     <th class="th-sm">Name
                                     </th>
+                                    <th class="th-sm">Entitlement
+                                    </th>
                                     <th class="th-sm">Action
                                     </th>
                                   </tr>
@@ -27,6 +29,7 @@
                                     @foreach ($leave_types as $leave_type)
                                   <tr>
                                     <td>{{$leave_type->name}}</td>
+                                    <td>{{$leave_type->entitlement ? $leave_type->entitlement." Days" : ""}}</td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -67,11 +70,23 @@
                 </div>
                 <form >
                 <div class="modal-body">
-                    <div class="form-group">
-                        <label for="title">Name<span class="required" style="color: red">*</span></label>
-                        <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter title"  required>
-                        @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="title">Name<span class="required" style="color: red">*</span></label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter title"  required>
+                                @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="title">Entitlement</label>
+                                <input type="number" min="0" class="form-control" wire:model.debounce.300ms="entitlement" placeholder="Enter Leave Type Entitlement / Year" >
+                                @error('entitlement') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
                     </div>
+                    
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">
@@ -93,10 +108,21 @@
                 <form >
                 <input type="hidden" wire:model="leave_type_id">
                 <div class="modal-body">
-                    <div class="form-group">
-                        <label for="title">Name<span class="required" style="color: red">*</span></label>
-                        <input type="text" class="form-control" wire:model.debounce.300ms="name" required>
-                        @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                  <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="title">Name<span class="required" style="color: red">*</span></label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter title"  required>
+                                @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="title">Entitlement</label>
+                                <input type="number" min="0" class="form-control" wire:model.debounce.300ms="entitlement" placeholder="Enter Leave Type Entitlement / Year" >
+                                @error('entitlement') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">

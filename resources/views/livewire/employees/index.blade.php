@@ -33,11 +33,12 @@
     
                                 <table id="employeesTable" class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                     <thead >
+                                        <th class="th-sm">
+                                            Profile
+                                        </th>
                                         <th class="th-sm">Emp#
                                         </th>
-                                        <th class="th-sm">Name
-                                        </th>
-                                        <th class="th-sm">Surname
+                                        <th class="th-sm">Fullname
                                         </th>
                                         <th class="th-sm">Gender
                                         </th>
@@ -64,9 +65,9 @@
                                         @foreach ($employees as $employee)
                                         @if (!$employee->driver)
                                         <tr>
+                                            <td class="line-height-35"><img src="{{asset('images/uploads/'.$employee->user->profile)}}" alt="" class="border-radius-50 img-circle profile-img " style="width: 50px; height:50px"></td>
                                             <td>{{ucfirst($employee->employee_number)}}</td>
-                                            <td>{{ucfirst($employee->name)}}</td>
-                                            <td>{{ucfirst($employee->surname)}}</td>
+                                            <td>{{ucfirst($employee->name)}} {{ucfirst($employee->surname)}}</td>
                                             <td>{{$employee->gender}}</td>
                                             <td>{{$employee->email}}</td>
                                             <td>@foreach ($employee->departments as $department)

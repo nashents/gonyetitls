@@ -376,7 +376,7 @@
                             <li role="separator" class="divider"></li>
                             <li class="profile-menu bg-gray">
                                 <div class="">
-                                    <img src="{{asset('images/uploads/'.$user->profile)}}" alt="{{ucfirst($user->name)}} {{ucfirst($user->surname)}}" class="img-circle profile-img">
+                                    <img src="{{asset('images/uploads/'.$user->profile)}}" alt="{{ucfirst($user->name)}} {{ucfirst($user->surname)}}" class="img-circle profile-img"  style="width: 50px; height:50px">
                                     <div class="profile-name">
                                         <h6>{{ucfirst($user->name)}} {{ucfirst($user->surname)}}</h6>
                                     </div>

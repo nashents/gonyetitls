@@ -15,21 +15,27 @@
                             <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                     <tr>
-                                        <th class="th-sm">Date Applied
-                                        </th>
-                                        <th class="th-sm">Employee
+                                         <th class="th-sm">Employee
                                         </th>
                                         <th class="th-sm">Type
                                         </th>
-                                        <th class="th-sm">Duration (Inclusive)
+                                        <th class="th-sm">CreatedOn
                                         </th>
-                                        <th class="th-sm">Day(s)
+                                        <th class="th-sm">Start Date
+                                        </th>
+                                        <th class="th-sm">End Date
+                                        </th>
+                                        <th class="th-sm">Duration
                                         </th>
                                         <th class="th-sm">Reason
                                         </th>
-                                        <th class="th-sm">HR Status
+                                        <th class="th-sm">Flags
                                         </th>
-                                        <th class="th-sm">HOD Status
+                                        <th class="th-sm">HR Auth
+                                        </th>
+                                        <th class="th-sm">HOD Auth
+                                        </th>
+                                        <th class="th-sm">Status
                                         </th>
                                         <th class="th-sm">Actions
                                         </th>
@@ -40,8 +46,7 @@
                                 <tbody>
                                     @forelse ($leaves as $leave)
                                   <tr>
-                                    <td>{{Carbon\Carbon::parse($leave->created_at)->format('d F Y')}}</td>
-                                    <td>
+                                      <td>
                                         {{ucfirst($leave->employee ? $leave->employee->name : '')}} {{ucfirst($leave->employee ? $leave->employee->surname : '')}}
                                         @if ($leave->department)
                                             <br>
@@ -49,11 +54,24 @@
                                         @endif
                                     </td>
                                     <td>{{$leave->leave_type ? $leave->leave_type->name : ""}}</td>
-                                    <td>{{Carbon\Carbon::parse($leave->from)->format('d F Y')}} - {{Carbon\Carbon::parse($leave->to)->format('d F Y')}}</td>
-                                    <td>{{$leave->days}}</td>
+                                    <td>{{Carbon\Carbon::parse($leave->created_at)->format('d F Y')}}</td>
+                                    <td>{{Carbon\Carbon::parse($leave->from)->format('d F Y')}}</td>
+                                    <td>{{Carbon\Carbon::parse($leave->to)->format('d F Y')}}</td>
+                                    <td>{{$leave->days ? $leave->days." Days" : ""}}</td>
                                     <td>{{$leave->reason}}</td>
-                                    <td><span class="badge bg-{{($leave->management_decision == 'approved') ? 'success' : (($leave->management_decision == 'rejected') ? 'danger' : 'warning') }}">{{($leave->management_decision == 'approved') ? 'approved' : (($leave->management_decision == 'rejected') ? 'rejected' : 'pending' )}}</span></td>
+                                    <td>
+                                        @if ($leave->is_backdated)
+                                            <span class="badge bg-danger">Backdated</span>
+                                        @endif    
+                                        @if ($leave->is_emergency)
+                                            <span class="badge bg-warning">Emergency</span>
+                                        @endif    
+                                    </td>
+                                  <td><span class="badge bg-{{($leave->management_decision == 'approved') ? 'success' : (($leave->management_decision == 'rejected') ? 'danger' : 'warning') }}">{{($leave->management_decision == 'approved') ? 'approved' : (($leave->management_decision == 'rejected') ? 'rejected' : 'pending' )}}</span></td>
                                     <td><span class="badge bg-{{($leave->hod_decision == 'approved') ? 'success' : (($leave->hod_decision == 'rejected') ? 'danger' : 'warning') }}">{{($leave->hod_decision == 'approved') ? 'approved' : (($leave->hod_decision == 'rejected') ? 'rejected' : 'pending') }}</span></td>
+                                    <td>
+                                       <span class="badge bg-{{($leave->status == 'approved') ? 'success' : (($leave->status == 'rejected') ? 'danger' : 'warning') }}">{{($leave->status == 'approved') ? 'approved' : (($leave->status == 'rejected') ? 'rejected' : 'pending' )}}</span>
+                                    </td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -77,13 +95,14 @@
                                                 @endphp
                                           
                                                 <li><a href="{{route('leaves.show',$leave->id)}}"  ><i class="fa fa-eye color-default"></i>View</a></li>
-                                                @if (isset($hod))
-                                                    <li><a href="#"  wire:click="authorize({{$leave->id}},'hod')" ><i class="fa fa-gavel color-default"></i> HOD Auth</a></li>
+                                                @if (Auth::user()->employee->id !== $leave->employee_id)
+                                                    @if (isset($hod))
+                                                        <li><a href="#"  wire:click="authorize({{$leave->id}},'hod')" ><i class="fa fa-gavel color-default"></i> HOD Auth</a></li>
+                                                    @endif
+                                                    @if ((in_array('Management', $rank_names) && in_array('Human Resources', $department_names)) || (in_array('Admin', $role_names) && in_array('Human Resources', $department_names)) || in_array('Super Admin', $role_names))
+                                                        <li><a href="#"  wire:click="authorize({{$leave->id}},'hr')" ><i class="fa fa-gavel color-default"></i> HR Auth</a></li>
+                                                    @endif
                                                 @endif
-                                                @if ((in_array('Management', $rank_names) && in_array('Human Resources', $department_names)) || (in_array('Admin', $role_names) && in_array('Human Resources', $department_names)) || in_array('Super Admin', $role_names))
-                                                    <li><a href="#"  wire:click="authorize({{$leave->id}},'hr')" ><i class="fa fa-gavel color-default"></i> HR Auth</a></li>
-                                                @endif
-                                               
                                             </ul>
                                         </div>
                                 </td>

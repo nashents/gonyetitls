@@ -68,7 +68,7 @@ class Index extends Component
     }
     protected $rules = [
         'selectedCategory' => 'nullable',
-        'name' => 'required|unique:brands,name,NULL,id,deleted_at,NULL|string|min:2',
+        'name' => 'required|unique:brands,name,NULL,id,deleted_at,NULL',
     ];
 
  

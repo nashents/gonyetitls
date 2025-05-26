@@ -33,6 +33,7 @@ Route::group(['middleware' => 'auth'], function(){
 Route::get('leave/applications/manage','LeaveController@manage')->name('leaves.manage');
 Route::get('leave/applications/approved','LeaveController@approved')->name('leaves.approved');
 Route::get('leave/applications/pending','LeaveController@pending')->name('leaves.pending');
+Route::get('leave/applications/progress','LeaveController@progress')->name('leaves.progress');
 Route::get('leave/applications/rejected','LeaveController@rejected')->name('leaves.rejected');
 Route::post('leave/application/{id}/decision','LeaveController@decision')->name('leaves.decision');
 Route::get('leave/reports','LeaveController@reports')->name('leaves.reports');

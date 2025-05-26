@@ -8,7 +8,7 @@
     @endif
 @endsection
 @section('title')
-    Booking|@if (Auth::user()->employee->company)
+    Bookings | @if (Auth::user()->employee->company)
     {{Auth::user()->employee->company->name}}
     @elseif (Auth::user()->company)
     {{Auth::user()->company->name}}

@@ -50,6 +50,7 @@
                                 <div class="col-md-6">
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
+                                        <li><a href="{{route('bookings.index')}}"><i class="fa fa-list"></i> All Bookings</a></li>
             							<li class="active"> <i class="fa fa-check"></i> Approved Bookings</li>
             						</ul>
                                 </div>

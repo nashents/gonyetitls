@@ -3,6 +3,7 @@
         <x-loading/>
         <div class="container-fluid">
             <div class="row">
+                
                 <div class="col-md-12">
                     <div class="panel">
                         <div class="panel-heading">
@@ -22,21 +23,21 @@
                             <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
-                                    <th class="th-sm">Date Applied
-                                    </th>
-                                    <th class="th-sm">Employee
+                                   <th class="th-sm">Employee
                                     </th>
                                     <th class="th-sm">Type
                                     </th>
-                                    <th class="th-sm">Duration (Inclusive)
+                                     <th class="th-sm">Date Applied
                                     </th>
-                                    <th class="th-sm">Day(s)
+                                    <th class="th-sm">Start Date
+                                    </th>
+                                    <th class="th-sm">End Date
+                                    </th>
+                                    <th class="th-sm">Duration
                                     </th>
                                     <th class="th-sm">Reason
                                     </th>
-                                    <th class="th-sm">HR Status
-                                    </th>
-                                    <th class="th-sm">HOD Status
+                                    <th class="th-sm">Status
                                     </th>
                                     <th class="th-sm">Actions
                                     </th>
@@ -47,8 +48,7 @@
                                 <tbody>
                                     @forelse ($leaves as $leave)
                                   <tr>
-                                    <td>{{Carbon\Carbon::parse($leave->created_at)->format('d F Y')}}</td>
-                                    <td>
+     <td>
                                         {{ucfirst($leave->employee ? $leave->employee->name : '')}} {{ucfirst($leave->employee ? $leave->employee->surname : '')}}
                                         @if ($leave->department)
                                             <br>
@@ -56,11 +56,14 @@
                                         @endif
                                     </td>
                                     <td>{{$leave->leave_type ? $leave->leave_type->name : ""}}</td>
-                                    <td>{{Carbon\Carbon::parse($leave->from)->format('d F Y')}} - {{Carbon\Carbon::parse($leave->to)->format('d F Y')}}</td>
-                                    <td>{{$leave->days}}</td>
+                                    <td>{{Carbon\Carbon::parse($leave->created_at)->format('d F Y')}}</td>
+                                    <td>{{Carbon\Carbon::parse($leave->from)->format('d F Y')}}</td>
+                                    <td>{{Carbon\Carbon::parse($leave->to)->format('d F Y')}}</td>
+                                    <td>{{$leave->days ? $leave->days." Days" : ""}}</td>
                                     <td>{{$leave->reason}}</td>
-                                    <td><span class="badge bg-{{($leave->management_decision == 'approved') ? 'success' : (($leave->management_decision == 'rejected') ? 'danger' : 'warning') }}">{{($leave->management_decision == 'approved') ? 'approved' : (($leave->management_decision == 'rejected') ? 'rejected' : 'pending' )}}</span></td>
-                                    <td><span class="badge bg-{{($leave->hod_decision == 'approved') ? 'success' : (($leave->hod_decision == 'rejected') ? 'danger' : 'warning') }}">{{($leave->hod_decision == 'approved') ? 'approved' : (($leave->hod_decision == 'rejected') ? 'rejected' : 'pending') }}</span></td>
+                                    <td>
+                                       <span class="badge bg-{{($leave->status == 'approved') ? 'success' : (($leave->status == 'rejected') ? 'danger' : 'warning') }}">{{($leave->status == 'approved') ? 'approved' : (($leave->status == 'rejected') ? 'rejected' : 'pending' )}}</span>
+                                    </td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -68,7 +71,7 @@
                                                 <span class="caret"></span>
                                             </button>
                                             <ul class="dropdown-menu">
-                                                @if ($leave->management_decision == "pending" && $leave->hod_id == Null )
+                                             @if ($leave->management_decision == "pending" && Auth::user()->id === $leave->user_id)
                                                     <li><a href="#" data-toggle="modal" data-target="#leaveEditModal" wire:click.prevent="edit({{$leave->id}})"><i class="fa fa-edit color-success"></i> Edit</a></li>
                                                     <li><a href="#" data-toggle="modal" data-target="#leaveDeleteModal{{$leave->id}}"><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                                 @endif
@@ -123,35 +126,57 @@
 
     <!-- Modal -->
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="leaveModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog mw-100 w-60" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fa fa-plus"></i> Apply Leave <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                 </div>
                 <form wire:submit.prevent="store()">
                 <div class="modal-body">
-                 
-                    <div class="form-group">
-                        <label for="leave_days">Available Leave Days<span class="required" style="color: red">*</span></label>
-                        <input type="text" class="form-control" wire:model.debounce.300ms="available_leave_days" disabled >
-                        @error('available_leave_days') <span class="text-danger error">{{ $message }}</span>@enderror
-                    </div>
-                    <div class="form-group">
-                        <label for="leave_type">Leave Type<span class="required" style="color: red">*</span></label>
-                        <select wire:model.debounce.300ms="leave_type_id" class="form-control" required >
-                            <option value="" selected>Select Leave Type</option>
-                            @foreach ($leave_types as $leave_type)
-                                <option value="{{$leave_type->id}}">{{$leave_type->name}}</option>
-                            @endforeach
-                        </select>
-                        <small><a href="{{ route('leave_types.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Leave Type</a></small>
-                        @error('leave_type_id') <span class="text-danger error">{{ $message }}</span>@enderror
-                    </div>
                     <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
+                                <label for="leave_type">Departments<span class="required" style="color: red">*</span></label>
+                                <select wire:model.debounce.300ms="department_id" class="form-control" required >
+                                    <option value="">Select Department</option>
+                                    @foreach ($departments as $department)
+                                        <option value="{{$department->id}}">{{$department->name}}</option>
+                                    @endforeach
+                                </select>
+                                @error('department_id') <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="leave_days">Available Leave Days<span class="required" style="color: red">*</span></label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="available_leave_days" disabled >
+                                @error('available_leave_days') <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="leave_type">Leave Type<span class="required" style="color: red">*</span></label>
+                                <select wire:model.debounce.300ms="leave_type_id" class="form-control" required >
+                                    <option value="" selected>Select Leave Type</option>
+                                    @foreach ($leave_types as $leave_type)
+                                        <option value="{{$leave_type->id}}">{{$leave_type->name}}</option>
+                                    @endforeach
+                                </select>
+                                @error('leave_type_id') <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-10">
+                        <input type="checkbox" wire:model.debounce.300ms="is_backdated"   class="line-style" />
+                        <label for="one" class="radio-label">Backdated Leave Application</label>
+                        @error('is_backdated') <span class="text-danger error">{{ $message }}</span>@enderror
+                    </div>
+                    <div class="row">
+                         @if ($this->is_backdated == True)
+                        <div class="col-md-4">
+                            <div class="form-group">
                                 <label for="name">Start Leave Date<span class="required" style="color: red">*</span></label>
-                                <input type="date" class="form-control" wire:model.debounce.300ms="from" required />
+                                <input type="date" class="form-control"  wire:model.debounce.300ms="from" required />
                                 @error('from') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
                         </div>
@@ -162,6 +187,22 @@
                                 @error('to') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
                         </div>
+                        @else
+                         <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="name">Start Leave Date<span class="required" style="color: red">*</span></label>
+                                <input type="date" class="form-control" min="<?= date('Y-m-d'); ?>" wire:model.debounce.300ms="from" required />
+                                @error('from') <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="to">End Leave Date<span class="required" style="color: red">*</span></label>
+                                <input type="date" class="form-control" min="<?= date('Y-m-d'); ?>" wire:model.debounce.300ms="to" required />
+                                @error('to') <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
+                        </div>
+                        @endif
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label for="to">Days Applied<span class="required" style="color: red">*</span></label>
@@ -201,54 +242,92 @@
     </div>
 
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="leaveEditModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog mw-100 w-60" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fa fa-edit"></i> Edit Leave Application <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                 </div>
                 <form wire:submit.prevent="update()">
                     <div class="modal-body">
-                 
-                        <div class="form-group">
-                            <label for="leave_days">Available Leave Days<span class="required" style="color: red">*</span></label>
-                            <input type="text" class="form-control" wire:model.debounce.300ms="available_leave_days" disabled >
-                            @error('available_leave_days') <span class="text-danger error">{{ $message }}</span>@enderror
-                        </div>
-                        <div class="form-group">
-                            <label for="leave_type">Leave Type<span class="required" style="color: red">*</span></label>
-                            <select wire:model.debounce.300ms="leave_type_id" class="form-control" required >
-                                <option value="" selected>Select Leave Type</option>
-                                @foreach ($leave_types as $leave_type)
-                                    <option value="{{$leave_type->id}}">{{$leave_type->name}}</option>
-                                @endforeach
-                            </select>
-                            <small><a href="{{ route('leave_types.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Leave Type</a></small>
-                            @error('leave_type_id') <span class="text-danger error">{{ $message }}</span>@enderror
-                        </div>
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="name">Start Leave Date<span class="required" style="color: red">*</span></label>
-                                    <input type="date" class="form-control" wire:model.debounce.300ms="from" required />
-                                    @error('from') <span class="text-danger error">{{ $message }}</span>@enderror
-                                </div>
+                   <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="leave_type">Departments<span class="required" style="color: red">*</span></label>
+                                <select wire:model.debounce.300ms="department_id" class="form-control" required >
+                                    <option value="">Select Department</option>
+                                    @foreach ($departments as $department)
+                                        <option value="{{$department->id}}">{{$department->name}}</option>
+                                    @endforeach
+                                </select>
+                                @error('department_id') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="to">End Leave Date<span class="required" style="color: red">*</span></label>
-                                    <input type="date" class="form-control" wire:model.debounce.300ms="to" required />
-                                    @error('to') <span class="text-danger error">{{ $message }}</span>@enderror
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="to">Days Applied<span class="required" style="color: red">*</span></label>
-                                    <input type="number" step="any" class="form-control" wire:model.debounce.300ms="days" required disabled/>
-                                    @error('days') <span class="text-danger error">{{ $message }}</span>@enderror
-                                </div>
-                            </div>
-                            <!-- /.col-md-6 -->
                         </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="leave_days">Available Leave Days<span class="required" style="color: red">*</span></label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="available_leave_days" disabled >
+                                @error('available_leave_days') <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="leave_type">Leave Type<span class="required" style="color: red">*</span></label>
+                                <select wire:model.debounce.300ms="leave_type_id" class="form-control" required >
+                                    <option value="" selected>Select Leave Type</option>
+                                    @foreach ($leave_types as $leave_type)
+                                        <option value="{{$leave_type->id}}">{{$leave_type->name}}</option>
+                                    @endforeach
+                                </select>
+                                @error('leave_type_id') <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
+                        </div>
+                    </div>
+                           <div class="mb-10">
+                        <input type="checkbox" wire:model.debounce.300ms="is_backdated"   class="line-style" />
+                        <label for="one" class="radio-label">Backdated Leave Application</label>
+                        @error('is_backdated') <span class="text-danger error">{{ $message }}</span>@enderror
+                    </div>
+                    <div class="row">
+                         @if ($this->is_backdated == True)
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="name">Start Leave Date<span class="required" style="color: red">*</span></label>
+                                <input type="date" class="form-control"  wire:model.debounce.300ms="from" required />
+                                @error('from') <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="to">End Leave Date<span class="required" style="color: red">*</span></label>
+                                <input type="date" class="form-control" wire:model.debounce.300ms="to" required />
+                                @error('to') <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
+                        </div>
+                        @else
+                         <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="name">Start Leave Date<span class="required" style="color: red">*</span></label>
+                                <input type="date" class="form-control" min="<?= date('Y-m-d'); ?>" wire:model.debounce.300ms="from" required />
+                                @error('from') <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="to">End Leave Date<span class="required" style="color: red">*</span></label>
+                                <input type="date" class="form-control" min="<?= date('Y-m-d'); ?>" wire:model.debounce.300ms="to" required />
+                                @error('to') <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
+                        </div>
+                        @endif
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="to">Days Applied<span class="required" style="color: red">*</span></label>
+                                <input type="number" step="any" class="form-control" wire:model.debounce.300ms="days" required disabled/>
+                                @error('days') <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
+                        </div>
+                        <!-- /.col-md-6 -->
+                    </div>
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="form-group">

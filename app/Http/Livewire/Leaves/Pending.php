@@ -6,7 +6,9 @@ use App\Models\Leave;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\DepartmentHead;
+use App\Mail\LeaveApplicationMail;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 
 class Pending extends Component
 {
@@ -25,6 +27,8 @@ class Pending extends Component
     public $role_names;
     public $department_names;
     public $category;
+    public $hod;
+    public $company;
 
 
     public function updated($value){
@@ -32,11 +36,11 @@ class Pending extends Component
     }
     protected $rules = [
         'decision' => 'required',
-        'reason' => 'required|string',
     ];
     public function mount(){
         $this->hod = DepartmentHead::where('employee_id', Auth::user()->employee->id)->first();
-        
+        $this->company = Auth::user()->employee->company;
+
         $ranks = Auth::user()->employee->ranks;
         foreach($ranks as $rank){
         $this->rank_names[] = $rank->name;
@@ -64,30 +68,34 @@ class Pending extends Component
 
         $leave = Leave::find($this->leave_id);
 
-        $ranks = Auth::user()->employee->ranks;
-        foreach ($ranks as $rank) {
-            $rank_names[] = $rank->name;
-        }
-
         if ($this->category == "hr") {
+
         $leave->management_id = Auth::user()->id;
         $leave->management_decision = $this->decision;
         $leave->management_reply = $this->reason;
-        $leave->hod_id = Auth::user()->id;
-        $leave->hod_decision = $this->decision;
-        $leave->hod_reply = $this->reason;
+        if ($leave->hod_id == Null) {
+            $leave->hod_id = Auth::user()->id;
+            $leave->hod_decision = $this->decision;
+            $leave->hod_reply = $this->reason;
+        }
+        $leave->status = $this->decision;
         $leave->update();
+
         if ($this->decision == "approved") {
             $employee =  $leave->employee;
             $employee->leave_days =  $employee->leave_days - $leave->days;
             $employee->update();
+            if ($employee->personal_email) {
+                 Mail::to($employee->personal_email)->send(new LeaveApplicationMail($this->company, $leave));
+            }
+           
         }
 
         }elseif ($this->category == "hod") {
-        $leave->hod_id = Auth::user()->id;
-        $leave->hod_decision = $this->decision;
-        $leave->hod_reply = $this->reason;
-        $leave->update();
+            $leave->hod_id = Auth::user()->id;
+            $leave->hod_decision = $this->decision;
+            $leave->hod_reply = $this->reason;
+            $leave->update();
         }
       
 
@@ -117,13 +125,11 @@ class Pending extends Component
         if ((in_array('Admin', $this->role_names) && in_array('Human Resources', $this->department_names)) || (in_array('Management', $this->rank_names) && in_array('Human Resources', $this->department_names)) || in_array('Super Admin', $this->role_names)) {
             return view('livewire.leaves.pending',[
                 'leaves' => Leave::where('status','pending')
-                ->where('employee_id' ,'!=', Auth::user()->employee->id)
                 ->latest()->paginate(10),
             ]);
         }elseif(isset($this->hod)){
             return view('livewire.leaves.pending',[
                 'leaves' => Leave::where('status','pending')
-                ->where('employee_id' ,'!=', Auth::user()->employee->id)
                 ->where('department_id' , $this->hod->department->id)
                 ->latest()->paginate(10),
             ]);

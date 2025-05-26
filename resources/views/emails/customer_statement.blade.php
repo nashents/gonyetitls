@@ -20,7 +20,7 @@ Customer Statement | {{$company->name}}
 										<tr>
 											<td style="padding:0 0 15px 0;color:#153643;">
 												<h3 style="font-size:16px; margin:0 0 20px 0;font-family:Arial,sans-serif;">Dear {{$customer->name}}</h3>
-												<p style="margin:0 0 12px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">Please find attached your statement. Kindly ensure all arrear are settled in due time.</p>
+												<p style="margin:0 0 12px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">Please find attached your statement. Kindly ensure all arrears are settled in due time.</p>
 											</td>
 										</tr>
 										<tr>

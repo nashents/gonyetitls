@@ -10,6 +10,8 @@ use Livewire\Component;
 use App\Models\Employee;
 use App\Models\LeaveType;
 use Livewire\WithPagination;
+use Maatwebsite\Excel\Excel;
+use App\Exports\LeavesExport;
 use App\Models\DepartmentHead;
 use Illuminate\Support\Facades\Auth;
 
@@ -24,6 +26,9 @@ class Manage extends Component
     
     public $employees;
     public $selectedEmployee;
+    public $is_backdated = False;
+    public $employee_departments;
+    public $department_id;
     public $selected_employee;
     private $leaves;
     public $leave_id;
@@ -40,6 +45,7 @@ class Manage extends Component
     public $reason;
     public $available_leave_days;
     public $days;
+    public $leave_filter;
 
 
     public function updated($value){
@@ -63,53 +69,64 @@ class Manage extends Component
         $this->from = '';
         $this->reason = '';
         $this->leave_type_id = '';
+        $this->is_backdated = False;
+    }
+
+     public function exportLeavesCSV(Excel $excel){
+        return $excel->download(new LeavesExport($this->range_from, $this->range_to, $this->leave_filter,  $this->search), 'leaves_' .time().'.csv', Excel::CSV);
+    }
+    public function exportLeavesPDF(Excel $excel){
+        return $excel->download(new LeavesExport($this->range_from, $this->range_to, $this->leave_filter,  $this->search), 'leaves_' .time().'.pdf', Excel::DOMPDF);
+    }
+    public function exportLeavesExcel(Excel $excel){
+        return $excel->download(new LeavesExport($this->range_from, $this->range_to, $this->leave_filter,  $this->search), 'leaves_' .time().'.xlsx');
     }
 
     public function mount(){
-      
         $this->employees = Employee::orderBy('name', 'asc')
         ->orderBy('surname', 'asc')->get();
         $this->leave_types = LeaveType::orderBy('name','asc')->get();
-        
+        $this->employee_departments = collect();
     }
 
     public function updatedSelectedEmployee($id){
         if (!is_null($id)) {
           $this->selected_employee = Employee::find($id);
+          $this->employee_departments = $this->selected_employee->departments;
           $this->available_leave_days =  $this->selected_employee->leave_days;
         }
     }
 
     public function store(){
 
-        $departments = $this->selected_employee->departments;
-        foreach($departments as $department){
-            $department_names[] = $department->name;
-        }
-        $roles = $this->selected_employee->user->roles;
-        foreach($roles as $role){
-            $role_names[] = $role->name;
-        }
-        $ranks = $this->selected_employee->ranks;
-        foreach($ranks as $rank){
-            $rank_names[] = $rank->name;
-        }
-        $employee_department = $this->selected_employee->departments->first();
+        if (isset($this->department_id)) {
 
-        if (isset($employee_department)) {
+            $now = Carbon::now();
+            $start = Carbon::parse($this->from);
+            $end = Carbon::parse($this->to);
+
+            $isBackdated = $start->lt($now->startOfDay()); // Before today
+            $isEmergency = !$isBackdated && $start->lt($now->addHours(24)); // Less than 24hrs ahead
 
             $leave = new Leave;
             $leave->user_id = Auth::user()->id;
             $leave->employee_id = $this->selected_employee->id;
             $leave->to = $this->to;
             $leave->from = $this->from;
+            $leave->is_backdated = $this->is_backdated;
+            $leave->is_emergency = $isEmergency;
             $leave->leave_type_id = $this->leave_type_id;
-            $leave->department_id = $employee_department->id;
+            $leave->department_id = $this->department_id;
             $leave->days = $this->days;
             $leave->reason = $this->reason;
 
+            //checking if employee is a department head or a manager
             $hod = DepartmentHead::where('employee_id', $this->selected_employee->id)->first();
-             
+            $ranks = $this->selected_employee->ranks;
+            foreach($ranks as $rank){
+                $rank_names[] = $rank->name;
+            }
+
             if (in_array('Management', $rank_names) || isset($hod)) {
                 $leave->hod_decision = 'approved';
                 $leave->management_decision = 'pending';

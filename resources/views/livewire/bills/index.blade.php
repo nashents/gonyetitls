@@ -20,7 +20,7 @@
                                   </span>
                                   <select wire:model.debounce.300ms="bill_filter" class="form-control" aria-label="..." >
                                     <option value="created_at">Bill Created At</option>
-                              </select>
+                                </select>
                                     </div>
 
                                     <!-- /input-group -->

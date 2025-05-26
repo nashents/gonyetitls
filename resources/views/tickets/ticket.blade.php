@@ -46,6 +46,8 @@
                                         Horse | {{ucfirst($ticket->booking->horse->horse_make ? $ticket->booking->horse->horse_make->name : "")}} {{ucfirst($ticket->booking->horse->horse_model ? $ticket->booking->horse->horse_model->name : "" )}} {{ucfirst($ticket->booking->horse->registration_number)}}
                                         @elseif(isset($ticket->booking->vehicle))
                                         Vehicle | {{ucfirst($ticket->booking->vehicle->vehicle_make->name)}} {{ucfirst($ticket->booking->vehicle->vehicle_model->name)}} {{ucfirst($ticket->booking->vehicle->registration_number)}}
+                                         @elseif(isset($ticket->booking->asset))
+                                            Asset | {{ucfirst($ticket->booking->asset->product->brand ? $ticket->booking->asset->product->brand->name : "")}} {{ucfirst($ticket->booking->asset->product ? $ticket->booking->asset->product->name : "")}}  {{$ticket->booking->asset->serial_number}}
                                         @elseif(isset($ticket->booking->trailer))
                                         Trailer | {{ucfirst($ticket->booking->trailer->make)}} {{ucfirst($ticket->booking->trailer->model)}} {{ucfirst($ticket->booking->trailer->registration_number)}}
                                     @endif</h5>
@@ -110,7 +112,9 @@
                                                     Horse | {{ucfirst($ticket->booking->horse->horse_make ? $ticket->booking->horse->horse_make->name : "")}} {{ucfirst($ticket->booking->horse->horse_model ? $ticket->booking->horse->horse_model->name : "" )}} {{ucfirst($ticket->booking->horse->registration_number)}}
                                                 @elseif(isset($ticket->booking->vehicle))
                                                     Vehicle | {{ucfirst($ticket->booking->vehicle->vehicle_make->name)}} {{ucfirst($ticket->booking->vehicle->vehicle_model->name)}} {{ucfirst($ticket->booking->vehicle->registration_number)}}
-                                                @elseif(isset($ticket->booking->trailer))
+                                                 @elseif(isset($ticket->booking->asset))
+                                            Asset | {{ucfirst($ticket->booking->asset->product->brand ? $ticket->booking->asset->product->brand->name : "")}} {{ucfirst($ticket->booking->asset->product ? $ticket->booking->asset->product->name : "")}}  {{$ticket->booking->asset->serial_number}}
+                                                    @elseif(isset($ticket->booking->trailer))
                                                     Trailer | {{ucfirst($ticket->booking->trailer->make)}} {{ucfirst($ticket->booking->trailer->model)}} {{ucfirst($ticket->booking->trailer->registration_number)}}
                                                 @endif
                                             </center>
