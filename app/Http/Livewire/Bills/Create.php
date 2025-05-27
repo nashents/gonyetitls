@@ -67,6 +67,7 @@ class Create extends Component
     public $tax_amount;
     public $total_tax_amount;
     public $user_id;
+    public $company;
 
     public $item_key;
     public $item_name;
@@ -145,6 +146,7 @@ class Create extends Component
     }
 
     public function mount(){
+        $this->company = Auth::user()->employee->company;
         $this->bill_number = $this->billNumber();
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->products = Product::where('buy',True)->orderBy('name','asc')->get();
@@ -439,14 +441,12 @@ class Create extends Component
         $bill->update();
 
         $notifications = Notification::where('category','Bill Authorization')->where('status',1)->get();
-        $company =  $this->company;
-        
         if ($notifications->isNotEmpty()) {
             foreach ($notifications as $notification) {
                 if($notification && isset($notification->category)){
                    $email = $notification->email ?? $notification->employee->email ?? null;
                 if($email){
-                    Mail::to($email)->send(new PendingNotificationEmails($company, $notification, $bill));
+                    Mail::to($email)->send(new PendingNotificationEmails($this->company, $notification, $bill));
                 }
                 }
             }

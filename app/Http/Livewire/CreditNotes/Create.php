@@ -61,6 +61,7 @@ class Create extends Component
     public $customer;
     public $product_name;
     public $product_description;
+    public $company;
 
     public $inputs = [];
     public $i = 1;
@@ -183,6 +184,7 @@ class Create extends Component
         $this->invoice_products = InvoiceProduct::orderBy('name','asc')->get();
         $this->invoices = Invoice::where('authorization','approved')->orderBy('created_at','desc')->get();
         $this->company_id = Auth::user()->employee->company->id;
+        $this->company = Auth::user()->employee->company;
     }
 
     public function updated($value){
@@ -230,14 +232,13 @@ class Create extends Component
         $credit_note->save();
 
         $notifications = Notification::where('category','Credit Note Authorization')->where('status',1)->get();
-        $company =  $this->company;
         
         if ($notifications->isNotEmpty()) {
             foreach ($notifications as $notification) {
                 if($notification && isset($notification->category)){
                 $email = $notification->email ?? $notification->employee->email ?? null;
                 if($email){
-                    Mail::to($email)->send(new PendingNotificationEmails($company, $notification, $credit_note));
+                    Mail::to($email)->send(new PendingNotificationEmails($this->company, $notification, $credit_note));
                 }
                 }
             }

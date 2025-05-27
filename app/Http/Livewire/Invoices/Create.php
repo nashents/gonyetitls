@@ -168,6 +168,7 @@ class Create extends Component
     public $current_balance;
     public $mode_of_payment;
     public $payment_amount;
+    public $company;
        
     
     
@@ -417,6 +418,7 @@ class Create extends Component
     public function mount(){
 
         $this->trip_filter = "created_at";
+        $this->company = Auth::user()->employee->company;
 
         $this->accounts = Account::where('account_type_id',1)->latest()->get();
 
@@ -1157,14 +1159,14 @@ class Create extends Component
     }
 
     $notifications = Notification::where('category','Invoice Authorization')->where('status',1)->get();
-        $company =  $this->company;
+       
         
         if ($notifications->isNotEmpty()) {
             foreach ($notifications as $notification) {
                 if($notification && isset($notification->category)){
                    $email = $notification->email ?? $notification->employee->email ?? null;
                 if($email){
-                    Mail::to($email)->send(new PendingNotificationEmails($company, $notification, $invoice));
+                    Mail::to($email)->send(new PendingNotificationEmails($this->company, $notification, $invoice));
                 }
                 }
             }

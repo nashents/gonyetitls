@@ -474,14 +474,14 @@ class Index extends Component
 
 
         $notifications = Notification::where('category','Fuel Order Authorization')->where('status',1)->get();
-        $company =  $this->company;
+      
         
         if ($notifications->isNotEmpty()) {
             foreach ($notifications as $notification) {
                 if($notification && isset($notification->category)){
                    $email = $notification->email ?? $notification->employee->email ?? null;
                 if($email){
-                    Mail::to($email)->send(new PendingNotificationEmails($company, $notification, $fuel));
+                    Mail::to($email)->send(new PendingNotificationEmails($this->company, $notification, $fuel));
                 }
                 }
             }
