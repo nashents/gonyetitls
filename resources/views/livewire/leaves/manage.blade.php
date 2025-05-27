@@ -117,7 +117,24 @@
                                     </td>
                                  
                                     <td>
+                                         @php
+                                            $today = Carbon\Carbon::today();
+                                            $start = Carbon\Carbon::parse($leave->from);
+                                            $end = Carbon\Carbon::parse($leave->to);
+
+                                            if ($today->lt($start)) {
+                                                $status = 'Not Yet Started';
+                                                $badgeClass = 'badge bg-warning text-dark';
+                                            } elseif ($today->between($start, $end)) {
+                                                $status = 'In Progress';
+                                                $badgeClass = 'badge bg-info text-white';
+                                            } else {
+                                                $status = 'Completed';
+                                                $badgeClass = 'badge bg-success';
+                                            }
+                                        @endphp
                                        <span class="badge bg-{{($leave->status == 'approved') ? 'success' : (($leave->status == 'rejected') ? 'danger' : 'warning') }}">{{($leave->status == 'approved') ? 'approved' : (($leave->status == 'rejected') ? 'rejected' : 'pending' )}}</span>
+                                        <small><span class="{{ $badgeClass }}">{{ $status }}</span></small>
                                     </td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">

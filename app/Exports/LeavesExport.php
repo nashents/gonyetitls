@@ -34,35 +34,36 @@ WithCustomStartCell
     }
     public function map($leave): array{
 
-        $name = $leave->user->employee ? $leave->user->employee->name : "";
-        $surname = $leave->user->employee ? $leave->user->employee->surname : "";
-        $full_name = $name ." ".$surname;
+        $employee_name = $leave->employee ? $leave->employee->name : "";
+        $employee_surname = $leave->employee ? $leave->employee->surname : "";
+        $employee_full_name = $employee_name ." ".$employee_surname;
+        $user_name = $leave->user ? $leave->user->name : "";
+        $user_surname = $leave->user ? $leave->user->surname : "";
+        $user_full_name = $user_name ." ".$user_surname;
 
             return   [
-                $leave->leave_type->name,
-                $full_name ,
+                $user_full_name ,
+                $leave->created_at ,
+                $employee_full_name ,
                 $leave->from,
                 $leave->to,
                 $leave->days,
-                $leave->country,
-                $leave->city,
-                $leave->suburb,
-                $leave->street_address,
+                $leave->reason,
+                $leave->status,
                  ];
 
 
     }
     public function headings(): array{
             return[
-                'Name',
-                'C Name',
-                'C Surname',
-                'Phonenumber',
-                'Email',
-                'Country',
-                'City',
-                'Suburb',
-                'Street Address',
+                'CreatedBy',
+                'AppliedOn',
+                'Employee',
+                'Start Date',
+                'End Date',
+                'Duration',
+                'Reason',
+                'Status',
             ];
 
 
@@ -70,7 +71,7 @@ WithCustomStartCell
     public function registerEvents(): array{
         return[
             AfterSheet::class    => function(AfterSheet $event) {
-                $event->sheet->getStyle('A7:I7')->applyFromArray([
+                $event->sheet->getStyle('A7:H7')->applyFromArray([
                     'font' => [
                         'bold' => true
                     ],

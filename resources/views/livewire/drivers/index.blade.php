@@ -30,13 +30,13 @@
 
                                 <table id="driversTable" class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                     <thead >
+                                        <th class="th-sm">Profile
+                                        </th>
                                         <th class="th-sm">Driver#
                                         </th>
                                         <th class="th-sm">Transporter
                                         </th>
-                                        <th class="th-sm">Name
-                                        </th>
-                                        <th class="th-sm">Surname
+                                        <th class="th-sm">Fullname
                                         </th>
                                         <th class="th-sm">License#
                                         </th>
@@ -63,10 +63,15 @@
                                         @foreach ($drivers as $driver)
                                         @if (isset($driver->employee))
                                       <tr>
+                                        @php
+                                            $user = App\Models\User::find($driver->user_id);
+                                        @endphp
+                                        <td class="line-height-35">  
+                                          <img src="{{asset('images/uploads/'.$user->profile)}}" alt="" class="border-radius-50 img-circle profile-img " style="width: 50px; height:50px">
+                                        </td>
                                         <td>{{ucfirst($driver->driver_number)}}</td>
                                         <td>{{ucfirst($driver->transporter ? $driver->transporter->name : "")}}</td>
-                                        <td>{{ucfirst($driver->employee ? $driver->employee->name : "")}}</td>
-                                        <td>{{ucfirst($driver->employee ?$driver->employee->surname : "")}}</td>
+                                        <td>{{ucfirst($driver->employee ? $driver->employee->name : "")}} {{ucfirst($driver->employee ?$driver->employee->surname : "")}}</td>
                                         <td>{{$driver->license_number}}</td>
                                         <td>{{$driver->class}}</td>
                                         <td>{{$driver->experience}}</td>
@@ -120,8 +125,7 @@
                                                 </ul>
                                             </div>
                                             @include('drivers.delete')
-
-                                    </td>
+                                        </td>
                                       </tr>
                                       @endif
                                       @endforeach
