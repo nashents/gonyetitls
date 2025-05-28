@@ -903,9 +903,18 @@ class Create extends Component
             $q->where('name', 'Trip Expense');
          })->orderBy('name','asc')->get();
 
-         foreach($this->expenses as $expense){
-            $this->expense_currency_id[] = $expense->currency_id;
-            $this->amount[] = $expense->amount;
+        
+
+        foreach($this->expenses as $expense){
+                $id = $expense->id;
+                $this->category[$id] = $expense->category;
+                $this->expense_currency_id[$id] = $expense->currency_id;
+                $this->amount[$id] = $expense->amount;
+                // Optional: handle exchange rate & converted amount if relevant
+                if ($expense->currency_id != ($this->company->currency_id ?? null)) {
+                    $this->expense_exchange_rate[$id] = $expense->exchange_rate;
+                    $this->expense_exchange_amount[$id] = $expense->exchange_amount;
+                }
          }
 
        
@@ -1264,7 +1273,7 @@ class Create extends Component
       
                 if(isset($this->starting_hours)){
                     if(isset($last_hours)){
-                        if($last_hour->hour < $this->ending_hour){
+                        if($last_hours->hour < $this->ending_hour){
                             $hours = new Hour;
                             $hours->user_id = $this->user->id;
                             $hours->trip_id = $trip->id;

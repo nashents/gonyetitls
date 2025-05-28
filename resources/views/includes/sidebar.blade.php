@@ -187,6 +187,7 @@
                     <a href="#"><i class="fas fa-calendar"></i> <span>Leave Management</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
                         <li><a href="{{route('leaves.index')}}"><i class="fas fa-plus "></i> <span>Apply for leave</span></a></li>
+                        <li><a href="{{route('leaves.myteam')}}"><i class="fas fa-users "></i> <span>My Team</span></a></li>
 
                         @if (isset($department_head) || (in_array('Admin', $role_names) && in_array('Human Resources', $department_names)) || (in_array('Management', $rank_names) && in_array('Human Resources', $department_names)) || in_array('Super Admin', $role_names))
                         <li><a href="{{route('leaves.manage')}}"><i class="fas fa-list "></i> <span>Manage Applications</span></a></li>

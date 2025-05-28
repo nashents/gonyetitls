@@ -45,16 +45,15 @@
                                 <div class="col-md-6">
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
-            							<li class="active"> <i class="fa fa-clock-o"></i> In Progress Leave Applications</li>
+            							<li class="active"> <i class="fa fa-users"></i> My Team</li>
             						</ul>
                                 </div>
-
                             </div>
                             <!-- /.row -->
                         </div>
                         <!-- /.container-fluid -->
 
-                        @livewire('leaves.progress')
+                        @livewire('leaves.myteam')
                         <!-- /.section -->
 
                     </div>
@@ -76,22 +75,7 @@
 @section('extra-js')
     <script>
     $(document).ready( function () {
-        $('#leavesTable').DataTable();
+        $('#employeesTable').DataTable();
     } );
     </script>
-    <script>
-    $(document).ready(function () {
-        $('.ckeditor').ckeditor();
-    });
-    </script>
-
 @endsection
-
-{{-- @section('page-js')
-<script src="{{asset('js/ckeditor/ckeditor.js')}}"></script>
-<script type="text/javascript">
-    $(function($) {
-       CKEDITOR.replace( 'editor1' );
-   });
-</script>
-@endsection --}}

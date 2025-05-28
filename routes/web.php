@@ -30,6 +30,7 @@ Route::group(['middleware' => 'auth'], function(){
 //**Human Resources Route**
 
 //Leave Management Routes
+Route::get('leaves/my-team','LeaveController@myTeam')->name('leaves.myteam');
 Route::get('leave/applications/manage','LeaveController@manage')->name('leaves.manage');
 Route::get('leave/applications/approved','LeaveController@approved')->name('leaves.approved');
 Route::get('leave/applications/pending','LeaveController@pending')->name('leaves.pending');
@@ -409,7 +410,9 @@ Route::get('tickets/{ticket}//export-to-pdf','TicketController@generatePDF')->na
 
 Route::get('horses/{horse}/edit','HorseController@edit')->name('horses.edit')->withTrashed();
 Route::resource('bins','BinController');
+Route::resource('claims','ClaimController');
 Route::resource('racks','RackController');
+Route::resource('dependants','DependantController');
 Route::resource('shifts','ShiftController');
 Route::resource('rehandlings','RehandlingController');
 Route::resource('route_expense','RouteExpenseController');

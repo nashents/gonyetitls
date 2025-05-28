@@ -97,6 +97,8 @@
                 <li role="presentation"><a href="#fitness" aria-controls="fitness" role="tab" data-toggle="tab">Reminders</a></li>
                 <li role="presentation"><a href="#departments" aria-controls="departments" role="tab" data-toggle="tab">Departments</a></li>
                 <li role="presentation"><a href="#documents" aria-controls="documents" role="tab" data-toggle="tab">Documents</a></li>
+                <li role="presentation"><a href="#dependants" aria-controls="dependants" role="tab" data-toggle="tab">Dependants</a></li>
+                <li role="presentation"><a href="#leaves" aria-controls="leaves" role="tab" data-toggle="tab">Leave</a></li>
 
             </ul>
             <div class="tab-content bg-white p-15">

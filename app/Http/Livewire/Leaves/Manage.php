@@ -344,6 +344,7 @@ class Manage extends Component
             if (!empty($this->search)) {
                 $query->where(function ($q) {
                     $q->where('days', 'like', '%' . $this->search . '%')
+                    ->orWhere('reason','like', '%' . $this->search . '%')
                     ->orWhereHas('employee', function ($q) {
                         $q->where(DB::raw("concat(name, ' ', surname)"), 'like', '%' . $this->search . '%');
                     })

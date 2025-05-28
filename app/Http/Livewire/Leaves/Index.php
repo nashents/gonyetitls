@@ -11,6 +11,7 @@ use App\Models\Employee;
 use App\Models\LeaveType;
 use Livewire\WithPagination;
 use App\Models\DepartmentHead;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
 class Index extends Component
@@ -257,9 +258,29 @@ class Index extends Component
         }
      
         $this->leave_types = LeaveType::orderBy('name','asc')->get();
+        if (filled($this->search)) {
+             return view('livewire.leaves.index',[
+                'leaves' => Leave::where('days', 'like', '%' . $this->search . '%')
+                    ->orWhere('reason','like', '%' . $this->search . '%')
+                    ->orWhereHas('employee', function ($q) {
+                        $q->where(DB::raw("concat(name, ' ', surname)"), 'like', '%' . $this->search . '%');
+                    })
+                    ->orWhereHas('user', function ($q) {
+                        $q->where(DB::raw("concat(name, ' ', surname)"), 'like', '%' . $this->search . '%');
+                    })
+                    ->orWhereHas('department', function ($q) {
+                        $q->where('name', 'like', '%' . $this->search . '%');
+                    })
+                    ->orWhereHas('leave_type', function ($q) {
+                        $q->where('name', 'like', '%' . $this->search . '%');
+                    })->paginate(10)
+            ]);
+          
+        }else{
+            return view('livewire.leaves.index',[
+                'leaves' => Leave::where('employee_id',Auth::user()->employee->id)->latest()->paginate(10)
+            ]);
+        }
        
-        return view('livewire.leaves.index',[
-            'leaves' => Leave::where('employee_id',Auth::user()->employee->id)->latest()->paginate(10)
-        ]);
     }
 }

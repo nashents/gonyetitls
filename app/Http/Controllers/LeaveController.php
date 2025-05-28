@@ -24,8 +24,8 @@ class LeaveController extends Controller
     public function manage(){
         return view('leaves.manage');
     }
-    public function progress(){
-        return view('leaves.progress');
+    public function myTeam(){
+        return view('leaves.myteam');
     }
 
     public function pending()

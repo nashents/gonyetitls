@@ -102,7 +102,7 @@ class Pending extends Component
             $this->dispatchBrowserEvent('hide-bulkyAuthorizationModal');
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
-                'message'=>"Bulk Bills Rejected Successfully"
+                'message'=>"Bulk Bill(s) Rejected Successfully"
             ]);
             return redirect()->route('bills.rejected');
          }
