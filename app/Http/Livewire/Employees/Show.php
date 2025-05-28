@@ -120,13 +120,21 @@ class Show extends Component
 
     public function render()
     {
+
+        $this->all_departments = Department::orderBy('name','asc')->get();
+        $this->employee = Employee::find($this->employee_id);
+        $this->employee_departments = $this->employee->departments;
         if (isset($this->driver)) {
             return view('livewire.employees.show',[
+                'all_departments' => $this->all_departments,
+                'employee_departments' =>  $this->employee->departments,
                 'driver_allowances' => AllowanceDriver::where('driver_id', $this->driver->id)->orderBy('created_at','desc')->paginate(10),
                 'recoveries' => Recovery::where('driver_id', $this->driver->id)->orderBy('created_at','desc')->paginate(10)
             ]);
         }else{
             return view('livewire.employees.show',[
+                'all_departments' => $this->all_departments,
+                'employee_departments' =>  $this->employee->departments,
             ]);
         }
        
