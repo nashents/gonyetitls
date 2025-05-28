@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Employees;
 
+use App\Models\Leave;
 use Livewire\Component;
 use App\Models\Employee;
 use App\Models\Recovery;
@@ -21,6 +22,7 @@ class Show extends Component
     public $employee_departments;
     public $department_id;
     public $trips;
+    public $leaves;
     public $cashflows;
     public $use_email_as_username;
     public $driver_allowance;
@@ -47,10 +49,11 @@ class Show extends Component
     public function mount($id){
         $this->pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
         $this->all_departments = Department::orderBy('name','asc')->get();
-        $this->employee = Employee::find($id);
+        $this->employee = Employee::with('leaves','documents','dependants','departments','driver')->find($id);
         $this->employee_id = $id;
         $this->use_email_as_username =  $this->employee->user->use_email_as_username;
         $this->driver = $this->employee->driver;
+        $this->leaves =  $this->employee->leaves;
         if(isset($this->driver)){
             $this->trips = $this->driver->trips;
             $this->cashflows = $this->driver->cash_flows;
@@ -95,6 +98,7 @@ class Show extends Component
     }
     public function removeDepartment(){
         $this->employee->departments()->detach($this->department_id);
+        $this->employee_departments = $this->employee->departments;
         $this->dispatchBrowserEvent('hide-removeDepartmentModal');
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
@@ -103,6 +107,7 @@ class Show extends Component
     }
     public function addDepartments(){
         $this->employee->departments()->attach($this->department_id);
+        $this->employee_departments = $this->employee->departments;
         $this->dispatchBrowserEvent('hide-departmentModal');
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
@@ -115,20 +120,13 @@ class Show extends Component
 
     public function render()
     {
-        $this->all_departments = Department::orderBy('name','asc')->get();
-        $this->employee = Employee::find($this->employee_id);
-        $this->employee_departments = $this->employee->departments;
         if (isset($this->driver)) {
             return view('livewire.employees.show',[
-                'all_departments' => $this->all_departments,
-                'employee_departments' =>  $this->employee->departments,
                 'driver_allowances' => AllowanceDriver::where('driver_id', $this->driver->id)->orderBy('created_at','desc')->paginate(10),
                 'recoveries' => Recovery::where('driver_id', $this->driver->id)->orderBy('created_at','desc')->paginate(10)
             ]);
         }else{
             return view('livewire.employees.show',[
-                'all_departments' => $this->all_departments,
-                'employee_departments' =>  $this->employee->departments,
             ]);
         }
        

@@ -81,6 +81,7 @@ class Index extends Component
     public $website;
     public $suburb;
     public $street_address;
+    public $company;
    
 
 
@@ -326,6 +327,7 @@ class Index extends Component
 
     public function mount($category){
             $this->resetPage();
+            $this->company = Auth::user()->employee->company;
             $this->purchase_filter = "created_at";
             $this->bookings = Booking::where('authorization','approved')->where('status',1)->latest()->get();
             $this->department = $category;
@@ -559,14 +561,14 @@ class Index extends Component
         }
 
          $notifications = Notification::where('category','Purchase Order Authorization')->where('status',1)->get();
-        $company =  $this->company;
+       
                 
         if ($notifications->isNotEmpty()) {
             foreach ($notifications as $notification) {
                 if($notification && isset($notification->category)){
                 $email = $notification->email ?? $notification->employee->email ?? null;
                 if($email){
-                    Mail::to($email)->send(new PendingNotificationEmails($company, $notification, $purchase));
+                    Mail::to($email)->send(new PendingNotificationEmails($this->company, $notification, $purchase));
                 }
                 }
             }

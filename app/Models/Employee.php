@@ -13,6 +13,9 @@ class Employee extends Model implements Auditable
 
     use \OwenIt\Auditing\Auditable;
 
+    public function dependants(){
+        return $this->hasMany('App\Models\Dependant');
+    }
     public function vehicle_assignment(){
         return $this->hasMany('App\Models\VehicleAssignment');
     }

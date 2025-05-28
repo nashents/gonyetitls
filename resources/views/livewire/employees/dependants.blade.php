@@ -1,30 +1,24 @@
 <div>
     {{-- <blockquote class="blockquote-reverse mt-20"> --}}
-      
+        <a href="" data-toggle="modal" data-target="#dependantModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Dependant</a>
+        <br>
+        <br>
+        <br>
         <table id="dependantsTable" class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
             <thead >
-                <th class="th-sm">Category
+                <th class="th-sm">Type
                 </th>
-                <th class="th-sm">Item
+                <th class="th-sm">Name
                 </th>
-                <th class="th-sm">Description
+                <th class="th-sm">Gender
                 </th>
-                <th class="th-sm">Qty
+                <th class="th-sm">DOB
                 </th>
-                <th class="th-sm">Price
-                </th>
-                <th class="th-sm">Subtotal(Excl)
-                </th>
-                <th class="th-sm">Tax Amt
-                </th>
-                <th class="th-sm">Subtotal(Incl)
-                </th>
-              
               </tr>
             </thead>
             <tbody>
-                @if ($dependants->count()>0)
-                @foreach ($dependants as $dependant)
+                @if (isset($dependants))
+                @forelse ($dependants as $dependant)
                 <tr>
                     <td>
                     {{$dependant->type}}
@@ -39,7 +33,15 @@
                     {{$dependant->dob}}
                     </td>
                 </tr>
-              @endforeach
+                @empty
+                    <tr>
+                    <td colspan="4">
+                        <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
+                            No Dependants Found ....
+                        </div> 
+                    </td>
+                    </tr>  
+                @endforelse
             </tbody>
             @else
                 <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
@@ -53,7 +55,6 @@
                        <center> <strong>Are you sure you want to delete this Dependant</strong> </center>
                     </div>
                     <form wire:submit.prevent="delete()"  >
-                       
                         <input type="hidden" name="_method" value="DELETE">
                     <div class="modal-footer no-border">
                         <div class="btn-group" role="group">

@@ -98,7 +98,7 @@
                 <li role="presentation"><a href="#departments" aria-controls="departments" role="tab" data-toggle="tab">Departments</a></li>
                 <li role="presentation"><a href="#documents" aria-controls="documents" role="tab" data-toggle="tab">Documents</a></li>
                 <li role="presentation"><a href="#dependants" aria-controls="dependants" role="tab" data-toggle="tab">Dependants</a></li>
-                <li role="presentation"><a href="#leaves" aria-controls="leaves" role="tab" data-toggle="tab">Leave</a></li>
+                <li role="presentation"><a href="#leaves" aria-controls="leaves" role="tab" data-toggle="tab">Leave Requests</a></li>
 
             </ul>
             <div class="tab-content bg-white p-15">
@@ -502,6 +502,88 @@
                 </div>
                 <div role="tabpanel" class="tab-pane" id="documents">
                   @livewire('documents.index', ['id' => $employee->id,'category'=>'employee'])
+                </div>
+                <div role="tabpanel" class="tab-pane" id="dependants">
+                    @livewire('employees.dependants', ['id' => $employee->id])
+               </div>
+               <div role="tabpanel" class="tab-pane" id="leaves">
+                    <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
+                        <thead>
+                          <tr>
+                            <th class="th-sm">CreatedBy
+                            </th>
+                            <th class="th-sm">Type
+                            </th>
+                            <th class="th-sm">Date Applied
+                            </th>
+                            <th class="th-sm">Start Date
+                            </th>
+                            <th class="th-sm">End Date
+                            </th>
+                            <th class="th-sm">Duration
+                            </th>
+                            <th class="th-sm">Reason
+                            </th>
+                            <th class="th-sm">Status
+                            </th>
+                          </tr>
+                        </thead>
+                        @if (isset($leaves))
+                        <tbody>
+                            @forelse ($leaves as $leave)
+                          <tr>
+                            <td>
+                                {{ucfirst($leave->user ? $leave->user->name : '')}} {{ucfirst($leave->user ? $leave->user->surname : '')}}
+                            </td>
+                            <td>{{$leave->leave_type ? $leave->leave_type->name : ""}}</td>
+                            <td>{{Carbon\Carbon::parse($leave->created_at)->format('d F Y')}}</td>
+                            <td>{{Carbon\Carbon::parse($leave->from)->format('d F Y')}}</td>
+                            <td>{{Carbon\Carbon::parse($leave->to)->format('d F Y')}}</td>
+                            <td>{{$leave->days ? $leave->days." Days" : ""}}</td>
+                            <td>{{$leave->reason}}</td>
+                            <td>
+                                    @php
+                                    $today = Carbon\Carbon::today();
+                                    $start = Carbon\Carbon::parse($leave->from);
+                                    $end = Carbon\Carbon::parse($leave->to);
+
+                                    if ($today->lt($start)) {
+                                        $status = 'Not Yet Started';
+                                        $badgeClass = 'badge bg-warning text-dark';
+                                    } elseif ($today->between($start, $end)) {
+                                        $status = 'In Progress';
+                                        $badgeClass = 'badge bg-info text-white';
+                                    } else {
+                                        $status = 'Completed';
+                                        $badgeClass = 'badge bg-success';
+                                    }
+                                @endphp
+                                <span class="badge bg-{{($leave->status == 'approved') ? 'success' : (($leave->status == 'rejected') ? 'danger' : 'warning') }}">{{($leave->status == 'approved') ? 'approved' : (($leave->status == 'rejected') ? 'rejected' : 'pending' )}}</span>
+                                <small><span class="{{ $badgeClass }}">{{ $status }}</span></small>
+                            </td>
+                          </tr>
+                          @empty
+                          <tr>
+                            <td colspan="8">
+                                <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
+                                    No Leave Applications Found ....
+                                </div>
+                               
+                            </td>
+                          </tr>  
+                            @endforelse
+                        </tbody>
+                        @else
+                            <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
+                         @endif
+                      </table>
+                      <nav class="text-center" style="float: right">
+                        <ul class="pagination rounded-corners">
+                            @if (isset($driver_allowances))
+                                {{ $driver_allowances->links() }} 
+                            @endif 
+                        </ul>
+                    </nav>    
                 </div>
                 <div class="row">
                     <div class="col-md-12">
