@@ -1273,7 +1273,7 @@ class Create extends Component
       
                 if(isset($this->starting_hours)){
                     if(isset($last_hours)){
-                        if($last_hours->hour < $this->ending_hour){
+                        if($last_hours->hour < $this->ending_hours){
                             $hours = new Hour;
                             $hours->user_id = $this->user->id;
                             $hours->trip_id = $trip->id;

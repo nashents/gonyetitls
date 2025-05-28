@@ -104,6 +104,27 @@
 @stack('scripts')
     
     <script type="text/javascript">
+            window.addEventListener('show-dependantModal', event => {
+                $('#dependantModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-dependantModal', event => {
+                $('#dependantModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-dependantEditModal', event => {
+                $('#dependantEditModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-dependantEditModal', event => {
+                $('#dependantEditModal').modal('hide');
+            })
+    </script>
+    
+    <script type="text/javascript">
             window.addEventListener('show-rehandlingModal', event => {
                 $('#rehandlingModal').modal('show');
             })

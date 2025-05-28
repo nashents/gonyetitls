@@ -50,7 +50,7 @@
             <div class="modal-dialog" role="document">
                 <div class="modal-content bg-danger">
                     <div class="modal-body">
-                       <center> <strong>Are you sure you want to delete this Bill Expense</strong> </center>
+                       <center> <strong>Are you sure you want to delete this Dependant</strong> </center>
                     </div>
                     <form wire:submit.prevent="delete()"  >
                        
