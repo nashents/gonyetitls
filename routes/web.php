@@ -407,10 +407,14 @@ Route::get('tickets/{ticket}/preview','TicketController@preview')->name('tickets
 Route::get('tickets/{ticket}/print','TicketController@print')->name('tickets.print');
 Route::get('tickets/{ticket}//export-to-pdf','TicketController@generatePDF')->name('tickets.pdf');
 
+Route::get('goods-received/tyres/','GoodsReceivedController@tyres')->name('goods_receiveds.tyres');
+Route::get('goods-received/assets/','GoodsReceivedController@assets')->name('goods_receiveds.assets');
+
 
 Route::get('horses/{horse}/edit','HorseController@edit')->name('horses.edit')->withTrashed();
 Route::resource('bins','BinController');
 Route::resource('claims','ClaimController');
+Route::resource('goods_receiveds','GoodsReceivedController');
 Route::resource('racks','RackController');
 Route::resource('dependants','DependantController');
 Route::resource('shifts','ShiftController');

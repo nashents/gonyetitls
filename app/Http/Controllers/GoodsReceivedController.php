@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\GoodsReceived;
+use Illuminate\Support\Facades\Session;
 use App\Http\Requests\StoreGoodsReceivedRequest;
 use App\Http\Requests\UpdateGoodsReceivedRequest;
 
@@ -15,7 +16,15 @@ class GoodsReceivedController extends Controller
      */
     public function index()
     {
-        //
+        return view('goods_receiveds.index');
+    }
+    public function assets()
+    {
+        return view('goods_receiveds.assets');
+    }
+    public function tyres()
+    {
+        return view('goods_receiveds.tyres');
     }
 
     /**
@@ -47,7 +56,7 @@ class GoodsReceivedController extends Controller
      */
     public function show(GoodsReceived $goodsReceived)
     {
-        //
+        return view('goods_receiveds.show')->with('goods_received',$goodsReceived);
     }
 
     /**
@@ -81,6 +90,26 @@ class GoodsReceivedController extends Controller
      */
     public function destroy(GoodsReceived $goodsReceived)
     {
-        //
+        $inventories = $goodsReceived->inventories;   
+        $assets = $goodsReceived->assets;   
+        $tyres = $goodsReceived->tyres;   
+        if (isset($inventories)) {
+            foreach ($inventories as $inventory) {
+                $inventory->delete();
+            }
+        }
+        if (isset($tyres)) {
+            foreach ($tyres as $tyre) {
+                $tyre->delete();
+            }
+        }
+        if (isset($assets)) {
+            foreach ($assets as $asset) {
+                $asset->delete();
+            }
+        }
+        $goodsReceived->delete();
+        Session::flash('success','Goods Received Voucher Deleted Successfully');
+        return redirect()->back();
     }
 }

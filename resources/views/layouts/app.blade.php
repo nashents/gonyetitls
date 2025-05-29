@@ -104,6 +104,27 @@
 @stack('scripts')
     
     <script type="text/javascript">
+            window.addEventListener('show-goods_receivedModal', event => {
+                $('#goods_receivedModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-goods_receivedModal', event => {
+                $('#goods_receivedModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-goods_receivedEditModal', event => {
+                $('#goods_receivedEditModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-goods_receivedEditModal', event => {
+                $('#goods_receivedEditModal').modal('hide');
+            })
+    </script>
+
+    <script type="text/javascript">
             window.addEventListener('show-dependantModal', event => {
                 $('#dependantModal').modal('show');
             })

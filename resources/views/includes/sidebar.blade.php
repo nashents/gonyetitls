@@ -794,6 +794,12 @@
                         @endif
                     </ul>
                 </li>
+                 <li class="has-children">
+                    <a href="#"><i class="fas fa-th-list"></i> <span>GRV (Assets)</span> <i class="fas fa-angle-right arrow"></i></a>
+                    <ul class="child-nav">
+                        <li class="{{ request()->routeIs('goods_receiveds.assets') ? 'active' : '' }}"><a href="{{route('goods_receiveds.assets')}}"><i class="fas fa-list "></i> <span>Manage Assets GRVs</span></a></li>
+                    </ul>
+                </li>
                 <li class="has-children {{ request()->routeIs('assets.*') ? 'active' : '' }}" >
                     <a href="#"><i class="fas fa-th-list"></i> <span>Assets</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
@@ -1566,6 +1572,12 @@
                     </ul>
                 </li>
                 <li class="has-children">
+                    <a href="#"><i class="fas fa-th-list"></i> <span>GRV (Inventory)</span> <i class="fas fa-angle-right arrow"></i></a>
+                    <ul class="child-nav">
+                        <li class="{{ request()->routeIs('goods_receiveds.index') ? 'active' : '' }}"><a href="{{route('goods_receiveds.index')}}"><i class="fas fa-list "></i> <span>Manage Inventory GRVs</span></a></li>
+                    </ul>
+                </li>
+                <li class="has-children">
                     <a href="#"><i class="fas fa-th-list"></i> <span>Inventory</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
                         <li class="{{ request()->routeIs('inventories.create') ? 'active' : '' }}"><a href="{{route('inventories.create')}}" ><i class="fas fa-plus "></i> <span>Create Inventory</span></a></li>
@@ -1646,6 +1658,13 @@
                         </li>
                         @endif
                     </ul>
+                </li>
+                    <li class="has-children">
+                        <a href="#"><i class="fas fa-th-list"></i> <span>GRV (Tyres)</span> <i class="fas fa-angle-right arrow"></i></a>
+                        <ul class="child-nav">
+                            <li class="{{ request()->routeIs('goods_receiveds.tyres') ? 'active' : '' }}"><a href="{{route('goods_receiveds.tyres')}}"><i class="fas fa-list "></i> <span>Manage Tyre GRVs</span></a></li>
+                        </ul>
+                    </li>
                     <li class="has-children">
                         <a href="#"><i class="fas fa-th-list"></i> <span>Tyres</span> <i class="fas fa-angle-right arrow"></i></a>
                         <ul class="child-nav">
@@ -1669,7 +1688,7 @@
                     ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
                     $retreadsDeletedCount = App\Models\Retread::onlyTrashed()
                     ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                @endphp
+                    @endphp
                     <li class="has-children {{ request()->routeIs('retreads.*') ? 'active' : '' }}" >
                         <a href="#"><i class="fas fa-th-list"></i> <span>Retreads</span> <i class="fas fa-angle-right arrow"></i></a>
                         <ul class="child-nav">
@@ -1701,12 +1720,7 @@
                             @endif
                         </ul>
                     </li>
-                </li>
-
-            
-
-               
-
+              
                 @endif
               
                       

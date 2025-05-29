@@ -13,6 +13,9 @@ class Asset extends Model implements Auditable
 
     use \OwenIt\Auditing\Auditable;
 
+    public function goods_received(){
+        return $this->belongsTo('App\Models\GoodsReceived');
+    }
     public function bin(){
         return $this->belongsTo('App\Models\Bin');
     }

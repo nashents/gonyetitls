@@ -134,6 +134,9 @@ class User extends Authenticatable implements Auditable
     public function logs(){
         return $this->hasMany('App\Models\Log');
     }
+    public function goods_receiveds(){
+        return $this->hasMany('App\Models\GoodsReceived');
+    }
     public function quotations(){
         return $this->hasMany('App\Models\Quotation');
     }

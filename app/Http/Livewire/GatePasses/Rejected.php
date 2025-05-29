@@ -73,7 +73,7 @@ class Rejected extends Component
 
                     if ($this->department == "logistics") {
                 
-                         $gate_pass->logistics_authorized_by_id = Auth::user()->id;
+                         $gate_pass->logistics_authorized_by_id = Auth::user()->employee->id;
                          $gate_pass->logistics_authorization = $this->authorize;
                          $gate_pass->logistics_authorization_reason = $this->comments;
                          $gate_pass->update();
@@ -81,7 +81,7 @@ class Rejected extends Component
                      
                     }elseif ($this->department == "workshop") {
                         
-                         $gate_pass->workshop_authorized_by_id = Auth::user()->id;
+                         $gate_pass->workshop_authorized_by_id = Auth::user()->employee->id;
                          $gate_pass->workshop_authorization = $this->authorize;
                          $gate_pass->workshop_authorization_reason = $this->comments;                         
                          $gate_pass->update();
@@ -89,7 +89,7 @@ class Rejected extends Component
                         
                     }elseif ($this->department == "security") {
                        
-                         $gate_pass->authorized_by_id = Auth::user()->id;
+                         $gate_pass->authorized_by_id = Auth::user()->employee->id;
                          $gate_pass->authorization = $this->authorize;
                          $gate_pass->authorization_reason = $this->comments;
                          $gate_pass->update();
@@ -137,7 +137,7 @@ class Rejected extends Component
 
               if ($this->department == "logistics") {
                    $gate_pass = GatePass::find($this->gate_pass_id);
-                   $gate_pass->logistics_authorized_by_id = Auth::user()->id;
+                   $gate_pass->logistics_authorized_by_id = Auth::user()->employee->id;
                    $gate_pass->logistics_authorization = $this->authorize;
                    $gate_pass->logistics_authorization_reason = $this->comments;
                    $gate_pass->update();
@@ -145,7 +145,7 @@ class Rejected extends Component
                  
               }elseif ($this->department == "workshop") {
                    $gate_pass = GatePass::find($this->gate_pass_id);
-                   $gate_pass->workshop_authorized_by_id = Auth::user()->id;
+                   $gate_pass->workshop_authorized_by_id = Auth::user()->employee->id;
                    $gate_pass->workshop_authorization = $this->authorize;
                    $gate_pass->workshop_authorization_reason = $this->comments;
                    $gate_pass->update();
@@ -153,7 +153,7 @@ class Rejected extends Component
                   
               }elseif ($this->department == "security") {
                    $gate_pass = GatePass::find($this->gate_pass_id);
-                   $gate_pass->authorized_by_id = Auth::user()->id;
+                   $gate_pass->authorized_by_id = Auth::user()->employee->id;
                    $gate_pass->authorization = $this->authorize;
                    $gate_pass->authorization_reason = $this->comments;
                    $gate_pass->update();

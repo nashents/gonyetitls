@@ -15,6 +15,9 @@ class Vendor extends Model implements Auditable
     public function workshop_services(){
         return $this->hasMany('App\Models\WorkshopService');
     }
+    public function goods_receiveds(){
+        return $this->hasMany('App\Models\GoodsReceived');
+    }
     public function loans(){
         return $this->hasMany('App\Models\Loan');
     }
