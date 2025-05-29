@@ -32,7 +32,7 @@
                                                 <select wire:model.debounce.300ms="selectedHorse" class="form-control" required size="4">
                                                     <option value="">Select Horse </option>
                                                     @foreach ($horses as $horse)
-                                                        <option value="{{$horse->id}}">{{$horse->registration_number}} {{$horse->horse_make ? $horse->horse_make->name : ""}} {{$horse->horse_model ? $horse->horse_model->name : ""}}</option>
+                                                        <option value="{{$horse->id}}">{{$horse->registration_number}} {{$horse->horse_make ? $horse->horse_make->name : ""}} {{$horse->horse_model ? $horse->horse_model->name : ""}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}}</option>
                                                     @endforeach
                                                 </select>
                                                 @error('selectedHorse') <span class="text-danger error">{{ $message }}</span>@enderror
@@ -44,7 +44,7 @@
                                                 <select wire:model.debounce.300ms="trailer_id" class="form-control" required size="4">
                                                     <option value="">Select Trailer</option>
                                                     @foreach ($trailers as $trailer)
-                                                        <option value="{{$trailer->id}}">{{$trailer->registration_number}} {{$trailer->make}} {{$trailer->model}}</option>
+                                                        <option value="{{$trailer->id}}">{{$trailer->registration_number}} {{$trailer->make}} {{$trailer->model}} {{$trailer->fleet_number ? "(".$trailer->fleet_number.")" : ""}}</option>
                                                     @endforeach
                                                 </select>
                                                 @error('trailer_id') <span class="text-danger error">{{ $message }}</span>@enderror
@@ -56,7 +56,7 @@
                                                 <select wire:model.debounce.300ms="selectedVehicle" class="form-control" required size="4">
                                                     <option value="">Select Vehicle</option>
                                                     @foreach ($vehicles as $vehicle)
-                                                        <option value="{{$vehicle->id}}">{{$vehicle->registration_number}} {{$vehicle->vehicle_make ? $vehicle->vehicle_make->name : ""}} {{$vehicle->vehicle_model ? $vehicle->vehicle_model->name : ""}}</option>
+                                                        <option value="{{$vehicle->id}}">{{$vehicle->registration_number}} {{$vehicle->vehicle_make ? $vehicle->vehicle_make->name : ""}} {{$vehicle->vehicle_model ? $vehicle->vehicle_model->name : ""}} {{$vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : ""}}</option>
                                                     @endforeach
                                                 </select>
                                                 @error('selectedVehicle') <span class="text-danger error">{{ $message }}</span>@enderror
