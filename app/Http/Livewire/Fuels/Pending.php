@@ -4,6 +4,7 @@ namespace App\Http\Livewire\Fuels;
 
 use App\Models\Bill;
 use App\Models\Fuel;
+use App\Models\Hour;
 use App\Models\User;
 use App\Models\Horse;
 use App\Models\Account;
@@ -182,22 +183,54 @@ class Pending extends Component
                         }
                         $vehicle->update();
                     }
+
+                    $last_mileage = Mileage::whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
+                    if(isset($last_mileage)){
+                        if($last_mileage < $fuel->odometer){
+                            $mileage = new Mileage;
+                            $mileage->user_id = Auth::user()->id;
+                            $mileage->trip_id = $fuel->trip_id ? $fuel->trip_id : Null;
+                            $mileage->fuel_id = $fuel->id;
+                            $mileage->horse_id = $fuel->horse_id;
+                            $mileage->vehicle_id = $fuel->vehicle_id;
+                            $mileage->mileage = $fuel->odometer;
+                            $mileage->date = $fuel->date;
+                            $mileage->category = "Fuel Order";
+                            $mileage->save();
+                        }
+                    }
+                
+                    $last_hours = Hour::whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
+                    if(isset($last_hours)){
+                        if($last_hours < $fuel->hours){
+                            $hours = new Hour;
+                            $hours->user_id = Auth::user()->id;
+                            $hours->trip_id = $fuel->trip_id ? $fuel->trip_id : Null;
+                            $hours->fuel_id = $fuel->id;
+                            $hours->horse_id = $fuel->horse_id;
+                            $hours->vehicle_id = $fuel->vehicle_id;
+                            $hours->hours = $fuel->hours;
+                            $hours->date = $fuel->date;
+                            $hours->category = "Fuel Order";
+                            $hours->save();
+                        }
+                    }
+
                     
-                    if($container->purchase_type == "Bulk Buy"){
+                   if($container->purchase_type == "Bulk Buy"){
                        
-                        if(isset($container->balance) && is_numeric($container->balance) && (isset($fuel->quantity) && is_numeric($fuel->quantity)) ){
+                        if($container->balance && is_numeric($container->balance) && ($fuel->quantity && is_numeric($fuel->quantity)) ){
                             if($container->balance >= $fuel->quantity){
                                 $container->balance = $container->balance - $fuel->quantity;
                             } 
                         }
-                      
-                        if(isset($container->account_balance)){
-                            if(isset($container->account_balance) && is_numeric($container->account_balance) && (isset($fuel->amount) && is_numeric($fuel->amount)) ){
-                                if($container->account_balance >= $fuel->amount){
-                                    $container->account_balance = $container->account_balance - $fuel->amount;
-                                }
+                    
+                        if($container->account_balance && is_numeric($container->account_balance) && ($fuel->amount && is_numeric($fuel->amount)) ){
+                            if($container->account_balance >= $fuel->amount){
+                                $container->account_balance = $container->account_balance - $fuel->amount;
                             }
                         }
+                    
                         $container->update();
                     }
                     
@@ -291,7 +324,7 @@ class Pending extends Component
                     $this->checked_by = $fuel->user->employee->name . ' ' . $fuel->user->employee->surname;
                     $this->regnumber = $fuel->horse ? $fuel->horse->registration_number : "";
         
-                    if ($this->station_email != "") {
+                    if ($this->station_email) {
 
                         if (filter_var($this->station_email, FILTER_VALIDATE_EMAIL)) {
 
@@ -408,37 +441,53 @@ class Pending extends Component
 
             }
 
-            $last_mileage = Mileage::whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
-            if(isset($last_mileage)){
-                if($last_mileage < $fuel->odometer){
-                    $mileage = new Mileage;
-                    $mileage->user_id = Auth::user()->id;
-                    $mileage->trip_id = $fuel->trip_id ? $fuel->trip_id : Null;
-                    $mileage->fuel_id = $fuel->id;
-                    $mileage->horse_id = $fuel->horse_id;
-                    $mileage->vehicle_id = $fuel->vehicle_id;
-                    $mileage->mileage = $fuel->odometer;
-                    $mileage->date = $fuel->date;
-                    $mileage->category = "Fuel Order";
-                    $mileage->save();
-                }
-            }
+                  $last_mileage = Mileage::whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
+                    if(isset($last_mileage)){
+                        if($last_mileage < $fuel->odometer){
+                            $mileage = new Mileage;
+                            $mileage->user_id = Auth::user()->id;
+                            $mileage->trip_id = $fuel->trip_id ? $fuel->trip_id : Null;
+                            $mileage->fuel_id = $fuel->id;
+                            $mileage->horse_id = $fuel->horse_id;
+                            $mileage->vehicle_id = $fuel->vehicle_id;
+                            $mileage->mileage = $fuel->odometer;
+                            $mileage->date = $fuel->date;
+                            $mileage->category = "Fuel Order";
+                            $mileage->save();
+                        }
+                    }
+                
+                    $last_hours = Hour::whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
+                    if(isset($last_hours)){
+                        if($last_hours < $fuel->hours){
+                            $hours = new Hour;
+                            $hours->user_id = Auth::user()->id;
+                            $hours->trip_id = $fuel->trip_id ? $fuel->trip_id : Null;
+                            $hours->fuel_id = $fuel->id;
+                            $hours->horse_id = $fuel->horse_id;
+                            $hours->vehicle_id = $fuel->vehicle_id;
+                            $hours->hours = $fuel->hours;
+                            $hours->date = $fuel->date;
+                            $hours->category = "Fuel Order";
+                            $hours->save();
+                        }
+                    }
             
             if($container->purchase_type == "Bulk Buy"){
                        
-                if(isset($container->balance) && is_numeric($container->balance) && (isset($fuel->quantity) && is_numeric($fuel->quantity)) ){
+                if($container->balance && is_numeric($container->balance) && ($fuel->quantity && is_numeric($fuel->quantity)) ){
                     if($container->balance >= $fuel->quantity){
                         $container->balance = $container->balance - $fuel->quantity;
                     } 
                 }
               
-                if(isset($container->account_balance)){
-                    if(isset($container->account_balance) && is_numeric($container->account_balance) && (isset($fuel->amount) && is_numeric($fuel->amount)) ){
-                        if($container->account_balance >= $fuel->amount){
-                            $container->account_balance = $container->account_balance - $fuel->amount;
-                        }
+               
+                if($container->account_balance && is_numeric($container->account_balance) && ($fuel->amount && is_numeric($fuel->amount)) ){
+                    if($container->account_balance >= $fuel->amount){
+                        $container->account_balance = $container->account_balance - $fuel->amount;
                     }
                 }
+             
                 $container->update();
             }
             
@@ -474,7 +523,6 @@ class Pending extends Component
                     $bill->to_be_paid = False;
                 }
                
-
                 $bill->fuel_id = $fuel->id;
                 $bill->bill_date = $fuel->date;
                 $bill->currency_id = $fuel->currency_id;

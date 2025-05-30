@@ -4,6 +4,7 @@ namespace App\Http\Livewire\Trips;
 
 use App\Models\Bill;
 use App\Models\Fuel;
+use App\Models\Hour;
 use App\Models\Trip;
 use App\Models\User;
 use App\Models\Horse;
@@ -310,7 +311,8 @@ class Pending extends Component
                         $mileage->position = "starting";
                         $mileage->save();
                     }
-                }           
+                }    
+                       
               }
     
               if(isset($trip->ending_mileage)){
@@ -328,6 +330,45 @@ class Pending extends Component
                         $mileage->category = "Trip";
                         $mileage->position = "ending";
                         $mileage->save();
+                    }
+                }
+              }
+          
+              if(isset($trip->starting_hours)){
+
+                $last_hours = Hour::whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
+                if(isset($last_hours)){
+                    if($last_hours < $trip->starting_hours){
+                        $hours = new Hour;
+                        $hours->user_id = Auth::user()->id;
+                        $hours->trip_id = $trip->id;
+                        $hours->horse_id = $trip->horse_id;
+                        $hours->trailer_id = $trip->trailer_id;
+                        $hours->vehicle_id = $trip->vehicle_id;
+                        $hours->hours = $trip->starting_hours;
+                        $hours->date = $trip->start_date;
+                        $hours->category = "Trip";
+                        $hours->position = "starting";
+                        $hours->save();
+                    }
+                }    
+              }
+    
+              if(isset($trip->ending_hours)){
+                $last_hours = Hour::whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
+                if(isset($last_hours)){
+                    if($last_hours < $trip->ending_hours){
+                        $hours = new Hour;
+                        $hours->user_id = Auth::user()->id;
+                        $hours->trip_id = $trip->id;
+                        $hours->horse_id = $trip->horse_id;
+                        $hours->trailer_id = $trip->trailer_id;
+                        $hours->vehicle_id = $trip->vehicle_id;
+                        $hours->hours = $trip->ending_hours;
+                        $hours->date = $trip->end_date;
+                        $hours->category = "Trip";
+                        $hours->position = "ending";
+                        $hours->save();
                     }
                 }
               }

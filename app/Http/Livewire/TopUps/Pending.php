@@ -27,6 +27,9 @@ class Pending extends Component
     public $top_up;
     public $container;
 
+    public $selectedRows = [];
+    public $selectPageRows = false;
+
    
 
     
@@ -61,6 +64,129 @@ class Pending extends Component
 
         return  $bill_number;
 
+
+    }
+
+      public function getTopUpsProperty(){
+ 
+        return TopUp::query()->with(['container','vendor','currency'
+            ])->where('authorization','pending')->orderBy('created_at','desc')->paginate(10);
+
+    }
+
+        public function showBulkyAuthorize(){
+        $this->dispatchBrowserEvent('show-bulkyAuthorizationModal');
+      }
+
+    public function updatedSelectPageRows($value){
+
+        if ($value) {
+            $this->selectedRows = $this->top_ups->pluck('id')->map(function ($id){
+                return (string) $id;
+            });
+        }else {
+            $this->reset(['selectedRows','selectPageRows']);
+        }
+     
+      }
+
+            public function authorizeSelectedRows(){
+
+        $selected_fuels = Fuel::WhereIn('id',$this->selectedRows)->get();
+        
+        if (isset($selected_fuels)) {
+
+            foreach($selected_fuels as $fuel){
+
+                $top_up = TopUp::find($this->top_up_id);
+                $top_up->authorized_by_id = Auth::user()->id;
+                $top_up->authorization = $this->authorize;
+                $top_up->reason = $this->comments;
+                $top_up->update();
+
+                if ($this->authorize == "approved") {
+
+                    $container = Container::find($this->container->id);
+                    $container->balance = $container->balance + $this->top_up->quantity;
+                    $container->account_balance = $container->account_balance + $this->top_up->amount;
+                    $container->update();
+
+                    if (isset($top_up->amount) && $top_up->amount > 0) {
+
+                        $account = Account::where('name','Fuel')->get()->first();
+
+                        $bill = new Bill;
+                        $bill->user_id = Auth::user()->id;
+                        $bill->bill_number = $this->billNumber();
+                        $bill->container_id = $container->id;
+                        $bill->top_up_id = $top_up->id;
+                        $bill->vendor_id = $top_up->vendor_id;
+                        if (isset($account)) {
+                            $bill->account_id = $account->id;
+                            $bill->account_type_id = $account->account_type->id;
+                        }
+                        $bill->category = "Fuel Station Fuel Topup";
+                        $bill->bill_date = date("Y-m-d");
+                        $bill->currency_id =  $top_up->currency_id;
+                        $bill->subtotal =  $top_up->amount;
+                        $bill->total =  $top_up->amount;
+                        $bill->balance =  $top_up->amount;
+                        $bill->exchange_rate = $top_up->exchange_rate;
+                        $bill->exchange_amount = $top_up->exchange_amount;
+                        $bill->authorized_by_id = $top_up->authorized_by_id;
+                        $bill->authorization = $top_up->authorization;
+                        $bill->comments = $top_up->reason;
+                        $bill->save();
+
+                        // $expense = Expense::where('name','Fuel Topup')->get()->first();
+                
+                        $bill_expense = new BillExpense;
+                        $bill_expense->user_id = Auth::user()->id;
+                        $bill_expense->bill_id = $bill->id;
+                        $bill_expense->currency_id = $bill->currency_id;
+                        if (isset($expense)) {
+                            $bill_expense->expense_id = $expense->id;
+                        }
+                        if (isset($account)) {
+                            $bill_expense->account_id = $account->id;
+                            $bill_expense->account_type_id = $account->account_type->id;
+                        }
+                        $bill_expense->qty = 1;
+                        $bill_expense->amount = $top_up->amount;
+                        $bill_expense->subtotal = $top_up->amount;
+                        $bill_expense->subtotal_incl = $top_up->amount;
+                        $bill_expense->save();
+
+                    }
+
+                }
+        
+             
+            }
+
+            $this->reset(['selectedRows','selectPageRows']);
+
+            if ($this->authorize == "approved") {
+                $this->dispatchBrowserEvent('hide-fuelAuthorizationModal');
+                $this->dispatchBrowserEvent('alert',[
+                    'type'=>'success',
+                    'message'=>"Bulk Fuel Top Up(s) Approved Successfully !!"
+                ]);
+                return redirect()->route('top_ups.approved');
+            }else {
+    
+                $this->dispatchBrowserEvent('hide-fuelAuthorizationModal');
+                $this->dispatchBrowserEvent('alert',[
+                    'type'=>'success',
+                    'message'=>"Bulk Fuel Top Up(s) Rejected Successfully"
+                ]);
+                return redirect()->route('top_ups.rejected');
+            }
+     
+
+          
+
+        }
 
     }
 

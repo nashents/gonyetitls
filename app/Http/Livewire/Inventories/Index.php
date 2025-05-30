@@ -109,6 +109,9 @@ class Index extends Component
                 ->orWhere('serial_number','like', '%'.$this->search.'%')
                 ->orWhere('part_number','like', '%'.$this->search.'%')
                 ->orWhere('purchase_date','like', '%'.$this->search.'%')
+                ->orWhere('amount','like', '%'.$this->search.'%')
+                ->orWhere('total','like', '%'.$this->search.'%')
+                ->orWhere('subtotal','like', '%'.$this->search.'%')
                 ->orWhereHas('product', function ($query) {
                     return $query->where('name', 'like', '%'.$this->search.'%');
                 })

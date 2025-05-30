@@ -279,7 +279,7 @@ WithCustomStartCell
       
                 return   [
                     $bill->bill_number ,
-                    $bill_category,
+                    isset($bill_category) ? $bill_category : "",
                     $items_list,
                     $bill->bill_date,
                     $bill->due_date,

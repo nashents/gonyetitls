@@ -141,14 +141,18 @@ class Index extends Component
             $ticket_inventory->qty =  1;
            
 
+
             if($this->inventory_type == "spares"){
-                $ticket_inventory->weight = $this->weight ? $this->weight : 0;
+                $ticket_inventory->weight = $this->weight ? $this->weight : 1;
                 $ticket_inventory->measurement = $inventory->measurement ? $inventory->measurement : "Item";
                 $ticket_inventory->currency_id = $inventory->currency_id;
-                if ((isset($this->weight) && is_numeric($this->weight && $this->weight > 0)) && (isset($inventory->weight) && is_numeric($inventory->weight) && $inventory->weight > 0) && (isset($inventory->subtotal_incl) && is_numeric($inventory->subtotal_incl) && $inventory->subtotal_incl > 0 )) {
+               
+
+                if (($this->weight && is_numeric($this->weight) && $this->weight > 0) && ($inventory->weight && is_numeric($inventory->weight) && $inventory->weight > 0) && ($inventory->subtotal_incl && is_numeric($inventory->subtotal_incl) && $inventory->subtotal_incl > 0 )) {
                     $amount = ($this->weight / $inventory->weight) * $inventory->subtotal_incl;
                     $ticket_inventory->amount = $amount ? $amount : 0;
                 }
+
                 $ticket_inventory->exchange_amount = $inventory->exchange_amount;
                 $ticket_inventory->exchange_rate = $inventory->exchange_rate;
             }elseif($this->inventory_type == "tyres"){
@@ -157,9 +161,7 @@ class Index extends Component
                 $ticket_inventory->exchange_amount = $tyre->exchange_amount;
                 $ticket_inventory->exchange_rate = $tyre->exchange_rate;
             }
-            
-
-
+        
             $ticket_inventory->save();
 
             $bill = new Bill;
@@ -216,9 +218,9 @@ class Index extends Component
                 $requisition->tyre_id = $this->selectedTyre;
             }
             $requisition->ticket_id = $this->ticket->id;
-            $requisition->vehicle_id =$this->ticket->vehicle_id;
+            $requisition->vehicle_id = $this->ticket->vehicle_id;
             $requisition->horse_id = $this->ticket->horse_id;
-            $requisition->trailer_id =$this->ticket->trailer_id;
+            $requisition->trailer_id = $this->ticket->trailer_id;
             $requisition->qty = 1;
             $requisition->save();
 
@@ -242,7 +244,7 @@ class Index extends Component
             $dispatch->save();
             
             if($this->inventory_type == "spares"){
-                if ((isset($inventory->balance) && is_numeric($inventory->balance) && $inventory->balance > 0) && (isset($this->weight) && is_numeric($this->weight) && $this->weight > 0)) {
+                if (($inventory->balance && is_numeric($inventory->balance) && $inventory->balance > 0) && ($this->weight && is_numeric($this->weight) && $this->weight > 0)) {
                     $inventory->balance = $inventory->balance - $this->weight;
                     if ($inventory->balance <= 0) {
                         $inventory->status = 0;

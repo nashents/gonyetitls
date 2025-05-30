@@ -499,31 +499,79 @@
                                                             </tr>
                                                             @if (isset($trip->weight))
                                                                 <tr>
-                                                                    <th scope="row">Weight</th>
+                                                                    <th scope="row">Scheduled Weight</th>
                                                                     <td>
                                                                         {{$trip->weight ? $trip->weight." tons" : ""}} 
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th scope="row">Loaded Weight</th>
+                                                                    <td>
+                                                                        {{$trip->delivery_note->loaded_weight ? $trip->delivery_note->loaded_weight." tons" : ""}} 
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th scope="row">Offloading Weight</th>
+                                                                    <td>
+                                                                        {{$trip->delivery_note->offloaded_weight ? $trip->delivery_note->offloaded_weight." tons" : ""}} 
                                                                     </td>
                                                                 </tr>
                                                             @endif
                                                             @if (isset($trip->cargo))
                                                             @if ($trip->cargo->type == "Solid")
                                                                 <tr>
-                                                                    <th scope="row">Quantity</th>
+                                                                    <th scope="row"> Secheduled Quantity</th>
                                                                     <td>
                                                                         {{$trip->quantity}} {{$trip->measurement}}
                                                                     </td>
                                                                 </tr>
+                                                                <tr>
+                                                                    <th scope="row"> Loaded Quantity</th>
+                                                                    <td>
+                                                                        {{$trip->delivery_note->loaded_quantity ? $trip->delivery_note->loaded_quantity : ""}} {{$trip->measurement}}
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th scope="row"> Offloaded Quantity</th>
+                                                                    <td>
+                                                                        {{$trip->delivery_note->offloaded_quantity ? $trip->delivery_note->offloaded_quantity : ""}} {{$trip->measurement}}
+                                                                    </td>
+                                                                </tr>
                                                             @elseif($trip->cargo->type == "Liquid")
                                                             <tr>
-                                                                <th scope="row">Litreage @ Ambient Temperature</th>
+                                                                <th scope="row">Scheduled Litreage @ Ambient Temperature</th>
                                                                 <td>
                                                                     {{$trip->litreage}} {{$trip->measurement}}
                                                                 </td>
                                                             </tr>
                                                             <tr>
-                                                                <th scope="row">Litreage @ 20 Degrees</th>
+                                                                <th scope="row">Scheduled Litreage @ 20 Degrees</th>
                                                                 <td>
                                                                     {{$trip->litreage_at_20}} {{$trip->measurement}}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <th scope="row">Loaded Litreage @ Ambient Temperature</th>
+                                                                <td>
+                                                                     {{$trip->delivery_note ? $trip->delivery_note->loaded_litreage : ""}} {{$trip->measurement}}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <th scope="row">Loaded Litreage @ 20 Degrees</th>
+                                                                <td>
+                                                                    {{$trip->delivery_note ? $trip->delivery_note->loaded_litreage_at_20 : ""}} {{$trip->measurement}}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <th scope="row">Offloaded Litreage @ Ambient Temperature</th>
+                                                                <td>
+                                                                    {{$trip->delivery_note ? $trip->delivery_note->offloaded_litreage : ""}} {{$trip->measurement}}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <th scope="row">Offloaded Litreage @ 20 Degrees</th>
+                                                                <td>
+                                                                    {{$trip->delivery_note ? $trip->delivery_note->offloaded_litreage_at_20 : ""}} {{$trip->measurement}}
                                                                 </td>
                                                             </tr>
                                                             @endif
