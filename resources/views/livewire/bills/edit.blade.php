@@ -237,7 +237,7 @@
                                 <div class="col-md-1">
                                     <div class="form-group">
                                         <label for="name">Qty<span class="required" style="color: red">*</span></label>
-                                        <input type="number" class="form-control" wire:model.debounce.300ms="current_qty.{{$key}}"  required />
+                                        <input type="number" step="any" min="1" class="form-control" wire:model.debounce.300ms="current_qty.{{$key}}"  required />
                                         @error('current_qty.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
@@ -311,7 +311,7 @@
                                         <div class="col-md-1">
                                             <div class="form-group">
                                                 <label for="name">Qty<span class="required" style="color: red">*</span></label>
-                                                <input type="number" min="1" class="form-control" wire:model.debounce.300ms="qty.{{ $value }}" placeholder="" required />
+                                                <input type="number" step="any" min="1" class="form-control" wire:model.debounce.300ms="qty.{{ $value }}" placeholder="" required />
                                                 @error('qty.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         </div>
