@@ -71,133 +71,100 @@
                                @error('tyre_assignment') <span class="text-danger error">{{ $message }}</span>@enderror
                            </div>
                            @if ($tyre_assignment == True)
-                           <div class="mb-10">
-                               <label for="">Assignment For?</label>
-                               <input type="radio" wire:model.debounce.300ms="assignment_type" value="Horse"  class="line-style"  />
-                               <label for="one" class="radio-label">Horse</label>
-                               <input type="radio" wire:model.debounce.300ms="assignment_type" value="Trailer"  class="line-style"  />
-                               <label for="one" class="radio-label">Trailer</label>
-                               <input type="radio" wire:model.debounce.300ms="assignment_type" value="Vehicle"  class="line-style" />
-                               <label for="one" class="radio-label">Vehicle</label>
-                           </div>      
-       
-               @if ($assignment_type == "Horse")
-               <div class="row">
-                   <div class="col-md-6">
-                       <div class="form-group">
-                           <label for="name">Horses<span class="required" style="color: red">*</span></label>
-                           <select class="form-control" wire:model.debounce.300ms="horse_id" required>
-                               <option value="">Select Horse</option>
-                               @foreach ($horses as $horse)
-                                    <option value="{{$horse->id}}">{{$horse->registration_number}} {{$horse->horse_make ? $horse->horse_make->name : ""}} {{$horse->horse_model ? $horse->horse_model->name : ""}}</option>
-                               @endforeach
+                                <div class="mb-10">
+                                    <label for="">Assignment For?</label>
+                                    <input type="radio" wire:model.debounce.300ms="assignment_type" value="Horse"  class="line-style"  />
+                                    <label for="one" class="radio-label">Horse</label>
+                                    <input type="radio" wire:model.debounce.300ms="assignment_type" value="Trailer"  class="line-style"  />
+                                    <label for="one" class="radio-label">Trailer</label>
+                                    <input type="radio" wire:model.debounce.300ms="assignment_type" value="Vehicle"  class="line-style" />
+                                    <label for="one" class="radio-label">Vehicle</label>
+                                </div>      
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                                @if ($assignment_type == "Horse")
+                                                    <div class="form-group">
+                                                        <label for="name">Horses<span class="required" style="color: red">*</span></label>
+                                                        <select class="form-control" wire:model.debounce.300ms="horse_id" required>
+                                                            <option value="">Select Horse</option>
+                                                            @foreach ($horses as $horse)
+                                                                    <option value="{{$horse->id}}">{{$horse->registration_number}} {{$horse->horse_make ? $horse->horse_make->name : ""}} {{$horse->horse_model ? $horse->horse_model->name : ""}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}}</option>
+                                                            @endforeach
+                                                        </select>
+                                                        @error('horse_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                    </div>
+                                                @elseif ($assignment_type == "Vehicle")
+                                                    <div class="form-group">
+                                                        <label for="name">Vehicles<span class="required" style="color: red">*</span></label>
+                                                        <select class="form-control" wire:model.debounce.300ms="vehicle_id" required>
+                                                            <option value="">Select vehicle</option>
+                                                            @foreach ($vehicles as $vehicle)
+                                                                    <option value="{{$vehicle->id}}">{{$vehicle->registration_number}} {{$vehicle->vehicle_make ? $vehicle->vehicle_make->name : ""}} {{$vehicle->vehicle_model ? $vehicle->vehicle_model->name : ""}} {{$vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : ""}}</option>
+                                                            @endforeach
+                                                        </select>
+                                                        @error('vehicle_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                    </div>
+                                                @elseif ($assignment_type == "Trailer")
+                                                    <div class="form-group">
+                                                        <label for="name">Trailers<span class="required" style="color: red">*</span></label>
+                                                        <select class="form-control" wire:model.debounce.300ms="trailer_id" required>
+                                                            <option value="">Select Trailer</option>
+                                                            @foreach ($trailers as $trailer)
+                                                                    <option value="{{$trailer->id}}">{{$trailer->registration_number}} {{$trailer->make}} {{$trailer->model}} {{$trailer->fleet_number ? "(".$trailer->fleet_number.")" : ""}}</option>
+                                                            @endforeach
+                                                        </select>
+                                                        @error('trailer_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                    </div>
+                                                @endif
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="name">Fitting Mileage<span class="required" style="color: red">*</span></label>
+                                                <input type="number" step="any" class="form-control" wire:model.debounce.300ms="starting_odometer" placeholder="Enter Odometer" required>
+                                                @error('starting_odometer') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="name">Wheel Axles<span class="required" style="color: red">*</span></label>
+                                                <select class="form-control" wire:model.debounce.300ms="axle" required>
+                                                    <option value="">Select Wheel Axle</option>
+                                                    <option value="Steering Axle">Steering Axle</option>
+                                                    <option value="Drive Axle">Drive Axle</option>
+                                                    <option value="Front Axle">Front Axle</option>
+                                                    <option value="Middle Axle">Middle Axle</option>
+                                                    <option value="Rear Axle">Rear Axle</option>
+                                                    <option value="Diff Axle">Diff Axle</option>
+                                                    <option value="Spare Wheel">Spare Wheel</option>
 
-                           </select>
-                           @error('horse_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                       </div>
-                   </div>
-                   <div class="col-md-6">
-                       <div class="form-group">
-                           <label for="name">Starting Mileage<span class="required" style="color: red">*</span></label>
-                           <input type="number" step="any" class="form-control" wire:model.debounce.300ms="starting_odometer" placeholder="Enter Odometer" required>
-                           @error('starting_odometer') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                       </div>
-                   </div>
-                  
-               </div>
-               @elseif ($assignment_type == "Vehicle")
-               <div class="row">
-                   <div class="col-md-6">
-                       <div class="form-group">
-                           <label for="name">Vehicles<span class="required" style="color: red">*</span></label>
-                           <select class="form-control" wire:model.debounce.300ms="vehicle_id" required>
-                               <option value="">Select vehicle</option>
-                               @foreach ($vehicles as $vehicle)
-                                    <option value="{{$vehicle->id}}">{{$vehicle->registration_number}} {{$vehicle->vehicle_make ? $vehicle->vehicle_make->name : ""}} {{$vehicle->vehicle_model ? $vehicle->vehicle_model->name : ""}}</option>
-                               @endforeach
-
-                           </select>
-                           @error('vehicle_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                       </div>
-                   </div>
-                   <div class="col-md-6">
-                       <div class="form-group">
-                           <label for="name">Starting Mileage<span class="required" style="color: red">*</span></label>
-                           <input type="number" step="any" class="form-control" wire:model.debounce.300ms="starting_odometer" placeholder="Enter Odometer" required>
-                           @error('starting_odometer') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                       </div>
-                   </div>
-               </div>
-               @elseif ($assignment_type == "Trailer")
-               <div class="row">
-                   <div class="col-md-6">
-                       <div class="form-group">
-                           <label for="name">Trailers<span class="required" style="color: red">*</span></label>
-                           <select class="form-control" wire:model.debounce.300ms="trailer_id" required>
-                               <option value="">Select Trailer</option>
-                               @foreach ($trailers as $trailer)
-                                    <option value="{{$trailer->id}}">{{$trailer->registration_number}} {{$trailer->make}} {{$trailer->model}} </option>
-                               @endforeach
-
-                           </select>
-                           @error('trailer_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                       </div>
-                   </div>
-                   <div class="col-md-6">
-                       <div class="form-group">
-                           <label for="name">Starting Mileage</label>
-                           <input type="number" step="any" class="form-control" wire:model.debounce.300ms="starting_odometer" placeholder="Enter Odometer">
-                           @error('starting_odometer') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                       </div>
-                   </div>
-               </div>
-               @endif
-         
-              
-               <div class="row">
-                   <div class="col-md-6">
-                       <div class="form-group">
-                           <label for="name">Wheel Axles<span class="required" style="color: red">*</span></label>
-                          <select class="form-control" wire:model.debounce.300ms="axle" required>
-                               <option value="">Select Wheel Axle</option>
-                               <option value="Steering Axle">Steering Axle</option>
-                               <option value="Drive Axle">Drive Axle</option>
-                               <option value="Front Axle">Front Axle</option>
-                               <option value="Middle Axle">Middle Axle</option>
-                               <option value="Rear Axle">Rear Axle</option>
-                               <option value="Diff Axle">Diff Axle</option>
-                               <option value="Spare Wheel">Spare Wheel</option>
-
-                          </select>
-                           @error('axle') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                       </div>
-                   </div>
-                   <div class="col-md-6">
-                       <div class="form-group">
-                           <label for="name">Wheel Positions<span class="required" style="color: red">*</span></label>
-                         <select class="form-control" wire:model.debounce.300ms="position" required>
-                           <option value="">Select Wheel Position</option>
-                           <option value="Front Left Inside">Front Left Inside</option>
-                           <option value="Front Left Outside">Front Left Outside</option>
-                           <option value="Front Right Inside">Front Right Inside</option>
-                           <option value="Front Right Outside">Front Right Outside</option>
-                           <option value="Middle Left Inside">Middle Left Inside</option>
-                           <option value="Middle Left Outside">Middle Left Outside</option>
-                           <option value="Middle Right Inside">Middle Right Inside</option>
-                           <option value="Middle Right Outside">Middle Right Outside</option>
-                           <option value="Rear Left Inside">Rear Left Inside</option>
-                           <option value="Rear Left Outside">Rear Left Outside</option>
-                           <option value="Rear Right Inside">Rear Right Inside</option>
-                           <option value="Rear Right Outside">Rear Right Outside</option>
-                           <option value="Spare Wheel">Spare Wheel</option>
-                         </select>
-                           @error('position') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                       </div>
-                   </div>
-               </div>
-
-                          
-                           @endif
+                                                </select>
+                                                @error('axle') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="name">Wheel Positions<span class="required" style="color: red">*</span></label>
+                                                <select class="form-control" wire:model.debounce.300ms="position" required>
+                                                        <option value="">Select Wheel Position</option>
+                                                        <option value="Front Left">Front Left</option>
+                                                        <option value="Front Right">Front Right</option>
+                                                        <option value="Middle Left Inside">Middle Left Inside</option>
+                                                        <option value="Middle Left Outside">Middle Left Outside</option>
+                                                        <option value="Middle Right Inside">Middle Right Inside</option>
+                                                        <option value="Middle Right Outside">Middle Right Outside</option>
+                                                        <option value="Rear Left Inside">Rear Left Inside</option>
+                                                        <option value="Rear Left Outside">Rear Left Outside</option>
+                                                        <option value="Rear Right Inside">Rear Right Inside</option>
+                                                        <option value="Rear Right Outside">Rear Right Outside</option>
+                                                        <option value="Spare Wheel">Spare Wheel</option>
+                                                </select>
+                                                @error('position') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            </div>
+                                        </div>
+                                    </div>
+                            @endif
                            
                             <h5 class="underline mt-30">Tyre Details</h5>
                            

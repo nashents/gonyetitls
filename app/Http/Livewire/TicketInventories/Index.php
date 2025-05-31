@@ -120,6 +120,7 @@ class Index extends Component
     public function addProducts(){
         // try{
 
+
             $inventory = Inventory::find($this->selectedInventory);
             $tyre = Tyre::find($this->selectedTyre);
 
@@ -163,49 +164,72 @@ class Index extends Component
             }
         
             $ticket_inventory->save();
+            $bill = $ticket_inventory->bill;
 
-            $bill = new Bill;
-            $bill->user_id = Auth::user()->id;
-            $bill->bill_number = $this->billNumber();
-            $bill->ticket_inventory_id = $ticket_inventory->id;
-            $bill->horse_id = $ticket_inventory->horse_id;
-            $bill->trailer_id = $ticket_inventory->trailer_id;
-            $bill->vehicle_id = $ticket_inventory->vehicle_id;
-            $bill->category = "Ticket";
-            $bill->bill_date = date('d-m-Y');
-            $account = Account::where('name','Repairs & Maintenance')->first();
-            if(isset($account)){
-                $account_type = $account->account_type;
-                $bill->account_id = $account->id;
-                if (isset($account_type)) {
-                    $bill->account_type_id = $account_type->id;
+            if (isset($bill)) {
+                $bill_expense = new BillExpense;
+                $bill_expense->bill_id = $bill->id;
+                $bill_expense->currency_id = $bill->currency_id;
+                if(isset($account)){
+                    $account_type = $account->account_type;
+                    $bill_expense->account_id = $account->id;
+                    if (isset($account_type)) {
+                        $bill_expense->account_type_id = $account_type->id;
+                    }
                 }
-            }
-            $bill->currency_id = $ticket_inventory->currency_id;
-            $bill->total = $ticket_inventory->amount;
-            $bill->balance = $ticket_inventory->amount;
-            $bill->exchange_amount = $ticket_inventory->exchange_amount;
-            $bill->exchange_rate = $ticket_inventory->exchange_rate;
-            $bill->authorization = 'approved';
-            $bill->to_be_paid = False;
-            $bill->save();
+                $bill_expense->inventory_id = $this->selectedInventory;
+                $bill_expense->qty = 1;
+                $bill_expense->amount = $ticket_inventory->amount ? $ticket_inventory->amount: 0;
+                $bill_expense->subtotal = $ticket_inventory->amount;
+                $bill_expense->subtotal_incl = $ticket_inventory->amount;
+                $bill_expense->save();
+            }else{
+                $bill = new Bill;
+                $bill->user_id = Auth::user()->id;
+                $bill->bill_number = $this->billNumber();
+                $bill->ticket_inventory_id = $ticket_inventory->id;
+                $bill->ticket_id = $ticket_inventory->ticket->id;
+                $bill->horse_id = $ticket_inventory->horse_id;
+                $bill->trailer_id = $ticket_inventory->trailer_id;
+                $bill->vehicle_id = $ticket_inventory->vehicle_id;
+                $bill->category = "Ticket";
+                $bill->bill_date = date('d-m-Y');
+                $account = Account::where('name','Repairs & Maintenance')->first();
+                if(isset($account)){
+                    $account_type = $account->account_type;
+                    $bill->account_id = $account->id;
+                    if (isset($account_type)) {
+                        $bill->account_type_id = $account_type->id;
+                    }
+                }
+                $bill->currency_id = $ticket_inventory->currency_id;
+                $bill->total = $ticket_inventory->amount;
+                $bill->balance = $ticket_inventory->amount;
+                $bill->exchange_amount = $ticket_inventory->exchange_amount;
+                $bill->exchange_rate = $ticket_inventory->exchange_rate;
+                $bill->authorization = 'approved';
+                $bill->to_be_paid = False;
+                $bill->save();
 
-            $bill_expense = new BillExpense;
-            $bill_expense->bill_id = $bill->id;
-            $bill_expense->currency_id = $bill->currency_id;
-            if(isset($account)){
-                $account_type = $account->account_type;
-                $bill_expense->account_id = $account->id;
-                if (isset($account_type)) {
-                    $bill_expense->account_type_id = $account_type->id;
+                $bill_expense = new BillExpense;
+                $bill_expense->bill_id = $bill->id;
+                $bill_expense->currency_id = $bill->currency_id;
+                if(isset($account)){
+                    $account_type = $account->account_type;
+                    $bill_expense->account_id = $account->id;
+                    if (isset($account_type)) {
+                        $bill_expense->account_type_id = $account_type->id;
+                    }
                 }
+                $bill_expense->inventory_id = $this->selectedInventory;
+                $bill_expense->qty = 1;
+                $bill_expense->amount = $ticket_inventory->amount ? $ticket_inventory->amount: 0;
+                $bill_expense->subtotal = $ticket_inventory->amount;
+                $bill_expense->subtotal_incl = $ticket_inventory->amount;
+                $bill_expense->save();
             }
-            $bill_expense->inventory_id = $this->selectedInventory;
-            $bill_expense->qty = 1;
-            $bill_expense->amount = $ticket_inventory->amount ? $ticket_inventory->amount: 0;
-            $bill_expense->subtotal = $ticket_inventory->amount;
-            $bill_expense->subtotal_incl = $ticket_inventory->amount;
-            $bill_expense->save();
+
+           
 
             $requisition = new InventoryRequisition;
             $requisition->user_id = Auth::user()->id;

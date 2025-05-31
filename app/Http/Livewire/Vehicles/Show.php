@@ -44,7 +44,6 @@ class Show extends Component
 
         $this->vehicle = Vehicle::find($id);
         $this->vehicle_id = $id;
-        $this->tyre_assignments = $this->vehicle->tyre_assignments;
         $this->vehicle_trips = Trip::where('vehicle_id',$id)->whereYear('created_at',date('Y'))->get()->count();
      
         if (isset($this->vehicle->trips)) {
@@ -204,7 +203,7 @@ class Show extends Component
     }
     public function getTyreAssignmentsProperty(){
 
-        return TyreAssignment::query()->with('vehicle','user')->where('vehicle_id',$this->vehicle_id)->whereYear('created_at', date('Y'))->orderBy('created_at','desc')->paginate(10);
+        return TyreAssignment::query()->with('vehicle','user')->where('vehicle_id',$this->vehicle_id)->where('status',1)->orderBy('created_at','desc')->paginate(10);
  
     }
     public function getLogsProperty(){

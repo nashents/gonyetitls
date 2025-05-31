@@ -18,7 +18,7 @@
                         <tbody class="text-center line-height-35 ">
 
                             <tr>
-                                <th class="w-10 text-center line-height-35">Tyre Number</th>
+                                <th class="w-10 text-center line-height-35">Tyre#</th>
                                 <td class="w-20 line-height-35">{{$tyre_assignment->tyre ? $tyre_assignment->tyre->tyre_number : ""}} </td>
                             </tr>
                             <tr>
@@ -67,7 +67,7 @@
                             </tr>
                             
                             <tr>
-                                <th class="w-10 text-center line-height-35">Starting Odometer</th>
+                                <th class="w-10 text-center line-height-35">Fitting Mileage</th>
                                 <td class="w-20 line-height-35">{{$tyre_assignment->starting_odometer ? $tyre_assignment->starting_odometer."Kms" : ""}}</td>
                             </tr>
                             <tr>

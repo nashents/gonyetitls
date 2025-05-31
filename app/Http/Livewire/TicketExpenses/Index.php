@@ -249,31 +249,16 @@ class Index extends Component
         // try{
 
         if (isset($this->selectedProduct)) {
-          
-
                 $ticket_expense = new  TicketExpense;
                 $ticket_expense->ticket_id = $this->ticket->id;
-                if (isset($this->selectedAccount)) {
-                    $ticket_expense->account_id =  $this->selectedAccount;
-                }
+                $ticket_expense->account_id =  $this->selectedAccount;
                 $ticket_expense->currency_id =  $this->currency_id;
                 $ticket_expense->vendor_id =  $this->vendor_id;
-                if (isset($this->selectedProduct)) {
-                    $ticket_expense->product_id =  $this->selectedProduct;
-                }
-                if (isset($this->qty)) {
-                    $ticket_expense->qty =  $this->qty;
-                }
-                if (isset($this->amount)) {
-                    $ticket_expense->amount =  $this->amount;
-                }
-              
-                if (isset($this->tax_rate)) {
-                    $ticket_expense->tax_rate = $this->tax_rate;
-                }
-                if (isset($this->selectedTax)) {
-                    $ticket_expense->tax_id = $this->selectedTax;
-                }
+                $ticket_expense->product_id =  $this->selectedProduct;
+                $ticket_expense->qty =  $this->qty;
+                $ticket_expense->amount =  $this->amount;
+                $ticket_expense->tax_rate = $this->tax_rate;
+                $ticket_expense->tax_id = $this->selectedTax;
     
                  if ((isset($this->amount) && is_numeric($this->amount)) && ( isset($this->qty) && is_numeric($this->qty) ) ) {
     
@@ -302,90 +287,63 @@ class Index extends Component
                 $ticket_expense->exchange_amount = $this->exchange_amount;
                 $ticket_expense->save();
 
-                $bill = new Bill;
-                $bill->user_id = Auth::user()->id;
-                $bill->vendor_id = $this->vendor_id;
-                $bill->ticket_id = $this->ticket->id;
-                $bill->ticket_expense_id = $ticket_expense->id;
-                $bill->horse_id = $ticket_expense->ticket->booking ? $ticket_expense->ticket->booking->horse_id : null;
-                $bill->trailer_id = $ticket_expense->ticket->booking ? $ticket_expense->ticket->booking->trailer_id : null;
-                $bill->vehicle_id = $ticket_expense->ticket->booking ? $ticket_expense->ticket->booking->vehicle_id : null;
-                $bill->currency_id = $this->currency_id;
-                $bill->category = "Vendor";
-                $bill->bill_number = $this->billNumber();
-                $bill->bill_date = $this->bill_date;
-                $bill->due_date = $this->due_date;
-                $bill->notes = $this->notes;
-                $bill->to_be_paid = True;
-                // $bill->authorization = 'approved';
-                $bill->save();
+                  $bill = new Bill;
+                    $bill->user_id = Auth::user()->id;
+                    $bill->vendor_id = $this->vendor_id;
+                    $bill->ticket_id = $this->ticket->id;
+                    $bill->ticket_expense_id = $ticket_expense->id;
+                    $bill->horse_id = $ticket_expense->ticket->booking ? $ticket_expense->ticket->booking->horse_id : null;
+                    $bill->trailer_id = $ticket_expense->ticket->booking ? $ticket_expense->ticket->booking->trailer_id : null;
+                    $bill->vehicle_id = $ticket_expense->ticket->booking ? $ticket_expense->ticket->booking->vehicle_id : null;
+                    $bill->currency_id = $this->currency_id;
+                    $bill->category = "Vendor";
+                    $bill->bill_number = $this->billNumber();
+                    $bill->bill_date = $this->bill_date;
+                    $bill->due_date = $this->due_date;
+                    $bill->notes = $this->notes;
+                    $bill->to_be_paid = True;
+                    // $bill->authorization = 'approved';
+                    $bill->save();
 
-                $bill_expense = new BillExpense;
-                $bill_expense->bill_id = $bill->id;
-                $bill_expense->currency_id = $bill->currency_id;
-
-                if (isset($this->selectedProduct)) {
+                    $bill_expense = new BillExpense;
+                    $bill_expense->bill_id = $bill->id;
+                    $bill_expense->currency_id = $bill->currency_id;
                     $bill_expense->product_id = $this->selectedProduct;
-                }
 
-                if (isset($this->selectedAccount)) {
                     $account = Account::find($this->selectedAccount);
                     $bill_expense->account_id = $this->selectedAccount;
-                    $bill_expense->account_type_id = $account->account_type->id;
-                }
-
-
-                if (isset($this->description)) {
+                    $bill_expense->account_type_id = $account ? $account->account_type->id : null;
                     $bill_expense->description = $this->description;
-                }
-
-                if (isset($this->qty)) {
                     $bill_expense->qty = $this->qty;
-                }
-
-                if (isset($this->amount)) {
                     $bill_expense->amount = $this->amount;
-                }
-
-                if (isset($this->selectedTax)) {
                     $bill_expense->tax_id = $this->selectedTax;
-                }
 
-                if (isset($this->amount) && isset($this->qty)) {
-                    $bill_subtotal = ($this->amount * $this->qty);
-                    $bill_expense->subtotal = $bill_subtotal;
-                }
-              
-                if (isset($this->tax_rate)) {
-                    $bill_tax_amount = ($this->subtotal * ($this->tax_rate / 100 ));
-                    $bill_expense->tax_amount =  $bill_tax_amount;
-                    $bill_subtotal_incl = $bill_tax_amount + $bill_subtotal ;
-                    $bill_expense->subtotal_incl = $bill_subtotal_incl;
-                }else{
-                    $bill_subtotal_incl = $bill_subtotal;
-                    $bill_expense->subtotal_incl = $bill_subtotal_incl;
-                }
+                    if (isset($this->amount) && isset($this->qty)) {
+                        $bill_subtotal = ($this->amount * $this->qty);
+                        $bill_expense->subtotal = $bill_subtotal;
+                    }
                 
-                $bill_expense->save();
- 
+                    if (isset($this->tax_rate)) {
+                        $bill_tax_amount = ($this->subtotal * ($this->tax_rate / 100 ));
+                        $bill_expense->tax_amount =  $bill_tax_amount;
+                        $bill_subtotal_incl = $bill_tax_amount + $bill_subtotal ;
+                        $bill_expense->subtotal_incl = $bill_subtotal_incl;
+                    }else{
+                        $bill_subtotal_incl = $bill_subtotal;
+                        $bill_expense->subtotal_incl = $bill_subtotal_incl;
+                    }
+                    
+                    $bill_expense->save();
+                    $bill = Bill::find($bill->id);
+                    $bill->tax_amount = $bill_tax_amount ?? null;
+                    $bill->subtotal = $bill_subtotal ?? null;
+                    $bill->total = $bill_subtotal_incl ?? null;
+                    $bill->balance = $bill_subtotal_incl ?? null;
+                    $bill->exchange_rate = $this->exchange_rate;
+                    $bill->exchange_amount = $this->exchange_amount;
+                    $bill->update();
 
-                $bill = Bill::find($bill->id);
-                if (isset($bill_tax_amount)) {
-                    $bill->tax_amount = $bill_tax_amount;
-                }
-                if(isset($bill_subtotal)){
-                    $bill->subtotal = $bill_subtotal;
-                }
-                if(isset($bill_subtotal_incl)){
-                    $bill->total = $bill_subtotal_incl;
-                    $bill->balance = $bill_subtotal_incl;
-                }
-               
-                $bill->exchange_rate = $this->exchange_rate;
-                $bill->exchange_amount = $this->exchange_amount;
-               
-               
-                $bill->update();
+            
 
 
           

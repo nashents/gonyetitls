@@ -89,9 +89,19 @@ WithCustomStartCell
             }
         }elseif ( $bill->invoice){
             $bill_category =    "Invoice VAT |".  $bill->invoice ? $bill->invoice->invoice_number : "" ;
-        }elseif ( $bill->ticket){
-            $bill_category =    "Ticket | ".$bill->ticket ? $bill->ticket->ticket_number : "";
-        }elseif ($bill->trip){
+        }elseif ($bill->ticket || $bill->ticket_inventory || $bill->ticket_expense){
+                        if ($bill->ticket) {
+                            $ticket = $bill->ticket ? $bill->ticket->ticket_number : "";
+                           $bill_category =    "Ticket | " . $ticket;
+                        }elseif ($bill->ticket_inventory) {
+                             $ticket =$bill->ticket_inventory->ticket ? $bill->ticket_inventory->ticket->ticket_number : "";
+                           $bill_category =    "Ticket | ".$ticket;
+                        }elseif ($bill->ticket_expense) {
+                             $ticket = $bill->ticket_expense->ticket ? $bill->ticket_expense->ticket->ticket_number : "";
+                           $bill_category =    "Ticket | ".$ticket;
+                        }
+                       
+                    }elseif ($bill->trip){
             $bill_category =   "Trip Expense | ".$bill->trip->trip_number;
         }elseif ($bill->purchase){
             $bill_category =   $bill->category." | ". $bill->purchase->purchase_number;
@@ -142,12 +152,15 @@ WithCustomStartCell
 
     if ($bill->bill_expenses) {
         foreach ($bill->bill_expenses as $expense) {
-            if ($expense->product) {
-                $items[] = $expense->product ? $expense->product->name : "";
-            }else{
-                $items[] = $expense->expense ? $expense->expense->name : "";
-            }
-        }
+                        if ($expense->product) {
+                            $items[] = $expense->product ? $expense->product->name : "";
+                        }elseif($expense->expense){
+                            $items[] = $expense->expense ? $expense->expense->name : "";
+                        }elseif($expense->inventory){
+                            $items[] = $expense->inventory->product ? $expense->inventory->product->name : "";
+                        }
+                     
+                    }
         if (isset($items)) {
             $items_list = implode(', ',$items);
         }else {

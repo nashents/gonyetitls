@@ -99,11 +99,14 @@
                             <li><a href="{{route('employees.create')}}"><i class="fa fa-plus-square-o"></i>Employee</a></li>
                             @endif
                             @if (in_array('Finance', $department_names)|| in_array('Super Admin', $role_names))
+                             <li><a href="{{route('assets.create')}}"><i class="fa fa-plus-square-o"></i>Asset</a></li>
+                             <li><a href="{{route('bills.create')}}"><i class="fa fa-plus-square-o"></i>Bill</a></li>
                             <li><a href="{{route('invoices.create')}}"><i class="fa fa-plus-square-o"></i>Invoice</a></li>
                             <li><a href="{{route('quotations.create')}}"><i class="fa fa-plus-square-o"></i>Quotation</a></li>
-                            <li><a href="{{route('assets.create')}}"><i class="fa fa-plus-square-o"></i>Asset</a></li>
+                           
                             @endif
                             @if (in_array('Transport & Logistics', $department_names) || in_array('Super Admin', $role_names))
+                            <li><a href="{{route('fuels.index')}}"><i class="fa fa-plus-square-o"></i>Fuel</a></li>
                             <li><a href="{{route('horses.create')}}"><i class="fa fa-plus-square-o"></i>Horse</a></li>
                             <li><a href="{{route('trailers.index')}}"><i class="fa fa-plus-square-o"></i>Trailer</a></li>
                             <li><a href="{{route('trips.create')}}"><i class="fa fa-plus-square-o"></i>Trip</a></li>

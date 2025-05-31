@@ -9,6 +9,7 @@
 
             <ul class="nav nav-tabs nav-justified" role="tablist">
                 <li role="presentation" class="active"><a href="#order" aria-controls="basic" role="tab" data-toggle="tab"><strong>Tyre Details</strong> </a></li>
+                <li role="presentation" ><a href="#assignments" aria-controls="assignments" role="tab" data-toggle="tab"><strong>Assignments</strong> </a></li>
 
             </ul>
             <div class="tab-content bg-white p-15">
@@ -125,6 +126,71 @@
                             </tr>
                         </tbody>
                     </table>
+                   
+                </div>
+                <div role="tabpanel" class="tab-pane" id="assignments">
+                           <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
+                                <thead>
+                                  <tr>
+                                    <th class="th-sm">Tyre#
+                                    </th>
+                                    <th class="th-sm">Tyre
+                                    </th>
+                                    <th class="th-sm">Specifications
+                                    </th>
+                                    <th class="th-sm">Assigned On
+                                    </th>
+                                    <th class="th-sm">Fitting Mileage
+                                    </th>
+                                    <th class="th-sm">Ending Mileage
+                                    </th>
+                                    <th class="th-sm">Tyre Life(Kms)
+                                    </th>
+                                    <th class="th-sm">Status
+                                    </th>
+                                  </tr>
+                                </thead>
+                                @if (isset($tyre_assignments))
+                                <tbody>
+                                    @forelse ($tyre_assignments as $tyre_assignment)
+                                  <tr>
+                                    <td>{{$tyre_assignment->tyre ? $tyre_assignment->tyre->tyre_number : ""}}</td>
+                                    <td>{{$tyre_assignment->tyre ? $tyre_assignment->tyre->width : ""}}/ {{$tyre_assignment->tyre ? $tyre_assignment->tyre->aspect_ratio : ""}} R {{$tyre_assignment->tyre ? $tyre_assignment->tyre->diameter : ""}}</td>
+                                    <td>
+                                        @if ($tyre_assignment->horse)
+                                        Horse | {{$tyre_assignment->horse->horse_make ? $tyre_assignment->horse->horse_make->name : ""}} {{$tyre_assignment->horse->horse_model ? $tyre_assignment->horse->horse_model->name : ""}} [ {{$tyre_assignment->horse ? $tyre_assignment->horse->registration_number : ""}} ]
+                                        @elseif ($tyre_assignment->trailer)
+                                        Trailer | {{$tyre_assignment->trailer ? $tyre_assignment->trailer->make : ""}} {{$tyre_assignment->trailer ? $tyre_assignment->trailer->model : ""}} [{{$tyre_assignment->trailer ? $tyre_assignment->trailer->registration_number : ""}}]
+                                        @elseif ($tyre_assignment->vehicle)
+                                        Vehicle | {{$tyre_assignment->vehicle->vehicle_make ? $tyre_assignment->vehicle->vehicle_make->name : ""}} {{$tyre_assignment->vehicle->vehicle_model ? $tyre_assignment->vehicle->vehicle_model->name : ""}} [{{$tyre_assignment->vehicle ? $tyre_assignment->vehicle->registration_number : ""}}]
+                                        @endif
+                                    </td>
+                                    <td>{{$tyre_assignment->starting_odometer ? $tyre_assignment->starting_odometer."Kms" : ""}}</td>
+                                    <td>{{$tyre_assignment->ending_odometer ? $tyre_assignment->ending_odometer."Kms" : ""}}</td>
+                                    <td>
+                                        @if ($tyre_assignment->tyre)
+                                            {{$tyre_assignment->tyre->mileage ? $tyre_assignment->tyre->mileage."Kms" : ""}}
+                                        @endif
+                                    </td>
+                                    <td>
+                                         <span class="badge bg-{{$tyre_assignment->status == 1 ? "success" : "warning"}}">{{$tyre_assignment->status == 1 ? "Current" : "Past"}}</span>      
+                                    </td>
+                                  </tr>
+                                  @empty
+                                  <tr>
+                                    <td colspan="10">
+                                        <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
+                                            No Tyre Assignments Found ....
+                                        </div>
+                                       
+                                    </td>
+                                  </tr> 
+                                  @endforelse
+                                </tbody>
+                                @else
+                                    <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
+                                 @endif
+                              </table>
                    
                 </div>
 

@@ -65,7 +65,7 @@
                                         </a>
                                        @else
                                        <span class="badge bg-{{$tyre->status == 1 ? "warning" : "success"}}">{{$tyre->status == 1 ? "Unassigned" : "Assigned"}}</span>        
-                                        @endif
+                                    @endif
                                     </td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">

@@ -23,12 +23,13 @@ class Index extends Component
 
 
     public $search;
-    protected $queryString = ['search'];
+    public $searchTyres;
+    protected $queryString = ['search', 'searchTyres'];
 
     private $tyre_assignments;
     public $tyre_assignment_id;
     public $tyres;
-    public $type = NULL;
+    public $type = "Horse";
     public $tyre_id;
     public $horses;
     public $horse_id;
@@ -47,7 +48,6 @@ class Index extends Component
 
     public function mount(){
         $this->resetPage();
-        $this->tyres = Tyre::where('status',1)->orderBy('tyre_number','asc')->get();
         $this->vehicles = Vehicle::where('status',1)->orderBy('registration_number','asc')->get();
         $this->trailers = Trailer::where('status', 1)->orderBy('registration_number','asc')->get();
         $this->horses = Horse::where('status',1)->orderBy('registration_number','asc')->get();
@@ -172,7 +172,6 @@ class Index extends Component
 
     public function edit($id){
 
-        $this->tyres = Tyre::latest()->get();
         $assignment = TyreAssignment::find($id);
         $this->user_id = $assignment->user_id;
         $this->horse_id = $assignment->horse_id;
@@ -221,6 +220,9 @@ class Index extends Component
                 $assignment->description = $this->description;
                 if ($this->ending_odometer) {
                     $assignment->status = 0;
+                    $tyre = Tyre::find($this->tyre_id);
+                    $tyre->status = 1;
+                    $tyre->update();
                 }
                
                 $assignment->update();
@@ -300,9 +302,24 @@ class Index extends Component
     public function render()
     {
 
+         if (filled($this->searchTyres)) {
+            $this->tyres = Tyre::query()->where('status',1)->whereDoesntHave('tyre_assignments', function ($query) {
+                            $query->where('status', 1);
+                        })->where('serial_number', 'like', '%'.$this->searchTyres.'%')
+                         ->whereHas('product', function ($query) {
+                            return $query->where('name', 'like', '%'.$this->searchTyres.'%');
+                        })
+                        ->get();
+        }else{
+             $this->tyres = Tyre::where('status',1)->whereDoesntHave('tyre_assignments', function ($query) {
+                            $query->where('status', 1);
+                        })->get();
+        }
+
         if (isset($this->search)) {
             return view('livewire.tyre-assignments.index',[
                 'tyre_assignments' => TyreAssignment::query()->with('horse','vehicle','trailer','tyre','tyre.product','tyre.product.brand')
+                ->where('status',1)
                 ->whereHas('tyre', function ($query) {
                     return $query->where('tyre_number', 'like', '%'.$this->search.'%');
                 })
@@ -332,7 +349,7 @@ class Index extends Component
         else {
            
             return view('livewire.tyre-assignments.index',[
-                'tyre_assignments' => TyreAssignment::query()->with('horse','vehicle','trailer','tyre')->orderBy('created_at','desc')->paginate(10),
+                'tyre_assignments' => TyreAssignment::query()->with('horse','vehicle','trailer','tyre')->where('status',1)->orderBy('created_at','desc')->paginate(10),
             ]);
           
         }

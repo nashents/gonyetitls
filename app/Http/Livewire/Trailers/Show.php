@@ -83,7 +83,7 @@ class Show extends Component
     }
     public function getTyreAssignmentsProperty(){
 
-        return TyreAssignment::query()->with('trailer','user')->where('trailer_id',$this->trailer_id)->whereYear('created_at', date('Y'))->orderBy('created_at','desc')->paginate(10);
+        return TyreAssignment::query()->with('trailer','user')->where('trailer_id',$this->trailer_id)->where('status',1)->orderBy('created_at','desc')->paginate(10);
        
     }
 

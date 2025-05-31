@@ -292,7 +292,7 @@
                             </th>
                             <th class="th-sm">Position
                             </th>
-                            <th class="th-sm">Starting Mileage
+                            <th class="th-sm">Fitting Mileage
                             </th>
                             <th class="th-sm">Ending Mileage
                             </th>
@@ -313,7 +313,7 @@
                                 <td>{{$tyre_assignment->position}}</td>
                                 <td>{{$tyre_assignment->axle}}</td>
                                 <td>{{$tyre_assignment->starting_odometer ? $tyre_assignment->starting_odometer." Kms" : ""}}</td>
-                                <td>{{$tyre_assignment->ending_odometer ? $tyre_assignment->ending_odometer."Kms" : ""}}</td>
+                                 <td>{{$tyre_assignment->vehicle->mileage ? $tyre_assignment->vehicle->mileage." Kms" : ""}}</td>
                             </tr>
                             @empty
                             <tr>
@@ -588,8 +588,22 @@
                                    
                                 @elseif ( $bill->invoice)
                                     Invoice VAT | <a href="{{ route('invoices.show', $bill->invoice->id) }}" style="color: blue" target="_blank">{{ $bill->invoice ? $bill->invoice->invoice_number : "" }}</a> 
-                                @elseif ( $bill->ticket)
-                                    Ticket | <a href="{{ route('tickets.show', $bill->ticket->id) }}" style="color: blue" target="_blank">{{  $bill->ticket ? $bill->ticket->ticket_number : "" }}</a> 
+                                @elseif ($bill->ticket || $bill->ticket_inventory || $bill->ticket_expense)
+                                @if ($bill->ticket_inventory)
+                                    Workshop Ticket | <a href="{{ route('tickets.show', $bill->ticket_inventory->ticket->id) }}" style="color: blue" target="_blank">{{  $bill->ticket_inventory->ticket ? $bill->ticket_inventory->ticket->ticket_number : "" }}</a> 
+                                @else
+                                     Workshop Ticket | <a href="{{ route('tickets.show', $bill->ticket->id) }}" style="color: blue" target="_blank">{{  $bill->ticket ? $bill->ticket->ticket_number : "" }}</a> 
+                                @endif
+                                @if ($bill->horse)
+                                    <br>
+                                    Horse | <a href="{{route('horses.show', $bill->horse->id)}}" style="color: blue" target="_blank">{{$bill->horse ? $bill->horse->registration_number : ""}} {{$bill->horse->fleet_number ? "(".$bill->horse->fleet_number.")" : ""}} {{$bill->horse->horse_make ? $bill->horse->horse_make->name : ""}} {{$bill->horse->horse_model ? $bill->horse->horse_model->name : ""}}</a> 
+                                @elseif ($bill->vehicle)
+                                    <br>
+                                    Vehicle | <a href="{{route('vehicles.show', $bill->vehicle->id)}}" style="color: blue" target="_blank">{{$bill->vehicle ? $bill->vehicle->registration_number : ""}} {{$bill->vehicle->fleet_number ? "(".$bill->vehicle->fleet_number.")" : ""}} {{$bill->vehicle->vehicle_make ? $bill->vehicle->vehicle_make->name : ""}} {{$bill->vehicle->vehicle_model ? $bill->vehicle->vehicle_model->name : ""}}</a> 
+                                @elseif ($bill->trailer)
+                                    <br>
+                                    Trailer | <a href="{{route('trailers.show', $bill->trailer->id)}}" style="color: blue" target="_blank">{{$bill->trailer ? $bill->trailer->registration_number : ""}} {{$bill->trailer->fleet_number ? "(".$bill->trailer->fleet_number.")" : ""}} {{$bill->trailer->make}} {{$bill->trailer->model}}</a> 
+                                @endif
                                 @elseif ($bill->trip && ($bill->horse || $bill->driver || $bill->driver))
                                     Trip Expense | <a href="{{ route('trips.show', $bill->trip->id) }}" style="color: blue" target="_blank">{{ $bill->trip->trip_number }}</a> 
                                 @elseif ($bill->purchase)
@@ -617,11 +631,18 @@
                                
                             </td>
                             <td>
-                                @foreach ($bill->bill_expenses as $expense)
-                                    @if ($expense->product)
-                                        {{$expense->product->name ? $expense->product->name : ""}} <br>
+                               @if ($bill->bill_expenses)
+                                @foreach ($bill->bill_expenses as $bill_expense)
+                                    @if ($bill_expense->expense)
+                                        {{$bill_expense->expense ? $bill_expense->expense->name : ""}}
+                                    @elseif($bill_expense->product)
+                                        {{ $bill_expense->product->brand ? $bill_expense->product->brand->name : ""}} {{ $bill_expense->product ? $bill_expense->product->name : ""}}
+                                    @elseif($bill_expense->inventory)
+                                        {{ $bill_expense->inventory->product->brand ? $bill_expense->inventory->product->brand->name : ""}} {{ $bill_expense->inventory->product ? $bill_expense->inventory->product->name : ""}}
                                     @endif
+                                    @if (!$loop->last),@endif
                                 @endforeach
+                            @endif
                             </td>
                             <td>{{$bill->bill_date}}</td>
                             <td>{{$bill->currency ? $bill->currency->name : ""}}</td> 

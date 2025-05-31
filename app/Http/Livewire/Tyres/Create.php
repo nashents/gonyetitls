@@ -110,7 +110,7 @@ class Create extends Component
     public $tyre_assignment_id;
     public $tyres;
     public $tyre_assignment;
-    public $assignment_type = NULL;
+    public $assignment_type = "Horse";
     public $tyre_id;
     public $horses;
     public $horse_id;

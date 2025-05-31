@@ -39,7 +39,9 @@ class Bill extends Model implements Auditable
     public function ticket(){
         return $this->BelongsTo('App\Models\Ticket');
     }
-    
+    public function ticket_inventory(){
+        return $this->belongsTo('App\Models\TicketInventory');
+    }
     public function top_up(){
         return $this->belongsTo('App\Models\TopUp');
     }
@@ -64,9 +66,7 @@ class Bill extends Model implements Auditable
     public function trailer(){
         return $this->belongsTo('App\Models\Trailer');
     }
-    public function ticket_inventory(){
-        return $this->belongsTo('App\Models\TicketInventory');
-    }
+    
     public function driver(){
         return $this->belongsTo('App\Models\Driver');
     }
