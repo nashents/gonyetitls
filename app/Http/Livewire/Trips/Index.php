@@ -462,22 +462,26 @@ class Index extends Component
         $trip->starting_mileage = $this->starting_mileage;
         $trip->update();
 
-        if (isset($trip->vehicle_id)) {
+        if (isset($trip->vehicle_id)) { 
             $vehicle = Vehicle::find($trip->vehicle_id);
-            $current_mileage = $vehicle->mileage;
-            if($this->ending_mileage > $current_mileage){
-                $vehicle->mileage = $this->ending_mileage;
+            if ($vehicle) {
+                $current_mileage = $vehicle->mileage;
+                if($this->ending_mileage > $current_mileage){
+                    $vehicle->mileage = $this->ending_mileage;
+                }
+                $vehicle->update();
             }
-            $vehicle->update();
-
         }elseif(isset($trip->horse_id)){
 
             $horse = Horse::find($trip->horse_id);
-            $current_mileage = $horse->mileage;
-            if($this->ending_mileage > $current_mileage){
-                $horse->mileage = $this->ending_mileage;
+            if ($horse) {
+                $current_mileage = $horse->mileage;
+                if($this->ending_mileage > $current_mileage){
+                    $horse->mileage = $this->ending_mileage;
+                }
+                $horse->update();
             }
-            $horse->update();
+            
         }
 
         $trip_status = new TripStatus;

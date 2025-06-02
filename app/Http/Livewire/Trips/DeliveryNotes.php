@@ -449,20 +449,23 @@ class DeliveryNotes extends Component
 
       if (isset($trip->vehicle_id)) {
           $vehicle = Vehicle::find($trip->vehicle_id);
-          $current_mileage = $vehicle->mileage;
-          if($this->ending_mileage > $current_mileage){
-              $vehicle->mileage = $this->ending_mileage;
-          }
-          $vehicle->update();
+            if ($vehicle) {
+                $current_mileage = $vehicle->mileage;
+                if($this->ending_mileage > $current_mileage){
+                    $vehicle->mileage = $this->ending_mileage;
+                }
+                $vehicle->update();
+            }
 
       }elseif(isset($trip->horse_id)){
-
-          $horse = Horse::find($trip->horse_id);
-          $current_mileage = $horse->mileage;
-          if($this->ending_mileage > $current_mileage){
-              $horse->mileage = $this->ending_mileage;
-          }
-          $horse->update();
+            $horse = Horse::find($trip->horse_id);
+            if ($horse) {
+                $current_mileage = $horse->mileage;
+                if($this->ending_mileage > $current_mileage){
+                    $horse->mileage = $this->ending_mileage;
+                }
+                $horse->update();
+            }
       }
 
       $trip_status = new TripStatus;
