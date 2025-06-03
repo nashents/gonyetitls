@@ -386,6 +386,41 @@ class Edit extends Component
     }
 
 
+    public function calculateFuelConsumption($id)
+    {
+        $trip = Trip::find($id);
+        if (!$trip) return;
+
+        $fuels = $trip->fuels;
+
+        $distance = null;
+        if (is_numeric($this->starting_mileage) && is_numeric($this->ending_mileage)) {
+            $distance = $this->ending_mileage - $this->starting_mileage;
+        } else {
+            $distance = $this->distance ?? 0;
+        }
+
+        $hours_distance = null;
+        if (is_numeric($this->starting_hours) && is_numeric($this->ending_hours)) {
+            $hours_distance = $this->ending_hours - $this->starting_hours;
+        }
+
+        $total_fuel = $fuels && $fuels->count() > 0 
+            ? $fuels->sum('quantity') 
+            : ($this->trip_fuel ?? 0);
+
+        if (is_numeric($distance) && $distance > 0 && $total_fuel > 0) {
+            $trip->fuel_consumption_mileage = $total_fuel / $distance;
+        }
+
+        if (is_numeric($hours_distance) && $hours_distance > 0 && $total_fuel > 0) {
+            $trip->fuel_consumption_hours = $total_fuel / $hours_distance;
+        }
+
+        $trip->save();
+    }
+
+
     public function calculateDistance($from, $to, $category)
     {
         $from_location = null;
@@ -1448,6 +1483,8 @@ class Edit extends Component
           $trip->emptyrun_destination = $this->emptyrun_destination;
           $trip->update();
           $this->trip = $trip;
+
+          $this->calculateFuelConsumption($trip->id);
 
           if($this->emptyrun_origin) $this->saveEmptyRun($trip, true);
           if($this->emptyrun_destination) $this->saveEmptyRun($trip, false);

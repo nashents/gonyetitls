@@ -389,14 +389,7 @@
                                                                     </td>
                                                                 </tr>
                                                             @endif
-                                                            <tr>
-                                                                <th scope="row">Estimated Trip Fuel</th>
-                                                                <td>
-                                                                    @if ($trip->trip_fuel)
-                                                                        {{$trip->trip_fuel}}Litres
-                                                                    @endif
-                                                                </td>
-                                                            </tr>
+                                                            
                                                             <tr>
                                                                 <th scope="row">Departure</th>
                                                                 <td>
@@ -474,6 +467,26 @@
                                                                 <td>
                                                                     
                                                                     {{$actual_distance ? $actual_distance." Kms" : ""}}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <th scope="row">Approximate Trip Fuel</th>
+                                                                <td>
+                                                                    @if ($trip->trip_fuel)
+                                                                        {{$trip->trip_fuel}}Litres
+                                                                    @endif
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <th scope="row">Fuel Consumption Mileage</th>
+                                                                <td>
+                                                                    {{$trip->fuel_consumption_mileage ? $trip->fuel_consumption_mileage."L/Km" : ""}}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <th scope="row">Fuel Consumption Hours</th>
+                                                                <td>
+                                                                   {{$trip->fuel_consumption_hours ? $trip->fuel_consumption_hours."L/H" : ""}}
                                                                 </td>
                                                             </tr>
                                                  

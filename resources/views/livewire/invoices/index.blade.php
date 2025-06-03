@@ -500,7 +500,7 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="name">Amount<span class="required" style="color: red">*</span></label>
-                                <input type="number" max="{{ $invoice_balance }}" step="any"  class="form-control" wire:model.debounce.300ms="amount" placeholder="Enter Amount" required >
+                                <input type="number" max="{{ $invoice_balance }}" {{ $amount > $invoice_balance ? "disabled" : "" }} step="any"  class="form-control" wire:model.debounce.300ms="amount" placeholder="Enter Amount" required >
                                 @error('amount') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 @if ($amount > $invoice_balance)
                                 <small style="color: red">Amount should be less than or equal to invoice balance.</small>   

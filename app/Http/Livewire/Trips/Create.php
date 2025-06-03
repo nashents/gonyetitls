@@ -67,6 +67,7 @@ class Create extends Component
 {
     use WithFileUploads;
     protected $queryString = ['searchTrip','searchVehicle','searchHorse','searchTrailer','searchDriver'];
+    public $trip_id;
     public $trip_types;
     public $selectedTripType;
     public $shifts;
@@ -295,7 +296,7 @@ class Create extends Component
     public $selected_fuel_currency;
     public $fuel_exchange_rate;
     public $fuel_exchange_amount;
-    public $fuel_quantity = 0 ;
+    public $fuel_quantity;
     public $horse_selected;
     public $vehicle_selected;
     public $fuel_tank_capacity;
@@ -835,6 +836,39 @@ class Create extends Component
         $this->allowance_currency_id = '';
     }
 
+    public function calculateFuelConsumption($id)
+    {
+        $trip = Trip::find($id);
+        if (!$trip) return;
+
+        $fuels = $trip->fuels;
+
+        $distance = null;
+        if (is_numeric($this->starting_mileage) && is_numeric($this->ending_mileage)) {
+            $distance = $this->ending_mileage - $this->starting_mileage;
+        } else {
+            $distance = $this->distance ?? 0;
+        }
+
+        $hours_distance = null;
+        if (is_numeric($this->starting_hours) && is_numeric($this->ending_hours)) {
+            $hours_distance = $this->ending_hours - $this->starting_hours;
+        }
+
+        $total_fuel = $fuels && $fuels->count() > 0 
+            ? $fuels->sum('quantity') 
+            : ($this->trip_fuel ?? 0);
+
+        if (is_numeric($distance) && $distance > 0 && $total_fuel > 0) {
+            $trip->fuel_consumption_mileage = $total_fuel / $distance;
+        }
+
+        if (is_numeric($hours_distance) && $hours_distance > 0 && $total_fuel > 0) {
+            $trip->fuel_consumption_hours = $total_fuel / $hours_distance;
+        }
+
+        $trip->save();
+    }
    
     
    
@@ -883,7 +917,6 @@ class Create extends Component
         $this->routes = Route::with('truck_stops:id,name')->where('status',1)->orderBy('name','asc')->get();
         $this->measurements = Measurement::orderBy('name','asc')->get();
         $this->truck_stops = collect();
-        $this->trip_fuel = 0;
         $this->with_customer_rates = "custom";
         $this->with_transporter_rates = "custom";
         $this->horses =  collect();
@@ -1233,6 +1266,7 @@ class Create extends Component
                 $trip->emptyrun_destination = $this->emptyrun_destination;
                 $trip->save();
 
+                $this->calculateFuelConsumption($trip->id);
                 $this->syncRelations($trip);
 
                 if($this->emptyrun_origin) $this->saveEmptyRun($trip, true);

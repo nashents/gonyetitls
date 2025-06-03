@@ -250,7 +250,7 @@
                                   </tr>
                                   @empty
                                   <tr>
-                                    <td colspan="10">
+                                    <td colspan="13">
                                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                             No Bills Found ....
                                         </div>
@@ -469,16 +469,22 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="name">Value<span class="required" style="color: red">*</span></label>
-                                <input type="number" step="any" class="form-control" wire:model.debounce.300ms="amount" placeholder="Enter Value" required />
+                                <input type="number" step="any" {{ $amount > $bill_balance ? "disabled" : "" }} class="form-control" wire:model.debounce.300ms="amount" placeholder="Enter Value" required />
                                 @error('amount') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                @if ($amount > $bill_balance)
+                                    <small style="color: red">Amount should be less than or equal to bill balance.</small>   
+                                @endif
                             </div>
                         </div>
                         @else   
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="name">Amount<span class="required" style="color: red">*</span></label>
-                                <input type="number" step="any" class="form-control" wire:model.debounce.300ms="amount" placeholder="Enter Amount" required />
+                                <input type="number"  max="{{ $bill_balance }}" step="any" {{ $amount > $bill_balance ? "disabled" : "" }} class="form-control" wire:model.debounce.300ms="amount" placeholder="Enter Amount" required />
                                 @error('amount') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                @if ($amount > $bill_balance)
+                                    <small style="color: red">Amount should be less than or equal to bill balance.</small>   
+                                @endif
                             </div>
                         </div>
                         @endif
@@ -488,6 +494,9 @@
                                 <label for="name">Balance<span class="required" style="color: red">*</span></label>
                                 <input type="number" step="any" class="form-control" wire:model.debounce.300ms="current_balance" placeholder="Current Balance" required disabled />
                                 @error('current_balance') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                @if ($current_balance < 0)
+                                <small style="color: red">Bill balance can not be negative</small>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -501,7 +510,13 @@
                 <div class="modal-footer">
                     <div class="btn-group" role="group">
                         <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
-                        <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Save</button>
+                        @if ($current_balance >= 0)
+                            <button type="submit" class="btn bg-success btn-wide btn-rounded" ><i class="fa fa-save" ></i>Save</button>      
+                        @elseif ($amount > $bill_balance)
+                            <button type="submit" class="btn bg-success btn-wide btn-rounded" disabled ><i class="fa fa-save" ></i>Save</button> 
+                        @else
+                            <button type="submit" class="btn bg-success btn-wide btn-rounded" disabled ><i class="fa fa-save" ></i>Save</button> 
+                        @endif
                     </div>
                     <!-- /.btn-group -->
                 </div>
