@@ -562,7 +562,10 @@ class Create extends Component
             $assignment = Assignment::where('horse_id',$id)
                                     ->where('status', 1)->first();
 
-            $trailer_assignments = $horse->trailer_assignments->where('status',1);
+            if($horse){
+                 $trailer_assignments = $horse->trailer_assignments->where('status',1);
+            }
+           
                                     
             $this->odometer = $horse->mileage;
             $this->fuel_tank_capacity = $horse->fuel_tank_capacity;
