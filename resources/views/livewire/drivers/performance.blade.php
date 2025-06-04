@@ -119,8 +119,6 @@
                                         <hr style="margin-top:2px; margin-bottom:2px">
                                         W/Loss(%)
                                     </th>
-                                    <th class="th-sm">Action
-                                    </th>
                                   </tr>
                                 </thead>
                                 @if (isset($drivers))
@@ -166,17 +164,7 @@
                                        <hr style="margin-top:5px; margin-bottom:5px">  
                                         {{$this->calculateTonnageLosses($selected_driver)}}
                                     </td>
-                                    <td class="w-10 line-height-35 table-dropdown">
-                                        <div class="dropdown">
-                                            <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                <i class="fa fa-bars"></i>
-                                                <span class="caret"></span>
-                                            </button>
-                                            <ul class="dropdown-menu">
-                                                {{-- <li><a href="#"  wire:click="edit({{$driver->id}})" ><i class="fa fa-refresh color-success"></i> Update</a></li> --}}
-                                            </ul>
-                                        </div>
-                                </td>
+                                   
                                   </tr>
                                   @empty
                                   <tr>

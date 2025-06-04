@@ -92,6 +92,7 @@ class Performance extends Component
         } else {
             $default_currency_trips_freight = Trip::where('driver_id', $id)
                 ->whereMonth($this->filter, Carbon::now()->month)
+                ->whereYear($this->filter, date('Y'))
                 ->where('currency_id', $this->currency->id)
                 ->whereNotNull('freight')
                 ->where('freight', '!=', 0)
@@ -99,6 +100,7 @@ class Performance extends Component
 
             $other_currency_trips_freight = Trip::where('driver_id', $id)
                 ->whereMonth($this->filter, Carbon::now()->month)
+                ->whereYear($this->filter, date('Y'))
                 ->where('currency_id', '!=', $this->currency->id)
                 ->whereNotNull('exchange_customer_freight')
                 ->where('exchange_customer_freight', '!=', 0)
