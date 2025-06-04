@@ -188,7 +188,7 @@ class Index extends Component
 
     public function topup(){
 
-        try{  
+    
         $container = Container::find($this->container_id);
         $top_up = new TopUp;
         $top_up->user_id = Auth::user()->id;
@@ -210,18 +210,6 @@ class Index extends Component
         $this->resetInputFields();
         Session::flash('success','Fuel Top Up Created Successfully!!');
         return redirect(route('top_ups.manage',$this->container_id));
-       
-        }
-        catch(\Exception $e){
-        // Set Flash Message
-        $this->dispatchBrowserEvent('hide-top_upModal');
-        $this->dispatchBrowserEvent('alert',[
-
-            'type'=>'error',
-            'message'=>"Something went wrong while creating fuel topup!!"
-        ]);
-    }
-
     }
 
     public function billNumber(){
@@ -260,7 +248,7 @@ class Index extends Component
 
 
     public function store(){
-        try{
+    
         $existing_container = Container::where('name',$this->name)->get()->first();
         if (!$existing_container) {
 
@@ -316,16 +304,7 @@ class Index extends Component
                 ]);
             }
 
-        }
-        catch(\Exception $e){
-        // Set Flash Message
-        $this->dispatchBrowserEvent('hide-containerModal');
-        $this->dispatchBrowserEvent('alert',[
-
-            'type'=>'error',
-            'message'=>"Something went wrong while creating station!!"
-        ]);
-    }
+       
 
     }
 
@@ -351,7 +330,7 @@ class Index extends Component
     public function update()
     {
         if ($this->container_id) {
-            try{
+       
             $container = container::find($this->container_id);
             $container->fuel_type = $this->fuel_type;
             $container->name = $this->name;
@@ -371,16 +350,7 @@ class Index extends Component
                 'type'=>'success',
                 'message'=>"Fueling Station Updated Successfully!!"
             ]);
-            }
-            catch(\Exception $e){
-            // Set Flash Message
-            $this->dispatchBrowserEvent('hide-containerEditModal');
-            $this->dispatchBrowserEvent('alert',[
-
-                'type'=>'error',
-                'message'=>"Something went wrong while updating fueling Station!!"
-            ]);
-        }
+           
         }
     }
 

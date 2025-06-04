@@ -9,6 +9,7 @@ use App\Models\Expense;
 use Livewire\Component;
 use App\Models\Currency;
 use App\Models\Employee;
+use App\Models\Purchase;
 use App\Models\Department;
 use App\Models\Requisition;
 use App\Models\Notification;
@@ -42,6 +43,8 @@ class Index extends Component
     public $requisition_for;
     public $trips;
     public $trip_id;
+    public $purchases;
+    public $purchase_id;
     public $bookings;
     public $booking_id;
     public $expenses;
@@ -53,6 +56,7 @@ class Index extends Component
     public $requisition_number;
     public $subject;
     public $requisition_id;
+    public $items = False;
     public $employees;
     public $employee;
     public $employee_id;
@@ -217,6 +221,24 @@ class Index extends Component
 
     }
 
+    public function updatedSearchPurchase(){
+
+        if (filled($this->searchPurchase)) {
+            $this->purchase = Purchase::query()->with(['vendor','currency'])
+            ->where('purchase_number', 'like', '%'.$this->searchPurchase.'%')
+            ->orWhere('date', 'like', '%'.$this->searchPurchase.'%')
+            ->orWhere('total', 'like', '%'.$this->searchPurchase.'%')
+            ->orWhereHas('vendor', function ($query) {
+                return $query->where('name', 'like', '%'.$this->searchPurchase.'%');
+            })
+            ->orWhereHas('currency', function ($query) {
+                return $query->where('name', 'like', '%'.$this->searchPurchase.'%');
+            })
+            ->orderBy('id','desc')->get();
+        }
+
+    }
+
     public function requisitionNumber(){
 
         if (isset(Auth::user()->company)) {
@@ -270,6 +292,8 @@ class Index extends Component
                 ->get();
             }elseif($value == 'Booking'){
                 $this->bookings = Booking::whereYear('in_date',date('Y'))->where('authorization','approved')->where('status',True)->orderBy('id','desc')->get();
+            }elseif($value == 'Purchase'){
+                $this->purchases = Purchase::whereYear('date',date('Y'))->where('authorization','approved')->where('status',True)->orderBy('id','desc')->get();
             }
         }
     }
@@ -285,10 +309,12 @@ class Index extends Component
         $requisition->department_id = $this->department_id;
         $requisition->trip_id = $this->trip_id ? $this->trip_id : Null;
         $requisition->booking_id = $this->booking_id ? $this->booking_id : Null;
+        $requisition->purchase_id = $this->purchase_id ? $this->purchase_id : Null;
         $requisition->employee_id = $this->employee_id;
         $requisition->currency_id = $this->currency_id;
         $requisition->date = $this->date;
         $requisition->description = $this->description;
+        $requisition->items = $this->items;
         $requisition->subject = $this->subject;
         $requisition->status = "Unpaid";
         $requisition->save();
@@ -384,6 +410,8 @@ class Index extends Component
            $this->requisition_for = "Trip";
         }elseif(isset($this->booking_id)){
             $this->requisition_for = "Booking";
+        }elseif(isset($this->purchase_id)){
+            $this->requisition_for = "Purchase";
         }
         $this->employee_id = $requisition->employee_id;
         $this->department_id = $requisition->department_id;
@@ -403,6 +431,7 @@ class Index extends Component
         $requisition->department_id = $this->department_id;
         $requisition->trip_id = $this->trip_id ? $this->trip_id : Null;
         $requisition->booking_id = $this->booking_id ? $this->booking_id : Null;
+        $requisition->purchase_id = $this->purchase_id ? $this->purchase_id : Null;
         $requisition->employee_id = $this->employee_id;
         $requisition->currency_id = $this->currency_id;
         $requisition->date = $this->date;

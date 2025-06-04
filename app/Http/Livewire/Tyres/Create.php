@@ -2,6 +2,8 @@
 
 namespace App\Http\Livewire\Tyres;
 
+use App\Models\Bin;
+use App\Models\Rack;
 use App\Models\Tyre;
 use App\Models\Horse;
 use App\Models\Store;
@@ -19,6 +21,7 @@ use App\Models\TyreCount;
 use App\Models\TyreDetail;
 use App\Models\TyreDispatch;
 use App\Models\TyreDocument;
+use App\Models\GoodsReceived;
 use Livewire\WithFileUploads;
 use App\Models\TyreAssignment;
 use Illuminate\Support\Facades\Auth;
@@ -35,6 +38,8 @@ class Create extends Component
     public $exchange_rate;
     public $exchange_amount;
     public $vendor_id;
+    public $goods_receiveds;
+    public $selectedGoodsReceived;
     public $selectedCurrency;
     public $selected_currency;
     public $date;
@@ -296,7 +301,7 @@ class Create extends Component
             foreach ($this->selectedProduct as $key => $value) {
                 $tyre = new Tyre;
                 $tyre->user_id = Auth::user()->id;
-               
+                $tyre->goods_received_id = $this->selectedGoodsReceived ? $this->selectedGoodsReceived : null;
                 $tyre->product_id = $this->selectedProduct[$key];
             
                 if (isset($this->serial_number[$key])) {
@@ -462,6 +467,37 @@ class Create extends Component
          
       }
 
+
+      public function refresh($category){
+
+        if($category == "racks"){
+            $this->racks = Rack::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Racks Refreshed Successfully!!."
+            ]);
+        }elseif($category == "bins"){
+            $this->bins = Bin::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Bins Refreshed Successfully!!."
+            ]);
+        }elseif($category == "goods_receiveds"){
+            $this->goods_receiveds = GoodsReceived::orderBy('id','desc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"GRVs Refreshed Successfully!!."
+            ]);
+        }
+    }
+
+     public function updatedSelectedGoodsReceived($id){
+        if(!is_null($id)){
+            $goods_received = GoodsReceived::find($id);
+            $this->vendor_id = $goods_received->vendor_id ?? null;
+        }
+    }
+
     public function render()
     {
 
@@ -470,6 +506,7 @@ class Create extends Component
             $this->exchange_amount = $this->exchange_rate * $this->total;
 
         }
+           $this->goods_receiveds = GoodsReceived::where('status',1)->where('department','tyre')->where('created_at', '>=', Carbon::now()->subMonth())->orderBy('created_at','desc')->get();
         $this->products = Product::with('brand')->orderBy('name','asc')->where('department','tyre')->where('status',True)->where('buy',True)->get()->sortBy('brand.name');
         $this->purchases = Purchase::where('department','tyre')->where('status',1)->where('authorization','approved')->orderBy('created_at','desc')->get();
         return view('livewire.tyres.create',[

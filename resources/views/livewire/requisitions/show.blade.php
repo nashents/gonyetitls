@@ -42,7 +42,60 @@
                           
                                 <tr>
                                     <th class="w-10 text-center line-height-35">Requisition For?</th>
-                                    <td class="w-20 line-height-35">{{$requisition->subject}}</td>
+                                    <td class="w-20 line-height-35">
+                                             {{ $requisition->subject }}
+
+                                            @if ($trip = $requisition->trip)
+                                                <br>
+                                                  Trip: 
+                                                <a href="{{ route('trips.show', $trip->id) }}" style="color: blue" target="_blank">
+                                                  
+                                                    {{ $trip->trip_number }} | 
+                                                    {{ $trip->horse?->registration_number }} 
+                                                    {{ $trip->driver?->employee?->name }} {{ $trip->driver?->employee?->surname }} |
+                                                    {{ $trip->customer?->name }} | 
+                                                    {{ $trip->loading_point?->name }} - {{ $trip->offloading_point?->name }}
+                                                </a>
+
+                                            @elseif ($booking = $requisition->booking)
+                                                <br>
+                                                  Booking:
+                                                <a href="{{ route('bookings.show', $booking->id) }}" style="color: blue" target="_blank">
+                                                  
+                                                    {{ $booking->booking_number }} | 
+                                                    {{ $booking->service_type?->name }} |
+
+                                                    @if ($horse = $booking->horse)
+                                                        {{ $horse->registration_number }} {{ $horse->fleet_number ? "($horse->fleet_number)" : '' }}
+                                                    @elseif ($vehicle = $booking->vehicle)
+                                                        {{ $vehicle->registration_number }} {{ $vehicle->fleet_number ? "($vehicle->fleet_number)" : '' }}
+                                                    @elseif ($trailer = $booking->trailer)
+                                                        {{ $trailer->registration_number }} {{ $trailer->fleet_number ? "($trailer->fleet_number)" : '' }}
+                                                    @endif
+                                                </a>
+
+                                            @elseif ($requisition->purchase_id)
+                                                @php
+                                                    $purchase = \App\Models\Purchase::find($requisition->purchase_id);
+                                                @endphp
+                                                @if($purchase)
+                                                    <br>
+                                                    Purchase Order:
+                                                    <a href="{{ route('purchases.show', $purchase->id) }}" style="color: blue" target="_blank"> 
+                                                        {{ $purchase->purchase_number }} | 
+                                                        {{ $purchase->date }} |
+                                                        {{ $purchase->vendor?->name }} |
+                                                        {{ $purchase->currency?->name }} 
+                                                        {{ $purchase->currency?->symbol }}{{ number_format($purchase->total ?? 0, 2) }}
+                                                    </a>
+                                                @endif
+                                            @endif
+
+                                            @if ($requisition->description)
+                                                <br>
+                                                {{ $requisition->description }}
+                                            @endif
+                                    </td>
                                 </tr>
                                 <tr>
                                     <th class="w-10 text-center line-height-35">Date</th>

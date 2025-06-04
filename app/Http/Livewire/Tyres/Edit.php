@@ -2,6 +2,8 @@
 
 namespace App\Http\Livewire\Tyres;
 
+use App\Models\Bin;
+use App\Models\Rack;
 use App\Models\Tyre;
 use App\Models\Store;
 use App\Models\Vendor;
@@ -12,6 +14,7 @@ use Livewire\Component;
 use App\Models\Currency;
 use App\Models\Purchase;
 use App\Models\TyreDetail;
+use App\Models\GoodsReceived;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
@@ -27,6 +30,8 @@ class Edit extends Component
   public $exchange_rate;
   public $exchange_amount;
   public $vendor_id;
+  public $goods_receiveds;
+  public $selectedGoodsReceived;
   public $selectedCurrency;
   public $selected_currency;
   public $date;
@@ -260,11 +265,35 @@ public function updatedSelectedTax($id){
     }
 }
 
+public function refresh($category){
+
+        if($category == "racks"){
+            $this->racks = Rack::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Racks Refreshed Successfully!!."
+            ]);
+        }elseif($category == "bins"){
+            $this->bins = Bin::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Bins Refreshed Successfully!!."
+            ]);
+        }elseif($category == "goods_receiveds"){
+            $this->goods_receiveds = GoodsReceived::orderBy('id','desc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"GRVs Refreshed Successfully!!."
+            ]);
+        }
+    }
+
 
       public function update(){
 
               $tyre = Tyre::find($this->tyre_id);
               $tyre->user_id = Auth::user()->id;
+              $tyre->goods_received_id = $this->selectedGoodsReceived ? $this->selectedGoodsReceived : null;
               $tyre->product_id = $this->selectedProduct;
               
               $tyre->serial_number = $this->serial_number;
@@ -322,6 +351,13 @@ public function updatedSelectedTax($id){
         return redirect()->route('tyres.index');
       }
 
+       public function updatedSelectedGoodsReceived($id){
+        if(!is_null($id)){
+            $goods_received = GoodsReceived::find($id);
+            $this->vendor_id = $goods_received->vendor_id ?? null;
+        }
+    }
+
     public function render()
     {
 
@@ -330,6 +366,7 @@ public function updatedSelectedTax($id){
         $this->exchange_amount = $this->exchange_rate * $this->total;
 
     }
+       $this->goods_receiveds = GoodsReceived::where('status',1)->where('department','tyre')->where('created_at', '>=', Carbon::now()->subMonth())->orderBy('created_at','desc')->get();
     $this->products = Product::orderBy('name','asc')->where('department','tyre')->where('status',True)->where('buy',True)->get();
       $this->purchases = Purchase::where('department','tyre')->where('status',1)->where('authorization','approved')->orderBy('created_at','desc')->get();
         return view('livewire.tyres.edit',[

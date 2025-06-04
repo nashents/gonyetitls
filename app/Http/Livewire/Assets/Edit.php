@@ -2,6 +2,8 @@
 
 namespace App\Http\Livewire\Assets;
 
+use App\Models\Bin;
+use App\Models\Rack;
 use App\Models\Asset;
 use App\Models\Store;
 use App\Models\Vendor;
@@ -14,6 +16,7 @@ use App\Models\Purchase;
 use App\Models\VendorType;
 use App\Models\Measurement;
 use App\Models\CategoryValue;
+use App\Models\GoodsReceived;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Auth;
 
@@ -32,6 +35,8 @@ class Edit extends Component
     public $exchange_amount;
     public $selectedCurrency;
     public $selected_currency;
+    public $goods_receiveds;
+    public $selectedGoodsReceived;
     public $vendor_types;
     public $vendors;
     public $vendor_id;
@@ -198,6 +203,7 @@ class Edit extends Component
                     $this->item_description = $product->description;
                 }
                 $this->qty = 1;
+                $this->weight = 1;
                
           
                 if ($product->tax_id) {
@@ -225,6 +231,29 @@ class Edit extends Component
         }
     }
 
+    public function refresh($category){
+
+        if($category == "racks"){
+            $this->racks = Rack::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Racks Refreshed Successfully!!."
+            ]);
+        }elseif($category == "bins"){
+            $this->bins = Bin::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Bins Refreshed Successfully!!."
+            ]);
+        }elseif($category == "goods_receiveds"){
+            $this->goods_receiveds = GoodsReceived::orderBy('id','desc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"GRVs Refreshed Successfully!!."
+            ]);
+        }
+    }
+
     
 
     public function updatedSelectedCurrency($id){
@@ -249,6 +278,7 @@ class Edit extends Component
                     $asset =  Asset::find($this->asset_id);
                     $asset->vendor_id = $this->vendor_id ? $this->vendor_id : NULL;
                     $asset->currency_id = $this->selectedCurrency ? $this->selectedCurrency : null;
+                    $asset->goods_received_id = $this->selectedGoodsReceived ? $this->selectedGoodsReceived : null;
                     $asset->product_id = $this->selectedProduct;
                     $asset->account_id = $this->selectedAccount;
                     $asset->serial_number = $this->serial_number;
@@ -291,6 +321,13 @@ class Edit extends Component
                     ]);
     }
 
+     public function updatedSelectedGoodsReceived($id){
+        if(!is_null($id)){
+            $goods_received = GoodsReceived::find($id);
+            $this->vendor_id = $goods_received->vendor_id ?? null;
+        }
+    }
+
     public function render()
     {
         if ((isset($this->exchange_rate) && $this->exchange_rate > 0)  &&  ( isset($this->total) && $this->total > 0 )) {
@@ -298,6 +335,7 @@ class Edit extends Component
             $this->exchange_amount = $this->exchange_rate * $this->total;
 
         }
+           $this->goods_receiveds = GoodsReceived::where('status',1)->where('department','asset')->where('created_at', '>=', Carbon::now()->subMonth())->orderBy('created_at','desc')->get();
         $this->measurements = Measurement::orderBy('name','asc')->get();
         $this->products = Product::where('department','asset')->orderBy('name','asc')->get();
         $this->vendor_types = VendorType::orderBy('name','asc')->get();

@@ -26,7 +26,6 @@
                                   <select wire:model.debounce.300ms="filter" class="form-control" aria-label="..." >
                                     <option value="">Select Filter</option>
                                     <option value="created_at">Trip Created At</option>
-                                    <option value="start_date">Trip Start Date</option>
                                   </select>
                                 </div>
                                     <!-- /input-group -->
@@ -74,7 +73,16 @@
                                 <!-- /input-group -->
                             </div>
                           
-                            
+                            <br>
+                            <small style="color: green">Dist(Km) = Total distance travelled in kilometers, Fuel(l) = Total fuel used in litres,
+                                F/C(l/Km) = Fuel Consumption using mileage/distance: Litre per Kilometer,
+                                F/C(l/H) = Fuel Consumption using engine hours: Litre per Engine Hour,
+                                Vol(l) = Total volume/litreage moved in litres, V/Loss(l) Total volume/litreage losses in litres,
+                                V/Loss(%) Total volume/litreage losses in percentage,
+                                W/Loss(t) = Total weight/tonnage losses in tons, W/Loss(%) = Total weight/tonnage losses in percentage.
+                            </small>
+                            <br>
+                            <br>
                             </div>
 
                             <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
@@ -84,23 +92,32 @@
                                     </th>
                                     <th class="th-sm">Driver
                                     </th>
-                                    <th class="th-sm">Trips
+                                    <th class="th-sm">Trip(s)
                                     </th>
-                                    <th class="th-sm">Revenue({{Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->name : ""}})
+                                    <th class="th-sm">Revenue({{$currency->name}})
                                     </th>
-                                    <th class="th-sm">Distance(Kms) 
+                                    <th class="th-sm">Dist(Km) 
                                     </th>
-                                    <th class="th-sm">Vol(Litres)
+                                    <th class="th-sm">Fuel(l) 
                                     </th>
-                                    <th class="th-sm">Vol Loss(Litres)
+                                    <th class="th-sm">
+                                        F/C(l/Km)
+                                        <hr style="margin-top:2px; margin-bottom:2px">
+                                        F/C(l/H)
                                     </th>
-                                    <th class="th-sm">Vol Loss(%)
+                                    <th class="th-sm">Vol(l)
                                     </th>
-                                    <th class="th-sm">Tonnage(Tons)
+                                   <th class="th-sm">
+                                        V/Loss(l)
+                                        <hr style="margin-top:2px; margin-bottom:2px">
+                                        V/Loss(%)
                                     </th>
-                                    <th class="th-sm">Tonnage Loss(Tons)
+                                    <th class="th-sm">Weight(t)
                                     </th>
-                                    <th class="th-sm">Tonnage Loss(%)
+                                     <th class="th-sm">
+                                        W/Loss(t)
+                                        <hr style="margin-top:2px; margin-bottom:2px">
+                                        W/Loss(%)
                                     </th>
                                     <th class="th-sm">Action
                                     </th>
@@ -112,25 +129,6 @@
                                   <tr>
                                     @php
                                          $driver = App\Models\Driver::find($selected_driver->driver_id);
-                                         if ((isset($selected_driver->total_volume_loss) && is_numeric($selected_driver->total_volume_loss) && $selected_driver->total_volume_loss > 0) && (isset($selected_driver->total_volume) && is_numeric($selected_driver->total_volume) && $selected_driver->total_volume > 0)) {
-                                            $vol_loss_percentage = ($selected_driver->total_volume_loss / $selected_driver->total_volume ) * 100;
-                                         }else {
-                                            $vol_loss_percentage = "";
-                                         }
-                                         if ((isset($selected_driver->total_tonnage_loss) && is_numeric($selected_driver->total_tonnage_loss)  && $selected_driver->total_tonnage_loss > 0) && (isset($selected_driver->total_tonnage) && is_numeric($selected_driver->total_tonnage) && $selected_driver->total_tonnage > 0)) {
-                                            $tonnage_loss_percentage = ($selected_driver->total_tonnage_loss / $selected_driver->total_tonnage ) * 100;
-                                         }else {
-                                            $tonnage_loss_percentage = "";
-                                         }
-                                         $currency = Auth::user()->employee->company->currency;
-                                        if (isset($currency)) {
-                                            $default_currency_trips_freight = App\Models\Trip::where('driver_id', $driver->id)->whereMonth('created_at', now()->month)->where('currency_id',$currency->id )->where('freight','!=','')->where('freight','!=', Null)->sum('freight');
-                                            $other_currency_trips_freight = App\Models\Trip::where('driver_id', $driver->id)->whereMonth('created_at', now()->month)->where('currency_id','!=',$currency->id )->where('exchange_customer_freight','!=','')->where('exchange_customer_freight','!=', Null)->sum('exchange_customer_freight');
-                                            $total_freight = $other_currency_trips_freight +  $default_currency_trips_freight;
-                                           
-                                        }else {
-                                            $total_freight = "";
-                                        }
                                     @endphp
                                     <td>
                                         @if (isset($driver))
@@ -142,19 +140,32 @@
                                             {{$driver->employee ? $driver->employee->name : ""}} {{$driver->employee ? $driver->employee->surname : ""}}
                                         @endif
                                     </td>
-                                    <td>{{$selected_driver->total_trips ? $selected_driver->total_trips." Trip(s)" : ""}}</td>
+                                    <td>{{$selected_driver->total_trips ? $selected_driver->total_trips : ""}}</td>
                                     <td>
-                                        @if ($total_freight)
-                                        {{Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->name : ""}} {{Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->symbol : ""}}{{number_format($total_freight,2)}}        
-                                        @endif
+                                        {{$this->calculateTotalRevenue($selected_driver->driver_id)}}
                                     </td>
-                                    <td>{{$selected_driver->total_kilometers ? number_format($selected_driver->total_kilometers,2)." Kms" : ""}}</td>
-                                    <td>{{$selected_driver->total_volume ? number_format($selected_driver->total_volume,2)." Litres" : ""}}</td>
-                                    <td>{{$selected_driver->total_volume_loss ? number_format($selected_driver->total_volume_loss,2)." Litres" : ""}}</td>
-                                    <td>{{ $vol_loss_percentage ?  number_format($vol_loss_percentage,2)." %" : ""}}</td>
-                                    <td>{{$selected_driver->total_tonnage ? number_format($selected_driver->total_tonnage,2)." Tons" : ""}}</td>
-                                    <td>{{$selected_driver->total_tonnage_loss ? number_format($selected_driver->total_tonnage_loss,2)." Tons" : ""}}</td>
-                                    <td>{{ $tonnage_loss_percentage ?  number_format($tonnage_loss_percentage,2)." %" : ""}}</td>
+                                    <td>{{$selected_driver->total_kilometers ? $selected_driver->total_kilometers."Kms" : ""}}</td>
+                                    <td>{{$selected_driver->total_fuel_quantity ? $selected_driver->total_fuel_quantity."l" : ""}}</td>
+                                    <td>
+                                        {{$selected_driver->avg_fuel_consumption_mileage ? $selected_driver->avg_fuel_consumption_mileage." L/Km" : ""}} 
+                                            <hr style="margin-top:5px; margin-bottom:5px">  
+                                        {{$selected_driver->avg_fuel_consumption_hours ? $selected_driver->avg_fuel_consumption_hours." L/H"  : ""}}
+                                    </td>
+                                    <td>
+                                        {{$selected_driver->total_volume ? $selected_driver->total_volume."l" : ""}}
+                                    </td>
+                                    <td>
+                                        
+                                        {{$selected_driver->total_volume_loss ? $selected_driver->total_volume_loss."l" : ""}}
+                                       <hr style="margin-top:5px; margin-bottom:5px">  
+                                        {{$this->calculateVolumeLosses($selected_driver)}}
+                                    </td>
+                                    <td>{{$selected_driver->total_tonnage ? $selected_driver->total_tonnage."t" : ""}}</td>
+                                    <td>
+                                        {{$selected_driver->total_tonnage_loss ? $selected_driver->total_tonnage_loss."t" : ""}}
+                                       <hr style="margin-top:5px; margin-bottom:5px">  
+                                        {{$this->calculateTonnageLosses($selected_driver)}}
+                                    </td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

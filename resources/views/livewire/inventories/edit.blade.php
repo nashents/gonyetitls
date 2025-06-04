@@ -12,7 +12,17 @@
                         </div>
                         <div class="panel-body">
                         <form wire:submit.prevent="update()" >
-
+                            <div class="form-group">
+                                    <label for="country">Goods Received Vouchers</label>
+                                    <select wire:model.debounce.300ms="selectedGoodsReceived" class="form-control" >
+                                        <option value="">Select GRV</option>
+                                        @foreach ($goods_receiveds as $goods_received)
+                                        <option value="{{$goods_received->id}}">{{$goods_received->goods_received_number}} | {{$goods_received->date}} | {{$goods_received->vendor ? $goods_received->vendor->name : ""}} </option>
+                                        @endforeach
+                                    </select>
+                                    <small>  <a href="{{ route('goods_receiveds.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Goods Received Voucher</a></small>  <a href="#" wire:click.prevent="refresh('goods_receiveds')" class="float-end"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                    @error('selectedGoodsReceived') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
                             <div class="row">
                                 <div class="col-md-3">
                                     <div class="form-group">
@@ -69,14 +79,14 @@
                                 </div>
                                 <div class="col-md-3">
                                     <div class="form-group">
-                                        <label for="Product">Expense Category<span class="required" style="color: red">*</span></label>
-                                        <select wire:model.debounce.300ms="selectedAccount" class="form-control" required {{$selectedPurchase ? "disabled" : ""}}>
+                                        <label for="Product">Expense Category</label>
+                                        <select wire:model.debounce.300ms="selectedAccount" class="form-control" {{$selectedPurchase ? "disabled" : ""}}>
                                             <option value="">Select Category</option>
                                             @foreach ($expense_accounts as $account)
                                               <option value="{{$account->id}}">{{$account->name}}</option>
                                             @endforeach
                                         </select>
-                                        <small>  <a href="{{ route('accounts.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Category</a></small> 
+                                        {{-- <small>  <a href="{{ route('accounts.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Category</a></small>  --}}
                                         @error('selectedAccount') <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>
                                 </div>
@@ -122,7 +132,7 @@
                             <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="purchase_date">Item Contents<span class="required" style="color: red">*</span></label>
-                                    <input type="number" step="any" min="1" class="form-control" wire:model.debounce.300ms="weight" required>
+                                    <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="weight" required>
                                     @error('weight') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     <small>Litres, weight, # of pieces or items etc eg 100 Litres or 4 items. Useful for deductions when invoicing / dispatching </small>
                                 </div>
@@ -154,13 +164,13 @@
                                     @if (filled($serial_number))
                                     <div class="form-group">
                                         <label for="name">Qty<span class="required" style="color: red">*</span></label>
-                                        <input type="number" min="1" class="form-control" wire:model.debounce.300ms="qty"  disabled required/>
+                                        <input type="number" step="any" min="1" class="form-control" wire:model.debounce.300ms="qty"  disabled required/>
                                         @error('qty') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                     @else
                                     <div class="form-group">
                                         <label for="name">Qty<span class="required" style="color: red">*</span></label>
-                                        <input type="number" min="1" class="form-control" wire:model.debounce.300ms="qty"  required/>
+                                        <input type="number" step="any" min="1" class="form-control" wire:model.debounce.300ms="qty"  required/>
                                         @error('qty') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                     @endif

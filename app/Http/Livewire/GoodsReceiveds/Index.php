@@ -7,6 +7,7 @@ use Livewire\Component;
 use App\Models\Employee;
 use Livewire\WithPagination;
 use App\Models\GoodsReceived;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
 class Index extends Component
@@ -19,6 +20,8 @@ class Index extends Component
     protected $queryString = ['search'];
     public $from;
     public $to;
+    public $goods_received_filter;
+    public $goods_received_number;
 
     private $goods_receiveds;
     public $goods_received;
@@ -39,6 +42,7 @@ class Index extends Component
     public $department;
 
     public function mount($department){
+        $this->goods_received_filter = "created_at";
         $this->company = Auth::user()->employee->company;
         $this->department = $department;
         $this->vendors = Vendor::orderBy('name','asc')->get();
@@ -91,11 +95,12 @@ class Index extends Component
     }
 
     public function store(){
-
+      
         $goods_received = new GoodsReceived;
         $goods_received->goods_received_number = $this->goodsReceivedNumber();
         $goods_received->user_id = Auth::user()->id;
         $goods_received->vendor_id = $this->vendor_id;
+        $goods_received->department = $this->department;
         $goods_received->employee_id = $this->employee_id;
         $goods_received->date = $this->date;
         $goods_received->delivery_date = $this->delivery_date;
@@ -160,10 +165,92 @@ class Index extends Component
     }
     }
 
+     public function showClose($id){
+        $goods_received = GoodsReceived::find($id);
+        $this->goods_received_id = $id;
+        $this->goods_received_number = $goods_received->goods_received_number;
+        $this->dispatchBrowserEvent('show-grvCloseModal');
+    }
+
+    public function closeGRV(){
+        $goods_received =  GoodsReceived::find($this->goods_received_id);
+        $goods_received->status = False;
+        $goods_received->update();
+        $this->dispatchBrowserEvent('hide-grvCloseModal');
+        $this->resetInputFields();
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"GRV Closed Successfully!!"
+        ]);
+    }
+
+
     public function render()
     {
-        return view('livewire.goods-receiveds.index',[
-            'goods_receiveds' => GoodsReceived::latest()->paginate(10)
-        ]);
+
+               if (isset($this->from) && isset($this->to)) {
+                if (isset($this->search)) {
+                    return view('livewire.goods-receiveds.index',[
+                        'goods_receiveds' => GoodsReceived::query()->with('vendor','employee')
+                        ->whereDate($this->goods_received_filter, '>=', $this->from)
+                        ->whereDate($this->goods_received_filter, '<=', $this->to)
+                        ->where('goods_received_number','like', '%'.$this->search.'%')
+                        ->orWhere('date','like', '%'.$this->search.'%')
+                        ->orWhere('delivery_date','like', '%'.$this->search.'%')
+                        ->orWhere('driver_name','like', '%'.$this->search.'%')
+                        ->orWhere('delivery_number','like', '%'.$this->search.'%')
+                        ->orWhereHas('vendor', function ($query) {
+                            return $query->where('name', 'like', '%'.$this->search.'%');
+                        })
+                        ->orWhereHas('employee', function ($query) {
+                            return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
+                        })
+                        ->orderBy($this->goods_received_filter,'desc')->paginate(10),
+                       
+    
+
+                    ]);
+                }else {
+                    return view('livewire.goods-receiveds.index',[
+                        'goods_receiveds' => GoodsReceived::query()->with('vendor','employee')
+                        ->whereDate($this->goods_received_filter, '>=', $this->from)
+                        ->whereDate($this->goods_received_filter, '<=', $this->to)
+                        ->where('to_be_paid', True)
+                        ->orderBy($this->goods_received_filter,'desc')->paginate(10),
+
+                    ]);
+                }
+               
+            }
+            elseif (isset($this->search)) {
+               
+                return view('livewire.goods-receiveds.index',[
+                    'goods_receiveds' => GoodsReceived::query()->with('vendor','employee')
+                    ->whereMonth($this->goods_received_filter, date('m'))
+                    ->whereYear($this->goods_received_filter, date('Y'))
+                    ->where('goods_received_number','like', '%'.$this->search.'%')
+                    ->orWhere('date','like', '%'.$this->search.'%')
+                    ->orWhere('delivery_date','like', '%'.$this->search.'%')
+                    ->orWhere('driver_name','like', '%'.$this->search.'%')
+                    ->orWhere('delivery_number','like', '%'.$this->search.'%')
+                    ->orWhereHas('vendor', function ($query) {
+                        return $query->where('name', 'like', '%'.$this->search.'%');
+                    })
+                    ->orWhereHas('employee', function ($query) {
+                        return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
+                    })
+                    ->orderBy($this->goods_received_filter,'desc')->paginate(10),
+                ]);
+            }
+            else {
+               
+                return view('livewire.goods-receiveds.index',[
+                    'goods_receiveds' => GoodsReceived::query()->with('vendor','employee')
+                    ->whereMonth($this->goods_received_filter, date('m'))
+                    ->whereYear($this->goods_received_filter, date('Y'))
+                    ->orderBy($this->goods_received_filter,'desc')->paginate(10),
+                ]);
+              
+            }
     }
 }

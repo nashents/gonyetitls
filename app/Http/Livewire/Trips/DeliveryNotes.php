@@ -57,6 +57,8 @@ class DeliveryNotes extends Component
     public $authorized_by;
     public $ending_mileage;
     public $starting_mileage;
+    public $ending_hours;
+    public $starting_hours;
     public $checked_by;
     public $start_date;
     public $transporter_id;
@@ -228,6 +230,8 @@ class DeliveryNotes extends Component
         $this->cargo_type = Null;
         $this->ending_mileage = Null;
         $this->starting_mileage = Null;
+        $this->ending_hours = Null;
+        $this->starting_hours = Null;
         $this->measurement = Null;
         $this->distance = Null;
         $this->loaded_quantity = Null;
@@ -299,6 +303,8 @@ class DeliveryNotes extends Component
       $this->cargo_type = $trip->cargo ? $trip->cargo->type : "";
       $this->ending_mileage = $trip->ending_mileage;
       $this->starting_mileage = $trip->starting_mileage;
+      $this->ending_hours = $trip->ending_hours;
+      $this->starting_hours = $trip->starting_hours;
       $delivery_note = $this->delivery_note;
 
       if ($delivery_note) {
@@ -445,6 +451,8 @@ class DeliveryNotes extends Component
       }
       $trip->ending_mileage = $this->ending_mileage;
       $trip->starting_mileage = $this->starting_mileage;
+      $trip->ending_hours = $this->ending_hours;
+      $trip->starting_hours = $this->starting_hours;
       $trip->update();
 
       if (isset($trip->vehicle_id)) {

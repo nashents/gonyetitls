@@ -26,6 +26,7 @@ use App\Models\VendorType;
 use App\Models\BillExpense;
 use App\Models\Measurement;
 use App\Models\CategoryValue;
+use App\Models\GoodsReceived;
 use Livewire\WithFileUploads;
 use App\Models\AttributeValue;
 use App\Models\inventorieserial;
@@ -46,6 +47,8 @@ class Create extends Component
     public $rack_id;
     public $purchases;
     public $selectedPurchase;
+    public $goods_receiveds;
+    public $selectedGoodsReceived;
     public $purchase_products;
     public $currencies;
     public $exchange_rate;
@@ -182,6 +185,13 @@ class Create extends Component
         $this->street_address = '';
     }
 
+    public function updatedSelectedGoodsReceived($id){
+        if(!is_null($id)){
+            $goods_received = GoodsReceived::find($id);
+            $this->vendor_id = $goods_received->vendor_id ?? null;
+        }
+    }
+
       public function refresh($category){
 
         if($category == "racks"){
@@ -195,6 +205,12 @@ class Create extends Component
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Bins Refreshed Successfully!!."
+            ]);
+        }elseif($category == "goods_receiveds"){
+            $this->goods_receiveds = GoodsReceived::orderBy('id','desc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"GRVs Refreshed Successfully!!."
             ]);
         }
     }
@@ -411,6 +427,7 @@ class Create extends Component
                     $this->item_description[$key] = $product->description;
                 }
                 $this->qty[$key] = 1;
+                $this->weight[$key] = 1;
                
           
                 if ($product->tax_id) {
@@ -473,6 +490,8 @@ class Create extends Component
 
     }
 
+        
+
 
     public function store(){
 
@@ -488,6 +507,7 @@ class Create extends Component
                     $inventory->user_id = Auth::user()->id;
                     $inventory->vendor_id = $this->vendor_id ? $this->vendor_id : NULL;
                     $inventory->currency_id = $this->selectedCurrency ? $this->selectedCurrency : null;
+                    $inventory->goods_received_id = $this->selectedGoodsReceived ? $this->selectedGoodsReceived : null;
     
                     if (isset($this->selectedProduct[$key])) {
                         $inventory->product_id = $this->selectedProduct[$key];
@@ -627,6 +647,7 @@ class Create extends Component
         $this->products = Product::with('brand')->orderBy('name','asc')->where('department','inventory')->where('status',True)->where('buy',True)->get()->sortBy('brand.name');
         $this->stores = Store::orderBy('name','asc')->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();
+        $this->goods_receiveds = GoodsReceived::where('status',1)->where('department','inventory')->where('created_at', '>=', Carbon::now()->subMonth())->orderBy('created_at','desc')->get();
         $this->purchases = Purchase::where('status',1)->where('created_at', '>=', Carbon::now()->subMonth())->where('authorization','approved')->orderBy('created_at','desc')->get();
         return view('livewire.inventories.create',[
             'products' => $this->products,

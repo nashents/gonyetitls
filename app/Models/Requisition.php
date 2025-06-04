@@ -12,6 +12,9 @@ class Requisition extends Model implements Auditable
     use \OwenIt\Auditing\Auditable;
     use HasFactory, SoftDeletes;
 
+    public function purchase(){
+        return $this->belongsTo('App\Models\Purchase');
+    }
     public function user(){
         return $this->belongsTo('App\Models\User');
     }

@@ -11,6 +11,46 @@
                             </div>
 
                             <div class="panel-title">
+                                                 <div class="row">
+                                
+                                <div class="col-lg-3">
+                                    <div class="input-group">
+                                        <span class="input-group-addon">
+                                  Filter By
+                                  </span>
+                                  <select wire:model.debounce.300ms="goods_received_filter" class="form-control" aria-label="..." >
+                                    <option value="created_at">Created At</option>
+                                    <option value="date">Received At</option>
+                                    <option value="delivery_date">Delivered At</option>
+                                </select>
+                                    </div>
+
+                                    <!-- /input-group -->
+                                </div>
+                            
+                                <div class="col-lg-2" style="margin-right: 7px; margin-left:-15px;">
+                                    <div class="input-group">
+                                        <span class="input-group-addon">
+                                From
+                                </span>
+                                <input type="date" wire:model.debounce.300ms="from"  class="form-control" aria-label="...">
+                                    </div>
+                                    <!-- /input-group -->
+                                </div>
+                                <div class="col-lg-2" style="margin-left: 7px">
+                                    <div class="input-group">
+                                        <span class="input-group-addon">
+                                To
+                                </span>
+                                <input type="date" wire:model.debounce.300ms="to"  class="form-control" aria-label="...">
+                                    </div>
+                                    <!-- /input-group -->
+                                </div>
+                          
+                               
+                               
+                                <!-- /input-group -->
+                            </div>
                                 <a href="#" data-toggle="modal" data-target="#goods_receivedModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Goods Received Voucher</a>
                             </div>
                         </div>
@@ -43,6 +83,8 @@
                                     </th>
                                     <th class="th-sm">Total
                                     </th>
+                                    <th class="th-sm">Status
+                                    </th>
                                     <th class="th-sm">Action
                                     </th>
                                   </tr>
@@ -59,8 +101,23 @@
                                     <td>{{$goods_received->delivery_number}}</td>
                                     <td>{{$goods_received->driver_name}}</td>
                                     <td>{{$goods_received->delivery_date}}</td>
+                                    <td>
+                                        @if ($department == "inventory")
+                                            @if ($goods_received->inventories && $goods_received->inventories->count() > 0)
+                                                {{$goods_received->inventories->count()}}        
+                                            @endif
+                                        @elseif($department == "asset")
+                                            @if ($goods_received->assets && $goods_received->assets->count() > 0)
+                                                {{$goods_received->assets->count()}}        
+                                            @endif
+                                        @elseif($department == "tyre")
+                                            @if ($goods_received->tyres && $goods_received->tyres->count() > 0)
+                                                {{$goods_received->tyres->count()}}        
+                                            @endif
+                                        @endif 
+                                    </td>
                                     <td></td>
-                                    <td></td>
+                                   <td><span class="badge bg-{{$goods_received->status == 1 ? "warning" : "success"}}">{{$goods_received->status == 1 ? "Open" : "Closed"}}</span></td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -70,6 +127,7 @@
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{ route('goods_receiveds.show', $goods_received->id) }}" ><i class="fa fa-eye color-default"></i> View</a></li>
                                                 <li><a href="#"  wire:click="edit({{$goods_received->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                                <li><a href="#" wire:click="showClose({{$goods_received->id}})"  ><i class="fas fa-check color-success"></i> Mark as closed</a></li>
                                                 <li><a href="#" data-toggle="modal" data-target="#goods_receivedDeleteModal{{ $goods_received->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                             </ul>
                                         </div>
@@ -110,6 +168,33 @@
         </div>
         <!-- /.container-fluid -->
     </section>
+
+          <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="grvCloseModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title" id="modal4Label"><i class="fas fa-check"></i> Mark GRV as closed<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                    </div>
+                    <form wire:submit.prevent="closeGRV()" >
+                    <div class="modal-body">
+                       <p>Are you sure you want to mark this GRV
+                        @if ($goods_received_number)
+                            {{$goods_received_number}}
+                        @endif
+                        as closed?
+                       </p>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                            <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-refresh"></i>Update</button>
+                        </div>
+                        <!-- /.btn-group -->
+                    </div>
+                </form>
+                </div>
+            </div>
+        </div>
 
 
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="goods_receivedModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">

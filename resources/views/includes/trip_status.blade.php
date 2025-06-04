@@ -485,28 +485,43 @@
                    
                     <h5 class="underline mt-30">Offloading Details</h5>
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label for="title">Date<span class="required" style="color: red">*</span></label>
                                 <input type="datetime-local" class="form-control" wire:model.debounce.300ms="offloaded_date" placeholder="Enter Offloading Date" required>
                                 @error('offloaded_date') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             @if (isset($starting_mileage))
-                            <div class="form-group">
-                                <label for="title">Ending Mileage</label>
-                                <input type="number" step="any" min="{{$starting_mileage}}" class="form-control" wire:model.debounce.300ms="ending_mileage" placeholder="Enter Ending Mileage" >
-                                @error('ending_mileage') <span class="text-danger error">{{ $message }}</span>@enderror
-                            </div>
+                                <div class="form-group">
+                                    <label for="title">Ending Mileage</label>
+                                    <input type="number" step="any" min="{{$starting_mileage}}" class="form-control" wire:model.debounce.300ms="ending_mileage" placeholder="Enter Ending Mileage" >
+                                    @error('ending_mileage') <span class="text-danger error">{{ $message }}</span>@enderror
+                                </div>
                             @else
-                            <div class="form-group">
-                                <label for="title">Ending Mileage</label>
-                                <input type="number" step="any" class="form-control" wire:model.debounce.300ms="ending_mileage" placeholder="Enter Ending Mileage" disabled>
-                                <small style="color:red">Please set starting mileage first</small>
-                                @error('ending_mileage') <span class="text-danger error">{{ $message }}</span>@enderror
-                            </div>
-                         
+                                <div class="form-group">
+                                    <label for="title">Ending Mileage</label>
+                                    <input type="number" step="any" class="form-control" wire:model.debounce.300ms="ending_mileage" placeholder="Enter Ending Mileage" disabled>
+                                    <small style="color:red">Please set starting mileage first</small>
+                                    @error('ending_mileage') <span class="text-danger error">{{ $message }}</span>@enderror
+                                </div>
+                            @endif
+                        </div>
+                        <div class="col-md-4">
+                            @if (isset($starting_hours))
+                                <div class="form-group">
+                                    <label for="title">Ending Hours</label>
+                                    <input type="number" step="any" min="{{$starting_hours}}" class="form-control" wire:model.debounce.300ms="ending_hours" placeholder="Enter Ending Hours" >
+                                    @error('ending_hours') <span class="text-danger error">{{ $message }}</span>@enderror
+                                </div>
+                            @else
+                                <div class="form-group">
+                                    <label for="title">Ending Hours</label>
+                                    <input type="number" step="any" class="form-control" wire:model.debounce.300ms="ending_hours" placeholder="Enter Ending Hours" disabled>
+                                    <small style="color:red">Please set starting hours first</small>
+                                    @error('ending_hours') <span class="text-danger error">{{ $message }}</span>@enderror
+                                </div>
                             @endif
                            
                         </div>

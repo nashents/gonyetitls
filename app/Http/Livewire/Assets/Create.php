@@ -4,6 +4,8 @@ namespace App\Http\Livewire\Assets;
 
 
 use Carbon\Carbon;
+use App\Models\Bin;
+use App\Models\Rack;
 use App\Models\Asset;
 use App\Models\Brand;
 use App\Models\Store;
@@ -25,6 +27,7 @@ use App\Models\AssetSerial;
 use App\Models\Measurement;
 use App\Models\AssetDocument;
 use App\Models\CategoryValue;
+use App\Models\GoodsReceived;
 use Livewire\WithFileUploads;
 use App\Models\AttributeValue;
 use App\Models\ProductAttribute;
@@ -41,6 +44,8 @@ class Create extends Component
     public $purchases;
     public $selectedPurchase;
     public $purchase_products;
+    public $goods_receiveds;
+    public $selectedGoodsReceived;
     public $currencies;
     public $exchange_rate;
     public $exchange_amount;
@@ -380,6 +385,7 @@ class Create extends Component
                     $this->item_description[$key] = $product->description;
                 }
                 $this->qty[$key] = 1;
+                $this->weight[$key] = 1;
                
           
                 if ($product->tax_id) {
@@ -423,7 +429,7 @@ class Create extends Component
                     $asset->user_id = Auth::user()->id;
                     $asset->vendor_id = $this->vendor_id ? $this->vendor_id : NULL;
                     $asset->currency_id = $this->selectedCurrency ? $this->selectedCurrency : null;
-    
+                    $asset->goods_received_id = $this->selectedGoodsReceived ? $this->selectedGoodsReceived : null;
                     if (isset($this->selectedProduct[$key])) {
                         $asset->product_id = $this->selectedProduct[$key];
                     }
@@ -507,6 +513,36 @@ class Create extends Component
         }
     }
 
+    public function refresh($category){
+
+        if($category == "racks"){
+            $this->racks = Rack::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Racks Refreshed Successfully!!."
+            ]);
+        }elseif($category == "bins"){
+            $this->bins = Bin::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Bins Refreshed Successfully!!."
+            ]);
+        }elseif($category == "goods_receiveds"){
+            $this->goods_receiveds = GoodsReceived::orderBy('id','desc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"GRVs Refreshed Successfully!!."
+            ]);
+        }
+    }
+
+     public function updatedSelectedGoodsReceived($id){
+        if(!is_null($id)){
+            $goods_received = GoodsReceived::find($id);
+            $this->vendor_id = $goods_received->vendor_id ?? null;
+        }
+    }
+
     public function render()
     {
 
@@ -515,6 +551,7 @@ class Create extends Component
             $this->exchange_amount = $this->exchange_rate * $this->total;
 
         }
+           $this->goods_receiveds = GoodsReceived::where('status',1)->where('department','asset')->where('created_at', '>=', Carbon::now()->subMonth())->orderBy('created_at','desc')->get();
         $this->measurements = Measurement::orderBy('name','asc')->get();
         $this->products = Product::with('brand')->orderBy('name','asc')->where('department','asset')->where('status',True)->where('buy',True)->get()->sortBy('brand.name');
         $this->stores = Store::orderBy('name','asc')->get();

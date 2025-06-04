@@ -232,7 +232,7 @@
                 <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
                     <a class="dashboard-stat bg-warning" href="{{route('bookings.index')}}">
                         <span class="number counter">{{$booking_count}}</span>
-                        <span class="name">Booking</span>
+                        <span class="name">Bookings</span>
                         <span class="bg-icon"><i class="fas fa-edit"></i></span>
                     </a>
                     <!-- /.dashboard-stat -->

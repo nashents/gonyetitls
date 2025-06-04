@@ -17,6 +17,7 @@ use App\Models\Purchase;
 use App\Models\Inventory;
 use App\Models\BillExpense;
 use App\Models\Measurement;
+use App\Models\GoodsReceived;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
@@ -30,6 +31,8 @@ class Edit extends Component
     public $store_id;
     public $bins;
     public $bin_id;
+    public $goods_receiveds;
+    public $selectedGoodsReceived;
     public $racks;
     public $rack_id;
     public $purchases;
@@ -259,6 +262,7 @@ class Edit extends Component
                     $this->item_description = $product->description;
                 }
                 $this->qty = 1;
+                $this->weight = 1;
           
                 if ($product->tax_id) {
                     $this->selectedTax = $product->tax_id;
@@ -285,7 +289,7 @@ class Edit extends Component
         }
     }
 
-          public function refresh($category){
+        public function refresh($category){
 
         if($category == "racks"){
             $this->racks = Rack::orderBy('name','asc')->get();
@@ -298,6 +302,12 @@ class Edit extends Component
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Bins Refreshed Successfully!!."
+            ]);
+        }elseif($category == "goods_receiveds"){
+            $this->goods_receiveds = GoodsReceived::orderBy('id','desc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"GRVs Refreshed Successfully!!."
             ]);
         }
     }
@@ -356,6 +366,7 @@ class Edit extends Component
         $inventory = Inventory::find($this->inventory_id);
         $inventory->user_id = Auth::user()->id;
         $inventory->vendor_id = $this->vendor_id ?? null;
+        $inventory->goods_received_id = $this->selectedGoodsReceived ? $this->selectedGoodsReceived : null;
         $inventory->store_id = $this->store_id ?? null;
         $inventory->bin_id = $this->bin_id ?? null;
         $inventory->rack_id = $this->rack_id ?? null;
@@ -476,6 +487,13 @@ class Edit extends Component
        
     }
 
+     public function updatedSelectedGoodsReceived($id){
+        if(!is_null($id)){
+            $goods_received = GoodsReceived::find($id);
+            $this->vendor_id = $goods_received->vendor_id ?? null;
+        }
+    }
+
     public function render()
     {
 
@@ -485,6 +503,7 @@ class Edit extends Component
 
         }
         $this->measurements = Measurement::orderBy('name','asc')->get();
+         $this->goods_receiveds = GoodsReceived::where('status',1)->where('department','inventory')->where('created_at', '>=', Carbon::now()->subMonth())->orderBy('created_at','desc')->get();
         $this->products = Product::with('brand')->orderBy('name','asc')->where('department','inventory')->where('status',True)->where('buy',True)->get()->sortBy('brand.name');
         $this->purchases = Purchase::where('status',1)->where('created_at', '>=', Carbon::now()->subMonth())->where('authorization','approved')->orderBy('created_at','desc')->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();

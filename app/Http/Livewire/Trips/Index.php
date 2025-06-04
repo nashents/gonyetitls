@@ -161,6 +161,8 @@ class Index extends Component
     public $loaded_freight;
     public $ending_mileage;
     public $starting_mileage;
+    public $ending_hours;
+    public $starting_hours;
 
     public $offloaded_quantity;
     public $offloaded_distance;
@@ -238,6 +240,8 @@ class Index extends Component
         $this->cargo_type = Null;
         $this->ending_mileage = Null;
         $this->starting_mileage = Null;
+        $this->ending_hours = Null;
+        $this->starting_hours = Null;
         $this->measurement = Null;
         $this->distance = Null;
         $this->loaded_quantity = Null;
@@ -315,6 +319,8 @@ class Index extends Component
         $this->cargo_type = $trip->cargo ? $trip->cargo->type : "";
         $this->ending_mileage = $trip->ending_mileage;
         $this->starting_mileage = $trip->starting_mileage;
+        $this->ending_hours = $trip->ending_hours;
+        $this->starting_hours = $trip->starting_hours;
 
         if (isset($delivery_note)) {
             $this->measurement = $delivery_note->measurement;
@@ -460,6 +466,8 @@ class Index extends Component
         }
         $trip->ending_mileage = $this->ending_mileage;
         $trip->starting_mileage = $this->starting_mileage;
+        $trip->ending_hours = $this->ending_hours;
+        $trip->starting_hours = $this->starting_hours;
         $trip->update();
 
         if (isset($trip->vehicle_id)) { 
