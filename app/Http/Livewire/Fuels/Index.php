@@ -4,6 +4,7 @@ namespace App\Http\Livewire\Fuels;
 
 use Carbon\Carbon;
 use App\Models\Fuel;
+use App\Models\Hour;
 use App\Models\Trip;
 use App\Models\Asset;
 use App\Models\Horse;
