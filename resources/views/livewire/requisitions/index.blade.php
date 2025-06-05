@@ -304,88 +304,6 @@
                     </div>
                     <form wire:submit.prevent="store()" >
                     <div class="modal-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="country">RequestedBy<span class="required" style="color: red">*</span></label>
-                                   <select wire:model.defer="employee_id" class="form-control" required >
-                                       <option value="">Select Employee</option>
-                                       @foreach ($employees as $employee)
-                                       <option value="{{ $employee->id }}">{{ $employee->name }} {{ $employee->surname }}</option>
-                                       @endforeach
-                                   </select>
-                                    @error('employee_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="form-group">
-                                    <label for="country">Departments<span class="required" style="color: red">*</span></label>
-                                   <select wire:model.defer="department_id" class="form-control" required >
-                                       <option value="">Select Department</option>
-                                       @foreach ($departments as $department)
-                                       <option value="{{ $department->id }}">{{ $department->name }}</option>
-                                       @endforeach
-                                      
-                                   </select>
-                                    @error('department_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="form-group">
-                                    <label for="Product">Expense Category<span class="required" style="color: red">*</span></label>
-                                    <select wire:model.debounce.300ms="selectedAccount" class="form-control" required>
-                                        <option value="">Select Category</option>
-                                        @foreach ($expense_accounts as $account)
-                                        <option value="{{$account->id}}">{{$account->name}}</option>
-                                        @endforeach
-                                    </select>
-                                    @error('selectedAccount') <span class="text-danger error">{{ $message }}</span>@enderror
-                                </div>
-                            </div>
-                            
-                        </div>
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="name">Subject</label>
-                                    <input type="text" min="1" class="form-control" wire:model.debounce.300ms="subject" placeholder="Enter Requisition Subject" />
-                                    @error('subject') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="name">Date<span class="required" style="color: red">*</span></label>
-                                    <input type="date" min="1" class="form-control" wire:model.debounce.300ms="date" placeholder="Enter Date" required />
-                                    @error('date') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="country">Currencies<span class="required" style="color: red">*</span></label>
-                                   <select wire:model.debounce.300ms="currency_id" class="form-control" required >
-                                       <option value="">Select Currency</option>
-                                       @foreach ($currencies as $currency)
-                                       <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
-                                       @endforeach
-                                   </select>
-                                    @error('currency_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                </div>
-                                @if (!is_null($currency_id))
-                                @if ($company)
-                                    @if ($currency_id != $company->currency_id)
-                                    <div class="form-group">
-                                        <label for="customer">Conversion Rate</label>
-                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="exchange_rate"  placeholder="Exchange Rate {{$selected_currency ? "From ".$selected_currency->name : ""}} {{$company->currency ? "To ".$company->currency->name : ""}}" >
-                                        @error('exchange_rate') <span class="text-danger error">{{ $message }}</span>@enderror
-                                        <small style="color: green">{{$selected_currency ? " 1 ".$selected_currency->name." is how much in" : ""}} {{$company->currency ? $company->currency->name." ?" : ""}}</small>
-                                        <small>{{$exchange_amount ? "The converted amount is: ".$exchange_amount : ""}}</small> 
-                                    </div> 
-                                    @endif
-                                @endif
-                            @endif
-                            </div>
-                            
-                        </div>
                         <div class="form-group" >
                             <label for="name">Attach requisition to a</label>
                            
@@ -459,6 +377,102 @@
                                 </div>
                             @endif
                         @endif
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="country">RequestedBy<span class="required" style="color: red">*</span></label>
+                                   <select wire:model.debounce.300ms="employee_id" class="form-control" required >
+                                       <option value="">Select Employee</option>
+                                       @foreach ($employees as $employee)
+                                       <option value="{{ $employee->id }}">{{ $employee->name }} {{ $employee->surname }}</option>
+                                       @endforeach
+                                   </select>
+                                    @error('employee_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="country">Departments<span class="required" style="color: red">*</span></label>
+                                   <select wire:model.debounce.300ms="department_id" class="form-control" required >
+                                       <option value="">Select Department</option>
+                                       @foreach ($departments as $department)
+                                       <option value="{{ $department->id }}">{{ $department->name }}</option>
+                                       @endforeach
+                                      
+                                   </select>
+                                    @error('department_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                @if ($requisition_for == "Trip" || $requisition_for == "Purchase" || $requisition_for == "Booking")
+                                    <div class="form-group">
+                                        <label for="Product">Expense Category</label>
+                                        <select wire:model.debounce.300ms="selectedAccount" class="form-control" disabled>
+                                            <option value="">Select Category</option>
+                                            @foreach ($expense_accounts as $account)
+                                            <option value="{{$account->id}}">{{$account->name}}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('selectedAccount') <span class="text-danger error">{{ $message }}</span>@enderror
+                                    </div>
+                                @else
+                                    <div class="form-group">
+                                        <label for="Product">Expense Category<span class="required" style="color: red">*</span></label>
+                                        <select wire:model.debounce.300ms="selectedAccount" class="form-control" required>
+                                            <option value="">Select Category</option>
+                                            @foreach ($expense_accounts as $account)
+                                            <option value="{{$account->id}}">{{$account->name}}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('selectedAccount') <span class="text-danger error">{{ $message }}</span>@enderror
+                                    </div>
+                                @endif
+                            </div>
+                            
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="name">Subject</label>
+                                    <input type="text" min="1" class="form-control" wire:model.debounce.300ms="subject" placeholder="Enter Requisition Subject" />
+                                    @error('subject') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="name">Date<span class="required" style="color: red">*</span></label>
+                                    <input type="date" min="1" class="form-control" wire:model.debounce.300ms="date" placeholder="Enter Date" required />
+                                    @error('date') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="country">Currencies<span class="required" style="color: red">*</span></label>
+                                   <select wire:model.debounce.300ms="currency_id" class="form-control" required >
+                                       <option value="">Select Currency</option>
+                                       @foreach ($currencies as $currency)
+                                       <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
+                                       @endforeach
+                                   </select>
+                                    @error('currency_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                                @if (!is_null($currency_id))
+                                @if ($company)
+                                    @if ($currency_id != $company->currency_id)
+                                    <div class="form-group">
+                                        <label for="customer">Conversion Rate</label>
+                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="exchange_rate"  placeholder="Exchange Rate {{$selected_currency ? "From ".$selected_currency->name : ""}} {{$company->currency ? "To ".$company->currency->name : ""}}" >
+                                        @error('exchange_rate') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        <small style="color: green">{{$selected_currency ? " 1 ".$selected_currency->name." is how much in" : ""}} {{$company->currency ? $company->currency->name." ?" : ""}}</small>
+                                        <small>{{$exchange_amount ? "The converted amount is: ".$exchange_amount : ""}}</small> 
+                                    </div> 
+                                    @endif
+                                @endif
+                            @endif
+                            </div>
+                            
+                        </div>
+                        
                         <div class="mb-20 mt-10">
                                 <input type="checkbox" wire:model.debounce.300ms="items" {{$requisition_for == "Purchase" ? "disabled" : ""}}  class="line-style" />
                                 <label for="one" class="radio-label">Add expense items to requisition.</label>
@@ -470,7 +484,7 @@
                                 @if ($requisition_for == "Trip")
                                     <div class="form-group">
                                         <label for="country">Expenses<span class="required" style="color: red">*</span></label>
-                                        <select wire:model.defer="expense_id.0" class="form-control" required >
+                                        <select wire:model.debounce.300ms="expense_id.0" class="form-control" required >
                                             <option value="">Select Expense</option>
                                             @foreach ($expenses as $expense)
                                             <option value="{{ $expense->id }}">{{ $expense->name }}</option>
@@ -576,7 +590,7 @@
                       @endif
                         <div class="form-group">
                             <label for="name">Notes</label>
-                            <textarea class="form-control" wire:model.defer="description" cols="30" rows="4"></textarea>
+                            <textarea class="form-control" wire:model.debounce.300ms="description" cols="30" rows="4"></textarea>
                             @error('description') <span class="error" style="color:red">{{ $message }}</span> @enderror
                         </div>
                     </div>
@@ -599,6 +613,79 @@
                     </div>
                     <form wire:submit.prevent="update()" >
                     <div class="modal-body">
+                             <div class="form-group" >
+                            <label for="name">Attach requisition to a</label>
+                           
+                            <label class="radio-inline">
+                                <input type="radio" wire:model.debounce.300ms="requisition_for" value="Booking" name="optradio">Garage Booking
+                            </label>
+                            <label class="radio-inline">
+                                <input type="radio" wire:model.debounce.300ms="requisition_for" value="Purchase" name="optradio">Purchase Order
+                            </label>
+                             <label class="radio-inline">
+                                <input type="radio" wire:model.debounce.300ms="requisition_for" value="Trip" name="optradio" >Trip
+                            </label>
+                        </div>
+                        @if (isset($requisition_for))
+                            @if ($requisition_for == "Trip")
+                                <div class="form-group">
+                                    <label for="country">Trips</label>
+                                    <input type="text" wire:model.debounce.300ms="searchTrip" placeholder="Search with trip#, trip ref, horse reg#..." class="form-control">
+                                <select wire:model.debounce.300ms="trip_id" class="form-control" size="8">
+                                    <option value="">Select Trip</option>
+                                    @if (isset($trips))
+                                        @foreach ($trips as $trip)
+                                        <option value="{{ $trip->id }}">{{ $trip->trip_number }} | {{ $trip->horse ? $trip->horse->registration_number : "" }} 
+                                            @if ($trip->driver)
+                                            {{ $trip->driver->employee ? $trip->driver->employee->name : "" }} {{ $trip->driver->employee ? $trip->driver->employee->surname : "" }}
+                                            @endif
+                                            | {{ $trip->customer ? $trip->customer->name : "" }} | {{ $trip->loading_point ? $trip->loading_point->name : "" }} - {{ $trip->offloading_point ? $trip->offloading_point->name : "" }}</option>
+                                        @endforeach
+                                    @endif
+                                </select>
+                                    @error('trip_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            @elseif($requisition_for == "Booking")
+                                <div class="form-group">
+                                    <label for="country">Garage Bookings</label>
+                                    <input type="text" wire:model.debounce.300ms="searchBooking" placeholder="Search with booking#, horse, vehicle, trailer reg#..." class="form-control">
+                                    <select wire:model.debounce.300ms="booking_id" class="form-control" size="8">
+                                        <option value="">Select Booking</option>
+                                        @foreach ($bookings as $booking)
+                                            <option value="{{ $booking->id }}">{{ $booking->booking_number }} | 
+                                                {{ $booking->service_type ? $booking->service_type->name : "" }} |
+                                                @if ($booking->horse)
+                                                {{ $booking->horse ? $booking->horse->registration_number : "" }} {{ $booking->horse->fleet_number ? "(".$booking->horse->fleet_number.")" : "" }}
+                                                @elseif ($booking->vehicle)
+                                                    {{ $booking->vehicle ? $booking->vehicle->registration_number : "" }} {{ $booking->vehicle->fleet_number ? "(".$booking->vehicle->fleet_number.")" : "" }}
+                                                @elseif ($booking->trailer)
+                                                {{ $booking->trailer ? $booking->trailer->registration_number : "" }} {{ $booking->trailer->fleet_number ? "(".$booking->trailer->fleet_number.")" : "" }}
+                                            @endif
+                                            </option>
+                                        @endforeach
+                                        
+                                    </select>
+                                    @error('booking_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            @elseif($requisition_for == "Purchase")
+                                <div class="form-group">
+                                        <label for="country">Purchase Orders</label>
+                                        <input type="text" wire:model.debounce.300ms="searchPurchase" placeholder="Search with booking#, horse, vehicle, trailer reg#..." class="form-control">
+                                        <select wire:model.debounce.300ms="purchase_id" class="form-control" size="8">
+                                            <option value="">Select Booking</option>
+                                            @foreach ($purchases as $purchase)
+                                                <option value="{{ $purchase->id }}">{{ $purchase->purchase_number }} | 
+                                                     {{ $purchase->date}} |
+                                                    {{ $purchase->vendor ? $purchase->vendor->name : "" }} |
+                                                    {{ $purchase->currency ? $purchase->currency->name : "" }} {{ $purchase->currency ? $purchase->currency->symbol : "" }}{{ number_format($purchase->total ? $purchase->total : 0,2)}}
+                                                </option>
+                                            @endforeach
+                                            
+                                        </select>
+                                        @error('purchase_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            @endif
+                        @endif
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
@@ -625,16 +712,29 @@
                                 </div>
                             </div>
                             <div class="col-md-3">
-                                <div class="form-group">
-                                    <label for="Product">Expense Category<span class="required" style="color: red">*</span></label>
-                                    <select wire:model.debounce.300ms="selectedAccount" class="form-control" required>
-                                        <option value="">Select Category</option>
-                                        @foreach ($expense_accounts as $account)
-                                        <option value="{{$account->id}}">{{$account->name}}</option>
-                                        @endforeach
-                                    </select>
-                                    @error('selectedAccount') <span class="text-danger error">{{ $message }}</span>@enderror
-                                </div>
+                                     @if ($requisition_for == "Trip" || $requisition_for == "Purchase" || $requisition_for == "Booking")
+                                    <div class="form-group">
+                                        <label for="Product">Expense Category</label>
+                                        <select wire:model.debounce.300ms="selectedAccount" class="form-control" disabled>
+                                            <option value="">Select Category</option>
+                                            @foreach ($expense_accounts as $account)
+                                            <option value="{{$account->id}}">{{$account->name}}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('selectedAccount') <span class="text-danger error">{{ $message }}</span>@enderror
+                                    </div>
+                                @else
+                                    <div class="form-group">
+                                        <label for="Product">Expense Category<span class="required" style="color: red">*</span></label>
+                                        <select wire:model.debounce.300ms="selectedAccount" class="form-control" required>
+                                            <option value="">Select Category</option>
+                                            @foreach ($expense_accounts as $account)
+                                            <option value="{{$account->id}}">{{$account->name}}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('selectedAccount') <span class="text-danger error">{{ $message }}</span>@enderror
+                                    </div>
+                                @endif
                             </div>
                         </div>
                         <div class="row">
@@ -679,79 +779,8 @@
                             </div>
                             
                         </div>
-                      <div class="form-group" >
-                            <label for="name">Attach requisition to a</label>
-                           
-                            <label class="radio-inline">
-                                <input type="radio" wire:model.debounce.300ms="requisition_for" value="Booking" name="optradio">Garage Booking
-                            </label>
-                            <label class="radio-inline">
-                                <input type="radio" wire:model.debounce.300ms="requisition_for" value="Purchase" name="optradio">Purchase Order
-                            </label>
-                             <label class="radio-inline">
-                                <input type="radio" wire:model.debounce.300ms="requisition_for" value="Trip" name="optradio" >Trip
-                            </label>
-                        </div>
-                        @if (isset($requisition_for))
-                            @if ($requisition_for == "Trip")
-                                <div class="form-group">
-                                    <label for="country">Trips</label>
-                                <select wire:model.debounce.300ms="trip_id" class="form-control" >
-                                    <option value="">Select Trip</option>
-                                    @if (isset($trips))
-                                        @foreach ($trips as $trip)
-                                        <option value="{{ $trip->id }}">{{ $trip->trip_number }} | {{ $trip->horse ? $trip->horse->registration_number : "" }}
-                                            @if ($trip->driver)
-                                            {{ $trip->driver->employee ? $trip->driver->employee->name : "" }} {{ $trip->driver->employee ? $trip->driver->employee->surname : "" }}
-                                            @endif
-                                            | {{ $trip->customer ? $trip->customer->name : "" }} | {{ $trip->loading_point ? $trip->loading_point->name : "" }} - {{ $trip->offloading_point ? $trip->offloading_point->name : "" }}</option>
-                                        @endforeach
-                                    @endif
-                                </select>
-                                    @error('trip_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                </div>
-                            @elseif($requisition_for == "Booking")
-                                <div class="form-group">
-                                    <label for="country">Garage Bookings</label>
-                                <select wire:model.debounce.300ms="booking_id" class="form-control" >
-                                    <option value="">Select Booking</option>
-                                    @foreach ($bookings as $booking)
-                                        <option value="{{ $booking->id }}">{{ $booking->booking_number }} | 
-                                            {{ $booking->service_type ? $booking->service_type->name : "" }} |
-                                            @if ($booking->horse)
-                                                {{ $booking->horse ? $booking->horse->registration_number : "" }} {{ $booking->horse->fleet_number ? "(".$booking->horse->fleet_number.")" : "" }}
-                                            @elseif ($booking->vehicle)
-                                                {{ $booking->vehicle ? $booking->vehicle->registration_number : "" }} {{ $booking->vehicle->fleet_number ? "(".$booking->vehicle->fleet_number.")" : "" }}
-                                            @elseif ($booking->trailer)
-                                            {{ $booking->trailer ? $booking->trailer->registration_number : "" }} {{ $booking->trailer->fleet_number ? "(".$booking->trailer->fleet_number.")" : "" }}
-                                            @endif    
-                                           
-                                        </option>
-                                    @endforeach
-                                    
-                                </select>
-                                    @error('booking_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                </div>
-                                 @elseif($requisition_for == "Purchase")
-                                <div class="form-group">
-                                        <label for="country">Purchase Orders</label>
-                                        <input type="text" wire:model.debounce.300ms="searchPurchase" placeholder="Search with booking#, horse, vehicle, trailer reg#..." class="form-control">
-                                        <select wire:model.debounce.300ms="purchase_id" class="form-control" size="8">
-                                            <option value="">Select Booking</option>
-                                            @foreach ($purchases as $purchase)
-                                                <option value="{{ $purchase->id }}">{{ $purchase->purchase_number }} | 
-                                                     {{ $purchase->date}} |
-                                                    {{ $purchase->vendor ? $purchase->vendor->name : "" }} |
-                                                    {{ $purchase->currency ? $purchase->currency->name : "" }} {{ $purchase->currency ? $purchase->currency->symbol : "" }}{{ number_format($purchase->total ? $purchase->total : 0,2)}}
-                                                </option>
-                                            @endforeach
-                                            
-                                        </select>
-                                        @error('purchase_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                </div>
-                            @endif
-                        @endif
-                        
+                    
+       
                         <div class="form-group">
                             <label for="name">Notes<span class="required" style="color: red">*</span></label>
                             <textarea class="form-control" wire:model.debounce.300ms="description" cols="30" rows="4"></textarea>
