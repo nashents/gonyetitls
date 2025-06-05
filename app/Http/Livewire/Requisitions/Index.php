@@ -6,6 +6,7 @@ use App\Models\Trip;
 use App\Models\Account;
 use App\Models\Booking;
 use App\Models\Expense;
+use App\Models\Product;
 use Livewire\Component;
 use App\Models\Currency;
 use App\Models\Employee;
@@ -38,6 +39,7 @@ class Index extends Component
     public $requisition_filter;
 
     public $accounts;
+    public $expense_accounts;
     public $account;
     public $selectedAccount;
     public $requisition_for;
@@ -65,6 +67,8 @@ class Index extends Component
     public $department_id;
     public $description;
     public $department_ids;
+    public $products;
+    public $selectedProduct;
     public $date;
     public $qty;
     public $amount;
@@ -76,6 +80,19 @@ class Index extends Component
     public $exchange_rate;
     public $item_totals = 0;
 
+    public $item_name;
+    public $item_description;
+    public $buy_price;
+    public $sell_price;
+    public $tax_id;
+    public $tax;
+    public $tax_accounts;
+    public $selectedTax;
+    public $expense_account_id;
+    public $sell = False;
+    public $buy = True;
+
+  
 
     public $inputs = [];
     public $i = 1;
@@ -110,10 +127,18 @@ class Index extends Component
         $this->subtotal = Null;
         $this->requisition_for = Null;
         $this->inputs = [];
+
+        $this->item_name = '';
+        $this->item_description = '';
+        $this->buy_price = '';
+        $this->sell_price = '';
+        $this->tax_id = '';
+        $this->sell = False;
+        $this->buy = True;
         
     }
     
-
+    
     public function exportRequisitionCSV(Excel $excel){
         return $excel->download(new RequisitionExport($this->from, $this->to, $this->requisition_filter,   $this->search), 'requisitions_' .time().'.csv', Excel::CSV);
     }
@@ -143,22 +168,63 @@ class Index extends Component
             $this->selected_currency = Currency::find($id);
         }
     }
+       public function updatedSelectedProduct($id, $key){
+        if (!is_null($id)) {
+            $product = Product::find($id);
+            if (isset($product)) {
+                if ($product->price) {
+                    $this->amount[$key] = $product->price;
+                }
+                if ($product->description) {
+                    $this->description[$key] = $product->description;
+                }
+                if ($product->tax_id) {
+                    $this->selectedTax[$key] = $product->tax_id;
+                    $tax = Account::find($product->tax_id);
+                    if (isset($tax)) {
+                        $this->tax_rate[$key] = $tax->rate;
+                    }
+                    
+                }  
+            }
+           
+        }
+    }
+
+        public function updatedSelectedTax($id, $key){
+        if(!is_null($id)){
+            $tax = Account::find($id);
+            if (isset($tax)) {
+                $this->tax_rate[$key] = $tax->rate;
+            }
+           
+        }
+    }
 
 
     public function mount(){
         $this->resetPage();
         $this->reset(['search', 'searchTrip', 'searchBooking']);
-        $departments = Auth::user()->employee->departments;
-        foreach ($departments as $department) {
+        $employee_departments = Auth::user()->employee->departments;
+        foreach ($employee_departments as $department) {
             $this->department_ids[] = $department->id;
         }
         $this->company = Auth::user()->employee->company;
         $this->requisition_filter = "created_at";
-       
         $this->employees = Employee::where('archive', 0)->where('status',1)->orderBy('surname','asc')->get()->sortBy('name');
         $this->departments = Department::orderBy('name','asc')->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->expenses = Expense::orderBy('name','asc')->get();
+        $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
+            return $query->where('name','Expenses');
+        })->orderBy('name','asc')->get();
+
+        $this->tax_accounts = Account::whereHas('account_type', function ($query) {
+            return $query->where('name','Sales Taxes');
+        })->orderBy('name','asc')->get();
+        $this->accounts = Account::whereHas('account_type.account_type_group', function ($query) {
+            return $query->where('name','Expenses');
+        })->orderBy('name','asc')->get();
     }
 
     public function updated($value){
@@ -273,7 +339,6 @@ class Index extends Component
 
     }
 
-
     public function updatedRequisitionFor($value){
         if (!is_null($value)) {
             if($value == 'Trip'){
@@ -290,7 +355,9 @@ class Index extends Component
                 ->where('trip_status','!=','Cancelled')
                 ->orderBy('id', 'desc')
                 ->get();
+                 $this->items = True;
             }elseif($value == 'Booking'){
+                $this->items = True;
                 $this->bookings = Booking::whereYear('in_date',date('Y'))->where('authorization','approved')->where('status',True)->orderBy('id','desc')->get();
             }elseif($value == 'Purchase'){
                 $this->purchases = Purchase::whereYear('date',date('Y'))->where('authorization','approved')->where('status',True)->orderBy('id','desc')->get();
@@ -298,6 +365,60 @@ class Index extends Component
         }
     }
     
+   public function showItem($key){
+        $this->item_key = $key;
+        $this->dispatchBrowserEvent('show-product_serviceModal');
+    }
+
+    public function storeItem(){
+        // try{
+       
+            $product = new Product;
+            $product->user_id = Auth::user()->id;
+            $product->name = $this->item_name;
+            $product->description = $this->item_description;
+            $product->price = $this->buy_price;
+            $product->sell_price = $this->sell_price;
+            $product->sell = $this->sell;
+            $product->buy = $this->buy;
+            $product->expense_account_id = $this->expense_account_id;
+            $product->tax_id = $this->tax_id;
+            $product->save(); 
+
+            $this->selectedProduct[$this->item_key] = $product->id;
+            if ($product) {
+                if ($product->price) {
+                    $this->amount[$this->item_key] = $product->price;
+                }
+                $this->qty[$this->item_key] = 1;
+                $this->description[$this->item_key] = $product->description;
+                if ($product->tax_id) {
+                    $this->selectedTax[$this->item_key] = $product->tax_id;
+                    $tax = Account::find($product->tax_id);
+                    if (isset($tax)) {
+                        $this->tax_rate[$this->item_key] = $tax->rate;
+                    }
+                    
+                }  
+            }
+    
+            $this->dispatchBrowserEvent('hide-product_serviceModal');
+            $this->resetInputFields();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Item Created Successfully!!"
+            ]);
+    
+            // }
+            //     catch(\Exception $e){
+            //     // Set Flash Message
+            //     $this->dispatchBrowserEvent('alert',[
+            //         'type'=>'error',
+            //         'message'=>"Something went wrong while creating item!!"
+            //     ]);
+            //  }
+        }
+       
 
     public function store(){
 
@@ -311,6 +432,7 @@ class Index extends Component
         $requisition->booking_id = $this->booking_id ? $this->booking_id : Null;
         $requisition->purchase_id = $this->purchase_id ? $this->purchase_id : Null;
         $requisition->employee_id = $this->employee_id;
+        $requisition->account_id = $this->selectedAccount;
         $requisition->currency_id = $this->currency_id;
         $requisition->date = $this->date;
         $requisition->description = $this->description;
@@ -318,37 +440,63 @@ class Index extends Component
         $requisition->subject = $this->subject;
         $requisition->status = "Unpaid";
         $requisition->save();
-        
 
-        if (isset($this->expense_id)) {
-            foreach($this->expense_id as $key => $value){
+        $items = [];
+        $type = null;
+
+        if (!empty($this->expense_id)) {
+            $items = $this->expense_id;
+            $type = 'expense';
+        } elseif (!empty($this->selectedProduct)) {
+            $items = $this->selectedProduct;
+            $type = 'product';
+        }
+
+        if ($type && !empty($items)) {
+            foreach ($items as $key => $value) {
                 $requisition_item = new RequisitionItem;
                 $requisition_item->requisition_id = $requisition->id;
-                if (isset($this->expense_id[$key])) {
-                    $requisition_item->expense_id = $this->expense_id[$key];
+
+                // Assign either expense_id or product_id
+                if ($type === 'expense') {
+                    $requisition_item->expense_id = $value;
+                } else {
+                    $requisition_item->product_id = $value;
                 }
-                if (isset($this->qty[$key])) {
-                    $requisition_item->qty = $this->qty[$key];
-                }
-                if (isset($this->amount[$key])) {
-                    $requisition_item->amount = $this->amount[$key];
-                }
-                if (isset($this->amount[$key]) && isset($this->qty[$key])) {
-                $this->subtotal = ($this->amount[$key] * $this->qty[$key]);
-                }
-                $requisition_item->subtotal = $this->subtotal;
+
+                // Handle quantity and amount
+                $qty = $this->qty[$key] ?? 0;
+                $amount = $this->amount[$key] ?? 0;
+
+                $requisition_item->qty = $qty;
+                $requisition_item->amount = $amount;
+
+                // Calculate subtotal
+                $subtotal = $amount * $qty;
+                $requisition_item->subtotal = $subtotal;
                 $requisition_item->save();
-                $this->total = $this->total +   $this->subtotal ;
+
+                // Update running total
+                $this->total += $subtotal;
             }
         }
+
         $requisition = Requisition::find($requisition->id);
-        $requisition->total = $this->total;
-        $requisition->exchange_rate = $this->exchange_rate;
-        if (isset($this->exchange_rate) && isset($this->total)) {
-           $exchange_amount = $this->exchange_rate * $this->total;
-           $requisition->exchange_amount = $exchange_amount;
+
+        if ($this->purchase_id && $purchase_order = Purchase::find($this->purchase_id)) {
+            $requisition->total = $purchase_order->total;
+            $requisition->exchange_rate = $purchase_order->exchange_rate;
+            $requisition->exchange_amount = $purchase_order->exchange_amount;
+        } else {
+            $requisition->total = $this->total;
+            $requisition->exchange_rate = $this->exchange_rate;
+
+            if ($this->exchange_rate && $this->total) {
+                $requisition->exchange_amount = $this->exchange_rate * $this->total;
+            }
         }
-        $requisition->update();
+
+        $requisition->save();
 
         $notifications = Notification::where('category','Requisition Authorization')->where('status',1)->get();
         $company =  $this->company;
@@ -470,8 +618,9 @@ class Index extends Component
         $employee = $user->employee;
       
         $this->expenses = Expense::orderBy('name','asc')->get();
-        $departments = $employee->departments;
-        foreach($departments as $department){
+        $this->products = Product::where('buy',True)->orderBy('name','asc')->get();
+        $employee_departments = $employee->departments;
+        foreach($employee_departments as $department){
             $department_names[] = $department->name;
         }
         $roles = $user->roles;

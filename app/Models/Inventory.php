@@ -15,6 +15,9 @@ class Inventory extends Model implements Auditable
     public function bill_expenses(){
         return $this->HasMany('App\Models\BillExpense');
     }
+     public function requisition_items(){
+        return $this->hasMany('App\Models\RequisitionItem');
+    }
      public function goods_received(){
         return $this->belongsTo('App\Models\GoodsReceived');
     }

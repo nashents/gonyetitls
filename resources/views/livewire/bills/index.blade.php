@@ -132,6 +132,8 @@
                                             Fuel Order | <a href="{{ route('fuels.show', $bill->fuel->id) }}" style="color: blue" target="_blank">{{ $bill->fuel ? $bill->fuel->order_number : "" }}</a> 
                                             @endif
                                            
+                                        @elseif ( $bill->requisition)
+                                            Requisition | <a href="{{ route('requisitions.show', $bill->requisition->id) }}" style="color: blue" target="_blank">{{ $bill->requisition ? $bill->requisition->requisition_number : "" }}</a> 
                                         @elseif ( $bill->invoice)
                                             Invoice VAT | <a href="{{ route('invoices.show', $bill->invoice->id) }}" style="color: blue" target="_blank">{{ $bill->invoice ? $bill->invoice->invoice_number : "" }}</a> 
                                          @elseif ($bill->ticket || $bill->ticket_inventory || $bill->ticket_expense)

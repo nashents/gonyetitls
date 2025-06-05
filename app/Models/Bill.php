@@ -18,6 +18,9 @@ class Bill extends Model implements Auditable
     public function documents(){
         return $this->hasMany('App\Models\Document');
     }
+    public function requisition(){
+        return $this->belongsTo('App\Models\Requisition');
+    }
     public function sale(){
         return $this->belongsTo('App\Models\Sale');
     }

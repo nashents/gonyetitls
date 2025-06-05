@@ -27,6 +27,9 @@ class Requisition extends Model implements Auditable
     public function currency(){
         return $this->belongsTo('App\Models\Currency');
     }
+    public function bill(){
+        return $this->hasOne('App\Models\Bill');
+    }
     public function requisition_items(){
         return $this->hasMany('App\Models\RequisitionItem');
     }

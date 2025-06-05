@@ -55,6 +55,7 @@ class Index extends Component
     public $exchange_rate;
     public $exchange_amount;
 
+    
     public $expense_accounts;
     public $selectedAccount;
     public $expenses;

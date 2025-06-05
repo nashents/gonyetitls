@@ -7,7 +7,7 @@
         <br>
         <table id="requisition_itemsTable" class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
             <thead >
-                <th class="th-sm">Expense
+                <th class="th-sm">Item
                 </th>
                 <th class="th-sm">Qty
                 </th>
@@ -25,7 +25,13 @@
                 @if ($requisition_items->count()>0)
                 @foreach ($requisition_items as $requisition_item)
               <tr>
-                  <td>{{ $requisition_item->expense ? $requisition_item->expense->name : ""}}</td>
+                  <td>
+                    @if ($requisition_item->expense)
+                            {{ $requisition_item->expense ? $requisition_item->expense->name : ""}}
+                    @elseif($requisition_item->product)
+                    {{ $requisition_item->product->brand ? $requisition_item->product->brand->name : ""}} {{ $requisition_item->product ? $requisition_item->product->name : ""}}
+                    @endif
+                    </td>
                   <td>{{ $requisition_item->qty}}</td>
                   <td>{{ $requisition_item->requisition->currency ? $requisition_item->requisition->currency->name : ""}}</td>
                   <td>

@@ -43,10 +43,10 @@
                                 <tr>
                                     <th class="w-10 text-center line-height-35">Requisition For?</th>
                                     <td class="w-20 line-height-35">
-                                             {{ $requisition->subject }}
+                                                         {{ $requisition->subject ? "Subject: ".$requisition->subject : "" }}
 
                                             @if ($trip = $requisition->trip)
-                                                <br>
+                                               
                                                   Trip: 
                                                 <a href="{{ route('trips.show', $trip->id) }}" style="color: blue" target="_blank">
                                                   
@@ -58,7 +58,7 @@
                                                 </a>
 
                                             @elseif ($booking = $requisition->booking)
-                                                <br>
+                                              
                                                   Booking:
                                                 <a href="{{ route('bookings.show', $booking->id) }}" style="color: blue" target="_blank">
                                                   
@@ -79,7 +79,7 @@
                                                     $purchase = \App\Models\Purchase::find($requisition->purchase_id);
                                                 @endphp
                                                 @if($purchase)
-                                                    <br>
+                                                   
                                                     Purchase Order:
                                                     <a href="{{ route('purchases.show', $purchase->id) }}" style="color: blue" target="_blank"> 
                                                         {{ $purchase->purchase_number }} | 
@@ -92,8 +92,7 @@
                                             @endif
 
                                             @if ($requisition->description)
-                                                <br>
-                                                {{ $requisition->description }}
+                                                Description: {{ $requisition->description }}
                                             @endif
                                     </td>
                                 </tr>

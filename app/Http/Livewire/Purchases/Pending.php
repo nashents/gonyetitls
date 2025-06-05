@@ -28,6 +28,8 @@ class Pending extends Component
     public $authorize;
     public $comments;
 
+
+
     public function billNumber(){
 
         if (isset(Auth::user()->company)) {
@@ -105,7 +107,7 @@ class Pending extends Component
             $bill->authorization = $this->authorize;
             $bill->comments = $this->comments;
             $bill->tax_amount = $purchase->tax_amount;
-            $bill->subtotal = $purchase->subtoal;
+            $bill->subtotal = $purchase->subtotal;
             $bill->total = $purchase->total;
             $bill->exchange_rate = $purchase->exchange_rate;
             $bill->exchange_amount = $purchase->exchange_amount;

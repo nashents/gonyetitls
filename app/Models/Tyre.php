@@ -49,6 +49,9 @@ class Tyre extends Model implements Auditable
     public function tyre_assignments(){
         return $this->hasMany('App\Models\TyreAssignment');
     }
+     public function requisition_items(){
+        return $this->hasMany('App\Models\RequisitionItem');
+    }
     public function vendor(){
         return $this->belongsTo('App\Models\Vendor');
     }

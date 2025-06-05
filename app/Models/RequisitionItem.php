@@ -18,6 +18,18 @@ class RequisitionItem extends Model implements Auditable
     public function expense(){
         return $this->belongsTo('App\Models\Expense');
     }
+    public function product(){
+        return $this->belongsTo('App\Models\Product');
+    }
+    public function asset(){
+        return $this->belongsTo('App\Models\Asset');
+    }
+    public function tyre(){
+        return $this->belongsTo('App\Models\Tyre');
+    }
+    public function inventory(){
+        return $this->belongsTo('App\Models\Inventory');
+    }
     public function account(){
         return $this->belongsTo('App\Models\Account');
     }
