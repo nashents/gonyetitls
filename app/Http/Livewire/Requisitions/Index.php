@@ -91,6 +91,7 @@ class Index extends Component
     public $expense_account_id;
     public $sell = False;
     public $buy = True;
+    public $item_key;
 
   
 
@@ -135,6 +136,7 @@ class Index extends Component
         $this->tax_id = '';
         $this->sell = False;
         $this->buy = True;
+        $this->item_key = Null;
         
     }
     
@@ -171,12 +173,10 @@ class Index extends Component
        public function updatedSelectedProduct($id, $key){
         if (!is_null($id)) {
             $product = Product::find($id);
+             $this->qty[$key] = 1;
             if (isset($product)) {
                 if ($product->price) {
                     $this->amount[$key] = $product->price;
-                }
-                if ($product->description) {
-                    $this->description[$key] = $product->description;
                 }
                 if ($product->tax_id) {
                     $this->selectedTax[$key] = $product->tax_id;
@@ -385,20 +385,19 @@ class Index extends Component
             $product->tax_id = $this->tax_id;
             $product->save(); 
 
+
             $this->selectedProduct[$this->item_key] = $product->id;
-            if ($product) {
+            $this->qty[$this->item_key] = 1;
+            if (isset($product)) {
                 if ($product->price) {
                     $this->amount[$this->item_key] = $product->price;
                 }
-                $this->qty[$this->item_key] = 1;
-                $this->description[$this->item_key] = $product->description;
                 if ($product->tax_id) {
                     $this->selectedTax[$this->item_key] = $product->tax_id;
                     $tax = Account::find($product->tax_id);
                     if (isset($tax)) {
                         $this->tax_rate[$this->item_key] = $tax->rate;
                     }
-                    
                 }  
             }
     

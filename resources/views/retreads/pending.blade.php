@@ -50,6 +50,7 @@
                                 <div class="col-md-6">
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
+                                          <li><a href="{{route('retreads.index')}}"><i class="fa fa-list"></i> All Retreads</a></li>
             							<li class="active"> <i class="fa fa-clock-o"></i> Pending Retreads</li>
             						</ul>
                                 </div>

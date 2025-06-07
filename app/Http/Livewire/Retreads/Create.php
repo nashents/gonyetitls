@@ -185,6 +185,7 @@ class Create extends Component
             if (isset($this->tyre_id[$key])) {
                 $tyre = Tyre::find($this->tyre_id[$key]);
                 $tyre->status = 0;
+                $tyre->retread = 1;
                 $tyre->update();
             }
           }

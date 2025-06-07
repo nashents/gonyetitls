@@ -13,8 +13,8 @@
                         <div class="panel-body">
                         <form wire:submit.prevent="update()" >
 
-                            <div class="row">
-                                    <div class="col-md-3">
+                           <div class="row">
+                                    <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="country">Vendors<span class="required" style="color: red">*</span></label>
                                            <select wire:model.debounce.300ms="vendor_id" class="form-control" required>
@@ -27,7 +27,7 @@
                                             @error('vendor_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
                                     </div>
-                                    <div class="col-md-3">
+                                    <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="country">Expense Account<span class="required" style="color: red">*</span></label>
                                            <select wire:model.debounce.300ms="account_id" class="form-control" required>
@@ -39,21 +39,29 @@
                                            {{-- <small><a href="{{ route('accounts.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Account</a></small>  --}}
                                             @error('account_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
+                                    </div> 
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="">Date<span class="required" style="color: red">*</span></label>
+                                        <input type="date" class="form-control" wire:model.debounce.300ms="date" placeholder="Date" required/>
+                                        @error('date') <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>
-                                    <div class="col-md-3">
+                                </div>
+                                  <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="name">Currencies<span class="required" style="color: red">*</span></label>
                                             <select wire:model.debounce.300ms="currency_id" class="form-control">
                                                 <option value="">Select Currency</option>
                                               @foreach ($currencies as $currency)
-                                                 <option value="{{$currency->id}}">{{$currency->name}}</option>
+                                                 <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
                                               @endforeach
                                             </select>
-                                            <small><a href="{{ route('currencies.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Currency</a></small> 
                                             @error('currency_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
                                     </div>
-                                    <div class="col-md-3">
+                                    <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="width">Total</label>
                                             <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="amount"  placeholder="Total Amount">
@@ -61,24 +69,7 @@
                                         </div>
                                     </div>
                                  
-                                   
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="">Date<span class="required" style="color: red">*</span></label>
-                                        <input type="date" class="form-control" wire:model.debounce.300ms="date" placeholder="Date" required/>
-                                        @error('date') <span class="text-danger error">{{ $message }}</span>@enderror
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="">Collection Date</label>
-                                        <input type="date" class="form-control" wire:model.debounce.300ms="date" placeholder="Collection Date" />
-                                        @error('collection_date') <span class="text-danger error">{{ $message }}</span>@enderror
-                                    </div>
-                                </div>
-                               
+                                
                             </div>
                            <div class="row">
                             <div class="col-md-8">

@@ -83,9 +83,6 @@ class Pending extends Component
             $retread->reason = $this->comments;
             $retread->update();
 
-          
-
-
         if ($this->authorize == "approved") {
 
             $bill = new Bill;

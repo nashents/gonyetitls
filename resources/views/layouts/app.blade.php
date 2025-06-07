@@ -104,6 +104,17 @@
 @stack('scripts')
     
     <script type="text/javascript">
+            window.addEventListener('show-closeRetreadModal', event => {
+                $('#closeRetreadModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-closeRetreadModal', event => {
+                $('#closeRetreadModal').modal('hide');
+            })
+    </script>
+
+    <script type="text/javascript">
             window.addEventListener('show-grvCloseModal', event => {
                 $('#grvCloseModal').modal('show');
             })

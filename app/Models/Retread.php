@@ -30,6 +30,9 @@ class Retread extends Model implements Auditable
     public function retread_tyres(){
         return $this->hasMany('App\Models\RetreadTyre');
     }
+    public function retread_items(){
+        return $this->hasMany('App\Models\RetreadItem');
+    }
     public function user(){
         return $this->belongsTo('App\Models\User');
     }

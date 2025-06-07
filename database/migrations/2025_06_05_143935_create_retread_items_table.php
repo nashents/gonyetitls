@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateRetreadTyresTable extends Migration
+class CreateRetreadItemsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,7 +13,7 @@ class CreateRetreadTyresTable extends Migration
      */
     public function up()
     {
-        Schema::create('retread_tyres', function (Blueprint $table) {
+        Schema::create('retread_items', function (Blueprint $table) {
             $table->id();
             $table->bigInteger('retread_id')->unsigned()->nullable();
             $table->foreign('retread_id')->references('id')->on('retreads')->onDelete('cascade');
@@ -31,6 +31,6 @@ class CreateRetreadTyresTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('retread_tyres');
+        Schema::dropIfExists('retread_items');
     }
 }

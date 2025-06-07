@@ -66,11 +66,15 @@
                                             </button>
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{route('retreads.show', $retread->id)}}"><i class="fa fa-eye color-default"></i>View</a></li>
-                                                @if ($retread->status == 1)
-                                                    <li><a href="#"  wire:click="showRreated({{$retread->id}})"><i class="fa fa-times color-warning"></i> Close</a></li>
+                                                @if ($retread->authorization == "pending" || $retread->authorization == "rejected")
+                                                    <li><a href="{{route('retreads.edit', $retread->id)}}"><i class="fa fa-edit color-success"></i> Edit</a></li>
                                                 @endif
-                                                <li><a href="{{route('retreads.edit', $retread->id)}}"><i class="fa fa-edit color-success"></i> Edit</a></li>
-                                                <li><a href="#" data-toggle="modal" data-target="#retreadsDeleteModal{{ $retread->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                                                @if ($retread->authorization == "approved" && $retread->status == 1)
+                                                    <li><a href="#"  wire:click="showRetread({{$retread->id}})"><i class="fa fa-times color-warning"></i> Close</a></li>
+                                                @endif
+                                                @if ($retread->authorization == "pending" || $retread->authorization == "rejected")
+                                                    <li><a href="#" data-toggle="modal" data-target="#retreadsDeleteModal{{ $retread->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                                                @endif
                                             </ul>
                                         </div>
                                         @include('retreads.delete')
@@ -111,7 +115,7 @@
         <!-- /.container-fluid -->
     </section>
 
-    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="bulkyCloseTicketModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="closeRetreadModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -119,19 +123,25 @@
                 </div>
                 <form wire:submit.prevent="closeRetread()" >
                 <div class="modal-body">
-                    <div class="form-group">
-                        <label for="name">Decision</label>
-                    <select class="form-control" wire:model.debounce.300ms="status" required>
-                        <option value="">Select Decision</option>
-                        <option value="0">Close</option>
-                        <option value="1">Open</option>
-                    </select>
-                        @error('status') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                    </div>
-                    <div class="form-group">
-                        <label for="reason">Comments</label>
-                       <textarea wire:model.debounce.300="comments" class="form-control" cols="30" rows="5"></textarea>
-                        @error('comments') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="name">Status</label>
+                                <select class="form-control" wire:model.debounce.300ms="status" required>
+                                    <option value="">Select Status</option>
+                                    <option value="0">Close</option>
+                                    <option value="1">Open</option>
+                                </select>
+                                @error('status') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="">Collection Date</label>
+                                <input type="date" class="form-control" wire:model.debounce.300ms="collection_date" placeholder="Collection Date" />
+                                @error('collection_date') <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">

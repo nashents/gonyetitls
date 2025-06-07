@@ -475,7 +475,7 @@
                         
                         <div class="mb-20 mt-10">
                                 <input type="checkbox" wire:model.debounce.300ms="items" {{$requisition_for == "Purchase" ? "disabled" : ""}}  class="line-style" />
-                                <label for="one" class="radio-label">Add expense items to requisition.</label>
+                                <label for="one" class="radio-label">Add items to requisition.</label>
                                 @error('items') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
                         @if ($items == True)

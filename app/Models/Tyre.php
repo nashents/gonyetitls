@@ -58,6 +58,9 @@ class Tyre extends Model implements Auditable
     public function tyre_details(){
         return $this->hasMany('App\Models\TyreDetail');
     }
+     public function retread_items(){
+        return $this->hasMany('App\Models\RetreadItem');
+    }
     public function retread_tyres(){
         return $this->hasMany('App\Models\RetreadTyre');
     }

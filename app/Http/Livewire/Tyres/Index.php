@@ -132,6 +132,7 @@ class Index extends Component
             return view('livewire.tyres.index',[
                 'tyres' => Tyre::with('product.brand')
                 ->where('disposed',0)
+                ->where('retread',0)
                 ->where('tyre_number','like', '%'.$this->search.'%')
                 ->orWhere('serial_number','like', '%'.$this->search.'%')
                 ->orWhere('purchase_date','like', '%'.$this->search.'%')
@@ -158,6 +159,7 @@ class Index extends Component
             return view('livewire.tyres.index',[
                 'tyres' => Tyre::with('product.brand')
                 ->where('disposed',0)
+                ->where('retread',0)
                 ->orderBy('created_at','desc')
                 ->paginate(10)
             ]);

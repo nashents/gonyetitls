@@ -49,7 +49,6 @@
                                 <tbody>
                                     @forelse ($tyres as $tyre)
                                   <tr>
-                                  
                                     <td>{{$tyre->product->brand ? $tyre->product->brand->name : ""}} {{$tyre->product ? $tyre->product->name : ""}}</td>
                                     <td>{{$tyre->type}} ({{$tyre->serial_number}})</td>
                                     <td>{{$tyre->width}} / {{$tyre->aspect_ratio}} R {{$tyre->diameter}}</td>
