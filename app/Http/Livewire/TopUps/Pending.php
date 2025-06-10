@@ -3,6 +3,7 @@
 namespace App\Http\Livewire\TopUps;
 
 use App\Models\Bill;
+use App\Models\Fuel;
 use App\Models\TopUp;
 use App\Models\Account;
 use Livewire\Component;
@@ -20,7 +21,6 @@ class Pending extends Component
     protected $queryString = ['search'];
     public $from;
     public $to;
-    private $top_ups;
     public $top_up_id;
     public $authorize;
     public $comments;
@@ -90,15 +90,14 @@ class Pending extends Component
      
       }
 
-            public function authorizeSelectedRows(){
+        public function authorizeSelectedRows(){
 
-        $selected_fuels = Fuel::WhereIn('id',$this->selectedRows)->get();
+        $selected_top_ups = TopUP::WhereIn('id',$this->selectedRows)->get();
         
-        if (isset($selected_fuels)) {
+        if (isset($selected_top_ups)) {
 
-            foreach($selected_fuels as $fuel){
+            foreach($selected_top_ups as $top_up){
 
-                $top_up = TopUp::find($this->top_up_id);
                 $top_up->authorized_by_id = Auth::user()->id;
                 $top_up->authorization = $this->authorize;
                 $top_up->reason = $this->comments;
@@ -281,7 +280,6 @@ class Pending extends Component
 
     public function render()
     {
-        $this->top_ups = TopUp::where('authorization','pending')->orderBy('created_at','desc')->paginate(10);
         return view('livewire.top-ups.pending',[
             'top_ups' => $this->top_ups
         ]);

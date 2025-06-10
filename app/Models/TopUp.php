@@ -27,6 +27,9 @@ class TopUp extends Model implements Auditable
         'address',
     ];
 
+    public function vendor(){
+        return $this->belongsTo('App\Models\Vendor');
+    }
     public function container(){
         return $this->belongsTo('App\Models\Container');
     }
