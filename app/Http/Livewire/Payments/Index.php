@@ -9,6 +9,7 @@ use Livewire\Component;
 use App\Models\CashFlow;
 use App\Models\Currency;
 use App\Models\Customer;
+use App\Models\Document;
 use App\Models\AccountType;
 use App\Models\BankAccount;
 use App\Models\Denomination;
