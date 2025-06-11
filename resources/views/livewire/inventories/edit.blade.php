@@ -320,7 +320,7 @@
                         </div>
 
                         <div class="mb-10 mt-10" style="float: right;">
-                            <input type="checkbox" wire:model.debounce.300ms="to_bills"   class="line-style" />
+                            <input type="checkbox" wire:model.debounce.300ms="to_bills"  {{$selectedPurchase ? "disabled" : ""}}  class="line-style" />
                             <label for="one" class="radio-label">Add item(s) to bills</label>
                             @error('to_bills') <span class="text-danger error">{{ $message }}</span>@enderror
                         </div>

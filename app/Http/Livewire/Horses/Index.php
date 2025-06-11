@@ -69,23 +69,21 @@ class Index extends Component
     public function calculateCPK($id){
 
             $cpk = Null;
-            $expenses = Null;
             $distance = Null;
             $bills = Bill::where('horse_id',$id)->where('authorization','approved')->whereYear('created_at',date('Y'))->get();
 
-            if (isset($bills)) {
+            $expenses = 0.0;
+
+            if (!empty($bills)) {
                 foreach ($bills as $bill) {
-                    if ($bill->currency_id == Auth::user()->employee->company->currency_id) {
-                        $expenses = $expenses + $bill->total;
-                    }elseif($bill->currency_id != Auth::user()->employee->company->currency_id){
-                        $expenses = $expenses + $bill->exchange_amount;
-                    }else{
-                        $expenses = Null;
-                    }
-                   
+                    $amount = ($bill->currency_id == Auth::user()->employee->company->currency_id) 
+                        ? $bill->total 
+                        : $bill->exchange_amount;
+
+                    $expenses += (float) $amount;
                 }
-            }else{
-                $expenses = Null;
+            } else {
+                $expenses = null;
             }
 
             $last_mileage = Mileage::where('horse_id',$id)->whereYear('created_at', date('Y'))->orderBy('created_at','desc')->first();

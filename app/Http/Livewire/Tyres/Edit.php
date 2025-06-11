@@ -4,6 +4,7 @@ namespace App\Http\Livewire\Tyres;
 
 use Carbon\Carbon;
 use App\Models\Bin;
+use App\Models\Bill;
 use App\Models\Rack;
 use App\Models\Tyre;
 use App\Models\Store;
@@ -15,6 +16,7 @@ use Livewire\Component;
 use App\Models\Currency;
 use App\Models\Purchase;
 use App\Models\TyreDetail;
+use App\Models\BillExpense;
 use App\Models\GoodsReceived;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Auth;
@@ -82,6 +84,7 @@ class Edit extends Component
   public $life_span;
   public $aspect_ratio;
   public $diameter;
+  public $to_bills;
 
 
   public $inputs ;
@@ -123,6 +126,7 @@ class Edit extends Component
   public $status;
   public $stores;
   public $store_id;
+  public $selectedAccount;
 
     public function mount($id){
 
@@ -153,6 +157,7 @@ class Edit extends Component
             $this->tax_rate = "";
         }
         $this->tax_rate = $tyre->tax_rate;
+        $this->to_bills = $tyre->bill ? True : False;
         $this->selectedProduct = $tyre->product_id;
         $this->serial_number = $tyre->serial_number;
         $this->status = $tyre->status;
@@ -163,6 +168,7 @@ class Edit extends Component
         $this->vendors = Vendor::orderBy('name','asc')->get();
         $this->store_id =  $tyre->store_id;
         $this->vendor_id = $tyre->vendor_id;
+        $this->selectedAccount = $tyre->account_id;
         $this->selectedCurrency = $tyre->currency_id;
         $this->amount = $tyre->amount;
         $this->total = $tyre->total;
@@ -289,6 +295,40 @@ public function refresh($category){
         }
     }
 
+        public function billNumber(){
+
+        if (isset(Auth::user()->company)) {
+            $str = Auth::user()->company->name;
+            $words = explode(' ', $str);
+            if (isset($words[1][0])) {
+                $initials = $words[0][0].$words[1][0];
+            }else {
+                $initials = $words[0][0];
+            }
+        }elseif (isset(Auth::user()->employee->company)) {
+            $str = Auth::user()->employee->company->name;
+            $words = explode(' ', $str);
+            if (isset($words[1][0])) {
+                $initials = $words[0][0].$words[1][0];
+            }else {
+                $initials = $words[0][0];
+            }
+        }
+
+        $bill = Bill::latest()->orderBy('id','desc')->first();
+
+        if (!$bill) {
+            $bill_number =  $initials .'B'. str_pad(1, 5, "0", STR_PAD_LEFT);
+        }else {
+            $number = $bill->id + 1;
+            $bill_number =  $initials .'B'. str_pad($number, 5, "0", STR_PAD_LEFT);
+        }
+
+        return  $bill_number;
+
+
+    }
+
 
       public function update(){
 
@@ -324,6 +364,7 @@ public function refresh($category){
             }
 
               $tyre->width = $this->width;
+              $tyre->account_id = $this->selectedAccount;
               $tyre->diameter = $this->diameter;
               $tyre->thread_depth = $this->thread_depth;
               $tyre->life_span = $this->life_span;
@@ -347,6 +388,89 @@ public function refresh($category){
               $tyre->disposed = 0;
 
               $tyre->update();
+
+              if ($this->to_bills) {
+            
+            $bill = $tyre->bill;
+
+            if($bill){     
+
+            $bill->tyre_id = $tyre->id;
+            $bill->category = "Inventory Item";
+            $bill->bill_date = $tyre->purchase_date;
+            $bill->account_id = $tyre->account_id;
+            $account = Account::find($tyre->account_id);
+            $account_type = $account ?  $account->account_type : "";
+            if (isset($account_type)) {
+                $bill->account_type_id = $account_type->id;
+            }
+            $bill->currency_id = $tyre->currency_id;
+            $bill->authorized_by_id = Auth::user()->id;
+            $bill->authorization = "pending";
+         
+            $bill->total = $tyre->subtotal_incl;
+            $bill->balance = $tyre->subtotal_incl;
+            $bill->to_be_paid = True;
+            $bill->update();
+
+                $bill_expense = $bill->bill_expenses->first();
+                if($bill_expense){
+                    $bill_expense->bill_id = $bill->id;
+                    $bill_expense->currency_id = $bill->currency_id;
+                    $bill_expense->account_id = $bill->account_id;
+                    $account = Account::find($bill->account_id);
+                    $account_type = $account ? $account->account_type : "";
+                    if (isset($account_type)) {
+                        $bill_expense->account_type_id = $account_type->id;
+                    }
+                    $bill_expense->product_id = $tyre->product_id;
+                    $bill_expense->qty = 1;
+                    $bill_expense->amount = $tyre->amount;
+                    $bill_expense->subtotal = $tyre->subtotal;
+                    $bill_expense->tax_amount = $tyre->tax_amount;
+                    $bill_expense->subtotal_incl = $tyre->subtotal_incl;
+                    $bill_expense->update();
+                }
+            }else{
+                $bill = new Bill;
+                $bill->user_id = Auth::user()->id;
+                $bill->bill_number = $this->billNumber();
+                $bill->tyre_id = $tyre->id;
+                $bill->category = "Tyre";
+                $bill->bill_date = $tyre->purchase_date;
+                $bill->account_id = $tyre->account_id;
+                $account = Account::find($tyre->account_id);
+                $account_type = $account ?  $account->account_type : "";
+                if (isset($account_type)) {
+                    $bill->account_type_id = $account_type->id;
+                }
+                $bill->currency_id = $tyre->currency_id;
+                $bill->authorized_by_id = Auth::user()->id;
+                $bill->authorization = "pending";
+             
+                $bill->total = $tyre->subtotal_incl;
+                $bill->balance = $tyre->subtotal_incl;
+                $bill->to_be_paid = True;
+                $bill->save();
+
+                $bill_expense = new BillExpense;
+                $bill_expense->bill_id = $bill->id;
+                $bill_expense->currency_id = $bill->currency_id;
+                $bill_expense->account_id = $bill->account_id;
+                $account = Account::find($bill->account_id);
+                $account_type = $account ? $account->account_type : "";
+                if (isset($account_type)) {
+                    $bill_expense->account_type_id = $account_type->id;
+                }
+                $bill_expense->product_id = $tyre->product_id;
+                $bill_expense->qty = 1;
+                $bill_expense->amount = $tyre->amount;
+                $bill_expense->subtotal = $tyre->subtotal;
+                $bill_expense->tax_amount = $tyre->tax_amount;
+                $bill_expense->subtotal_incl = $tyre->subtotal_incl;
+                $bill_expense->save();
+            }
+        }
 
         Session::flash('success','Tyre(s) added successfully');
         return redirect()->route('tyres.index');

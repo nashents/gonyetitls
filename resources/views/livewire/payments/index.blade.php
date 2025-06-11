@@ -22,8 +22,8 @@
                                                 <span class="input-group-addon">
                                           Filter By
                                           </span>
-                                          <select wire:model.debounce.300ms="bill_filter" class="form-control" aria-label="..." >
-                                            <option value="created_at">Payment Created At</option>
+                                          <select wire:model.debounce.300ms="payment_filter" class="form-control" aria-label="..." >
+                                            <option value="created_at">Payment Recorded At</option>
                                             <option value="date">Payment Date</option>
                                       </select>
                                             </div>
@@ -54,7 +54,26 @@
                                        
                                         <!-- /input-group -->
                                     </div>
-                                    <a href="" data-toggle="modal" data-target="#paymentModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Record payment</a>
+                                </div>
+                                <div class="panel-title" style="margin-left:-15px;" >
+                                    <div class="col-lg-3">
+                                        <div class="input-group">
+                                            <span class="input-group-addon">Movement</span>
+                                            <select wire:model.debounce.300ms="movement" class="form-control" aria-label="..." >
+                                            <option value="all">All Payments</option>
+                                            <option value="Debit">Debit</option>
+                                            <option value="Credit">Credit</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    {{-- <a href="#" wire:click="exportPaymentsExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
+                                    <a href="#" wire:click="exportPaymentsCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
+                                    <a href="#" wire:click="exportPaymentsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>  --}}
+                                </div>
+                                <div class="panel-title" style="margin-left:-15px;" >
+                                    <div class="col-lg-3">
+                                        <a href="" data-toggle="modal" data-target="#paymentModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Record payment</a>
+                                    </div>
                                 </div>
                             </div>
                             <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
@@ -73,8 +92,9 @@
                                         </th>
                                         <th class="th-sm">Account
                                         </th>
-                                        
                                         <th class="th-sm">Category
+                                        </th>
+                                        <th class="th-sm">Movement
                                         </th>
                                         <th class="th-sm">Currency
                                         </th>
@@ -122,6 +142,19 @@
                                             Bill# <a href="{{route('bills.show',$payment->bill->id)}}" style="color: blue">{{$payment->bill ? $payment->bill->bill_number : ""}}</a> Payment to {{$payment->vendor ? $payment->vendor->name : ""}} <br>
                                             @endif
                                         </td>
+                                        <td>
+                                            @if ($payment->invoice)
+                                               Crt
+                                            @elseif ($payment->invoice_payment)
+                                                Crt
+                                            @elseif($payment->bill)
+                                               Dbt
+                                            @elseif ($payment->customer && !$payment->invoice)
+                                                Crt
+                                            @elseif ($payment->recovery)
+                                                Crt
+                                            @endif
+                                        </td>
                                         <td>{{$payment->currency ? $payment->currency->name : ""}}</td>
                                         <td>
                                             @if ($payment->amount)
@@ -158,7 +191,7 @@
                                       </tr>
                                       @empty
                                   <tr>
-                                    <td colspan="8">
+                                    <td colspan="9">
                                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                             No Payments Found ....
                                         </div>

@@ -23,12 +23,12 @@
                                                 <span class="caret"></span>
                                             </button>
                                             <ul class="dropdown-menu bg-gray" aria-labelledby="menu12">
-                                                <li><a href="#"  wire:click="showBulkyAuthorize()"><i class="fa fa-gavel"></i>Authorize Fuel Orders</a></li>
+                                                <li><a href="#"  wire:click="showBulkyAuthorize()"><i class="fa fa-gavel"></i>Authorize Fuel TopUps</a></li>
                                             </ul>
                                         </div>
                                     </div>
                                     <div class="col-lg-6" style="margin-top: 3px; margin-left: -20px;">
-                                    <span >selected {{ count($selectedRows) }} fuel order(s) to authorize.</span>
+                                    <span >selected {{ count($selectedRows) }} fuel top up(s) to authorize.</span>
                                     </div>
                                 </div>
                                 <br>

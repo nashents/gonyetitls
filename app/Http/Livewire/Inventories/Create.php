@@ -578,8 +578,9 @@ class Create extends Component
                     $bill->inventory_id = $inventory->id;
                     $bill->category = "Inventory Item";
                     $bill->bill_date = $inventory->purchase_date;
-                    $account_type = Account::find($inventory->account_id)->account_type;
                     $bill->account_id = $inventory->account_id;
+                    $account = Account::find($inventory->account_id);
+                    $account_type = $account ?  $account->account_type : "";
                     if (isset($account_type)) {
                         $bill->account_type_id = $account_type->id;
                     }
@@ -596,8 +597,9 @@ class Create extends Component
                     $bill_expense = new BillExpense;
                     $bill_expense->bill_id = $bill->id;
                     $bill_expense->currency_id = $bill->currency_id;
-                    $account_type = Account::find($bill->account_id)->account_type;
                     $bill_expense->account_id = $bill->account_id;
+                    $account = Account::find($bill->account_id);
+                    $account_type = $account ? $account->account_type : "";
                     if (isset($account_type)) {
                         $bill_expense->account_type_id = $account_type->id;
                     }

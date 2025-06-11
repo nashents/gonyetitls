@@ -24,7 +24,7 @@
                                     @error('selectedGoodsReceived') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             <div class="row">
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <div class="form-group">
                                         <label for="country">Purchase Orders</label>
                                         <select wire:model.debounce.300ms="selectedPurchase" class="form-control" >
@@ -33,10 +33,11 @@
                                             <option value="{{$purchase->id}}">{{$purchase->purchase_number}} | {{$purchase->vendor ? $purchase->vendor->name : ""}} | {{ $purchase->currency ? $purchase->currency->name : "" }} {{ $purchase->currency ? $purchase->currency->symbol : "" }}{{number_format($purchase->value,2)}} | {{ $purchase->date }}</option>
                                             @endforeach
                                         </select>
+                                        <small>  <a href="{{ route('tyre_purchases.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Purchase Order</a></small> 
                                         @error('selectedPurchase') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <div class="form-group">
                                         <label for="country">Vendors</label>
                                         <select wire:model.debounce.300ms="vendor_id" class="form-control">
@@ -48,7 +49,7 @@
                                         @error('vendor_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <div class="form-group">
                                         <label for="name">Currencies</label>
                                         <select wire:model.debounce.300ms="selectedCurrency" class="form-control">
@@ -73,6 +74,19 @@
                                     @endif
                                     @endif
                                 </div> 
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="Product">Expense Category</label>
+                                        <select wire:model.debounce.300ms="selectedAccount" class="form-control" {{$selectedPurchase ? "disabled" : ""}}>
+                                            <option value="">Select Category</option>
+                                            @foreach ($expense_accounts as $account)
+                                                <option value="{{$account->id}}">{{$account->name}}</option>
+                                            @endforeach
+                                        </select>
+                                        {{-- <small>  <a href="{{ route('accounts.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Category</a></small>  --}}
+                                        @error('selectedAccount') <span class="text-danger error">{{ $message }}</span>@enderror
+                                    </div>
+                                </div>
                             </div>
 
                             <h5 class="underline mt-30">Tyre Assignment</h5>
@@ -550,6 +564,13 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <div class="mb-10 mt-10" style="float: right;">
+                                <input type="checkbox" wire:model.debounce.300ms="to_bills" {{$selectedPurchase ? "disabled" : ""}}   class="line-style" />
+                                <label for="one" class="radio-label">Add tyre(s) to bills</label>
+                                @error('to_bills') <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
+
                             <div class="row">
                                 <div class="col-md-12">
                                     <div class="btn-group pull-right mt-10" >

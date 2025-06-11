@@ -195,6 +195,18 @@
                             <tr>
                                 <td colspan="3"></td>
                                 <td colspan="2">VAT TOTAL</td>
+                                <td>
+                                    @if (isset($invoice->tax_amount) && $invoice->tax_amount > 0) 
+                                    {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format($invoice->tax_amount,2)}}
+                                    @else
+                                    {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format(0,2)}}
+                                    @endif
+                                </td>
+                            </tr>
+                           
+                            <tr>
+                                <td colspan="3"></td>
+                                <td colspan="2">VAT TOTAL</td>
                                  
                                 <td>
                                     @if (isset($invoice->tax_amount) && $invoice->tax_amount > 0) 

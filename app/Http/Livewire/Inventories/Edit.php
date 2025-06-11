@@ -203,11 +203,7 @@ class Edit extends Component
         $this->selectedAccount = $inventory->account_id;
         $this->item_description = $product->description;
         
-        if ($this->inventory->bill) {
-            $this->to_bills = True;
-        }else{
-            $this->to_bills = False;
-        }
+        $this->to_bills = $inventory->bill ? True : False;
 
         $this->weight = $inventory->weight;
         $this->measurement = $inventory->measurement;
@@ -406,16 +402,18 @@ class Edit extends Component
         $inventory->disposed = 0;
         $inventory->update();
 
-        if ($inventory->bill) {
-                      
+        if ($this->to_bills) {
+            
             $bill = $inventory->bill;
-            $bill->user_id = Auth::user()->id;
-            $bill->bill_number = $this->billNumber();
+
+            if($bill){     
+
             $bill->inventory_id = $inventory->id;
             $bill->category = "Inventory Item";
             $bill->bill_date = $inventory->purchase_date;
-            $account_type = Account::find($inventory->account_id)->account_type;
             $bill->account_id = $inventory->account_id;
+            $account = Account::find($inventory->account_id);
+            $account_type = $account ?  $account->account_type : "";
             if (isset($account_type)) {
                 $bill->account_type_id = $account_type->id;
             }
@@ -428,22 +426,24 @@ class Edit extends Component
             $bill->to_be_paid = True;
             $bill->update();
 
-            $bill_expense = $bill->bill_expenses->first();
-            $bill_expense->bill_id = $bill->id;
-            $bill_expense->currency_id = $bill->currency_id;
-            $account_type = Account::find($bill->account_id)->account_type;
-            $bill_expense->account_id = $bill->account_id;
-            if (isset($account_type)) {
-                $bill_expense->account_type_id = $account_type->id;
-            }
-            $bill_expense->product_id = $inventory->product_id;
-            $bill_expense->qty = 1;
-            $bill_expense->amount = $inventory->amount;
-            $bill_expense->subtotal = $inventory->subtotal;
-            $bill_expense->tax_amount = $inventory->tax_amount;
-            $bill_expense->subtotal_incl = $inventory->subtotal_incl;
-            $bill_expense->update();
-
+                $bill_expense = $bill->bill_expenses->first();
+                if($bill_expense){
+                    $bill_expense->bill_id = $bill->id;
+                    $bill_expense->currency_id = $bill->currency_id;
+                    $bill_expense->account_id = $bill->account_id;
+                    $account = Account::find($bill->account_id);
+                    $account_type = $account ? $account->account_type : "";
+                    if (isset($account_type)) {
+                        $bill_expense->account_type_id = $account_type->id;
+                    }
+                    $bill_expense->product_id = $inventory->product_id;
+                    $bill_expense->qty = 1;
+                    $bill_expense->amount = $inventory->amount;
+                    $bill_expense->subtotal = $inventory->subtotal;
+                    $bill_expense->tax_amount = $inventory->tax_amount;
+                    $bill_expense->subtotal_incl = $inventory->subtotal_incl;
+                    $bill_expense->update();
+                }
             }else{
                 $bill = new Bill;
                 $bill->user_id = Auth::user()->id;
@@ -451,8 +451,9 @@ class Edit extends Component
                 $bill->inventory_id = $inventory->id;
                 $bill->category = "Inventory Item";
                 $bill->bill_date = $inventory->purchase_date;
-                $account_type = Account::find($inventory->account_id)->account_type;
                 $bill->account_id = $inventory->account_id;
+                $account = Account::find($inventory->account_id);
+                $account_type = $account ?  $account->account_type : "";
                 if (isset($account_type)) {
                     $bill->account_type_id = $account_type->id;
                 }
@@ -468,8 +469,9 @@ class Edit extends Component
                 $bill_expense = new BillExpense;
                 $bill_expense->bill_id = $bill->id;
                 $bill_expense->currency_id = $bill->currency_id;
-                $account_type = Account::find($bill->account_id)->account_type;
                 $bill_expense->account_id = $bill->account_id;
+                $account = Account::find($bill->account_id);
+                $account_type = $account ? $account->account_type : "";
                 if (isset($account_type)) {
                     $bill_expense->account_type_id = $account_type->id;
                 }
@@ -481,6 +483,7 @@ class Edit extends Component
                 $bill_expense->subtotal_incl = $inventory->subtotal_incl;
                 $bill_expense->save();
             }
+        }
 
         Session::flash('success','Invetory Updated Successfully!!');
         return redirect(route('inventories.index'));
