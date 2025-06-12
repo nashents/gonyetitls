@@ -90,7 +90,7 @@ class Create extends Component
         })->orderBy('name','asc')->get();
     
         $this->retread_number = $this->retreadNumber();
-        $this->tyres = Tyre::with('product.brand')->get()->sortBy('product.brand.name');
+        $this->tyres = Tyre::with('product.brand')->where('status',1)->where('disposed',0)->get()->sortBy('product.brand.name');
         $this->vendors = Vendor::orderBy('name','asc')->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
       }
@@ -183,10 +183,19 @@ class Create extends Component
             $retread_tyre->save();
 
             if (isset($this->tyre_id[$key])) {
+
                 $tyre = Tyre::find($this->tyre_id[$key]);
-                $tyre->status = 0;
                 $tyre->retread = 1;
                 $tyre->update();
+
+                $assignments = $tyre->tyre_assignments;
+                if ($assignments) {
+                    foreach ($assignments as $assignment) {
+                        $assignment->status = 0;
+                        $assignment->update();
+                    }
+                }
+
             }
           }
         }
@@ -202,7 +211,9 @@ class Create extends Component
     {
 
         if (isset($this->searchTyre)) {
-            $this->tyres = Tyre::query()->with('product:id,name','product.brand:id,name')->where('disposed',0)
+            $this->tyres = Tyre::query()->with('product:id,name','product.brand:id,name')
+            ->where('status',1)
+            ->where('disposed',0)
             ->where('tyre_number', 'like', '%'.$this->searchTyre.'%')
             ->orWhere('serial_number', 'like', '%'.$this->searchTyre.'%')
             ->orWhere('width', 'like', '%'.$this->searchTyre.'%')

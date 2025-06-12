@@ -102,16 +102,23 @@ class Pending extends Component
             $bill->comments = $this->comments;
             $bill->save();
 
-            $bill_expense = new BillExpense;
-            $bill_expense->user_id = Auth::user()->id;
-            $bill_expense->bill_id = $bill->id;
-            $bill_expense->currency_id = $bill->currency_id;
-            $bill_expense->account_id = $this->retread->account_id;
-            $bill_expense->account_type_id = $this->retread->account_type_id;
-            $bill_expense->qty = 1;
-            $bill_expense->amount = $this->retread->total;
-            $bill_expense->subtotal = $this->retread->total;
-            $bill_expense->save();
+            $retread_tyres = $retread->retread_tyres;
+            if ($retread_tyres) {
+                foreach ($retread_tyres as $retread_tyre) {
+                    $bill_expense = new BillExpense;
+                    $bill_expense->user_id = Auth::user()->id;
+                    $bill_expense->bill_id = $bill->id;
+                    $bill_expense->product_id = $retread_tyre->tyre->product_id;
+                    $bill_expense->currency_id = $bill->currency_id;
+                    $bill_expense->account_id = $this->retread->account_id;
+                    $bill_expense->account_type_id = $this->retread->account_type_id;
+                    $bill_expense->qty = 1;
+                    $bill_expense->amount = $this->retread->total;
+                    $bill_expense->subtotal = $this->retread->total;
+                    $bill_expense->save();
+                }
+            }
+           
 
             $this->dispatchBrowserEvent('hide-authorizationModal');
             $this->dispatchBrowserEvent('alert',[

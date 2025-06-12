@@ -23,21 +23,21 @@
                             <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
-                                    <th class="th-sm">Product
+                                    <th class="th-sm">Tyre
                                     </th>
-                                    <th class="th-sm">Type/Serial#
+                                    <th class="th-sm">Dimensions
                                     </th>
-                                    <th class="th-sm">Specs
+                                      <th class="th-sm">Location
                                     </th>
-                                    <th class="th-sm">Purchase Date
+                                    <th class="th-sm">Acquisition
                                     </th>
                                     <th class="th-sm">Ccy
                                     </th>
-                                    <th class="th-sm">Rate
+                                    <th class="th-sm">Amt
                                     </th>
-                                    <th class="th-sm">Tax Amt
+                                    <th class="th-sm">Tax
                                     </th>
-                                    <th class="th-sm">Subtotal(Incl)
+                                    <th class="th-sm">Total
                                     </th>
                                     <th class="th-sm">Status
                                     </th>
@@ -49,23 +49,51 @@
                                 <tbody>
                                     @forelse ($tyres as $tyre)
                                   <tr>
-                                    <td>{{$tyre->product->brand ? $tyre->product->brand->name : ""}} {{$tyre->product ? $tyre->product->name : ""}}</td>
-                                    <td>{{$tyre->type}} ({{$tyre->serial_number}})</td>
+                                    <td>
+                                        <strong>Product:</strong> {{$tyre->product->brand ? $tyre->product->brand->name : ""}} {{$tyre->product ? $tyre->product->name : ""}}
+                                        <br>
+                                        <strong>Type:</strong> {{$tyre->type}}
+                                        <br>
+                                        <strong>S/N:</strong> {{$tyre->serial_number}}
+                                    </td>
                                     <td>{{$tyre->width}} / {{$tyre->aspect_ratio}} R {{$tyre->diameter}}</td>
+                                    <td>
+                                        @php
+                                           $assignment =  $tyre->tyre_assignments->where('status',1)->first();
+                                        @endphp
+                                        @if ($assignment)
+                                            <a href="{{route('tyre_assignments.show',$assignment->id)}}" style="color: blue">
+                                            @if ($assignment->horse)
+                                                Horse: {{$assignment->horse->registration_number}} {{$assignment->horse->fleet_number ? "(".$assignment->horse->fleet_number.")" : ""}}
+                                                <br>
+                                                {{$assignment->axle}} {{$assignment->position}}
+                                            @elseif($assignment->trailer)
+                                                Trailer: {{$assignment->trailer->registration_number}} {{$assignment->trailer->fleet_number ? "(".$assignment->trailer->fleet_number.")" : ""}}
+                                                <br>
+                                                {{$assignment->axle}} {{$assignment->position}}
+                                            @elseif($assignment->vehicle)
+                                                Vehicle: {{$assignment->horse->registration_number}} {{$assignment->vehicle->fleet_number ? "(".$assignment->vehicle->fleet_number.")" : ""}}
+                                                <br>
+                                                {{$assignment->axle}} {{$assignment->position}}
+                                            @endif
+                                            </a>
+                                          
+                                        @else
+                                            @if ($tyre->retread == 0)
+                                                <span class="badge bg-success">Instore</span>
+                                                <br>
+                                                {{$tyre->store ? $tyre->store->name : ""}}
+                                            @else
+                                                <span class="badge bg-warning">Retread</span>
+                                            @endif  
+                                        @endif
+                                    </td>
                                     <td>{{$tyre->purchase_date}}</td>
                                     <td>{{$tyre->currency ? $tyre->currency->name : ""}}</td>
                                     <td>{{$tyre->currency ? $tyre->currency->symbol : ""}}{{number_format($tyre->amount,2)}}</td>
                                     <td>{{$tyre->currency ? $tyre->currency->symbol : ""}}{{number_format($tyre->tax_amount ? $tyre->tax_amount : 0,2)}}</td>
                                     <td>{{$tyre->currency ? $tyre->currency->symbol : ""}}{{number_format($tyre->subtotal_incl,2)}}</td>
-                                    <td>
-                                        @if ($tyre->status == 0 && isset($tyre->tyre_assignment))
-                                        <a href="{{route('tyre_assignments.show',$tyre->tyre_assignment->id)}}">
-                                            <span class="badge bg-{{$tyre->status == 1 ? "warning" : "success"}}">{{$tyre->status == 1 ? "Unassigned" : "Assigned"}}</span>        
-                                        </a>
-                                       @else
-                                       <span class="badge bg-{{$tyre->status == 1 ? "warning" : "success"}}">{{$tyre->status == 1 ? "Unassigned" : "Assigned"}}</span>        
-                                    @endif
-                                    </td>
+                                    <td><span class="badge bg-{{$tyre->retread == 0 ? "success" : "warning"}}">{{$tyre->retread == 0 ? "Fit for use" : "Retread"}}</span></td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

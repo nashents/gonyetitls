@@ -28,7 +28,11 @@
                 <div class="content-container">
 
                     <!-- ========== LEFT SIDEBAR ========== -->
-                  @include('includes.sidebar')
+                   @if (isset(Auth::user()->employee->company))
+                    @include('includes.sidebar')
+                    @elseif(Auth::user()->company)
+                    @include('includes.company_sidebar')
+                    @endif
                     <!-- /.left-sidebar -->
 
                     <div class="main-page">

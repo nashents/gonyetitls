@@ -21,7 +21,7 @@
                                         <option value="{{$goods_received->id}}">GRV#: {{$goods_received->goods_received_number}} Receiveing Date: {{$goods_received->date}} ReceivedBy: {{$goods_received->employee ? $goods_received->employee->name : ""}} {{$goods_received->employee ? $goods_received->employee->surname : ""}} Vendor: {{$goods_received->vendor ? $goods_received->vendor->name : ""}} {{$goods_received->delivery_number ? "Delivery#: ".$goods_received->delivery_number : ""}} {{$goods_received->delivery_date ? "Delivery Date: ".$goods_received->delivery_date : ""}} {{$goods_received->driver_name ? "Driver Name: ".$goods_received->driver_name : ""}} </option>
                                         @endforeach
                                     </select>
-                                    <small>  <a href="{{ route('goods_receiveds.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Goods Received Voucher</a></small>  <a href="#" wire:click.prevent="refresh('goods_receiveds')" class="float-end"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                    <small><a href="{{ route('goods_receiveds.tyres') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Goods Received Voucher</a></small><a href="#" wire:click.prevent="refresh('goods_receiveds')" class="float-end"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                     @error('selectedGoodsReceived') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                                 <div class="row">

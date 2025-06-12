@@ -8,9 +8,8 @@
         <div class="col-md-10 col-md-offset-1">
 
             <ul class="nav nav-tabs nav-justified" role="tablist">
-                <li role="presentation" class="active"><a href="#order" aria-controls="basic" role="tab" data-toggle="tab"><strong>Tyre Details</strong> </a></li>
+                <li role="presentation" class="active"><a href="#basic" aria-controls="basic" role="tab" data-toggle="tab"><strong>Tyre Details</strong> </a></li>
                 <li role="presentation" ><a href="#assignments" aria-controls="assignments" role="tab" data-toggle="tab"><strong>Assignments</strong> </a></li>
-
             </ul>
             <div class="tab-content bg-white p-15">
                 <div role="tabpanel" class="tab-pane active" id="basic">
@@ -18,31 +17,42 @@
                         <tbody class="text-center line-height-35 ">
 
                             <tr>
-                                <th class="w-10 text-center line-height-35">Tyre Number</th>
+                                <th class="w-10 text-center line-height-35">Tyre#</th>
                                 <td class="w-20 line-height-35">{{$tyre->tyre_number}} </td>
                             </tr>
-                            @if ($tyre->tyre_assignment)
-                                <tr>
-                                    <th class="w-10 text-center line-height-35">Tyre Assignment</th>
-                                    <td class="w-20 line-height-35">
-                                        @if ($tyre->tyre_assignment->horse)
-                                            Horse: {{$tyre->tyre_assignment->horse ? $tyre->tyre_assignment->horse->registration_number : ""}} {{$tyre->tyre_assignment->horse->fleet_number ? "(".$tyre->tyre_assignment->horse->fleet_number.")" : ""}}
-                                        @elseif($tyre->tyre_assignment->trailer)        
-                                            Trailer: {{$tyre->tyre_assignment->trailer ? $tyre->tyre_assignment->trailer->registration_number : ""}} {{$tyre->tyre_assignment->trailer->fleet_number ? "(".$tyre->tyre_assignment->trailer->fleet_number.")" : ""}}
-                                        @elseif($tyre->tyre_assignment->vehicle)        
-                                            Vehicle: {{$tyre->tyre_assignment->vehicle ? $tyre->tyre_assignment->vehicle->registration_number : ""}} {{$tyre->tyre_assignment->vehicle->fleet_number ? "(".$tyre->tyre_assignment->vehicle->fleet_number.")" : ""}}
-                                        @endif
-                                    </td>
-                                </tr>
-                            @endif
-                           
-                            <tr>
+                           <tr>
                                 <th class="w-10 text-center line-height-35">CreatedBy</th>
                                 <td class="w-20 line-height-35">{{$tyre->user ? $tyre->user->name : ""}} {{$tyre->user ? $tyre->user->surname : ""}} </td>
                             </tr>
                             <tr>
-                                <th class="w-10 text-center line-height-35">Date</th>
-                                <td class="w-20 line-height-35">{{$tyre->purchase_date}}</td>
+                                <th class="w-10 text-center line-height-35">Location</th>
+                                <td class="w-20 line-height-35">
+                                    @php
+                                           $assignment =  $tyre->tyre_assignments->where('status',1)->first();
+                                        @endphp
+                                        @if ($assignment)
+                                            <a href="{{route('tyre_assignments.show',$assignment->id)}}" style="color: blue">
+                                            @if ($assignment->horse)
+                                                Horse: {{$assignment->horse->registration_number}} {{$assignment->horse->fleet_number ? "(".$assignment->horse->fleet_number.")" : ""}}
+                                                <br>
+                                                {{$assignment->axle}} {{$assignment->position}}
+                                            @elseif($assignment->trailer)
+                                                Trailer: {{$assignment->trailer->registration_number}} {{$assignment->trailer->fleet_number ? "(".$assignment->trailer->fleet_number.")" : ""}}
+                                                <br>
+                                                {{$assignment->axle}} {{$assignment->position}}
+                                            @elseif($assignment->vehicle)
+                                                Vehicle: {{$assignment->horse->registration_number}} {{$assignment->vehicle->fleet_number ? "(".$assignment->vehicle->fleet_number.")" : ""}}
+                                                <br>
+                                                {{$assignment->axle}} {{$assignment->position}}
+                                            @endif
+                                            </a>
+                                          
+                                        @else
+                                            <span class="badge bg-success">Instore</span>
+                                            <br>
+                                            {{$tyre->store ? $tyre->store->name : ""}}
+                                        @endif
+                                </td>
                             </tr>
                             <tr>
                                 <th class="w-10 text-center line-height-35">Vendor</th>
@@ -57,7 +67,7 @@
                                 <td class="w-20 line-height-35">{{$tyre->type}} </td>
                             </tr>
                             <tr>
-                                <th class="w-10 text-center line-height-35">Specifications</th>
+                                <th class="w-10 text-center line-height-35">Dimensions</th>
                                 <td class="w-20 line-height-35">{{$tyre->width}} / {{$tyre->aspect_ratio}} R {{$tyre->diameter}}</td>
                             </tr>
                            
@@ -66,7 +76,7 @@
                                 <td class="w-20 line-height-35"> {{$tyre->currency ? $tyre->currency->name : ""}}</td>
                             </tr>
                             <tr>
-                                <th class="w-10 text-center line-height-35">Subtotal (Excl)</th>
+                                <th class="w-10 text-center line-height-35">Amount</th>
                                 <td class="w-20 line-height-35">
                                     @if ($tyre->subtotal)
                                         {{$tyre->currency ? $tyre->currency->symbol : ""}}{{number_format($tyre->subtotal,2)}}
@@ -74,13 +84,13 @@
                                 </td>
                             </tr>
                             <tr>
-                                <th class="w-10 text-center line-height-35">Tax Amount</th>
+                                <th class="w-10 text-center line-height-35">Tax Amt</th>
                                 <td class="w-20 line-height-35">
                                     {{$tyre->currency ? $tyre->currency->symbol : ""}}{{number_format($tyre->tax_amount ? $tyre->tax_amount : 0,2)}}
                                 </td>
                             </tr>
                             <tr>
-                                <th class="w-10 text-center line-height-35">Subtotal (Incl)</th>
+                                <th class="w-10 text-center line-height-35">Total</th>
                                 <td class="w-20 line-height-35">
                                     @if ($tyre->subtotal_incl)
                                         {{$tyre->currency ? $tyre->currency->symbol : ""}}{{number_format($tyre->subtotal_incl,2)}}
@@ -89,7 +99,7 @@
                             </tr>
                            
                             <tr>
-                                <th class="w-10 text-center line-height-35">Purchase Date</th>
+                                <th class="w-10 text-center line-height-35">Acquisition Date</th>
                                 <td class="w-20 line-height-35">{{$tyre->purchase_date}}</td>
                             </tr>
                             <tr>
@@ -134,10 +144,6 @@
                                   <tr>
                                     <th class="th-sm">Tyre#
                                     </th>
-                                    <th class="th-sm">Tyre
-                                    </th>
-                                    <th class="th-sm">Specifications
-                                    </th>
                                     <th class="th-sm">Assigned On
                                     </th>
                                     <th class="th-sm">Fitting Mileage
@@ -155,7 +161,6 @@
                                     @forelse ($tyre_assignments as $tyre_assignment)
                                   <tr>
                                     <td>{{$tyre_assignment->tyre ? $tyre_assignment->tyre->tyre_number : ""}}</td>
-                                    <td>{{$tyre_assignment->tyre ? $tyre_assignment->tyre->width : ""}}/ {{$tyre_assignment->tyre ? $tyre_assignment->tyre->aspect_ratio : ""}} R {{$tyre_assignment->tyre ? $tyre_assignment->tyre->diameter : ""}}</td>
                                     <td>
                                         @if ($tyre_assignment->horse)
                                         Horse | {{$tyre_assignment->horse->horse_make ? $tyre_assignment->horse->horse_make->name : ""}} {{$tyre_assignment->horse->horse_model ? $tyre_assignment->horse->horse_model->name : ""}} [ {{$tyre_assignment->horse ? $tyre_assignment->horse->registration_number : ""}} ]
@@ -178,7 +183,7 @@
                                   </tr>
                                   @empty
                                   <tr>
-                                    <td colspan="10">
+                                    <td colspan="8">
                                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                             No Tyre Assignments Found ....
                                         </div>
@@ -191,7 +196,6 @@
                                     <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
                                  @endif
                               </table>
-                   
                 </div>
 
                 <div class="row">

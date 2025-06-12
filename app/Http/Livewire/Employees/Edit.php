@@ -346,17 +346,19 @@ class Edit extends Component
             $bank_account->swift_code= $this->swift_code;
             $bank_account->update();
           }else{
-            $bank_account = new BankAccount;
-            $bank_account->user_id =  Auth::user()->id;
-            $bank_account->employee_id =  $employee->id;
-            $bank_account->name =  $this->bank_name;
-            $bank_account->account_name =  $this->account_name;
-            $bank_account->account_number = $this->account_number;
-            $bank_account->branch = $this->bank_branch;
-            $bank_account->currency_id = $this->bank_currency_id;
-            $bank_account->branch_code = $this->branch_code;
-            $bank_account->swift_code= $this->swift_code;
-            $bank_account->save();
+              if ($this->account_number && $this->bank_name) {
+                  $bank_account = new BankAccount;
+                  $bank_account->user_id =  Auth::user()->id;
+                  $bank_account->employee_id =  $employee->id;
+                  $bank_account->name =  $this->bank_name;
+                  $bank_account->account_name =  $this->account_name;
+                  $bank_account->account_number = $this->account_number;
+                  $bank_account->branch = $this->bank_branch;
+                  $bank_account->currency_id = $this->bank_currency_id;
+                  $bank_account->branch_code = $this->branch_code;
+                  $bank_account->swift_code= $this->swift_code;
+                  $bank_account->save();
+              }
           }
 
           if (!empty($this->file) && isset($this->title)) {

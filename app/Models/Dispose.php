@@ -12,6 +12,13 @@ class Dispose extends Model implements Auditable
     use \OwenIt\Auditing\Auditable;
     use HasFactory, SoftDeletes;
 
+    protected $fillable = [
+        'user_id',
+        'tyre_id',
+        'comments',
+        'date',
+    ];
+
     public function user(){
         return $this->belongsTo('App\Models\User');
     }

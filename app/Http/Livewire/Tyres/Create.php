@@ -131,6 +131,7 @@ class Create extends Component
     public $starting_odometer;
     public $ending_odometer;
     public $status;
+    public $selectedAccount;
     public $stores;
     public $store_id;
     public $to_bills = False;
@@ -341,7 +342,7 @@ class Create extends Component
                 $tyre->user_id = Auth::user()->id;
                 $tyre->goods_received_id = $this->selectedGoodsReceived ? $this->selectedGoodsReceived : null;
                 $tyre->product_id = $this->selectedProduct[$key];
-            
+                $tyre->account_id = $this->selectedAccount;
                 if (isset($this->serial_number[$key])) {
                     $tyre->serial_number = $this->serial_number[$key];
                 }

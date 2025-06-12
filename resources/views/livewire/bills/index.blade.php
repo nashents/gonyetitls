@@ -125,6 +125,8 @@
                                           
                                         @elseif ( $bill->container && $bill->top_up)
                                             Fuel Topup | <a href="{{ route('containers.show', $bill->container->id) }}" style="color: blue" target="_blank">{{ $bill->container ? $bill->container->name : "" }}</a> 
+                                        @elseif ( $bill->retread)
+                                            Tyre Retread | <a href="{{ route('retreads.show', $bill->retread->id) }}" style="color: blue" target="_blank">{{ $bill->retread ? $bill->retread->retread_number : "" }}</a> 
                                         @elseif ( $bill->fuel)
                                             @if ($bill->trip)
                                             Trip Expense - Fuel Order | <a href="{{ route('fuels.show', $bill->fuel->id) }}" style="color: blue" target="_blank">{{ $bill->fuel ? $bill->fuel->order_number : "" }}</a> | <a href="{{ route('trips.show', $bill->trip->id) }}" style="color: blue" target="_blank">{{ $bill->trip->trip_number }}</a> 

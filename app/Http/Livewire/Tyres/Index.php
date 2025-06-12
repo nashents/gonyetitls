@@ -97,17 +97,30 @@ class Index extends Component
         }
     
         public function dispose(){
-            $dispose = new Dispose;
-            $dispose->user_id = Auth::user()->id;
-            $dispose->tyre_id = $this->tyre_id;
-            $dispose->comments = $this->comments;
-            $dispose->date = $this->date;
-            $dispose->save();
+
+           $dispose = Dispose::firstOrCreate(
+            [
+                'tyre_id' => $this->tyre_id, // Unique condition to check
+                'user_id' => Auth::id(),     // Optional: use Auth::id() shorthand
+            ],
+            [
+                'comments' => $this->comments,
+                'date'     => $this->date,
+            ]
+            );
     
             $tyre = Tyre::find($this->tyre_id);
             $tyre->disposed = $this->dispose;
             $tyre->status = 0;
             $tyre->update();
+
+            $assignments = $tyre->tyre_assignments;
+            if ($assignments) {
+                foreach ($assignments as $assignment) {
+                    $assignment->status = 0;
+                    $assignment->update();
+                }
+            }
     
             $this->dispatchBrowserEvent('hide-disposeModal');
     

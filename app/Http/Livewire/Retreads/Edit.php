@@ -166,8 +166,15 @@ class Edit extends Component
 
           if (isset($this->tyre_id[$key])) {
               $tyre = Tyre::find($this->tyre_id[$key]);
-              $tyre->status = 0;
               $tyre->update();
+
+              $assignments = $tyre->tyre_assignments;
+                if ($assignments) {
+                    foreach ($assignments as $assignment) {
+                        $assignment->status = 0;
+                        $assignment->update();
+                    }
+                }
           }
         }
       }
