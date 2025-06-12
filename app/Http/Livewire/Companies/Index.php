@@ -10,6 +10,7 @@ use Livewire\Component;
 use App\Models\Currency;
 use App\Models\Transporter;
 use App\Mail\AccountCreationMail;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
@@ -172,7 +173,10 @@ class Index extends Component
     }
 
     public function store(){
-        // try{
+    
+        DB::transaction(function () {
+
+
         $pin = $this->generatePIN();
 
         $user = new User;
@@ -184,14 +188,6 @@ class Index extends Component
         $user->save();
         $user->roles()->attach($this->role_id);
 
-        
-        if (isset(Auth::user()->company)) {
-            $company = Auth::user()->company;
-        }elseif (isset(Auth::user()->employee->company)) {
-            $company = Auth::user()->employee->company;
-        }
-
-        Mail::to($this->email)->send(new AccountCreationMail($user, $company,$pin));
 
         $company = new Company;
         $company->admin_id = Auth::user()->id;
@@ -227,7 +223,7 @@ class Index extends Component
         $transporter_user->password = Hash::make($pin);
         $transporter_user->save();
 
-        Mail::to($this->email)->send(new AccountCreationMail($transporter_user, $company,$pin));
+       
 
         $transporter = new Transporter;
         $transporter->creator_id = Auth::user()->id;
@@ -245,6 +241,12 @@ class Index extends Component
         $transporter->status = 1;
         $transporter->save();
 
+       
+        if ($this->email) {
+            Mail::to($this->email)->send(new AccountCreationMail($user, $company,$pin));
+            Mail::to($this->email)->send(new AccountCreationMail($transporter_user, $company,$pin));
+        }
+
         $this->dispatchBrowserEvent('hide-companyModal');
         $this->resetInputFields();
         $this->dispatchBrowserEvent('alert',[
@@ -252,14 +254,7 @@ class Index extends Component
             'message'=>"Company Created Successfully!!"
         ]);
 
-    //     }
-    //     catch(\Exception $e){
-    //     // Set Flash Message
-    //     $this->dispatchBrowserEvent('alert',[
-    //         'type'=>'error',
-    //         'message'=>"Something goes wrong while creating company!!"
-    //     ]);
-    // }
+     });
 
     }
 
@@ -299,56 +294,50 @@ class Index extends Component
 
         public function update()
         {
-            if ($this->company_id) {
-                // try{
-                $company = Company::find($this->company_id);
-                
-                $user = $company->user;
-                $user->name = $this->name;
-                $user->email = $this->email;
-                $user->username = $this->email;
-                $user->update();
-                $user->roles()->detach();
-                $user->roles()->sync($this->role_id);
+            DB::transaction(function () {
+                if ($this->company_id) {
+                    $company = Company::find($this->company_id);
+                    
+                    $user = $company->user;
+                    $user->name = $this->name;
+                    $user->email = $this->email;
+                    $user->username = $this->email;
+                    $user->update();
+                    $user->roles()->detach();
+                    $user->roles()->sync($this->role_id);
 
-                $company->user_id = $this->user_id;
-                $company->admin_id = Auth::user()->id;
-                $company->name = $this->name;
-                $company->type = $this->selectedType;
-                $company->phonenumber = $this->phonenumber;
-                $company->email = $this->email;
-                $company->currency_id = $this->license_currency_id ? $this->license_currency_id : Null;
-                $company->license_currency_id = $this->license_currency_id ? $this->license_currency_id : Null;
-                $company->status = $this->status;
-                $company->plan = $this->selectedPlan;
-                $company->expiry_date = $this->expiry_date;
-                $company->fee = $this->fee;
-                $company->noreply = $this->noreply;
-                $company->website = $this->website;
-                $company->username = $this->email;
-                $company->country = $this->country;
-                $company->city = $this->city;
-                $company->suburb = $this->suburb;
-                $company->street_address = $this->street_address;
-                $company->update();
+                    $company->user_id = $this->user_id;
+                    $company->admin_id = Auth::user()->id;
+                    $company->name = $this->name;
+                    $company->type = $this->selectedType;
+                    $company->phonenumber = $this->phonenumber;
+                    $company->email = $this->email;
+                    $company->currency_id = $this->license_currency_id ? $this->license_currency_id : Null;
+                    $company->license_currency_id = $this->license_currency_id ? $this->license_currency_id : Null;
+                    $company->status = $this->status;
+                    $company->plan = $this->selectedPlan;
+                    $company->expiry_date = $this->expiry_date;
+                    $company->fee = $this->fee;
+                    $company->noreply = $this->noreply;
+                    $company->website = $this->website;
+                    $company->username = $this->email;
+                    $company->country = $this->country;
+                    $company->city = $this->city;
+                    $company->suburb = $this->suburb;
+                    $company->street_address = $this->street_address;
+                    $company->update();
 
-                $this->dispatchBrowserEvent('hide-companyEditModal');
-                $this->resetInputFields();
-                $this->dispatchBrowserEvent('alert',[
-                    'type'=>'success',
-                    'message'=>"Company Updated Successfully!!"
-                ]);
+                    $this->dispatchBrowserEvent('hide-companyEditModal');
+                    $this->resetInputFields();
+                    $this->dispatchBrowserEvent('alert',[
+                        'type'=>'success',
+                        'message'=>"Company Updated Successfully!!"
+                    ]);
 
-                return redirect(request()->header('Referer'));
-            //     }
-            //     catch(\Exception $e){
-            //     $this->dispatchBrowserEvent('hide-companyEditModal');
-            //     $this->dispatchBrowserEvent('alert',[
-            //         'type'=>'error',
-            //         'message'=>"Something goes wrong while creating company!!"
-            //     ]);
-            //   }
-            }
+                    return redirect(request()->header('Referer'));
+                }
+
+            });
         }
 
     public function render()

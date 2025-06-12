@@ -20,6 +20,7 @@ class AccountCreationMail extends Mailable implements ShouldQueue
      public $user;
      public $pin;
      public $company;
+     
     public function __construct($user, $company, $pin)
     {
             $this->pin = $pin;
