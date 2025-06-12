@@ -204,6 +204,67 @@
 
                                     <!-- /.col-md-6 -->
                                 </div>
+                                    <h5 class="underline mt-10">Driver Bank Details</h5>
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="title">Bank</label>
+                                            <input type="text" class="form-control"  wire:model.debounce.300ms="bank_name" placeholder="Enter Bank Name"  />
+                                            @error('bank_name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="file">Account Name</label>
+                                            <input type="text" class="form-control"  wire:model.debounce.300ms="account_name" placeholder="Enter Account Name" />
+                                            @error('account_name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="file">Account Number</label>
+                                            <input type="text" class="form-control"  wire:model.debounce.300ms="account_number" placeholder="Enter Account Number" />
+                                            @error('account_number') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="title">Account Currency</label>
+                                            <select class="form-control" wire:model.debounce.300ms="bank_currency_id" >
+                                                <option value="">Select Currency</option>
+                                              @foreach ($currencies as $currency)
+                                                  <option value="{{ $currency->id }}">{{ $currency->name }}</option>
+                                              @endforeach
+                                            </select>
+                                            @error('bank_currency_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                   
+                                </div>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label for="expiry_date">Account Branch</label>
+                                                <input type="text" class="form-control"  wire:model.debounce.300ms="bank_branch" placeholder="Enter Branch"  />
+                                                @error('bank_branch') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label for="expiry_date">Branch Code</label>
+                                                <input type="text" class="form-control"  wire:model.debounce.300ms="branch_code" placeholder="Enter Branch Code" />
+                                                @error('branch_code') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label for="expiry_date">Swift Code</label>
+                                                <input type="text" class="form-control"  wire:model.debounce.300ms="swift_code" placeholder="Enter Swift Code" />
+                                                @error('swift_code') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <br>
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">

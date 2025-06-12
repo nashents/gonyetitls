@@ -32,13 +32,16 @@
                                 <table class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                     <thead >
                                         <tr>
-                                        <th class="th-sm">Horse#
+                                        <th class="th-sm">#
                                         </th>
                                         <th class="th-sm">Transporter
                                         </th>
                                         <th class="th-sm">Make
                                         </th>
-                                        <th class="th-sm">HRN
+                                        <th class="th-sm">
+                                            Fleet#
+                                            <hr style="margin-top:2px; margin-bottom:2px">
+                                            HRN
                                         </th>
                                         <th class="th-sm">Revenue
                                         </th>
@@ -75,7 +78,11 @@
                                         <td>{{$horse->horse_number}}</td>
                                         <td>{{$horse->transporter ? $horse->transporter->name : ""}}</td>
                                         <td>{{ucfirst($horse->horse_make ? $horse->horse_make->name : "")}} {{ucfirst($horse->horse_model ? $horse->horse_model->name : "")}}</td>
-                                        <td>{{ucfirst($horse->registration_number)}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}}</td>
+                                         <td>
+                                           {{$horse->fleet_number}}
+                                            <hr style="margin-top:2px; margin-bottom:2px">
+                                            {{ucfirst($horse->registration_number)}}
+                                        </td>
                                         <td> 
                                             @foreach ($currencies as $currency)
                                                 @php

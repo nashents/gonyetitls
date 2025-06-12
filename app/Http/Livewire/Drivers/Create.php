@@ -17,6 +17,7 @@ use App\Models\Employee;
 use App\Models\JobTitle;
 use App\Models\Province;
 use App\Models\Department;
+use App\Models\BankAccount;
 use App\Models\Transporter;
 use Livewire\WithFileUploads;
 use App\Models\DepartmentHead;
@@ -76,6 +77,15 @@ class Create extends Component
     public $next_of_kin;
     public $relationship;
     public $contact;
+
+    //bank vars
+    public $bank_name;
+    public $bank_branch;
+    public $account_name;
+    public $account_number;
+    public $bank_currency_id;
+    public $branch_code;
+    public $swift_code;
 
     public $city;
     public $suburb;
@@ -315,6 +325,20 @@ class Create extends Component
       $employee->save();
       $employee->departments()->sync($this->selectedDepartment);
       $employee->ranks()->sync($this->rank_id);
+
+       if ($this->account_number && $this->bank_name) {
+              $bank_account = new BankAccount;
+              $bank_account->user_id =  Auth::user()->id;
+              $bank_account->employee_id =  $employee->id;
+              $bank_account->name =  $this->bank_name;
+              $bank_account->account_name =  $this->account_name;
+              $bank_account->account_number = $this->account_number;
+              $bank_account->branch = $this->bank_branch;
+              $bank_account->currency_id = $this->bank_currency_id;
+              $bank_account->branch_code = $this->branch_code;
+              $bank_account->swift_code= $this->swift_code;
+              $bank_account->save();
+          }
 
       $rank = Rank::find($this->rank_id);
    

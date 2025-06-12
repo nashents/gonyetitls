@@ -33,13 +33,16 @@
                                 <table  class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                     <thead >
                                         <tr>
-                                            <th class="th-sm">Vehicle#
+                                            <th class="th-sm">#
                                             </th>
                                             <th class="th-sm">Transporter
                                             </th>
                                             <th class="th-sm">Make
                                             </th>
-                                            <th class="th-sm">VRN
+                                            <th class="th-sm">
+                                                Fleet#
+                                            <hr style="margin-top:2px; margin-bottom:2px">
+                                                TRN
                                             </th>
                                             <th class="th-sm">Revenue
                                             </th>
@@ -73,8 +76,12 @@
                                         <td>{{$vehicle->vehicle_number}}</td>
                                         <td>{{$vehicle->transporter ? $vehicle->transporter->name : ""}}</td>
                                         <td>{{ucfirst($vehicle->vehicle_make ? $vehicle->vehicle_make->name : "")}} {{ucfirst($vehicle->vehicle_model ? $vehicle->vehicle_model->name : "")}}</td>
-                                        <td>{{$vehicle->registration_number}} {{$vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : ""}}</td>
-                                              <td> 
+                                        <td>
+                                           {{$vehicle->fleet_number}}
+                                            <hr style="margin-top:2px; margin-bottom:2px">
+                                            {{ucfirst($vehicle->registration_number)}}
+                                        </td>
+                                        <td> 
                                             @foreach ($currencies as $currency)
                                                 @php
                                                     $revenue = App\Models\Trip::where('vehicle_id',$vehicle->id)->whereYear('created_at', date('Y'))->where('authorization', 'approved')->where('trip_status','!=', 'Cancelled')

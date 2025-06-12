@@ -31,13 +31,16 @@
                                 <table class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                     <thead >
                                         <tr>
-                                        <th class="th-sm">Trailer#
+                                        <th class="th-sm">#
                                         </th>
                                         <th class="th-sm">Transporter
                                         </th>
                                         <th class="th-sm">Make
                                         </th>
-                                        <th class="th-sm">TRN
+                                        <th class="th-sm">
+                                            Fleet#
+                                            <hr style="margin-top:2px; margin-bottom:2px">
+                                            TRN
                                         </th>
                                         <th class="th-sm">Year
                                         </th>
@@ -56,7 +59,11 @@
                                         <td>{{$trailer->trailer_number}}</td>
                                         <td>{{$trailer->transporter ? $trailer->transporter->name : ""}}</td>
                                         <td>{{$trailer->make}} {{$trailer->model}}</td>
-                                        <td>{{$trailer->registration_number}} {{$trailer->fleet_number ? "(".$trailer->fleet_number.")" : ""}}</td>
+                                        <td>
+                                           {{$trailer->fleet_number}}
+                                            <hr style="margin-top:2px; margin-bottom:2px">
+                                            {{ucfirst($trailer->registration_number)}}
+                                        </td>
                                         <td>{{$trailer->year}}</td>
                                         <td><span class="badge bg-{{$trailer->status == 1 ? "success" : "danger"}}">{{$trailer->status == 1 ? "Available" : "Unavailable"}}</span></td>
                                         <td><span class="badge bg-{{$trailer->service == 0 ? "success" : "danger"}}">{{$trailer->service == 0 ? "Fit for use" : "In Service"}}</span></td>

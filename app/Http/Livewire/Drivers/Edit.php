@@ -16,6 +16,7 @@ use App\Models\Employee;
 use App\Models\JobTitle;
 use App\Models\Province;
 use App\Models\Department;
+use App\Models\BankAccount;
 use App\Models\Transporter;
 use Livewire\WithFileUploads;
 use App\Models\DepartmentHead;
@@ -81,6 +82,16 @@ class Edit extends Component
     public $contact;
     public $status;
 
+    
+    //bank vars
+    public $bank_name;
+    public $bank_branch;
+    public $account_name;
+    public $account_number;
+    public $bank_currency_id;
+    public $branch_code;
+    public $swift_code;
+
   
     public $city;
     public $suburb;
@@ -127,6 +138,15 @@ class Edit extends Component
         $this->driver = $driver;
         $this->driver_id = $driver->id;
         $employee = Employee::find($driver->employee->id);
+        if($employee->bank_account){
+          $this->bank_name = $employee->bank_account->name;
+          $this->bank_currency_id = $employee->bank_account->currency_id;
+          $this->account_name = $employee->bank_account->account_name;
+          $this->account_number = $employee->bank_account->account_number;
+          $this->bank_branch = $employee->bank_account->bank_branch;
+          $this->brach_code = $employee->bank_account->branch_code;
+          $this->swift_code = $employee->bank_account->swift_code;
+        }
         $this->user = $driver->user;
         $this->user_id = $this->user->id;
         $this->employee = $employee;
@@ -307,6 +327,32 @@ class Edit extends Component
           $employee->departments()->sync($this->selectedDepartment);
           $employee->ranks()->detach();
           $employee->ranks()->sync($this->rank_id);
+
+              $bank_account = $employee->bank_account;
+          if(isset($bank_account)){
+            $bank_account->name =  $this->bank_name;
+            $bank_account->account_name =  $this->account_name;
+            $bank_account->account_number = $this->account_number;
+            $bank_account->branch = $this->bank_branch;
+            $bank_account->currency_id = $this->bank_currency_id;
+            $bank_account->branch_code = $this->branch_code;
+            $bank_account->swift_code= $this->swift_code;
+            $bank_account->update();
+          }else{
+              if ($this->account_number && $this->bank_name) {
+                  $bank_account = new BankAccount;
+                  $bank_account->user_id =  Auth::user()->id;
+                  $bank_account->employee_id =  $employee->id;
+                  $bank_account->name =  $this->bank_name;
+                  $bank_account->account_name =  $this->account_name;
+                  $bank_account->account_number = $this->account_number;
+                  $bank_account->branch = $this->bank_branch;
+                  $bank_account->currency_id = $this->bank_currency_id;
+                  $bank_account->branch_code = $this->branch_code;
+                  $bank_account->swift_code= $this->swift_code;
+                  $bank_account->save();
+              }
+          }
 
           $rank = Rank::find($this->rank_id[0]);
           if ($rank->name == "HOD") {
