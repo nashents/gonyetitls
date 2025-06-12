@@ -9,7 +9,6 @@
                 <li role="presentation" class="active"><a href="#basic" aria-controls="basic" role="tab" data-toggle="tab">Invoice Details</a></li>
                 <li role="presentation"><a href="#invoice_items" aria-controls="invoice_items" role="tab" data-toggle="tab">Invoice Items</a></li>
                 <li role="presentation"><a href="#payments" aria-controls="payments" role="tab" data-toggle="tab">Payments</a></li>
-
             </ul>
             <div class="tab-content bg-white p-15">
                 <div role="tabpanel" class="tab-pane active" id="basic">
@@ -126,15 +125,11 @@
                             <thead >
                                 <th class="th-sm">Payment#
                                 </th>
-                                <th class="th-sm">Invoice#
-                                </th>
-                                <th class="th-sm">Customer
-                                </th>
-                                <th class="th-sm">PaidBy
+                                <th class="th-sm">Date
                                 </th>
                                 <th class="th-sm">MOP
                                 </th>
-                                <th class="th-sm">Currency
+                                <th class="th-sm">Ccy
                                 </th>
                                 <th class="th-sm">Amt
                                 </th>
@@ -146,19 +141,12 @@
                               </tr>
                             </thead>
                        
-                            @if ($payments->count()>0)
+                            @if ($payments)
                             <tbody>
-                                @foreach ($payments as $payment)
+                                @forelse ($payments as $payment)
                               <tr>
                                 
                                 <td>{{ucfirst($payment->payment_number)}}</td>
-                                <td>
-                                    @if ($payment->invoice)
-                                    <a href="{{ route('invoices.show',$payment->invoice->id) }}" style="color:blue">{{$payment->invoice ? $payment->invoice->invoice_number : ""}}</a>
-                                    @endif
-                                </td>
-                                <td>{{ucfirst($payment->customer ? $payment->customer->name : "")}}</td>
-                                <td>{{ucfirst($payment->name)}} {{ucfirst($payment->surname)}}</td>
                                 <td>{{$payment->mode_of_payment}}</td>
                                 <td>{{$payment->currency ? $payment->currency->name : ""}}</td>
                                 <td>@if ($payment->amount)
@@ -190,7 +178,16 @@
 
                             </td>
                               </tr>
-                              @endforeach
+                             @empty
+                                  <tr>
+                                    <td colspan="7">
+                                        <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
+                                            No Invoice Payments Recorded....
+                                        </div>
+                                       
+                                    </td>
+                                  </tr>  
+                                @endforelse
                             </tbody>
                             @else
                             <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">

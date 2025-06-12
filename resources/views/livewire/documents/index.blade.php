@@ -19,7 +19,7 @@
         <table id="documentsTable" class="table  table-striped table-borderless table-sm table-responsive" cellspacing="0" width="100%">
                                 
             <tbody>
-                @if ($folders->count()>0)
+                @if ($folders && $folders->count()>0)
                     @foreach ($folders as $folder)
                         <tr>
                             <td style="padding-top: 15px; width:100px" >   
@@ -43,7 +43,7 @@
                                     
                                     @if (isset($selectedFolder))
                                         @php
-                                            $folder_documents = $documents->where('folder_id',$selectedFolder)
+                                            $folder_documents = $documents ? $documents->where('folder_id',$selectedFolder) : NUll;
                                         @endphp
                                         @if ($folder_documents->count()>0)
                                             @foreach ($folder_documents as $document)
