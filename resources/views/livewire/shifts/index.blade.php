@@ -6,7 +6,41 @@
                 <div class="col-md-12">
                     <div class="panel">
                         <div class="panel-heading">
-                       
+                                <div class="panel-title">
+                                <div class="row">
+                                        <div class="col-lg-3">
+                                            <div class="input-group">
+                                                <span class="input-group-addon">
+                                                Filter By
+                                                </span>
+                                                <select wire:model.debounce.300ms="invoice_filter" class="form-control" aria-label="..." >
+                                                    <option value="created_at">Shift Created At</option>
+                                                    <option value="date">Shift Date</option>
+                                                </select>
+                                            </div>
+                                            <!-- /input-group -->
+                                        </div>
+                             
+                                        <div class="col-lg-2" style="margin-right: 7px; margin-left:-15px;">
+                                            <div class="input-group">
+                                                <span class="input-group-addon">
+                                        From
+                                        </span>
+                                        <input type="date" wire:model.debounce.300ms="from"  class="form-control" aria-label="...">
+                                            </div>
+                                            <!-- /input-group -->
+                                        </div>
+                                        <div class="col-lg-2" style="margin-left: 7px">
+                                            <div class="input-group">
+                                                <span class="input-group-addon">
+                                        To
+                                        </span>
+                                        <input type="date" wire:model.debounce.300ms="to"  class="form-control" aria-label="...">
+                                            </div>
+                                            <!-- /input-group -->
+                                        </div>
+                                </div>
+                            </div>
                             <div class="panel-title">
                                 <a href="" data-toggle="modal" data-target="#shiftModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Shift</a>
                                 <a href="" data-toggle="modal" data-target="#shiftsImportModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import</a>

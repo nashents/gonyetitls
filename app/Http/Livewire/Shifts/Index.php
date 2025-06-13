@@ -31,10 +31,11 @@ class Index extends Component
     use WithPagination;
 
     protected $paginationTheme = 'bootstrap';
-
     public $search;
+    public $shift_filter;
     protected $queryString = ['search'];
-
+    public $from;
+    public $to;
     private $shifts;
     public $shift_id;
     public $status;
@@ -153,6 +154,7 @@ class Index extends Component
     public function mount(){
         $this->resetPage();
         $this->user = Auth::user();
+        $this->shift_filter = "created_at";
         $this->employee =  $this->user->employee;
         $this->company = Company::with('currency')->find( $this->employee->company_id);
         $this->customers = Customer::orderBy('name','asc')->get();
@@ -288,15 +290,14 @@ class Index extends Component
 
     public function exportShiftsCSV(Excel $excel){
 
-        return $excel->download(new ShiftsExport, 'shifts.csv', Excel::CSV);
+        return $excel->download(new ShiftsExport($this->from, $this->to, $this->shift_filter, $this->search), 'shifts_'.time().'.csv', Excel::CSV);
     }
     public function exportShiftsPDF(Excel $excel){
 
-        return $excel->download(new ShiftsExport, 'shifts.pdf', Excel::DOMPDF);
+        return $excel->download(new ShiftsExport($this->from, $this->to, $this->shift_filter, $this->search), 'shifts_'.time().'.pdf', Excel::DOMPDF);
     }
     public function exportShiftsExcel(Excel $excel){
-
-        return $excel->download(new ShiftsExport, 'shifts.xlsx');
+        return $excel->download(new ShiftsExport($this->from, $this->to, $this->shift_filter, $this->search), 'shifts_'.time().'.xlsx');
     }
 
        public function shiftNumber(){
@@ -622,22 +623,93 @@ class Index extends Component
     }
     public function render()
     {
-        if (isset($this->search)) {
-            return view('livewire.shifts.index',[
-                'shifts' => Shift::where('name','like', '%'.$this->search.'%')
-                ->orWhere('shift_start_time','like', '%'.$this->search.'%')
-                ->orWhere('expiry_date','like', '%'.$this->search.'%')
-                ->orWhere('shift_end_time','like', '%'.$this->search.'%')
-                ->orWhere('type','like', '%'.$this->search.'%')
-                ->orWhere('date','like', '%'.$this->search.'%')
-                ->orderBy('created_at','desc')->paginate(10),
+            if (isset($this->from) && isset($this->to)) {
+                if (isset($this->search)) {
+                    return view('livewire.shifts.index',[
+                        'shifts' => Shift::query()->with('customer:id,name','driver','horse','vehicle','cargo','transporter','fuel')
+                        ->whereDate($this->shift_filter, '>=', $this->from)
+                        ->whereDate($this->shift_filter, '<=', $this->to)
+                        ->where('shift_number','like', '%'.$this->search.'%')
+                        ->orWhere('date','like', '%'.$this->search.'%')
+                        ->orWhere('type','like', '%'.$this->search.'%')
+                        ->orWhere('for','like', '%'.$this->search.'%')
+                        ->orWhereHas('customer', function ($query) {
+                            return $query->where('name', 'like', '%'.$this->search.'%');
+                        })
+                        ->orWhereHas('horse', function ($query) {
+                            return $query->where('registration_number', 'like', '%'.$this->search.'%')
+                                        ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
+                        })
+                        ->orWhereHas('vehicle', function ($query) {
+                            return $query->where('registration_number', 'like', '%'.$this->search.'%')
+                                        ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
+                        })
+                        ->orWhereHas('cargo', function ($query) {
+                            return $query->where('name', 'like', '%'.$this->search.'%');
+                        })
+                        ->orWhereHas('transporter', function ($query) {
+                            return $query->where('name', 'like', '%'.$this->search.'%');
+                        })
+                        ->orWhereHas('driver.employee', function ($query) {
+                            return $query->where('name', 'like', '%'.$this->search.'%')
+                                        ->orWhere('surname', 'like', '%'.$this->search.'%');
+                        })
+                        ->orderBy($this->shift_filter,'desc')->paginate(10),
+                    ]);
+                }else {
+                    return view('livewire.shifts.index',[
+                        'shifts' => Shift::query()->with('customer:id,name','driver','horse','vehicle','cargo','transporter','fuel')
+                        ->whereDate($this->shift_filter, '>=', $this->from)
+                        ->whereDate($this->shift_filter, '<=', $this->to)
+                        ->orderBy($this->shift_filter,'desc')->paginate(10),
+
+                    ]);
+                }
+            }
+            elseif (isset($this->search)) {
+                return view('livewire.shifts.index',[
+                    'shifts' => Shift::query()->with('customer:id,name','driver','horse','vehicle','cargo','transporter','fuel')
+                    ->whereMonth($this->shift_filter, date('m'))
+                    ->whereYear($this->shift_filter, date('Y'))
+                    ->where('shift_number','like', '%'.$this->search.'%')
+                    ->orWhere('date','like', '%'.$this->search.'%')
+                    ->orWhere('type','like', '%'.$this->search.'%')
+                    ->orWhere('for','like', '%'.$this->search.'%')
+                    ->orWhereHas('customer', function ($query) {
+                        return $query->where('name', 'like', '%'.$this->search.'%');
+                    })
+                    ->orWhereHas('horse', function ($query) {
+                        return $query->where('registration_number', 'like', '%'.$this->search.'%')
+                                    ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
+                    })
+                    ->orWhereHas('vehicle', function ($query) {
+                        return $query->where('registration_number', 'like', '%'.$this->search.'%')
+                                    ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
+                    })
+                    ->orWhereHas('cargo', function ($query) {
+                        return $query->where('name', 'like', '%'.$this->search.'%');
+                    })
+                    ->orWhereHas('transporter', function ($query) {
+                        return $query->where('name', 'like', '%'.$this->search.'%');
+                    })
+                    ->orWhereHas('driver.employee', function ($query) {
+                        return $query->where('name', 'like', '%'.$this->search.'%')
+                                    ->orWhere('surname', 'like', '%'.$this->search.'%');
+                    })
+                    ->orderBy($this->shift_filter,'desc')->paginate(10),
+                ]);
+            }
+            else {
                
-            ]);
-        }else {
-            return view('livewire.shifts.index',[
-                'shifts' => Shift::orderBy('created_at','desc')->paginate(10)
-            ]);
-        }
+                return view('livewire.shifts.index',[
+                    'shifts' => Shift::query()->with('customer:id,name','driver','horse','vehicle','cargo','transporter','fuel')
+                    ->whereMonth($this->shift_filter, date('m'))
+                    ->whereYear($this->shift_filter, date('Y'))
+                    ->orderBy($this->shift_filter,'desc')->paginate(10),
+                ]);
+              
+            }
+        
        
     }
 }

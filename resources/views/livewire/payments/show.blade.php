@@ -24,27 +24,26 @@
                             <th class="w-10 text-center line-height-35">Description</th>
                             <td class="w-20 line-height-35"> 
                                 @if ($payment->invoice)
-                                {{$payment->customer ? $payment->customer->name : ""}} Payment for invoice# <a href="{{route('invoices.show',$payment->invoice->id)}}" style="color: blue">{{$payment->invoice ? $payment->invoice->invoice_number : ""}}</a> <br>
-                            @elseif ($payment->invoice_payment)
-                                {{$payment->customer ? $payment->customer->name : ""}} Setoff payment for invoice# <a href="{{ route('invoices.show',$payment->invoice_payment->invoice_id) }}" style="color:blue">{{$payment->invoice_payment->invoice ? $payment->invoice_payment->invoice->invoice_number : ""}}</a>
-                            @elseif($payment->bill)
-                                Bill# <a href="{{route('bills.show',$payment->bill->id)}}" style="color: blue">{{$payment->bill ? $payment->bill->bill_number : ""}}</a> Payment to {{$payment->vendor ? $payment->vendor->name : ""}} <br>
-                            @elseif ($payment->customer && !$payment->invoice_payment)
-                                @php
-                                    $customer_account = App\Models\Account::find($payment->customer_account_id);
-                                @endphp
-                                <a href="{{ route('customers.show',$payment->customer->id) }}" style="color:blue">{{$payment->customer ? $payment->customer->name : ""}}</a> payment into
-                                @if ($customer_account)
-                                    <a href="{{ route('accounts.show',$customer_account->id) }}" style="color: blue">{{ $customer_account->name }}</a> customer account
+                                    {{$payment->customer ? $payment->customer->name : ""}} Payment for invoice# <a href="{{route('invoices.show',$payment->invoice->id)}}" style="color: blue">{{$payment->invoice ? $payment->invoice->invoice_number : ""}}</a> <br>
+                                @elseif ($payment->invoice_payment)
+                                    {{$payment->customer ? $payment->customer->name : ""}} Setoff payment for invoice# <a href="{{ route('invoices.show',$payment->invoice_payment->invoice_id) }}" style="color:blue">{{$payment->invoice_payment->invoice ? $payment->invoice_payment->invoice->invoice_number : ""}}</a>
+                                @elseif($payment->bill)
+                                    Bill# <a href="{{route('bills.show',$payment->bill->id)}}" style="color: blue">{{$payment->bill ? $payment->bill->bill_number : ""}}</a> Payment to {{$payment->vendor ? $payment->vendor->name : ""}} <br>
+                                @elseif ($payment->customer && !$payment->invoice_payment)
+                                    @php
+                                        $customer_account = App\Models\Account::find($payment->customer_account_id);
+                                    @endphp
+                                    <a href="{{ route('customers.show',$payment->customer->id) }}" style="color:blue">{{$payment->customer ? $payment->customer->name : ""}}</a> payment into
+                                    @if ($customer_account)
+                                        <a href="{{ route('accounts.show',$customer_account->id) }}" style="color: blue">{{ $customer_account->name }}</a> customer account
+                                    @endif
+                                    <br>
+                                @elseif ($payment->recovery)
+                                    Recovery# <a href="{{ route('recoveries.show',$payment->recovery->id) }}" style="color:blue">{{$payment->recovery ? $payment->recovery->recovery_number : ""}}</a> payment. <br>
                                 @endif
-                                <br>
-                            @elseif ($payment->recovery)
-                            Recovery# <a href="{{ route('recoveries.show',$payment->recovery->id) }}" style="color:blue">{{$payment->recovery ? $payment->recovery->recovery_number : ""}}</a> payment. <br>
-                            @endif
-                           
-                            @if ($payment->description)
-                                {{$payment->description}}
-                            @endif
+                                @if ($payment->description)
+                                    {{$payment->description}}
+                                @endif
                             </td>
                         </tr> 
                         @if ($payment->mode_of_payment)
@@ -58,7 +57,7 @@
                                     <td class="w-20 line-height-35">{{$payment->specify_other}}</td>
                                 </tr>
                             @endif
-                            @if ($mode_of_payment == "Bank Payment" || $mode_of_payment == "Credit Card" || $mode_of_payment == "Paypal")
+                            @if ($payment->mode_of_payment == "Bank Payment" || $payment->mode_of_payment == "Credit Card" || $payment->mode_of_payment == "Paypal")
                             <tr>
                                 <th class="w-10 text-center line-height-35">Bank Account</th>
                                 <td class="w-20 line-height-35">{{$payment->bank_account ? $payment->bank_account->name : ""}} {{$payment->bank_account ? $payment->bank_account->account_number : ""}}</td>
