@@ -32,12 +32,12 @@ class Index extends Component
     public $search;
     public $searchTrip;
     public $searchBooking;
-    protected $queryString = ['search','searchTrip','searchBooking'];
+    public $searchPurchase;
+    protected $queryString = ['search','searchTrip','searchBooking' ,'searchPurchase'];
     public $from;
     public $to;
 
     public $requisition_filter;
-
     public $accounts;
     public $expense_accounts;
     public $account;
@@ -204,7 +204,7 @@ class Index extends Component
 
     public function mount(){
         $this->resetPage();
-        $this->reset(['search', 'searchTrip', 'searchBooking']);
+        $this->reset(['search', 'searchTrip', 'searchBooking', 'searchPurchase']);
         $employee_departments = Auth::user()->employee->departments;
         foreach ($employee_departments as $department) {
             $this->department_ids[] = $department->id;
@@ -243,67 +243,7 @@ class Index extends Component
         'qty.*' => 'required',
         'amount.*' => 'required',
     ];
-
-
-    public function updatedSearchTrip(){
-
-        if (isset($this->searchTrip)) {
-            $this->trips = Trip::query()->with([ 'customer:id,name',
-            'horse:id,registration_number',
-            'loading_point:id,name',
-            'offloading_point:id,name'])
-            ->where('trip_number', 'like', '%'.$this->searchTrip.'%')
-            ->orWhere('trip_ref', 'like', '%'.$this->searchTrip.'%')
-            ->orWhereHas('horse', function ($query) {
-                return $query->where('registration_number', 'like', '%'.$this->searchTrip.'%');
-            })
-            ->orderBy('id','desc')->get();
-        }
-
-    }
-    public function updatedSearchBooking(){
-
-        if (isset($this->searchBooking)) {
-            $this->bookings = Booking::query()->with([
-            'horse:id,registration_number',
-            'trailer:id,registration_number',
-            'vehicle:id,registration_number',
-            'employee:id,name,surname'])
-            ->where('booking_number', 'like', '%'.$this->searchBooking.'%')
-            ->orWhereHas('horse', function ($query) {
-                return $query->where('registration_number', 'like', '%'.$this->searchBooking.'%');
-            })
-            ->orWhereHas('trailer', function ($query) {
-                return $query->where('registration_number', 'like', '%'.$this->searchBooking.'%');
-            })
-            ->orWhereHas('vehicle', function ($query) {
-                return $query->where('registration_number', 'like', '%'.$this->searchBooking.'%');
-            })
-            ->orWhereHas('employee', function ($query) {
-                return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->searchBooking.'%');
-            })
-            ->orderBy('id','desc')->get();
-        }
-
-    }
-
-    public function updatedSearchPurchase(){
-
-        if (filled($this->searchPurchase)) {
-            $this->purchase = Purchase::query()->with(['vendor','currency'])
-            ->where('purchase_number', 'like', '%'.$this->searchPurchase.'%')
-            ->orWhere('date', 'like', '%'.$this->searchPurchase.'%')
-            ->orWhere('total', 'like', '%'.$this->searchPurchase.'%')
-            ->orWhereHas('vendor', function ($query) {
-                return $query->where('name', 'like', '%'.$this->searchPurchase.'%');
-            })
-            ->orWhereHas('currency', function ($query) {
-                return $query->where('name', 'like', '%'.$this->searchPurchase.'%');
-            })
-            ->orderBy('id','desc')->get();
-        }
-
-    }
+    
 
     public function requisitionNumber(){
 
@@ -339,31 +279,7 @@ class Index extends Component
 
     }
 
-    public function updatedRequisitionFor($value){
-        if (!is_null($value)) {
-            if($value == 'Trip'){
-                $this->trips =  Trip::select('id', 'trip_number', 'trip_ref', 'customer_id', 'driver_id', 'horse_id', 'from', 'to', 'loading_point_id', 'offloading_point_id')
-                ->with([
-                    'customer:id,name',
-                    'driver',
-                    'horse:id,registration_number',
-                    'loading_point:id,name',
-                    'offloading_point:id,name'
-                ])
-                ->whereYear('start_date',date('Y'))
-                ->where('authorization','approved')
-                ->where('trip_status','!=','Cancelled')
-                ->orderBy('id', 'desc')
-                ->get();
-                 $this->items = True;
-            }elseif($value == 'Booking'){
-                $this->items = True;
-                $this->bookings = Booking::whereYear('in_date',date('Y'))->where('authorization','approved')->where('status',True)->orderBy('id','desc')->get();
-            }elseif($value == 'Purchase'){
-                $this->purchases = Purchase::whereYear('date',date('Y'))->where('authorization','approved')->where('status',True)->orderBy('id','desc')->get();
-            }
-        }
-    }
+   
     
    public function showItem($key){
         $this->item_key = $key;
@@ -612,7 +528,91 @@ class Index extends Component
 
     public function render()
     {
-        
+
+        if($this->requisition_for == 'Trip'){
+            $this->items = True;
+            if (filled($this->searchTrip)) {
+                $this->trips = Trip::query()->with([ 'customer:id,name',
+                'horse:id,registration_number',
+                'loading_point:id,name',
+                'offloading_point:id,name'])
+                ->whereYear('start_date',date('Y'))
+                ->where('authorization','approved')
+                ->where('trip_status','!=','Cancelled')
+                ->where('trip_number', 'like', '%'.$this->searchTrip.'%')
+                ->orWhere('trip_ref', 'like', '%'.$this->searchTrip.'%')
+                ->orWhereHas('horse', function ($query) {
+                    return $query->where('registration_number', 'like', '%'.$this->searchTrip.'%');
+                })
+                ->orderBy('id','desc')->get();
+            }else{
+                $this->trips =  Trip::select('id', 'trip_number', 'trip_ref', 'customer_id', 'driver_id', 'horse_id', 'from', 'to', 'loading_point_id', 'offloading_point_id')
+                ->with([
+                    'customer:id,name',
+                    'driver',
+                    'horse:id,registration_number',
+                    'loading_point:id,name',
+                    'offloading_point:id,name'
+                ])
+                ->whereYear('start_date',date('Y'))
+                ->where('authorization','approved')
+                ->where('trip_status','!=','Cancelled')
+                ->orderBy('id', 'desc')
+                ->get();
+            }
+        }elseif($this->requisition_for == 'Booking'){
+                $this->items = True;
+                if (filled($this->searchBooking)) {
+                    $this->bookings = Booking::query()->with([
+                    'horse:id,registration_number',
+                    'trailer:id,registration_number',
+                    'vehicle:id,registration_number',
+                    'employee:id,name,surname'])
+                    ->whereYear('in_date',date('Y'))->where('authorization','approved')->where('status',True)
+                    ->where('booking_number', 'like', '%'.$this->searchBooking.'%')
+                    ->orWhereHas('service_type', function ($query) {
+                        return $query->where('name', 'like', '%'.$this->searchBooking.'%');
+                    })
+                    ->orWhereHas('horse', function ($query) {
+                        return $query->where('registration_number', 'like', '%'.$this->searchBooking.'%');
+                    })
+                    ->orWhereHas('trailer', function ($query) {
+                        return $query->where('registration_number', 'like', '%'.$this->searchBooking.'%');
+                    })
+                    ->orWhereHas('vehicle', function ($query) {
+                        return $query->where('registration_number', 'like', '%'.$this->searchBooking.'%');
+                    })
+                    ->orWhereHas('employee', function ($query) {
+                        return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->searchBooking.'%');
+                    })
+                    ->orderBy('id','desc')->get();
+                }else{
+                    $this->bookings = Booking::whereYear('in_date',date('Y'))->where('authorization','approved')->where('status',True)->orderBy('id','desc')->get();
+                }
+            
+        }elseif($this->requisition_for == 'Purchase'){
+              if (filled($this->searchPurchase)) {
+                    $this->purchases = Purchase::query()->with(['vendor','currency'])
+                    ->whereYear('date',date('Y'))
+                    ->where('authorization','approved')
+                    ->where('status',True)
+                    ->where('purchase_number', 'like', '%'.$this->searchPurchase.'%')
+                    ->orWhere('date', 'like', '%'.$this->searchPurchase.'%')
+                    ->orWhere('total', 'like', '%'.$this->searchPurchase.'%')
+                    ->orWhereHas('vendor', function ($query) {
+                        return $query->where('name', 'like', '%'.$this->searchPurchase.'%');
+                    })
+                    ->orWhereHas('currency', function ($query) {
+                        return $query->where('name', 'like', '%'.$this->searchPurchase.'%');
+                    })
+                    ->orderBy('id','desc')->get();
+            }else{
+                $this->purchases = Purchase::whereYear('date',date('Y'))->where('authorization','approved')->where('status',True)->orderBy('id','desc')->get();
+            }
+            
+        }
+
+
         $user = Auth::user();
         $employee = $user->employee;
       

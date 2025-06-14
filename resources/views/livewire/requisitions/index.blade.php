@@ -339,7 +339,7 @@
                             @elseif($requisition_for == "Booking")
                                 <div class="form-group">
                                     <label for="country">Garage Bookings</label>
-                                    <input type="text" wire:model.debounce.300ms="searchBooking" placeholder="Search with booking#, horse, vehicle, trailer reg#..." class="form-control">
+                                    <input type="text" wire:model.debounce.300ms="searchBooking" placeholder="Search with booking#, service tye, horse, vehicle, trailer reg#..." class="form-control">
                                     <select wire:model.debounce.300ms="booking_id" class="form-control" size="8">
                                         <option value="">Select Booking</option>
                                         @foreach ($bookings as $booking)
@@ -361,18 +361,17 @@
                             @elseif($requisition_for == "Purchase")
                                 <div class="form-group">
                                         <label for="country">Purchase Orders</label>
-                                        <input type="text" wire:model.debounce.300ms="searchPurchase" placeholder="Search with booking#, horse, vehicle, trailer reg#..." class="form-control">
-                                        <select wire:model.debounce.300ms="purchase_id" class="form-control" size="8">
-                                            <option value="">Select Booking</option>
-                                            @foreach ($purchases as $purchase)
-                                                <option value="{{ $purchase->id }}">{{ $purchase->purchase_number }} | 
-                                                     {{ $purchase->date}} |
-                                                    {{ $purchase->vendor ? $purchase->vendor->name : "" }} |
-                                                    {{ $purchase->currency ? $purchase->currency->name : "" }} {{ $purchase->currency ? $purchase->currency->symbol : "" }}{{ number_format($purchase->total ? $purchase->total : 0,2)}}
-                                                </option>
-                                            @endforeach
-                                            
-                                        </select>
+                                        <input type="text" wire:model.debounce.300ms="searchPurchase" placeholder="Search with order#, vendor, currency..." class="form-control">
+                                            <select wire:model.debounce.300ms="purchase_id" class="form-control" size="8">
+                                                <option value="">Select Purchase Order</option>
+                                                @foreach ($purchases as $purchase)
+                                                    <option value="{{ $purchase->id }}">{{ $purchase->purchase_number }} | 
+                                                        {{ $purchase->date}} |
+                                                        {{ $purchase->vendor ? $purchase->vendor->name : "" }} |
+                                                        {{ $purchase->currency ? $purchase->currency->name : "" }} {{ $purchase->currency ? $purchase->currency->symbol : "" }}{{ number_format($purchase->total ? $purchase->total : 0,2)}}
+                                                    </option>
+                                                @endforeach
+                                            </select>
                                         @error('purchase_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             @endif
@@ -672,7 +671,7 @@
                                         <label for="country">Purchase Orders</label>
                                         <input type="text" wire:model.debounce.300ms="searchPurchase" placeholder="Search with booking#, horse, vehicle, trailer reg#..." class="form-control">
                                         <select wire:model.debounce.300ms="purchase_id" class="form-control" size="8">
-                                            <option value="">Select Booking</option>
+                                            <option value="">Select Purchase Order</option>
                                             @foreach ($purchases as $purchase)
                                                 <option value="{{ $purchase->id }}">{{ $purchase->purchase_number }} | 
                                                      {{ $purchase->date}} |

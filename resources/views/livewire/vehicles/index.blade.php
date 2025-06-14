@@ -33,16 +33,12 @@
                                 <table  class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                     <thead >
                                         <tr>
-                                            <th class="th-sm">#
-                                            </th>
                                             <th class="th-sm">Transporter
                                             </th>
                                             <th class="th-sm">Make
                                             </th>
                                             <th class="th-sm">
-                                                Fleet#
-                                            <hr style="margin-top:2px; margin-bottom:2px">
-                                                TRN
+                                            (Fleet#) HRN
                                             </th>
                                             <th class="th-sm">Revenue
                                             </th>
@@ -73,13 +69,10 @@
                                     <tbody>
                                         @forelse ($vehicles as $vehicle)
                                       <tr>
-                                        <td>{{$vehicle->vehicle_number}}</td>
                                         <td>{{$vehicle->transporter ? $vehicle->transporter->name : ""}}</td>
                                         <td>{{ucfirst($vehicle->vehicle_make ? $vehicle->vehicle_make->name : "")}} {{ucfirst($vehicle->vehicle_model ? $vehicle->vehicle_model->name : "")}}</td>
-                                        <td>
-                                           {{$vehicle->fleet_number}}
-                                            <hr style="margin-top:2px; margin-bottom:2px">
-                                            {{ucfirst($vehicle->registration_number)}}
+                                        <td width="150">
+                                            {{$vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : ""}} {{ucfirst($vehicle->registration_number)}}
                                         </td>
                                         <td> 
                                             @foreach ($currencies as $currency)
