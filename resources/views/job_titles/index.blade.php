@@ -20,26 +20,7 @@
 <body class="top-navbar-fixed">
 @endsection
 
-{{-- @section('page-css')
-<link rel="stylesheet" href="css/prism/prism.css" media="screen" > <!-- USED FOR DEMO HELP - YOU CAN REMOVE IT -->
-<link rel="stylesheet" type="text/css" href="js/DataTables/datatables.min.css"/>
-@endsection --}}
 
-
-            <!-- ========== TOP NAVBAR ========== -->
-           @include('includes.navbar')
-
-            <!-- ========== WRAPPER FOR BOTH SIDEBARS & MAIN CONTENT ========== -->
-            <div class="content-wrapper">
-                <div class="content-container">
-
-                    <!-- ========== LEFT SIDEBAR ========== -->
-                    @if (isset(Auth::user()->employee->company))
-                    @include('includes.sidebar')
-                    @elseif(Auth::user()->company)
-                    @include('includes.company_sidebar')
-                    @endif
-                    <!-- /.left-sidebar -->
 
                     <div class="main-page">
                         <div class="container-fluid">
@@ -72,11 +53,6 @@
                     <!-- /.main-page -->
 
 
-
-                </div>
-                <!-- /.content-container -->
-            </div>
-            <!-- /.content-wrapper -->
 
 
         <!-- ========== PAGE JS FILES ========== -->

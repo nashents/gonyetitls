@@ -14,21 +14,7 @@
     {{Auth::user()->company->name}}
     @endif
 @endsection
-            <!-- ========== TOP NAVBAR ========== -->
-      @include('includes.navbar')
-
-            <!-- ========== WRAPPER FOR BOTH SIDEBARS & MAIN CONTENT ========== -->
-            <div class="content-wrapper">
-                <div class="content-container">
-
-                    <!-- ========== LEFT SIDEBAR ========== -->
-                    @if (isset(Auth::user()->employee->company))
-                    @include('includes.sidebar')
-                    @elseif (isset(Auth::user()->company))
-                    @include('includes.company_sidebar')
-                    @endif
-
-                    <!-- /.left-sidebar -->
+     
 
                     <div class="main-page">
                         <div class="container-fluid">
@@ -102,11 +88,6 @@
                     <!-- /.main-page -->
 
 
-
-                </div>
-                <!-- /.content-container -->
-            </div>
-            <!-- /.content-wrapper -->
 
         </div>
 @endsection

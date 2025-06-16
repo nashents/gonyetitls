@@ -9,7 +9,7 @@
     @endif
 @endsection
 @section('title')
-    Allocation|@if (isset(Auth::user()->employee->company))
+    Allocations | @if (isset(Auth::user()->employee->company))
     {{Auth::user()->employee->company->name}}
     @elseif (Auth::user()->company)
     {{Auth::user()->company->name}}
@@ -20,16 +20,7 @@
 <body class="top-navbar-fixed">
 @endsection
 
-            <!-- ========== TOP NAVBAR ========== -->
-           @include('includes.navbar')
-
-            <!-- ========== WRAPPER FOR BOTH SIDEBARS & MAIN CONTENT ========== -->
-            <div class="content-wrapper">
-                <div class="content-container">
-
-                    <!-- ========== LEFT SIDEBAR ========== -->
-                  @include('includes.sidebar')
-                    <!-- /.left-sidebar -->
+         
 
                     <div class="main-page">
                         <div class="container-fluid">
@@ -53,10 +44,6 @@
 
                     </div>
 
-
-                </div>
-                <!-- /.content-container -->
-            </div>
 
 
 

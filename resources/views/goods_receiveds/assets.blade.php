@@ -19,16 +19,7 @@
 <body class="top-navbar-fixed">
 @endsection
 
-            <!-- ========== TOP NAVBAR ========== -->
-           @include('includes.navbar')
-
-            <!-- ========== WRAPPER FOR BOTH SIDEBARS & MAIN CONTENT ========== -->
-            <div class="content-wrapper">
-                <div class="content-container">
-
-                    <!-- ========== LEFT SIDEBAR ========== -->
-                  @include('includes.sidebar')
-                    <!-- /.left-sidebar -->
+       
                     <div class="main-page">
                         <div class="container-fluid">
                             <div class="row page-title-div">
@@ -48,9 +39,7 @@
 
                        @livewire('goods-receiveds.index',['department' => 'asset'])
 
-
                     </div>
-
 
                 </div>
                 <!-- /.content-container -->

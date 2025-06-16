@@ -51,9 +51,7 @@
 
                         @livewire('fuels.show',['fuel' => $fuel])
 
-
                     </div>
-
 
                 </div>
                 <!-- /.content-container -->

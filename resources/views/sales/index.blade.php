@@ -20,16 +20,7 @@ Sales |@if (Auth::user()->employee->company)
 <body class="top-navbar-fixed">
 @endsection
 
-            <!-- ========== TOP NAVBAR ========== -->
-           @include('includes.navbar')
 
-            <!-- ========== WRAPPER FOR BOTH SIDEBARS & MAIN CONTENT ========== -->
-            <div class="content-wrapper">
-                <div class="content-container">
-
-                    <!-- ========== LEFT SIDEBAR ========== -->
-                  @include('includes.sidebar')
-                    <!-- /.left-sidebar -->
 
                     <div class="main-page">
                         <div class="container-fluid">
@@ -54,9 +45,7 @@ Sales |@if (Auth::user()->employee->company)
                     </div>
 
 
-                </div>
-                <!-- /.content-container -->
-            </div>
+        
 
 
 

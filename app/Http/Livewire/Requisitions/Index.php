@@ -568,7 +568,9 @@ class Index extends Component
                     'trailer:id,registration_number',
                     'vehicle:id,registration_number',
                     'employee:id,name,surname'])
-                    ->whereYear('in_date',date('Y'))->where('authorization','approved')->where('status',True)
+                    ->whereYear('in_date',date('Y'))
+                    ->where('authorization','approved')
+                    ->where('status',True)
                     ->where('booking_number', 'like', '%'.$this->searchBooking.'%')
                     ->orWhereHas('service_type', function ($query) {
                         return $query->where('name', 'like', '%'.$this->searchBooking.'%');

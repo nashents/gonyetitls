@@ -71,7 +71,7 @@
 
    
 
-<div class="left-sidebar fixed-sidebar bg-black-300 box-shadow tour-three">
+<div class="left-sidebar fixed-sidebar bg-black-300 box-shadow tour-three" id="sidebar" style="overflow-y: auto; height: 100vh;">
     <div class="sidebar-content">
         <div class="user-info closed">
             @if ($user)
@@ -1770,3 +1770,5 @@
     </div>
     <!-- /.sidebar-content -->
 </div>
+
+

@@ -22,24 +22,6 @@
 @section('content')
 
 
-
-{{-- @section('page-css')
-<link rel="stylesheet" href="css/prism/prism.css" media="screen" > <!-- USED FOR DEMO HELP - YOU CAN REMOVE IT -->
-<link rel="stylesheet" type="text/css" href="js/DataTables/datatables.min.css"/>
-@endsection --}}
-
-
-            <!-- ========== TOP NAVBAR ========== -->
-           @include('includes.navbar')
-
-            <!-- ========== WRAPPER FOR BOTH SIDEBARS & MAIN CONTENT ========== -->
-            <div class="content-wrapper">
-                <div class="content-container">
-
-                    <!-- ========== LEFT SIDEBAR ========== -->
-                  @include('includes.sidebar')
-                    <!-- /.left-sidebar -->
-
                     <div class="main-page">
                         <div class="container-fluid">
                             <div class="row page-title-div">
@@ -66,12 +48,6 @@
 
                     </div>
                     <!-- /.main-page -->
-
-                </div>
-                <!-- /.content-container -->
-            </div>
-            <!-- /.content-wrapper -->
-
 
         <!-- ========== PAGE JS FILES ========== -->
 

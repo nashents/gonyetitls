@@ -45,30 +45,13 @@
    @yield('body-id')
         <div class="main-wrapper">
                  <!-- ========== TOP NAVBAR ========== -->
-                    @if (Auth::user())
-                        @if (Auth::user()->employee || Auth::user()->company)
-                            @include('includes.navbar')
-                        @else
-                            @include('includes.third_party_navbar')
-                        @endif
-                    @endif
-             
+       
 
             <!-- ========== WRAPPER FOR BOTH SIDEBARS & MAIN CONTENT ========== -->
             <div class="content-wrapper">
                 <div class="content-container">
                     <!-- ========== LEFT SIDEBAR ========== -->
-                    @if (Auth::user())
-                        @if (Auth::user()->employee)
-                            @include('includes.sidebar')
-                        @elseif(Auth::user()->company)
-                            @include('includes.company_sidebar')
-                        @else
-                            @include('includes.third_party_sidebar')
-                        @endif
-                    @endif
-                  
-                 
+           
                     <!-- /.left-sidebar -->
                     @yield('content')
                 </div>

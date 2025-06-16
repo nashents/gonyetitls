@@ -13,17 +13,6 @@
 
 
 
-            <!-- ========== TOP NAVBAR ========== -->
-            @include('includes.navbar')
-
-            <!-- ========== WRAPPER FOR BOTH SIDEBARS & MAIN CONTENT ========== -->
-            <div class="content-wrapper">
-                <div class="content-container">
-
-                    <!-- ========== LEFT SIDEBAR ========== -->
-           @include('includes.company_sidebar')
-                    <!-- /.left-sidebar -->
-
                     <div class="main-page">
                         <div class="container-fluid">
                             <x-loading/>
@@ -55,11 +44,7 @@
                     <!-- /.main-page -->
 
 
-                </div>
-                <!-- /.content-container -->
-            </div>
-            <!-- /.content-wrapper -->
-
+          
 
 @endsection
 @section('extra-js')

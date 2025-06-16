@@ -24,25 +24,7 @@
 <body class="top-navbar-fixed">
 @endsection
 
-            <!-- ========== TOP NAVBAR ========== -->
-            @if (!Auth::user()->employee && Auth::user()->transporter)
-            @include('includes.third_party_navbar')
-            @else   
-            @include('includes.navbar')
-            @endif
-          
-
-            <!-- ========== WRAPPER FOR BOTH SIDEBARS & MAIN CONTENT ========== -->
-            <div class="content-wrapper">
-                <div class="content-container">
-
-                    <!-- ========== LEFT SIDEBAR ========== -->
-                    @if (!Auth::user()->employee && Auth::user()->transporter)
-                    @include('includes.third_party_sidebar')
-                    @else   
-                    @include('includes.sidebar')
-                    @endif
-                    
+        
 
                     <div class="main-page">
                         <div class="container-fluid">
@@ -67,10 +49,7 @@
                     </div>
 
 
-                </div>
-                <!-- /.content-container -->
-            </div>
-
+             
 
 
 @endsection

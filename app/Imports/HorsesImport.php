@@ -72,20 +72,22 @@ WithChunkReading
 
 
     }
+
     public function collection(Collection $rows)
     {
 
        foreach($rows as $row){
         if($row->filter()->isNotEmpty()){
 
-            $horse = Horse::where('registration_number',$row['registration_number'])->first();
+            $horse = Horse::where('registration_number', $row['registration_number'])->first();
 
             if (isset($horse)) {
                
                 $transporter = Transporter::where('transporter_number', $row['transporter_number'])->first();
                 if (isset($transporter)) {
                     $transporter_id = $transporter->id;
-                }    
+                }  
+
                 $make = HorseMake::where('name', $row['make'])->first();
                 if (isset($make)) {
                     $make_id = $make->id;
@@ -116,6 +118,7 @@ WithChunkReading
                     $horse->horse_model_id = $model->id;
                     $model_id = $model->id;
                 }
+
                 $horse->chasis_number    = $row['chasisnumber'];
                 $horse->engine_number    = $row['enginenumber'];
                 $horse->registration_number     = $row['registration_number'];
@@ -191,7 +194,6 @@ WithChunkReading
             $model_id = "";
             }
             
-
     }
        }
 
@@ -199,6 +201,7 @@ WithChunkReading
 
     public function rules(): array{
         return[
+             '*.registration_number' => 'required|string',
             // '*.transporter_number' => ['required'],
             // '*.registration_number' => ['required','unique:horses,registration_number,NULL,id,deleted_at,NULL'],
             // '*.chasis_number' => ['nullable','unique:horses,chasis_number,NULL,id,deleted_at,NULL'],

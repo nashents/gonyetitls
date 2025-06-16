@@ -39,16 +39,7 @@
 
 
 
-            <!-- ========== TOP NAVBAR ========== -->
-            @include('includes.third_party_navbar')
-
-            <!-- ========== WRAPPER FOR BOTH SIDEBARS & MAIN CONTENT ========== -->
-            <div class="content-wrapper">
-                <div class="content-container">
-
-                    <!-- ========== LEFT SIDEBAR ========== -->
-           @include('includes.third_party_sidebar')
-                    <!-- /.left-sidebar -->
+        
 
                     <div class="main-page">
                         <div class="container-fluid">
@@ -81,10 +72,6 @@
                     <!-- /.main-page -->
 
 
-                </div>
-                <!-- /.content-container -->
-            </div>
-            <!-- /.content-wrapper -->
 
 
 @endsection

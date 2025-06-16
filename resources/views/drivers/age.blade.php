@@ -10,13 +10,14 @@
     <link rel="shortcut icon" type = "image/png" href="{!! asset('images/uploads/'.Auth::user()->transporter->company->logo)!!}">
     @endif
 @endsection
-@section('title')
-    Drivers Age | @if (Auth::user()->employee)
-    {{Auth::user()->employee->company->name}}
+@section('title')  
+    Drivers Age | 
+    @if (Auth::user()->employee)
+        {{Auth::user()->employee->company->name}}
     @elseif (Auth::user()->company)
-    {{Auth::user()->company->name}}
+        {{Auth::user()->company->name}}
     @elseif (Auth::user()->transporter)
-    {{Auth::user()->transporter->company->name}}
+        {{Auth::user()->transporter->company->name}}
     @endif
 @endsection
 
@@ -24,25 +25,7 @@
 <body class="top-navbar-fixed">
 @endsection
 
-            <!-- ========== TOP NAVBAR ========== -->
-            @if (!Auth::user()->employee && Auth::user()->transporter)
-            @include('includes.third_party_navbar')
-            @else   
-            @include('includes.navbar')
-            @endif
           
-
-            <!-- ========== WRAPPER FOR BOTH SIDEBARS & MAIN CONTENT ========== -->
-            <div class="content-wrapper">
-                <div class="content-container">
-
-                    <!-- ========== LEFT SIDEBAR ========== -->
-                    @if (!Auth::user()->employee && Auth::user()->transporter)
-                    @include('includes.third_party_sidebar')
-                    @else   
-                    @include('includes.sidebar')
-                    @endif
-                    
                     
                     <div class="main-page">
                         <div class="container-fluid">
@@ -70,11 +53,7 @@
                     </div>
                     <!-- /.main-page -->
 
-                </div>
-                <!-- /.content-container -->
-            </div>
-            <!-- /.content-wrapper -->
-
+            
 
         <!-- ========== PAGE JS FILES ========== -->
 

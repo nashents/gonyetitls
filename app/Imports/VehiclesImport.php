@@ -64,141 +64,71 @@ WithChunkReading
         return  $vehicle_number;
 
     }
+
     public function collection(Collection $rows)
     {
 
-       foreach($rows as $row){
+        foreach($rows as $row){
 
-        if($row->filter()->isNotEmpty()){
-        
-            $vehicle = Vehicle::where('registration_number',$row['registration_number'])->first();
-
-        if (isset($vehicle)) {
-
-            $transporter = Transporter::where('transporter_number', $row['transporter_number'])->first();
-            if (isset($transporter)) {
-                $transporter_id = $transporter->id;
-            }   
-            if (isset($transporter_id) && $transporter_id != "") {
-                $vehicle->transporter_id     = $transporter_id;
-            } 
-            $make = VehicleMake::where('name', $row['make'])->first();
-            if (isset($make)) {
-                $make_id = $make->id;
-            }    
-            $model = VehicleModel::where('name', $row['model'])->first();
-            if (isset($model)) {
-                $model_id = $model->id;
-            }   
-          
-            if (isset($make_id) && $make_id != "") {
-                $vehicle->vehicle_make_id = $make_id;
-            }else {
-                $make = new VehicleMake;
-                $make->name = $row['make'];
-                $make->save();
-                $vehicle->vehicle_make_id = $make->id;
-                $make_id = $make->id;
+            $registrationNumber = trim($row['registration_number'] ?? '');
+            if (empty($registrationNumber)) {
+                \Log::warning('Skipped row due to empty registration_number:', $row->toArray());
+                return;
             }
-            if (isset($model_id) && $model_id != "") {
-                $vehicle->vehicle_model_id = $model_id;
-            }else {
-                $model = new VehicleModel;
-                $model->name = $row['model'];
-                $model->save();
-                $vehicle->vehicle_model_id = $model->id;
-                $model_id = $model->id;
-            }   
-            
-            
-            $vehicle->chasis_number = $row['chasisnumber'];
-            $vehicle->engine_number = $row['enginenumber'];
-            $vehicle->registration_number = $row['registration_number'];
-            $vehicle->fleet_number = $row['fleetnumber'];
-            $vehicle->year = $row['year'];
-            $vehicle->color = $row['color'];
-            $vehicle->manufacturer =  $row['manufacturer'];
-            $vehicle->country_of_origin =$row['country_of_origin'];
-            $vehicle->mileage =$row['mileage'];
-            $vehicle->hours   = $row['engine_hours'];
-            $vehicle->fuel_type =$row['fueltype'];
-            $vehicle->fuel_consumption_empty_standard    = $row['fuel_consumption_empty'] ? $row['fuel_consumption_empty'] : 0;
-            $vehicle->fuel_consumption_loaded_standard    = $row['fuel_consumption_loaded'] ? $row['fuel_consumption_loaded'] : 0;
-            $vehicle->update();
-            $make_id = "";
-            $model_id = "";
-            
+            if ($row->filter()->isNotEmpty() && !empty($registrationNumber)) {
+                $vehicle = Vehicle::where('registration_number', $registrationNumber)->first();
+                
 
-           
-        } else {
+                // Helper closure to get or create related record IDs
+                $getOrCreateId = function ($model, $column, $value) {
+                    if (!$value) return null;
+                    $record = $model::where($column, $value)->first();
+                    if ($record) {
+                        return $record->id;
+                    } else {
+                        $newRecord = new $model;
+                        $newRecord->$column = $value;
+                        $newRecord->save();
+                        return $newRecord->id;
+                    }
+                };
 
-            $transporter = Transporter::where('transporter_number', $row['transporter_number'])->first();
-            if (isset($transporter)) {
-                $transporter_id = $transporter->id;
-            }    
-            
-            $make = VehicleMake::where('name', $row['make'])->first();
-            if (isset($make)) {
-                $make_id = $make->id;
-            }  
-            $model = VehicleModel::where('name', $row['model'])->first();
-            if (isset($model)) {
-                $model_id = $model->id;
-            } 
-          
-            $vehicle = new Vehicle;
-            if (isset($make_id) && $make_id != "") {
-                $vehicle->vehicle_make_id  = $make_id;
-            }else {
-                $make = new VehicleMake;
-                $make->name = $row['make'];
-                $make->save();
-                $vehicle->vehicle_make_id = $make->id;
-                $make_id = $make->id;
-            }  
-            if (isset($model_id) && $model_id != "") {
-                $vehicle->vehicle_model_id     = $model_id;
+                $transporter_id = $getOrCreateId(Transporter::class, 'transporter_number', $row['transporter_number']);
+                $make_id       = $getOrCreateId(VehicleMake::class, 'name', $row['make']);
+                $model_id      = $getOrCreateId(VehicleModel::class, 'name', $row['model']);
+
+                if (!$vehicle) {
+                    $vehicle = new Vehicle;
+                    $vehicle->user_id = Auth::user()->id;
+                    $vehicle->vehicle_number = $this->vehicleNumber();
+                }
+
+                $vehicle->transporter_id         = $transporter_id;
+                $vehicle->vehicle_make_id        = $make_id;
+                $vehicle->vehicle_model_id       = $model_id;
+                $vehicle->chasis_number          = $row['chasisnumber'];
+                $vehicle->engine_number          = $row['enginenumber'];
+                $vehicle->registration_number    = $row['registration_number'];
+                $vehicle->fleet_number           = $row['fleetnumber'];
+                $vehicle->year                   = $row['year'];
+                $vehicle->color                  = $row['color'];
+                $vehicle->manufacturer           = $row['manufacturer'];
+                $vehicle->country_of_origin      = $row['country_of_origin'];
+                $vehicle->mileage                = $row['mileage'];
+                $vehicle->hours                  = $row['engine_hours'];
+                $vehicle->fuel_type              = $row['fueltype'];
+                $vehicle->fuel_consumption_empty_standard  = $row['fuel_consumption_empty'] ?? 0;
+                $vehicle->fuel_consumption_loaded_standard = $row['fuel_consumption_loaded'] ?? 0;
+
+                $vehicle->exists ? $vehicle->update() : $vehicle->save();
             }
-            else {
-                $model = new VehicleModel;
-                $model->name = $row['model'];
-                $model->save();
-                $vehicle->vehicle_model_id = $model->id;
-                $model_id = $model->id;
-            }   
-
-            if (isset($transporter_id) && $transporter_id != "") {
-                $vehicle->transporter_id     = $transporter_id;
-            } 
-
-            $vehicle->user_id = Auth::user()->id;
-            $vehicle->vehicle_number = $this->vehicleNumber();
-            $vehicle->chasis_number = $row['chasisnumber'];
-            $vehicle->engine_number = $row['enginenumber'];
-            $vehicle->registration_number = $row['registration_number'];
-            $vehicle->fleet_number = $row['fleetnumber'];
-            $vehicle->year = $row['year'];
-            $vehicle->color = $row['color'];
-            $vehicle->manufacturer =  $row['manufacturer'];
-            $vehicle->country_of_origin =$row['country_of_origin'];
-            $vehicle->mileage = $row['mileage'];
-            $vehicle->hours   = $row['engine_hours'];
-            $vehicle->fuel_type =$row['fueltype'];
-            $vehicle->fuel_consumption_empty_standard    = $row['fuel_consumption_empty'] ? $row['fuel_consumption_empty'] : 0;
-            $vehicle->fuel_consumption_loaded_standard    = $row['fuel_consumption_loaded'] ? $row['fuel_consumption_loaded'] : 0;
-            $vehicle->save();
-            $make_id = "";
-            $model_id = "";
-        }
-        
-
       
-       }
-    }
+        }
     }
 
     public function rules(): array{
         return[
+             '*.registration_number' => 'required|string',
             // '*.transporter_number' => ['required'],
             // '*.registration_number' => ['nullable','unique:vehicles,registration_number,NULL,id,deleted_at,NULL'],
             // '*.chasis_number' => ['nullable','unique:vehicles,chasis_number,NULL,id,deleted_at,NULL'],

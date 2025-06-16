@@ -1026,7 +1026,7 @@
                                             <div class="panel panel-info">
                                                 <div class="panel-heading">
                                                     <div class="panel-title">
-                                                        <h5>Trip Offloading Points</h5>
+                                                        <h5>Other Offloading Points</h5>
                                                     </div>
                                                 </div>
                                                 <div class="panel-body overflow-x-auto">
