@@ -1,77 +1,75 @@
 
   
-   @php
+    @php
+        $user = Auth::user();
+        $employee = $user->employee;
 
-    $user = Auth::user();
-    $employee = $user->employee;
-
-   $departments = $employee->departments;
-   foreach($departments as $department){
-       $department_names[] = $department->name;
-   }
-   $roles = $user->roles;
-   foreach($roles as $role){
-       $role_names[] = $role->name;
-   }
-   $ranks = $employee->ranks;
-   foreach($ranks as $rank){
-       $rank_names[] = $rank->name;
-   }
-   $myAllocationCount = App\Models\Allocation::where('employee_id',$employee->id)
-                           ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                           ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-   $hseq_department = App\Models\Department::where('name','HSEQ')->first();
-   $wsdepartment = App\Models\Department::where('name','Workshop')->first();
-   if (isset($wsdepartment)) {
-       $wsdepartment_head = App\Models\DepartmentHead::where('department_id',$wsdepartment->id)->where('employee_id',$employee->id)->first();
-   }
-   $stdepartment = App\Models\Department::where('name','Workshop')->first();
-   if (isset($stdepartment)) {
-       $stdepartment_head = App\Models\DepartmentHead::where('department_id',$stdepartment->id)->where('employee_id',$employee->id)->first();
-   }
-   $fndepartment = App\Models\Department::where('name','Finance')->first();
-   if (isset($fndepartment)) {
-       $fndepartment_head = App\Models\DepartmentHead::where('department_id',$fndepartment->id)->where('employee_id',$employee->id)->first();
-   }
+        $departments = $employee->departments;
+        foreach($departments as $department){
+            $department_names[] = $department->name;
+        }
+        $roles = $user->roles;
+        foreach($roles as $role){
+            $role_names[] = $role->name;
+        }
+        $ranks = $employee->ranks;
+        foreach($ranks as $rank){
+            $rank_names[] = $rank->name;
+        }
+        $myAllocationCount = App\Models\Allocation::where('employee_id',$employee->id)
+                                                ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
+                                                ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
+        $hseq_department = App\Models\Department::where('name','HSEQ')->first();
+        $wsdepartment = App\Models\Department::where('name','Workshop')->first();
+        if (isset($wsdepartment)) {
+            $wsdepartment_head = App\Models\DepartmentHead::where('department_id',$wsdepartment->id)->where('employee_id',$employee->id)->first();
+        }
+        $stdepartment = App\Models\Department::where('name','Workshop')->first();
+        if (isset($stdepartment)) {
+            $stdepartment_head = App\Models\DepartmentHead::where('department_id',$stdepartment->id)->where('employee_id',$employee->id)->first();
+        }
+        $fndepartment = App\Models\Department::where('name','Finance')->first();
+        if (isset($fndepartment)) {
+            $fndepartment_head = App\Models\DepartmentHead::where('department_id',$fndepartment->id)->where('employee_id',$employee->id)->first();
+        }
+    @endphp
   
-@endphp
-  
-  
-  @if ($employee)
-    <style>
-        .bg-black-300 {
-        background-color: {{$employee->company->color}};
-        }
-    </style>
-  @elseif($user->company)
-    <style>
-        .bg-black-300 {
-        background-color: {{$user->company->color}};
-        }
-    </style>
-  @elseif($user->transporter)
-    <style>
-        .bg-black-300 {
-        background-color: {{$user->transporter->company->color}};
-        }
-    </style>
-  @elseif($user->customer)
-    <style>
-        .bg-black-300 {
-        background-color: {{$user->customer->company->color}};
-        }
-    </style>
-  @elseif($user->agent)
-    <style>
-        .bg-black-300 {
-        background-color: {{$user->agent->company->color}};
-        }
-    </style>
-  @endif
+    
+    @if ($employee)
+        <style>
+            .bg-black-300 {
+            background-color: {{$employee->company->color}};
+            }
+        </style>
+    @elseif($user->company)
+        <style>
+            .bg-black-300 {
+            background-color: {{$user->company->color}};
+            }
+        </style>
+    @elseif($user->transporter)
+        <style>
+            .bg-black-300 {
+            background-color: {{$user->transporter->company->color}};
+            }
+        </style>
+    @elseif($user->customer)
+        <style>
+            .bg-black-300 {
+            background-color: {{$user->customer->company->color}};
+            }
+        </style>
+    @elseif($user->agent)
+        <style>
+            .bg-black-300 {
+            background-color: {{$user->agent->company->color}};
+            }
+        </style>
+    @endif
 
    
 
-<div class="left-sidebar fixed-sidebar bg-black-300 box-shadow tour-three" id="sidebar" style="overflow-y: auto; height: 100vh;">
+<div id="sidebar" style="overflow-y: auto; height: 100vh;" class="left-sidebar fixed-sidebar bg-black-300 box-shadow tour-three" >
     <div class="sidebar-content">
         <div class="user-info closed">
             @if ($user)
@@ -1724,47 +1722,48 @@
                 @endif
               
                       
-                        @if (in_array('Management', $rank_names) || in_array('Directors', $rank_names)|| in_array('Super Admin', $role_names))
-                        <li class="nav-header">
-                            <span class="">Business Settings</span>
+                @if (in_array('Management', $rank_names) || in_array('Directors', $rank_names)|| in_array('Super Admin', $role_names))
+                <li class="nav-header">
+                    <span class="">Business Settings</span>
+                </li>
+                @php
+                    $companies = App\Models\Company::where('type','!=','admin')->get();
+                    $admin_company = App\Models\Company::where('type','admin')->get()->first();
+                @endphp
+                @if ($user->is_admin())
+                    <li  class="{{ request()->routeIs('company-profile',$admin_company->id) ? 'active' : '' }}">
+                        <a href="{{route('company-profile',$admin_company->id)}}"><i class="fas fa-cog"></i><span> {{ $admin_company->name }}</span> </a>
+                    </li>
+                @endif
+                @if ($companies->count() >0)
+                    @foreach ($companies as $company)
+                        <li class="{{ request()->routeIs('company-profile',$company->id) ? 'active' : '' }}">
+                            <a href="{{route('company-profile',$company->id)}}"><i class="fas fa-cog"></i><span> {{ $company->name }}</span> </a>
                         </li>
-                        @php
-                            $companies = App\Models\Company::where('type','!=','admin')->get();
-                            $admin_company = App\Models\Company::where('type','admin')->get()->first();
-                        @endphp
-                        @if ($user->is_admin())
-                            <li  class="{{ request()->routeIs('company-profile',$admin_company->id) ? 'active' : '' }}">
-                                <a href="{{route('company-profile',$admin_company->id)}}"><i class="fas fa-cog"></i><span> {{ $admin_company->name }}</span> </a>
-                            </li>
-                        @endif
-                        @if ($companies->count() >0)
-                            @foreach ($companies as $company)
-                                <li class="{{ request()->routeIs('company-profile',$company->id) ? 'active' : '' }}">
-                                    <a href="{{route('company-profile',$company->id)}}"><i class="fas fa-cog"></i><span> {{ $company->name }}</span> </a>
-                                </li>
-                            @endforeach
-                        @endif
+                    @endforeach
+                @endif
 
-                       
-                        <li class="{{ request()->routeIs('companies.index') ? 'active' : '' }}">
-                            <a href="{{route('companies.index')}}"><i class="fas fa-plus-circle"></i> <span>Create new business</span> </a>
-                        </li>
-                        @endif
-                       
-                        <li class="nav-header">
-                            <span class="">Profile Settings</span>
-                        </li>
-                        <li class="{{ request()->routeIs('profile',$user->id) ? 'active' : '' }}">
-                            <a href="{{route('profile',$user->id)}}"><i class="fas fa-user"></i> <span>My Profile</span> </a>
-                        </li>
-                        @if (in_array('Super Admin', $role_names))
-                        <li  class="{{ request()->routeIs('audits.all') ? 'active' : '' }}">
-                            <a href="{{route('audits.all')}}"><i class="fas fa-history"></i> <span>Audits</span> </a>
-                        </li>
-                        @endif
-                        <li>
-                            <a href="{{route('logout')}}"><i class="fas fa-sign-out-alt" ></i> <span>Logout</span> </a>
-                        </li>
+                
+                <li class="{{ request()->routeIs('companies.index') ? 'active' : '' }}">
+                    <a href="{{route('companies.index')}}"><i class="fas fa-plus-circle"></i> <span>Create new business</span> </a>
+                </li>
+                @endif
+                
+                <li class="nav-header">
+                    <span class="">Profile Settings</span>
+                </li>
+                <li class="{{ request()->routeIs('profile',$user->id) ? 'active' : '' }}">
+                    <a href="{{route('profile',$user->id)}}"><i class="fas fa-user"></i> <span>My Profile</span> </a>
+                </li>
+                @if (in_array('Super Admin', $role_names))
+                <li  class="{{ request()->routeIs('audits.all') ? 'active' : '' }}">
+                    <a href="{{route('audits.all')}}"><i class="fas fa-history"></i> <span>Audits</span> </a>
+                </li>
+                @endif
+                <li>
+                    <a href="{{route('logout')}}"><i class="fas fa-sign-out-alt" ></i> <span>Logout</span> </a>
+                </li>
+            </ul>
         </div>
         <!-- /.sidebar-nav -->
     </div>

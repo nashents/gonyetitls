@@ -356,7 +356,11 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row">
+                    
+                @if (!is_null($for))
+                @if ($for === "Rehandling")
+
+                             <div class="row">
                          <div class="col-md-3">
                             <div class="form-group">
                                 <label for="name">Depart Workshop</label>
@@ -387,8 +391,6 @@
                         </div>
                     </div>
 
-                @if (!is_null($for))
-                @if ($for === "Rehandling")
                     <h5 class="underline mt-30">Rehandling Work</h5>
                     <div class="row">
                         <div class="col-md-4">

@@ -360,6 +360,48 @@ class Index extends Component
                 $this->fuel_amount = $this->unit_price * $this->fuel_quantity;
             }
         }
+
+       
+
+    public function calculateFuelConsumption($id)
+    {
+        $shift = Shift::find($id);
+        if (!$shift) return;
+
+        $fuel = $shift->fuel;
+        if (!$fuel || !is_numeric($fuel->quantity) || $fuel->quantity <= 0) return;
+
+        $rehandlings = $shift->rehandlings;
+        if (!$rehandlings || $rehandlings->isEmpty()) return;
+
+        $distance = null;
+        $hours_distance = null;
+
+        $first = $rehandlings->first();
+        $last = $rehandlings->count() > 1
+            ? $rehandlings->sortByDesc('created_at')->first()
+            : $first;
+
+        if (is_numeric($first->open_mileage) && is_numeric($last->close_mileage)) {
+            $distance = $last->close_mileage - $first->open_mileage;
+        }
+
+        if (is_numeric($first->open_hours) && is_numeric($last->close_hours)) {
+            $hours_distance = $last->close_hours - $first->open_hours;
+        }
+
+        $total_fuel = $fuel->quantity;
+
+        if (is_numeric($distance) && $distance > 0) {
+            $shift->fuel_consumption_mileage = $total_fuel / $distance;
+        }
+
+        if (is_numeric($hours_distance) && $hours_distance > 0) {
+            $shift->fuel_consumption_hours = $total_fuel / $hours_distance;
+        }
+
+        $shift->save();
+    }
     
 
     public function store(){
@@ -461,6 +503,8 @@ class Index extends Component
                 $fuel->save();
             
             }
+
+        $this->calculateFuelConsumption($shift->id);
 
         $this->dispatchBrowserEvent('hide-shiftModal');
         $this->resetInputFields();

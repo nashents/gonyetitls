@@ -3910,29 +3910,41 @@ window.addEventListener('hide-imageModal', event => {
             })
         })
     </script>
+
      @livewireScripts
 
-<script>
+   <script>
     document.addEventListener("DOMContentLoaded", function() {
         const sidebar = document.getElementById('sidebar');
+        // console.log("Script loaded, sidebar:", sidebar); 
 
-        function restoreSidebarScroll() {
-            const scrollPos = localStorage.getItem('sidebar-scroll');
-            if (scrollPos) {
-                sidebar.scrollTop = scrollPos;
+        if (sidebar) {
+            // Restore previous scroll position
+            const savedScroll = localStorage.getItem('sidebar-scroll');
+            if (savedScroll !== null) {
+                sidebar.scrollTop = parseInt(savedScroll, 10);
+                console.log("Restored sidebar scroll to:", savedScroll); // You should see this
             }
+
+            // Save new scroll position on scroll
+            sidebar.addEventListener('scroll', function() {
+                localStorage.setItem('sidebar-scroll', sidebar.scrollTop);
+                console.log("Saved sidebar scroll:", sidebar.scrollTop);
+            });
+
+            // Livewire safety restore
+            if (window.Livewire) {
+                window.Livewire.hook('message.processed', () => {
+                    const savedScroll = localStorage.getItem('sidebar-scroll');
+                    if (savedScroll !== null) {
+                        sidebar.scrollTop = parseInt(savedScroll, 10);
+                        console.log("Livewire restored sidebar scroll to:", savedScroll);
+                    }
+                });
+            }
+        } else {
+            console.warn("Sidebar element not found.");
         }
-
-        restoreSidebarScroll();
-
-        sidebar.addEventListener('scroll', function() {
-            localStorage.setItem('sidebar-scroll', sidebar.scrollTop);
-        });
-
-        // When Livewire updates the DOM
-        Livewire.hook('message.processed', (message, component) => {
-            restoreSidebarScroll();
-        });
     });
 </script>
     

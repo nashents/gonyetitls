@@ -78,7 +78,6 @@ WithChunkReading
             if ($row->filter()->isNotEmpty() && !empty($registrationNumber)) {
                 $vehicle = Vehicle::where('registration_number', $registrationNumber)->first();
                 
-
                 // Helper closure to get or create related record IDs
                 $getOrCreateId = function ($model, $column, $value) {
                     if (!$value) return null;
