@@ -69,7 +69,10 @@
                                     <th class="th-sm">
                                            Timeline
                                     </th>
-                                    <th class="th-sm">F/C
+                                    <th class="th-sm" style="width:120px;">
+                                        F/C Hours
+                                        <hr style="margin-top:2px; margin-bottom:2px">
+                                        F/C Mileage
                                     </th>
                                     <th class="th-sm">Status
                                     </th>
@@ -111,7 +114,11 @@
                                         <strong>Depart Worksite: </strong> {{$shift->depart_location_time}} <br>
                                         <strong>Arrive Workshop: </strong> {{$shift->arrive_workshop_time}} <br>
                                     </td>
-                                    <td></td>
+                                   <td>
+                                        {{$shift->fuel_consumption_hours ? $shift->fuel_consumption_hours." L/H" : ""}}
+                                            <hr style="margin-top:5px; margin-bottom:5px"> 
+                                        {{$shift->fuel_consumption_mileage ? $shift->fuel_consumption_mileage." L/Km" : ""}}
+                                    </td>
                                     <td><span class="badge bg-{{$shift->status == 1 ? "warning" : "success"}}">{{$shift->status == 1 ? "Open" : "Closed"}}</span></td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
@@ -334,21 +341,33 @@
                         </div>
                     </div>
                     <div class="row">
-                         <div class="col-md-4">
+                         <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="name">Currencies</label>
+                                <select class="form-control" wire:model.debounce.300ms="currency_id">
+                                    <option value="">Select Currency</option>
+                                    @foreach ($currencies as $currency)
+                                        <option value="{{$currency->id}}">{{$currency->symbol}} {{$currency->name}} {{$currency->fullname}}</option>
+                                    @endforeach
+                                </select>
+                                @error('currency_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="name">Date<span class="required" style="color: red">*</span></label>
                                 <input type="date" class="form-control" wire:model.debounce.300ms="date" placeholder="Enter Shift Date" required/>
                                 @error('date') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
-                         <div class="col-md-4">
+                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="name">Duty Start Time</label>
                                 <input type="time" class="form-control" wire:model.debounce.300ms="shift_start_time" placeholder="Enter Shift Start Time"/>
                                 @error('shift_start_time') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
-                         <div class="col-md-4">
+                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="name">Duty Close Time</label>
                                 <input type="time" class="form-control" wire:model.debounce.300ms="shift_end_time" placeholder="Enter Shift End Time" />
@@ -467,6 +486,22 @@
                             </div>
                         </div> 
                     </div>
+                    <div class="row">
+                         <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="name">Weight</label>
+                                <input type="time" class="form-control" wire:model.debounce.300ms="weight.0" placeholder="Enter Work Weight" />
+                                @error('weight.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                         <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="name">Freight</label>
+                                <input type="number" step="any" class="form-control" wire:model.debounce.300ms="freight.0" placeholder="Enter Work Freight" />
+                                @error('freight.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div> 
+                    </div>
                     <br>  
 
                     @foreach ($inputs as $key => $value)
@@ -549,6 +584,22 @@
                                 <i class="fa fa-times"></i>
                             </button>
                         </div>
+                    </div>
+                      <div class="row">
+                         <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="name">Weight</label>
+                                <input type="time" class="form-control" wire:model.debounce.300ms="weight.{{$value}}" placeholder="Enter Work Weight" />
+                                @error('weight.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                         <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="name">Freight</label>
+                                <input type="number" step="any" class="form-control" wire:model.debounce.300ms="freight.{{$value}}" placeholder="Enter Work Freight" />
+                                @error('freight.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div> 
                     </div>
                     <br>   
                     @endforeach

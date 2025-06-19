@@ -709,6 +709,10 @@ Route::get('trips/authorization/pending','TripController@pending')->name('trips.
 Route::get('trips/authorization/approved','TripController@approved')->name('trips.approved');
 Route::get('trips/authorization/rejected','TripController@rejected')->name('trips.rejected');
 
+Route::get('shifts/authorization/pending','ShiftController@pending')->name('shifts.pending');
+Route::get('shifts/authorization/approved','ShiftController@approved')->name('shifts.approved');
+Route::get('shifts/authorization/rejected','ShiftController@rejected')->name('shifts.rejected');
+
 Route::get('transporters/deleted','TransporterController@deleted')->name('transporters.deleted');
 Route::get('transporters/authorization/pending','TransporterController@pending')->name('transporters.pending');
 Route::get('transporters/authorization/approved','TransporterController@approved')->name('transporters.approved');

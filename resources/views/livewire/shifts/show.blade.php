@@ -7,7 +7,7 @@
 
             <ul class="nav nav-tabs nav-justified" role="tablist">
                 <li role="presentation" class="active"><a href="#basic" aria-controls="basic" role="tab" data-toggle="tab">Shift Details</a></li>
-                   @if ($shift->fuel_order == True)
+                @if ($shift->fuel_order == True)
                 <li role="presentation" ><a href="#fuel" aria-controls="fuel" role="tab" data-toggle="tab">Fuel Order</a></li>
                 @endif
                 @if ($shift->for === "Trips")

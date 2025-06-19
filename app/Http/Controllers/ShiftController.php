@@ -19,6 +19,19 @@ class ShiftController extends Controller
         return view('shifts.index');
     }
 
+        public function pending()
+    {
+        return view('shifts.pending');
+    }
+    public function approved()
+    {
+        return view('shifts.approved');
+    }
+    public function rejected()
+    {
+        return view('shifts.rejected');
+    }
+
     /**
      * Show the form for creating a new resource.
      *

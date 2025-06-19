@@ -16,16 +16,17 @@ class Show extends Component
     
     public $shift;
     public $shift_id;
-    public $assets;
+   
  
 
     public function mount($id){
         $this->shift_id = $id;
         $this->shift = Shift::find($id);
+      
     }
 
     public function render()
     {
-        return view('livewire.shifts.show');
+        return view('livewire.shifts.show',[]);
     }
 }

@@ -52,7 +52,7 @@ class Index extends Component
     public $containers;
     public $selectedContainer;
     public $currencies;
-    public $selectedCurrency ;
+    public $currency_id ;
     public $customers;
     public $customer_id;
     public $fuel_order = False;
@@ -90,7 +90,7 @@ class Index extends Component
     public $close_mileage;
     public $weight;
     public $freight;
-    public $currency_id;
+
 
      //fuel vars
 
@@ -415,6 +415,7 @@ class Index extends Component
         $shift->shift_end_time = $this->shift_end_time;
         $shift->customer_id = $this->customer_id;
         $shift->driver_id = $this->driver_id;
+        $shift->currency_id = $this->currency_id;
         $shift->cargo_id = $this->cargo_id;
         $shift->transporter_id = $this->selectedTransporter;
         $shift->horse_id = $this->equipment === "Horse" ? $this->selectedHorse : null;
@@ -436,6 +437,7 @@ class Index extends Component
                 $rehandling = new Rehandling;
                 $rehandling->user_id = Auth::user()->id;
                 $rehandling->shift_id = $shift->id;
+                $rehandling->currency_id = $this->currency_id;
                 if (isset($this->location_id[$key])){
                     $rehandling->location_id = $this->location_id[$key];
                 }
@@ -462,9 +464,6 @@ class Index extends Component
                 }
                 if (isset($this->weight[$key])){
                     $rehandling->weight = $this->weight[$key];
-                }
-                if (isset($this->currency_id[$key])){
-                    $rehandling->currency_id = $this->currency_id[$key];
                 }
                 if (isset($this->freight[$key])){
                     $rehandling->freight = $this->freight[$key];

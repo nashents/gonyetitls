@@ -1113,12 +1113,10 @@
                     </li>
                     @endif
                     @if ($employee->vehicle_assignment || in_array('Super Admin', $role_names))
-                    <li><a href="{{route('logs.index')}}"><i class="fas fa-book"></i> <span>Log Book</span></a></li>
+                        <li><a href="{{route('logs.index')}}"><i class="fas fa-book"></i> <span>Log Book</span></a></li>
                     @endif
                   
                     @if (!$user->driver)
-                   
-                   
                     <li class="has-children {{ request()->routeIs('transporters.*') ? 'active' : '' }}">
                         <a href="#"><i class="fas fa-truck"></i> <span>Transporters</span> <i class="fas fa-angle-right arrow"></i></a>
                         <ul class="child-nav">
@@ -1138,9 +1136,8 @@
                                     @if ($transportersRejectedCount>0)
                                     <span class="label label-success ml-5">{{$transportersRejectedCount}}</span>
                                     @endif
-                                </a></li>
-                               
-                                @endif
+                            </a></li>
+                            @endif  
                         </ul>
                     </li>
                     {{-- <li class="has-children {{ request()->routeIs('rehandlings.*') ? 'active' : '' }}">
@@ -1149,13 +1146,44 @@
                             <li><a href="{{route('rehandlings.index')}}" ><i class="fas fa-list "></i> <span>Manage Worksheets</span></a></li>
                         </ul>
                     </li> --}}
+                      @php
+                        $shiftsPendingCount = App\Models\Shift::where('authorization','pending')
+                        ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
+                        $shiftsApprovedCount = App\Models\Shift::where('authorization','approved')
+                        ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
+                        //  ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
+                        //  ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
+                        $shiftsRejectedCount = App\Models\Shift::where('authorization','rejected')
+                        ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
+                        $department = App\Models\Department::where('name','Transport & Logistics')->first();
+                        if (isset($department)) {
+                            $department_head = App\Models\DepartmentHead::where('department_id',$department->id)->where('employee_id',$employee->id)->first();
+                        }
+                       
+                    @endphp
                     <li class="has-children {{ request()->routeIs('shifts.*') ? 'active' : '' }}">
                         <a href="#"><i class="fas fa-clock"></i> <span>Shifts</span> <i class="fas fa-angle-right arrow"></i></a>
                         <ul class="child-nav">
-                            <li><a href="{{route('shifts.index')}}" ><i class="fas fa-list "></i> <span>Manage Shifts</span></a></li>
+                            <li><a href="{{route('shifts.index')}}" ><i class="fas fa-list "></i> <span>Manage Shifts</span></a></li>          
+                            @if (in_array('Management', $rank_names) || isset($department_head) || in_array('Super Admin', $role_names))
+                                <li><a href="{{route('shifts.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Shifts</span>
+                                    @if ($shiftsPendingCount>0)
+                                        <span class="label label-success ml-5">{{$shiftsPendingCount}}</span>
+                                    @endif
+                                </a></li>
+                                <li><a href="{{route('shifts.approved')}}" ><i class="fas fa-check "></i> <span>Approved Shifts</span>
+                                    @if ($shiftsApprovedCount>0)
+                                        <span class="label label-success ml-5">{{$shiftsApprovedCount}}</span>
+                                    @endif
+                                </a></li>
+                                <li><a href="{{route('shifts.rejected')}}" ><i class="fas fa-ban "></i> <span>Rejected Shifts</span>
+                                    @if ($shiftsRejectedCount>0)
+                                        <span class="label label-success ml-5">{{$shiftsRejectedCount}}</span>
+                                    @endif
+                                </a></li>
+                            @endif
                         </ul>
                     </li>
-                   
                     @endif
                     @endif
                    
