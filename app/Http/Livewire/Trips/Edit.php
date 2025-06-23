@@ -1799,8 +1799,6 @@ class Edit extends Component
                     
                     }
             
-                  
-            
                     $trip_expense = TripExpense::where('fuel_id',$fuel->id)->where('trip_id',$trip->id)->first();
                     
                     if (isset($trip_expense)) {
@@ -1826,10 +1824,6 @@ class Edit extends Component
                     
           }else{
 
-          
-               
-                $container = Container::find($this->selectedContainer);
-        
                 $fuel = new Fuel;
                 $fuel->user_id = $this->user->id;
                 $fuel->order_number = $this->orderNumber();
@@ -1865,9 +1859,7 @@ class Edit extends Component
                 $fuel->reason = $trip->reason;
 
                 $fuel->save();
-        
-              
-        
+
                 $trip_expense = new TripExpense;
                 $trip_expense->user_id = $this->user->id;
                 $trip_expense->trip_id = $trip->id;
@@ -1895,6 +1887,84 @@ class Edit extends Component
                 );
         
                 $trip_expense->save();
+                
+                if($fuel->authorization == "approved"){
+
+                     $container = Container::find($fuel->container_id);
+
+                      if ($fuel->horse) {
+                        $horse = Horse::find($fuel->horse_id);
+                        if((isset($horse->fuel_balance) && is_numeric($horse->fuel_balance)) && (isset($fuel->quantity) && is_numeric($fuel->quantity))){
+                            $horse->fuel_balance = $horse->fuel_balance + $fuel->quantity;
+                        }
+                        $current_mileage = $horse->mileage;
+                        if ($fuel->odometer >  $current_mileage) {
+                            $horse->mileage = $fuel->odometer;
+                        }
+                      
+                        $horse->update();
+                    }
+                    if ($fuel->vehicle) {
+                        $vehicle = Vehicle::find($fuel->vehicle_id);
+                        if((isset($vehicle->fuel_balance) && is_numeric($vehicle->fuel_balance)) && (isset($fuel->quantity) && is_numeric($fuel->quantity))){
+                            $vehicle->fuel_balance = $vehicle->fuel_balance + $fuel->quantity;
+                        }
+                        $current_mileage = $vehicle->mileage;
+                        if ($fuel->odometer >  $current_mileage) {
+                            $vehicle->mileage = $fuel->odometer;
+                        }
+                        $vehicle->update();
+                    }
+
+                    $last_mileage = Mileage::whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
+                    if(isset($last_mileage)){
+                        if($last_mileage < $fuel->odometer){
+                            $mileage = new Mileage;
+                            $mileage->user_id = Auth::user()->id;
+                            $mileage->trip_id = $fuel->trip_id ? $fuel->trip_id : Null;
+                            $mileage->fuel_id = $fuel->id;
+                            $mileage->horse_id = $fuel->horse_id;
+                            $mileage->vehicle_id = $fuel->vehicle_id;
+                            $mileage->mileage = $fuel->odometer;
+                            $mileage->date = $fuel->date;
+                            $mileage->category = "Fuel Order";
+                            $mileage->save();
+                        }
+                    }
+                
+                    $last_hours = Hour::whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
+                    if(isset($last_hours)){
+                        if($last_hours < $fuel->hours){
+                            $hours = new Hour;
+                            $hours->user_id = Auth::user()->id;
+                            $hours->trip_id = $fuel->trip_id ? $fuel->trip_id : Null;
+                            $hours->fuel_id = $fuel->id;
+                            $hours->horse_id = $fuel->horse_id;
+                            $hours->vehicle_id = $fuel->vehicle_id;
+                            $hours->hours = $fuel->hours;
+                            $hours->date = $fuel->date;
+                            $hours->category = "Fuel Order";
+                            $hours->save();
+                        }
+                    }
+
+                    if($container && $container->purchase_type == "Bulk Buy"){
+                        if($container->balance && is_numeric($container->balance) && ($fuel->quantity && is_numeric($fuel->quantity)) ){
+                            if($container->balance >= $fuel->quantity){
+                                $container->balance = $container->balance - $fuel->quantity;
+                            } 
+                        }
+                        if($container->account_balance && is_numeric($container->account_balance) && ($fuel->amount && is_numeric($fuel->amount)) ){
+                            if($container->account_balance >= $fuel->amount){
+                                $container->account_balance = $container->account_balance - $fuel->amount;
+                            }
+                        }
+                        $container->update();
+                    } 
+                }
+
+            
+          
             
             }
     

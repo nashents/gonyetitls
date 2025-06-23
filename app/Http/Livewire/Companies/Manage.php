@@ -34,6 +34,8 @@ class Manage extends Component
     public $company_id;
     public $user_id;
     public $admin_id;
+    public $currencies;
+    public $currency_id;
 
     public function mount(){
         if (Auth::user()->is_admin()) {
@@ -41,8 +43,8 @@ class Manage extends Component
         }else {
             $this->companies = Company::where('type','!=','admin')->get();
         }
-        $this->roles = Role::all();
-        $this->currencies = Currency::all();
+        $this->roles = Role::orderBy('name','asc')->get();
+        $this->currencies = Currency::orderBy('name','asc')->get();
         $this->noreply = 'noreply@gonyetitls.co.zw';
     }
 

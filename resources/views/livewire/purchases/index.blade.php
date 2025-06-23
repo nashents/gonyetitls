@@ -150,7 +150,7 @@
                                             @endphp
                                             @if ($user)
                                                 <br>
-                                               <small><strong style="background-color: orange">AuthorizedBy: {{$purchase->authorization_comments}}</strong></small>  
+                                               <small><strong style="background-color: orange">AuthBy: {{$user->name}} {{$user->surname}}</strong></small>  
                                             @endif
                                             @if ($purchase->authorization_comments)
                                             <br>
@@ -168,7 +168,7 @@
                                                     @if ($purchase->authorization == "approved")
                                                     <li><a href="{{route('purchases.preview',$purchase->id)}}"  ><i class="fas fa-file-invoice color-primary"></i> Preview</a></li>
                                                     @if ($purchase->is_sent == False)
-                                                         <li><a href="" wire:click.prevent="markSent({{$purchase->id}})"  ><i class="fas fa-file-invoice color-primary"></i> Mark as sent</a></li>
+                                                         <li><a href="" wire:click.prevent="markSent({{$purchase->id}})"  ><i class="fas fa-check color-secondary"></i> Mark as sent</a></li>
                                                     @endif
                                                     @endif
                                                     @if ($purchase->authorization != "approved")

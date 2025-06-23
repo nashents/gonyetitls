@@ -113,7 +113,7 @@
                                             <select wire:model.debounce.300ms="selectedPurchaseProduct.0" class="form-control" required>
                                                 <option value="">Select Product</option>
                                                 @foreach ($purchase_products as $purchase_product)
-                                                    <option value="{{$purchase_product->product->id}}"> {{$purchase_product->product->brand ? $purchase_product->product->brand->name : ""}} {{$purchase_product->product ? $purchase_product->product->name : ""}} {{$purchase_product->product ? $purchase_product->product->identification_number : ""}}</option>
+                                                    <option value="{{$purchase_product->id}}"> {{$purchase_product->product->brand ? $purchase_product->product->brand->name : ""}} {{$purchase_product->product ? $purchase_product->product->name : ""}} {{$purchase_product->product ? $purchase_product->product->identification_number : ""}}</option>
                                                 @endforeach
                                             </select>
                                             <small>  <a href="{{ route('products.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Product</a></small> 
@@ -219,7 +219,7 @@
                                                     <select wire:model.debounce.300ms="selectedPurchaseProduct.{{$value}}" class="form-control" required>
                                                         <option value="">Select Product</option>
                                                         @foreach ($purchase_products as $purchase_product)
-                                                            <option value="{{$purchase_product->product->id}}"> {{$purchase_product->product->brand ? $purchase_product->product->brand->name : ""}} {{$purchase_product->product ? $purchase_product->product->name : ""}} {{$purchase_product->product ? $purchase_product->product->identification_number : ""}}</option>
+                                                            <option value="{{$purchase_product->id}}"> {{$purchase_product->product->brand ? $purchase_product->product->brand->name : ""}} {{$purchase_product->product ? $purchase_product->product->name : ""}} {{$purchase_product->product ? $purchase_product->product->identification_number : ""}}</option>
                                                         @endforeach
                                                     </select>
                                                     <small>  <a href="{{ route('products.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Product</a></small> 

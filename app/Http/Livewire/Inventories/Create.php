@@ -158,6 +158,7 @@ class Create extends Component
         unset($this->documentInputs[$m]);
     }
 
+
     public function mount(){
           $this->company = Auth::user()->employee->company;
         $this->products = Product::with('brand')->orderBy('name','asc')->where('department','inventory')->where('status',True)->where('buy',True)->get()->sortBy('brand.name');

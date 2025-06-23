@@ -32,6 +32,7 @@
                                 <div class="col-md-6">
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
+                                        <li><a href="{{route('fuels.index')}}"><i class="fa fa-list"></i> All Fuel Orders</a></li>
             							<li class="active"> <i class="fa fa-check"></i> Approved Fuel Orders</li>
             						</ul>
                                 </div>
