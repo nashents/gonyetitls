@@ -159,7 +159,7 @@ class Index extends Component
                 ->with(['product.brand', 'currency']) // Eager load relationships
                 ->where('inventories.disposed', 0)
                 ->where('inventories.status', 1)
-                ->orderBy('products.name', 'asc') // Order by product name
+                ->orderBy('created_at', 'desc') // Order by product name
                 ->paginate(10)
             ]);
         }

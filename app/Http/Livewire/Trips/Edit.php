@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Trips;
 
+use Carbon\Carbon;
 use App\Models\Bill;
 use App\Models\Fuel;
 use App\Models\Hour;
@@ -16,6 +17,7 @@ use App\Models\TopUp;
 use App\Models\Border;
 use App\Models\Broker;
 use App\Models\Driver;
+use App\Models\Account;
 use App\Models\Company;
 use App\Models\Expense;
 use App\Models\Mileage;
@@ -42,6 +44,7 @@ use App\Models\Measurement;
 use App\Models\Transporter;
 use App\Models\TripExpense;
 use App\Models\DeliveryNote;
+use App\Models\ExchangeRate;
 use App\Models\LoadingPoint;
 use App\Models\ClearingAgent;
 use Livewire\WithFileUploads;
@@ -153,6 +156,7 @@ class Edit extends Component
     public $currencies;
     public $selectedCurrency;
     public $selected_currency;
+    public $selected_fuel_currency;
     public $amount = [];
     public $selectedCargo;
     public $cost_of_sales;
@@ -1407,6 +1411,41 @@ class Edit extends Component
       
     }
 
+         public function billNumber(){
+
+        if (isset(Auth::user()->company)) {
+            $str = Auth::user()->company->name;
+            $words = explode(' ', $str);
+            if (isset($words[1][0])) {
+                $initials = $words[0][0].$words[1][0];
+            }else {
+                $initials = $words[0][0];
+            }
+        }elseif (isset(Auth::user()->employee->company)) {
+            $str = Auth::user()->employee->company->name;
+            $words = explode(' ', $str);
+            if (isset($words[1][0])) {
+                $initials = $words[0][0].$words[1][0];
+            }else {
+                $initials = $words[0][0];
+            }
+        }
+
+        $bill = Bill::latest()->orderBy('id','desc')->first();
+
+        if (!$bill) {
+            $bill_number =  $initials .'B'. str_pad(1, 5, "0", STR_PAD_LEFT);
+        }else {
+            $number = $bill->id + 1;
+            $bill_number =  $initials .'B'. str_pad($number, 5, "0", STR_PAD_LEFT);
+        }
+
+        return  $bill_number;
+
+
+    }
+
+
 
       public function update(){
  
@@ -1665,6 +1704,8 @@ class Edit extends Component
             }
           }
 
+     
+
          
           $this->syncRelations($trip);
     
@@ -1917,6 +1958,7 @@ class Edit extends Component
                     }
 
                     $last_mileage = Mileage::whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
+                    
                     if(isset($last_mileage)){
                         if($last_mileage < $fuel->odometer){
                             $mileage = new Mileage;
@@ -1933,6 +1975,7 @@ class Edit extends Component
                     }
                 
                     $last_hours = Hour::whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
+
                     if(isset($last_hours)){
                         if($last_hours < $fuel->hours){
                             $hours = new Hour;
@@ -1961,6 +2004,53 @@ class Edit extends Component
                         }
                         $container->update();
                     } 
+
+                    $account = Account::where('name','Trip Expense')->get()->first();
+
+                    $bill = new Bill;
+                    $bill->user_id = Auth::user()->id;
+                    $bill->bill_number = $this->billNumber();
+                    $bill->trip_id = $trip->id;
+                    $bill->fuel_id = $trip_expense->fuel_id;
+                    $bill->trip_expense_id = $trip_expense->id;
+                    $bill->horse_id = $trip->horse_id;
+                    $bill->vehicle_id = $trip->vehicle_id;
+                    if (isset($account)) {
+                        $bill->account_id = $account->id;
+                        $bill->account_type_id = $account->account_type->id;
+                    }
+                    if($fuel->container->purchase_type == "Once Off Buy"){
+                        $bill->to_be_paid = True;
+                    }else{
+                        $bill->to_be_paid = False;
+                    }
+                    $bill->driver_id = $trip->driver_id;
+                    $bill->category = "Trip Expense - Fuel Order";
+                    $bill->bill_date = date("Y-m-d");
+                    $bill->currency_id = $trip_expense->currency_id;
+                    $bill->subtotal = $trip_expense->amount;
+                    $bill->total = $trip_expense->amount;
+                    $bill->exchange_amount = $trip_expense->exchange_amount;
+                    $bill->balance = $trip_expense->amount;
+                    $bill->authorized_by_id = $fuel->authorized_by_id;
+                    $bill->authorization = $fuel->authorization;
+                    $bill->comments = $fuel->reason;
+                    $bill->save();
+
+                    $bill_expense = new BillExpense;
+                    $bill_expense->user_id = Auth::user()->id;
+                    $bill_expense->bill_id = $bill->id;
+                    if (isset($account)) {
+                        $bill_expense->account_id = $account->id;
+                        $bill_expense->account_type_id = $account->account_type->id;
+                    }
+                    $bill_expense->currency_id = $bill->currency_id;
+                    $bill_expense->expense_id = $trip_expense->expense_id;
+                    $bill_expense->qty = 1;
+                    $bill_expense->amount = $trip_expense->amount;
+                    $bill_expense->subtotal = $trip_expense->amount;
+                    $bill_expense->subtotal_incl = $trip_expense->amount;
+                    $bill_expense->save();
                 }
 
             
@@ -2080,6 +2170,7 @@ class Edit extends Component
                 $trip_expense->save();
 
                 if ($trip->authorization === "approved") {
+
                     $expense = Expense::where('name','Transporter Payment')->get()->first();
                     $account = Account::where('name','Trip Expense')->get()->first();
 
@@ -2100,9 +2191,9 @@ class Edit extends Component
                     $bill->total = $trip_expense->amount;
                     $bill->balance = $trip_expense->amount;
 
-                    $bill->authorized_by_id = Auth::user()->id;
-                    $bill->authorization = $this->authorize;
-                    $bill->comments = $this->comments;
+                    $bill->authorized_by_id = $trip->authorized_by_id;
+                    $bill->authorization = $trip->authorization;
+                    $bill->comments = $trip->reason;
                     $bill->save();
 
                    
@@ -2167,18 +2258,21 @@ class Edit extends Component
     }
     public function updatedSelectedFuelCurrency($id){
         if(!is_null($id)){
-            $this->selected_currency = Currency::find($id);
-             $predefined_exchange_rate = ExchangeRate::where('currency_id', $id)
-                ->where('status', 1)
-                ->where('expiry', '>', Carbon::today())
-                ->first();
-            
-            if ($predefined_exchange_rate) {   
-                $this->fuel_exchange_rate = $predefined_exchange_rate->exchange_rate;
+            $this->selected_fuel_currency = Currency::find($id);
+            if($id != $this->company->currency_id){
+                $predefined_exchange_rate = ExchangeRate::where('currency_id', $id)
+                    ->where('status', 1)
+                    ->where('expiry', '>', Carbon::today())
+                    ->first();
+                
+                if ($predefined_exchange_rate) {   
+                    $this->fuel_exchange_rate = $predefined_exchange_rate->exchange_rate;
+                }
             }
+           
+            
         }
     }
-
         public function updatedRate(){
             $this->calculateFreight();
     }

@@ -1198,18 +1198,17 @@
                                    </div>
                                    @endif
                                    <div class="row">
-                                       
-                                       <div class="col-md-4">
+                                       <div class="col-md-3">
                                            <div class="form-group">
                                                <label for="odometer">Horse Mileage<span class="required" style="color: red">*</span></label>
                                                <input type="number" step="any" class="form-control" wire:model.debounce.300ms="odometer" required placeholder="Enter Horse Mileage" required/>
                                                @error('odometer') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                            </div>
                                        </div>
-                                        <div class="col-md-4">
+                                        <div class="col-md-3">
                                             <div class="form-group">
                                                 <label for="odometer">Engine Hours</label>
-                                                <input type="number" step="any" class="form-control" wire:model.debounce.300ms="hours" required placeholder="Enter Engine Hours"/>
+                                                <input type="number" step="any" class="form-control" wire:model.debounce.300ms="hours" placeholder="Enter Engine Hours"/>
                                                 @error('hours') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         </div>

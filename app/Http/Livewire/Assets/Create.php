@@ -31,6 +31,7 @@ use App\Models\CategoryValue;
 use App\Models\GoodsReceived;
 use Livewire\WithFileUploads;
 use App\Models\AttributeValue;
+use App\Models\PurchaseProduct;
 use App\Models\ProductAttribute;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
@@ -409,6 +410,7 @@ class Create extends Component
         if (!is_null($id)) {
             $purchase_product = PurchaseProduct::find($id);
             if (isset($purchase_product)) {
+                 $this->selectedProduct[$key] = $purchase_product->product_id;
                 $this->amount[$key] = $purchase_product->amount;
                 $this->item_description[$key] = $purchase_product->product->description;
                 $this->qty[$key] = $purchase_product->qty;

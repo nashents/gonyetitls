@@ -450,6 +450,7 @@ class Create extends Component
         if (!is_null($id)) {
             $purchase_product = PurchaseProduct::find($id);
             if (isset($purchase_product)) {
+                $this->selectedProduct[$key] = $purchase_product->product_id;
                 $this->amount[$key] = $purchase_product->amount;
                 $this->item_description[$key] = $purchase_product->product->description;
                 $this->qty[$key] = $purchase_product->qty;
@@ -522,11 +523,13 @@ class Create extends Component
         if (isset($this->selectedProduct)) {
             
             foreach ($this->selectedProduct as $key => $value) {
+
     
             if (isset($this->qty[$key])) {
     
                 for ($i=0; $i < $this->qty[$key] ; $i++) { 
-    
+                       
+                   
                     $inventory = new Inventory;
                     $inventory->user_id = Auth::user()->id;
                     $inventory->vendor_id = $this->vendor_id ? $this->vendor_id : NULL;
@@ -594,6 +597,7 @@ class Create extends Component
                     $inventory->disposed = 0;
                     $inventory->save();
 
+                    
                     if ($this->to_bills == True) {
                       
                     $bill = new Bill;
