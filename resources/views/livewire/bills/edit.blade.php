@@ -146,7 +146,7 @@
                              
                             </div>
                             <div class="row">
-                                <div class="col-md-2">
+                                <div class="col-md-3">
                                     <div class="form-group">
                                         <label for="country">Currencies<span class="required" style="color: red">*</span></label>
                                         <select wire:model.debounce.300ms="selectedCurrency" class="form-control" required>
@@ -159,35 +159,35 @@
                                         @error('selectedCurrency') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         <small>  <a href="{{ route('currencies.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Currency</a></small> 
                                     </div>
-                                    @if (!is_null($selectedCurrency))
-                                    @if (Auth::user()->employee->company)
-                                        @if ($selectedCurrency != Auth::user()->employee->company->currency_id)
-                                        <div class="form-group">
-                                            <label for="customer">Conversion Rate</label>
-                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="exchange_rate"  placeholder="Exchange Rate {{$selected_currency ? "From ".$selected_currency->name : ""}} {{Auth::user()->employee->company->currency ? "To ".Auth::user()->employee->company->currency->name : ""}}" >
-                                            @error('exchange_rate') <span class="text-danger error">{{ $message }}</span>@enderror
-                                            <small style="color: green">{{$selected_currency ? " 1 ".$selected_currency->name." is how much in" : ""}} {{Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->name." ?" : ""}}</small>
-                                            <small>{{$exchange_amount ? "The converted amount is: ".$exchange_amount : ""}}</small>
-                                        </div> 
+                                     @if (!is_null($selectedCurrency))
+                                        @if ($company)
+                                            @if ($selectedCurrency != $company->currency_id)
+                                            <div class="form-group">
+                                                <label for="customer">Conversion Rate<span class="required" style="color: red">*</span></label>
+                                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="exchange_rate"  placeholder="Exchange Rate {{$selected_currency ? "From ".$selected_currency->name : ""}} {{$company->currency ? "To ".$company->currency->name : ""}}" required>
+                                                @error('exchange_rate') <span class="text-danger error">{{ $message }}</span>@enderror
+                                                <small style="color: green">{{$selected_currency ? " 1 ".$selected_currency->name." is how much in" : ""}} {{$company->currency ? $company->currency->name." ?" : ""}}</small>
+                                                <small>{{$exchange_amount ? "The converted amount is: ".$exchange_amount : ""}}</small> <br>
+                                            </div> 
+                                            @endif
                                         @endif
                                     @endif
-                                    @endif
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <div class="form-group">
                                         <label for="name">Bill Date<span class="required" style="color: red">*</span></label>
                                         <input type="date" class="form-control" wire:change="billDate()" wire:model.debounce.300ms="bill_date" placeholder="Enter Bill Date" required >
                                         @error('bill_date') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <div class="form-group">
                                         <label for="name">Due Date</label>
                                         <input type="date" class="form-control" wire:model.debounce.300ms="due_date" placeholder="Enter Due Date"  >
                                         @error('due_date') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-5">
                                     <div class="form-group">
                                         <label for="subheading">Notes</label>
                                         <textarea class="form-control" wire:model.debounce.300ms="notes" cols="30" rows="3"></textarea>

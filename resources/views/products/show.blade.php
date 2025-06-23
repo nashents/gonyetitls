@@ -9,7 +9,7 @@
     @endif
 @endsection
 @section('title')
-    Product|@if (isset(Auth::user()->employee->company))
+    Products | @if (isset(Auth::user()->employee->company))
     {{Auth::user()->employee->company->name}}
     @elseif (Auth::user()->company)
     {{Auth::user()->company->name}}
@@ -101,6 +101,11 @@
     <script>
     $(document).ready( function () {
         $('#attributesTable').DataTable();
+    } );
+    </script>
+    <script>
+    $(document).ready( function () {
+        $('#itemsTable').DataTable();
     } );
     </script>
 @endsection

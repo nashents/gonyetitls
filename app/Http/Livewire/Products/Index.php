@@ -2,6 +2,8 @@
 
 namespace App\Http\Livewire\Products;
 
+use App\Models\Tyre;
+use App\Models\Asset;
 use App\Models\Brand;
 use App\Models\Store;
 use App\Models\Value;
@@ -9,10 +11,12 @@ use App\Models\Product;
 use Livewire\Component;
 use App\Models\Category;
 use App\Models\Attribute;
+use App\Models\Inventory;
 use App\Models\VehicleMake;
 use App\Models\VehicleModel;
 use Livewire\WithPagination;
 use Livewire\WithFileUploads;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Intervention\Image\Facades\Image;
 use Illuminate\Support\Facades\Session;
@@ -26,14 +30,80 @@ class Index extends Component
     public $department;
     protected $queryString = ['search'];
     private $products;
+    public $base_currency;
 
     public function mount($category){
         $this->department = $category;
+        $this->base_currency = Auth::user()->employee->company->currency;
         $this->resetPage();
     }
     public function updatingSearch()
     {
         $this->resetPage();
+    }
+
+    public function calculateTotalValue($id)
+    {
+        $product = Product::find($id);
+        if (!$product) {
+            return null;
+        }
+
+        $currency_id = Auth::user()->employee->company->currency_id;
+        $total_value = 0;
+
+        $relations = [
+            'tyre' => 'tyres',
+            'inventory' => 'inventories',
+            'asset' => 'assets'
+        ];
+
+        if (!isset($relations[$this->department])) {
+            return null; // invalid department
+        }
+
+        $relation = $relations[$this->department];
+
+        $items = $product->$relation;
+
+        $value = $items->where('status', 1)
+                    ->where('currency_id', $currency_id)
+                    ->whereNotNull('total')
+                    ->sum('total');
+
+        $value_exchange = $items->where('status', 1)
+                                ->where('currency_id', '!=', $currency_id)
+                                ->whereNotNull('exchange_amount')
+                                ->sum('exchange_amount');
+
+        if (is_numeric($value) && is_numeric($value_exchange)) {
+            $total_value = $value + $value_exchange;
+        }
+
+        return $total_value;
+    }
+
+    public function calculateAvgLeadTime($id){
+
+        if ($this->department == "inventory") {
+            $averageLeadTime = Inventory::select(DB::raw('AVG(DATEDIFF(inventories.created_at, purchases.created_at)) as avg_lead_time'))
+            ->join('purchases', 'inventories.purchase_id', '=', 'purchases.id')
+            ->where('inventories.product_id', $id) // Filter by specific product_id
+            ->value('avg_lead_time');
+        }elseif($this->department == "tyre") {
+            $averageLeadTime = Tyre::select(DB::raw('AVG(DATEDIFF(tyres.created_at, purchases.created_at)) as avg_lead_time'))
+            ->join('purchases', 'tyres.purchase_id', '=', 'purchases.id')
+            ->where('tyres.product_id', $id) // Filter by specific product_id
+            ->value('avg_lead_time');
+        }elseif ($this->department == "assset") {
+            $averageLeadTime = Asset::select(DB::raw('AVG(DATEDIFF(assets.created_at, purchases.created_at)) as avg_lead_time'))
+            ->join('purchases', 'assets.purchase_id', '=', 'purchases.id')
+            ->where('assets.product_id', $id) // Filter by specific product_id
+            ->value('avg_lead_time');
+        }
+       
+       return $averageLeadTime;
+
     }
 
     public function render()

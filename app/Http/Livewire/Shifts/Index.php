@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Shifts;
 
+use Carbon\Carbon;
 use App\Models\Fuel;
 use App\Models\Work;
 use App\Models\Cargo;
@@ -18,6 +19,7 @@ use App\Models\Location;
 use App\Models\Container;
 use App\Models\Rehandling;
 use App\Models\Transporter;
+use App\Models\ExchangeRate;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Excel;
 use App\Exports\ShiftsExport;
@@ -52,7 +54,8 @@ class Index extends Component
     public $containers;
     public $selectedContainer;
     public $currencies;
-    public $currency_id ;
+    public $selectedCurrency;
+    public $selected_currency;
     public $customers;
     public $customer_id;
     public $fuel_order = False;
@@ -90,6 +93,10 @@ class Index extends Component
     public $close_mileage;
     public $weight;
     public $freight;
+    public $exchange_rate;
+    public $exchange_amount;
+
+
 
 
      //fuel vars
@@ -170,6 +177,40 @@ class Index extends Component
     }
 
 
+    public function updatedSelectedCurrency($id){
+        if(!is_null($id)){
+            $this->selected_currency = Currency::find($id);
+            if($id != $this->company->currency_id){
+                $predefined_exchange_rate = ExchangeRate::where('currency_id', $id)
+                    ->where('status', 1)
+                    ->where('expiry', '>', Carbon::today())
+                    ->first();
+                if ($predefined_exchange_rate) {   
+                    $this->exchange_rate = $predefined_exchange_rate->exchange_rate;
+                }
+            }
+        }
+    }
+
+    public function updatedSelectedFuelCurrency($id){
+        if(!is_null($id)){
+            $this->selected_fuel_currency = Currency::find($id);
+            if($id != $this->company->currency_id){
+                $predefined_exchange_rate = ExchangeRate::where('currency_id', $id)
+                    ->where('status', 1)
+                    ->where('expiry', '>', Carbon::today())
+                    ->first();
+                
+                if ($predefined_exchange_rate) {   
+                    $this->fuel_exchange_rate = $predefined_exchange_rate->exchange_rate;
+                }
+            }
+           
+            
+        }
+    }
+    
+
        public function refresh($category){
 
         if($category == "works"){
@@ -197,11 +238,7 @@ class Index extends Component
                 }
             }
 
-             public function updatedSelectedFuelCurrency($id){
-                    if(!is_null($id)){
-                        $this->selected_fuel_currency = Currency::find($id);
-                    }
-                }
+            
 
                     public function updatedAllHorses($status){
         if(!is_null($status)){
@@ -402,6 +439,8 @@ class Index extends Component
 
         $shift->save();
     }
+
+    
     
 
     public function store(){
@@ -415,7 +454,7 @@ class Index extends Component
         $shift->shift_end_time = $this->shift_end_time;
         $shift->customer_id = $this->customer_id;
         $shift->driver_id = $this->driver_id;
-        $shift->currency_id = $this->currency_id;
+        $shift->currency_id = $this->se;
         $shift->cargo_id = $this->cargo_id;
         $shift->transporter_id = $this->selectedTransporter;
         $shift->horse_id = $this->equipment === "Horse" ? $this->selectedHorse : null;
@@ -429,6 +468,8 @@ class Index extends Component
         $shift->depart_location_time = $this->depart_location_time;
         $shift->arrive_workshop_time = $this->arrive_workshop_time;
         $shift->date = $this->date;
+        $shift->exchange_amount = $this->exchange_amount;
+        $shift->exchange_rate = $this->exchange_rate;
         $shift->status = '1';
         $shift->save();
 
@@ -437,7 +478,7 @@ class Index extends Component
                 $rehandling = new Rehandling;
                 $rehandling->user_id = Auth::user()->id;
                 $rehandling->shift_id = $shift->id;
-                $rehandling->currency_id = $this->currency_id;
+                $rehandling->currency_id = $this->selectedCurrency;
                 if (isset($this->location_id[$key])){
                     $rehandling->location_id = $this->location_id[$key];
                 }
@@ -589,6 +630,8 @@ class Index extends Component
             $shift->arrive_location_time = $this->arrive_location_time;
             $shift->depart_location_time = $this->depart_location_time;
             $shift->arrive_workshop_time = $this->arrive_workshop_time;
+            $shift->exchange_amount = $this->exchange_amount;
+            $shift->exchange_rate = $this->exchange_rate;
             $shift->date = $this->date;
             $shift->status = $this->status;
             $shift->update();
@@ -666,6 +709,15 @@ class Index extends Component
     }
     public function render()
     {
+
+        if ((isset($this->fuel_exchange_rate) && $this->fuel_exchange_rate > 0 && is_numeric($this->fuel_exchange_rate)) && (isset($this->fuel_amount) && $this->fuel_amount > 0 && is_numeric($this->fuel_amount)) ) {
+            $this->fuel_exchange_amount = $this->fuel_exchange_rate * $this->fuel_amount;
+        }
+
+        if ((isset($this->exchange_rate) && $this->exchange_rate > 0)  &&  ( isset($this->total) && $this->total > 0 )) {
+            $this->exchange_amount = $this->exchange_rate * $this->total;
+        }
+
             if (isset($this->from) && isset($this->to)) {
                 if (isset($this->search)) {
                     return view('livewire.shifts.index',[

@@ -17,6 +17,7 @@ use App\Models\Purchase;
 use App\Models\Inventory;
 use App\Models\BillExpense;
 use App\Models\Measurement;
+use App\Models\ExchangeRate;
 use App\Models\GoodsReceived;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Auth;
@@ -95,6 +96,7 @@ class Edit extends Component
     public $city;
     public $suburb;
     public $street_address;
+    public $company;
 
     // vendor vars
 
@@ -172,6 +174,7 @@ class Edit extends Component
     }
 
     public function mount($inventory){
+        $this->company = Auth::user()->employee->company;
         $this->inventory = $inventory;
         $this->products = Product::with('brand')->orderBy('name','asc')->where('department','inventory')->where('status',True)->where('buy',True)->get()->sortBy('brand.name');
         $this->vendors = Vendor::orderBy('name','asc')->get();
@@ -355,6 +358,21 @@ class Edit extends Component
 
     }
 
+
+     public function updatedSelectedCurrency($id){
+        if(!is_null($id)){
+            $this->selected_currency = Currency::find($id);
+            if($id != $this->company->currency_id){
+                $predefined_exchange_rate = ExchangeRate::where('currency_id', $id)
+                    ->where('status', 1)
+                    ->where('expiry', '>', Carbon::today())
+                    ->first();
+                if ($predefined_exchange_rate) {   
+                    $this->exchange_rate = $predefined_exchange_rate->exchange_rate;
+                }
+            }
+        }
+    }
 
 
     public function update(){

@@ -124,6 +124,26 @@
 @stack('scripts')
     
     <script type="text/javascript">
+            window.addEventListener('show-exchange_rateModal', event => {
+                $('#exchange_rateModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-exchange_rateModal', event => {
+                $('#exchange_rateModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-exchange_rateEditModal', event => {
+                $('#exchange_rateEditModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-exchange_rateEditModal', event => {
+                $('#exchange_rateEditModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
             window.addEventListener('show-closeRetreadModal', event => {
                 $('#closeRetreadModal').modal('show');
             })

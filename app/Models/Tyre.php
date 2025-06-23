@@ -24,6 +24,9 @@ class Tyre extends Model implements Auditable
     public function currency(){
         return $this->belongsTo('App\Models\Currency');
     }
+    public function purchase(){
+        return $this->belongsTo('App\Models\Purchase');
+    }
     public function store(){
         return $this->belongsTo('App\Models\Store');
     }

@@ -15,6 +15,7 @@ use App\Models\Document;
 use App\Models\Purchase;
 use App\Models\VendorType;
 use App\Models\AccountType;
+use App\Models\ExchangeRate;
 use App\Models\Notification;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Excel;
@@ -45,6 +46,8 @@ class Index extends Component
     public $purchase_id;
     public $purchase;
     public $currencies;
+    public $selectedCurrency;
+    public $selected_currency;
     public $currency_id;
     public $department;
     public $value = 0;
@@ -124,7 +127,7 @@ class Index extends Component
         $this->title = '';
         $this->file = '';
         $this->date = '';
-        $this->currency_id = '';
+        $this->selectedCurrency = '';
         $this->vendor_id = '';
         $this->selectedAccount = '';
         $this->inputs = [];
@@ -345,7 +348,7 @@ class Index extends Component
                 return $query->where('name','Sales Taxes');
             })->orderBy('name','asc')->get();
             $this->vendors = Vendor::orderBy('name','asc')->get();
-            $this->currencies = Currency::all();
+            $this->currencies = Currency::orderBy('name','asc')->get();
             $this->purchase_number = $this->purchaseNumber();
     }
 
@@ -428,7 +431,7 @@ class Index extends Component
     }
     protected $rules = [
         'date' => 'required',
-        'currency_id' => 'required',
+        'selectedCurrency' => 'required',
         'selectedVendorType' => 'required',
         'vendor_id' => 'required',
         'purchase_number' => 'required',
@@ -441,6 +444,30 @@ class Index extends Component
         'qty.*' => 'required',
     ];
   
+    public function markSent($id){
+        $purchase = Purchase::find($id);
+        $purchase->is_sent = True;
+        $purchase->update();
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Purchase Order Marked As Sent"
+        ]);
+    }
+
+     public function updatedSelectedCurrency($id){
+        if(!is_null($id)){
+            $this->selected_currency = Currency::find($id);
+            if($id != $this->company->currency_id){
+                $predefined_exchange_rate = ExchangeRate::where('currency_id', $id)
+                    ->where('status', 1)
+                    ->where('expiry', '>', Carbon::today())
+                    ->first();
+                if ($predefined_exchange_rate) {   
+                    $this->exchange_rate = $predefined_exchange_rate->exchange_rate;
+                }
+            }
+        }
+    }
 
     public function store(){
         $purchase = new Purchase;
@@ -452,9 +479,9 @@ class Index extends Component
         $purchase->description = $this->description;
         $purchase->account_id = $this->selectedAccount;
         $purchase->vendor_id = $this->vendor_id;
-        $purchase->currency_id = $this->currency_id;
+        $purchase->currency_id = $this->selectedCurrency;
         $purchase->status = '1';
-        $purchase->expiry = Carbon::parse($this->date)->addDays(7)->format('Y-m-d');
+        $purchase->expiry = Carbon::parse($this->date)->addMonth()->format('Y-m-d');
         $purchase->save();
         $this->purchase_id = $purchase->id;
 
@@ -602,7 +629,7 @@ class Index extends Component
         $this->purchase = Purchase::find($id);
         $this->purchase_number = $this->purchase->purchase_number;
         $this->date = $this->purchase->date;
-        $this->currency_id = $this->purchase->currency_id;
+        $this->selectedCurrency = $this->purchase->currency_id;
         $this->booking_id = $this->purchase->booking_id;
         $this->purchase_order_products = $this->purchase->purchase_products;
         if(isset($this->purchase_order_products)){
@@ -640,7 +667,7 @@ class Index extends Component
         $purchase->expense_id = $this->expense_id;
         $purchase->vendor_id = $this->vendor_id;
         $purchase->vendor_type_id = $this->selectedVendorType;
-        $purchase->currency_id = $this->currency_id;
+        $purchase->currency_id = $this->selectedCurrency;
         $purchase->expiry = Carbon::parse($this->date)->addDays(7)->format('Y-m-d');
         $purchase->status = '1';
         $purchase->update();
@@ -843,6 +870,7 @@ class Index extends Component
         }
       
         $this->vendors = Vendor::orderBy('name','asc')->get();
+
         if ((isset($this->exchange_rate) && $this->exchange_rate > 0)  &&  ( isset($this->total) && $this->total > 0 )) {
             $this->exchange_amount = $this->exchange_rate * $this->total;
         }

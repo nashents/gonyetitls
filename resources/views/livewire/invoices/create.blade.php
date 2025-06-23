@@ -99,20 +99,19 @@
                                                </select>
                                                 @error('selectedCurrency') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
-                                            @if (!is_null($selectedCurrency))
-                                            @if (Auth::user()->employee->company)
-                                                @if ($selectedCurrency != Auth::user()->employee->company->currency_id)
-                                                <div class="row">
+                                             @if (!is_null($selectedCurrency))
+                                                @if ($company)
+                                                    @if ($selectedCurrency != $company->currency_id)
                                                     <div class="form-group">
                                                         <label for="customer">Conversion Rate<span class="required" style="color: red">*</span></label>
-                                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="exchange_rate"  placeholder="Exchange Rate" required>
+                                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="exchange_rate"  placeholder="Exchange Rate {{$selected_currency ? "From ".$selected_currency->name : ""}} {{$company->currency ? "To ".$company->currency->name : ""}}" required>
                                                         @error('exchange_rate') <span class="text-danger error">{{ $message }}</span>@enderror
-                                                        <small>{{$exchange_amount ? "The converted amount is: ".$exchange_amount : ""}}</small>
+                                                        <small style="color: green">{{$selected_currency ? " 1 ".$selected_currency->name." is how much in" : ""}} {{$company->currency ? $company->currency->name." ?" : ""}}</small>
+                                                        <small>{{$exchange_amount ? "The converted amount is: ".$exchange_amount : ""}}</small> <br>
                                                     </div> 
-                                                </div>
+                                                    @endif
                                                 @endif
                                             @endif
-                                        @endif 
                                         </div>
                                         <div class="col-md-5">
                                             <div class="form-group">

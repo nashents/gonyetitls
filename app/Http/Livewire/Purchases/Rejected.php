@@ -77,6 +77,7 @@ class Rejected extends Component
         $purchase->authorized_by_id = Auth::user()->id;
         $purchase->authorization = $this->authorize;
         $purchase->authorization_comments = $this->comments;
+        $purchase->authorization_date = date('Y-m-d');
         $purchase->update();
             
         if ($this->authorize == "approved") {

@@ -9,6 +9,7 @@
             <ul class="nav nav-tabs nav-justified" role="tablist">
                 <li role="presentation" class="active"><a href="#basic" aria-controls="basic" role="tab" data-toggle="tab"><strong>Product Details</strong> </a></li>
                 <li role="presentation"><a href="#attributes" aria-controls="attributes" role="tab" data-toggle="tab">Product Attributes</a></li>
+                <li role="presentation"><a href="#inventory" aria-controls="inventory" role="tab" data-toggle="tab">Inventory</a></li>
 
             </ul>
             <div class="tab-content bg-white p-15">
@@ -111,6 +112,9 @@
                
                 <div role="tabpanel" class="tab-pane" id="attributes">
                     @livewire('products.product-attributes', ['id' => $product->id])
+                </div>
+                <div role="tabpanel" class="tab-pane" id="inventory">
+                    @livewire('products.items', ['id' => $product->id,'department' => $product->department])
                 </div>
 
                 <div class="row">

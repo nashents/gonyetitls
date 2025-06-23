@@ -3,6 +3,7 @@
 namespace App\Http\Livewire\Quotations;
 
 
+use Carbon\Carbon;
 use App\Models\Cargo;
 use App\Models\Account;
 use App\Models\Product;
@@ -12,6 +13,7 @@ use App\Models\Customer;
 use App\Models\Quotation;
 use App\Models\BankAccount;
 use App\Models\Destination;
+use App\Models\ExchangeRate;
 use App\Models\LoadingPoint;
 use App\Models\QuotationItem;
 use App\Models\OffloadingPoint;
@@ -28,6 +30,7 @@ class Create extends Component
     public $customers;
     public $selectedCustomer;
     public $company_id;
+    public $company;
     public $bank_accounts;
     public $bank_account_id;
 
@@ -46,7 +49,9 @@ class Create extends Component
 
     public $initials;
     public $currencies;
+    public $selectedCurrency;
     public $currency_id;
+    public $selected_currency;
     public $date;
     public $expiry;
     public $memo;
@@ -177,7 +182,7 @@ public function updatedSelectedCustomer($id){
     $this->customer = Customer::find($id);
     $this->initials = $this->customer->initials;
     $this->quotation_number = $this->quotationNumber();
-    $this->currency_id = $this->customer->currency ? $this->customer->currency->id  : NULL;
+    $this->selectedCurrency = $this->customer->currency ? $this->customer->currency->id  : NULL;
 }
 
 public function updatedSelectedCargo($id){
@@ -187,6 +192,21 @@ public function updatedSelectedCargo($id){
    
 
 }
+
+    public function updatedSelectedCurrency($id){
+        if(!is_null($id)){
+            $this->selected_currency = Currency::find($id);
+            if($id != $this->company->currency_id){
+                $predefined_exchange_rate = ExchangeRate::where('currency_id', $id)
+                    ->where('status', 1)
+                    ->where('expiry', '>', Carbon::today())
+                    ->first();
+                if ($predefined_exchange_rate) {   
+                    $this->exchange_rate = $predefined_exchange_rate->exchange_rate;
+                }
+            }
+        }
+    }
 
 public function quotationNumber(){
     
@@ -243,9 +263,10 @@ public function quotationNumber(){
 
 }
     public function mount(){
+         $this->company = Auth::user()->employee->company;
         $this->for_trips = False;
         $this->quotation_number = $this->quotationNumber();
-        $this->bank_accounts = BankAccount::orderBy('name','asc')->get();  
+         $this->bank_accounts = BankAccount::whereNull('employee_id')->whereNotNull('company_id')->orderBy('name','asc')->get();
         $this->customers = Customer::orderBy('name','asc')->get();
         $this->cargos = Cargo::orderBy('name','asc')->get();
         $this->loading_points = LoadingPoint::orderBy('name','asc')->get();
@@ -303,7 +324,7 @@ public function quotationNumber(){
         'quotation_number' => 'required',
         'bank_account_id' => 'required',
         'date' => 'required',
-        'currency_id' => 'required',
+        'selectedCurrency' => 'required',
     ];
 
     public function updatedSelectedProduct($id, $key){
@@ -514,7 +535,7 @@ public function quotationNumber(){
         $quotation->user_id = Auth::user()->id;
         $quotation->company_id = $this->company_id;
         $quotation->customer_id = $this->selectedCustomer;
-        $quotation->currency_id = $this->currency_id;
+        $quotation->currency_id = $this->selectedCurrency;
         $quotation->quotation_number = $this->quotation_number;
         $quotation->number = $this->number;
         $quotation->date = $this->date;
@@ -775,7 +796,7 @@ public function quotationNumber(){
 
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->customers = Customer::orderBy('name','asc')->get();
-        $this->bank_accounts = BankAccount::orderBy('name','asc')->get();
+        $this->bank_accounts = BankAccount::whereNull('employee_id')->whereNotNull('company_id')->orderBy('name','asc')->get();
 
         $this->cargos = Cargo::orderBy('name','asc')->get();
         $this->loading_points = LoadingPoint::orderBy('name','asc')->get();

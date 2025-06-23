@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Invoices;
 
+use Carbon\Carbon;
 use App\Models\Tax;
 use App\Models\Trip;
 use App\Models\User;
@@ -23,6 +24,7 @@ use App\Models\InvoiceItem;
 use App\Models\InvoiceTrip;
 use App\Models\Measurement;
 use App\Models\Denomination;
+use App\Models\ExchangeRate;
 use App\Models\InvoiceCount;
 use App\Models\Notification;
 use App\Models\TripDocument;
@@ -82,6 +84,7 @@ class Create extends Component
     public $currencies;
     public $destinations;
     public $selectedCurrency;
+    public $selected_currency;
     public $selectedTrip = [];
     public $trip_sum = [];
     public $tax_rate = [];
@@ -437,7 +440,7 @@ class Create extends Component
         $this->inventories = Inventory::with('product.brand')->where('status',1)->get()->sortBy('product.brand.name');
         $this->income_account_id = Account::where('name','Sales')->first()->id;
      
-        $this->bank_accounts = BankAccount::orderBy('name','asc')->get();
+         $this->bank_accounts = BankAccount::whereNull('employee_id')->whereNotNull('company_id')->orderBy('name','asc')->get();
         $this->products = Product::where('sell',True)->orderBy('name','asc')->get();
 
 
@@ -1197,6 +1200,21 @@ class Create extends Component
         }
     }
 
+    public function updatedSelectedCurrency($id){
+        if (!is_null($id)) {
+             $this->selected_currency = Currency::find($id);
+            if($id != $this->company->currency_id){
+                $predefined_exchange_rate = ExchangeRate::where('currency_id', $id)
+                    ->where('status', 1)
+                    ->where('expiry', '>', Carbon::today())
+                    ->first();
+                if ($predefined_exchange_rate) {   
+                    $this->exchange_rate = $predefined_exchange_rate->exchange_rate;
+                }
+            }
+        }
+    }
+
 
     public function render()
     {
@@ -1222,7 +1240,7 @@ class Create extends Component
         $this->inventories = Inventory::with('product.brand')->where('status',1)->get()->sortBy('product.brand.name');
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->customers = Customer::orderBy('name','asc')->get();
-        $this->bank_accounts = BankAccount::orderBy('name','asc')->get();
+        $this->bank_accounts = BankAccount::whereNull('employee_id')->whereNotNull('company_id')->orderBy('name','asc')->get();
         $this->products = Product::where('sell',True)->orderBy('name','asc')->get();
 
         if (isset($this->from) && isset($this->to)) {

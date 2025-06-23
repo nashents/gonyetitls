@@ -146,8 +146,6 @@ Route::post('/racks/import','ImportsController@importRacks')->name('racks.import
 Route::post('/bins/import','ImportsController@importBins')->name('bins.import');
 
 
-
-Route::get('account/transactions','HorseController@archived')->name('horses.archived');
 Route::get('employees/leave-days','EmployeeController@leave')->name('employees.leaves.index');
 
 Route::get('horses/archived','HorseController@archived')->name('horses.archived');
@@ -582,6 +580,7 @@ Route::resource('horse_makes','HorseMakeController');
 Route::resource('vehicle_models','VehicleModelController');
 Route::resource('horse_models','HorseModelController');
 Route::resource('asset_assignments','AssetAssignmentController');
+Route::resource('exchange_rates','ExchangeRateController');
 Route::resource('inventories','InventoryController');
 Route::resource('purchases','PurchaseController');
 Route::resource('inventory_purchases','InventoryPurchaseController');

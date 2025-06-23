@@ -2085,11 +2085,27 @@ class Edit extends Component
     public function updatedSelectedCurrency($id){
         if(!is_null($id)){
             $this->selected_currency = Currency::find($id);
+            $predefined_exchange_rate = ExchangeRate::where('currency_id', $id)
+                ->where('status', 1)
+                ->where('expiry', '>', Carbon::today())
+                ->first();
+            
+            if ($predefined_exchange_rate) {   
+                $this->exchange_rate = $predefined_exchange_rate->exchange_rate;
+            }
         }
     }
     public function updatedSelectedFuelCurrency($id){
         if(!is_null($id)){
             $this->selected_currency = Currency::find($id);
+             $predefined_exchange_rate = ExchangeRate::where('currency_id', $id)
+                ->where('status', 1)
+                ->where('expiry', '>', Carbon::today())
+                ->first();
+            
+            if ($predefined_exchange_rate) {   
+                $this->fuel_exchange_rate = $predefined_exchange_rate->exchange_rate;
+            }
         }
     }
 

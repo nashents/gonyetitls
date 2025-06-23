@@ -17,26 +17,33 @@
                                 @elseif ($department == "asset")
                                 <a href="{{route('products.create')}}" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Product</a>
                                 @endif
-                              
                             </div>
-
                         </div>
+                       
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
                             <div class="col-md-3" style="float: right; padding-right:0px">
                                 <div class="form-group">
                                     <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search products...">
                                 </div>
                             </div>
+                            <small style="color: green">
+                                Average Lead Time(ALT): is the days difference from purchase order submission to the supplier to the receiving of items in store. <br>
+                                Total Value: is the average cost of the items in store across multiple currency converted to the base currency.
+                            </small>
                             <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
-                                    <th class="th-sm">Product#
+                                    <th class="th-sm">Code
                                     </th>
                                     <th class="th-sm">Name
                                     </th>
-                                    <th class="th-sm">Identification/Part#
+                                    <th class="th-sm">ID/Part#
                                     </th>
                                     <th class="th-sm">Item(s) in Inventory
+                                    </th>
+                                    <th class="th-sm">Total Value
+                                    </th>
+                                    <th class="th-sm">ALT(Days)
                                     </th>
                                     <th class="th-sm">Status
                                     </th>
@@ -59,8 +66,25 @@
                                         @elseif($department == "asset")
                                             {{$product->assets->where('status',1)->where('balance','>',0)->count()}}
                                         @endif
-                                        
                                     </td>
+                                    <td>
+                                        @php
+                                            $totalValue = $this->calculateTotalValue($product->id);
+                                        @endphp
+
+                                        @if ($totalValue)
+                                            {{ $base_currency->name }} {{ $base_currency->symbol }} {{ number_format($totalValue, 2) }}
+                                        @else
+                                            {{ $base_currency->name }} {{ $base_currency->symbol }} 0.00
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @php
+                                            $days = $this->calculateAvgLeadTime($product->id);
+                                        @endphp
+                                         {{$days ? $days: ""}}
+                                    </td>
+                                   
                                     <td><span class="badge bg-{{$product->status == 1 ? "success" : "danger"}}">{{$product->status == 1 ? "Active" : "Inactive"}}</span></td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
@@ -86,7 +110,7 @@
                                   </tr>
                                   @empty
                                   <tr>
-                                    <td colspan="6">
+                                    <td colspan="7">
                                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                             No Products Found ....
                                         </div>

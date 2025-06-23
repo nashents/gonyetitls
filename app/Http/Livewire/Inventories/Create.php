@@ -25,10 +25,12 @@ use App\Models\Department;
 use App\Models\VendorType;
 use App\Models\BillExpense;
 use App\Models\Measurement;
+use App\Models\ExchangeRate;
 use App\Models\CategoryValue;
 use App\Models\GoodsReceived;
 use Livewire\WithFileUploads;
 use App\Models\AttributeValue;
+use App\Models\PurchaseProduct;
 use App\Models\inventorieserial;
 use App\Models\ProductAttribute;
 use Illuminate\Support\Facades\Auth;
@@ -47,6 +49,7 @@ class Create extends Component
     public $rack_id;
     public $purchases;
     public $selectedPurchase;
+    public $selectedPurchaseProduct;
     public $goods_receiveds;
     public $selectedGoodsReceived;
     public $purchase_products;
@@ -117,6 +120,7 @@ class Create extends Component
     public $worknumber;
     public $email;
     public $website;
+    public $company;
 
 
     public $expires_at;
@@ -155,14 +159,14 @@ class Create extends Component
     }
 
     public function mount(){
-
+          $this->company = Auth::user()->employee->company;
         $this->products = Product::with('brand')->orderBy('name','asc')->where('department','inventory')->where('status',True)->where('buy',True)->get()->sortBy('brand.name');
         $this->stores = Store::orderBy('name','asc')->get();
         $this->racks = Rack::orderBy('name','asc')->get();
         $this->bins = Bin::orderBy('name','asc')->get();
         $this->measurements = Measurement::orderBy('name','asc')->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();
-        $this->currencies = Currency::latest()->get();
+        $this->currencies = Currency::orderBy('name','asc')->get();
 
 
         $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
@@ -428,8 +432,6 @@ class Create extends Component
                 }
                 $this->qty[$key] = 1;
                 $this->weight[$key] = 1;
-               
-          
                 if ($product->tax_id) {
                     $this->selectedTax[$key] = $product->tax_id;
                     $tax = Account::find($product->tax_id);
@@ -438,6 +440,27 @@ class Create extends Component
                     }
                     
                 }  
+            }
+           
+        }
+    }
+
+    public function updatedSelectedPurchaseProduct($id, $key){
+        if (!is_null($id)) {
+            $purchase_product = PurchaseProduct::find($id);
+            if (isset($purchase_product)) {
+                $this->amount[$key] = $purchase_product->amount;
+                $this->item_description[$key] = $purchase_product->product->description;
+                $this->qty[$key] = $purchase_product->qty;
+                $this->weight[$key] = 1;
+                if($purchase_product->tax_id){
+                    $this->selectedTax[$key] = $purchase_product->tax_id;
+                    $tax = Account::find($purchase_product->tax_id);
+                    if (isset($tax)) {
+                        $this->tax_rate[$key] = $tax->rate;
+                    }
+                }
+                
             }
            
         }
@@ -634,6 +657,15 @@ class Create extends Component
     public function updatedSelectedCurrency($id){
         if(!is_null($id)){
             $this->selected_currency = Currency::find($id);
+            if($id != $this->company->currency_id){
+                $predefined_exchange_rate = ExchangeRate::where('currency_id', $id)
+                    ->where('status', 1)
+                    ->where('expiry', '>', Carbon::today())
+                    ->first();
+                if ($predefined_exchange_rate) {   
+                    $this->exchange_rate = $predefined_exchange_rate->exchange_rate;
+                }
+            }
         }
     }
 

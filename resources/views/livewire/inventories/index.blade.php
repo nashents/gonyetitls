@@ -59,7 +59,7 @@
                                              store: {{$inventory->store ? $inventory->store->name : ""}}
                                              <br>
                                         @endif
-                                        @if ($inventory->product)
+                                        @if ($inventory->product->category)
                                         Category: {{$inventory->product->category ? $inventory->product->category->name : ""}}  {{$inventory->product->category_value ? $inventory->product->category_value->name : ""}} 
                                         @endif
                                         @if ($inventory->rack)

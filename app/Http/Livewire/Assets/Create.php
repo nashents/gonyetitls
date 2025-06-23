@@ -25,6 +25,7 @@ use App\Models\VendorType;
 use App\Models\AssetDetail;
 use App\Models\AssetSerial;
 use App\Models\Measurement;
+use App\Models\ExchangeRate;
 use App\Models\AssetDocument;
 use App\Models\CategoryValue;
 use App\Models\GoodsReceived;
@@ -43,6 +44,7 @@ class Create extends Component
     public $store_id;
     public $purchases;
     public $selectedPurchase;
+    public $selectedPurchaseProduct;
     public $purchase_products;
     public $goods_receiveds;
     public $selectedGoodsReceived;
@@ -54,6 +56,7 @@ class Create extends Component
     public $vendor_types;
     public $vendors;
     public $vendor_id;
+    public $company;
   
     public $purchase_date;
     public $total;
@@ -149,11 +152,12 @@ class Create extends Component
     }
 
     public function mount(){
+         $this->company = Auth::user()->employee->company;
         $this->products = Product::with('brand')->orderBy('name','asc')->where('department','asset')->where('status',True)->where('buy',True)->get()->sortBy('brand.name');
         $this->stores = Store::orderBy('name','asc')->get();
         $this->measurements = Measurement::orderBy('name','asc')->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();
-        $this->currencies = Currency::latest()->get();
+        $this->currencies = Currency::orderBy('name','asc')->get();
         $this->purchases = Purchase::where('status',1)->whereDate('expiry','>',Carbon::now())->where('authorization','approved')->orderBy('created_at','desc')->get();
 
         $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
@@ -401,6 +405,27 @@ class Create extends Component
         }
     }
 
+      public function updatedSelectedPurchaseProduct($id, $key){
+        if (!is_null($id)) {
+            $purchase_product = PurchaseProduct::find($id);
+            if (isset($purchase_product)) {
+                $this->amount[$key] = $purchase_product->amount;
+                $this->item_description[$key] = $purchase_product->product->description;
+                $this->qty[$key] = $purchase_product->qty;
+                $this->weight[$key] = 1;
+                if($purchase_product->tax_id){
+                    $this->selectedTax[$key] = $purchase_product->tax_id;
+                    $tax = Account::find($purchase_product->tax_id);
+                    if (isset($tax)) {
+                        $this->tax_rate[$key] = $tax->rate;
+                    }
+                }
+                
+            }
+           
+        }
+    }
+
     public function updatedSelectedTax($id, $key){
         if(!is_null($id)){
             $tax = Account::find($id);
@@ -507,9 +532,18 @@ class Create extends Component
     
     }
 
-    public function updatedSelectedCurrency($id){
+   public function updatedSelectedCurrency($id){
         if(!is_null($id)){
             $this->selected_currency = Currency::find($id);
+            if($id != $this->company->currency_id){
+                $predefined_exchange_rate = ExchangeRate::where('currency_id', $id)
+                    ->where('status', 1)
+                    ->where('expiry', '>', Carbon::today())
+                    ->first();
+                if ($predefined_exchange_rate) {   
+                    $this->exchange_rate = $predefined_exchange_rate->exchange_rate;
+                }
+            }
         }
     }
 

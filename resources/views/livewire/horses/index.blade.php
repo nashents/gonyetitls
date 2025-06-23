@@ -70,7 +70,6 @@
                                     <tbody>
                                         @forelse ($horses as $horse)
                                      <tr>
-                                        <td>{{$horse->horse_number}}</td>
                                         <td>{{$horse->transporter ? $horse->transporter->name : ""}}</td>
                                         <td>{{ucfirst($horse->horse_make ? $horse->horse_make->name : "")}} {{ucfirst($horse->horse_model ? $horse->horse_model->name : "")}}</td>
                                         <td width="150">

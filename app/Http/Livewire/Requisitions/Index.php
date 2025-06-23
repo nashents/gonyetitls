@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Requisitions;
 
+use Carbon\Carbon;
 use App\Models\Trip;
 use App\Models\Account;
 use App\Models\Booking;
@@ -13,6 +14,7 @@ use App\Models\Employee;
 use App\Models\Purchase;
 use App\Models\Department;
 use App\Models\Requisition;
+use App\Models\ExchangeRate;
 use App\Models\Notification;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Excel;
@@ -52,7 +54,7 @@ class Index extends Component
     public $expenses;
     public $expense_id;
     public $currencies;
-    public $currency_id;
+    public $selectedCurrency;
     private $requisitions;
     public $requisition;
     public $requisition_number;
@@ -117,7 +119,7 @@ class Index extends Component
         $this->employee_id = '';
         $this->department_id = '';
         $this->date = '';
-        $this->currency_id = '';
+        $this->selectedCurrency = '';
         $this->expense_id = '';
         $this->selectedAccount = '';
         $this->qty = '';
@@ -165,11 +167,21 @@ class Index extends Component
         ]);
     }
 
-    public function updatedCurrencyId($id){
-        if (!is_null($id)) {
+    public function updatedSelectedCurrency($id){
+        if(!is_null($id)){
             $this->selected_currency = Currency::find($id);
+            if($id != $this->company->currency_id){
+                $predefined_exchange_rate = ExchangeRate::where('currency_id', $id)
+                    ->where('status', 1)
+                    ->where('expiry', '>', Carbon::today())
+                    ->first();
+                if ($predefined_exchange_rate) {   
+                    $this->exchange_rate = $predefined_exchange_rate->exchange_rate;
+                }
+            }
         }
     }
+
        public function updatedSelectedProduct($id, $key){
         if (!is_null($id)) {
             $product = Product::find($id);
@@ -232,7 +244,7 @@ class Index extends Component
     }
 
     protected $rules = [
-        'currency_id' => 'required',
+        'selectedCurrency' => 'required',
         'expense_id.0' => 'required',
         'selectedAccount.0' => 'required',
         'employee_id.0' => 'required',
@@ -348,7 +360,7 @@ class Index extends Component
         $requisition->purchase_id = $this->purchase_id ? $this->purchase_id : Null;
         $requisition->employee_id = $this->employee_id;
         $requisition->account_id = $this->selectedAccount;
-        $requisition->currency_id = $this->currency_id;
+        $requisition->currency_id = $this->selectedCurrency;
         $requisition->date = $this->date;
         $requisition->description = $this->description;
         $requisition->items = $this->items;
@@ -466,7 +478,7 @@ class Index extends Component
 
     public function edit($id){
         $requisition = Requisition::find($id);
-        $this->currency_id = $requisition->currency_id;
+        $this->selectedCurrency = $requisition->currency_id;
         $this->trip_id = $requisition->trip_id;
         $this->booking_id = $requisition->booking_id;
         if (isset($this->trip_id)) {
@@ -496,7 +508,7 @@ class Index extends Component
         $requisition->booking_id = $this->booking_id ? $this->booking_id : Null;
         $requisition->purchase_id = $this->purchase_id ? $this->purchase_id : Null;
         $requisition->employee_id = $this->employee_id;
-        $requisition->currency_id = $this->currency_id;
+        $requisition->currency_id = $this->selectedCurrency;
         $requisition->date = $this->date;
         $requisition->description = $this->description;
         $requisition->subject = $this->subject;

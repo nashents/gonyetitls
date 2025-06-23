@@ -209,13 +209,13 @@
                                     @else   
                                     <div class="form-group">
                                         <label for="country">Product(s)<span class="required" style="color: red">*</span></label>
-                                       <select wire:model.debounce.300ms="selectedProduct.0" class="form-control" required>
+                                       <select wire:model.debounce.300ms="selectedPurchaseProduct.0" class="form-control" required>
                                            <option value="">Select Product</option>
                                            @foreach ($purchase_products as $purchase_product)
                                            <option value="{{$purchase_product->product->id}}"> {{$purchase_product->product->brand ? $purchase_product->product->brand->name : ""}} {{$purchase_product->product->name}}</option>
                                         @endforeach
                                        </select>
-                                        @error('selectedProduct.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        @error('selectedPurchaseProduct.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                     @endif
                                   
@@ -344,13 +344,13 @@
                                     @else   
                                     <div class="form-group">
                                         <label for="country">Product(s)<span class="required" style="color: red">*</span></label>
-                                       <select wire:model.debounce.300ms="selectedProduct.{{$value}}" class="form-control" required>
+                                       <select wire:model.debounce.300ms="selectedPurchaseProduct.{{$value}}" class="form-control" required>
                                            <option value="">Select Product</option>
                                          @foreach ($purchase_products as $purchase_product)
                                             <option value="{{$purchase_product->product->id}}"> {{$purchase_product->product->brand ? $purchase_product->product->brand->name : ""}} {{$purchase_product->product->name}}</option>
                                          @endforeach
                                        </select>
-                                        @error('selectedProduct.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        @error('selectedPurchaseProduct.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                     @endif
                                 </div>

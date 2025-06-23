@@ -123,7 +123,7 @@
                             <select class="form-control" wire:model.debounce.300ms="currency_id.0" required>
                                 <option value="">Select Currency</option>
                               @foreach ($currencies as $currency)
-                                  <option value="{{ $currency->id }}">{{ $currency->name }}</option>
+                                 <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
                               @endforeach
                             </select>
                             @error('currency_id.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -285,7 +285,7 @@
                                     <select class="form-control" wire:model.debounce.300ms="currency_id" required>
                                         <option value="">Select Currency</option>
                                       @foreach ($currencies as $currency)
-                                          <option value="{{ $currency->id }}">{{ $currency->name }}</option>
+                                         <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
                                       @endforeach
                                     </select>
                                     @error('currency_id') <span class="error" style="color:red">{{ $message }}</span> @enderror

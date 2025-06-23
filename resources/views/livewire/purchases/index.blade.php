@@ -82,15 +82,13 @@
                                         </th>
                                         <th class="th-sm">Ccy
                                         </th>
-                                        <th class="th-sm">Subtotal
-                                        </th>
-                                        <th class="th-sm">Tax Amt
-                                        </th>
                                         <th class="th-sm">Total
                                         </th>
                                         <th class="th-sm">Paid
                                         </th>
-                                        <th class="th-sm">Status
+                                        <th class="th-sm">GReceived
+                                        </th>
+                                        <th class="th-sm">Sent
                                         </th>
                                         <th class="th-sm">Auth
                                         </th>
@@ -104,17 +102,20 @@
                                     <tr>
                                         <td>{{$purchase->purchase_number}}</td>
                                         <td>
-                                            {{$purchase->user ? $purchase->user->name : ""}} {{$purchase->user ? $purchase->user->surname : ""}}
-                                            <br>
-                                            {{$purchase->user->employee->departments ? $purchase->user->employee->departments->first()->name : ""}}
+                                            @if ($purchase->user)
+                                                 {{$purchase->user ? $purchase->user->name : ""}} {{$purchase->user ? $purchase->user->surname : ""}}
+                                                @if ($purchase->user->employee)
+                                                    <br>
+                                                    <small><strong>{{$purchase->user->employee->departments ? $purchase->user->employee->departments->first()->name : ""}}</strong></small>
+                                                @endif
+                                            @endif
                                         </td>
                                         <td>{{$purchase->date}}</td>
-                                        <td><span class="label label-{{Carbon\Carbon::now() < $purchase->expiry ? 'success' : 'danger' }}">{{Carbon\Carbon::parse($purchase->expiry)->format('d-m-Y')}}</span></td>
+                                        <td><span class="badge bg-{{Carbon\Carbon::now() < $purchase->expiry ? 'success' : 'danger' }}">{{Carbon\Carbon::parse($purchase->expiry)->format('d-m-Y')}}</span></td>
                                         <td>{{$purchase->vendor ? $purchase->vendor->name : ""}}</td>
-                                     
                                         <td>
                                             @foreach ($purchase->purchase_products as $purchase_product )
-                                            {{$purchase_product->product ? $purchase_product->product->name : ""}} {{$purchase_product->product->brand ? $purchase_product->product->brand->name : ""}} <br>
+                                            {{$purchase_product->product ? $purchase_product->product->name : ""}} {{$purchase_product->product->brand ? $purchase_product->product->brand->name : ""}} ({{$purchase_product->qty}}) <br>
                                             @endforeach
                                             @if ($purchase->description)
                                                 <br>
@@ -122,8 +123,6 @@
                                             @endif
                                         </td>
                                         <td>{{$purchase->currency ? $purchase->currency->name : ""}}</td>
-                                        <td>{{$purchase->currency ? $purchase->currency->symbol : ""}}{{number_format($purchase->subtotal ? $purchase->subtotal : 0,2)}}</td>
-                                        <td>{{$purchase->currency ? $purchase->currency->symbol : ""}}{{number_format($purchase->tax_amount ? $purchase->tax_amount : 0,2)}}</td>
                                         <td>{{$purchase->currency ? $purchase->currency->symbol : ""}}{{number_format($purchase->total ? $purchase->total : 0,2)}}</td>
                                         <td>
                                             @if ($purchase->bill)
@@ -133,16 +132,29 @@
                                             @endif
                                         </td>
                                         <td>
-                                            @if ($purchase->bill)
-                                            <span class="label label-{{($purchase->bill->status == 'Paid') ? 'success' : (($purchase->bill->status == 'Partial') ? 'warning' : 'danger') }}">{{ $purchase->bill->status }}</span>
-                                            @else
-                                            <span class="badge bg-warning">pending</span>
+
+                                            @if ($department == "tyre")
+                                                {{$purchase->tyres->count()}}
+                                            @elseif($department == "inventory")
+                                                {{$purchase->inventories->count()}}
+                                            @elseif($department == "asset")
+                                                {{$purchase->assets->count()}}
                                             @endif
                                         </td>
+                                        <td>
+                                           <span class="badge bg-{{$purchase->is_sent == True ? 'success' :  'primary' }}">{{ $purchase->is_sent == True ? "Sent" : "Not Sent" }}</span>
+                                        </td>
                                         <td><span class="badge bg-{{($purchase->authorization == 'approved') ? 'success' : (($purchase->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($purchase->authorization == 'approved') ? 'approved' : (($purchase->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
+                                            @php
+                                                $user = App\Models\User::find($purchase->authorized_by_id);
+                                            @endphp
+                                            @if ($user)
+                                                <br>
+                                               <small><strong style="background-color: orange">AuthorizedBy: {{$purchase->authorization_comments}}</strong></small>  
+                                            @endif
                                             @if ($purchase->authorization_comments)
                                             <br>
-                                            <small><strong style="background-color: orange">{{$purchase->authorization_comments}}</strong></small>  
+                                            <small><strong style="background-color: orange">Auth Comments: {{$purchase->authorization_comments}}</strong></small>  
                                             @endif 
                                         </td>
                                         <td class="w-10 line-height-35 table-dropdown">
@@ -155,6 +167,9 @@
                                                     <li><a href="{{route('purchases.show',$purchase->id)}}" ><i class="fa fa-eye color-default"></i> View</a></li>
                                                     @if ($purchase->authorization == "approved")
                                                     <li><a href="{{route('purchases.preview',$purchase->id)}}"  ><i class="fas fa-file-invoice color-primary"></i> Preview</a></li>
+                                                    @if ($purchase->is_sent == False)
+                                                         <li><a href="" wire:click.prevent="markSent({{$purchase->id}})"  ><i class="fas fa-file-invoice color-primary"></i> Mark as sent</a></li>
+                                                    @endif
                                                     @endif
                                                     @if ($purchase->authorization != "approved")
                                                     <li><a href="#"  wire:click="edit({{$purchase->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
@@ -292,14 +307,27 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="title">Currencies<span class="required" style="color: red">*</span></label>
-                                <select wire:model.debounce.300ms="currency_id" class="form-control" required>
+                                <select wire:model.debounce.300ms="selectedCurrency" class="form-control" required>
                                     <option value="">Select Currency</option>
                                     @foreach ($currencies as $currency)
                                     <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>                                      
                                     @endforeach
                                 </select>
-                                @error('currency_id') <span class="text-danger error">{{ $message }}</span>@enderror
+                                @error('selectedCurrency') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
+                             @if (!is_null($selectedCurrency))
+                                @if ($company)
+                                    @if ($selectedCurrency != $company->currency_id)
+                                    <div class="form-group">
+                                        <label for="customer">Conversion Rate<span class="required" style="color: red">*</span></label>
+                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="exchange_rate"  placeholder="Exchange Rate {{$selected_currency ? "From ".$selected_currency->name : ""}} {{$company->currency ? "To ".$company->currency->name : ""}}" required>
+                                        @error('exchange_rate') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        <small style="color: green">{{$selected_currency ? " 1 ".$selected_currency->name." is how much in" : ""}} {{$company->currency ? $company->currency->name." ?" : ""}}</small>
+                                        <small>{{$exchange_amount ? "The converted amount is: ".$exchange_amount : ""}}</small> <br>
+                                    </div> 
+                                    @endif
+                                @endif
+                            @endif
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
@@ -619,14 +647,27 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="title">Currencies<span class="required" style="color: red">*</span></label>
-                                    <select wire:model.debounce.300ms="currency_id" class="form-control" required>
+                                    <select wire:model.debounce.300ms="selectedCurrency" class="form-control" required>
                                         <option value="">Select Currency</option>
                                         @foreach ($currencies as $currency)
                                         <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>                                      
                                         @endforeach
                                     </select>
-                                    @error('currency_id') <span class="text-danger error">{{ $message }}</span>@enderror
+                                    @error('selectedCurrency') <span class="text-danger error">{{ $message }}</span>@enderror
                                 </div>
+                                 @if (!is_null($selectedCurrency))
+                                    @if ($company)
+                                        @if ($selectedCurrency != $company->currency_id)
+                                        <div class="form-group">
+                                            <label for="customer">Conversion Rate<span class="required" style="color: red">*</span></label>
+                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="exchange_rate"  placeholder="Exchange Rate {{$selected_currency ? "From ".$selected_currency->name : ""}} {{$company->currency ? "To ".$company->currency->name : ""}}" required>
+                                            @error('exchange_rate') <span class="text-danger error">{{ $message }}</span>@enderror
+                                            <small style="color: green">{{$selected_currency ? " 1 ".$selected_currency->name." is how much in" : ""}} {{$company->currency ? $company->currency->name." ?" : ""}}</small>
+                                            <small>{{$exchange_amount ? "The converted amount is: ".$exchange_amount : ""}}</small> <br>
+                                        </div> 
+                                        @endif
+                                    @endif
+                                @endif
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">

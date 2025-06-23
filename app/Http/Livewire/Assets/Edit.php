@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Assets;
 
+use Carbon\Carbon;
 use App\Models\Bin;
 use App\Models\Rack;
 use App\Models\Asset;
@@ -15,6 +16,7 @@ use App\Models\Currency;
 use App\Models\Purchase;
 use App\Models\VendorType;
 use App\Models\Measurement;
+use App\Models\ExchangeRate;
 use App\Models\CategoryValue;
 use App\Models\GoodsReceived;
 use Livewire\WithFileUploads;
@@ -40,6 +42,7 @@ class Edit extends Component
     public $vendor_types;
     public $vendors;
     public $vendor_id;
+    public $company;
   
     public $purchase_date;
     public $total;
@@ -135,6 +138,7 @@ class Edit extends Component
     }
 
     public function mount($asset){
+         $this->company = Auth::user()->employee->company;
         $this->products = Product::where('department','asset')->orderBy('name','asc')->get();
         $this->category_values = CategoryValue::orderBy('name','asc')->get();
         $this->vendor_types = VendorType::orderBy('name','asc')->get();
@@ -256,9 +260,18 @@ class Edit extends Component
 
     
 
-    public function updatedSelectedCurrency($id){
+     public function updatedSelectedCurrency($id){
         if(!is_null($id)){
             $this->selected_currency = Currency::find($id);
+            if($id != $this->company->currency_id){
+                $predefined_exchange_rate = ExchangeRate::where('currency_id', $id)
+                    ->where('status', 1)
+                    ->where('expiry', '>', Carbon::today())
+                    ->first();
+                if ($predefined_exchange_rate) {   
+                    $this->exchange_rate = $predefined_exchange_rate->exchange_rate;
+                }
+            }
         }
     }
 

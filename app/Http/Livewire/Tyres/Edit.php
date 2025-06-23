@@ -17,6 +17,7 @@ use App\Models\Currency;
 use App\Models\Purchase;
 use App\Models\TyreDetail;
 use App\Models\BillExpense;
+use App\Models\ExchangeRate;
 use App\Models\GoodsReceived;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Auth;
@@ -51,6 +52,7 @@ class Edit extends Component
   public $selectedPurchase;
   public $purchases;
   public $description;
+  public $company;
 
   public $assigned;
 
@@ -129,7 +131,7 @@ class Edit extends Component
   public $selectedAccount;
 
     public function mount($id){
-
+          $this->company = Auth::user()->employee->company;
         $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
           return $query->where('name','Expenses');
       })->orderBy('name','asc')->get();
@@ -230,11 +232,20 @@ class Edit extends Component
         }
     }
 
-    public function updatedSelectedCurrency($id){
-      if(!is_null($id)){
-          $this->selected_currency = Currency::find($id);
-      }
-  }
+     public function updatedSelectedCurrency($id){
+        if(!is_null($id)){
+            $this->selected_currency = Currency::find($id);
+            if($id != $this->company->currency_id){
+                $predefined_exchange_rate = ExchangeRate::where('currency_id', $id)
+                    ->where('status', 1)
+                    ->where('expiry', '>', Carbon::today())
+                    ->first();
+                if ($predefined_exchange_rate) {   
+                    $this->exchange_rate = $predefined_exchange_rate->exchange_rate;
+                }
+            }
+        }
+    }
 
   public function updatedSelectedProduct($id){
     if (!is_null($id)) {

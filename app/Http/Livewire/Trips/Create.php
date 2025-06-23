@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Trips;
 
+use Carbon\Carbon;
 use App\Models\Fuel;
 use App\Models\Hour;
 use App\Models\Rate;
@@ -45,6 +46,7 @@ use App\Models\Measurement;
 use App\Models\Transporter;
 use App\Models\TripExpense;
 use App\Models\DeliveryNote;
+use App\Models\ExchangeRate;
 use App\Models\LoadingPoint;
 use App\Models\Notification;
 use App\Models\RouteExpense;
@@ -285,6 +287,7 @@ class Create extends Component
     public $expense_exchange_rate;
     public $expense_exchange_amount;
     public $fuel_order = False;
+    public $exchange_rates;
 
     //fuel vars
     public $selectedContainer;
@@ -294,6 +297,7 @@ class Create extends Component
     public $date;
     public $selectedFuelCurrency;
     public $selected_fuel_currency;
+    public $selected_allowance_currency;
     public $fuel_exchange_rate;
     public $fuel_exchange_amount;
     public $fuel_quantity;
@@ -357,11 +361,33 @@ class Create extends Component
     public function updatedSelectedCurrency($id){
         if(!is_null($id)){
             $this->selected_currency = Currency::find($id);
+            if($id != $this->company->currency_id){
+                $predefined_exchange_rate = ExchangeRate::where('currency_id', $id)
+                    ->where('status', 1)
+                    ->where('expiry', '>', Carbon::today())
+                    ->first();
+                
+                if ($predefined_exchange_rate) {   
+                    $this->exchange_rate = $predefined_exchange_rate->exchange_rate;
+                }
+            }
         }
     }
     public function updatedSelectedFuelCurrency($id){
         if(!is_null($id)){
             $this->selected_fuel_currency = Currency::find($id);
+            if($id != $this->company->currency_id){
+                $predefined_exchange_rate = ExchangeRate::where('currency_id', $id)
+                    ->where('status', 1)
+                    ->where('expiry', '>', Carbon::today())
+                    ->first();
+                
+                if ($predefined_exchange_rate) {   
+                    $this->fuel_exchange_rate = $predefined_exchange_rate->exchange_rate;
+                }
+            }
+           
+            
         }
     }
     
@@ -564,28 +590,29 @@ class Create extends Component
 
             if($horse){
                  $trailer_assignments = $horse->trailer_assignments->where('status',1);
+                $this->odometer = $horse->mileage;
+                $this->fuel_tank_capacity = $horse->fuel_tank_capacity;
+                $this->starting_mileage = $horse->mileage;
+                $this->starting_hours = $horse->hours;
+                $this->fuel_consumption_loaded_standard = $horse->fuel_consumption_loaded_standard;
+                $this->fuel_consumption_empty_standard = $horse->fuel_consumption_empty_standard;
+                $this->fuel_balance = $horse->fuel_balance;
+                if (isset( $assignment)) {
+                    $driver = $assignment->driver;
+                    $this->driver_id = $driver->id;
+                }      
+                                
+                if (isset( $trailer_assignments) && $trailer_assignments->count()> 0) {
+                    $this->with_trailer = True;
+                    foreach ($trailer_assignments as $trailer_assignment) {
+                        $this->trailer_id[] = $trailer_assignment->trailer_id;
+                    }
+                    
+                }   
             }
            
                                     
-            $this->odometer = $horse->mileage;
-            $this->fuel_tank_capacity = $horse->fuel_tank_capacity;
-            $this->starting_mileage = $horse->mileage;
-            $this->starting_hours = $horse->hours;
-            $this->fuel_consumption_loaded_standard = $horse->fuel_consumption_loaded_standard;
-            $this->fuel_consumption_empty_standard = $horse->fuel_consumption_empty_standard;
-            $this->fuel_balance = $horse->fuel_balance;
-            if (isset( $assignment)) {
-                $driver = $assignment->driver;
-                $this->driver_id = $driver->id;
-            }      
-                           
-            if (isset( $trailer_assignments) && $trailer_assignments->count()> 0) {
-                $this->with_trailer = True;
-                foreach ($trailer_assignments as $trailer_assignment) {
-                    $this->trailer_id[] = $trailer_assignment->trailer_id;
-                }
-                
-            }                        
+                          
            
         }
     }
@@ -599,17 +626,19 @@ class Create extends Component
             $assignment = VehicleAssignment::where('vehicle_id',$id)
                                     ->where('status', 1)->first();
                                     
-            $this->odometer = $vehicle->mileage;
-            $this->fuel_tank_capacity = $vehicle->fuel_tank_capacity;
-            $this->starting_mileage = $vehicle->mileage;
-            $this->starting_hours = $vehicle->hours;
-            $this->fuel_consumption_loaded_standard = $vehicle->fuel_consumption_loaded_standard;
-            $this->fuel_consumption_empty_standard = $vehicle->fuel_consumption_empty_standard;
-            $this->fuel_balance = $vehicle->fuel_balance;
-            if (isset( $assignment)) {
-                $driver = $assignment->employee;
-                $this->driver_id = $driver->id;
-            }                        
+            if($vehicle){
+                $this->odometer = $vehicle->mileage;
+                $this->fuel_tank_capacity = $vehicle->fuel_tank_capacity;
+                $this->starting_mileage = $vehicle->mileage;
+                $this->starting_hours = $vehicle->hours;
+                $this->fuel_consumption_loaded_standard = $vehicle->fuel_consumption_loaded_standard;
+                $this->fuel_consumption_empty_standard = $vehicle->fuel_consumption_empty_standard;
+                $this->fuel_balance = $vehicle->fuel_balance;
+                if (isset( $assignment)) {
+                    $driver = $assignment->employee;
+                    $this->driver_id = $driver->id;
+                } 
+            }                       
            
         }
     }
@@ -678,7 +707,7 @@ class Create extends Component
         if(!is_null($id)){
             $shift = Shift::find($id);
             if($shift){
-
+               
                 $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$shift->transporter_id)
                 ->where('archive',0)
                 ->orderBy('registration_number','asc')->get();
@@ -693,6 +722,7 @@ class Create extends Component
                 ->where('archive',0)
                 ->orderBy('employee_name','asc')->get();
 
+                $transporter = Transporter::find($shift->transporter_id);
                 $this->cargos = $transporter->cargos->sortBy('name');
                 $this->selectedStatus = "Scheduled";
                 $trip_type = TripType::where('name','Local')->first();
@@ -904,6 +934,7 @@ class Create extends Component
         $this->user = Auth::user();
         $this->employee =  $this->user->employee;
         $this->company = Company::with('currency')->find( $this->employee->company_id);
+        $this->exchange_rates = ExchangeRate::all();
         $this->shifts = Shift::where('for','Trips')->where('status','1')->latest()->get();
         $this->liquid_measurements = Measurement::where('cargo_type','Liquid')->get();
         $this->solid_measurements = Measurement::where('cargo_type','Solid')->get(); 
@@ -1655,7 +1686,35 @@ class Create extends Component
             // end trip creation logic
     }
 
-      
+    
+    public function updatedSelectedAllowanceCurrency($id, $key)
+    {
+        if (!is_null($id) && $this->company->currency_id != $id) {
+            $predefined_exchange_rate = ExchangeRate::where('currency_id', $id)
+                ->where('status', 1)
+                ->where('expiry', '>', Carbon::today())
+                ->first();
+            
+            if ($predefined_exchange_rate) {   
+                $this->allowance_exchange_rate[$key] = $predefined_exchange_rate->exchange_rate;
+            }
+        }
+    }
+
+    public function updatedExpenseCurrencyId($id, $key)
+    {
+        if (!is_null($id) && $this->company->currency_id != $id) {
+            $predefined_exchange_rate = ExchangeRate::where('currency_id', $id)
+                ->where('status', 1)
+                ->where('expiry', '>', Carbon::today())
+                ->first();
+            
+            if ($predefined_exchange_rate) {   
+                $this->expense_exchange_rate[$key] = $predefined_exchange_rate->exchange_rate;
+            }
+        }
+    }
+
       public function updatedRate(){
             $this->calculateFreight();
       }

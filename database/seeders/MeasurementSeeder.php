@@ -19,9 +19,13 @@ class MeasurementSeeder extends Seeder
             ['cargo_type' => 'Solid','name' => 'Bulk'],
             ['cargo_type' => 'Solid','name' => 'Cartons'],
             ['cargo_type' => 'Solid','name' => 'Containers'],
-            ['cargo_type' => 'Liquid','name' => 'Litres'],
+            ['cargo_type' => 'Liquid','name' => 'Litre(s)'],
             ['cargo_type' => 'Solid','name' => 'Units'],
             ['cargo_type' => 'Solid','name' => 'Trailers'],
+            ['cargo_type' => 'Solid','name' => 'Each'],
+            ['cargo_type' => 'Solid','name' => 'Item(s)'],
+            ['cargo_type' => 'Solid','name' => 'Kg(s)'],
+            ['cargo_type' => 'Solid','name' => 'Ton(s)'],
         ];
        
             Measurement::insert($measurements);

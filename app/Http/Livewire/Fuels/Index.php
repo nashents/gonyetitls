@@ -24,6 +24,7 @@ use App\Models\Container;
 use App\Models\FuelCount;
 use App\Models\TripExpense;
 use App\Exports\FuelsExport;
+use App\Models\ExchangeRate;
 use App\Models\Notification;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Excel;
@@ -52,7 +53,7 @@ class Index extends Component
     public $trips;
     public $vehicle;
     public $currencies;
-    public $currency_id;
+    public $selectedCurrency;
     public $selectedVehicle;
     public $vehicles;
     public $employees;
@@ -159,9 +160,18 @@ class Index extends Component
     }
 
     
-    public function updatedCurrencyId($id){
-        if (!is_null($id)) {
+    public function updatedSelectedCurrency($id){
+        if(!is_null($id)){
             $this->selected_currency = Currency::find($id);
+            if($id != $this->company->currency_id){
+                $predefined_exchange_rate = ExchangeRate::where('currency_id', $id)
+                    ->where('status', 1)
+                    ->where('expiry', '>', Carbon::today())
+                    ->first();
+                if ($predefined_exchange_rate) {   
+                    $this->exchange_rate = $predefined_exchange_rate->exchange_rate;
+                }
+            }
         }
     }
 
@@ -220,7 +230,7 @@ class Index extends Component
         
             $this->container_balance = $this->container ? $this->container->balance : "";
            
-            $this->currency_id = $this->container->currency_id;
+            $this->selectedCurrency = $this->container->currency_id;
            
             }
     }
@@ -371,7 +381,7 @@ class Index extends Component
         $fuel->transporter_total = $this->transporter_total;
         $fuel->profit = $this->fuel_profit;
         $fuel->quantity = $this->quantity;
-        $fuel->currency_id = $this->currency_id;
+        $fuel->currency_id = $this->selectedCurrency;
         $fuel->amount = $this->amount;
         $fuel->exchange_rate = $this->exchange_rate;
         $fuel->exchange_amount = $this->exchange_amount;
@@ -524,7 +534,7 @@ class Index extends Component
     $this->selectedVehicle = $fuel->vehicle_id;
     $this->selectedTrip = $fuel->trip_id;
     $this->trips = Trip::orderBy('created_at','desc')->get();
-    $this->currency_id = $fuel->currency_id;
+    $this->selectedCurrency = $fuel->currency_id;
     $this->asset_id = $fuel->asset_id;
     $this->selectedContainer = $fuel->container_id;
     $this->container = Container::find($fuel->container_id);
@@ -600,7 +610,7 @@ class Index extends Component
             $fuel->transporter_total = $this->transporter_total;
             $fuel->profit = $this->fuel_profit;
             $fuel->quantity = $this->quantity;
-            $fuel->currency_id = $this->currency_id;
+            $fuel->currency_id = $this->selectedCurrency;
             $fuel->amount = $this->amount;
             $fuel->exchange_rate = $this->exchange_rate;
             $fuel->exchange_amount = $this->exchange_amount;

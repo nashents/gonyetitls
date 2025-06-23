@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Invoices;
 
+use Carbon\Carbon;
 use App\Models\Trip;
 use App\Models\Account;
 use App\Models\Invoice;
@@ -15,6 +16,7 @@ use App\Models\BankAccount;
 use App\Models\Destination;
 use App\Models\InvoiceItem;
 use App\Models\Measurement;
+use App\Models\ExchangeRate;
 use App\Models\TripDocument;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
@@ -89,12 +91,14 @@ class Edit extends Component
     public $bank_accounts;
     public $bank_account_id;
     public $company_id;
+    public $company;
     public $currencies;
     public $destinations;
     public $purchase_order_number;
     public $sales_order_number;
     public $pat_number;
     public $selectedCurrency;
+    public $selected_currency;
     public $tax_rate = [];
    
     public $measurements;
@@ -670,6 +674,7 @@ class Edit extends Component
     }
 
     public function mount($invoice){
+        $this->company = Auth::user()->employee->company;
         $this->trip_filter = "created_at";
         $this->invoice_id = $invoice->id;
         $this->invoice = $invoice;
@@ -735,7 +740,7 @@ class Edit extends Component
        
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->customers = Customer::orderBy('name','asc')->get();
-        $this->bank_accounts = BankAccount::orderBy('name','asc')->get();
+        $this->bank_accounts = BankAccount::whereNull('employee_id')->whereNotNull('company_id')->orderBy('name','asc')->get();
         $this->accounts = Account::where('account_type_id',1)->latest()->get();
         $this->measurements = Measurement::orderBy('name','asc')->get();
         $this->income_accounts = Account::whereHas('account_type.account_type_group', function($q){
@@ -1367,6 +1372,22 @@ class Edit extends Component
 
         }
     }
+
+    public function updatedSelectedCurrency($id){
+        if (!is_null($id)) {
+             $this->selected_currency = Currency::find($id);
+             if($id != $this->company->currency_id){
+                $predefined_exchange_rate = ExchangeRate::where('currency_id', $id)
+                    ->where('status', 1)
+                    ->where('expiry', '>', Carbon::today())
+                    ->first();
+                if ($predefined_exchange_rate) {   
+                    $this->exchange_rate = $predefined_exchange_rate->exchange_rate;
+                }
+            }
+        }
+    }
+    
     public function render()
     {
 
@@ -1389,7 +1410,7 @@ class Edit extends Component
         $this->inventories = Inventory::with('product.brand')->where('status',1)->get()->sortBy('product.brand.name');
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->customers = Customer::orderBy('name','asc')->get();
-        $this->bank_accounts = BankAccount::orderBy('name','asc')->get();
+        $this->bank_accounts = BankAccount::whereNull('employee_id')->whereNotNull('company_id')->orderBy('name','asc')->get();
         $this->products = Product::where('sell',True)->orderBy('name','asc')->get();
 
         if (isset($this->from) && isset($this->to)) {

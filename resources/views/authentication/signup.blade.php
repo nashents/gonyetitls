@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.auth_app')
 <link rel="shortcut icon" type = "image/png" href="{!! asset('images/tinmac-favicon.png')!!}">
 @section('title')
     Signup | Gonyet TLS

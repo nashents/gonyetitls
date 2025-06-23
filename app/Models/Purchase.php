@@ -27,6 +27,9 @@ class Purchase extends Model implements Auditable
     public function inventories(){
         return $this->hasMany('App\Models\Inventory');
     }
+    public function tyres(){
+        return $this->hasMany('App\Models\Tyre');
+    }
     public function category_value(){
         return $this->belongsTo('App\Models\CategoryValue');
     }

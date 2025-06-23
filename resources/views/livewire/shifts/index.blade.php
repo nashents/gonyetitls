@@ -344,14 +344,27 @@
                          <div class="col-md-3">
                             <div class="form-group">
                                 <label for="name">Currencies</label>
-                                <select class="form-control" wire:model.debounce.300ms="currency_id">
+                                <select class="form-control" wire:model.debounce.300ms="selectedCurrency">
                                     <option value="">Select Currency</option>
                                     @foreach ($currencies as $currency)
-                                        <option value="{{$currency->id}}">{{$currency->symbol}} {{$currency->name}} {{$currency->fullname}}</option>
+                                        <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
                                     @endforeach
                                 </select>
-                                @error('currency_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                @error('selectedCurrency') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
+                              @if (!is_null($selectedCurrency))
+                                @if ($company)
+                                    @if ($selectedCurrency != $company->currency_id)
+                                    <div class="form-group">
+                                        <label for="customer">Conversion Rate<span class="required" style="color: red">*</span></label>
+                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="exchange_rate"  placeholder="Exchange Rate {{$selected_currency ? "From ".$selected_currency->name : ""}} {{$company->currency ? "To ".$company->currency->name : ""}}" required>
+                                        @error('exchange_rate') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        <small style="color: green">{{$selected_currency ? " 1 ".$selected_currency->name." is how much in" : ""}} {{$company->currency ? $company->currency->name." ?" : ""}}</small>
+                                        <small>{{$exchange_amount ? "The converted amount is: ".$exchange_amount : ""}}</small> <br>
+                                    </div> 
+                                    @endif
+                                @endif
+                            @endif
                         </div>
                          <div class="col-md-3">
                             <div class="form-group">

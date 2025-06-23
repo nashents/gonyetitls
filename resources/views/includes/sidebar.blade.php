@@ -573,7 +573,7 @@
                     </ul>
                 </li>
                 <li  class="{{ request()->routeIs('bank_accounts.index') ? 'active' : '' }}" ><a href="{{route('bank_accounts.index')}}"><i class="fas fa-bank"></i> <span>Bank Accounts</span></a></li>
-               
+                <li  class="{{ request()->routeIs('exchange_rates.index') ? 'active' : '' }}" ><a href="{{route('exchange_rates.index')}}"><i class="fas fa-exchange"></i> <span>Currency Exchange Rates</span></a></li>
                 @endif
 
 
@@ -1096,10 +1096,10 @@
                             <li class="{{ request()->routeIs('deductions.index') ? 'active' : '' }}"><a href="{{route('deductions.index')}}" ><i class="fas fa-list "></i> <span>Deductions</span></a></li>
                             <li class="{{ request()->routeIs('destinations.index') ? 'active' : '' }}"><a href="{{route('destinations.index')}}"><i class="fas fa-map-pin"></i> <span>Destinations</span> </a></li>
                             <li class="{{ request()->routeIs('expenses.index') ? 'active' : '' }}"><a href="{{ route('expenses.index') }}"><i class="fas fa-list"></i> <span>Expenses</span> </a></li>
-                            <li class="{{ request()->routeIs('locations.index') ? 'active' : '' }}"><a href="{{route('locations.index')}}" ><i class="fas fa-map-marker"></i> <span>Locations</span></a></li>
                             <li class="{{ request()->routeIs('loading_points.index') ? 'active' : '' }}"><a href="{{route('loading_points.index')}}" ><i class="fas fa-map-marker"></i> <span>Loading Points</span></a></li>
                             <li class="{{ request()->routeIs('offloading_points.index') ? 'active' : '' }}"><a href="{{route('offloading_points.index')}}" ><i class="fas fa-map-marker "></i> <span>Offloading Points</span></a></li>
                             <li class="{{ request()->routeIs('provinces.index') ? 'active' : '' }}"><a href="{{route('provinces.index')}}"><i class="fas fa-globe-africa"></i> <span>Provinces</span> </a></li>
+                            <li class="{{ request()->routeIs('works.index') ? 'active' : '' }}"><a href="{{route('works.index')}}" ><i class="fas fa-list"></i> <span>Rehandling Jobs</span></a></li>
                             <li class="{{ request()->routeIs('routes.index') ? 'active' : '' }}"><a href="{{route('routes.index')}}" ><i class="fas fa-road"></i> <span>Road Routes</span></a></li>
                             <li class="{{ request()->routeIs('corridors.index') ? 'active' : '' }}"><a href="{{route('corridors.index')}}" ><i class="fas fa-road"></i> <span>Transport Corridors</span></a></li>
                             @if (in_array('Finance', $department_names) || in_array('Super Admin', $role_names))
@@ -1107,7 +1107,7 @@
                             @endif
                             <li class="{{ request()->routeIs('trip_types.index') ? 'active' : '' }}"><a href="{{route('trip_types.index')}}"><i class="fas fa-road"></i> <span>Trip Types</span> </a></li>
                             <li class="{{ request()->routeIs('truck_stops.index') ? 'active' : '' }}"><a href="{{route('truck_stops.index')}}" ><i class="fas fa-stop"></i> <span>Truck Stops</span></a></li>
-                            <li class="{{ request()->routeIs('works.index') ? 'active' : '' }}"><a href="{{route('works.index')}}" ><i class="fas fa-list"></i> <span>Jobs</span></a></li>
+                            <li class="{{ request()->routeIs('locations.index') ? 'active' : '' }}"><a href="{{route('locations.index')}}" ><i class="fas fa-map-marker"></i> <span>Worksites</span></a></li>
                           
                         </ul>
                     </li>

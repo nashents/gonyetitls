@@ -110,14 +110,14 @@
                                         @else   
                                             <div class="form-group">
                                                 <label for="country">Product(s)<span class="required" style="color: red">*</span></label>
-                                            <select wire:model.debounce.300ms="selectedProduct.0" class="form-control" required>
+                                            <select wire:model.debounce.300ms="selectedPurchaseProduct.0" class="form-control" required>
                                                 <option value="">Select Product</option>
                                                 @foreach ($purchase_products as $purchase_product)
                                                     <option value="{{$purchase_product->product->id}}"> {{$purchase_product->product->brand ? $purchase_product->product->brand->name : ""}} {{$purchase_product->product ? $purchase_product->product->name : ""}} {{$purchase_product->product ? $purchase_product->product->identification_number : ""}}</option>
                                                 @endforeach
                                             </select>
                                             <small>  <a href="{{ route('products.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Product</a></small> 
-                                                @error('selectedProduct.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                @error('selectedPurchaseProduct.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         @endif
                                        
@@ -156,7 +156,7 @@
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="name">Identification#</label>
-                                            <input type="text" class="form-control" wire:model.debounce.300ms="serial_number.0" placeholder="Serial# / UniqueID"/>
+                                            <input type="text" class="form-control" wire:model.debounce.300ms="serial_number.0" {{ count($qty) > 1 ? 'disabled' : '' }} placeholder="Serial# / UniqueID"/>
                                             @error('serial_number.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
                                         </div>
@@ -216,14 +216,14 @@
                                                 @else   
                                                     <div class="form-group">
                                                         <label for="country">Product(s)<span class="required" style="color: red">*</span></label>
-                                                    <select wire:model.debounce.300ms="selectedProduct.{{$value}}" class="form-control" required>
+                                                    <select wire:model.debounce.300ms="selectedPurchaseProduct.{{$value}}" class="form-control" required>
                                                         <option value="">Select Product</option>
                                                         @foreach ($purchase_products as $purchase_product)
                                                             <option value="{{$purchase_product->product->id}}"> {{$purchase_product->product->brand ? $purchase_product->product->brand->name : ""}} {{$purchase_product->product ? $purchase_product->product->name : ""}} {{$purchase_product->product ? $purchase_product->product->identification_number : ""}}</option>
                                                         @endforeach
                                                     </select>
                                                     <small>  <a href="{{ route('products.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Product</a></small> 
-                                                        @error('selectedProduct.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                        @error('selectedPurchaseProduct.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                                     </div>
                                                 @endif
                                                
@@ -261,7 +261,7 @@
                                         <div class="col-md-4">
                                             <div class="form-group">
                                                 <label for="name">Identification#</label>
-                                                <input type="text" class="form-control" wire:model.debounce.300ms="serial_number.{{$value}}" placeholder="Serial#/UniqueID"/>
+                                                <input type="text" class="form-control" wire:model.debounce.300ms="serial_number.{{$value}}" {{ count($qty) > 1 ? 'disabled' : '' }} placeholder="Serial#/UniqueID"/>
                                                 @error('serial_number.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         </div>

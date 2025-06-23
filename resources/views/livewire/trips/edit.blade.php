@@ -865,8 +865,8 @@
                                             @if ($company)
                                                 @if ($selectedCurrency != $company->currency_id)
                                                 <div class="form-group">
-                                                    <label for="customer">Conversion Rate</label>
-                                                    <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="exchange_rate"  placeholder="Exchange Rate {{$selected_currency ? "From ".$selected_currency->name : ""}} {{$company->currency ? "To ".$company->currency->name : ""}}" >
+                                                    <label for="customer">Conversion Rate<span class="required" style="color: red">*</span></label>
+                                                    <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="exchange_rate"  placeholder="Exchange Rate {{$selected_currency ? "From ".$selected_currency->name : ""}} {{$company->currency ? "To ".$company->currency->name : ""}}" required>
                                                     @error('exchange_rate') <span class="text-danger error">{{ $message }}</span>@enderror
                                                     <small style="color: green">{{$selected_currency ? " 1 ".$selected_currency->name." is how much in" : ""}} {{$company->currency ? $company->currency->name." ?" : ""}}</small>
                                                     <small>{{$exchange_customer_freight ? "The customer converted amount is: ".$exchange_customer_freight : ""}}</small> <br>
@@ -1087,10 +1087,10 @@
                                             @if ($company)
                                                 @if ($selectedFuelCurrency != $company->currency_id)
                                                 <div class="form-group">
-                                                    <label for="customer">Conversion Rate</label>
-                                                    <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="fuel_exchange_rate"  placeholder="Exchange Rate {{$selected_currency ? "From ".$selected_currency->name : ""}} {{$company->currency ? "To ".$company->currency->name : ""}}" >
+                                                    <label for="customer">Conversion Rate<span class="required" style="color: red">*</span></label>
+                                                    <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="fuel_exchange_rate"  placeholder="Exchange Rate {{$selected_currency ? "From ".$selected_currency->name : ""}} {{$company->currency ? "To ".$company->currency->name : ""}}" required>
                                                     @error('fuel_exchange_rate') <span class="text-danger error">{{ $message }}</span>@enderror
-                                                    <small style="color: green">{{$selected_currency ? " 1 ".$selected_currency->name." is how much in" : ""}} {{$company->currency ? $company->currency->name." ?" : ""}}</small>
+                                                    <small style="color: green">{{$selected_fuel_currency ? " 1 ".$selected_fuel_currency->name." is how much in" : ""}} {{$company->currency ? $company->currency->name." ?" : ""}}</small>
                                                     <small>{{$fuel_exchange_amount ? "The fuel converted amount is: ".$fuel_exchange_amount : ""}}</small> <br>       
                                                 </div> 
                                                 @endif

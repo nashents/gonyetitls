@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Containers;
 
+use Carbon\Carbon;
 use App\Models\Bill;
 use App\Models\TopUp;
 use App\Models\Vendor;
@@ -13,6 +14,7 @@ use App\Models\Currency;
 use App\Models\Container;
 use App\Models\BillExpense;
 use Illuminate\Support\Str;
+use App\Models\ExchangeRate;
 use Livewire\WithPagination;
 use App\Models\ContainerCount;
 use Illuminate\Support\Facades\Auth;
@@ -34,7 +36,7 @@ class Index extends Component
     public $container_number;
     public $container_id;
     public $container_currency_id;
-    public $currency_id;
+    public $selectedCurrency;
     public $currencies;
     public $vendor_id;
     public $name;
@@ -66,7 +68,7 @@ class Index extends Component
     public function mount(){
         $this->resetPage();
         $this->company = Auth::user()->employee->company;
-        $this->currencies = Currency::all();
+        $this->currencies = Currency::orderBy('name','asc')->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();
     }
     public function containerNumber(){
@@ -161,13 +163,12 @@ class Index extends Component
         $this->phonenumber = "";
         $this->address = "";
         $this->purchase_type = "";
-        $this->currency_id = "";
+        $this->selectedCurrency = "";
         $this->fuel_type = "";
         $this->capacity = "";
         $this->quantity = "";
         $this->rate = "";
         $this->amount = "";
-        $this->selected_currency = Null;
     }
     public function showTopUpModal($id){
         $this->container_id = $id;
@@ -175,14 +176,23 @@ class Index extends Component
         $this->fuel_type = $container->fuel_type;
         $this->capacity = $container->capacity;
         $this->balance = $container->balance;
-        $this->currency_id = $container->currency_id;
+        $this->selectedCurrency = $container->currency_id;
         $this->account_balance = $container->account_balance;
         $this->dispatchBrowserEvent('show-top_upModal');
     }
 
-    public function updatedCurrencyId($id){
-        if (!is_null($id)) {
+        public function updatedSelectedCurrency($id){
+        if(!is_null($id)){
             $this->selected_currency = Currency::find($id);
+            if($id != $this->company->currency_id){
+                $predefined_exchange_rate = ExchangeRate::where('currency_id', $id)
+                    ->where('status', 1)
+                    ->where('expiry', '>', Carbon::today())
+                    ->first();
+                if ($predefined_exchange_rate) {   
+                    $this->exchange_rate = $predefined_exchange_rate->exchange_rate;
+                }
+            }
         }
     }
 
@@ -196,7 +206,7 @@ class Index extends Component
         $top_up->container_id = $container->id ? $container->id : NULL;
         $top_up->vendor_id = $this->vendor_id ? $this->vendor_id : NULL;
         $top_up->date = $this->date;
-        $top_up->currency_id = $this->currency_id ? $this->currency_id : NULL;
+        $top_up->currency_id = $this->selectedCurrency ? $this->selectedCurrency : NULL;
         $top_up->fuel_type = $container->fuel_type;
         $top_up->quantity = $this->quantity;
         $top_up->rate = $this->rate;

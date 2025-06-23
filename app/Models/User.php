@@ -60,6 +60,9 @@ class User extends Authenticatable implements Auditable
     public function bins(){
         return $this->hasMany('App\Models\Bin');
     }
+     public function exchange_rates(){
+        return $this->hasMany('App\Models\ExchangeRate');
+    }
     public function racks(){
         return $this->hasMany('App\Models\Rack');
     }

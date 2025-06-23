@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Quotations;
 
+use Carbon\Carbon;
 use App\Models\Cargo;
 use App\Models\Account;
 use App\Models\Product;
@@ -12,6 +13,7 @@ use App\Models\Discount;
 use App\Models\Quotation;
 use App\Models\BankAccount;
 use App\Models\Destination;
+use App\Models\ExchangeRate;
 use App\Models\LoadingPoint;
 use App\Models\QuotationItem;
 use App\Models\OffloadingPoint;
@@ -30,11 +32,14 @@ class Edit extends Component
     public $customers;
     public $selectedCustomer;
     public $company_id;
+    public $company;
     public $bank_accounts;
     public $bank_account_id;
     public $initials;
     public $currencies;
     public $currency_id;
+    public $selectedCurrency;
+    public $selected_currency;
     public $date;
     public $expiry;
     public $memo;
@@ -161,7 +166,7 @@ class Edit extends Component
     public function updatedSelectedCustomer($id){
         $this->selectedCustomer = $id;
         $this->customer = Customer::find($this->selectedCustomer);
-        $this->currency_id = $this->customer->currency ? $this->customer->currency->id  : NULL;
+        $this->selectedCurrency = $this->customer->currency ? $this->customer->currency->id  : NULL;
     }
 
     public function updatedSelectedCargo($id){
@@ -173,12 +178,28 @@ class Edit extends Component
     }
 
 
+    public function updatedSelectedCurrency($id){
+        if(!is_null($id)){
+            $this->selected_currency = Currency::find($id);
+            if($id != $this->company->currency_id){
+                $predefined_exchange_rate = ExchangeRate::where('currency_id', $id)
+                    ->where('status', 1)
+                    ->where('expiry', '>', Carbon::today())
+                    ->first();
+                if ($predefined_exchange_rate) {   
+                    $this->exchange_rate = $predefined_exchange_rate->exchange_rate;
+                }
+            }
+        }
+    }
+
     public function mount($quotation){
+        $this->company = Auth::user()->employee->company;
         $this->quotation = $quotation;
         $this->for_trips = $this->quotation->for_trips;
         $this->user_id = $this->quotation->user_id;
         $this->selectedCustomer = $this->quotation->customer_id;
-        $this->currency_id = $this->quotation->currency_id;
+        $this->selectedCurrency = $this->quotation->currency_id;
         $this->company_id = $this->quotation->company_id;
         $this->quotation_number = $this->quotation->quotation_number;
         $this->footer = $this->quotation->footer;
@@ -226,7 +247,7 @@ class Edit extends Component
        
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->customers = Customer::orderBy('name','asc')->get();
-        $this->bank_accounts = BankAccount::orderBy('name','asc')->get();
+         $this->bank_accounts = BankAccount::whereNull('employee_id')->whereNotNull('company_id')->orderBy('name','asc')->get();
         $this->cargos = Cargo::orderBy('name','asc')->get();
         $this->loading_points = LoadingPoint::orderBy('name','asc')->get();
         $this->offloading_points = OffloadingPoint::orderBy('name','asc')->get();
@@ -257,7 +278,7 @@ class Edit extends Component
         'selectedCustomer' => 'required',
         'quotation_number' => 'required',
         'date' => 'required',
-        'currency_id' => 'required',
+        'selectedCurrency' => 'required',
 
     ];
 
@@ -560,7 +581,7 @@ class Edit extends Component
         $quotation = Quotation::find($this->quotation_id);
         $quotation->company_id = $this->company_id;
         $quotation->customer_id = $this->selectedCustomer;
-        $quotation->currency_id = $this->currency_id;
+        $quotation->currency_id = $this->selectedCurrency;
         $quotation->bank_account_id = $this->bank_account_id;
         $quotation->date = $this->date;
         $quotation->expiry = $this->expiry;
@@ -1025,7 +1046,7 @@ class Edit extends Component
 
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->customers = Customer::orderBy('name','asc')->get();
-        $this->bank_accounts = BankAccount::orderBy('name','asc')->get();
+        $this->bank_accounts = BankAccount::whereNull('employee_id')->whereNotNull('company_id')->orderBy('name','asc')->get();
         $this->products = Product::where('sell',True)->orderBy('name','asc')->get();
         $this->cargos = Cargo::orderBy('name','asc')->get();
         $this->loading_points = LoadingPoint::orderBy('name','asc')->get();

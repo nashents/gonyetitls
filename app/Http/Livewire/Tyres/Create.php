@@ -22,6 +22,7 @@ use App\Models\Purchase;
 use App\Models\TyreCount;
 use App\Models\TyreDetail;
 use App\Models\BillExpense;
+use App\Models\ExchangeRate;
 use App\Models\TyreDispatch;
 use App\Models\TyreDocument;
 use App\Models\GoodsReceived;
@@ -43,6 +44,7 @@ class Create extends Component
     public $vendor_id;
     public $goods_receiveds;
     public $selectedGoodsReceived;
+    public $selectedPurchaseProduct;
     public $selectedCurrency;
     public $selected_currency;
     public $date;
@@ -92,6 +94,7 @@ class Create extends Component
     public $life_span;
     public $aspect_ratio;
     public $diameter;
+    public $company;
 
 
     public $inputs = [];
@@ -150,7 +153,7 @@ class Create extends Component
     }
 
     public function mount(){
-
+        $this->company = Auth::user()->employee->company;
         $this->stores = Store::latest()->get();
         $this->tyre_assignments = TyreAssignment::latest()->get();
         $this->tyres = Tyre::where('status',1)->orderBy('tyre_number','asc')->get();
@@ -224,9 +227,18 @@ class Create extends Component
           }
       }
 
-    public function updatedSelectedCurrency($id){
+     public function updatedSelectedCurrency($id){
         if(!is_null($id)){
             $this->selected_currency = Currency::find($id);
+            if($id != $this->company->currency_id){
+                $predefined_exchange_rate = ExchangeRate::where('currency_id', $id)
+                    ->where('status', 1)
+                    ->where('expiry', '>', Carbon::today())
+                    ->first();
+                if ($predefined_exchange_rate) {   
+                    $this->exchange_rate = $predefined_exchange_rate->exchange_rate;
+                }
+            }
         }
     }
 
@@ -249,6 +261,27 @@ class Create extends Component
                     }
                     
                 }  
+            }
+           
+        }
+    }
+
+      public function updatedSelectedPurchaseProduct($id, $key){
+        if (!is_null($id)) {
+            $purchase_product = PurchaseProduct::find($id);
+            if (isset($purchase_product)) {
+                $this->amount[$key] = $purchase_product->amount;
+                $this->item_description[$key] = $purchase_product->product->description;
+                $this->qty[$key] = $purchase_product->qty;
+             
+                if($purchase_product->tax_id){
+                    $this->selectedTax[$key] = $purchase_product->tax_id;
+                    $tax = Account::find($purchase_product->tax_id);
+                    if (isset($tax)) {
+                        $this->tax_rate[$key] = $tax->rate;
+                    }
+                }
+                
             }
            
         }

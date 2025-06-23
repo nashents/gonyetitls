@@ -3,6 +3,7 @@
 namespace App\Http\Livewire\Bills;
 
 
+use Carbon\Carbon;
 use App\Models\Bill;
 use App\Models\Trip;
 use App\Models\Horse;
@@ -17,6 +18,7 @@ use Livewire\Component;
 use App\Models\Currency;
 use App\Models\BillExpense;
 use App\Models\Transporter;
+use App\Models\ExchangeRate;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
@@ -65,6 +67,7 @@ class Edit extends Component
     public $due_date;
     public $notes;
     public $accounts;
+    public $company;
   
   
 
@@ -280,6 +283,7 @@ class Edit extends Component
     }
 
     public function mount($id){
+        $this->company = Auth::user()->employee->company;
         $this->bill_id = $id;
         $this->bill = Bill::find($id);
         $this->trips = Trip::latest()->get();
@@ -349,6 +353,15 @@ class Edit extends Component
     public function updatedSelectedCurrency($id){
         if(!is_null($id)){
             $this->selected_currency = Currency::find($id);
+              if($id != $this->company->currency_id){
+                $predefined_exchange_rate = ExchangeRate::where('currency_id', $id)
+                    ->where('status', 1)
+                    ->where('expiry', '>', Carbon::today())
+                    ->first();
+                if ($predefined_exchange_rate) {   
+                    $this->exchange_rate = $predefined_exchange_rate->exchange_rate;
+                }
+            }
         }
     }
 
