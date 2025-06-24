@@ -70,6 +70,7 @@ class Edit extends Component
     public $qty  ;
     public $item_description  ;
     public $amount ;
+    public $cost ;
     public $tax_amount;
     public $tax_id;
     public $tax;
@@ -139,14 +140,13 @@ class Edit extends Component
 
     public function mount($asset){
          $this->company = Auth::user()->employee->company;
-        $this->products = Product::where('department','asset')->orderBy('name','asc')->get();
+      
         $this->category_values = CategoryValue::orderBy('name','asc')->get();
         $this->vendor_types = VendorType::orderBy('name','asc')->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();
         $this->currencies = Currency::latest()->get();
         $this->measurements = Measurement::orderBy('name','asc')->get();
         $this->categories = Category::orderBy('name','asc')->get();
-        $this->purchases = Purchase::where('department','asset')->where('status',1)->where('authorization','approved')->orderBy('created_at','desc')->get();
         $this->stores = Store::orderBy('name','asc')->get();
         $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name','Expenses');
@@ -166,6 +166,7 @@ class Edit extends Component
         $this->selectedPurchase = $asset->purchase_id;
         $this->qty = $asset->qty;
         $this->amount = $asset->amount;
+        $this->cost = $asset->cost;
         $this->tax_amount = $asset->tax_amount;
         $this->subtotal = $asset->subtotal;
         $this->subtotal_incl = $asset->subtotal_incl;
@@ -296,6 +297,7 @@ class Edit extends Component
                     $asset->account_id = $this->selectedAccount;
                     $asset->serial_number = $this->serial_number;
                     $asset->amount = $this->amount;
+                    $asset->cost = $this->cost;
                     $asset->qty = $this->qty;
                     $asset->subtotal = $this->amount;
                     $asset->measurement = $this->measurement;
@@ -350,10 +352,10 @@ class Edit extends Component
         }
            $this->goods_receiveds = GoodsReceived::where('status',1)->where('department','asset')->where('created_at', '>=', Carbon::now()->subMonth())->orderBy('created_at','desc')->get();
         $this->measurements = Measurement::orderBy('name','asc')->get();
-        $this->products = Product::where('department','asset')->orderBy('name','asc')->get();
+        $this->products = Product::with('brand')->orderBy('name','asc')->where('department','asset')->where('status',True)->where('buy',True)->get()->sortBy('brand.name');
         $this->vendor_types = VendorType::orderBy('name','asc')->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();
-        $this->purchases = Purchase::where('department','asset')->where('status',1)->where('authorization','approved')->orderBy('created_at','desc')->get();
+       $this->purchases = Purchase::where('department','inventory')->where('status',1)->where('created_at', '>=', Carbon::now()->subMonth())->where('authorization','approved')->orderBy('created_at','desc')->get();
         return view('livewire.assets.edit',[
             'products' => $this->products,
             'vendor_types' => $this->vendor_types,

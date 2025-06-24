@@ -28,6 +28,7 @@ use App\Models\TyreDocument;
 use App\Models\GoodsReceived;
 use Livewire\WithFileUploads;
 use App\Models\TyreAssignment;
+use App\Models\PurchaseProduct;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
@@ -73,6 +74,7 @@ class Create extends Component
     public $qty = [] ;
     public $item_description = [] ;
     public $amount = [];
+    public $cost = [];
     public $tax_amount;
     public $tax_id;
     public $tax;
@@ -85,6 +87,7 @@ class Create extends Component
 
     public $title;
     public $file;
+    public $department;
 
 
 
@@ -153,6 +156,7 @@ class Create extends Component
     }
 
     public function mount(){
+        $this->department = "tyre";
         $this->company = Auth::user()->employee->company;
         $this->stores = Store::latest()->get();
         $this->tyre_assignments = TyreAssignment::latest()->get();
@@ -162,7 +166,6 @@ class Create extends Component
         $this->horses = Horse::where('status',1)->orderBy('registration_number','asc')->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->products = Product::orderBy('name','asc')->where('department','tyre')->where('status',True)->where('buy',True)->get();
-        $this->purchases = Purchase::where('department','tyre')->where('status',1)->where('authorization','approved')->orderBy('created_at','desc')->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();
 
         $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
@@ -270,6 +273,7 @@ class Create extends Component
         if (!is_null($id)) {
             $purchase_product = PurchaseProduct::find($id);
             if (isset($purchase_product)) {
+                $this->selectedProduct[$key] = $purchase_product->product_id;
                 $this->amount[$key] = $purchase_product->amount;
                 $this->item_description[$key] = $purchase_product->product->description;
                 $this->qty[$key] = $purchase_product->qty;
@@ -285,6 +289,48 @@ class Create extends Component
             }
            
         }
+    }
+
+          public function goodsReceivedNumber(){
+
+     if (isset($this->company)) {
+            $str = $this->company->name;
+            $words = explode(' ', $str);
+            if (isset($words[1][0])) {
+                $initials = $words[0][0].$words[1][0];
+            }else {
+                $initials = $words[0][0];
+            }
+        }
+ 
+        $goods_received = GoodsReceived::orderBy('id','desc')->first();
+
+        if (!$goods_received) {
+            $goods_received_number =  $initials .'GR'. str_pad(1, 5, "0", STR_PAD_LEFT);
+        }else {
+            $number = $goods_received->id + 1;
+            $goods_received_number =  $initials .'GR'. str_pad($number, 5, "0", STR_PAD_LEFT);
+        }
+
+        return  $goods_received_number;
+
+    }
+
+        
+    public function createGRV(){
+
+        $goods_received = new GoodsReceived;
+        $goods_received->goods_received_number = $this->goodsReceivedNumber();
+        $goods_received->user_id = Auth::user()->id;
+        $goods_received->department = $this->department;
+        $goods_received->vendor_id = $this->vendor_id;
+        $goods_received->employee_id = Auth::user()->employee->id;
+        $goods_received->date = $this->purchase_date;
+        $goods_received->save();
+
+        $this->selectedGoodsReceived = $goods_received->id;
+
+        return $this->selectedGoodsReceived;
     }
 
     public function updatedSelectedTax($id, $key){
@@ -373,7 +419,11 @@ class Create extends Component
             foreach ($this->selectedProduct as $key => $value) {
                 $tyre = new Tyre;
                 $tyre->user_id = Auth::user()->id;
-                $tyre->goods_received_id = $this->selectedGoodsReceived ? $this->selectedGoodsReceived : null;
+                if ($this->selectedGoodsReceived) {
+                    $tyre->goods_received_id = $this->selectedGoodsReceived;
+                }else{
+                    $tyre->goods_received_id = $this->createGRV();
+                }
                 $tyre->product_id = $this->selectedProduct[$key];
                 $tyre->account_id = $this->selectedAccount;
                 if (isset($this->serial_number[$key])) {
@@ -384,6 +434,9 @@ class Create extends Component
                 }
                 if (isset($this->amount[$key])) {
                     $tyre->amount = $this->amount[$key];
+                }
+                if (isset($this->cost[$key])) {
+                    $tyre->cost = $this->cost[$key];
                 }
                 if (isset($this->qty[$key])) {
                     $tyre->qty = $this->qty[$key];
@@ -623,7 +676,7 @@ class Create extends Component
         }
         $this->goods_receiveds = GoodsReceived::where('status',1)->where('department','tyre')->where('created_at', '>=', Carbon::now()->subMonth())->orderBy('created_at','desc')->get();
         $this->products = Product::with('brand')->orderBy('name','asc')->where('department','tyre')->where('status',True)->where('buy',True)->get()->sortBy('brand.name');
-        $this->purchases = Purchase::where('department','tyre')->where('status',1)->where('authorization','approved')->orderBy('created_at','desc')->get();
+        $this->purchases = Purchase::where('department','tyre')->where('status',1)->where('created_at', '>=', Carbon::now()->subMonth())->where('authorization','approved')->orderBy('created_at','desc')->get();
         return view('livewire.tyres.create',[
             'amount' =>   $this->amount,
             'purchases' => $this->purchases,

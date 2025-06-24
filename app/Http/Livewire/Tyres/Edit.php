@@ -65,6 +65,7 @@ class Edit extends Component
   public $qty  ;
   public $item_description  ;
   public $amount ;
+  public $cost ;
   public $tax_amount;
   public $tax_id;
   public $tax;
@@ -165,14 +166,13 @@ class Edit extends Component
         $this->status = $tyre->status;
         $this->stores = Store::latest()->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
-        $this->products = Product::orderBy('name','asc')->where('department','tyre')->where('status',True)->where('buy',True)->get();
-        $this->purchases = Purchase::where('department','tyre')->where('status',1)->where('authorization','approved')->orderBy('created_at','desc')->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();
         $this->store_id =  $tyre->store_id;
         $this->vendor_id = $tyre->vendor_id;
         $this->selectedAccount = $tyre->account_id;
         $this->selectedCurrency = $tyre->currency_id;
         $this->amount = $tyre->amount;
+        $this->cost = $tyre->cost;
         $this->total = $tyre->total;
         $this->purchase_date = $tyre->purchase_date;
         $this->tyre_number = $tyre->tyre_number;
@@ -352,6 +352,7 @@ public function refresh($category){
               $tyre->type = $this->type;
               $tyre->qty = $this->qty;
               $tyre->amount = $this->amount;
+              $tyre->cost = $this->cost;
               $tyre->subtotal = $this->qty * $this->amount;
   
               $tyre->tax_rate = $this->tax_rate;
@@ -503,8 +504,8 @@ public function refresh($category){
 
     }
        $this->goods_receiveds = GoodsReceived::where('status',1)->where('department','tyre')->where('created_at', '>=', Carbon::now()->subMonth())->orderBy('created_at','desc')->get();
-    $this->products = Product::orderBy('name','asc')->where('department','tyre')->where('status',True)->where('buy',True)->get();
-      $this->purchases = Purchase::where('department','tyre')->where('status',1)->where('authorization','approved')->orderBy('created_at','desc')->get();
+         $this->products = Product::with('brand')->orderBy('name','asc')->where('department','tyre')->where('status',True)->where('buy',True)->get()->sortBy('brand.name');
+       $this->purchases = Purchase::where('department','tyre')->where('status',1)->where('created_at', '>=', Carbon::now()->subMonth())->where('authorization','approved')->orderBy('created_at','desc')->get();
         return view('livewire.tyres.edit',[
           'purchases' => $this->purchases,
           

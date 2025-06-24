@@ -26,16 +26,23 @@
                                 <div class="row">
                                         <div class="col-md-3">
                                             <div class="form-group">
-                                                <label for="country">Purchase Orders</label>
-                                               <select wire:model.debounce.300ms="selectedPurchase" class="form-control" >
-                                                   <option value="">Select Purchase Order</option>
-                                                 @foreach ($purchases as $purchase)
-                                                 <option value="{{$purchase->id}}">{{$purchase->purchase_number}} | {{ $purchase->date }} | {{$purchase->vendor ? $purchase->vendor->name : ""}} | {{ $purchase->currency ? $purchase->currency->name : "" }} {{ $purchase->currency ? $purchase->currency->symbol : "" }}{{number_format($purchase->total,2)}}</option>
-                                                 @endforeach
-                                               </select>
-                                               <small>  <a href="{{ route('inventory_purchases.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Purchase Order</a></small> 
-                                                @error('selectedPurchase') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                            </div>
+                                        <label for="country">Purchase Orders</label>
+                                        <select wire:model.debounce.300ms="selectedPurchase" class="form-control" >
+                                            <option value="">Select Purchase Order</option>
+                                            @foreach ($purchases as $purchase)
+                                            @if ($purchase->inventories && $purchase->inventories->count() > 0)
+                                                 <option value="{{$purchase->id}}" style="color: orange">{{$purchase->purchase_number}} | {{ $purchase->date }} | {{$purchase->vendor ? $purchase->vendor->name : ""}} | {{ $purchase->currency ? $purchase->currency->name : "" }} {{ $purchase->currency ? $purchase->currency->symbol : "" }}{{number_format($purchase->total,2)}}</option>
+                                            @else
+                                                <option value="{{$purchase->id}}">{{$purchase->purchase_number}} | {{ $purchase->date }} | {{$purchase->vendor ? $purchase->vendor->name : ""}} | {{ $purchase->currency ? $purchase->currency->name : "" }} {{ $purchase->currency ? $purchase->currency->symbol : "" }}{{number_format($purchase->total,2)}}</option>
+                                            @endif
+                                           
+                                            @endforeach
+                                        </select>
+                                        <small>  <a href="{{ route('tyre_purchases.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Purchase Order</a></small> 
+                                        <br>
+                                        <small style="color: green">NB: All fully / partially received purchase orders will appear in orange</small>
+                                        @error('selectedPurchase') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
                                         </div>
     
                                         <div class="col-md-3">
@@ -92,7 +99,7 @@
                                         </div>
                                        </div>
     
-                                
+                                 <div style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">
                                 <div class="row">
                                     <div class="col-md-4">
                                         @if (is_null($selectedPurchase))
@@ -153,7 +160,7 @@
                                 </div>
                 
                                 <div class="row">
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <div class="form-group">
                                             <label for="name">Identification#</label>
                                             <input type="text" class="form-control" wire:model.debounce.300ms="serial_number.0" {{ count($qty) > 1 ? 'disabled' : '' }} placeholder="Serial# / UniqueID"/>
@@ -176,14 +183,14 @@
                                             @endif
                                         </div>
                                        
-                                        <div class="col-md-3">
+                                        <div class="col-md-2">
                                             <div class="form-group">
                                                 <label for="name">Rate</label>
-                                                <input type="number" step="any"  class="form-control" wire:model.debounce.300ms="amount.0"  />
+                                                <input type="number" step="any"  class="form-control" wire:model.debounce.300ms="amount.0"/>
                                                 @error('amount.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         </div>
-                                        <div class="col-md-3">
+                                         <div class="col-md-3">
                                             <div class="form-group">
                                                 <label for="subheading">Taxes</label>
                                                 <select wire:model.debounce.300ms="selectedTax.0"  class="form-control">
@@ -196,9 +203,21 @@
                                                 @error('selectedTax.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         </div>      
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label for="name">Additional Cost</label>
+                                                <input type="number" step="any"  class="form-control" wire:model.debounce.300ms="cost.0"/>
+                                                @error('cost.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            </div>
+                                        </div>
+                                       
                                 </div>
+                                 </div>
+                                 <br>
 
                                         @foreach ($inputs as $key => $value)
+                                        <div style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">
+
                                         <div class="row">
                                             <div class="col-md-4">
                                                 @if (is_null($selectedPurchase))
@@ -258,7 +277,7 @@
                                             </div> 
                                         </div>
                                         <div class="row">
-                                        <div class="col-md-4">
+                                        <div class="col-md-3">
                                             <div class="form-group">
                                                 <label for="name">Identification#</label>
                                                 <input type="text" class="form-control" wire:model.debounce.300ms="serial_number.{{$value}}" {{ count($qty) > 1 ? 'disabled' : '' }} placeholder="Serial#/UniqueID"/>
@@ -281,14 +300,14 @@
                                             @endif
                                            
                                         </div>
-                                        <div class="col-md-3">
+                                        <div class="col-md-2">
                                             <div class="form-group">
                                                 <label for="name">Rate</label>
                                                 <input type="number" step="any" class="form-control" wire:model.debounce.300ms="amount.{{$value}}"/>
                                                 @error('amount.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                             </div>
-                                            <div class="col-md-3">
+                                             <div class="col-md-3">
                                                 <div class="form-group">
                                                     <label for="subheading">Taxes</label>
                                                     <select wire:model.debounce.300ms="selectedTax.{{$value}}"  class="form-control">
@@ -301,12 +320,22 @@
                                                     @error('selectedTax.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                                 </div>
                                             </div>      
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label for="name">Additional Cost</label>
+                                                <input type="number" step="any" class="form-control" wire:model.debounce.300ms="cost.{{$value}}"/>
+                                                @error('cost.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            </div>
+                                            </div>
+                                           
                                         <div class="col-md-1">
                                             <div class="form-group">
                                                 <button class="btn btn-danger btn-rounded xs" style="margin-top:23px"  wire:click.prevent="remove({{$key}})"> <i class="fa fa-times"></i></button>
                                             </div>
                                         </div>
                                     </div>
+                                    </div>
+                                    <br>
                                         @endforeach
                                
                                 <div class="row">

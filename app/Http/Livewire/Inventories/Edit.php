@@ -75,6 +75,7 @@ class Edit extends Component
     public $qty  ;
     public $item_description  ;
     public $amount ;
+    public $cost ;
     public $tax_amount;
     public $tax_id;
     public $tax;
@@ -176,7 +177,6 @@ class Edit extends Component
     public function mount($inventory){
         $this->company = Auth::user()->employee->company;
         $this->inventory = $inventory;
-        $this->products = Product::with('brand')->orderBy('name','asc')->where('department','inventory')->where('status',True)->where('buy',True)->get()->sortBy('brand.name');
         $this->vendors = Vendor::orderBy('name','asc')->get();
         $this->currencies = Currency::latest()->get();
         $this->stores = Store::orderBy('name','asc')->get();
@@ -201,6 +201,7 @@ class Edit extends Component
         $this->purchase_date = $inventory->purchase_date;
         $this->qty = $inventory->qty;
         $this->amount = $inventory->amount;
+        $this->cost = $inventory->cost;
         $product = $inventory->product;
         $this->selectedProduct = $inventory->product_id;
         $this->selectedAccount = $inventory->account_id;
@@ -387,6 +388,7 @@ class Edit extends Component
         $inventory->product_id = $this->selectedProduct ?? null;
         $inventory->currency_id = $this->selectedCurrency ?? null;
         $inventory->amount = $this->amount;
+        $inventory->cost = $this->cost;
         $inventory->qty = $this->qty;
         $inventory->measurement = $this->measurement;
         $inventory->weight = $this->weight;
@@ -526,7 +528,7 @@ class Edit extends Component
         $this->measurements = Measurement::orderBy('name','asc')->get();
          $this->goods_receiveds = GoodsReceived::where('status',1)->where('department','inventory')->where('created_at', '>=', Carbon::now()->subMonth())->orderBy('created_at','desc')->get();
         $this->products = Product::with('brand')->orderBy('name','asc')->where('department','inventory')->where('status',True)->where('buy',True)->get()->sortBy('brand.name');
-        $this->purchases = Purchase::where('status',1)->where('created_at', '>=', Carbon::now()->subMonth())->where('authorization','approved')->orderBy('created_at','desc')->get();
+        $this->purchases = Purchase::where('department','inventory')->where('status',1)->where('created_at', '>=', Carbon::now()->subMonth())->where('authorization','approved')->orderBy('created_at','desc')->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->stores = Store::orderBy('name','asc')->get();

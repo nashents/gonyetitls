@@ -84,6 +84,7 @@ class Create extends Component
     public $qty = [] ;
     public $item_description = [] ;
     public $amount = [];
+    public $cost = [];
     public $tax_amount;
     public $tax_id;
     public $tax;
@@ -115,6 +116,7 @@ class Create extends Component
     public $worknumber;
     public $email;
     public $website;
+    public $department;
 
 
     public $expires_at;
@@ -153,13 +155,14 @@ class Create extends Component
     }
 
     public function mount(){
-         $this->company = Auth::user()->employee->company;
-        $this->products = Product::with('brand')->orderBy('name','asc')->where('department','asset')->where('status',True)->where('buy',True)->get()->sortBy('brand.name');
+        $this->company = Auth::user()->employee->company;
+        $this->department = "asset";
+       
         $this->stores = Store::orderBy('name','asc')->get();
         $this->measurements = Measurement::orderBy('name','asc')->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
-        $this->purchases = Purchase::where('status',1)->whereDate('expiry','>',Carbon::now())->where('authorization','approved')->orderBy('created_at','desc')->get();
+       
 
         $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name','Expenses');
@@ -371,6 +374,48 @@ class Create extends Component
       
     }
 
+        public function goodsReceivedNumber(){
+
+     if (isset($this->company)) {
+            $str = $this->company->name;
+            $words = explode(' ', $str);
+            if (isset($words[1][0])) {
+                $initials = $words[0][0].$words[1][0];
+            }else {
+                $initials = $words[0][0];
+            }
+        }
+ 
+        $goods_received = GoodsReceived::orderBy('id','desc')->first();
+
+        if (!$goods_received) {
+            $goods_received_number =  $initials .'GR'. str_pad(1, 5, "0", STR_PAD_LEFT);
+        }else {
+            $number = $goods_received->id + 1;
+            $goods_received_number =  $initials .'GR'. str_pad($number, 5, "0", STR_PAD_LEFT);
+        }
+
+        return  $goods_received_number;
+
+    }
+
+        
+    public function createGRV(){
+
+        $goods_received = new GoodsReceived;
+        $goods_received->goods_received_number = $this->goodsReceivedNumber();
+        $goods_received->user_id = Auth::user()->id;
+        $goods_received->vendor_id = $this->vendor_id;
+        $goods_received->department = $this->department;
+        $goods_received->employee_id = Auth::user()->employee->id;
+        $goods_received->date = $this->purchase_date;
+        $goods_received->save();
+
+        $this->selectedGoodsReceived = $goods_received->id;
+        
+        return $this->selectedGoodsReceived;
+    }
+
     public function updatedSelectedPurchase($id)
     {
         if (!is_null($id) ) {
@@ -456,7 +501,14 @@ class Create extends Component
                     $asset->user_id = Auth::user()->id;
                     $asset->vendor_id = $this->vendor_id ? $this->vendor_id : NULL;
                     $asset->currency_id = $this->selectedCurrency ? $this->selectedCurrency : null;
-                    $asset->goods_received_id = $this->selectedGoodsReceived ? $this->selectedGoodsReceived : null;
+                  
+                    if ($this->selectedGoodsReceived) {
+                      $asset->goods_received_id = $this->selectedGoodsReceived;
+                    }else{
+                        $asset->goods_received_id = $this->createGRV();
+                    }
+                    
+
                     if (isset($this->selectedProduct[$key])) {
                         $asset->product_id = $this->selectedProduct[$key];
                     }
@@ -468,6 +520,9 @@ class Create extends Component
                     }
                     if (isset($this->amount[$key])) {
                         $asset->amount = $this->amount[$key];
+                    }
+                    if (isset($this->cost[$key])) {
+                        $asset->cost = $this->cost[$key];
                     }
                     if (isset($this->qty[$key])) {
                         $asset->qty = $this->qty[$key];
@@ -592,7 +647,7 @@ class Create extends Component
         $this->products = Product::with('brand')->orderBy('name','asc')->where('department','asset')->where('status',True)->where('buy',True)->get()->sortBy('brand.name');
         $this->stores = Store::orderBy('name','asc')->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();
-        $this->purchases = Purchase::where('status',1)->whereDate('expiry','>',Carbon::now())->where('authorization','approved')->orderBy('created_at','desc')->get();
+        $this->purchases = Purchase::where('department','asset')->where('status',1)->where('created_at', '>=', Carbon::now()->subMonth())->where('authorization','approved')->orderBy('created_at','desc')->get();
         return view('livewire.assets.create',[
             'products' => $this->products,
             'stores' => $this->stores,

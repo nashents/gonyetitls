@@ -14,7 +14,7 @@
                         <form wire:submit.prevent="update()" >
                             <div class="form-group">
                                     <label for="country">Goods Received Vouchers</label>
-                                    <select wire:model.debounce.300ms="selectedGoodsReceived" class="form-control" >
+                                    <select wire:model.debounce.300ms="selectedGoodsReceived" class="form-control" disabled>
                                         <option value="">Select GRV</option>
                                         @foreach ($goods_receiveds as $goods_received)
                                         <option value="{{$goods_received->id}}">{{$goods_received->goods_received_number}} | {{$goods_received->date}} | {{$goods_received->vendor ? $goods_received->vendor->name : ""}} </option>
@@ -27,7 +27,7 @@
                                 <div class="col-md-3">
                                     <div class="form-group">
                                         <label for="country">Purchase Orders</label>
-                                       <select wire:model.debounce.300ms="selectedPurchase" class="form-control" >
+                                       <select wire:model.debounce.300ms="selectedPurchase" class="form-control" disabled>
                                            <option value="">Select Purchase Order</option>
                                          @foreach ($purchases as $purchase)
                                          <option value="{{$purchase->id}}">{{$purchase->purchase_number}} | {{ $purchase->date }} | {{$purchase->vendor ? $purchase->vendor->name : ""}} | {{ $purchase->currency ? $purchase->currency->name : "" }} {{ $purchase->currency ? $purchase->currency->symbol : "" }}{{number_format($purchase->total,2)}}</option>
@@ -92,7 +92,7 @@
                                 </div>
                             </div>
 
-                      
+                       <div style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">
                         <div class="row">
                             <div class="col-md-4">
                                 @if (is_null($selectedPurchase))
@@ -110,14 +110,14 @@
                                 @else   
                                     <div class="form-group">
                                         <label for="country">Product(s)<span class="required" style="color: red">*</span></label>
-                                        <select wire:model.debounce.300ms="selectedProduct" class="form-control" required>
+                                        <select wire:model.debounce.300ms="selectedPurchaseProduct" class="form-control" required>
                                             <option value="">Select Product</option>
                                             @foreach ($purchase_products as $purchase_product)
                                                 <option value="{{$purchase_product->id}}"> {{$purchase_product->product->brand ? $purchase_product->product->brand->name : ""}} {{$purchase_product->product ? $purchase_product->product->name : ""}} {{$purchase_product->product ? $purchase_product->product->identification_number : ""}}</option>
                                             @endforeach
                                         </select>
                                         <small>  <a href="{{ route('products.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Product</a></small> 
-                                        @error('selectedProduct') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        @error('selectedPurchaseProduct') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 @endif
                                
@@ -153,7 +153,7 @@
                         </div>
         
                         <div class="row">
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="name">Serial#</label>
                                     <input type="text" class="form-control" wire:model.debounce.300ms="serial_number" placeholder="Serial#/UniqueID"/>
@@ -176,10 +176,10 @@
                                     @endif
                                    
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <div class="form-group">
                                         <label for="name">Rate</label>
-                                        <input type="number" step="any"  class="form-control" wire:model.debounce.300ms="amount"  />
+                                        <input type="number" step="any"  class="form-control" wire:model.debounce.300ms="amount"/>
                                         @error('amount') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
@@ -195,8 +195,16 @@
                                             <small><a href="{{ route('taxes.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small> 
                                         @error('selectedTax') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
-                                </div>      
+                                </div> 
+                                  <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label for="name">Additional Cost</label>
+                                        <input type="number" step="any"  class="form-control" wire:model.debounce.300ms="cost"  />
+                                        @error('cost') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>     
                         </div>
+                       </div>
                                     
                                 <div class="row">
                                     <div class="col-md-3">

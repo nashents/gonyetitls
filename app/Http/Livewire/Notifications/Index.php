@@ -16,6 +16,7 @@ class Index extends Component
     public $employee_id;
     public $employees;
     public $category;
+    public $when;
  
     public $notification_id;
     public $user_id;
@@ -50,6 +51,7 @@ class Index extends Component
     }
     protected $rules = [
         'category' => 'required',
+        'when' => 'required',
     ];
 
     private function resetInputFields(){
@@ -57,6 +59,7 @@ class Index extends Component
         $this->employee_id = '';
         $this->status = '';
         $this->category = '';
+        $this->when = '';
 
     }
 
@@ -67,6 +70,7 @@ class Index extends Component
         $notification->user_id = Auth::user()->id;
         $notification->employee_id = $this->employee_id;
         $notification->category = $this->category;
+        $notification->when = $this->when;
         $notification->email = $this->email;
         $notification->status = $this->status;
         $notification->save();
@@ -95,6 +99,7 @@ class Index extends Component
     $this->user_id = $notification->user_id;
     $this->employee_id = $notification->employee_id;
     $this->category = $notification->category;
+    $this->when = $notification->when;
     $this->email = $notification->email;
     $this->status = $notification->status;
     $this->notification_id = $notification->id;
@@ -110,6 +115,7 @@ class Index extends Component
             $notification = Notification::find($this->notification_id);
             $notification->employee_id = $this->employee_id;
             $notification->category = $this->category;
+            $notification->when = $this->when;
             $notification->email = $this->email;
             $notification->status = $this->status;
             $notification->update();
