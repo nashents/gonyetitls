@@ -359,15 +359,16 @@
                             <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
                          @endif
                       </table>
+                        <nav class="text-center" style="float: right">
+                            <ul class="pagination rounded-corners">
+                                @if (isset($driver_allowances))
+                                    {{ $driver_allowances->links() }} 
+                                @endif 
+                            </ul>
+                        </nav>  
                       
                 </div>
-                <nav class="text-center" style="float: right">
-                    <ul class="pagination rounded-corners">
-                        @if (isset($driver_allowances))
-                            {{ $driver_allowances->links() }} 
-                        @endif 
-                    </ul>
-                </nav>    
+                 
                 <div role="tabpanel" class="tab-pane" id="recoveries">
                     <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                         <thead>
@@ -445,13 +446,12 @@
                          @endif
                       </table>
                        <nav class="text-center" style="float: right">
-                                <ul class="pagination rounded-corners">
-                                    @if (isset($recoveries))
-                                        {{ $recoveries->links() }} 
-                                    @endif 
-                                </ul>
-                            </nav>    
-                    
+                            <ul class="pagination rounded-corners">
+                                @if (isset($recoveries))
+                                    {{ $recoveries->links() }} 
+                                @endif 
+                            </ul>
+                        </nav>    
                 </div>
                 @endif
                 <div role="tabpanel" class="tab-pane" id="fitness">
