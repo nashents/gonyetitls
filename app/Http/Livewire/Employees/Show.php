@@ -132,8 +132,8 @@ class Show extends Component
             return view('livewire.employees.show',[
                 'all_departments' => $this->all_departments,
                 'employee_departments' =>  $this->employee->departments,
-                'driver_allowances' => AllowanceDriver::where('driver_id', $this->driver->id)->orderBy('created_at','desc')->paginate(10),
-                'recoveries' => Recovery::where('driver_id', $this->driver->id)->orderBy('created_at','desc')->paginate(10)
+                'driver_allowances' => AllowanceDriver::where('driver_id', $this->driver->id)->orderBy('created_at','desc')->get(),
+                'recoveries' => Recovery::where('driver_id', $this->driver->id)->orderBy('created_at','desc')->get()
             ]);
         }else{
             return view('livewire.employees.show',[
