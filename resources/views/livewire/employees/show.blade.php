@@ -308,7 +308,7 @@
                     @endif
                 </div>
                 <div  role="tabpanel" class="tab-pane" id="allowances">
-                    <table id="allowancesTable"  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
+                    <table   class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                         <thead>
                           <tr>
                             <th class="th-sm">Trip
@@ -361,8 +361,15 @@
                       </table>
                       
                 </div>
+                <nav class="text-center" style="float: right">
+                    <ul class="pagination rounded-corners">
+                        @if (isset($driver_allowances))
+                            {{ $driver_allowances->links() }} 
+                        @endif 
+                    </ul>
+                </nav>    
                 <div role="tabpanel" class="tab-pane" id="recoveries">
-                    <table id="recoveriesTable"  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
+                    <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                         <thead>
                           <tr>
                             <th class="th-sm">Recovery#
@@ -437,6 +444,13 @@
                             <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
                          @endif
                       </table>
+                       <nav class="text-center" style="float: right">
+                                <ul class="pagination rounded-corners">
+                                    @if (isset($recoveries))
+                                        {{ $recoveries->links() }} 
+                                    @endif 
+                                </ul>
+                            </nav>    
                     
                 </div>
                 @endif
