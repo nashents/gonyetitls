@@ -20,8 +20,8 @@ class Show extends Component
     public $employee_id;
     public $employee;
     public $driver;
-    private $driver_allowances;
-    private $recoveries;
+    public $driver_allowances;
+    public $recoveries;
     public $all_departments;
     public $employee_departments;
     public $department_id;

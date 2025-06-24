@@ -307,9 +307,8 @@
                     @livewire('drivers.trips', ['id' => $employee->driver->id])
                     @endif
                 </div>
-             
-                <div role="tabpanel" class="tab-pane" id="allowances">
-                    <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
+                <div  role="tabpanel" class="tab-pane" id="allowances">
+                    <table id="allowancesTable"  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                         <thead>
                           <tr>
                             <th class="th-sm">Trip
@@ -322,8 +321,8 @@
                             </th>
                             <th class="th-sm">Amount
                             </th>
-                            <th class="th-sm">Status
-                            </th>
+                            {{-- <th class="th-sm">Status
+                            </th> --}}
                           </tr>
                         </thead>
                         @if (isset($driver_allowances))
@@ -343,8 +342,7 @@
                                     {{$driver_allowance->currency ? $driver_allowance->currency->symbol : ""}}{{number_format($driver_allowance->amount,2)}}
                                 @endif
                             </td>
-                            <td><span class="label label-{{($driver_allowance->status == 'Paid') ? 'success' : (($driver_allowance->status == 'Partial') ? 'warning' : 'danger') }}">{{ $driver_allowance->status }}</span></td>
-                    
+                            {{-- <td><span class="label label-{{($driver_allowance->status == 'Paid') ? 'success' : (($driver_allowance->status == 'Partial') ? 'warning' : 'danger') }}">{{ $driver_allowance->status }}</span></td>--}}
                           </tr>
                           @empty
                           <tr>
@@ -361,19 +359,12 @@
                             <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
                          @endif
                       </table>
-                      <nav class="text-center" style="float: right">
-                        <ul class="pagination rounded-corners">
-                            @if (isset($driver_allowances))
-                                {{ $driver_allowances->links() }} 
-                            @endif 
-                        </ul>
-                    </nav>    
+                      
                 </div>
                 <div role="tabpanel" class="tab-pane" id="recoveries">
-                    <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
+                    <table id="recoveriesTable"  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                         <thead>
                           <tr>
-
                             <th class="th-sm">Recovery#
                             </th>
                             <th class="th-sm">Date
@@ -446,13 +437,7 @@
                             <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
                          @endif
                       </table>
-                      <nav class="text-center" style="float: right">
-                        <ul class="pagination rounded-corners">
-                            @if (isset($recoveries))
-                                {{ $recoveries->links() }} 
-                            @endif 
-                        </ul>
-                    </nav>    
+                    
                 </div>
                 @endif
                 <div role="tabpanel" class="tab-pane" id="fitness">

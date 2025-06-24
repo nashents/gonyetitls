@@ -108,7 +108,7 @@
     </script>
 <script>
     $(document).ready( function () {
-        $('#driver_allowancesTable').DataTable();
+        $('#allowancesTable').DataTable();
     } );
     </script>
 @endsection
