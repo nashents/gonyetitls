@@ -8,11 +8,15 @@ use App\Models\Employee;
 use App\Models\Recovery;
 use App\Models\Allowance;
 use App\Models\Department;
+use Livewire\WithPagination;
 use App\Models\AllowanceDriver;
 
 class Show extends Component
 {
 
+    use WithPagination;
+    protected $paginationTheme = 'bootstrap';
+  
     public $employee_id;
     public $employee;
     public $driver;
