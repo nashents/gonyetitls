@@ -23,6 +23,8 @@ use App\Models\ExchangeRate;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Excel;
 use App\Exports\ShiftsExport;
+use App\Imports\ShiftsImport;
+use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Session;
@@ -31,6 +33,7 @@ class Index extends Component
 {
 
     use WithPagination;
+    use WithFileUploads;
 
     protected $paginationTheme = 'bootstrap';
     public $search;
@@ -123,6 +126,7 @@ class Index extends Component
     public $open_employee_id;
     public $closing_employee_id;
     public $fuel_id;
+    public $importFile;
 
 
     private function resetInputFields(){
@@ -335,6 +339,21 @@ class Index extends Component
     }
     public function exportShiftsExcel(Excel $excel){
         return $excel->download(new ShiftsExport($this->from, $this->to, $this->shift_filter, $this->search), 'shifts_'.time().'.xlsx');
+    }
+
+        public function importShifts(){
+      
+        $file = $this->importFile;
+        $import = new ShiftsImport($this->for);
+        $import->import($file);
+
+        $this->dispatchBrowserEvent('hide-shiftsImportModal');
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Shift(s) Imported Successfully!!"
+        ]);
+
+        return redirect(request()->header('Referer'));
     }
 
        public function shiftNumber(){

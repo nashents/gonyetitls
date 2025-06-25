@@ -1660,7 +1660,7 @@ class Create extends Component
                 $this->recalculateExpenses($trip->id);
 
 
-                $notifications = Notification::where('category','Trip Authorization')->where('status',1)->get();
+                $notifications = Notification::where('when','before')->where('category','Trip Authorization')->where('status',1)->get();
                 
                 if ($notifications->isNotEmpty()) {
                     foreach ($notifications as $notification) {

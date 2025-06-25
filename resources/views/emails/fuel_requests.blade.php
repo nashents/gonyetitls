@@ -50,8 +50,8 @@ Fuel Request | @if (isset(Auth::user()->employee->company))
 										<p style="margin:0;font-size:14px;line-height:16px;font-family:Arial,sans-serif;color:#ffffff;">
 											&reg;
                                             Gonyeti TLS {{date('Y')}}<br/>
-                                        <a href="mailto:info@gonyetitls.com" style="color:#ffffff;text-decoration:underline;">
-                                            info@gonyetitls.com</a>
+                                        <a href="mailto:info@basilmark.com" style="color:#ffffff;text-decoration:underline;">
+                                            info@basilmark.com</a>
 										</p>
 									</center>
 									</td>
@@ -60,7 +60,7 @@ Fuel Request | @if (isset(Auth::user()->employee->company))
 											<tr>
 												</td>
 												<td style="padding:0 0 0 10px;width:38px;">
-													<a target="_blank" href="https://www.facebook.com/gonyetitls" style="color:#ffffff;"><img src="https://assets.codepen.io/210284/fb_1.png" alt="Facebook" width="38" style="height:auto;display:block;border:0;"  /></a>
+													<a target="_blank" href="https://www.facebook.com/basilmarkzw" style="color:#ffffff;"><img src="https://assets.codepen.io/210284/fb_1.png" alt="Facebook" width="38" style="height:auto;display:block;border:0;"  /></a>
 												</td>
 											</tr>
 										</table>

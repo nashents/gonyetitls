@@ -124,10 +124,18 @@
 @stack('scripts')
     
     <script type="text/javascript">
+            window.addEventListener('hide-shiftsImportModal', event => {
+                $('#shiftsImportModal').modal('hide');
+            })
+    </script>
+
+    <script type="text/javascript">
             window.addEventListener('show-exchange_rateModal', event => {
                 $('#exchange_rateModal').modal('show');
             })
     </script>
+
+
     <script type="text/javascript">
             window.addEventListener('hide-exchange_rateModal', event => {
                 $('#exchange_rateModal').modal('hide');

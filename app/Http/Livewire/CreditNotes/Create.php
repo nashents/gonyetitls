@@ -231,7 +231,7 @@ class Create extends Component
         $credit_note->total = $this->total;
         $credit_note->save();
 
-        $notifications = Notification::where('category','Credit Note Authorization')->where('status',1)->get();
+        $notifications = Notification::where('when','before')->where('category','Credit Note Authorization')->where('status',1)->get();
         
         if ($notifications->isNotEmpty()) {
             foreach ($notifications as $notification) {

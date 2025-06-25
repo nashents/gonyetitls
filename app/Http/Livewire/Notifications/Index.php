@@ -55,8 +55,8 @@ class Index extends Component
     ];
 
     private function resetInputFields(){
-        $this->email = '';
-        $this->employee_id = '';
+        $this->email = Null;
+        $this->employee_id = Null;
         $this->status = '';
         $this->category = '';
         $this->when = '';

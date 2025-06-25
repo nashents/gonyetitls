@@ -74,7 +74,7 @@ Leave Copy | {{$company->name}}
 												<table role="presentation" style="border-collapse:collapse;border:0;border-spacing:0;">
 													<tr>
 														<td style="padding:0 0 0 10px;width:38px;">
-															<a target="_blank" href="https://www.facebook.com/gonyetitls" style="color:#ffffff;"><img src="https://assets.codepen.io/210284/fb_1.png" alt="Facebook" width="38" style="height:auto;display:block;border:0;"  /></a>
+															<a target="_blank" href="https://www.facebook.com/basilmarkzw" style="color:#ffffff;"><img src="https://assets.codepen.io/210284/fb_1.png" alt="Facebook" width="38" style="height:auto;display:block;border:0;"  /></a>
 														</td>
 													</tr>
 												</table>

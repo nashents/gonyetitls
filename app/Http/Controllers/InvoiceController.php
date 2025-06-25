@@ -196,13 +196,15 @@ class InvoiceController extends Controller
 
     }
 
+    
+
     public function sendEmailWithAttachment($data, $filePath)
-{       $customer = $data['customer'];
-    if ($customer->email) {
-        Mail::to($customer->email)->send(new SendCustomerStatementMail($data, $filePath));
+    {       $customer = $data['customer'];
+        if ($customer->email) {
+            Mail::to($customer->email)->send(new SendCustomerStatementMail($data, $filePath));
+        }
+    
     }
-   
-}
 
     public function customerStatementsEmail($selectedCustomer = null, $selectedType = null, $from = null, $to = null){
         $company = Auth::user()->employee->company;

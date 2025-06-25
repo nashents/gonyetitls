@@ -425,7 +425,7 @@ class Index extends Component
 
         $requisition->save();
 
-        $notifications = Notification::where('category','Requisition Authorization')->where('status',1)->get();
+        $notifications = Notification::where('when','before')->where('category','Requisition Authorization')->where('status',1)->get();
         $company =  $this->company;
                 
         if ($notifications->isNotEmpty()) {

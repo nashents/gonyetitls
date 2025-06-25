@@ -237,7 +237,7 @@ class Create extends Component
         }
  
        
-        $notifications = Notification::where('category','Garage Booking Authorization')->where('status',1)->get();
+        $notifications = Notification::where('when','before')->where('category','Garage Booking Authorization')->where('status',1)->get();
         $company =  $this->company;
         
         if ($notifications->isNotEmpty()) {

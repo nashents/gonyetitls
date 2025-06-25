@@ -451,7 +451,7 @@ class Create extends Component
         $bill->exchange_amount = $this->exchange_amount;
         $bill->update();
 
-        $notifications = Notification::where('category','Bill Authorization')->where('status',1)->get();
+        $notifications = Notification::where('when','before')->where('category','Bill Authorization')->where('status',1)->get();
         if ($notifications->isNotEmpty()) {
             foreach ($notifications as $notification) {
                 if($notification && isset($notification->category)){

@@ -177,19 +177,35 @@
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fa fa-upload"></i>Import Shift(s) <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                 </div>
-                <form action="{{route('shifts.import')}}" method="POST" enctype="multipart/form-data">
-                    {{ csrf_field() }}
+                <form wire:submit.prevent="importShifts()" method="POST" enctype="multipart/form-data">
+                  
                 <div class="modal-body">
-                    <div class="form-group">
-                        <label for="name">Upload Shift(s) Excel File</label>
-                        <input type="file" class="form-control" name="file" placeholder="Upload Shifts File" >
-                        @error('file') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    <div class="row">
+                        <div class="col-md-6">
+                                <div class="form-group">
+                                <label for="name">For<span class="required" style="color: red">*</span></label>
+                                <select class="form-control" wire:model.debounce.300ms="for">
+                                    <option value="">Select Option</option>
+                                    <option value="Rehandling">Rehandling Work</option>
+                                    <option value="Trips">Trips</option>
+                                </select>
+                                @error('for') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="name">Upload Shift(s) Excel File</label>
+                                <input type="file" class="form-control" wire:model.debounce.300ms="importFile"placeholder="Upload Shifts File" required>
+                                @error('importFile') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
                     </div>
+                 
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">
                         <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
-                        <button  onClick="this.form.submit(); this.disabled=true; this.value='Sending…'; "  class="btn bg-success btn-wide btn-rounded"><i class="fa fa-upload"></i>Upload</button>
+                        <button  type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-upload"></i>Upload</button>
                     </div>
                     <!-- /.btn-group -->
                 </div>

@@ -6,9 +6,15 @@ use App\Models\Bill;
 use App\Models\Account;
 use Livewire\Component;
 use App\Models\Purchase;
+use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\BillExpense;
+use App\Models\Notification;
 use Livewire\WithPagination;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
+use App\Mail\SendPurchaseOrderUpdateMail;
 
 class Pending extends Component
 {
@@ -74,7 +80,13 @@ class Pending extends Component
         $this->dispatchBrowserEvent('show-purchaseAuthorizationModal');
       }
 
+    
+
       public function update(){
+
+      DB::transaction(function () {
+
+
         $purchase = Purchase::find($this->purchase_id);
         if ($purchase->authorization == "approved") {
             $this->dispatchBrowserEvent('hide-purchaseAuthorizationModal');
@@ -83,6 +95,7 @@ class Pending extends Component
                 'message'=>"Purchase Order Approved Already"
             ]);
         }else {
+            
             $purchase->authorized_by_id = Auth::user()->id;
             $purchase->authorization = $this->authorize;
             $purchase->authorization_comments = $this->comments;
@@ -140,6 +153,33 @@ class Pending extends Component
                 }
             }
 
+            $notifications = Notification::where('when','after')->where('category','Purchase Order Authorization')->where('status',1)->get();
+
+            if ($notifications) {
+                $company = Auth::user()->employee->company;
+                $purchase_products = $purchase->purchase_products;
+                $data = [
+                    'purchase' => $purchase,
+                    'company' => $company,
+                    'purchase_products' => $purchase_products,
+                ];
+
+                $pdf = PDF::loadView('purchases.purchase', $data);
+
+                $fileName = 'purchase_order' . time() . '.pdf';
+                $filePath = 'myfiles/documents/' . $fileName;
+                Storage::disk('local')->put($filePath, $pdf->output());
+
+                $notification =  $notifications->first();
+                $email =  $notification->email ?  $notification->email :  $notification->employee->email;
+                $employee =  $notification->employee;
+                if ($email) {
+                    Mail::to($email)->send(new SendPurchaseOrderUpdateMail($data, $filePath, $employee, $notifications));
+                }
+               
+            }
+            
+
            
             $this->dispatchBrowserEvent('hide-purchaseAuthorizationModal');
             $this->dispatchBrowserEvent('alert',[
@@ -170,7 +210,8 @@ class Pending extends Component
           
         }
         }
-      }
+        });
+    }
 
     public function render()
     {

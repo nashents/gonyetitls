@@ -37,7 +37,7 @@
                                 <tbody>
                                     @foreach ($notifications as $notification)
                                   <tr>
-                                    <td>{{$notification->user ? $notification->user->name : ""}}</td>
+                                    <td>{{$notification->user ? $notification->user->name : ""}} {{$notification->user ? $notification->user->surname : ""}}</td>
                                     <td>{{$notification->when}}</td>
                                     <td>{{$notification->category}}</td>
                                     <td>{{$notification->employee ? $notification->employee->name : ""}} {{$notification->employee ? $notification->employee->surname : ""}}</td>

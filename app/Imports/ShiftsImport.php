@@ -47,41 +47,42 @@ WithBatchInserts
     * @return \Illuminate\Database\Eloquent\Model|null
     */
 
-    public $company;
-    public $trailer_ids;
+    public $for;
 
-    public function __construct()
-    {
-        $this->company = Auth::user()->employee->company;
+    public function __construct($for)
+    {   $this->for = $for;
+       
     }
 
-       private function parseExcelDate($value)
-       {
-           if (!isset($value)) {
-               return null;
-           }
-   
-           // If it's a numeric Excel date serial
-           if (is_numeric($value)) {
-               try {
-                   return Carbon::instance(\PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($value)->format('Y-m-d'));
-               } catch (\Exception $e) {
-                   return null;
-               }
-           }
-   
-           // If it's a string in strict YYYY-MM-DD format
-           if (is_string($value)) {
-               try {
-                   $parsed = Carbon::createFromFormat('Y-m-d', $value);
-                   return $parsed && $parsed->format('Y-m-d') === $value ? $parsed : null;
-               } catch (\Exception $e) {
-                   return null;
-               }
-           }
-   
-           return null;
-       }
+        private function parseExcelDate($value)
+        {
+            if (!isset($value)) {
+                return null;
+            }
+
+            // If it's a numeric Excel date serial
+            if (is_numeric($value)) {
+                try {
+                    return Carbon::instance(
+                        \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($value)
+                    );
+                } catch (\Exception $e) {
+                    return null;
+                }
+            }
+
+            // If it's a string in strict YYYY-MM-DD format
+            if (is_string($value)) {
+                try {
+                    $parsed = Carbon::createFromFormat('Y-m-d', $value);
+                    return $parsed && $parsed->format('Y-m-d') === $value ? $parsed : null;
+                } catch (\Exception $e) {
+                    return null;
+                }
+            }
+
+            return null;
+        }
 
        public function limit(): int
     {
@@ -95,11 +96,9 @@ WithBatchInserts
        foreach($rows as $row){
         if($row->filter()->isNotEmpty()){
 
-            $offloading_point = OffloadingPoint::where('name',$row['offloading_point'])->first();
             $customer = Customer::where('name',$row['customer'])->first();
-            $horse = Horse::where('fleet_number',$row['fleet_number'])->first();
-            $cargo = Cargo::where('name',$row['cargo'])->first();
-            $transporter = Transporter::where('name',$row['transporter'])->first();            
+            $horse = Horse::where('fleet_number',$row['horse'])->first();
+            $cargo = Cargo::where('name',$row['cargo'])->first();      
             $employee = Employee::where('surname', $row['driver'])->first();
             if($employee){
                 $driver = $employee->driver;
@@ -108,69 +107,30 @@ WithBatchInserts
             }
             
 
-            $trip = new Shift;
-            $trip->user_id     = Auth::user()->id;
-            $trip->trip_type_id = $trip_type ? $trip_type->id : Null;
-            $trip->trip_ref = $row['trip_reference'];
-            $trip->start_date = $this->parseExcelDate($row['start_date']);
-            $trip->end_date = $this->parseExcelDate($row['end_date']);
-            $trip->transporter_id     = $transporter ? $transporter->id : Null;
-            $trip->horse_id     = $horse ? $horse->id : Null;
-            if (isset($this->trailer_ids)) {
-                $trip->with_trailer = 1;
+            $shift = new Shift;
+            $shift->user_id     = Auth::user()->id;
+            if ($row['shift'] == "Morning") {
+                $shift->type = "Day";
+            }elseif($row['shift'] == "Night"){
+                $shift->type = "Night";
             }
-            $trip->driver_id     = $driver ? $driver->id : Null;
-            $trip->customer_id     = $customer ? $customer->id : Null;
-            $trip->currency_id     = $currency ? $currency->id : Null;
-            $trip->loading_point_id     = $loading_point ? $loading_point->id : Null;
-            $trip->offloading_point_id     = $offloading_point ? $offloading_point->id : Null;
-            $trip->cargo_id     = $cargo ? $cargo->id : Null;
-            if(isset($cargo)){
-                $cargo_type = $cargo->type;
-                if ($cargo_type && $cargo_type == "Solid") {
-                    $trip->calculation_measurement = "weight";
-                }elseif ($cargo_type && $cargo_type == "Liquid") {
-                    $trip->calculation_measurement = "litreage_at_20";
-                }
-                $trip->with_cargos = 1;
-            }
-            $trip->with_customer_rates = "custom";
-            $trip->with_transporter_rates = "custom";
-            $trip->weight     = $row['weight'];
-            $trip->litreage     = $row['litreage_at_ambient'];
-            $trip->litreage_at_20     = $row['litreage_at_20'];
-            $trip->rate     = $row['rate'];
-            if (isset($row['rate'])) {
-               $trip->freight_calculation = 'flat_rate';
-               $trip->with_customer_rates = 'custom';
-            }
-            $trip->freight     = $row['freight'];
-            $trip->turnover = $row['freight'];
-            $turnover = $row['freight'];
-            $cost_of_sales = 0;
-            $trip->cost_of_sales = 0;
-            $trip->trip_status     = $row['trip_status'];
-            $trip->save();
 
-            if (isset($this->trailer_ids) && !empty($this->trailer_ids) && !is_null($this->trailer_ids) ) {
-                $trip->trailers()->sync($this->trailer_ids);
-              }
+            $parsedDate = $this->parseExcelDate($row['date']);
+            $shift->date = $parsedDate ? $parsedDate->format('Y-m-d') : null;
+            $shift->shift_start_time     = $row['shift_start'];
+            $shift->shift_end_time     = $row['shift_close'];
+            $shift->horse_id     = $horse ? $horse->id : Null;
+            $shift->driver_id     = $driver ? $driver->id : Null;
+            $shift->customer_id     = $customer ? $customer->id : Null;
+            $shift->cargo_id     = $cargo ? $cargo->id : Null;
+            $shift->actual_mileage     = $row['actual_mileage'];
+            $shift->calculated_mileage     = $row['cal_mileage'];
+            $shift->open_mileage     = $row['open_mileage'];
+            $shift->close_mileage     = $row['close_mileage'];
+            $shift->fuel_consumption_mileage     = $row['consumption'];
+            $shift->save();
 
-              if ((isset($cost_of_sales) && is_numeric($cost_of_sales) && $cost_of_sales > 0) && (isset($turnover) && is_numeric($turnover) && $turnover > 0)) {
-         
-                $trip->net_profit = $turnover - $cost_of_sales;
-                $this->net_profit = $turnover - $cost_of_sales;
-    
-                if((is_numeric($this->net_profit) && $this->net_profit > 0) && (is_numeric($turnover) && $turnover > 0)){
-                    $trip->markup_percentage = (($this->net_profit/$cost_of_sales) * 100);
-                    $trip->net_profit_percentage = (($this->net_profit/$turnover) * 100);
-                }
-          
-            }else {
-
-                $trip->net_profit_percentage = 100 ;
-                $trip->markup_percentage = 100 ;
-            }      
+            
             
     }
        }
