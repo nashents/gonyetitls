@@ -247,7 +247,7 @@ class Edit extends Component
        
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->customers = Customer::orderBy('name','asc')->get();
-         $this->bank_accounts = BankAccount::whereNull('employee_id')->whereNotNull('company_id')->orderBy('name','asc')->get();
+        $this->bank_accounts = BankAccount::where('company_id',$this->company->id)->orderBy('name','asc')->get();
         $this->cargos = Cargo::orderBy('name','asc')->get();
         $this->loading_points = LoadingPoint::orderBy('name','asc')->get();
         $this->offloading_points = OffloadingPoint::orderBy('name','asc')->get();
@@ -1046,7 +1046,7 @@ class Edit extends Component
 
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->customers = Customer::orderBy('name','asc')->get();
-        $this->bank_accounts = BankAccount::whereNull('employee_id')->whereNotNull('company_id')->orderBy('name','asc')->get();
+        $this->bank_accounts = BankAccount::where('company_id',$this->company->id)->orderBy('name','asc')->get();
         $this->products = Product::where('sell',True)->orderBy('name','asc')->get();
         $this->cargos = Cargo::orderBy('name','asc')->get();
         $this->loading_points = LoadingPoint::orderBy('name','asc')->get();

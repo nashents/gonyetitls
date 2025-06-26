@@ -441,7 +441,7 @@ class Create extends Component
         $this->inventories = Inventory::with('product.brand')->where('status',1)->get()->sortBy('product.brand.name');
         $this->income_account_id = Account::where('name','Sales')->first()->id;
      
-         $this->bank_accounts = BankAccount::whereNull('employee_id')->whereNotNull('company_id')->orderBy('name','asc')->get();
+        $this->bank_accounts = BankAccount::where('company_id',$this->company->id)->orderBy('name','asc')->get();
         $this->products = Product::where('sell',True)->orderBy('name','asc')->get();
 
 
@@ -1244,7 +1244,7 @@ class Create extends Component
         $this->inventories = Inventory::with('product.brand')->where('status',1)->get()->sortBy('product.brand.name');
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->customers = Customer::orderBy('name','asc')->get();
-        $this->bank_accounts = BankAccount::whereNull('employee_id')->whereNotNull('company_id')->orderBy('name','asc')->get();
+       $this->bank_accounts = BankAccount::where('company_id',$this->company->id)->orderBy('name','asc')->get();
         $this->products = Product::where('sell',True)->orderBy('name','asc')->get();
 
         if (isset($this->from) && isset($this->to)) {

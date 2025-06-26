@@ -266,7 +266,7 @@ public function quotationNumber(){
          $this->company = Auth::user()->employee->company;
         $this->for_trips = False;
         $this->quotation_number = $this->quotationNumber();
-         $this->bank_accounts = BankAccount::whereNull('employee_id')->whereNotNull('company_id')->orderBy('name','asc')->get();
+        $this->bank_accounts = BankAccount::where('company_id',$this->company->id)->orderBy('name','asc')->get();
         $this->customers = Customer::orderBy('name','asc')->get();
         $this->cargos = Cargo::orderBy('name','asc')->get();
         $this->loading_points = LoadingPoint::orderBy('name','asc')->get();
@@ -796,7 +796,7 @@ public function quotationNumber(){
 
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->customers = Customer::orderBy('name','asc')->get();
-        $this->bank_accounts = BankAccount::whereNull('employee_id')->whereNotNull('company_id')->orderBy('name','asc')->get();
+        $this->bank_accounts = BankAccount::where('company_id',$this->company->id)->orderBy('name','asc')->get();
 
         $this->cargos = Cargo::orderBy('name','asc')->get();
         $this->loading_points = LoadingPoint::orderBy('name','asc')->get();
