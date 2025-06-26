@@ -31,6 +31,7 @@ use App\Models\TripDocument;
 use App\Models\InvoicePayment;
 use App\Models\ProductService;
 use App\Models\InventoryDispatch;
+use Illuminate\Support\Facades\DB;
 use App\Models\InventoryRequisition;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -855,6 +856,8 @@ class Create extends Component
 
     public function store(){
 
+          DB::transaction(function () {
+
         $invoice = new Invoice;
         $invoice->user_id = Auth::user()->id;
         $invoice->company_id = $this->company_id;
@@ -1192,6 +1195,7 @@ class Create extends Component
         //         'message'=>"Something went wrong while creating invoice!!"
         //     ]);
         // }
+    });
     }
 
     public function invoiceDate(){

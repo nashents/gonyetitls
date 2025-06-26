@@ -20,6 +20,7 @@ use App\Models\BillExpense;
 use App\Models\Transporter;
 use App\Models\ExchangeRate;
 use App\Models\Notification;
+use Predis\Command\Traits\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\PendingNotificationEmails;
@@ -314,6 +315,8 @@ class Create extends Component
 
     public function store(){
 
+          DB::transaction(function () {
+
         $bill = new Bill;
         $bill->user_id = Auth::user()->id;
         $bill->vendor_id = $this->selectedVendor;
@@ -470,6 +473,8 @@ class Create extends Component
         ]);
 
         return redirect()->route('bills.index');
+
+    });
     }
 
 

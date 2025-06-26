@@ -350,6 +350,7 @@ class Index extends Component
     public function store(){
 
         // try{
+          DB::transaction(function () {
 
         $requisition = new Requisition;
         $requisition->requisition_number = $this->requisitionNumber();
@@ -455,6 +456,8 @@ class Index extends Component
 //     ]);
 // }
 
+    });
+
     }
     
     public function showPayment($id){
@@ -501,6 +504,8 @@ class Index extends Component
 
         // try{
 
+          DB::transaction(function () {
+
         $requisition =  Requisition::find($this->requisition_id);
         $requisition->user_id = Auth::user()->id;
         $requisition->department_id = $this->department_id;
@@ -530,6 +535,8 @@ class Index extends Component
 //         'message'=>"Something goes wrong while creating requisition!!"
 //     ]);
 // }
+
+    });
 
     }
 

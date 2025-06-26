@@ -13,6 +13,7 @@ use App\Models\BillExpense;
 use Livewire\WithPagination;
 use App\Mail\invoiceOrderMail;
 use App\Models\TransportOrder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
@@ -64,6 +65,8 @@ class Pending extends Component
       
       public function authorizeSelectedRows(){
 
+          DB::transaction(function () {
+
         $selected_bills = Bill::WhereIn('id',$this->selectedRows)->get();
         
         if (isset($selected_bills)) {
@@ -113,6 +116,7 @@ class Pending extends Component
          
         }
 
+    });
    }
 
    public function getBillsProperty(){
@@ -221,6 +225,8 @@ class Pending extends Component
       }
 
       public function update(){
+
+          DB::transaction(function () {
     //   try{
             $bill = Bill::find($this->bill_id);
             $bill->authorized_by_id = Auth::user()->id;
@@ -266,6 +272,8 @@ class Pending extends Component
 //         'message'=>"Something went wrong while trying to authorize an bill!!"
 //     ]);
 //     }
+
+    });
 
       }
 

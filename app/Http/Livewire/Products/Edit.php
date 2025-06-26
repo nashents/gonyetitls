@@ -12,6 +12,7 @@ use App\Models\CategoryValue;
 use Livewire\WithFileUploads;
 use App\Models\AttributeValue;
 use App\Models\ProductAttribute;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
 class Edit extends Component
@@ -139,6 +140,8 @@ class Edit extends Component
     ];
     public function update(){
 
+        DB::transaction(function () {
+
         if ($this->image) {
                 $image = $this->image;
                 $fileNameWithExt = $image->getClientOriginalName();
@@ -189,6 +192,8 @@ class Edit extends Component
         }elseif($this->department == "inventory"){
             return redirect(route('inventory_products.index'));
         }
+
+        });
     }
 
 

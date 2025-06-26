@@ -24,6 +24,7 @@ use Livewire\WithFileUploads;
 use App\Models\PurchaseProduct;
 use App\Exports\PurchasesExport;
 use App\Models\PurchaseDocument;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\PendingNotificationEmails;
@@ -470,6 +471,9 @@ class Index extends Component
     }
 
     public function store(){
+
+        DB::transaction(function () {
+
         $purchase = new Purchase;
         $purchase->user_id = Auth::user()->id;
         $purchase->purchase_number = $this->purchase_number;
@@ -616,6 +620,8 @@ class Index extends Component
               'type'=>'success',
               'message'=>"Purchase Order Created Successfully!!"
           ]);
+
+        });
     }
 
     public function quotation($id){
@@ -655,6 +661,9 @@ class Index extends Component
         $this->dispatchBrowserEvent('show-purchaseEditModal');
     }
     public function update(){
+
+         DB::transaction(function () {
+
         if ($this->purchase_id) {
 
         $purchase = Purchase::find($this->purchase_id);
@@ -809,6 +818,7 @@ class Index extends Component
           ]);
         
         }
+    });
     }
 
     public function updatingSearch()

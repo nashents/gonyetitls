@@ -7,6 +7,7 @@ use App\Models\User;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\TransportOrder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
@@ -51,6 +52,8 @@ class Rejected extends Component
 
       
       public function authorizeSelectedRows(){
+          DB::transaction(function () {
+            
 
         $selected_bills = Bills::WhereIn('id',$this->selectedRows)->get();
         
@@ -98,6 +101,7 @@ class Rejected extends Component
          $this->reset(['selectedRows','selectPageRows']);
          
         }
+    });
 
    }
 
@@ -207,6 +211,8 @@ class Rejected extends Component
       }
 
       public function update(){
+
+          DB::transaction(function () {
       try{
             $invoice = Invoice::find($this->invoice_id);
             $invoice->authorized_by_id = Auth::user()->id;
@@ -251,7 +257,7 @@ catch(\Exception $e){
         'message'=>"Something went wrong while trying to authorize an invoice!!"
     ]);
     }
-
+          });
       }
 
          

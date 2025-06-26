@@ -13,6 +13,7 @@ use App\Models\Container;
 use Livewire\WithPagination;
 use App\Mail\invoiceOrderMail;
 use App\Models\TransportOrder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
@@ -60,6 +61,8 @@ class Pending extends Component
 
 
       public function authorizeSelectedRows(){
+
+          DB::transaction(function () {
 
            $selected_invoices = Invoice::WhereIn('id',$this->selectedRows)->get();
            
@@ -111,6 +114,7 @@ class Pending extends Component
             
            }
 
+        });
       }
 
       public function getInvoicesProperty(){
@@ -125,6 +129,8 @@ class Pending extends Component
       }
 
       public function update(){
+
+          DB::transaction(function () {
     //   try{
             $invoice = Invoice::find($this->invoice_id);
             $invoice->authorized_by_id = Auth::user()->id;
@@ -195,6 +201,8 @@ class Pending extends Component
 //         'message'=>"Something went wrong while trying to authorize an invoice!!"
 //     ]);
 //     }
+
+    });
 
       }
     public function render()

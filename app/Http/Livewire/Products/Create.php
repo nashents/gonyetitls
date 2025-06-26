@@ -13,6 +13,7 @@ use App\Models\CategoryValue;
 use Livewire\WithFileUploads;
 use App\Models\AttributeValue;
 use App\Models\ProductAttribute;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
@@ -222,6 +223,7 @@ class Create extends Component
 
     public function store(){
 
+        DB::transaction(function () {
 
         if ($this->image) {
                 $image = $this->image;
@@ -273,7 +275,8 @@ class Create extends Component
             return redirect(route('inventory_products.index'));
         }
       
-      
+    });
+    
     }
 
     public function render()

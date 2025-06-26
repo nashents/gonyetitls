@@ -8,6 +8,7 @@ use Livewire\Component;
 use App\Models\Purchase;
 use App\Models\BillExpense;
 use Livewire\WithPagination;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
 class Rejected extends Component
@@ -73,6 +74,9 @@ class Rejected extends Component
       }
 
       public function update(){
+
+         DB::transaction(function () {
+
         $purchase = Purchase::find($this->purchase_id);
         $purchase->authorized_by_id = Auth::user()->id;
         $purchase->authorization = $this->authorize;
@@ -160,6 +164,8 @@ class Rejected extends Component
             }
           
         }
+
+    });
         
       }
 

@@ -19,6 +19,7 @@ use App\Models\Currency;
 use App\Models\BillExpense;
 use App\Models\Transporter;
 use App\Models\ExchangeRate;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
@@ -416,6 +417,8 @@ class Edit extends Component
 
     public function update(){
 
+          DB::transaction(function () {
+
         $bill =  Bill::find($this->bill_id);
         $bill->vendor_id = $this->selectedVendor;
         $bill->bill_for = $this->bill_for;
@@ -630,6 +633,8 @@ class Edit extends Component
         ]);
 
         return redirect()->route('bills.index');
+        
+    });
     }
 
 

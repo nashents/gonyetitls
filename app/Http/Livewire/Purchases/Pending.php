@@ -171,11 +171,14 @@ class Pending extends Component
                 Storage::disk('local')->put($filePath, $pdf->output());
 
                 $notification =  $notifications->first();
-                $email =  $notification->email ?  $notification->email :  $notification->employee->email;
-                $employee =  $notification->employee;
-                if ($email) {
-                    Mail::to($email)->send(new SendPurchaseOrderUpdateMail($data, $filePath, $employee, $notifications));
+                if ($notification) {
+                    $email =  $notification->email ?  $notification->email :  $notification->employee->email;
+                    $employee =  $notification->employee;
+                    if ($email) {
+                        Mail::to($email)->send(new SendPurchaseOrderUpdateMail($data, $filePath, $employee, $notifications));
+                    }
                 }
+               
                
             }
             

@@ -8,6 +8,7 @@ use Livewire\Component;
 use App\Models\BillExpense;
 use App\Models\Requisition;
 use Livewire\WithPagination;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
 class Pending extends Component
@@ -76,6 +77,9 @@ class Pending extends Component
       }
 
       public function update(){
+
+          DB::transaction(function () {
+            
     //   try{
             $requisition = Requisition::find($this->requisition_id);
             $requisition->authorized_by_id = Auth::user()->id;
@@ -157,6 +161,7 @@ class Pending extends Component
 //         'message'=>"Something went wrong while trying to authorize requisition!!"
 //     ]);
 //     }
+    });
 
       }
 

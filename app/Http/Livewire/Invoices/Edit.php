@@ -18,6 +18,7 @@ use App\Models\InvoiceItem;
 use App\Models\Measurement;
 use App\Models\ExchangeRate;
 use App\Models\TripDocument;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
@@ -777,6 +778,8 @@ class Edit extends Component
 
     public function update()
     {
+
+          DB::transaction(function () {
         if ($this->invoice_id) {
             
             $invoice = Invoice::find($this->invoice_id);
@@ -1371,6 +1374,8 @@ class Edit extends Component
             return redirect()->route('invoices.index');
 
         }
+
+    });
     }
 
     public function updatedSelectedCurrency($id){
