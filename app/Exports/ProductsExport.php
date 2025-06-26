@@ -2,6 +2,7 @@
 
 namespace App\Exports;
 
+use App\Models\Account;
 use App\Models\Product;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Events\AfterSheet;
@@ -16,7 +17,7 @@ use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
 use Maatwebsite\Excel\Concerns\WithCustomStartCell;
 
-class StockValuationExport implements  FromQuery,
+class ProductsExport implements  FromQuery,
 ShouldAutoSize,
 WithMapping,
 WithHeadings,
@@ -28,92 +29,29 @@ WithCustomStartCell
     /**
     * @return \Illuminate\Support\Collection
     */
-
-    public $department;
-   
-   
-
-    public function __construct($department)
-    {
-            $this->department = $department;
-           
-    }
     public function query()
     {
         return Product::query()->where('department',$this->department)->where('buy',true)->orderBy('name','asc');
     }
 
-    public function calculateTotalValue($product)
-    {
-      
-        if (!$product) {
-            return null;
-        }
 
-        $currency_id = Auth::user()->employee->company->currency_id;
-        $total_value = 0;
-
-        $relations = [
-            'tyre' => 'tyres',
-            'inventory' => 'inventories',
-            'asset' => 'assets'
-        ];
-
-        if (!isset($relations[$this->department])) {
-            return null; // invalid department
-        }
-
-        $relation = $relations[$this->department];
-
-        $items = $product->$relation;
-        $value = $items->where('status', 1)
-                ->where('currency_id', $currency_id)
-                ->filter(function ($item) {
-                    return !is_null($item->total) || !is_null($item->subtotal_incl);
-                })
-                ->map(function ($item) {
-                    return $item->total ?? $item->subtotal_incl ?? 0;
-                })
-                ->sum();
-
-        $value_exchange = $items->where('status', 1)
-                                ->where('currency_id', '!=', $currency_id)
-                                ->whereNotNull('exchange_amount')
-                                ->sum('exchange_amount');
-
-        if (is_numeric($value) && is_numeric($value_exchange)) {
-            $total_value = $value + $value_exchange;
-        }
-
-        return $total_value;
-    }
 
     public function map($product): array{
 
             $brand = $product->brand ? $product->brand->name : "";
-            $currency = Auth::user()->employee->company->currency->name;
-            $symbol = Auth::user()->employee->company->currency->symbol;
-            $total = $this->calculateTotalValue($product);
-            $qty = Null;
-            if($this->department == "tyre")
-                $qty = $product->tyres->where('status',1)->count();
-            elseif($this->department == "inventory"){
-                $qty = $product->inventories->where('status',1)->where('balance','>',0)->count();
-            }elseif($this->department == "asset"){
-                $qty = $product->assets->where('status',1)->where('balance','>',0)->count();
-            }
-                
-          
+            $account = Account::find($product->expense_account_id);
 
             return   [
                 $product->name,
                 $brand,
                 $product->product_number,
                 $product->identification_number,
-                $product->unit_of_measure,
-                $qty,
-                $currency ." ".$symbol,
-                $total
+                $product->category ? $product->category->name : "",
+                $product->category_value ? $product->category_value->name : "",
+                $product->manufacturer,
+                $account ? $account->name : "",
+                $product->price,
+                $product->description,
                  ];
 
 
@@ -124,10 +62,12 @@ WithCustomStartCell
                 'Brand',
                 'Code',
                 'Part/Model#',
-                'UOM',
-                'Qty',
-                'Currency',
-                'Total Value',
+                'Category',
+                'Sub Category',
+                'Manufacturer',
+                'Expense Category',
+                'Buying Price',
+                'Notes',
             ];
 
 
@@ -135,7 +75,7 @@ WithCustomStartCell
     public function registerEvents(): array{
         return[
             AfterSheet::class    => function(AfterSheet $event) {
-                $event->sheet->getStyle('A7:H7')->applyFromArray([
+                $event->sheet->getStyle('A7:J7')->applyFromArray([
                     'font' => [
                         'bold' => true
                     ],

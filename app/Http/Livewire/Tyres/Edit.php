@@ -369,10 +369,12 @@ public function refresh($category){
                 if (isset($this->amount)) {
                     $tyre->tax_amount = ($this->amount * ($this->tax_rate / 100 ));
                     $tyre->subtotal_incl = ($this->amount * ($this->tax_rate / 100 )) + $this->amount;
+                    $tyre->total = ($this->amount * ($this->tax_rate / 100 )) + $this->amount;
                 }
             }else{
                 $tyre->tax_amount = 0;
                 $tyre->subtotal_incl = $this->amount;
+                $tyre->total = $this->amount;
             }
 
               $tyre->width = $this->width;

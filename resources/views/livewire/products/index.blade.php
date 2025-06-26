@@ -17,6 +17,10 @@
                                 @elseif ($department == "asset")
                                 <a href="{{route('products.create')}}" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Product</a>
                                 @endif
+                                <a href="#" wire:click="exportProductsExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
+                                <a href="#" wire:click="exportProductsCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
+                                <a href="#" wire:click="exportProductsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
+                                <a href="#" wire:click="exportStockValuationExcel()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-line-chart"></i>Stock Valution</a>
                             </div>
                         </div>
                        
@@ -39,6 +43,8 @@
                                     </th>
                                     <th class="th-sm">ID/Part#
                                     </th>
+                                    <th class="th-sm">UOM
+                                    </th>
                                     <th class="th-sm">Item(s) in Inventory
                                     </th>
                                     <th class="th-sm">Total Value
@@ -58,6 +64,7 @@
                                     <td>{{$product->product_number}}</td>
                                     <td>{{$product->name}} {{$product->model}} {{$product->brand ? "(".$product->brand->name.")" : ""}}</td>
                                     <td>{{$product->identification_number}}</td>
+                                    <td>{{$product->unit_of_measure}}</td>
                                     <td>
                                         @if ($department == "tyre")
                                             {{$product->tyres->where('status',1)->count()}}

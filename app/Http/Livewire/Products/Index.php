@@ -15,9 +15,12 @@ use App\Models\Inventory;
 use App\Models\VehicleMake;
 use App\Models\VehicleModel;
 use Livewire\WithPagination;
+use Maatwebsite\Excel\Excel;
 use Livewire\WithFileUploads;
+use App\Exports\ProductsExport;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use App\Exports\StockValuationExport;
 use Intervention\Image\Facades\Image;
 use Illuminate\Support\Facades\Session;
 
@@ -37,6 +40,23 @@ class Index extends Component
         $this->base_currency = Auth::user()->employee->company->currency;
         $this->resetPage();
     }
+
+
+    
+    public function exportProductsCSV(Excel $excel){
+        return $excel->download(new ProductsExport, 'products_' .time().'.csv', Excel::CSV);
+    }
+    public function exportProductsPDF(Excel $excel){
+        return $excel->download(new ProductsExport, 'products_' .time().'.pdf', Excel::DOMPDF);
+    }
+    public function exportProductsExcel(Excel $excel){
+        return $excel->download(new ProductsExport, 'products_' .time().'.xlsx');
+    }
+    public function exportStockValuationExcel(Excel $excel){
+        return $excel->download(new StockValuationExport($this->department), 'stock_valuation_' .time().'.xlsx');
+    }
+
+
     public function updatingSearch()
     {
         $this->resetPage();
@@ -67,9 +87,14 @@ class Index extends Component
         $items = $product->$relation;
 
         $value = $items->where('status', 1)
-                    ->where('currency_id', $currency_id)
-                    ->whereNotNull('total')
-                    ->sum('total');
+                ->where('currency_id', $currency_id)
+                ->filter(function ($item) {
+                    return !is_null($item->total) || !is_null($item->subtotal_incl);
+                })
+                ->map(function ($item) {
+                    return $item->total ?? $item->subtotal_incl ?? 0;
+                })
+                ->sum();
 
         $value_exchange = $items->where('status', 1)
                                 ->where('currency_id', '!=', $currency_id)

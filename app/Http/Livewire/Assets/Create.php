@@ -63,8 +63,7 @@ class Create extends Component
     public $total;
     public $residual_value;
     public $weight = [];
-    public $measurement = [];
-    public $measurements;
+
     public $life;
     public $depreciation_type;
     public $warranty_exp_date;
@@ -159,7 +158,7 @@ class Create extends Component
         $this->department = "asset";
        
         $this->stores = Store::orderBy('name','asc')->get();
-        $this->measurements = Measurement::orderBy('name','asc')->get();
+       
         $this->vendors = Vendor::orderBy('name','asc')->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
        
@@ -531,9 +530,7 @@ class Create extends Component
                     if (isset($this->amount[$key])) {
                         $asset->subtotal = $this->amount[$key];
                     }
-                    if (isset($this->measurement[$key])) {
-                        $asset->measurement = $this->measurement[$key];
-                    }
+                  
                     if (isset($this->weight[$key])) {
                         $asset->weight = $this->weight[$key];
                         $asset->balance = $this->weight[$key];
@@ -549,10 +546,12 @@ class Create extends Component
                         if (isset($this->amount[$key])) {
                             $asset->tax_amount = ($this->amount[$key] * ($this->tax_rate[$key] / 100 ));
                             $asset->subtotal_incl = ($this->amount[$key] * ($this->tax_rate[$key] / 100 )) + $this->amount[$key];
+                            $asset->total = ($this->amount[$key] * ($this->tax_rate[$key] / 100 )) + $this->amount[$key];
                         }
                     }else{
                         if(isset($this->amount[$key])){
                             $asset->subtotal_incl = $this->amount[$key];
+                            $asset->total = $this->amount[$key];
                         }
                     }
                    
@@ -643,7 +642,7 @@ class Create extends Component
 
         }
            $this->goods_receiveds = GoodsReceived::where('status',1)->where('department','asset')->where('created_at', '>=', Carbon::now()->subMonth())->orderBy('created_at','desc')->get();
-        $this->measurements = Measurement::orderBy('name','asc')->get();
+       
         $this->products = Product::with('brand')->orderBy('name','asc')->where('department','asset')->where('status',True)->where('buy',True)->get()->sortBy('brand.name');
         $this->stores = Store::orderBy('name','asc')->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();

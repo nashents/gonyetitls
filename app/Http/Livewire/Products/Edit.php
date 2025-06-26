@@ -39,6 +39,7 @@ class Edit extends Component
     public $product;
     public $product_id;
     public $previous_image;
+    public $unit_of_measure;
 
     public $tax;
     public $tax_accounts;
@@ -88,6 +89,7 @@ class Edit extends Component
         $this->manufacturer = $product->manufacturer;
         $this->description = $product->description;
         $this->previous_image = $product->filename;
+        $this->unit_of_measure = $product->unit_of_measure;
         $this->buy = $product->buy;
         $this->sell = $product->sell;
         $this->sell_price = $product->sell_price;
@@ -131,15 +133,9 @@ class Edit extends Component
         $this->validateOnly($value);
     }
     protected $rules = [
-        'selectedCategory' => 'required',
-        'selectedCategoryValue' => 'required',
-        'brand_id' => 'required',
-        'manufacturer' => 'required',
+        'unit_of_measure' => 'required',
         'image' => 'nullable|image',
-        'description' => 'nullable',
-        'serial_number' => 'required',
         'name' => 'required|unique:products,name,NULL,id,deleted_at,NULL',
-        'model' => 'required|unique:products,model,NULL,id,deleted_at,NULL',
     ];
     public function update(){
 
@@ -164,6 +160,7 @@ class Edit extends Component
         $product->price = $this->buy_price;
         $product->sell_price = $this->sell_price;
         $product->sell = $this->sell;
+        $product->unit_of_measure = $this->unit_of_measure;
         $product->buy = $this->buy;
         $product->account_id = $this->income_account_id;
         $product->expense_account_id = $this->expense_account_id;

@@ -48,8 +48,7 @@ class Edit extends Component
     public $total;
     public $residual_value;
     public $weight ;
-    public $measurement ;
-    public $measurements;
+
     public $life;
     public $depreciation_type;
     public $warranty_exp_date;
@@ -145,7 +144,7 @@ class Edit extends Component
         $this->vendor_types = VendorType::orderBy('name','asc')->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();
         $this->currencies = Currency::latest()->get();
-        $this->measurements = Measurement::orderBy('name','asc')->get();
+      
         $this->categories = Category::orderBy('name','asc')->get();
         $this->stores = Store::orderBy('name','asc')->get();
         $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
@@ -170,6 +169,7 @@ class Edit extends Component
         $this->tax_amount = $asset->tax_amount;
         $this->subtotal = $asset->subtotal;
         $this->subtotal_incl = $asset->subtotal_incl;
+        $this->total = $asset->total;
         $this->selectedTax = $asset->tax_id;
         $this->residual_value = $asset->residual_value;
         $this->serial_number = $asset->serial_number;
@@ -177,7 +177,7 @@ class Edit extends Component
         $this->description = $asset->description;
         $this->depreciation_type = $asset->depreciation_type;
         $this->asset_number = $asset->asset_number;
-        $this->measurement = $asset->measurement;
+     
         $this->weight = $asset->weight;
         $this->store_id = $asset->store_id;
         $this->balance = $asset->balance;
@@ -300,7 +300,7 @@ class Edit extends Component
                     $asset->cost = $this->cost;
                     $asset->qty = $this->qty;
                     $asset->subtotal = $this->amount;
-                    $asset->measurement = $this->measurement;
+                  
                     $asset->weight = $this->weight;
                     $asset->balance = $this->weight;
                     $asset->tax_rate = $this->tax_rate;
@@ -309,10 +309,12 @@ class Edit extends Component
                         if (isset($this->amount)) {
                             $asset->tax_amount = ($this->amount * ($this->tax_rate / 100 ));
                             $asset->subtotal_incl = ($this->amount * ($this->tax_rate / 100 )) + $this->amount;
+                            $asset->total = ($this->amount * ($this->tax_rate / 100 )) + $this->amount;
                         }
                     }else{
                         $asset->tax_amount = 0;
                         $asset->subtotal_incl = $this->amount;
+                        $asset->total = $this->amount;
                     }
                    
                     $asset->residual_value = $this->residual_value;
@@ -351,7 +353,7 @@ class Edit extends Component
 
         }
            $this->goods_receiveds = GoodsReceived::where('status',1)->where('department','asset')->where('created_at', '>=', Carbon::now()->subMonth())->orderBy('created_at','desc')->get();
-        $this->measurements = Measurement::orderBy('name','asc')->get();
+       
         $this->products = Product::with('brand')->orderBy('name','asc')->where('department','asset')->where('status',True)->where('buy',True)->get()->sortBy('brand.name');
         $this->vendor_types = VendorType::orderBy('name','asc')->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();

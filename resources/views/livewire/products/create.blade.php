@@ -63,12 +63,29 @@
                                     @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                                 </div>
-                                <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="name">Identification#</label>
-                                    <input type="text" class="form-control" wire:model.debounce.300ms="identification_number" placeholder="Product ID# eg Model#/Part#" >
-                                    @error('identification_number') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="name">Identification#</label>
+                                        <input type="text" class="form-control" wire:model.debounce.300ms="identification_number" placeholder="Product ID# eg Model#/Part#" >
+                                        @error('identification_number') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
                                 </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="name">Unit Of Measure<span class="required" style="color: red">*</span></label>
+                                        <select class="form-control" wire:model.debounce.300ms="unit_of_measure" required>
+                                            <option value="">Select Unit Of Measure</option>
+                                            <option value="Cubic">Cubic</option>
+                                            <option value="Each">Each</option>
+                                            <option value="Item(s)">Item(s)</option>
+                                            <option value="Kg(s)">Kg(s)</option>
+                                            <option value="Litres">Litres</option>
+                                            <option value="Metre(s)">Metre(s)</option>
+                                            <option value="Piece(s)">Piece(s)</option>
+                                            <option value="Ton(s)">Ton(s)</option>
+                                        </select>
+                                        @error('unit_of_measure') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
                                 </div>
                             </div>
 

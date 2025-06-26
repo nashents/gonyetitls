@@ -472,10 +472,12 @@ class Create extends Component
                     if (isset($this->amount[$key])) {
                         $tyre->tax_amount = ($this->amount[$key] * ($this->tax_rate[$key] / 100 ));
                         $tyre->subtotal_incl = ($this->amount[$key] * ($this->tax_rate[$key] / 100 )) + $this->amount[$key];
+                        $tyre->total = ($this->amount[$key] * ($this->tax_rate[$key] / 100 )) + $this->amount[$key];
                     }
                 }else{
                     if(isset($this->amount[$key])){
                         $tyre->subtotal_incl = $this->amount[$key];
+                        $tyre->total = $this->amount[$key];
                     }
                     
                 }

@@ -94,7 +94,7 @@
 
                        <div style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">
                         <div class="row">
-                            <div class="col-md-4">
+                            <div class="col-md-5">
                                 @if (is_null($selectedPurchase))
                                     <div class="form-group">
                                         <label for="country">Product(s)<span class="required" style="color: red">*</span></label>
@@ -122,7 +122,7 @@
                                 @endif
                                
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="purchase_date">Description</label>
                                     <textarea  class="form-control" wire:model.debounce.300ms="item_description" cols="30" rows="2" ></textarea>
@@ -137,19 +137,7 @@
                                     <small>Litres, weight, # of pieces or items etc eg 100 Litres or 4 items. Useful for deductions when invoicing / dispatching </small>
                                 </div>
                                 </div>
-                            <div class="col-md-2">
-                                <div class="form-group">
-                                    <label for="country">Unit of measure<span class="required" style="color: red">*</span></label>
-                                   <select wire:model.debounce.300ms="measurement" class="form-control" required>
-                                       <option value="">Select Option</option>
-                                       @foreach ($measurements as $measurement)
-                                        <option value="{{$measurement->name}}">{{$measurement->name}}</option>
-                                       @endforeach
-                                   </select>
-                                   <small><a href="{{ route('measurements.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Unit Of Measure</a></small> 
-                                    @error('measurement') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                </div>
-                            </div> 
+                          
                         </div>
         
                         <div class="row">

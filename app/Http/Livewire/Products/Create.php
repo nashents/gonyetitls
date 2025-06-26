@@ -42,6 +42,7 @@ class Create extends Component
     public $category_id;
     public $sub_category_id;
     public $brand_name;
+    public $unit_of_measure;
 
     public $tax;
     public $tax_accounts;
@@ -157,14 +158,9 @@ class Create extends Component
         $this->validateOnly($value);
     }
     protected $rules = [
-        'selectedCategory' => 'required',
-        'selectedCategoryValue' => 'required',
-        'brand_id' => 'required',
+      
         'name' => 'required',
-        'category_id' => 'required',
-        'category_name' => 'required',
-        'sub_category_name' => 'required',
-        'brand_name' => 'required',
+        'unit_of_measure' => 'required',
     ];
 
     public function storeCategory(){
@@ -248,6 +244,7 @@ class Create extends Component
         $product->product_number = $this->product_number;
         $product->identification_number = $this->identification_number;
         $product->price = $this->buy_price;
+        $product->unit_of_measure = $this->unit_of_measure;
         $product->sell_price = $this->sell_price;
         $product->sell = $this->sell;
         $product->buy = $this->buy;

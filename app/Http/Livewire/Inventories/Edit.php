@@ -53,8 +53,7 @@ class Edit extends Component
     public $total;
     public $residual_value;
     public $weight ;
-    public $measurement ;
-    public $measurements;
+  
     public $life;
     public $depreciation_type;
     public $warranty_exp_date;
@@ -182,7 +181,7 @@ class Edit extends Component
         $this->stores = Store::orderBy('name','asc')->get();
         $this->racks = Rack::orderBy('name','asc')->get();
         $this->bins = Bin::orderBy('name','asc')->get();
-        $this->measurements = Measurement::orderBy('name','asc')->get();
+       
         $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name','Expenses');
         })->orderBy('name','asc')->get();
@@ -210,7 +209,7 @@ class Edit extends Component
         $this->to_bills = $inventory->bill ? True : False;
 
         $this->weight = $inventory->weight;
-        $this->measurement = $inventory->measurement;
+       
         $this->store_id = $inventory->store_id;
         $this->bin_id = $inventory->bin_id;
         $this->rack_id = $inventory->rack_id;
@@ -390,7 +389,7 @@ class Edit extends Component
         $inventory->amount = $this->amount;
         $inventory->cost = $this->cost;
         $inventory->qty = $this->qty;
-        $inventory->measurement = $this->measurement;
+    
         $inventory->weight = $this->weight;
         $inventory->balance = $this->weight;
 
@@ -401,10 +400,12 @@ class Edit extends Component
             if (isset($this->amount)) {
                 $inventory->tax_amount = ($this->amount * ($this->tax_rate / 100 ));
                 $inventory->subtotal_incl = ($this->amount * ($this->tax_rate / 100 )) + $this->amount;
+                $inventory->total = ($this->amount * ($this->tax_rate / 100 )) + $this->amount;
             }
         }else{
             $inventory->tax_amount = 0;
             $inventory->subtotal_incl = $this->amount;
+            $inventory->total = $this->amount;
         }
        
         $inventory->account_id = $this->selectedAccount;
@@ -525,7 +526,7 @@ class Edit extends Component
             $this->exchange_amount = $this->exchange_rate * $this->total;
 
         }
-        $this->measurements = Measurement::orderBy('name','asc')->get();
+      
          $this->goods_receiveds = GoodsReceived::where('status',1)->where('department','inventory')->where('created_at', '>=', Carbon::now()->subMonth())->orderBy('created_at','desc')->get();
         $this->products = Product::with('brand')->orderBy('name','asc')->where('department','inventory')->where('status',True)->where('buy',True)->get()->sortBy('brand.name');
         $this->purchases = Purchase::where('department','inventory')->where('status',1)->where('created_at', '>=', Carbon::now()->subMonth())->where('authorization','approved')->orderBy('created_at','desc')->get();
@@ -538,7 +539,7 @@ class Edit extends Component
             'vendors' => $this->vendors,
             'currencies' => $this->currencies,
             'stores' => $this->stores,
-            'measurements' => $this->measurements,
+           
         ]);
     }
 }

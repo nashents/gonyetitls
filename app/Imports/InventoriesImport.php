@@ -3,6 +3,8 @@
 namespace App\Imports;
 
 use Carbon\Carbon;
+use App\Models\Bin;
+use App\Models\Rack;
 use App\Models\Brand;
 use App\Models\Store;
 use App\Models\Product;
@@ -40,13 +42,7 @@ WithBatchInserts
     */
 
     public $company;
-    public $trailer_ids;
-    public $store;
-    public $category;
-    public $sub_category;
-    public $brand;
-    public $currency;
-
+  
     public function __construct()
     {
         $this->company = Auth::user()->employee->company;
@@ -110,33 +106,35 @@ WithBatchInserts
    
        }
 
-       private function parseExcelDate($value)
-       {
-           if (!isset($value)) {
-               return null;
-           }
-   
-           // If it's a numeric Excel date serial
-           if (is_numeric($value)) {
-               try {
-                   return Carbon::instance(\PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($value)->format('Y-m-d'));
-               } catch (\Exception $e) {
-                   return null;
-               }
-           }
-   
-           // If it's a string in strict YYYY-MM-DD format
-           if (is_string($value)) {
-               try {
-                   $parsed = Carbon::createFromFormat('Y-m-d', $value);
-                   return $parsed && $parsed->format('Y-m-d') === $value ? $parsed : null;
-               } catch (\Exception $e) {
-                   return null;
-               }
-           }
-   
-           return null;
-       }
+      private function parseExcelDate($value)
+        {
+            if (!isset($value)) {
+                return null;
+            }
+
+            // If it's a numeric Excel date serial
+            if (is_numeric($value)) {
+                try {
+                    return Carbon::instance(
+                        \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($value)
+                    );
+                } catch (\Exception $e) {
+                    return null;
+                }
+            }
+
+            // If it's a string in strict YYYY-MM-DD format
+            if (is_string($value)) {
+                try {
+                    $parsed = Carbon::createFromFormat('Y-m-d', $value);
+                    return $parsed && $parsed->format('Y-m-d') === $value ? $parsed : null;
+                } catch (\Exception $e) {
+                    return null;
+                }
+            }
+
+            return null;
+        }
 
     public function collection(Collection $rows)
     {
@@ -150,6 +148,8 @@ WithBatchInserts
             $sub_category = Null;
             $brand = Null;
             $currency = Null;
+            $rack = Null;
+            $bin = Null;
 
             $storeName = trim($row['store_name']);
             if (filled($storeName)) {
@@ -157,7 +157,7 @@ WithBatchInserts
                     ['name' => $storeName], 
                     ['status' => 1]
                 );
-                $this->store = $store;
+              
             }
             $categoryName = trim($row['category']);
             if (filled($categoryName)) {
@@ -165,7 +165,7 @@ WithBatchInserts
                     ['name' => $categoryName], 
                     ['status' => 1]
                 );
-                $this->category = $category;
+              
             }
      
             $sub_categoryName = trim($row['sub_category']);
@@ -174,7 +174,6 @@ WithBatchInserts
                     ['name' => $sub_categoryName], 
                     ['status' => 1]
                 );
-                $this->sub_category = $sub_category;
             }
          
             $brandName = trim($row['brand_name']);
@@ -183,7 +182,22 @@ WithBatchInserts
                     ['name' => $brandName], 
                     ['status' => 1]
                 );
-                $this->brand = $brand;
+            }
+
+            $rackNumber = trim($row['rack_number']);
+            if (filled($rackNumber)) {
+                $rack = Rack::firstOrCreate(
+                    ['rack_number' => $rackNumber], 
+                    ['status' => 1]
+                );
+            }
+         
+            $binNumber = trim($row['bin_number']);
+            if (filled($binNumber)) {
+                $bin = Bin::firstOrCreate(
+                    ['bin_number' => $binNumber], 
+                    ['status' => 1]
+                );
             }
             
             $currencyName = trim($row['currency']);
@@ -192,7 +206,6 @@ WithBatchInserts
                     ['name' => $currencyName], 
                     ['status' => 1]
                 );
-                $this->currency = $currency;
             }
           
             $product = Product::where('name',$row['product_name'])->first();
@@ -209,16 +222,23 @@ WithBatchInserts
                             $inventory->qty = 1;
                             $inventory->amount = $row['unit_price'];
                             $inventory->subtotal_incl = $row['unit_price'];
-                            if ($this->currency) {
-                                $inventory->currency_id = $this->currency->id;
+                            $inventory->total = $row['unit_price'];
+
+                            if ($currency) {
+                                $inventory->currency_id = $currency->id;
                             }
-                            if ($this->store) {
-                                $inventory->store_id = $this->store->id;
+                            if ($rack) {
+                                $inventory->rack_id = $rack->id;
+                            }
+                            if ($bin) {
+                                $inventory->bin_id = $bin->id;
+                            }
+                            if ($store) {
+                                $inventory->store_id = $store->id;
                             }
                             $inventory->purchase_date = $this->parseExcelDate($row['purchase_date']);
                             $inventory->weight = $row['item_contents'] ? $row['item_contents'] : 1;
                             $inventory->balance = $row['balance'] ? $row['balance'] : 1;
-                            $inventory->measurement = $row['measurement'];
                             $inventory->status = 1;
                             $inventory->save();
         
@@ -226,17 +246,17 @@ WithBatchInserts
                         
                             $product = new Product;
                             $product->user_id = Auth::user()->id;
-        
-                             if ($this->category) {
-                                $product->category_id = $this->category->id;
+                            $product->unit_of_measure = $row['unit_of_measure'];
+                             if ($category) {
+                                $product->category_id = $category->id;
                             }
                             
-                            if ($this->sub_category) {
-                                $product->category_value_id = $this->sub_category->id;
+                            if ($sub_category) {
+                                $product->category_value_id = $sub_category->id;
                             }
                             
-                            if ($this->brand) {
-                                $product->brand_id = $this->brand->id;
+                            if ($brand) {
+                                $product->brand_id = $brand->id;
                             }
                             $product->status = 1;
                             $product->buy = 1;
@@ -244,7 +264,6 @@ WithBatchInserts
                             $product->product_number = $this->productNumber();
                             $product->department = 'inventory';
                             $product->identification_number = $row['part_number'];
-                            $product->description = $row['description'];
                             $product->status = '1';
                             $product->save(); 
                             
@@ -256,16 +275,22 @@ WithBatchInserts
                             $inventory->subtotal = $row['unit_price'];
                             $inventory->qty = 1;
                             $inventory->subtotal_incl = $row['unit_price'];
-                            if ($this->currency) {
-                                $inventory->currency_id = $this->currency->id;
+                            $inventory->total = $row['unit_price'];
+                            if ($currency) {
+                                $inventory->currency_id = $currency->id;
                             }
-                            if ($this->store) {
-                                $inventory->store_id = $this->store->id;
+                              if ($rack) {
+                                $inventory->rack_id = $rack->id;
+                            }
+                            if ($bin) {
+                                $inventory->bin_id = $bin->id;
+                            }
+                            if ($store) {
+                                $inventory->store_id = $store->id;
                             }
                             $inventory->purchase_date = $this->parseExcelDate($row['purchase_date']);
                             $inventory->weight = $row['item_contents'] ? $row['item_contents'] : 1;
                             $inventory->balance = $row['balance'] ? $row['balance'] : 1;
-                            $inventory->measurement = $row['measurement'];
                             $inventory->status = 1 ;
                             $inventory->save();
             
@@ -284,7 +309,6 @@ WithBatchInserts
             // '*.qty' => ['required'],
             // '*.weight' => ['required'],
             // '*.balance' => ['required'],
-            // '*.measurement' => ['required'],
         ];
     }
 

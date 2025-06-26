@@ -56,24 +56,28 @@
                                     <td>{{$inventory->serial_number ? "SN#: ".$inventory->serial_number : ""}} {{$inventory->product->identification_number ? "PN#: ".$inventory->product->identification_number : ""}}</td>
                                     <td>
                                         @if ($inventory->store)
-                                             store: {{$inventory->store ? $inventory->store->name : ""}}
-                                             <br>
+                                             <strong>Store:</strong>  {{$inventory->store ? $inventory->store->name : ""}}
                                         @endif
                                         @if ($inventory->product->category)
-                                        Category: {{$inventory->product->category ? $inventory->product->category->name : ""}}  {{$inventory->product->category_value ? $inventory->product->category_value->name : ""}} 
+                                            <br>
+                                           <strong>Category:</strong> {{$inventory->product->category ? $inventory->product->category->name : ""}}  {{$inventory->product->category_value ? $inventory->product->category_value->name : ""}} 
                                         @endif
                                         @if ($inventory->rack)
-                                             Rack: {{$inventory->rack ? $inventory->rack->name : ""}} {{$inventory->rack ? $inventory->rack->rack_number : ""}} 
-                                             <br>
+                                            <br>
+                                              <strong>Rack:</strong> {{$inventory->rack ? $inventory->rack->name : ""}} {{$inventory->rack ? $inventory->rack->rack_number : ""}}
                                         @endif
                                         @if ($inventory->bin)
-                                             Bin: {{$inventory->bin ? $inventory->bin->name : ""}} {{$inventory->bin ? $inventory->bin->bin_number : ""}} 
-                                             <br>
+                                            <br>
+                                              <strong>Bin:</strong> {{$inventory->bin ? $inventory->bin->name : ""}} {{$inventory->bin ? $inventory->bin->bin_number : ""}} 
                                         @endif
                                        
                                     </td>
                                     <td>{{$inventory->weight}} {{$inventory->measurement}} {{$inventory->balance ? "Bal: ".$inventory->balance." ".$inventory->measurement : ""}}</td>
-                                    <td>{{$inventory->purchase_date}}</td>
+                                    <td>
+                                        @if ($inventory->purchase_date)
+                                            {{Carbon\Carbon::parse($inventory->purchase_date)->format('Y-m-d')}}        
+                                        @endif
+                                    </td>
                                     <td>{{$inventory->currency ? $inventory->currency->name : ""}}</td>
                                     <td>
                                         @if ($inventory->amount)

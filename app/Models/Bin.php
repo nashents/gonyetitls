@@ -22,4 +22,10 @@ class Bin extends Model implements Auditable
         return $this->belongsTo('App\Models\User');
     }
 
+      protected $fillable =[
+        'name',
+        'bin_number',
+        'status'
+    ];
+
 }

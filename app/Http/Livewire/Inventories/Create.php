@@ -66,8 +66,6 @@ class Create extends Component
     public $total;
     public $residual_value;
     public $weight = [];
-    public $measurement = [];
-    public $measurements;
     public $life;
     public $depreciation_type;
     public $warranty_exp_date;
@@ -167,7 +165,6 @@ class Create extends Component
         $this->stores = Store::orderBy('name','asc')->get();
         $this->racks = Rack::orderBy('name','asc')->get();
         $this->bins = Bin::orderBy('name','asc')->get();
-        $this->measurements = Measurement::orderBy('name','asc')->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
 
@@ -605,9 +602,7 @@ class Create extends Component
                     if (isset($this->amount[$key])) {
                         $inventory->subtotal = $this->amount[$key];
                     }
-                    if (isset($this->measurement[$key])) {
-                        $inventory->measurement = $this->measurement[$key];
-                    }
+                  
                     if (isset($this->weight[$key])) {
                         $inventory->weight = $this->weight[$key];
                         $inventory->balance = $this->weight[$key];
@@ -623,10 +618,11 @@ class Create extends Component
                         if (isset($this->amount[$key])) {
                             $inventory->tax_amount = ($this->amount[$key] * ($this->tax_rate[$key] / 100 ));
                             $inventory->subtotal_incl = ($this->amount[$key] * ($this->tax_rate[$key] / 100 )) + $this->amount[$key];
+                            $inventory->total = ($this->amount[$key] * ($this->tax_rate[$key] / 100 )) + $this->amount[$key];
                         }
                     }else{
                         if (isset($this->amount[$key])) {
-                            $inventory->subtotal_incl = $this->amount[$key];
+                            $inventory->total = $this->amount[$key];
                         }
                        
                     }
@@ -734,7 +730,7 @@ class Create extends Component
             $this->exchange_amount = $this->exchange_rate * $this->total;
 
         }
-        $this->measurements = Measurement::orderBy('name','asc')->get();
+     
         $this->products = Product::with('brand')->orderBy('name','asc')->where('department','inventory')->where('status',True)->where('buy',True)->get()->sortBy('brand.name');
         $this->stores = Store::orderBy('name','asc')->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();
@@ -745,7 +741,7 @@ class Create extends Component
             'stores' => $this->stores,
             'vendors' => $this->vendors,
             'purchases' => $this->purchases,
-            'measurements' => $this->measurements,
+          
         ]);
     }
 }
