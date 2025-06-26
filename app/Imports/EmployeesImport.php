@@ -10,19 +10,22 @@ use App\Imports\EmployeesImport;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Maatwebsite\Excel\Concerns\WithLimit;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\SkipsErrors;
 use Maatwebsite\Excel\Concerns\SkipsOnError;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
+use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 
-class EmployeesImport implements  ToCollection,
+class EmployeesImport implements  ToCollection,WithLimit, 
 WithHeadingRow,
 SkipsOnError,
 WithValidation,
-WithChunkReading
+WithChunkReading,
+WithBatchInserts
 {
     use Importable, SkipsErrors;
 
@@ -35,6 +38,11 @@ WithChunkReading
             $i++;
         }
         return $pin;
+    }
+
+       public function limit(): int
+    {
+        return 500; // Import only the first 100 rows
     }
 
     public function employeeNumber(){
@@ -123,10 +131,21 @@ WithChunkReading
 
         $pin =  $this->generatePIN();
 
-        $user = User::where('name',$row['name'])
-                    ->where('surname',$row['surname'])->get()->first();
-        $employee = Employee::where('name',$row['name'])
-                        ->where('surname',$row['surname'])->get()->first();
+        $name = $row->get('name');
+        $surname = $row->get('surname');
+
+        if (!$name || !$surname) {
+            // skip row if required fields are missing
+            continue;
+        }
+
+        $user = User::where('name', $name)
+                    ->where('surname', $surname)
+                    ->first();
+        $employee = Employee::where('name', $name)
+                    ->where('surname', $surname)
+                    ->first();
+      
 
      
         if (isset($user) && isset($employee)) {
@@ -220,8 +239,13 @@ WithChunkReading
 
 
 
+       public function batchSize(): int
+    {
+        return 10;
+    }
+
     public function chunkSize(): int
     {
-        return 1000;
+        return 10;
     }
 }
