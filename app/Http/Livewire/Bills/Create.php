@@ -216,7 +216,7 @@ class Create extends Component
 
     public function showItem($key){
         $this->item_key = $key;
-        $this->billBrowserEvent('show-product_serviceModal');
+        $this->dispatchBrowserEvent('show-product_serviceModal');
     }
 
     public function storeItem(){
@@ -252,9 +252,9 @@ class Create extends Component
                 }  
             }
     
-            $this->billBrowserEvent('hide-product_serviceModal');
+            $this->dispatchBrowserEvent('hide-product_serviceModal');
             $this->resetInputFields();
-            $this->billBrowserEvent('alert',[
+            $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Item Created Successfully!!"
             ]);
@@ -262,7 +262,7 @@ class Create extends Component
             // }
             //     catch(\Exception $e){
             //     // Set Flash Message
-            //     $this->billBrowserEvent('alert',[
+            //     $this->dispatchBrowserEvent('alert',[
             //         'type'=>'error',
             //         'message'=>"Something went wrong while creating item!!"
             //     ]);
@@ -468,7 +468,7 @@ class Create extends Component
         }
 
 
-        $this->billBrowserEvent('alert',[
+        $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
             'message'=>"Bill Created Successfully!!"
         ]);
