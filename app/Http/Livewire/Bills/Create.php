@@ -135,7 +135,7 @@ class Create extends Component
             }
         }
 
-        $bill = Dispatch::latest()->orderBy('id','desc')->first();
+        $bill = Bill::latest()->orderBy('id','desc')->first();
 
         if (!$bill) {
             $bill_number =  $initials .'B'. str_pad(1, 5, "0", STR_PAD_LEFT);

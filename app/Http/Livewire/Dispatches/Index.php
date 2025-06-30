@@ -242,10 +242,10 @@ class Index extends Component
         $dispatch = Dispatch::latest()->orderBy('id','desc')->first();
 
         if (!$dispatch) {
-            $dispatch_number =  $initials .'B'. str_pad(1, 5, "0", STR_PAD_LEFT);
+            $dispatch_number =  $initials .'D'. str_pad(1, 5, "0", STR_PAD_LEFT);
         }else {
             $number = $dispatch->id + 1;
-            $dispatch_number =  $initials .'B'. str_pad($number, 5, "0", STR_PAD_LEFT);
+            $dispatch_number =  $initials .'D'. str_pad($number, 5, "0", STR_PAD_LEFT);
         }
 
         return  $dispatch_number;

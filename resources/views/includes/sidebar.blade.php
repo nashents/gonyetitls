@@ -824,24 +824,24 @@
                     @endphp
                     <a href="#"><i class="fas fa-list"></i> <span>Dispatches (Assets) </span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
-                        <li><a href="#" ><i class="fas fa-list "></i> <span>Manage Dispatches</span></a></li>
+                        <li><a href="{{route('asset_dispatches.index')}}" ><i class="fas fa-list "></i> <span>Manage Dispatches</span></a></li>
                         @if (in_array('Management', $rank_names) || in_array('Admin', $role_names) || in_array('Super Admin', $role_names))
                         <li>
-                            <a href="#" ><i class="fas fa-clock "></i> <span>Pending Dispatches</span>
+                            <a href="{{route('asset_dispatches.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Dispatches</span>
                                 @if ($dispatchesPendingCount>0)
                                 <span class="label label-success ml-5">{{$dispatchesPendingCount}}</span>
                                 @endif
                             </a>
                         </li>
                         <li>
-                            <a href="#" ><i class="fas fa-check "></i> <span>Approved Dispatches</span>
+                            <a href="{{route('asset_dispatches.approved')}}" ><i class="fas fa-check "></i> <span>Approved Dispatches</span>
                                 @if ($dispatchesApprovedCount>0)
                                 <span class="label label-success ml-5">{{$dispatchesApprovedCount}}</span>
                                 @endif
                             </a>
                         </li>
                         <li>
-                            <a href="#" ><i class="fas fa-ban "></i> <span>Rejected Dispatches</span>
+                            <a href="{{route('asset_dispatches.rejected')}}" ><i class="fas fa-ban "></i> <span>Rejected Dispatches</span>
                                 @if ($dispatchesRejectedCount>0)
                                 <span class="label label-success ml-5">{{$dispatchesRejectedCount}}</span>
                                 @endif
@@ -1674,24 +1674,24 @@
                     @endphp
                     <a href="#"><i class="fas fa-list"></i> <span>Dispatches (Inventory) </span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
-                        <li><a href="#" ><i class="fas fa-list "></i> <span>Manage Dispatches</span></a></li>
+                        <li><a href="{{route('inventory_dispatches.index')}}" ><i class="fas fa-list "></i> <span>Manage Dispatches</span></a></li>
                         @if (in_array('Management', $rank_names) || in_array('Admin', $role_names) || in_array('Super Admin', $role_names))
                         <li>
-                            <a href="#" ><i class="fas fa-clock "></i> <span>Pending Dispatches</span>
+                            <a href="{{route('inventory_dispatches.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Dispatches</span>
                                 @if ($dispatchesPendingCount>0)
                                 <span class="label label-success ml-5">{{$dispatchesPendingCount}}</span>
                                 @endif
                             </a>
                         </li>
                         <li>
-                            <a href="#" ><i class="fas fa-check "></i> <span>Approved Dispatches</span>
+                            <a href="{{route('inventory_dispatches.approved')}}" ><i class="fas fa-check "></i> <span>Approved Dispatches</span>
                                 @if ($dispatchesApprovedCount>0)
                                 <span class="label label-success ml-5">{{$dispatchesApprovedCount}}</span>
                                 @endif
                             </a>
                         </li>
                         <li>
-                            <a href="#" ><i class="fas fa-ban "></i> <span>Rejected Dispatches</span>
+                            <a href="{{route('inventory_dispatches.rejected')}}" ><i class="fas fa-ban "></i> <span>Rejected Dispatches</span>
                                 @if ($dispatchesRejectedCount>0)
                                 <span class="label label-success ml-5">{{$dispatchesRejectedCount}}</span>
                                 @endif
@@ -1844,24 +1844,24 @@
                     @endphp
                     <a href="#"><i class="fas fa-list"></i> <span>Dispatches (Tyres) </span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
-                        <li><a href="#" ><i class="fas fa-list "></i> <span>Manage Dispatches</span></a></li>
+                        <li><a href="{{route('tyre_dispatches.index')}}" ><i class="fas fa-list "></i> <span>Manage Dispatches</span></a></li>
                         @if (in_array('Management', $rank_names) || in_array('Admin', $role_names) || in_array('Super Admin', $role_names))
                         <li>
-                            <a href="#" ><i class="fas fa-clock "></i> <span>Pending Dispatches</span>
+                            <a href="{{route('tyre_dispatches.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Dispatches</span>
                                 @if ($dispatchesPendingCount>0)
                                 <span class="label label-success ml-5">{{$dispatchesPendingCount}}</span>
                                 @endif
                             </a>
                         </li>
                         <li>
-                            <a href="#" ><i class="fas fa-check "></i> <span>Approved Dispatches</span>
+                            <a href="{{route('tyre_dispatches.approved')}}" ><i class="fas fa-check "></i> <span>Approved Dispatches</span>
                                 @if ($dispatchesApprovedCount>0)
                                 <span class="label label-success ml-5">{{$dispatchesApprovedCount}}</span>
                                 @endif
                             </a>
                         </li>
                         <li>
-                            <a href="#" ><i class="fas fa-ban "></i> <span>Rejected Dispatches</span>
+                            <a href="{{route('tyre_dispatches.rejected')}}" ><i class="fas fa-ban "></i> <span>Rejected Dispatches</span>
                                 @if ($dispatchesRejectedCount>0)
                                 <span class="label label-success ml-5">{{$dispatchesRejectedCount}}</span>
                                 @endif
