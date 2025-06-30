@@ -13,9 +13,21 @@ class TyreDispatchController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+       public function index()
     {
-        //
+        return view('tyre_dispatches.index');
+    }
+    public function approved()
+    {
+        return view('tyre_dispatches.approved');
+    }
+    public function pending()
+    {
+        return view('tyre_dispatches.pending');
+    }
+    public function rejected()
+    {
+        return view('tyre_dispatches.rejected');
     }
 
     /**

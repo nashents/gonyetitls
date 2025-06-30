@@ -13,9 +13,21 @@ class AssetDispatchController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+      public function index()
     {
-        //
+        return view('asset_dispatches.index');
+    }
+      public function approved()
+    {
+        return view('asset_dispatches.approved');
+    }
+    public function pending()
+    {
+        return view('asset_dispatches.pending');
+    }
+    public function rejected()
+    {
+        return view('asset_dispatches.rejected');
     }
 
     /**

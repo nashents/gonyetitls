@@ -803,7 +803,51 @@
                     <ul class="child-nav">
                         <li><a href="{{route('assets.create')}}" ><i class="fas fa-plus "></i> <span>Create Asset</span></a></li>
                         <li><a href="{{route('assets.index')}}"><i class="fas fa-list "></i> <span>Manage Assets</span></a></li>
-                        <li><a href="{{route('asset_assignments.index')}}"><i class="fa fa-exchange "></i> <span>Asset Assignment</span></a></li>
+                    </ul>
+                </li>
+                 <li class="has-children {{ request()->routeIs('asset_dispatches.*') ? 'active' : '' }}">
+                    @php
+                        $dispatchesPendingCount = App\Models\Dispatch::where('authorization','pending')
+                        ->where('department','asset')
+                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
+                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
+                        // ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
+                        $dispatchesApprovedCount = App\Models\Dispatch::where('authorization','approved')
+                        ->where('department','asset')
+                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
+                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
+                        $dispatchesRejectedCount = App\Models\Dispatch::where('authorization','rejected')
+                        ->where('department','asset')
+                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
+                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
+                       
+                    @endphp
+                    <a href="#"><i class="fas fa-list"></i> <span>Dispatches (Assets) </span> <i class="fas fa-angle-right arrow"></i></a>
+                    <ul class="child-nav">
+                        <li><a href="#" ><i class="fas fa-list "></i> <span>Manage Dispatches</span></a></li>
+                        @if (in_array('Management', $rank_names) || in_array('Admin', $role_names) || in_array('Super Admin', $role_names))
+                        <li>
+                            <a href="#" ><i class="fas fa-clock "></i> <span>Pending Dispatches</span>
+                                @if ($dispatchesPendingCount>0)
+                                <span class="label label-success ml-5">{{$dispatchesPendingCount}}</span>
+                                @endif
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" ><i class="fas fa-check "></i> <span>Approved Dispatches</span>
+                                @if ($dispatchesApprovedCount>0)
+                                <span class="label label-success ml-5">{{$dispatchesApprovedCount}}</span>
+                                @endif
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" ><i class="fas fa-ban "></i> <span>Rejected Dispatches</span>
+                                @if ($dispatchesRejectedCount>0)
+                                <span class="label label-success ml-5">{{$dispatchesRejectedCount}}</span>
+                                @endif
+                            </a>
+                        </li>
+                        @endif
                     </ul>
                 </li>
                 @endif
@@ -1608,18 +1652,54 @@
                     <ul class="child-nav">
                         <li class="{{ request()->routeIs('inventories.create') ? 'active' : '' }}"><a href="{{route('inventories.create')}}" ><i class="fas fa-plus "></i> <span>Create Inventory</span></a></li>
                         <li class="{{ request()->routeIs('inventories.index') ? 'active' : '' }}"><a href="{{route('inventories.index')}}"><i class="fas fa-list "></i> <span>Manage Inventory</span></a></li>
-                        <li class="{{ request()->routeIs('inventory_assignments.index') ? 'active' : '' }}"><a href="{{route('inventory_assignments.index')}}"><i class="fas fa-list "></i> <span>Inventory Assignments</span></a></li>
-                        <li class="{{ request()->routeIs('inventory_dispatches.index') ? 'active' : '' }}"><a href="{{route('inventory_dispatches.index')}}"><i class="fas fa-list "></i> <span>Inventory Dispatches</span></a></li>
                         <li class="{{ request()->routeIs('disposes.index') ? 'active' : '' }}"> <a href="{{route('disposes.index')}}"><i class="fas fa-list "></i> <span>Disposed Items</span></a></li>
                     </ul>
                 </li>
-
-                {{-- <li class="has-children {{ request()->routeIs('stocks.index') ? 'active' : '' }}" >
-                    <a href="#"><i class="fas fa-line-chart"></i> <span>Reports</span> <i class="fas fa-angle-right arrow"></i></a>
+                <li class="has-children {{ request()->routeIs('inventory_dispatches.*') ? 'active' : '' }}">
+                    @php
+                        $dispatchesPendingCount = App\Models\Dispatch::where('authorization','pending')
+                        ->where('department','inventory')
+                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
+                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
+                        // ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
+                        $dispatchesApprovedCount = App\Models\Dispatch::where('authorization','approved')
+                        ->where('department','inventory')
+                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
+                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
+                        $dispatchesRejectedCount = App\Models\Dispatch::where('authorization','rejected')
+                        ->where('department','inventory')
+                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
+                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
+                       
+                    @endphp
+                    <a href="#"><i class="fas fa-list"></i> <span>Dispatches (Inventory) </span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
-                        <li><a href="{{route('stocks.index')}}" ><i class="fas fa-list "></i> <span>Stock Take</span></a></li>
+                        <li><a href="#" ><i class="fas fa-list "></i> <span>Manage Dispatches</span></a></li>
+                        @if (in_array('Management', $rank_names) || in_array('Admin', $role_names) || in_array('Super Admin', $role_names))
+                        <li>
+                            <a href="#" ><i class="fas fa-clock "></i> <span>Pending Dispatches</span>
+                                @if ($dispatchesPendingCount>0)
+                                <span class="label label-success ml-5">{{$dispatchesPendingCount}}</span>
+                                @endif
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" ><i class="fas fa-check "></i> <span>Approved Dispatches</span>
+                                @if ($dispatchesApprovedCount>0)
+                                <span class="label label-success ml-5">{{$dispatchesApprovedCount}}</span>
+                                @endif
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" ><i class="fas fa-ban "></i> <span>Rejected Dispatches</span>
+                                @if ($dispatchesRejectedCount>0)
+                                <span class="label label-success ml-5">{{$dispatchesRejectedCount}}</span>
+                                @endif
+                            </a>
+                        </li>
+                        @endif
                     </ul>
-                </li> --}}
+                </li>
                 <li class="nav-header">
                     <span class="">Tyre Management</span>
                 </li>
@@ -1696,8 +1776,6 @@
                         <ul class="child-nav">
                             <li class="{{ request()->routeIs('tyres.create') ? 'active' : '' }}"><a href="{{route('tyres.create')}}" ><i class="fas fa-plus "></i> <span>Create Tyre</span></a></li>
                             <li class="{{ request()->routeIs('tyres.index') ? 'active' : '' }}"><a href="{{route('tyres.index')}}"><i class="fas fa-list "></i> <span>Manage Tyres</span></a></li>
-                            <li class="{{ request()->routeIs('tyre_assignments.index') ? 'active' : '' }}"><a href="{{route('tyre_assignments.index')}}"><i class="fa fa-exchange "></i> <span>Tyre Assignments</span></a></li>
-                            <li class="{{ request()->routeIs('tyre_dispatches.index') ? 'active' : '' }}"><a href="{{route('tyre_dispatches.index')}}"><i class="fa fa-list "></i> <span>Tyre Dispatches</span></a></li>
                             <li class="{{ request()->routeIs('disposes.index') ? 'active' : '' }}"><a href="{{route('disposes.index')}}"><i class="fas fa-list "></i> <span>Disposed Items</span></a></li>
                         </ul>
                     </li>
@@ -1746,6 +1824,52 @@
                             @endif
                         </ul>
                     </li>
+
+                       <li class="has-children {{ request()->routeIs('tyre_dispatches.*') ? 'active' : '' }}">
+                    @php
+                        $dispatchesPendingCount = App\Models\Dispatch::where('authorization','pending')
+                        ->where('department','tyre')
+                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
+                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
+                        // ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
+                        $dispatchesApprovedCount = App\Models\Dispatch::where('authorization','approved')
+                        ->where('department','tyre')
+                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
+                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
+                        $dispatchesRejectedCount = App\Models\Dispatch::where('authorization','rejected')
+                        ->where('department','tyre')
+                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
+                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
+                       
+                    @endphp
+                    <a href="#"><i class="fas fa-list"></i> <span>Dispatches (Tyres) </span> <i class="fas fa-angle-right arrow"></i></a>
+                    <ul class="child-nav">
+                        <li><a href="#" ><i class="fas fa-list "></i> <span>Manage Dispatches</span></a></li>
+                        @if (in_array('Management', $rank_names) || in_array('Admin', $role_names) || in_array('Super Admin', $role_names))
+                        <li>
+                            <a href="#" ><i class="fas fa-clock "></i> <span>Pending Dispatches</span>
+                                @if ($dispatchesPendingCount>0)
+                                <span class="label label-success ml-5">{{$dispatchesPendingCount}}</span>
+                                @endif
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" ><i class="fas fa-check "></i> <span>Approved Dispatches</span>
+                                @if ($dispatchesApprovedCount>0)
+                                <span class="label label-success ml-5">{{$dispatchesApprovedCount}}</span>
+                                @endif
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" ><i class="fas fa-ban "></i> <span>Rejected Dispatches</span>
+                                @if ($dispatchesRejectedCount>0)
+                                <span class="label label-success ml-5">{{$dispatchesRejectedCount}}</span>
+                                @endif
+                            </a>
+                        </li>
+                        @endif
+                    </ul>
+                </li>
               
                 @endif
               

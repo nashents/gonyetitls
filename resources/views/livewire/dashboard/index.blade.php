@@ -217,9 +217,9 @@
                 <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
 
                 <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-danger" href="{{route('inventories.index')}}">
-                        <span class="number counter">{{$inventory_count}}</span>
-                        <span class="name">Inventory</span>
+                    <a class="dashboard-stat bg-danger" href="{{route('inventory_products.index')}}">
+                        <span class="number counter">{{$product_count}}</span>
+                        <span class="name">Inventory Products</span>
                         <span class="bg-icon"><i class="fas fa-warehouse"></i></span>
                     </a>
                     <!-- /.dashboard-stat -->

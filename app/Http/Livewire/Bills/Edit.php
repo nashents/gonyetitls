@@ -417,7 +417,7 @@ class Edit extends Component
 
     public function update(){
 
-          DB::transaction(function () {
+        DB::transaction(function () {
 
         $bill =  Bill::find($this->bill_id);
         $bill->vendor_id = $this->selectedVendor;

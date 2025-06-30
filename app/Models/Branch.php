@@ -13,6 +13,9 @@ class Branch extends Model implements Auditable
 
     use \OwenIt\Auditing\Auditable;
 
+    public function dispatches(){
+        return $this->hasMany('App\Models\Dispatch');
+    }
     public function user(){
         return $this->belongsTo('App\Models\User');
     }

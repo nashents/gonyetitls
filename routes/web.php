@@ -68,7 +68,17 @@ Route::get('purchase/orders/pending','PurchaseController@pending')->name('purcha
 Route::get('purchase/orders/management','PurchaseController@manage')->name('purchases.manage');
 Route::get('purchase/orders/reports','PurchaseController@reports')->name('purchases.reports');
 
+Route::get('inventory_dispatches/approved','InventoryDispatchController@approved')->name('inventory_dispatches.approved');
+Route::get('inventory_dispatches/rejected','InventoryDispatchController@rejected')->name('inventory_dispatches.rejected');
+Route::get('inventory_dispatches/pending','InventoryDispatchController@pending')->name('inventory_dispatches.pending');
 
+Route::get('asset_dispatches/approved','AssetDispatchController@approved')->name('asset_dispatches.approved');
+Route::get('asset_dispatches/rejected','AssetDispatchController@rejected')->name('asset_dispatches.rejected');
+Route::get('asset_dispatches/pending','AssetDispatchController@pending')->name('asset_dispatches.pending');
+
+Route::get('tyre_dispatches/approved','TyreDispatchController@approved')->name('tyre_dispatches.approved');
+Route::get('tyre_dispatches/rejected','TyreDispatchController@rejected')->name('tyre_dispatches.rejected');
+Route::get('tyre_dispatches/pending','TyreDispatchController@pending')->name('tyre_dispatches.pending');
 
 Route::get('inventory_purchase/orders/deleted','InventoryPurchaseController@deleted')->name('inventory_purchases.deleted');
 Route::get('inventory_purchase/orders/approved','InventoryPurchaseController@approved')->name('inventory_purchases.approved');
@@ -77,6 +87,12 @@ Route::get('inventory_purchase/orders/pending','InventoryPurchaseController@pend
 Route::get('inventory_purchase/orders/management','InventoryPurchaseController@manage')->name('inventory_purchases.manage');
 Route::get('inventory_purchase/orders/reports','InventoryPurchaseController@reports')->name('inventory_purchases.reports');
 
+Route::get('tyre_purchase/orders/deleted','TyrePurchaseController@deleted')->name('tyre_purchases.deleted');
+Route::get('tyre_purchase/orders/approved','TyrePurchaseController@approved')->name('tyre_purchases.approved');
+Route::get('tyre_purchase/orders/rejected','TyrePurchaseController@rejected')->name('tyre_purchases.rejected');
+Route::get('tyre_purchase/orders/pending','TyrePurchaseController@pending')->name('tyre_purchases.pending');
+Route::get('tyre_purchase/orders/management','TyrePurchaseController@manage')->name('tyre_purchases.manage');
+Route::get('tyre_purchase/orders/reports','TyrePurchaseController@reports')->name('tyre_purchases.reports');
 Route::get('tyre_purchase/orders/deleted','TyrePurchaseController@deleted')->name('tyre_purchases.deleted');
 Route::get('tyre_purchase/orders/approved','TyrePurchaseController@approved')->name('tyre_purchases.approved');
 Route::get('tyre_purchase/orders/rejected','TyrePurchaseController@rejected')->name('tyre_purchases.rejected');
@@ -552,6 +568,7 @@ Route::resource('branches','BranchController');
 Route::resource('loading_points','LoadingPointController');
 Route::resource('offloading_points','OffloadingPointController');
 Route::resource('products','ProductController');
+Route::resource('dispatches','DispatchController');
 Route::resource('inventory_products','InventoryProductController');
 Route::resource('inventory_requisitions','InventoryRequisitionController');
 Route::resource('inventory_assignments','InventoryAssignmentController');

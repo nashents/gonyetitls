@@ -12,6 +12,12 @@ class TicketInventory extends Model implements Auditable
     use \OwenIt\Auditing\Auditable;
     use HasFactory, SoftDeletes;
 
+    public function dispatch(){
+        return $this->belongsTo('App\Models\Dispatch');
+    }
+    public function dispatch_item(){
+        return $this->belongsTo('App\Models\DispatchItem');
+    }
     public function inventory(){
         return $this->belongsTo('App\Models\Inventory');
     }

@@ -21,6 +21,9 @@ class Trailer extends Model implements Auditable
     public function mileages(){
         return $this->hasMany('App\Models\Mileage');
     }
+      public function dispatches(){
+        return $this->hasMany('App\Models\Dispatch');
+    }
     public function bills(){
         return $this->hasMany('App\Models\Bill');
     }

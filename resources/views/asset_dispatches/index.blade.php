@@ -34,7 +34,7 @@
                                 <div class="col-md-6">
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
-            							<li class="active"> <i class="fas fa-list"></i> Inventory Dispatches</li>
+            							<li class="active"> <i class="fas fa-list"></i> Asset Dispatches</li>
             						</ul>
                                 </div>
                                 <!-- /.col-md-6 -->
@@ -44,7 +44,7 @@
                         </div>
                         <!-- /.container-fluid -->
 
-                        @livewire('dispatches.index',['department' => 'inventory'])
+                        @livewire('dispatches.index',['department' => 'asset'])
                         <!-- /.section -->
 
                     </div>

@@ -20,7 +20,7 @@ use App\Models\BillExpense;
 use App\Models\Transporter;
 use App\Models\ExchangeRate;
 use App\Models\Notification;
-use Predis\Command\Traits\DB;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\PendingNotificationEmails;
@@ -114,39 +114,7 @@ class Create extends Component
         $this->buy = True;
     }
 
-    public function billNumber(){
-
-        if (isset(Auth::user()->company)) {
-            $str = Auth::user()->company->name;
-            $words = explode(' ', $str);
-            if (isset($words[1][0])) {
-                $initials = $words[0][0].$words[1][0];
-            }else {
-                $initials = $words[0][0];
-            }
-        }elseif (isset(Auth::user()->employee->company)) {
-            $str = Auth::user()->employee->company->name;
-            $words = explode(' ', $str);
-            if (isset($words[1][0])) {
-                $initials = $words[0][0].$words[1][0];
-            }else {
-                $initials = $words[0][0];
-            }
-        }
-
-        $bill = Bill::latest()->orderBy('id','desc')->first();
-
-        if (!$bill) {
-            $bill_number =  $initials .'B'. str_pad(1, 5, "0", STR_PAD_LEFT);
-        }else {
-            $number = $bill->id + 1;
-            $bill_number =  $initials .'B'. str_pad($number, 5, "0", STR_PAD_LEFT);
-        }
-
-        return  $bill_number;
-
-
-    }
+   
 
     public function mount(){
         $this->company = Auth::user()->employee->company;
@@ -315,7 +283,7 @@ class Create extends Component
 
     public function store(){
 
-          DB::transaction(function () {
+        DB::transaction(function () {
 
         $bill = new Bill;
         $bill->user_id = Auth::user()->id;
