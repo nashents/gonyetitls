@@ -152,7 +152,7 @@
                        <select wire:model.debounce.300ms="selectedTicket" class="form-control" required size="4">
                            <option value="">Select Ticket</option>
                            @foreach ($tickets as $ticket)
-                               <option value="">
+                               <option value="{{$ticket->id}}">
                                     {{$ticket->booking->booking_number ? "Booking#: ".$ticket->booking->booking_number : ""}}
                                     {{$ticket->ticket_number ? "Ticket#: ".$ticket->ticket_number : ""}}
                                     {{$ticket->in_date ? "Date: ".$ticket->in_date : ""}}
@@ -238,7 +238,7 @@
                                     <div class="form-group">
                                         <label for="purchase_date">Qty<span class="required" style="color: red">*</span></label>
                                         @if ($max)
-                                            <input type="number" step="any" min="0" max="{{$max}}" class="form-control" wire:model.debounce.300ms="qty.0" placeholder="Enter Qty" required>
+                                            <input type="number" step="any" min="0"  max="{{ $max[0] ?? '' }}"  class="form-control" wire:model.debounce.300ms="qty.0" placeholder="Enter Qty" required>
                                         @else
                                             <input type="number" step="any" min="0"  class="form-control" wire:model.debounce.300ms="qty.0" placeholder="Enter Qty" required>
                                         @endif
@@ -268,7 +268,7 @@
                                             <div class="form-group">
                                                 <label for="purchase_date">Qty<span class="required" style="color: red">*</span></label>
                                                 @if ($max)
-                                            <input type="number" step="any" min="0" max="{{$max}}" class="form-control" wire:model.debounce.300ms="qty.{{$value}}" placeholder="Enter Qty" required>
+                                            <input type="number" step="any" min="0"  max="{{ $max[$value] ?? '' }}"  class="form-control" wire:model.debounce.300ms="qty.{{$value}}" placeholder="Enter Qty" required>
                                         @else
                                             <input type="number" step="any" min="0"  class="form-control" wire:model.debounce.300ms="qty.{{$value}}" placeholder="Enter Qty" required>
                                         @endif

@@ -115,6 +115,39 @@ class Create extends Component
     }
 
    
+    public function billNumber(){
+
+        if (isset(Auth::user()->company)) {
+            $str = Auth::user()->company->name;
+            $words = explode(' ', $str);
+            if (isset($words[1][0])) {
+                $initials = $words[0][0].$words[1][0];
+            }else {
+                $initials = $words[0][0];
+            }
+        }elseif (isset(Auth::user()->employee->company)) {
+            $str = Auth::user()->employee->company->name;
+            $words = explode(' ', $str);
+            if (isset($words[1][0])) {
+                $initials = $words[0][0].$words[1][0];
+            }else {
+                $initials = $words[0][0];
+            }
+        }
+
+        $bill = Dispatch::latest()->orderBy('id','desc')->first();
+
+        if (!$bill) {
+            $bill_number =  $initials .'B'. str_pad(1, 5, "0", STR_PAD_LEFT);
+        }else {
+            $number = $bill->id + 1;
+            $bill_number =  $initials .'B'. str_pad($number, 5, "0", STR_PAD_LEFT);
+        }
+
+        return  $bill_number;
+
+
+    }
 
     public function mount(){
         $this->company = Auth::user()->employee->company;
@@ -183,7 +216,7 @@ class Create extends Component
 
     public function showItem($key){
         $this->item_key = $key;
-        $this->dispatchBrowserEvent('show-product_serviceModal');
+        $this->billBrowserEvent('show-product_serviceModal');
     }
 
     public function storeItem(){
@@ -219,9 +252,9 @@ class Create extends Component
                 }  
             }
     
-            $this->dispatchBrowserEvent('hide-product_serviceModal');
+            $this->billBrowserEvent('hide-product_serviceModal');
             $this->resetInputFields();
-            $this->dispatchBrowserEvent('alert',[
+            $this->billBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Item Created Successfully!!"
             ]);
@@ -229,7 +262,7 @@ class Create extends Component
             // }
             //     catch(\Exception $e){
             //     // Set Flash Message
-            //     $this->dispatchBrowserEvent('alert',[
+            //     $this->billBrowserEvent('alert',[
             //         'type'=>'error',
             //         'message'=>"Something went wrong while creating item!!"
             //     ]);
@@ -435,7 +468,7 @@ class Create extends Component
         }
 
 
-        $this->dispatchBrowserEvent('alert',[
+        $this->billBrowserEvent('alert',[
             'type'=>'success',
             'message'=>"Bill Created Successfully!!"
         ]);

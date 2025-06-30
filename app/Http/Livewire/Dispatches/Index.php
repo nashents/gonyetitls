@@ -12,6 +12,7 @@ use App\Models\Employee;
 use App\Models\Inventory;
 use App\Models\DispatchItem;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class Index extends Component
 {
@@ -39,7 +40,7 @@ class Index extends Component
     public $selectedProduct = [];
     public $employees;
     public $max;
-    public $discription;
+    public $description;
     public $selectedEmployee;
     public $requested_by_id;
     public $date;
@@ -192,10 +193,15 @@ class Index extends Component
     }
   
     public function updatedSelectedProduct($id, $key){
+      
+
         if (!is_null($id)) {
+
+            
             if ($this->expand == False) {
                   $this->qty[$key] = 1;
             }
+             
           
             $this->inventories = Inventory::where('product_id',$id)->where('status',1)->where('balance','>',0)->orderBy('created_at','asc')->get();
             $this->tyres = Tyre::where('product_id',$id)->where('status',1)->orderBy('created_at','asc')->get();
@@ -207,6 +213,9 @@ class Index extends Component
             }elseif ($this->assets) {
                 $this->max[$key] = $this->assets->count();
             }
+
+        
+            
         }
     }
 
@@ -244,24 +253,48 @@ class Index extends Component
 
     }
 
+    
+    public function updated($value){
+        $this->validateOnly($value);
+    }
+    protected $rules = [
+        'date' => 'required',
+    ];
+
+    private function resetInputFields(){
+        $this->date = '';
+        $this->requested_by_id = '';
+        $this->selectedEmployee = '';
+        $this->branch_id = '';
+        $this->department_id = '';
+        $this->selectedInventory = [];
+        $this->searchTicket = [] ;
+    }
+
     public function store(){
+
+        DB::transaction(function () {
         
         $dispatch = new Dispatch;
         $dispatch->user_id = Auth::user()->id;
-        $dispatch->dispatch_number = $this->selectedTicket;
+        $dispatch->dispatch_number = $this->dispatchNumber();
         $dispatch->ticket_id = $this->selectedTicket;
-        $dispatch->employee_id = $this->employee_id;
+        $dispatch->employee_id = $this->selectedEmployee;
         $dispatch->requested_by_id = $this->requested_by_id;
         $dispatch->department = $this->department;
         $dispatch->department_id = $this->department_id;
         $dispatch->branch_id = $this->branch_id;
+        $dispatch->description = $this->description;
         $dispatch->save();
 
         if ($this->expand == True) {
+
             if ($this->selectedInventory) {
                 foreach ($this->selectedInventory as $key => $value) {
+
                     $dispatch_item = new DispatchItem;
                     $dispatch_item->dispatch_id = $dispatch->id;
+                    
                     if (isset($this->selectedTyre[$key])) {
                         $tyre = Tyre::find($this->selectedTyre[$key]);
                         if ($tyre) {
@@ -286,30 +319,39 @@ class Index extends Component
                     if (isset($this->weight[$key])) {
                         $dispatch_item->weight = $this->weight[$key];
                     }
+
+                    $dispatch_item->save();
                         
                 }
             }
         }elseif ($this->expand == False) {
                 if ($this->selectedProduct) {
+
                 foreach ($this->selectedProduct as $key => $value) {
-                    if (isset($this->qty[$key])) {
+
+                    $dispatch_item = new DispatchItem;
+                    $dispatch_item->dispatch_id = $dispatch->id;
+
                             if (isset($this->selectedProduct[$key])) {
                                 $product = Product::find($this->selectedProduct[$key]);
                                 if ($product) {
+                                    if (isset($this->qty[$key])) {
+
                                     if ($this->department == 'inventory') {
-                                        $inventories = $product->inventories->orderBy('created_at','asc')->take($this->qty[$key]);
-                                        if ($inventories) {
-                                            foreach ($inventories as $inventory) {
-                                                $dispatch_item = new DispatchItem;
-                                                $dispatch_item->dispatch_id = $dispatch->id;
-                                                $dispatch_item->product_id = $this->selectedProduct[$key];
-                                                $dispatch_item->inventory_id = $inventory->id;
-                                                $dispatch_item->weight = $inventory->balance;
-                                                $dispatch_item->save();
+                                      
+                                            $inventories =  Inventory::where('product_id',$product->id)->orderBy('created_at','asc')->take($this->qty[$key])->get();
+                                            if ($inventories) {
+                                                foreach ($inventories as $inventory) {
+                                                    $dispatch_item->product_id = $this->selectedProduct[$key];
+                                                    $dispatch_item->inventory_id = $inventory->id;
+                                                    $dispatch_item->weight = $inventory->balance;
+                                                    $dispatch_item->save();
+                                                }
                                             }
-                                        }
+                                      
+                                     
                                     }elseif ($this->department == 'asset') {
-                                        $assets = $product->assets->orderBy('created_at','asc')->take($this->qty[$key]);
+                                       $assets =  Asset::where('product_id',$product->id)->orderBy('created_at','asc')->take($this->qty[$key])->get();
                                         if ($assets) {
                                             foreach ($assets as $asset) {
                                                 $dispatch_item = new DispatchItem;
@@ -321,7 +363,7 @@ class Index extends Component
                                             }
                                         }
                                     }elseif ($this->department == 'tyre') {
-                                        $tyres = $product->tyres->orderBy('created_at','asc')->take($this->qty[$key]);
+                                       $tyres =  Tyre::where('product_id',$product->id)->orderBy('created_at','asc')->take($this->qty[$key])->get();
                                         if ($tyres) {
                                             foreach ($tyres as $tyre) {
                                                 $dispatch_item = new DispatchItem;
@@ -332,16 +374,30 @@ class Index extends Component
                                             }
                                         }
                                     }
+                                    }
                                 }
+
+
                                
                             }   
-                    }
+             
                
+                    $dispatch_item->save();
+
+                        
                         
                 }
             }
         }
 
+        $this->dispatchBrowserEvent('hide-dispatchModal');
+        $this->resetInputFields();
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Items Dispatched Successfully!!"
+        ]);
+
+    });
     
     }
     public function render()
