@@ -15,12 +15,13 @@ use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\SkipsErrors;
 use Maatwebsite\Excel\Concerns\SkipsOnError;
 use Maatwebsite\Excel\Concerns\ToCollection;
+use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 
-class EmployeesImport implements  ToCollection,WithLimit, 
+class EmployeesImport implements  ToCollection,SkipsEmptyRows, WithLimit, 
 WithHeadingRow,
 SkipsOnError,
 WithValidation,
@@ -40,9 +41,9 @@ WithBatchInserts
         return $pin;
     }
 
-       public function limit(): int
+    public function limit(): int
     {
-        return 500; // Import only the first 100 rows
+        return 2500; // Import only the first 100 rows
     }
 
     public function employeeNumber(){

@@ -4,12 +4,14 @@ namespace App\Http\Livewire\Dispatches;
 
 use App\Models\Tyre;
 use App\Models\Asset;
+use App\Models\Branch;
 use App\Models\Ticket;
 use App\Models\Product;
 use Livewire\Component;
 use App\Models\Dispatch;
 use App\Models\Employee;
 use App\Models\Inventory;
+use App\Models\Department;
 use App\Models\DispatchItem;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -22,8 +24,8 @@ class Index extends Component
     protected $queryString = ['searchProduct','searchTicket'];
     public $dispatches;
     public $department;
-    public $departments;
-    public $department_id;
+    public $all_departments;
+    public $asset_department_id;
     public $horse_id;
     public $trailer_id;
     public $vehicle_id;
@@ -33,12 +35,17 @@ class Index extends Component
     public $ticket;
     public $selectedTicket;
     public $inventories;
+    public $tyres;
+    public $assets;
+    public $selectedTyre = [];
     public $selectedInventory = [];
+    public $selectedAsset = [];
     public $products;
     public $qty = [];
     public $weight = [];
     public $selectedProduct = [];
     public $employees;
+    public $company;
     public $max;
     public $description;
     public $selectedEmployee;
@@ -65,32 +72,87 @@ class Index extends Component
     public function updatedSearchProduct($value)
     {
         if (filled($value)) {
-            $this->products = Product::with('brand', 'inventories')
-            ->where(function ($query) use ($value) {
-                $query
+            if ($this->department == "tyre") {
+                $this->products = Product::with('brand','tyres')
+                                    ->where(function ($query) use ($value) {
+                                        $query
+                                        ->where('department', $this->department)
+                                        ->whereHas('tyres', function ($query) {
+                                            $query->where('status', 1);
+                                        })
+                                        ->where('name', 'like', '%'.$value.'%')
+                                            ->orWhereHas('brand', function ($q) use ($value) {
+                                                $q->where('name', 'like', '%'.$value.'%');
+                                            })
+                                            ->orWhere('identification_number', 'like', '%'.$value.'%')
+                                            ->orWhere('product_number', 'like', '%'.$value.'%')
+                                            
+                                            ;
+                                    })->get();
+            }elseif ($this->department == "asset") {
+                 $this->products = Product::with('brand','assets')
+                                    ->where(function ($query) use ($value) {
+                                        $query
+                                        ->where('department', $this->department)
+                                        ->whereHas('assets', function ($query) {
+                                            $query->where('status', 1)->where('balance', '>', 0);
+                                        })
+                                        ->where('name', 'like', '%'.$value.'%')
+                                            ->orWhereHas('brand', function ($q) use ($value) {
+                                                $q->where('name', 'like', '%'.$value.'%');
+                                            })
+                                            ->orWhere('identification_number', 'like', '%'.$value.'%')
+                                            ->orWhere('product_number', 'like', '%'.$value.'%')
+                                            
+                                            ;
+                                    })->get();
+            }elseif ($this->department == "inventory") {
+                 $this->products = Product::with('brand', 'inventories')
+                                    ->where(function ($query) use ($value) {
+                                        $query
+                                        ->where('department', $this->department)
+                                        ->whereHas('inventories', function ($query) {
+                                            $query->where('status', 1)->where('balance', '>', 0);
+                                        })
+                                        ->where('name', 'like', '%'.$value.'%')
+                                            ->orWhereHas('brand', function ($q) use ($value) {
+                                                $q->where('name', 'like', '%'.$value.'%');
+                                            })
+                                            ->orWhere('identification_number', 'like', '%'.$value.'%')
+                                            ->orWhere('product_number', 'like', '%'.$value.'%')
+                                            
+                                            ;
+                                    })->get();
+            }
+           
+        }else{
+            if ($this->department == "asset") {
+                $this->products = Product::with('brand','assets')
+                ->where('department', $this->department)
+                ->whereHas('assets', function ($query) {
+                    $query->where('status', 1)
+                        ->where('balance', '>', 0);
+                })
+                ->orderBy('name', 'asc')
+                ->get();
+            }elseif ($this->department == "inventory") {
+                $this->products = Product::with('brand', 'inventories')
                 ->where('department', $this->department)
                 ->whereHas('inventories', function ($query) {
-                    $query->where('status', 1)->where('balance', '>', 0);
+                    $query->where('status', 1)
+                        ->where('balance', '>', 0);
                 })
-                ->where('name', 'like', '%'.$value.'%')
-                    ->orWhereHas('brand', function ($q) use ($value) {
-                        $q->where('name', 'like', '%'.$value.'%');
-                    })
-                    ->orWhere('identification_number', 'like', '%'.$value.'%')
-                    ->orWhere('product_number', 'like', '%'.$value.'%')
-                    
-                    ;
-            })
-            ->get();
-        }else{
-            $this->products = Product::with('brand', 'inventories')
-            ->where('department', $this->department)
-            ->whereHas('inventories', function ($query) {
-                $query->where('status', 1)
-                    ->where('balance', '>', 0);
-            })
-            ->orderBy('name', 'asc')
-            ->get();
+                ->orderBy('name', 'asc')
+                ->get();
+            }elseif ($this->department == "tyre") {
+                $this->products = Product::with('brand','tyres')
+                ->where('department', $this->department)
+                ->whereHas('tyres', function ($query) {
+                    $query->where('status', 1);
+                })
+                ->orderBy('name', 'asc')
+                ->get();
+            }
         }
            
     }
@@ -135,19 +197,43 @@ class Index extends Component
 
     public function mount($department){
         $this->inventories = collect();
+        $this->tyres = collect();
+        $this->assets = collect();
         $this->department = $department;
+        $this->company = Auth::user()->employee->company;
         $this->employees = Employee::where('status',1)->where('archive',0)->orderBy('name','asc')->orderBy('surname','asc')->get();
         $this->tickets = Ticket::whereYear('created_at',date('Y'))->where('status',1)->get();
-       
+        $this->all_departments = Department::orderBy('name','asc')->get();
+        $this->branches = Branch::orderBy('name','asc')->get();
 
-         $this->products = Product::with('brand', 'inventories')
-        ->where('department', $this->department)
-        ->whereHas('inventories', function ($query) {
-            $query->where('status', 1)
-                ->where('balance', '>', 0);
-        })
-        ->orderBy('name', 'asc')
-        ->get();
+        if ($this->department == "asset") {
+            $this->products = Product::with('brand','assets')
+            ->where('department', $this->department)
+            ->whereHas('assets', function ($query) {
+                $query->where('status', 1)
+                    ->where('balance', '>', 0);
+            })
+            ->orderBy('name', 'asc')
+            ->get();
+        }elseif ($this->department == "inventory") {
+            $this->products = Product::with('brand', 'inventories')
+            ->where('department', $this->department)
+            ->whereHas('inventories', function ($query) {
+                $query->where('status', 1)
+                    ->where('balance', '>', 0);
+            })
+            ->orderBy('name', 'asc')
+            ->get();
+        }elseif ($this->department == "tyre") {
+             $this->products = Product::with('brand','tyres')
+            ->where('department', $this->department)
+            ->whereHas('tyres', function ($query) {
+                $query->where('status', 1);
+            })
+            ->orderBy('name', 'asc')
+            ->get();
+        }
+       
        
      
     }
@@ -156,7 +242,7 @@ class Index extends Component
         if (!is_null($id)) {
             $employee = Employee::find($id);
             if ($employee) {
-                $this->department_id = $employee->departments->first()->id;
+                $this->asset_department_id = $employee->departments->first()->id;
                 $this->branch_id = $employee->branch_id;
             }
           
@@ -193,25 +279,22 @@ class Index extends Component
     }
   
     public function updatedSelectedProduct($id, $key){
-      
-
         if (!is_null($id)) {
-
-            
             if ($this->expand == False) {
                   $this->qty[$key] = 1;
             }
-             
-          
             $this->inventories = Inventory::where('product_id',$id)->where('status',1)->where('balance','>',0)->orderBy('created_at','asc')->get();
             $this->tyres = Tyre::where('product_id',$id)->where('status',1)->orderBy('created_at','asc')->get();
             $this->assets = Asset::where('product_id',$id)->where('status',1)->where('balance','>',0)->orderBy('created_at','asc')->get();
-            if ($this->inventories) {
-                $this->max[$key] = $this->inventories->count();
-            }elseif ($this->tyres) {
-                $this->max[$key] = $this->tyres->count();
-            }elseif ($this->assets) {
-                $this->max[$key] = $this->assets->count();
+            
+            $product = Product::find($id);
+
+            if ($product && $this->department == "inventory") {
+                $this->max[$key] = $product->inventories->count();
+            }elseif ($product && $this->department == "tyre") {
+                $this->max[$key] = $product->tyres->count();
+            }elseif ($product && $this->department == "asset") {
+                $this->max[$key] = $product->assets->count();
             }
 
         
@@ -266,7 +349,7 @@ class Index extends Component
         $this->requested_by_id = '';
         $this->selectedEmployee = '';
         $this->branch_id = '';
-        $this->department_id = '';
+        $this->asset_department_id = '';
         $this->selectedInventory = [];
         $this->searchTicket = [] ;
     }
@@ -282,110 +365,179 @@ class Index extends Component
         $dispatch->employee_id = $this->selectedEmployee;
         $dispatch->requested_by_id = $this->requested_by_id;
         $dispatch->department = $this->department;
-        $dispatch->department_id = $this->department_id;
+        $dispatch->department_id = $this->asset_department_id;
         $dispatch->branch_id = $this->branch_id;
         $dispatch->description = $this->description;
+        $dispatch->date = $this->date;
         $dispatch->save();
 
         if ($this->expand == True) {
 
-            if ($this->selectedInventory) {
-                foreach ($this->selectedInventory as $key => $value) {
+            if ($this->department == "inventory") {
+                foreach ($this->selectedInventory as $key => $id) {
 
-                    $dispatch_item = new DispatchItem;
-                    $dispatch_item->dispatch_id = $dispatch->id;
-                    
-                    if (isset($this->selectedTyre[$key])) {
-                        $tyre = Tyre::find($this->selectedTyre[$key]);
-                        if ($tyre) {
-                            $dispatch_item->product_id = $tyre->product_id;
+                    $inventory = Inventory::find($id);
+                    if ($inventory) {
+
+                        $dispatch_item = new DispatchItem;
+                        $dispatch_item->dispatch_id = $dispatch->id;
+                        $dispatch_item->product_id = $inventory->product_id;
+                        $dispatch_item->currency_id = $inventory->currency_id;
+                        $dispatch_item->inventory_id = $id;
+
+                        $amount = 0;
+                        $exchange_amount = 0;
+
+                        if (isset($this->weight[$key]) && is_numeric($this->weight[$key]) && 
+                            is_numeric($inventory->weight) && $inventory->weight > 0) {
+
+                            $dispatch_item->weight = $this->weight[$key];
+                            $ratio = $this->weight[$key] / $inventory->weight;
+
+                            if ($inventory->currency_id != $this->company->currency_id) {
+                                if (is_numeric($inventory->exchange_amount) && is_numeric($inventory->total)) {
+                                    $exchange_amount = $ratio * $inventory->exchange_amount;
+                                    $amount = $ratio * $inventory->total;
+                                }
+                            } else {
+                                if (is_numeric($inventory->total)) {
+                                    $amount = $ratio * $inventory->total;
+                                }
+                            }
+
+                            $dispatch_item->amount = $amount;
+                            $dispatch_item->exchange_amount = $exchange_amount;
                         }
+
+                        $dispatch_item->exchange_rate = $inventory->exchange_rate;
+                        $dispatch_item->save();
+                    }
+                }
+            }elseif ($this->department == "tyre") {
+                foreach ($this->selectedTyre as $key => $id) {  
+                    $tyre = Tyre::find($id);
+                    if ($tyre) {
+                        $dispatch_item = new DispatchItem;
+                        $dispatch_item->dispatch_id = $dispatch->id;
+                        $dispatch_item->product_id = $tyre->product_id;
+                        $dispatch_item->currency_id = $tyre->currency_id;
+                        $dispatch_item->amount = $tyre->total;
+                        $dispatch_item->exchange_amount = $tyre->exchange_amount;
+                        $dispatch_item->exchange_amount = $tyre->exchange_rate;
                         $dispatch_item->tyre_id = $this->selectedTyre[$key];
+                        $dispatch_item->save();   
                     }
-                    if (isset($this->selectedAsset[$key])) {
-                        $asset = Asset::find($this->selectedAsset[$key]);
-                        if ($asset) {
-                            $dispatch_item->product_id = $asset->product_id;
-                        }
-                        $dispatch_item->asset_id = $this->selectedAsset[$key];
-                    }
-                    if (isset($this->selectedInventory[$key])) {
-                        $inventory = Inventory::find($this->selectedInventory[$key]);
-                        if ($inventory) {
-                            $dispatch_item->product_id = $inventory->product_id;
-                        }
-                        $dispatch_item->inventory_id = $this->selectedInventory[$key];
-                    }
-                    if (isset($this->weight[$key])) {
-                        $dispatch_item->weight = $this->weight[$key];
-                    }
+                }
+            }elseif ($this->department == "asset") {
+                foreach ($this->selectedAsset as $key => $id) {
+                    $asset = Asset::find($id);
+                    if ($asset) {
 
-                    $dispatch_item->save();
-                        
+                        $dispatch_item = new DispatchItem;
+                        $dispatch_item->dispatch_id = $dispatch->id;
+                        $dispatch_item->product_id = $asset->product_id;
+                        $dispatch_item->currency_id = $asset->currency_id;
+                        $dispatch_item->asset_id = $id;
+
+                        $amount = 0;
+                        $exchange_amount = 0;
+
+                        if (isset($this->weight[$key]) && is_numeric($this->weight[$key]) && 
+                            is_numeric($asset->weight) && $asset->weight > 0) {
+
+                            $dispatch_item->weight = $this->weight[$key];
+                            $ratio = $this->weight[$key] / $asset->weight;
+
+                            if ($asset->currency_id != $this->company->currency_id) {
+                                if (is_numeric($asset->exchange_amount) && is_numeric($asset->total)) {
+                                    $exchange_amount = $ratio * $asset->exchange_amount;
+                                    $amount = $ratio * $asset->total;
+                                }
+                            } else {
+                                if (is_numeric($asset->total)) {
+                                    $amount = $ratio * $asset->total;
+                                }
+                            }
+
+                            $dispatch_item->amount = $amount;
+                            $dispatch_item->exchange_amount = $exchange_amount;
+                        }
+
+                        $dispatch_item->exchange_rate = $asset->exchange_rate;
+                        $dispatch_item->save();
+                    }
                 }
             }
         }elseif ($this->expand == False) {
-                if ($this->selectedProduct) {
 
-                foreach ($this->selectedProduct as $key => $value) {
+            if ($this->selectedProduct) {
 
-                    $dispatch_item = new DispatchItem;
-                    $dispatch_item->dispatch_id = $dispatch->id;
+                foreach ($this->selectedProduct as $key => $productId) {
 
-                            if (isset($this->selectedProduct[$key])) {
-                                $product = Product::find($this->selectedProduct[$key]);
-                                if ($product) {
-                                    if (isset($this->qty[$key])) {
+                    $qty = $this->qty[$key] ?? 0;
+                    if (!$qty || $qty < 1) continue;
 
-                                    if ($this->department == 'inventory') {
-                                      
-                                            $inventories =  Inventory::where('product_id',$product->id)->orderBy('created_at','asc')->take($this->qty[$key])->get();
-                                            if ($inventories) {
-                                                foreach ($inventories as $inventory) {
-                                                    $dispatch_item->product_id = $this->selectedProduct[$key];
-                                                    $dispatch_item->inventory_id = $inventory->id;
-                                                    $dispatch_item->weight = $inventory->balance;
-                                                    $dispatch_item->save();
-                                                }
-                                            }
-                                      
-                                     
-                                    }elseif ($this->department == 'asset') {
-                                       $assets =  Asset::where('product_id',$product->id)->orderBy('created_at','asc')->take($this->qty[$key])->get();
-                                        if ($assets) {
-                                            foreach ($assets as $asset) {
-                                                $dispatch_item = new DispatchItem;
-                                                $dispatch_item->dispatch_id = $dispatch->id;
-                                                $dispatch_item->product_id = $this->selectedProduct[$key];
-                                                $dispatch_item->asset_id = $asset->id;
-                                                $dispatch_item->weight = $asset->balance;
-                                                $dispatch_item->save();
-                                            }
-                                        }
-                                    }elseif ($this->department == 'tyre') {
-                                       $tyres =  Tyre::where('product_id',$product->id)->orderBy('created_at','asc')->take($this->qty[$key])->get();
-                                        if ($tyres) {
-                                            foreach ($tyres as $tyre) {
-                                                $dispatch_item = new DispatchItem;
-                                                $dispatch_item->dispatch_id = $dispatch->id;
-                                                $dispatch_item->product_id = $this->selectedProduct[$key];
-                                                $dispatch_item->tyre_id = $tyre->id;
-                                                $dispatch_item->save();
-                                            }
-                                        }
-                                    }
-                                    }
-                                }
+                    $product = Product::find($productId);
+                    if (!$product) continue;
 
+                    switch ($this->department) {
+                        case 'inventory':
+                            $items = Inventory::where('product_id', $product->id)
+                                ->orderBy('created_at', 'asc')
+                                ->take($qty)
+                                ->get();
 
-                               
-                            }   
-             
-               
-                    $dispatch_item->save();
+                            foreach ($items as $item) {
+                                $dispatch_item = new DispatchItem;
+                                $dispatch_item->dispatch_id = $dispatch->id;
+                                $dispatch_item->product_id = $product->id;
+                                $dispatch_item->inventory_id = $item->id;
+                                $dispatch_item->currency_id = $item->currency_id;
+                                $dispatch_item->amount = $item->total;
+                                $dispatch_item->exchange_amount = $item->exchange_amount;
+                                $dispatch_item->exchange_rate = $item->exchange_rate;
+                                $dispatch_item->weight = $item->balance;
+                                $dispatch_item->save();
+                            }
+                            break;
 
-                        
-                        
+                        case 'asset':
+                            $items = Asset::where('product_id', $product->id)
+                                ->orderBy('created_at', 'asc')
+                                ->take($qty)
+                                ->get();
+
+                            foreach ($items as $item) {
+                                $dispatch_item = new DispatchItem;
+                                $dispatch_item->dispatch_id = $dispatch->id;
+                                $dispatch_item->product_id = $product->id;
+                                $dispatch_item->asset_id = $item->id;
+                                $dispatch_item->amount = $item->total;
+                                $dispatch_item->exchange_amount = $item->exchange_amount;
+                                $dispatch_item->exchange_rate = $item->exchange_rate;
+                                $dispatch_item->weight = $item->balance;
+                                $dispatch_item->save();
+                            }
+                            break;
+
+                        case 'tyre':
+                            $items = Tyre::where('product_id', $product->id)
+                                ->orderBy('created_at', 'asc')
+                                ->take($qty)
+                                ->get();
+
+                            foreach ($items as $item) {
+                                $dispatch_item = new DispatchItem;
+                                $dispatch_item->dispatch_id = $dispatch->id;
+                                $dispatch_item->product_id = $product->id;
+                                $dispatch_item->tyre_id = $item->id;
+                                $dispatch_item->amount = $item->total;
+                                $dispatch_item->exchange_amount = $item->exchange_amount;
+                                $dispatch_item->exchange_rate = $item->exchange_rate;
+                                $dispatch_item->save();
+                            }
+                            break;
+                    }
                 }
             }
         }

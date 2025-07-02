@@ -10,19 +10,23 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Maatwebsite\Excel\Concerns\ToModel;
+use Maatwebsite\Excel\Concerns\WithLimit;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\SkipsErrors;
 use Maatwebsite\Excel\Concerns\SkipsOnError;
 use Maatwebsite\Excel\Concerns\ToCollection;
+use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
+use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 
-class VehiclesImport implements ToCollection,
+class VehiclesImport implements ToCollection, SkipsEmptyRows, WithLimit, 
 WithHeadingRow,
 SkipsOnError,
 WithValidation,
-WithChunkReading
+WithChunkReading,
+WithBatchInserts
 {
 
     use Importable, SkipsErrors;
@@ -65,62 +69,69 @@ WithChunkReading
 
     }
 
+     public function limit(): int
+    {
+        return 2500; // Import only the first 100 rows
+    }
+
     public function collection(Collection $rows)
     {
 
         foreach($rows as $row){
 
-            $registrationNumber = trim($row['registration_number'] ?? '');
-            if (empty($registrationNumber)) {
-                \Log::warning('Skipped row due to empty registration_number:', $row->toArray());
-                return;
-            }
-            if ($row->filter()->isNotEmpty() && !empty($registrationNumber)) {
-                $vehicle = Vehicle::where('registration_number', $registrationNumber)->first();
-                
-                // Helper closure to get or create related record IDs
-                $getOrCreateId = function ($model, $column, $value) {
-                    if (!$value) return null;
-                    $record = $model::where($column, $value)->first();
-                    if ($record) {
-                        return $record->id;
-                    } else {
-                        $newRecord = new $model;
-                        $newRecord->$column = $value;
-                        $newRecord->save();
-                        return $newRecord->id;
-                    }
-                };
+                $registrationNumber = trim($row->get('registration_number', ''));
 
-                $transporter_id = $getOrCreateId(Transporter::class, 'transporter_number', $row['transporter_number']);
-                $make_id       = $getOrCreateId(VehicleMake::class, 'name', $row['make']);
-                $model_id      = $getOrCreateId(VehicleModel::class, 'name', $row['model']);
+        if (empty($registrationNumber)) {
+            \Log::warning('Skipped row due to empty registration_number:', $row->toArray());
+            continue;
+        }
 
-                if (!$vehicle) {
-                    $vehicle = new Vehicle;
-                    $vehicle->user_id = Auth::user()->id;
-                    $vehicle->vehicle_number = $this->vehicleNumber();
+        if ($row->filter()->isNotEmpty()) {
+            $vehicle = Vehicle::firstOrNew(['registration_number' => $registrationNumber]);
+
+            // Helper closure to get or create related record IDs
+            $getOrCreateId = function ($model, $column, $value) {
+                if (!$value) return null;
+
+                $record = $model::where($column, $value)->first();
+                if ($record) {
+                    return $record->id;
                 }
 
-                $vehicle->transporter_id         = $transporter_id;
-                $vehicle->vehicle_make_id        = $make_id;
-                $vehicle->vehicle_model_id       = $model_id;
-                $vehicle->chasis_number          = $row['chasisnumber'];
-                $vehicle->engine_number          = $row['enginenumber'];
-                $vehicle->registration_number    = $row['registration_number'];
-                $vehicle->fleet_number           = $row['fleetnumber'];
-                $vehicle->year                   = $row['year'];
-                $vehicle->color                  = $row['color'];
-                $vehicle->manufacturer           = $row['manufacturer'];
-                $vehicle->country_of_origin      = $row['country_of_origin'];
-                $vehicle->mileage                = $row['mileage'];
-                $vehicle->hours                  = $row['engine_hours'];
-                $vehicle->fuel_type              = $row['fueltype'];
-                $vehicle->fuel_consumption_empty_standard  = $row['fuel_consumption_empty'] ?? 0;
-                $vehicle->fuel_consumption_loaded_standard = $row['fuel_consumption_loaded'] ?? 0;
+                $newRecord = new $model;
+                $newRecord->$column = $value;
+                $newRecord->save();
+                return $newRecord->id;
+            };
 
-                $vehicle->exists ? $vehicle->update() : $vehicle->save();
+            $transporter_id = $getOrCreateId(Transporter::class, 'transporter_number', $row->get('transporter_number'));
+            $make_id        = $getOrCreateId(VehicleMake::class, 'name', $row->get('make'));
+            $model_id       = $getOrCreateId(VehicleModel::class, 'name', $row->get('model'));
+
+            if (!$vehicle->exists) {
+                $vehicle->user_id = Auth::user()->id;
+                $vehicle->vehicle_number = $this->vehicleNumber();
             }
+
+            $vehicle->transporter_id         = $transporter_id;
+            $vehicle->vehicle_make_id        = $make_id;
+            $vehicle->vehicle_model_id       = $model_id;
+            $vehicle->chasis_number          = $row->get('chasisnumber');
+            $vehicle->engine_number          = $row->get('enginenumber');
+            $vehicle->registration_number    = $registrationNumber;
+            $vehicle->fleet_number           = $row->get('fleetnumber');
+            $vehicle->year                   = $row->get('year');
+            $vehicle->color                  = $row->get('color');
+            $vehicle->manufacturer           = $row->get('manufacturer');
+            $vehicle->country_of_origin      = $row->get('country_of_origin');
+            $vehicle->mileage                = $row->get('mileage');
+            $vehicle->hours                  = $row->get('engine_hours');
+            $vehicle->fuel_type              = $row->get('fueltype');
+            $vehicle->fuel_consumption_empty_standard  = $row->get('fuel_consumption_empty', 0);
+            $vehicle->fuel_consumption_loaded_standard = $row->get('fuel_consumption_loaded', 0);
+
+            $vehicle->save();
+        }
       
         }
     }
@@ -139,8 +150,13 @@ WithChunkReading
 
 
 
+     public function batchSize(): int
+    {
+        return 10;
+    }
+
     public function chunkSize(): int
     {
-        return 1000;
+        return 10;
     }
 }

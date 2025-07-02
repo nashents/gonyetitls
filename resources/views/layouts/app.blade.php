@@ -124,6 +124,26 @@
 @stack('scripts')
     
     <script type="text/javascript">
+            window.addEventListener('show-dispatchModal', event => {
+                $('#dispatchModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-dispatchModal', event => {
+                $('#dispatchModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-dispatchEditModal', event => {
+                $('#dispatchEditModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-dispatchEditModal', event => {
+                $('#dispatchEditModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
             window.addEventListener('hide-shiftsImportModal', event => {
                 $('#shiftsImportModal').modal('hide');
             })

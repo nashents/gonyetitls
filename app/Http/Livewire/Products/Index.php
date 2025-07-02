@@ -110,6 +110,9 @@ class Index extends Component
 
     public function calculateAvgLeadTime($id){
 
+
+        $averageLeadTime = 0;
+
         if ($this->department == "inventory") {
             $averageLeadTime = Inventory::select(DB::raw('AVG(DATEDIFF(inventories.created_at, purchases.created_at)) as avg_lead_time'))
             ->join('purchases', 'inventories.purchase_id', '=', 'purchases.id')

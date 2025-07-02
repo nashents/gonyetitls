@@ -86,7 +86,7 @@ WithBatchInserts
 
        public function limit(): int
     {
-        return 500; // Import only the first 100 rows
+        return 2500; // Import only the first 100 rows
     }
 
     public function collection(Collection $rows)

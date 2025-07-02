@@ -10,19 +10,24 @@ use App\Imports\VendorsImport;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Maatwebsite\Excel\Concerns\WithLimit;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\SkipsErrors;
 use Maatwebsite\Excel\Concerns\SkipsOnError;
 use Maatwebsite\Excel\Concerns\ToCollection;
+use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
+use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 
-class VendorsImport implements  ToCollection,
+class VendorsImport implements  ToCollection, SkipsEmptyRows, WithLimit, 
 WithHeadingRow,
 SkipsOnError,
 WithValidation,
-WithChunkReading
+WithChunkReading,
+WithBatchInserts
+
 {
     use Importable, SkipsErrors;
 
@@ -70,6 +75,11 @@ WithChunkReading
 
 
     }
+
+     public function limit(): int
+    {
+        return 2500; // Import only the first 100 rows
+    }
  
 
     /**
@@ -84,64 +94,53 @@ WithChunkReading
        foreach($rows as $row){
         if($row->filter()->isNotEmpty()){
 
-        $pin =  $this->generatePIN();
+        $pin = $this->generatePIN();
 
-        $user = User::where('name',$row['name'])->get()->first();
-        $vendor = Vendor::where('name',$row['name'])->get()->first();
+        $name = $row->get('name');
+        $email = $row->get('email');
+        $phonenumber = $row->get('phonenumber');
+        $worknumber = $row->get('worknumber');
+        $country = $row->get('country');
+        $city = $row->get('city');
+        $suburb = $row->get('suburb');
+        $street = $row->get('streetaddress');
 
-        if (isset($user) && isset($vendor)) {
-            $user->name = $row['name'];
-            $user->category  = 'vendor';
-            $user->is_admin = '0';
-            $user->active = '1';
-            $user->email = $row['email'];
-            $user->update();
-            $user->roles()->attach([3]);
+        $user = User::firstOrNew(['name' => $name]);
+        $user->category = 'vendor';
+        $user->is_admin = '0';
+        $user->active = '1';
+        $user->email = $email;
 
-            $vendor->name    = $row['name'];
-            $vendor->email    = $row['email'];
-            $vendor->pin    = $pin;
-            $vendor->phonenumber    = $row['phonenumber'];
-            $vendor->worknumber    = $row['worknumber'];
-            $vendor->country    = $row['country'];
-            $vendor->city    = $row['city'];
-            $vendor->suburb    = $row['suburb'];
-            $vendor->street_address    = $row['streetaddress'];
-            $vendor->update();
-           
-        } else {
-              
-      
-
-        $user = User::create([
-            'name'     => $row['name'],
-            'category'     => 'vendor',
-            'is_admin'     => '0',
-            'active'     => '1',
-            'email'     => $row['email'],
-            'password'    => Hash::make($pin),
-
-        ]);
-        $user->roles()->attach([3]);
-      
-        $vendor = new Vendor;
-        
-        $vendor->company_id     = Auth::user()->employee->company_id;
-        $vendor->creator_id     = Auth::user()->id;
-        $vendor->user_id     = $user->id;
-        $vendor->vendor_number   = $this->vendorNumber();
-        $vendor->name    = $row['name'];
-        $vendor->email    = $row['email'];
-        $vendor->pin    = $pin;
-        $vendor->phonenumber    = $row['phonenumber'];
-        $vendor->worknumber    = $row['worknumber'];
-        $vendor->country    = $row['country'];
-        $vendor->city    = $row['city'];
-        $vendor->suburb    = $row['suburb'];
-        $vendor->street_address    = $row['streetaddress'];
-        $vendor->save();
-      
+        if (!$user->exists) {
+            $user->password = Hash::make($pin);
         }
+
+        $user->save();
+
+        if (!$user->roles()->where('role_id', 3)->exists()) {
+            $user->roles()->attach([3]);
+        }
+
+        $vendor = Vendor::firstOrNew(['name' => $name]);
+
+        if (!$vendor->exists) {
+            $vendor->company_id = Auth::user()->employee->company_id;
+            $vendor->creator_id = Auth::user()->id;
+            $vendor->user_id = $user->id;
+            $vendor->vendor_number = $this->vendorNumber();
+        }
+
+        $vendor->name = $name;
+        $vendor->email = $email;
+        $vendor->pin = $pin;
+        $vendor->phonenumber = $phonenumber;
+        $vendor->worknumber = $worknumber;
+        $vendor->country = $country;
+        $vendor->city = $city;
+        $vendor->suburb = $suburb;
+        $vendor->street_address = $street;
+
+        $vendor->save();
         
      
     }
@@ -156,8 +155,13 @@ WithChunkReading
         ];
     }
 
+    public function batchSize(): int
+    {
+        return 10;
+    }
+
     public function chunkSize(): int
     {
-        return 1000;
+        return 10;
     }
 }

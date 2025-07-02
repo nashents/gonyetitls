@@ -21,15 +21,15 @@ class InventoryDispatchController extends Controller
 
         public function approved()
     {
-        return view('asset_dispatches.approved');
+        return view('inventory_dispatches.approved');
     }
     public function pending()
     {
-        return view('asset_dispatches.pending');
+        return view('inventory_dispatches.pending');
     }
     public function rejected()
     {
-        return view('asset_dispatches.rejected');
+        return view('inventory_dispatches.rejected');
     }
 
     /**

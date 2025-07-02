@@ -143,6 +143,8 @@ class Index extends Component
            
 
 
+
+
             if($this->inventory_type == "spares"){
                 $ticket_inventory->weight = $this->weight ? $this->weight : 1;
                 $ticket_inventory->measurement = $inventory->measurement ? $inventory->measurement : "Item";
@@ -164,6 +166,7 @@ class Index extends Component
             }
         
             $ticket_inventory->save();
+            
             $bill = $ticket_inventory->bill;
 
             if (isset($bill)) {

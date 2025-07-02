@@ -3,27 +3,36 @@
 namespace App\Imports;
 
 use App\Models\User;
-use App\Models\Count;
 use App\Models\Agent;
+use App\Models\Count;
 use App\Imports\AgentsImport;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Maatwebsite\Excel\Concerns\WithLimit;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\SkipsErrors;
 use Maatwebsite\Excel\Concerns\SkipsOnError;
 use Maatwebsite\Excel\Concerns\ToCollection;
+use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
+use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 
-class AgentsImport implements  ToCollection,
+class AgentsImport implements  ToCollection, SkipsEmptyRows, WithLimit, 
 WithHeadingRow,
 SkipsOnError,
 WithValidation,
-WithChunkReading
+WithChunkReading,
+WithBatchInserts
 {
     use Importable, SkipsErrors;
+
+     public function limit(): int
+    {
+        return 2500; // Import only the first 100 rows
+    }
 
     public function generatePIN($digits = 4){
         $i = 0; //counter
@@ -163,8 +172,13 @@ WithChunkReading
 
 
 
+   public function batchSize(): int
+    {
+        return 10;
+    }
+
     public function chunkSize(): int
     {
-        return 1000;
+        return 10;
     }
 }

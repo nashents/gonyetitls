@@ -468,19 +468,24 @@ class Create extends Component
                 if (isset($this->selectedTax[$key])) {
                     $tyre->tax_id = $this->selectedTax[$key];
                 }
-                if (isset($this->tax_rate[$key]) && is_numeric($this->tax_rate[$key])) {
+               if (isset($this->tax_rate[$key]) && is_numeric($this->tax_rate[$key])) {
                     if (isset($this->amount[$key])) {
                         $tyre->tax_amount = ($this->amount[$key] * ($this->tax_rate[$key] / 100 ));
-                        $tyre->subtotal_incl = ($this->amount[$key] * ($this->tax_rate[$key] / 100 )) + $this->amount[$key];
-                        $tyre->total = ($this->amount[$key] * ($this->tax_rate[$key] / 100 )) + $this->amount[$key];
+                        $this->total = ($this->amount[$key] * ($this->tax_rate[$key] / 100 )) + $this->amount[$key];
+                        $tyre->subtotal_incl = $this->total;
+                        $tyre->total = $this->total;
                     }
                 }else{
-                    if(isset($this->amount[$key])){
-                        $tyre->subtotal_incl = $this->amount[$key];
-                        $tyre->total = $this->amount[$key];
+                    if (isset($this->amount[$key])) {
+                        $this->total = $this->amount[$key];
+                        $tyre->subtotal_incl =  $this->total;
+                        $tyre->total =  $this->total;
                     }
                     
                 }
+
+                $tyre->exchange_rate = $this->exchange_rate;
+                $tyre->exchange_amount = $this->exchange_amount;
 
                 $tyre->tyre_number = $this->tyreNumber();
                 $tyre->currency_id = $this->selectedCurrency;

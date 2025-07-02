@@ -110,9 +110,9 @@ WithBatchInserts
             return null;
         }
 
-       public function limit(): int
+    public function limit(): int
     {
-        return 500; // Import only the first 100 rows
+        return 2500; // Import only the first 100 rows
     }
 
     public function collection(Collection $rows)
@@ -120,197 +120,140 @@ WithBatchInserts
 
 
        foreach($rows as $row){
-        if($row->filter()->isNotEmpty()){
+            if($row->filter()->isNotEmpty()){
+                
+                $trip_number = $this->tripNumber();
+                $user_id = Auth::id();
+                $company_id = $this->company->id;
+                $trailer_ids = [];
 
-            $loading_point = LoadingPoint::where('name','LIKE','%'.$row['loading_point'].'%')->first();
-            $customer = Customer::where('name','LIKE','%'.$row['customer'].'%')->first();
-            if (isset($row['driver']) && $row['driver'] != "") {
-                $driver_name_array = explode(' ', $row['driver']);
-                if (isset($driver_name_array)) {
-                    if (isset($driver_name_array[0]) && isset($driver_name_array[2])) {
-                        $employee = Employee::where('name','LIKE','%'.$driver_name_array[0].'%')
-                            ->where('surname','LIKE','%'.$driver_name_array[2].'%')->first();
-                    }elseif(isset($driver_name_array[0]) && isset($driver_name_array[1])){
-                        $employee = Employee::where('name','LIKE','%'.$driver_name_array[0].'%')
-                        ->where('surname','LIKE','%'.$driver_name_array[1].'%')->first();
-                    }
-                }
-            }
-            
-                   
-            $horse = Horse::where('registration_number','LIKE','%'.$row['horse_registration_number'].'%')->first();
-            $cargo = Cargo::where('name','LIKE','%'.$row['cargo'].'%')->first();
-            $transporter = Transporter::where('name','LIKE','%'.$row['transporter'].'%')->first();
-            $trip_type = TripType::where('name','LIKE','%'.$row['trip_type'].'%')->first();
-            $currency = Currency::where('name','LIKE','%'.$row['currency'].'%')->first();
-            $offloading_point = OffloadingPoint::where('name','LIKE','%'. $row['offloading_point'] ?? null.'%')->first();
-            
-            if (isset($row['trailer_reg_numbers'])) {
-                $regnumbers = explode(',', $row['trailer_reg_numbers']);
+                $trip_ref = trim($row->get('trip_reference'));
+                $start_date = $this->parseExcelDate($row->get('start_date'));
+                $end_date = $this->parseExcelDate($row->get('end_date'));
 
-                if (isset($regnumbers)) {
-                    foreach ($regnumbers as $regnumber) {
-                        $trailer = Trailer::where('registration_number','LIKE','%'.$regnumber.'%')->first();
-                        if (isset($trailer)) {
-                            $trailer_ids[] = $trailer->id;
+                $driver_name = trim($row->get('driver'));
+                $driver = null;
+
+                if ($driver_name) {
+                    $name_parts = explode(' ', $driver_name);
+                    if (count($name_parts) >= 2) {
+                        $name = $name_parts[0];
+                        $surname = $name_parts[1] ?? $name_parts[2] ?? null;
+                        if ($surname) {
+                            $employee = Employee::where('name', 'LIKE', "%$name%")
+                                ->where('surname', 'LIKE', "%$surname%")
+                                ->first();
+                            $driver = $employee?->driver;
                         }
                     }
                 }
-            }
-            
-            if(isset($employee)){
-                $driver = $employee->driver;
-            }else{
-                $driver = Null;
-            }
-            
 
-            $trip = new Trip;
-            $trip->trip_number = $this->tripNumber() ;
-            $trip->user_id     = Auth::user()->id;
-            $trip->company_id = $this->company->id;
-            $trip->trip_type_id = $trip_type ? $trip_type->id : Null;
-            $trip->trip_ref = $row['trip_reference'];
-            $trip->start_date = $this->parseExcelDate($row['start_date']);
-            $trip->end_date = $this->parseExcelDate($row['end_date']);
-            $trip->transporter_id     = $transporter ? $transporter->id : Null;
-            $trip->horse_id     = $horse ? $horse->id : Null;
-            if (isset($this->trailer_ids)) {
-                $trip->with_trailer = 1;
-            }
-            $trip->driver_id     = $driver ? $driver->id : Null;
-            $trip->customer_id     = $customer ? $customer->id : Null;
-            $trip->currency_id     = $currency ? $currency->id : Null;
-            $trip->loading_point_id     = $loading_point ? $loading_point->id : Null;
-            $trip->offloading_point_id     = $offloading_point ? $offloading_point->id : Null;
-            $trip->cargo_id     = $cargo ? $cargo->id : Null;
-            if(isset($cargo)){
-                $cargo_type = $cargo->type;
-                if ($cargo_type && $cargo_type == "Solid") {
+                $horse = Horse::where('registration_number', 'LIKE', '%' . trim($row->get('horse_registration_number')) . '%')->first();
+                $vehicle = $horse?->vehicle;
+
+                $customer = Customer::where('name', 'LIKE', '%' . trim($row->get('customer')) . '%')->first();
+                $loading_point = LoadingPoint::where('name', 'LIKE', '%' . trim($row->get('loading_point')) . '%')->first();
+                $offloading_point = OffloadingPoint::where('name', 'LIKE', '%' . trim($row->get('offloading_point')) . '%')->first();
+                $cargo = Cargo::where('name', 'LIKE', '%' . trim($row->get('cargo')) . '%')->first();
+                $transporter = Transporter::where('name', 'LIKE', '%' . trim($row->get('transporter')) . '%')->first();
+                $trip_type = TripType::where('name', 'LIKE', '%' . trim($row->get('trip_type')) . '%')->first();
+                $currency = Currency::where('name', 'LIKE', '%' . trim($row->get('currency')) . '%')->first();
+
+                // Trailer IDs
+                $trailer_ids = [];
+                $trailer_regs = explode(',', trim($row->get('trailer_reg_numbers') ?? ''));
+                foreach ($trailer_regs as $reg) {
+                    $trailer = Trailer::where('registration_number', 'LIKE', '%' . trim($reg) . '%')->first();
+                    if ($trailer) {
+                        $trailer_ids[] = $trailer->id;
+                    }
+                }
+
+                $trip = new Trip();
+                $trip->trip_number = $trip_number;
+                $trip->user_id = $user_id;
+                $trip->company_id = $company_id;
+                $trip->trip_ref = $trip_ref;
+                $trip->trip_type_id = $trip_type?->id;
+                $trip->transporter_id = $transporter?->id;
+                $trip->horse_id = $horse?->id;
+                $trip->driver_id = $driver?->id;
+                $trip->vehicle_id = $vehicle?->id;
+                $trip->customer_id = $customer?->id;
+                $trip->currency_id = $currency?->id;
+                $trip->loading_point_id = $loading_point?->id;
+                $trip->offloading_point_id = $offloading_point?->id;
+                $trip->cargo_id = $cargo?->id;
+                $trip->start_date = $start_date;
+                $trip->end_date = $end_date;
+                $trip->trip_status = trim($row->get('trip_status'));
+                $trip->rate = $row->get('rate');
+                $trip->freight = $row->get('freight');
+                $trip->weight = $row->get('weight');
+                $trip->litreage = $row->get('litreage_at_ambient');
+                $trip->litreage_at_20 = $row->get('litreage_at_20');
+
+                $trip->with_trailer = count($trailer_ids) > 0 ? 1 : 0;
+                $trip->with_customer_rates = "custom";
+                $trip->with_transporter_rates = "custom";
+                $trip->freight_calculation = $row->get('rate') ? 'flat_rate' : null;
+
+                if ($cargo?->type === "Solid") {
                     $trip->calculation_measurement = "weight";
-                }elseif ($cargo_type && $cargo_type == "Liquid") {
+                } elseif ($cargo?->type === "Liquid") {
                     $trip->calculation_measurement = "litreage_at_20";
                 }
-                $trip->with_cargos = 1;
-            }
-            $trip->with_customer_rates = "custom";
-            $trip->with_transporter_rates = "custom";
-            $trip->weight     = $row['weight'];
-            $trip->litreage     = $row['litreage_at_ambient'];
-            $trip->litreage_at_20     = $row['litreage_at_20'];
-            $trip->rate     = $row['rate'];
-            if (isset($row['rate'])) {
-               $trip->freight_calculation = 'flat_rate';
-               $trip->with_customer_rates = 'custom';
-            }
-            $trip->freight     = $row['freight'];
-            $trip->turnover = $row['freight'];
-            $turnover = $row['freight'];
-            $cost_of_sales = 0;
-            $trip->cost_of_sales = 0;
-            $trip->trip_status     = $row['trip_status'];
-            $trip->save();
 
-            if (isset($this->trailer_ids) && !empty($this->trailer_ids) && !is_null($this->trailer_ids) ) {
-                $trip->trailers()->sync($this->trailer_ids);
-              }
+                $trip->turnover = $trip->freight;
+                $trip->cost_of_sales = 0;
+                $trip->net_profit = $trip->turnover;
+                $trip->net_profit_percentage = 100;
+                $trip->markup_percentage = 100;
 
-              if ((isset($cost_of_sales) && is_numeric($cost_of_sales) && $cost_of_sales > 0) && (isset($turnover) && is_numeric($turnover) && $turnover > 0)) {
-         
-                $trip->net_profit = $turnover - $cost_of_sales;
-                $this->net_profit = $turnover - $cost_of_sales;
-    
-                if((is_numeric($this->net_profit) && $this->net_profit > 0) && (is_numeric($turnover) && $turnover > 0)){
-                    $trip->markup_percentage = (($this->net_profit/$cost_of_sales) * 100);
-                    $trip->net_profit_percentage = (($this->net_profit/$turnover) * 100);
+                $trip->save();
+
+                if (!empty($trailer_ids)) {
+                    $trip->trailers()->sync($trailer_ids);
                 }
-          
-            }else {
 
-                $trip->net_profit_percentage = 100 ;
-                $trip->markup_percentage = 100 ;
-            }
-
-
-
-                $delivery_note = new DeliveryNote;
-                $delivery_note->user_id =  $trip->user_id;
+                // Save Delivery Note
+                $delivery_note = new DeliveryNote();
+                $delivery_note->user_id = $user_id;
                 $delivery_note->trip_id = $trip->id;
-                $delivery_note->loaded_date =  $trip->start_date;
-                $delivery_note->loaded_litreage =  $trip->litreage;
-                $delivery_note->loaded_litreage_at_20 =  $trip->litreage_at_20;
+                $delivery_note->loaded_date = $start_date;
+                $delivery_note->offloaded_date = $end_date;
+                $delivery_note->loaded_litreage = $trip->litreage;
+                $delivery_note->loaded_litreage_at_20 = $trip->litreage_at_20;
                 $delivery_note->loaded_weight = $trip->weight;
                 $delivery_note->loaded_rate = $trip->rate;
                 $delivery_note->loaded_freight = $trip->freight;
-                $delivery_note->offloaded_date =   $trip->end_date;
-                $delivery_note->offloaded_weight = $row['offloaded_weight'];
-                $delivery_note->offloaded_litreage = $row['offloaded_litreage_at_ambient'];
-                $delivery_note->offloaded_litreage_at_20 = $row['offloaded_litreage_at_20'];
+                $delivery_note->offloaded_weight = $row->get('offloaded_weight');
+                $delivery_note->offloaded_litreage = $row->get('offloaded_litreage_at_ambient');
+                $delivery_note->offloaded_litreage_at_20 = $row->get('offloaded_litreage_at_20');
                 $delivery_note->save();
 
+                // Update statuses if trip is completed or cancelled
+                if (in_array($trip->trip_status, ['Offloaded', 'Cancelled', 'Scheduled'])) {
+                    if ($horse) $horse->update(['status' => 1]);
+                    if ($vehicle) $vehicle->update(['status' => 1]);
+                    if ($driver) $driver->update(['status' => 1]);
 
-                
-          if ($row['trip_status'] == "Offloaded" || $row['trip_status'] == "Cancelled" || $row['trip_status'] == "Scheduled") {
-            
-            $horse = Horse::withTrashed()->find($trip->horse_id);
-            if (isset($horse)) {
-                $horse->status = 1;
-                $horse->update();
-            }
-            $vehicle = Vehicle::withTrashed()->find($trip->vehicle_id);
-            if (isset($vehicle)) {
-                $vehicle->status = 1;
-                $vehicle->update();
-            }
-          
-            $driver = Driver::withTrashed()->find($trip->driver_id);
-            if (isset($driver)) {
-                $driver->status = 1;
-                $driver->update();
-            }
-           
-
-            if ($trip->trailers->count()>0) {
-                foreach ($trip->trailers as $trailer) {
-                    $trailer = Trailer::withTrashed()->find($trailer->id);
-                    $trailer->status = 1;
-                    $trailer->update();
-                }
-            }
-            
-            $breakdown_assignments = $trip->breakdown_assignments;
-            if ($breakdown_assignments->count()>0) {
-            
-            foreach ($breakdown_assignments as $breakdown_assignment) {
-
-                $horse = Horse::withTrashed()->find($breakdown_assignment->horse_id);
-                $horse->status = 1;
-                $horse->update();
-
-                $vehicle = Vehicle::withTrashed()->find($breakdown_assignment->vehicle_id);
-                $vehicle->status = 1;
-                $vehicle->update();
-    
-                $driver = Driver::withTrashed()->find($breakdown_assignment->driver_id);
-                $driver->status = 1;
-                $driver->update();
-
-    
-                if ($breakdown_assignment->trailers->count()>0) {
                     foreach ($trip->trailers as $trailer) {
-                        $trailer = Trailer::withTrashed()->find($trailer->id);
-                        $trailer->status = 1;
-                        $trailer->update();
+                        $trailer?->update(['status' => 1]);
+                    }
+
+                    foreach ($trip->breakdown_assignments as $ba) {
+                        Horse::withTrashed()->find($ba->horse_id)?->update(['status' => 1]);
+                        Vehicle::withTrashed()->find($ba->vehicle_id)?->update(['status' => 1]);
+                        Driver::withTrashed()->find($ba->driver_id)?->update(['status' => 1]);
+
+                        foreach ($ba->trailers as $t) {
+                            Trailer::withTrashed()->find($t->id)?->update(['status' => 1]);
+                        }
                     }
                 }
+
             }
-                # code...
-            }
-        }
-            
-           
-            
-    }
        }
     }
 

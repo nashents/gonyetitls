@@ -16,6 +16,7 @@ use App\Http\Controllers\SmsController;
 */
 
 Route::get('/','LoginController@login')->name('login');
+Route::get('/login','LoginController@login')->name('get-login');
 Route::post('/login','LoginController@postLogin')->name('postLogin');
 Route::get('/signup','LoginController@signup')->name('signup');
 Route::get('/logout', 'LoginController@logout')->name('logout');

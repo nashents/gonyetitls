@@ -47,7 +47,7 @@ class DispatchController extends Controller
      */
     public function show(Dispatch $dispatch)
     {
-        //
+        return view('dispatches.show')->with('dispatch',$dispatch);
     }
 
     /**

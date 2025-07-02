@@ -614,18 +614,26 @@ class Create extends Component
                     if (isset($this->selectedTax[$key])) {
                         $inventory->tax_id = $this->selectedTax[$key];
                     }
+                    
                     if (isset($this->tax_rate[$key]) && is_numeric($this->tax_rate[$key])) {
                         if (isset($this->amount[$key])) {
                             $inventory->tax_amount = ($this->amount[$key] * ($this->tax_rate[$key] / 100 ));
-                            $inventory->subtotal_incl = ($this->amount[$key] * ($this->tax_rate[$key] / 100 )) + $this->amount[$key];
-                            $inventory->total = ($this->amount[$key] * ($this->tax_rate[$key] / 100 )) + $this->amount[$key];
+                            $this->total = ($this->amount[$key] * ($this->tax_rate[$key] / 100 )) + $this->amount[$key];
+                            $inventory->subtotal_incl = $this->total;
+                            $inventory->total = $this->total;
+                           
                         }
                     }else{
                         if (isset($this->amount[$key])) {
-                            $inventory->total = $this->amount[$key];
+                            $this->total = $this->amount[$key];
+                            $inventory->subtotal_incl =  $this->total;
+                            $inventory->total =  $this->total;
                         }
                        
                     }
+
+                    $inventory->exchange_rate = $this->exchange_rate;
+                    $inventory->exchange_amount = $this->exchange_amount;
 
                     $inventory->account_id = $this->selectedAccount;
                     $inventory->residual_value = $this->residual_value;
@@ -665,8 +673,8 @@ class Create extends Component
                     $bill->authorized_by_id = Auth::user()->id;
                     $bill->authorization = "pending";
                  
-                    $bill->total = $inventory->subtotal_incl;
-                    $bill->balance = $inventory->subtotal_incl;
+                    $bill->total = $inventory->total;
+                    $bill->balance = $inventory->total;
                     $bill->to_be_paid = True;
                     $bill->save();
 

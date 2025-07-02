@@ -5,7 +5,7 @@ namespace App\Imports;
 use App\Models\Location;
 use Maatwebsite\Excel\Concerns\ToModel;
 
-class LocationsImport implements ToModel
+class LocationsImport implements ToModel 
 {
     /**
     * @param array $row

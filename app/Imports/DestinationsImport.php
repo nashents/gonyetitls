@@ -10,19 +10,24 @@ use Illuminate\Support\Collection;
 use App\Imports\DestinationsImport;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Maatwebsite\Excel\Concerns\WithLimit;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\SkipsErrors;
 use Maatwebsite\Excel\Concerns\SkipsOnError;
 use Maatwebsite\Excel\Concerns\ToCollection;
+use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
+use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 
-class DestinationsImport implements  ToCollection,
+class DestinationsImport implements  ToCollection, SkipsEmptyRows, WithLimit, 
 WithHeadingRow,
 SkipsOnError,
 WithValidation,
-WithChunkReading
+WithChunkReading,
+WithBatchInserts
+
 {
     use Importable, SkipsErrors;
 
@@ -31,6 +36,12 @@ WithChunkReading
     *
     * @return \Illuminate\Database\Eloquent\Model|null
     */
+
+     public function limit(): int
+    {
+        return 2500; // Import only the first 100 rows
+    }
+
     public function collection(Collection $rows)
     {
 
@@ -89,8 +100,13 @@ WithChunkReading
 
 
 
+    public function batchSize(): int
+    {
+        return 10;
+    }
+
     public function chunkSize(): int
     {
-        return 1000;
+        return 10;
     }
 }

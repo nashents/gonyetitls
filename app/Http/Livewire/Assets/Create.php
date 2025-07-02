@@ -542,18 +542,25 @@ class Create extends Component
                     if (isset($this->selectedTax[$key])) {
                         $asset->tax_id = $this->selectedTax[$key];
                     }
+
                     if (isset($this->tax_rate[$key]) && is_numeric($this->tax_rate[$key])) {
                         if (isset($this->amount[$key])) {
                             $asset->tax_amount = ($this->amount[$key] * ($this->tax_rate[$key] / 100 ));
-                            $asset->subtotal_incl = ($this->amount[$key] * ($this->tax_rate[$key] / 100 )) + $this->amount[$key];
-                            $asset->total = ($this->amount[$key] * ($this->tax_rate[$key] / 100 )) + $this->amount[$key];
+                            $this->total = ($this->amount[$key] * ($this->tax_rate[$key] / 100 )) + $this->amount[$key];
+                            $asset->subtotal_incl = $this->total;
+                            $asset->total = $this->total;
                         }
                     }else{
-                        if(isset($this->amount[$key])){
-                            $asset->subtotal_incl = $this->amount[$key];
-                            $asset->total = $this->amount[$key];
+                        if (isset($this->amount[$key])) {
+                            $this->total = $this->amount[$key];
+                            $asset->subtotal_incl =  $this->total;
+                            $asset->total =  $this->total;
                         }
+                       
                     }
+
+                    $asset->exchange_rate = $this->exchange_rate;
+                    $asset->exchange_amount = $this->exchange_amount;
                    
                     $asset->residual_value = $this->residual_value;
                     $asset->store_id = $this->store_id ? $this->store_id : null;
