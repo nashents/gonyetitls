@@ -16,23 +16,23 @@
                                 <div class="col-md-4 col-md-offset-4">
                                     <div class="alert-info" role="alert">
                                         @php
-                                        $employee_department = Auth::user()->employee->departments->first();
+                                        $employee_department = $employee->departments->first();
                  
-                                        $departments = Auth::user()->employee->departments;
+                                        $departments = $employee->departments;
                                         foreach($departments as $department){
                                             $department_names[] = $department->name;
                                         }
-                                        $roles = Auth::user()->roles;
+                                        $roles = $user->roles;
                                         foreach($roles as $role){
                                             $role_names[] = $role->name;
                                         }
-                                        $ranks = Auth::user()->employee->ranks;
+                                        $ranks = $employee->ranks;
                                         foreach($ranks as $rank){
                                             $rank_names[] = $rank->name;
                                         }
                                     @endphp
                                         <center><strong>Total Trips!</strong> {{ $trips->total() }}</center>
-                                        @if (Auth::user()->employee->company->rates_managed_by_finance == 1)
+                                        @if ($company->rates_managed_by_finance == 1)
                                             @if (in_array('Finance', $department_names) ||  in_array('Super Admin', $role_names))
                                                 @php
                                                     foreach ($trips as $trip) {
@@ -191,11 +191,19 @@
                                         </th>
                                         <th class="th-sm">Status
                                         </th>
+                                        @if ($company->rates_managed_by_finance == True)
+                                            @if (in_array('Finance', $department_names) ||  in_array('Super Admin', $role_names))
+                                                <th>Freight</th>
+                                                @endif
+                                        @else 
+                                            <th>Freight</th>
+                                        @endif
                                         <th class="th-sm">
                                             Invoice
                                             <hr style="margin-top:2px; margin-bottom:2px">
                                             PODS
                                         </th>
+                                     
                                         <th class="th-sm">Auth
                                         </th>
                                         <th class="th-sm">Actions
@@ -352,6 +360,13 @@
                                                                                                                 @endif</span>
                                         </td>
                                         @endif
+                                        @if ($company->rates_managed_by_finance == True)
+                                            @if (in_array('Finance', $department_names) ||  in_array('Super Admin', $role_names))
+                                                <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                            @endif
+                                        @else
+                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                        @endif
                                         <td> 
                                             @if ($trip->invoice_items->count()>0)
                                                 <span class="label label-success"> issued</span>
@@ -369,7 +384,6 @@
                                                 @endif
                                             </center>
                                         </td>
-                                            
                                          <td><span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
                                          <td class="w-10 line-height-35 table-dropdown">
                                             <div class="dropdown">
@@ -379,10 +393,10 @@
                                                 </button>
                                                 <ul class="dropdown-menu">
                                                     <li><a href="{{route('trips.show', $trip->id)}}"><i class="fas fa-eye color-default"></i> View</a></li>
-                                                    @if (Auth::user()->is_admin())
+                                                    @if ($user->is_admin())
                                                         <li><a href="{{route('audits.index', ['id' =>$trip->id, 'category' => 'trip'])}}"><i class="fas fa-list color-default"></i> Audits</a></li>
                                                     @endif
-                                                    @if (Auth::user()->employee)
+                                                    @if ($employee)
                                                     <li><a href="{{route('trips.trip_sheet', $trip->id)}}"><i class="fas fa-file color-warning"></i> Trip Sheet</a></li>
                                                     <li><a href="{{route('trips.edit', $trip->id)}}"><i class="fas fa-edit color-success"></i> Edit</a></li>
                                                     <li><a href="#" data-toggle="modal" data-target="#tripDeleteModal{{$trip->id}}"><i class="fa fa-trash color-danger"></i> Delete</a></li>
@@ -531,7 +545,13 @@
                                                                                                                 @endif</span>
                                         </td>
                                         @endif
-                                       
+                                         @if ($company->rates_managed_by_finance == True)
+                                            @if (in_array('Finance', $department_names) ||  in_array('Super Admin', $role_names))
+                                                <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                            @endif
+                                        @else
+                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                        @endif
                                         <td> 
                                             @if ($trip->invoice_items->count()>0)
                                                 <span class="label label-success"> issued</span>
@@ -549,6 +569,7 @@
                                                 @endif
                                             </center>
                                         </td>
+                                        
                                          <td><span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
                                          <td class="w-10 line-height-35 table-dropdown">
                                             <div class="dropdown">
@@ -558,10 +579,10 @@
                                                 </button>
                                                 <ul class="dropdown-menu">
                                                     <li><a href="{{route('trips.show', $trip->id)}}"><i class="fas fa-eye color-default"></i> View</a></li>
-                                                    @if (Auth::user()->is_admin())
+                                                    @if ($user->is_admin())
                                                         <li><a href="{{route('audits.index', ['id' =>$trip->id, 'category' => 'trip'])}}"><i class="fas fa-list color-default"></i> Audits</a></li>
                                                     @endif
-                                                    @if (Auth::user()->employee)
+                                                    @if ($employee)
                                                    <li><a href="{{route('trips.trip_sheet', $trip->id)}}"><i class="fas fa-file color-warning"></i> Trip Sheet</a></li>
                                                    <li><a href="{{route('trips.edit', $trip->id)}}"><i class="fas fa-edit color-success"></i> Edit</a></li>
                                                    <li><a href="#" data-toggle="modal" data-target="#tripDeleteModal{{$trip->id}}"><i class="fa fa-trash color-danger"></i> Delete</a></li>
@@ -709,7 +730,13 @@
                                                                                                                 @endif</span>
                                         </td>
                                         @endif
-                                       
+                                        @if ($company->rates_managed_by_finance == True)
+                                            @if (in_array('Finance', $department_names) ||  in_array('Super Admin', $role_names))
+                                                <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                            @endif
+                                        @else
+                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                        @endif
                                         <td> 
                                             @if ($trip->invoice_items->count()>0)
                                                 <span class="label label-success"> issued</span>
@@ -736,10 +763,10 @@
                                                 </button>
                                                 <ul class="dropdown-menu">
                                                     <li><a href="{{route('trips.show', $trip->id)}}"><i class="fas fa-eye color-default"></i> View</a></li>
-                                                    @if (Auth::user()->is_admin())
+                                                    @if ($user->is_admin())
                                                     <li><a href="{{route('audits.index', ['id' =>$trip->id, 'category' => 'trip'])}}"><i class="fas fa-list color-default"></i> Audits</a></li>
                                                 @endif
-                                                   @if (Auth::user()->employee)
+                                                   @if ($employee)
                                                    <li><a href="{{route('trips.trip_sheet', $trip->id)}}"><i class="fas fa-file color-warning"></i> Trip Sheet</a></li>
                                                    <li><a href="{{route('trips.edit', $trip->id)}}"><i class="fas fa-edit color-success"></i> Edit</a></li>
                                                    <li><a href="#" data-toggle="modal" data-target="#tripDeleteModal{{$trip->id}}"><i class="fa fa-trash color-danger"></i> Delete</a></li>
@@ -886,6 +913,13 @@
                                                                                                                 @endif</span>
                                     </td>
                                     @endif
+                                     @if ($company->rates_managed_by_finance == True)
+                                            @if (in_array('Finance', $department_names) ||  in_array('Super Admin', $role_names))
+                                                <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                            @endif
+                                        @else
+                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                        @endif
                                     <td> 
                                         @if ($trip->invoice_items->count()>0)
                                             <span class="label label-success"> issued</span>
@@ -912,10 +946,10 @@
                                             </button>
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{route('trips.show', $trip->id)}}"><i class="fas fa-eye color-default"></i> View</a></li>
-                                                @if (Auth::user()->is_admin())
+                                                @if ($user->is_admin())
                                                     <li><a href="{{route('audits.index', ['id' =>$trip->id, 'category' => 'trip'])}}"><i class="fas fa-list color-default"></i> Audits</a></li>
                                                 @endif
-                                                @if (Auth::user()->employee)
+                                                @if ($employee)
                                                 <li><a href="{{route('trips.trip_sheet', $trip->id)}}"><i class="fas fa-file color-warning"></i> Trip Sheet</a></li>
                                                 <li><a href="{{route('trips.edit', $trip->id)}}"><i class="fas fa-edit color-success"></i> Edit</a></li>
                                                 <li><a href="#" data-toggle="modal" data-target="#tripDeleteModal{{$trip->id}}"><i class="fa fa-trash color-danger"></i> Delete</a></li>
@@ -1063,6 +1097,13 @@
                                                                                                                 @endif</span>
                                         </td>
                                         @endif
+                                         @if ($company->rates_managed_by_finance == True)
+                                            @if (in_array('Finance', $department_names) ||  in_array('Super Admin', $role_names))
+                                                <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                            @endif
+                                        @else
+                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                        @endif
                                         <td> 
                                             @if ($trip->invoice_items->count()>0)
                                                 <span class="label label-success"> issued</span>
@@ -1089,10 +1130,10 @@
                                                 </button>
                                                 <ul class="dropdown-menu">
                                                     <li><a href="{{route('trips.show', $trip->id)}}"><i class="fas fa-eye color-default"></i> View</a></li>
-                                                    @if (Auth::user()->is_admin())
+                                                    @if ($user->is_admin())
                                                     <li><a href="{{route('audits.index', ['id' =>$trip->id, 'category' => 'trip'])}}"><i class="fas fa-list color-default"></i> Audits</a></li>
                                                 @endif
-                                                    @if (Auth::user()->employee)
+                                                    @if ($employee)
                                                     <li><a href="{{route('trips.trip_sheet', $trip->id)}}"><i class="fas fa-file color-warning"></i> Trip Sheet</a></li>
                                                     <li><a href="{{route('trips.edit', $trip->id)}}"><i class="fas fa-edit color-success"></i> Edit</a></li>
                                                     <li><a href="#" data-toggle="modal" data-target="#tripDeleteModal{{$trip->id}}"><i class="fa fa-trash color-danger"></i> Delete</a></li>
@@ -1240,6 +1281,13 @@
                                                                                                                 @endif</span>
                                         </td>
                                         @endif
+                                        @if ($company->rates_managed_by_finance == True)
+                                        @if (in_array('Finance', $department_names) ||  in_array('Super Admin', $role_names))
+                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                        @endif
+                                        @else
+                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                        @endif
                                         <td> 
                                             @if ($trip->invoice_items->count()>0)
                                                 <span class="label label-success"> issued</span>
@@ -1266,10 +1314,10 @@
                                                 </button>
                                                 <ul class="dropdown-menu">
                                                     <li><a href="{{route('trips.show', $trip->id)}}"><i class="fas fa-eye color-default"></i>View</a></li>
-                                                    @if (Auth::user()->is_admin())
+                                                    @if ($user->is_admin())
                                                         <li><a href="{{route('audits.index', ['id' =>$trip->id, 'category' => 'trip'])}}"><i class="fas fa-list color-default"></i> Audits</a></li>
                                                     @endif
-                                                    @if (Auth::user()->employee)
+                                                    @if ($employee)
                                                     <li><a href="{{route('trips.trip_sheet', $trip->id)}}"><i class="fas fa-file color-warning"></i> Trip Sheet</a></li>
                                                     <li><a href="{{route('trips.edit', $trip->id)}}"><i class="fas fa-edit color-success"></i> Edit</a></li>
                                                     <li><a href="#" data-toggle="modal" data-target="#tripDeleteModal{{$trip->id}}"><i class="fa fa-trash color-danger"></i>Delete</a></li>
@@ -1415,6 +1463,13 @@
                                                                                                                 @endif</span>
                                         </td>
                                         @endif
+                                        @if ($company->rates_managed_by_finance == True)
+                                            @if (in_array('Finance', $department_names) ||  in_array('Super Admin', $role_names))
+                                                <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                            @endif
+                                        @else
+                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                        @endif
                                         <td> 
                                             @if ($trip->invoice_items->count()>0)
                                                 <span class="label label-success"> issued</span>
@@ -1441,10 +1496,10 @@
                                                 </button>
                                                 <ul class="dropdown-menu">
                                                     <li><a href="{{route('trips.show', $trip->id)}}"><i class="fas fa-eye color-default"></i> View</a></li>
-                                                    @if (Auth::user()->is_admin())
+                                                    @if ($user->is_admin())
                                                     <li><a href="{{route('audits.index', ['id' =>$trip->id, 'category' => 'trip'])}}"><i class="fas fa-list color-default"></i> Audits</a></li>
                                                 @endif
-                                                    @if (Auth::user()->employee)
+                                                    @if ($employee)
                                                     <li><a href="{{route('trips.trip_sheet', $trip->id)}}"><i class="fas fa-file color-warning"></i> Trip Sheet</a></li>
                                                     <li><a href="{{route('trips.edit', $trip->id)}}"><i class="fas fa-edit color-success"></i> Edit</a></li>
                                                     <li><a href="#" data-toggle="modal" data-target="#tripDeleteModal{{$trip->id}}"><i class="fa fa-trash color-danger"></i> Delete</a></li>
@@ -1591,6 +1646,13 @@
                                                                                                                 @endif</span>
                                         </td>
                                         @endif
+                                        @if ($company->rates_managed_by_finance == True)
+                                            @if (in_array('Finance', $department_names) ||  in_array('Super Admin', $role_names))
+                                                <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                            @endif
+                                        @else
+                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                        @endif
                                         <td> 
                                             @if ($trip->invoice_items->count()>0)
                                                 <span class="label label-success"> issued</span>
@@ -1617,10 +1679,10 @@
                                                 </button>
                                                 <ul class="dropdown-menu">
                                                     <li><a href="{{route('trips.show', $trip->id)}}"><i class="fas fa-eye color-default"></i> View</a></li>
-                                                    @if (Auth::user()->is_admin())
+                                                    @if ($user->is_admin())
                                                         <li><a href="{{route('audits.index', ['id' =>$trip->id, 'category' => 'trip'])}}"><i class="fas fa-list color-default"></i> Audits</a></li>
                                                     @endif
-                                                   @if (Auth::user()->employee)
+                                                   @if ($employee)
                                                    <li><a href="{{route('trips.trip_sheet', $trip->id)}}"><i class="fas fa-file color-warning"></i> Trip Sheet</a></li>
                                                    <li><a href="{{route('trips.edit', $trip->id)}}"><i class="fas fa-edit color-success"></i> Edit</a></li>
                                                    <li><a href="#" data-toggle="modal" data-target="#tripDeleteModal{{$trip->id}}"><i class="fa fa-trash color-danger"></i> Delete</a></li>
@@ -1768,6 +1830,13 @@
                                                                                                                 @endif</span>
                                         </td>
                                         @endif
+                                        @if ($company->rates_managed_by_finance == True)
+                                            @if (in_array('Finance', $department_names) ||  in_array('Super Admin', $role_names))
+                                                <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                            @endif
+                                        @else
+                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                        @endif
                                         <td> 
                                             @if ($trip->invoice_items->count()>0)
                                                 <span class="label label-success"> issued</span>
@@ -1795,10 +1864,10 @@
                                                 <ul class="dropdown-menu">
                                                     <li><a href="{{route('trips.show', $trip->id)}}"><i class="fas fa-eye color-default"></i> View</a></li>
                                                     
-                                                    @if (Auth::user()->is_admin())
+                                                    @if ($user->is_admin())
                                                         <li><a href="{{route('audits.index', ['id' =>$trip->id, 'category' => 'trip'])}}"><i class="fas fa-list color-default"></i> Audits</a></li>
                                                     @endif
-                                                   @if (Auth::user()->employee)
+                                                   @if ($employee)
                                                    <li><a href="{{route('trips.trip_sheet', $trip->id)}}"><i class="fas fa-file color-warning"></i> Trip Sheet</a></li>
 
                                                         <li><a href="{{route('trips.edit', $trip->id)}}"><i class="fas fa-edit color-success"></i> Edit</a></li>
@@ -1813,7 +1882,7 @@
                                       @endif
                                       @empty
                                       <tr>
-                                        <td colspan="14">
+                                        <td colspan="15">
                                             <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                                 No Trips Found ....
                                             </div>

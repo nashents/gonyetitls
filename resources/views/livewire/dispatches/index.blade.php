@@ -34,7 +34,6 @@
                                     </th>
                                     <th class="th-sm">Items
                                     </th>
-                                    
                                     <th class="th-sm">Total Items
                                     </th>
                                     <th class="th-sm">Total Value
@@ -102,7 +101,7 @@
                                         @endif
                                     </td>
                                     <td>{{$dispatch->dispatch_items->count()}}</td>
-                                    <td></td>
+                                    <td>{{$dispatch->currency ? $dispatch->currency->name : ""}} {{$dispatch->currency ? $dispatch->currency->symbol : ""}}{{$dispatch->total}}</td>
                                     <td><span class="badge bg-{{($dispatch->authorization == 'approved') ? 'success' : (($dispatch->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($dispatch->authorization == 'approved') ? 'approved' : (($dispatch->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">

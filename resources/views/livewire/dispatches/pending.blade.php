@@ -41,7 +41,7 @@
                                 <tbody>
                                     @foreach ($dispatches as $dispatch)
                                   <tr>
-                                    <td>{{$dispatch->dispatch_number}}</td>
+                                                                    <td>{{$dispatch->dispatch_number}}</td>
                                     <td>{{$dispatch->user ? $dispatch->user->name : ""}} {{$dispatch->user ? $dispatch->user->surname : ""}}</td>
                                     <td>{{$dispatch->date}}</td>
                                     <td>
@@ -94,7 +94,7 @@
                                         @endif
                                     </td>
                                     <td>{{$dispatch->dispatch_items->count()}}</td>
-                                    <td></td>
+                                    <td>{{$dispatch->currency ? $dispatch->currency->name : ""}} {{$dispatch->currency ? $dispatch->currency->symbol : ""}}{{$dispatch->total}}</td>
                                     <td><span class="badge bg-{{($dispatch->authorization == 'approved') ? 'success' : (($dispatch->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($dispatch->authorization == 'approved') ? 'approved' : (($dispatch->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">

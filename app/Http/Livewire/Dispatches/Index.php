@@ -361,22 +361,32 @@ class Index extends Component
         $dispatch = new Dispatch;
         $dispatch->user_id = Auth::user()->id;
         $dispatch->dispatch_number = $this->dispatchNumber();
+        $dispatch->horse_id = $this->horse_id;
+        $dispatch->trailer_id = $this->trailer_id;
+        $dispatch->vehicle_id = $this->vehicle_id;
         $dispatch->ticket_id = $this->selectedTicket;
         $dispatch->employee_id = $this->selectedEmployee;
         $dispatch->requested_by_id = $this->requested_by_id;
         $dispatch->department = $this->department;
         $dispatch->department_id = $this->asset_department_id;
         $dispatch->branch_id = $this->branch_id;
+        $dispatch->currency_id = $this->company->currency_id;
         $dispatch->description = $this->description;
         $dispatch->date = $this->date;
         $dispatch->save();
+
+        $dispatch_total = 0;
 
         if ($this->expand == True) {
 
             if ($this->department == "inventory") {
                 foreach ($this->selectedInventory as $key => $id) {
 
+                    $amount = 0;
+                    $exchange_amount = 0;
+
                     $inventory = Inventory::find($id);
+
                     if ($inventory) {
 
                         $dispatch_item = new DispatchItem;
@@ -385,8 +395,7 @@ class Index extends Component
                         $dispatch_item->currency_id = $inventory->currency_id;
                         $dispatch_item->inventory_id = $id;
 
-                        $amount = 0;
-                        $exchange_amount = 0;
+                       
 
                         if (isset($this->weight[$key]) && is_numeric($this->weight[$key]) && 
                             is_numeric($inventory->weight) && $inventory->weight > 0) {
@@ -411,11 +420,18 @@ class Index extends Component
 
                         $dispatch_item->exchange_rate = $inventory->exchange_rate;
                         $dispatch_item->save();
+
+                        $dispatch_total += $inventory->currency_id != $this->company->currency_id
+                            ? $exchange_amount
+                            : $amount;
+
                     }
                 }
             }elseif ($this->department == "tyre") {
                 foreach ($this->selectedTyre as $key => $id) {  
+
                     $tyre = Tyre::find($id);
+
                     if ($tyre) {
                         $dispatch_item = new DispatchItem;
                         $dispatch_item->dispatch_id = $dispatch->id;
@@ -423,14 +439,24 @@ class Index extends Component
                         $dispatch_item->currency_id = $tyre->currency_id;
                         $dispatch_item->amount = $tyre->total;
                         $dispatch_item->exchange_amount = $tyre->exchange_amount;
-                        $dispatch_item->exchange_amount = $tyre->exchange_rate;
+                        $dispatch_item->exchange_rate = $tyre->exchange_rate;
                         $dispatch_item->tyre_id = $this->selectedTyre[$key];
                         $dispatch_item->save();   
+
+                        $dispatch_total += $tyre->currency_id != $this->company->currency_id
+                            ? $tyre->exchange_amount
+                            : $tyre->total;
                     }
                 }
             }elseif ($this->department == "asset") {
+
                 foreach ($this->selectedAsset as $key => $id) {
+
+                    $amount = 0;
+                    $exchange_amount = 0;
+
                     $asset = Asset::find($id);
+
                     if ($asset) {
 
                         $dispatch_item = new DispatchItem;
@@ -438,9 +464,6 @@ class Index extends Component
                         $dispatch_item->product_id = $asset->product_id;
                         $dispatch_item->currency_id = $asset->currency_id;
                         $dispatch_item->asset_id = $id;
-
-                        $amount = 0;
-                        $exchange_amount = 0;
 
                         if (isset($this->weight[$key]) && is_numeric($this->weight[$key]) && 
                             is_numeric($asset->weight) && $asset->weight > 0) {
@@ -465,6 +488,11 @@ class Index extends Component
 
                         $dispatch_item->exchange_rate = $asset->exchange_rate;
                         $dispatch_item->save();
+
+                        $dispatch_total += $asset->currency_id != $this->company->currency_id
+                            ? $exchange_amount
+                            : $amount;
+
                     }
                 }
             }
@@ -498,6 +526,11 @@ class Index extends Component
                                 $dispatch_item->exchange_rate = $item->exchange_rate;
                                 $dispatch_item->weight = $item->balance;
                                 $dispatch_item->save();
+
+                                $dispatch_total += $item->currency_id != $this->company->currency_id
+                                ? $item->exchange_amount
+                                : $item->total;
+                                
                             }
                             break;
 
@@ -513,10 +546,15 @@ class Index extends Component
                                 $dispatch_item->product_id = $product->id;
                                 $dispatch_item->asset_id = $item->id;
                                 $dispatch_item->amount = $item->total;
+                                $dispatch_item->currency_id = $item->currency_id;
                                 $dispatch_item->exchange_amount = $item->exchange_amount;
                                 $dispatch_item->exchange_rate = $item->exchange_rate;
                                 $dispatch_item->weight = $item->balance;
                                 $dispatch_item->save();
+
+                                $dispatch_total += $item->currency_id != $this->company->currency_id
+                                ? $item->exchange_amount
+                                : $item->total;
                             }
                             break;
 
@@ -531,16 +569,24 @@ class Index extends Component
                                 $dispatch_item->dispatch_id = $dispatch->id;
                                 $dispatch_item->product_id = $product->id;
                                 $dispatch_item->tyre_id = $item->id;
+                                $dispatch_item->currency_id = $item->currency_id;
                                 $dispatch_item->amount = $item->total;
                                 $dispatch_item->exchange_amount = $item->exchange_amount;
                                 $dispatch_item->exchange_rate = $item->exchange_rate;
                                 $dispatch_item->save();
+
+                                $dispatch_total += $item->currency_id != $this->company->currency_id
+                                ? $item->exchange_amount
+                                : $item->total;
                             }
                             break;
                     }
                 }
             }
         }
+
+        $dispatch->total = $dispatch_total;
+        $dispatch->save();
 
         $this->dispatchBrowserEvent('hide-dispatchModal');
         $this->resetInputFields();

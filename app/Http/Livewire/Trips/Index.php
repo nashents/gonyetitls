@@ -61,6 +61,10 @@ class Index extends Component
     public $suburb;
     public $street_address;
 
+    public $user;
+    public $employee;
+
+
     public $search;
     protected $queryString = ['search'];
 
@@ -175,6 +179,10 @@ class Index extends Component
     public $transporter_offloaded_freight;
     public $transporter_loaded_rate;
     public $transporter_loaded_freight;
+
+    public $role_names = [];
+    public $department_names = [];
+    public $rank_names = [];
    
   
     public $trip_status_date;
@@ -277,6 +285,20 @@ class Index extends Component
         $this->resetPage();
         $this->trip_filter = "created_at";
         $this->countries = Country::orderBy('name','asc')->get();
+        $this->user = Auth::user();
+        $this->employee = $this->user->employee;
+        $this->company = $this->employee->company;
+         foreach($this->employee->departments as $department) {
+            $this->department_names[] = $department->name;
+        }
+    
+        foreach($this->user->roles as $role) {
+            $this->role_names[] = $role->name;
+        }
+    
+        foreach($this->employee->ranks as $rank) {
+            $this->rank_names[] = $rank->name;
+        }
      
       }
 

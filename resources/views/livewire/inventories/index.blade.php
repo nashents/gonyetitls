@@ -57,18 +57,20 @@
                                     <td>
                                         @if ($inventory->store)
                                              <strong>Store:</strong>  {{$inventory->store ? $inventory->store->name : ""}}
+                                             <br>
                                         @endif
                                         @if ($inventory->product->category)
-                                            <br>
                                            <strong>Category:</strong> {{$inventory->product->category ? $inventory->product->category->name : ""}}  {{$inventory->product->category_value ? $inventory->product->category_value->name : ""}} 
+                                           <br>
                                         @endif
                                         @if ($inventory->rack)
-                                            <br>
+                                          
                                               <strong>Rack:</strong> {{$inventory->rack ? $inventory->rack->name : ""}} {{$inventory->rack ? $inventory->rack->rack_number : ""}}
+                                                <br>
                                         @endif
                                         @if ($inventory->bin)
-                                            <br>
                                               <strong>Bin:</strong> {{$inventory->bin ? $inventory->bin->name : ""}} {{$inventory->bin ? $inventory->bin->bin_number : ""}} 
+                                               <br>
                                         @endif
                                        
                                     </td>

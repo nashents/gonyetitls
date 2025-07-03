@@ -73,6 +73,10 @@
                                 <td class="w-20 line-height-35">{{$dispatch->dispatch_items->count()}}</td>
                             </tr>
                             <tr>
+                                <th class="w-10 text-center line-height-35">Total Value</th>
+                                <td class="w-20 line-height-35">{{$dispatch->currency ? $dispatch->currency->name : ""}} {{$dispatch->currency ? $dispatch->currency->symbol : ""}}{{$dispatch->total}}</td>
+                            </tr>
+                            <tr>
                                 <th class="w-10 text-center line-height-35">Authorization</th>
                                 <td class="w-20 line-height-35"><span class="badge bg-{{($dispatch->authorization == 'approved') ? 'success' : (($dispatch->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($dispatch->authorization == 'approved') ? 'approved' : (($dispatch->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
                             </tr>
@@ -83,14 +87,14 @@
                                 <tr>
                                     <th class="w-10 text-center line-height-35">Authorized By</th>
                                     <td class="w-20 line-height-35">
-                                        {{$dispatch->risk}}
+                                        {{$authorizer->name}} {{$authorizer->surname}}
                                     </td>
                                 </tr>
                             @endif
                             @if ($dispatch->authorization_date)
                                     <tr>
                                     <th class="w-10 text-center line-height-35">Authorized On</th>
-                                    <td class="w-20 line-height-35">{{$dispatch->authorization_date}}</td>
+                                    <td class="w-20 line-height-35">{{Carbon\Carbon::parse($dispatch->authorization_date)->format('Y-m-d')}}</td>
                                 </tr>
                             @endif
                             @if ($dispatch->authorization_comments)

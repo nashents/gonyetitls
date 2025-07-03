@@ -42,7 +42,7 @@
                                 <tbody>
                                     @foreach ($dispatches as $dispatch)
                                   <tr>
-                                    <td>{{$dispatch->dispatch_number}}</td>
+                                                                   <td>{{$dispatch->dispatch_number}}</td>
                                     <td>{{$dispatch->user ? $dispatch->user->name : ""}} {{$dispatch->user ? $dispatch->user->surname : ""}}</td>
                                     <td>{{$dispatch->date}}</td>
                                     <td>
@@ -95,7 +95,7 @@
                                         @endif
                                     </td>
                                     <td>{{$dispatch->dispatch_items->count()}}</td>
-                                    <td></td>
+                                    <td>{{$dispatch->currency ? $dispatch->currency->name : ""}} {{$dispatch->currency ? $dispatch->currency->symbol : ""}}{{$dispatch->total}}</td>
                                     <td><span class="badge bg-{{($dispatch->authorization == 'approved') ? 'success' : (($dispatch->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($dispatch->authorization == 'approved') ? 'approved' : (($dispatch->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
@@ -104,7 +104,7 @@
                                                 <span class="caret"></span>
                                             </button>
                                             <ul class="dropdown-menu">
-                                               <li><a href="{{route('dispatches.show',$bill->id)}}"  ><i class="fas fa-eye color-default"></i>View</a></li>
+                                               <li><a href="{{route('dispatches.show',$dispatch->id)}}"  ><i class="fas fa-eye color-default"></i>View</a></li>
                                             </ul>
                                         </div>
                                         @include('dispatches.delete')

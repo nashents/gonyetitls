@@ -22,6 +22,9 @@ class Dispatch extends Model implements Auditable
         return $this->belongsTo('App\Models\Branch');
     }
    
+    public function currency(){
+        return $this->belongsTo('App\Models\Currency');
+    }
     public function ticket(){
         return $this->belongsTo('App\Models\Ticket');
     }

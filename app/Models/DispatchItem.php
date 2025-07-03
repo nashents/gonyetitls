@@ -15,6 +15,9 @@ class DispatchItem extends Model implements Auditable
     public function dispatch(){
         return $this->belongsTo('App\Models\Dispatch');
     }
+    public function currency(){
+        return $this->belongsTo('App\Models\Currency');
+    }
     public function product(){
         return $this->belongsTo('App\Models\Product');
     }

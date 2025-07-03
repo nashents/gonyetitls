@@ -21,7 +21,13 @@
                 </th>
                 <th class="th-sm">Status
                 </th>
-              
+                @if ($company->rates_managed_by_finance == True)
+                    @if (in_array('Finance', $department_names) ||  in_array('Super Admin', $role_names))
+                    <th>Freight</th>
+                    @endif
+                @else 
+                    <th>Freight</th>
+                @endif
                 <th class="th-sm">Actions
                 </th>
     
@@ -113,6 +119,11 @@
                     <span class="label label-accent label-wide" >{{$trip->trip_status}} </span>
                 </td>
                 @endif
+                   @if ($company->rates_managed_by_finance == True)
+                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                        @else
+                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                        @endif
                  <td class="w-10 line-height-35 table-dropdown">
                     <div class="dropdown">
                         <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -206,6 +217,11 @@
                     <span class="label label-accent label-wide" >{{$trip->trip_status}} </span>
                 </td>
                 @endif
+                   @if ($company->rates_managed_by_finance == True)
+                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                        @else
+                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                        @endif
                  <td class="w-10 line-height-35 table-dropdown">
                     <div class="dropdown">
                         <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -303,7 +319,11 @@
                 <span class="label label-accent label-wide" >{{$trip->trip_status}} </span>
             </td>
             @endif
-            
+               @if ($company->rates_managed_by_finance == True)
+                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                        @else
+                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                        @endif
             
              <td class="w-10 line-height-35 table-dropdown">
                 <div class="dropdown">
@@ -403,7 +423,11 @@
                 @endif
               
                
-             
+                @if ($company->rates_managed_by_finance == True)
+                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                        @else
+                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                        @endif
                 
                  <td class="w-10 line-height-35 table-dropdown">
                     <div class="dropdown">
@@ -503,7 +527,11 @@
                 </td>
                 @endif
                
-                    
+                       @if ($company->rates_managed_by_finance == True)
+                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                        @else
+                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                        @endif
                
                 
                  <td class="w-10 line-height-35 table-dropdown">
@@ -606,7 +634,11 @@
                 </td>
                 @endif
                
-                  
+                     @if ($company->rates_managed_by_finance == True)
+                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                        @else
+                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                        @endif
                 
                  <td class="w-10 line-height-35 table-dropdown">
                     <div class="dropdown">
@@ -707,7 +739,12 @@
                 <td class="table-accent" style="padding-left: 5px; padding-right: 5px;" >
                     <span class="label label-accent label-wide" >{{$trip->trip_status}} </span>
                 </td>
-                @endif            
+                @endif    
+                   @if ($company->rates_managed_by_finance == True)
+                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                        @else
+                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                        @endif        
                  <td class="w-10 line-height-35 table-dropdown">
                     <div class="dropdown">
                         <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
