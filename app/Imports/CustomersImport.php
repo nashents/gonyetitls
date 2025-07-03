@@ -3,172 +3,115 @@
 namespace App\Imports;
 
 use App\Models\User;
-use App\Models\Count;
 use App\Models\Customer;
-use App\Imports\CustomersImport;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Maatwebsite\Excel\Concerns\WithLimit;
 use Maatwebsite\Excel\Concerns\Importable;
-use Maatwebsite\Excel\Concerns\SkipsErrors;
-use Maatwebsite\Excel\Concerns\SkipsOnError;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
-use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
+use Maatwebsite\Excel\Concerns\WithBatchInserts;
+use Maatwebsite\Excel\Concerns\SkipsOnError;
+use Maatwebsite\Excel\Concerns\SkipsErrors;
+use Maatwebsite\Excel\Concerns\WithLimit;
 
-class CustomersImport implements  ToCollection, SkipsEmptyRows, WithLimit, 
-WithHeadingRow,
-SkipsOnError,
-WithValidation,
-WithChunkReading,
-WithBatchInserts
+class CustomersImport implements 
+    ToCollection,
+    SkipsEmptyRows,
+    WithHeadingRow,
+    SkipsOnError,
+    WithValidation,
+    WithChunkReading,
+    WithBatchInserts,
+    WithLimit
 {
     use Importable, SkipsErrors;
 
-    public function generatePIN($digits = 4){
-        $i = 0; //counter
-        $pin = ""; //our default pin is blank.
-        while($i < $digits){
-            //generate a random number between 0 and 9.
-            $pin .= mt_rand(0, 9);
-            $i++;
-        }
-        return $pin;
-    }
+  protected $initialCustomerId;
+    protected $initials;
+    protected $roleId = 3;
 
-    public function customerNumber(){
-
-        if (isset(Auth::user()->company)) {
-            $str = Auth::user()->company->name;
-            $words = explode(' ', $str);
-            if (isset($words[1][0])) {
-                $initials = $words[0][0].$words[1][0];
-            }else {
-                $initials = $words[0][0];
-            }
-        }elseif (isset(Auth::user()->employee->company)) {
-            $str = Auth::user()->employee->company->name;
-            $words = explode(' ', $str);
-            if (isset($words[1][0])) {
-                $initials = $words[0][0].$words[1][0];
-            }else {
-                $initials = $words[0][0];
-            }
-        }
-
-            $customer = Customer::orderBy('id', 'desc')->first();
-
-        if (!$customer) {
-            $customer_number =  $initials .'C'. str_pad(1, 5, "0", STR_PAD_LEFT);
-        }else {
-            $number = $customer->id + 1;
-            $customer_number =  $initials .'C'. str_pad($number, 5, "0", STR_PAD_LEFT);
-        }
-
-        return  $customer_number;
-
-
-    }
-
-     public function limit(): int
+    public function __construct()
     {
-        return 2500; // Import only the first 100 rows
+        $this->initialCustomerId = Customer::max('id') ?? 0;
+        $this->initials = $this->getCompanyInitials();
     }
- 
 
-    /**
-    * @param array $row
-    *
-    * @return \Illuminate\Database\Eloquent\Model|null
-    */
-    public function collection(Collection $rows)
+    protected function generatePIN($digits = 4): string
     {
+        return str_pad(mt_rand(0, pow(10, $digits) - 1), $digits, '0', STR_PAD_LEFT);
+    }
+
+    protected function getCompanyInitials(): string
+    {
+        $companyName = Auth::user()->company->name ?? Auth::user()->employee->company->name ?? 'VC';
+        $words = explode(' ', $companyName);
+        return strtoupper(substr($words[0], 0, 1) . ($words[1][0] ?? ''));
+    }
+
+    protected function generateCustomerNumber(): string
+    {
+        $this->initialCustomerId++;
+        return $this->initials . 'V' . str_pad($this->initialCustomerId, 5, '0', STR_PAD_LEFT);
+    }
+
+    public function collection(Collection $rows): void
+    {
+        foreach ($rows as $row) {
+            if ($row->filter()->isEmpty()) continue;
+  $name        = $row->get('name');
+            $email       = $row->get('email');
+            $phonenumber = $row->get('phonenumber');
+            $worknumber  = $row->get('worknumber');
+            $country     = $row->get('country');
+            $city        = $row->get('city');
+            $suburb      = $row->get('suburb');
+            $street      = $row->get('streetaddress');
 
 
-       foreach($rows as $row){
-        if($row->filter()->isNotEmpty()){
+            $customer = Customer::firstOrNew(['name' => $name]);
 
-        $pin =  $this->generatePIN();
-     
-        $user = User::where('name',$row['name'])->get()->first();
-        $customer = Customer::where('name',$row['name'])->get()->first();
+            $customer->company_id     = Auth::user()->employee->company_id ?? null;
+            $customer->creator_id     = Auth::user()->id;
 
+            if (!$customer->exists) {
+                $customer->customer_number = $this->generateCustomerNumber();
+            }
 
-        if (isset($user) && isset($customer)) {
-          
-            $user->name = $row['name'];
-            $user->category  = 'customer';
-            $user->is_admin = '0';
-            $user->active = '1';
-            $user->email = $row['email'];
-            $user->update();
-            $user->roles()->attach([3]);
-      
-            $customer->name    = $row['name'];
-            $customer->email    = $row['email'];
-            $customer->phonenumber    = $row['phonenumber'];
-            $customer->worknumber    = $row['worknumber'];
-            $customer->country    = $row['country'];
-            $customer->city    = $row['city'];
-            $customer->suburb    = $row['suburb'];
-            $customer->street_address    = $row['streetaddress'];
-            $customer->update();
-            
-           
-        } else {
-           
-        $user = User::create([
-            'name'     => $row['name'],
-            'category'     => 'customer',
-            'is_admin'     => '0',
-            'active'     => '1',
-            'email'     => $row['email'],
-            'password'    => Hash::make($pin),
+            $customer->email          = $email;
+            $customer->phonenumber    = $phonenumber;
+            $customer->worknumber     = $worknumber;
+            $customer->country        = $country;
+            $customer->city           = $city;
+            $customer->suburb         = $suburb;
+            $customer->street_address = $street;
 
-        ]);
-        $user->roles()->attach([3]);
-      
-       $customer = new Customer;
-       $customer->company_id     = Auth::user()->employee->company_id;
-       $customer->creator_id     = Auth::user()->id;
-       $customer->user_id     = $user->id;
-       $customer->customer_number   = $this->customerNumber();
-       $customer->name    = $row['name'];
-       $customer->email    = $row['email'];
-       $customer->pin    = $pin;
-       $customer->phonenumber    = $row['phonenumber'];
-       $customer->worknumber    = $row['worknumber'];
-       $customer->country    = $row['country'];
-       $customer->city    = $row['city'];
-       $customer->suburb    = $row['suburb'];
-       $customer->street_address    = $row['streetaddress'];
-       $customer->save();
+            $customer->save();
         }
-        
-
-    }
-       }
     }
 
-    public function rules(): array{
-        return[
-            // '*.name' => ['nullable','unique:users,name,NULL,id,deleted_at,NULL'],
-            // '*.email' => ['nullable','unique:users,email,NULL,id,deleted_at,NULL'],
-            // '*.phonenumber' => ['nullable','unique:customers,phonenumber,NULL,id,deleted_at,NULL'],
+    public function rules(): array
+    {
+        return [
+            // Add validation rules as needed
         ];
-    }
-
-    public function batchSize(): int
-    {
-        return 10;
     }
 
     public function chunkSize(): int
     {
-        return 10;
+        return 50;
+    }
+
+    public function batchSize(): int
+    {
+        return 50;
+    }
+
+    public function limit(): int
+    {
+        return 2500;
     }
 }

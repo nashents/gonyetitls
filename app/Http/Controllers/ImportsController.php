@@ -31,11 +31,14 @@ use Illuminate\Support\Facades\Session;
 
 class ImportsController extends Controller
 {
+
+    
     public function importEmployees(Request $request){
         $this->validate($request,[
             'file' => 'required'
         ]);
         $file = $request->file;
+        ini_set('max_execution_time', 300);
         $import = new EmployeesImport;
         $import->import($file);
         Session::flash('success','Employee(s) Imported Successfully!!');
@@ -46,6 +49,7 @@ class ImportsController extends Controller
             'file' => 'required'
         ]);
         $file = $request->file;
+        ini_set('max_execution_time', 300);
         $import = new RacksImport;
         $import->import($file);
         Session::flash('success','Rack(s) Imported Successfully!!');
@@ -56,6 +60,7 @@ class ImportsController extends Controller
             'file' => 'required'
         ]);
         $file = $request->file;
+        ini_set('max_execution_time', 300);
         $import = new BinsImport;
         $import->import($file);
         Session::flash('success','Bin(s) Imported Successfully!!');
@@ -67,6 +72,7 @@ class ImportsController extends Controller
             'file' => 'required|file|mimes:xls,xlsx'
         ]);
         $file = $request->file;
+        ini_set('max_execution_time', 300);
         $import = new TrailersImport;
         $import->import($file);
         Session::flash('success','Trailer(s) Imported Successfully!!');
@@ -78,6 +84,7 @@ class ImportsController extends Controller
             'file' => 'required|file|mimes:xls,xlsx'
         ]);
         $file = $request->file;
+        ini_set('max_execution_time', 300);
         $import = new TripsImport;
         $import->import($file);
         Session::flash('success','Trip(s) Imported Successfully!!');
@@ -89,6 +96,7 @@ class ImportsController extends Controller
             'file' => 'required|file|mimes:xls,xlsx'
         ]);
         $file = $request->file;
+        ini_set('max_execution_time', 300);
         $import = new EmployeesLeaveImport;
         $import->import($file);
         Session::flash('success','Employee Leave Data Imported Successfully!!');
@@ -100,6 +108,7 @@ class ImportsController extends Controller
             'file' => 'required|file|mimes:xls,xlsx'
         ]);
         $file = $request->file;
+        ini_set('max_execution_time', 300);
         $import = new ConsigneesImport;
         $import->import($file);
         Session::flash('success','Consignees Imported Successfully!!');
@@ -111,6 +120,7 @@ class ImportsController extends Controller
             'file' => 'required|file|mimes:xls,xlsx'
         ]);
         $file = $request->file;
+        ini_set('max_execution_time', 300);
         $import = new ProvincesImport;
         $import->import($file);
         Session::flash('success','Province(s) Imported Successfully!!');
@@ -124,6 +134,7 @@ class ImportsController extends Controller
             'file' => 'required|file|mimes:xls,xlsx'
         ]);
         $file = $request->file;
+        ini_set('max_execution_time', 300);
         $import = new TyresImport;
         $import->import($file);
         Session::flash('success','Tyre(s) Imported Successfully!!');
@@ -134,6 +145,7 @@ class ImportsController extends Controller
             'file' => 'required|file|mimes:xls,xlsx'
         ]);
         $file = $request->file;
+        ini_set('max_execution_time', 300);
         $import = new CountriesImport;
         $import->import($file);
         Session::flash('success','Countries Imported Successfully!!');
@@ -144,6 +156,7 @@ class ImportsController extends Controller
             'file' => 'required|file|mimes:xls,xlsx'
         ]);
         $file = $request->file;
+        ini_set('max_execution_time', 300);
         $import = new CargosImport;
         $import->import($file);
         Session::flash('success','Cargo(s) Imported Successfully!!');
@@ -154,6 +167,7 @@ class ImportsController extends Controller
             'file' => 'required|file|mimes:xls,xlsx'
         ]);
         $file = $request->file;
+        ini_set('max_execution_time', 300);
         $import = new DestinationsImport;
         $import->import($file);
         Session::flash('success','Destination(s) Imported Successfully!!');
@@ -164,6 +178,7 @@ class ImportsController extends Controller
             'file' => 'required|file|mimes:xls,xlsx'
         ]);
         $file = $request->file;
+        ini_set('max_execution_time', 300);
         $import = new LoadingPointsImport;
         $import->import($file);
         Session::flash('success','LoadingsPoint(s) Imported Successfully!!');
@@ -174,6 +189,7 @@ class ImportsController extends Controller
             'file' => 'required|file|mimes:xls,xlsx'
         ]);
         $file = $request->file;
+        ini_set('max_execution_time', 300);
         $import = new OffloadingPointsImport;
         $import->import($file);
         Session::flash('success','OffloadingsPoint(s) Imported Successfully!!');
@@ -185,6 +201,7 @@ class ImportsController extends Controller
             'file' => 'required|file|mimes:xls,xlsx'
         ]);
         $file = $request->file;
+        ini_set('max_execution_time', 300);
         $import = new VehiclesImport;
         $import->import($file);
         Session::flash('success','Vehicle(s) Imported Successfully!!');
@@ -195,6 +212,7 @@ class ImportsController extends Controller
             'file' => 'required|file|mimes:xls,xlsx'
         ]);
         $file = $request->file;
+        ini_set('max_execution_time', 300);
         $import = new CustomersImport;
         $import->import($file);
         Session::flash('success','Customer(s) Imported Successfully!!');
@@ -205,6 +223,7 @@ class ImportsController extends Controller
             'file' => 'required|file|mimes:xls,xlsx'
         ]);
         $file = $request->file;
+        ini_set('max_execution_time', 300);
         $import = new AgentsImport;
         $import->import($file);
         Session::flash('success','Agent(s) Imported Successfully!!');
@@ -215,6 +234,7 @@ class ImportsController extends Controller
             'file' => 'required|file|mimes:xls,xlsx'
         ]);
         $file = $request->file;
+        ini_set('max_execution_time', 300);
         $import = new TransportersImport;
         $import->import($file);
         Session::flash('success','Transporter(s) Imported Successfully!!');
@@ -225,6 +245,7 @@ class ImportsController extends Controller
             'file' => 'required|file|mimes:xls,xlsx'
         ]);
         $file = $request->file;
+        ini_set('max_execution_time', 300);
         $import = new HorsesImport;
         $import->import($file);
         Session::flash('success','Horse(s) Imported Successfully!!');
@@ -235,6 +256,7 @@ class ImportsController extends Controller
             'file' => 'required|file|mimes:xls,xlsx'
         ]);
         $file = $request->file;
+        ini_set('max_execution_time', 300);
         $import = new DriversImport;
         $import->import($file);
         Session::flash('success','Driver(s) Imported Successfully!!');
@@ -245,6 +267,7 @@ class ImportsController extends Controller
             'file' => 'required|file|mimes:xls,xlsx'
         ]);
         $file = $request->file;
+        ini_set('max_execution_time', 300);
         $import = new VendorsImport;
         $import->import($file);
         Session::flash('success','Vendor(s) Imported Successfully!!');
@@ -255,6 +278,7 @@ class ImportsController extends Controller
             'file' => 'required|file|mimes:xls,xlsx'
         ]);
         $file = $request->file;
+        ini_set('max_execution_time', 300);
         $import = new BrokersImport;
         $import->import($file);
         Session::flash('success','Broker(s) Imported Successfully!!');
@@ -265,6 +289,7 @@ class ImportsController extends Controller
             'file' => 'required|file|mimes:xls,xlsx'
         ]);
         $file = $request->file;
+        ini_set('max_execution_time', 300);
         $import = new CompaniesImport;
         $import->import($file);
         Session::flash('success','Companies Imported Successfully!!');
