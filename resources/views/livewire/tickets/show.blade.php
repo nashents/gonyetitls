@@ -10,7 +10,7 @@
             <ul class="nav nav-tabs nav-justified" role="tablist">
                 <li role="presentation" class="active"><a href="#jd" aria-controls="jd" role="tab" data-toggle="tab">Ticket Description</a></li>
                 <li role="presentation"><a href="#inspection" aria-controls="inspection" role="tab" data-toggle="tab">Inspection Results</a></li>
-                {{-- <li role="presentation"><a href="#parts" aria-controls="parts" role="tab" data-toggle="tab">Inventory</a></li> --}}
+                <li role="presentation"><a href="#parts" aria-controls="parts" role="tab" data-toggle="tab">Inventory</a></li>
                 <li role="presentation"><a href="#expenses" aria-controls="expenses" role="tab" data-toggle="tab">Expenses</a></li>
 
             </ul>
@@ -328,10 +328,10 @@
 
                     </div>
 
-                {{-- <div role="tabpanel" class="tab-pane " id="parts">
+                <div role="tabpanel" class="tab-pane " id="parts">
                     <x-loading/>
                         @livewire('ticket-inventories.index', ['ticket' => $ticket])
-                    </div> --}}
+                    </div>
                     <div role="tabpanel" class="tab-pane " id="expenses">
                     <x-loading/>
                         @livewire('ticket-expenses.index', ['ticket' => $ticket])
