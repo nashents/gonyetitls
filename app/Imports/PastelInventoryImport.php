@@ -25,7 +25,7 @@ use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\SkipsErrors;
 
-class InventoriesImport implements ToCollection, SkipsEmptyRows, WithLimit,
+class PastelInventoryImport implements ToCollection, SkipsEmptyRows, WithLimit,
     WithHeadingRow, SkipsOnError, WithValidation, WithChunkReading, WithBatchInserts
 {
     use Importable, SkipsErrors;

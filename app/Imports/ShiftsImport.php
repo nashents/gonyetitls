@@ -32,7 +32,7 @@ use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 
-class ShiftsImport implements ToCollection, SkipsEmptyRows, WithLimit, 
+class ShiftsImport implements ToCollection, SkipsEmptyRows, WithLimit,
 WithHeadingRow,
 SkipsOnError,
 WithValidation,
@@ -41,115 +41,99 @@ WithBatchInserts
 {
     use Importable, SkipsErrors;
 
-    /**
-    * @param array $row
-    *
-    * @return \Illuminate\Database\Eloquent\Model|null
-    */
-
     public $for;
 
     public function __construct($for)
-    {   $this->for = $for;
-       
+    {
+        $this->for = $for;
     }
 
-        private function parseExcelDate($value)
-        {
-            if (!isset($value)) {
-                return null;
-            }
-
-            // If it's a numeric Excel date serial
-            if (is_numeric($value)) {
-                try {
-                    return Carbon::instance(
-                        \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($value)
-                    );
-                } catch (\Exception $e) {
-                    return null;
-                }
-            }
-
-            // If it's a string in strict YYYY-MM-DD format
-            if (is_string($value)) {
-                try {
-                    $parsed = Carbon::createFromFormat('Y-m-d', $value);
-                    return $parsed && $parsed->format('Y-m-d') === $value ? $parsed : null;
-                } catch (\Exception $e) {
-                    return null;
-                }
-            }
-
+    private function parseExcelDate($value)
+    {
+        if (!isset($value)) {
             return null;
         }
 
-       public function limit(): int
+        if (is_numeric($value)) {
+            try {
+                return Carbon::instance(
+                    \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($value)
+                );
+            } catch (\Exception $e) {
+                return null;
+            }
+        }
+
+        if (is_string($value)) {
+            try {
+                $parsed = Carbon::createFromFormat('Y-m-d', $value);
+                return $parsed && $parsed->format('Y-m-d') === $value ? $parsed : null;
+            } catch (\Exception $e) {
+                return null;
+            }
+        }
+
+        return null;
+    }
+
+    public function limit(): int
     {
-        return 2500; // Import only the first 100 rows
+        return 2500;
     }
 
     public function collection(Collection $rows)
     {
+        $userId = Auth::id();
 
+        foreach ($rows as $row) {
+            if ($row->filter()->isNotEmpty()) {
+                $customer = Customer::where('name', $row->get('customer'))->first();
+                $horse = Horse::where('fleet_number', $row->get('horse'))->first();
+                $cargo = Cargo::where('name', $row->get('cargo'))->first();
 
-       foreach($rows as $row){
-        if($row->filter()->isNotEmpty()){
+                $employee = Employee::where('surname', $row->get('driver'))->first();
+                $driver = $employee?->driver;
 
-            $customer = Customer::where('name',$row['customer'])->first();
-            $horse = Horse::where('fleet_number',$row['horse'])->first();
-            $cargo = Cargo::where('name',$row['cargo'])->first();      
-            $employee = Employee::where('surname', $row['driver'])->first();
-            if($employee){
-                $driver = $employee->driver;
-            }else{
-                $driver = Null;
+                $date = $this->parseExcelDate($row->get('date'))?->format('Y-m-d');
+
+                Shift::create([
+                    'user_id' => $userId,
+                    'type' => match ($row->get('shift')) {
+                        'Morning' => 'Day',
+                        'Night' => 'Night',
+                        default => null
+                    },
+                    'date' => $date,
+                    'shift_start_time' => $row->get('shift_start'),
+                    'shift_end_time' => $row->get('shift_close'),
+                    'horse_id' => $horse?->id,
+                    'driver_id' => $driver?->id,
+                    'customer_id' => $customer?->id,
+                    'cargo_id' => $cargo?->id,
+                    'actual_mileage' => $row->get('actual_mileage'),
+                    'calculated_mileage' => $row->get('cal_mileage'),
+                    'open_mileage' => $row->get('open_mileage'),
+                    'close_mileage' => $row->get('close_mileage'),
+                    'fuel_consumption_mileage' => $row->get('consumption'),
+                ]);
             }
-            
-
-            $shift = new Shift;
-            $shift->user_id     = Auth::user()->id;
-            if ($row['shift'] == "Morning") {
-                $shift->type = "Day";
-            }elseif($row['shift'] == "Night"){
-                $shift->type = "Night";
-            }
-
-            $parsedDate = $this->parseExcelDate($row['date']);
-            $shift->date = $parsedDate ? $parsedDate->format('Y-m-d') : null;
-            $shift->shift_start_time     = $row['shift_start'];
-            $shift->shift_end_time     = $row['shift_close'];
-            $shift->horse_id     = $horse ? $horse->id : Null;
-            $shift->driver_id     = $driver ? $driver->id : Null;
-            $shift->customer_id     = $customer ? $customer->id : Null;
-            $shift->cargo_id     = $cargo ? $cargo->id : Null;
-            $shift->actual_mileage     = $row['actual_mileage'];
-            $shift->calculated_mileage     = $row['cal_mileage'];
-            $shift->open_mileage     = $row['open_mileage'];
-            $shift->close_mileage     = $row['close_mileage'];
-            $shift->fuel_consumption_mileage     = $row['consumption'];
-            $shift->save();
-
-            
-            
-    }
-       }
+        }
     }
 
-    public function rules(): array{
-        return[
-            // '*.transporter_id' => ['required'],
+    public function rules(): array
+    {
+        return [
+            // Add validation rules if needed
         ];
     }
 
-
     public function batchSize(): int
     {
-        return 10;
+        return 50;
     }
 
     public function chunkSize(): int
     {
-        return 10;
+        return 50;
     }
 }

@@ -86,4 +86,18 @@ class Inventory extends Model implements Auditable
     public function inventory_requisitions(){
         return $this->hasMany('App\Models\InventoryRequisition');
     }
+
+        protected $fillable = [
+        'code',
+        'description',
+        'type',
+        'category',
+        'group',
+        'uom',
+        'qty',
+        'unit_cost',
+        'total_value',
+        'company_name',
+        'user_id', // or 'created_by' depending on your schema
+    ];
 }

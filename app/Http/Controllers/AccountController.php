@@ -18,6 +18,10 @@ class AccountController extends Controller
     {
         return view('accounts.index');
     }
+    public function tax()
+    {
+        return view('accounts.tax');
+    }
 
     /**
      * Show the form for creating a new resource.

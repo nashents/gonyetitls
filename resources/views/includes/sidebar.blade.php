@@ -570,6 +570,9 @@
                     <ul class="child-nav">
                         {{-- <li><a href="{{route('account_types.index')}}" ><i class="fas fa-list "></i> <span>Account Types</span></a></li> --}}
                         <li><a href="{{route('accounts.index')}}"><i class="fas fa-list "></i> <span> Manage Accounts</span></a></li>
+                        @if (Auth::user()->is_admin())
+                             <li><a href="{{route('accounts.tax')}}"><i class="fas fa-list "></i> <span> Manage Sales Taxs</span></a></li>
+                        @endif
                     </ul>
                 </li>
                 <li  class="{{ request()->routeIs('bank_accounts.index') ? 'active' : '' }}" ><a href="{{route('bank_accounts.index')}}"><i class="fas fa-bank"></i> <span>Bank Accounts</span></a></li>

@@ -40,6 +40,8 @@ Route::get('leave/applications/rejected','LeaveController@rejected')->name('leav
 Route::post('leave/application/{id}/decision','LeaveController@decision')->name('leaves.decision');
 Route::get('leave/reports','LeaveController@reports')->name('leaves.reports');
 
+Route::get('accounts/tax','AccountController@tax')->name('accounts.tax');
+
 //Loan Management Routes
 Route::get('loans/myloans/','LoanController@myloans')->name('loans.myloans');
 Route::get('loan/applications/approved','LoanController@approved')->name('loans.approved');
