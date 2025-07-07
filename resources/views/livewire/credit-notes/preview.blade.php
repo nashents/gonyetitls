@@ -112,6 +112,7 @@
                     <table>
                         <thead>
                             <tr class="text-center">
+                                <th class="text-center"> <strong>HS Code</strong></th>
                                 <th class="text-center"> <strong>Description</strong></th>
                                 <th class="text-center"><strong>Qty</strong></th>
                                 <th class="text-center"><strong>Price</strong></th>
@@ -124,14 +125,21 @@
           
                             @foreach ($invoice_items as $invoice_item)
                                  <tr>
+                                    @php
+                                        $tax = App\Models\Account::find($invoice_item->tax_id);
+                                    @endphp
+                                    <td class="unit text-center"> 
+                                        @if ($tax && $tax->hs_code)
+                                             {{$tax->hs_code}}
+                                        @endif
+                                    </td>
                                     <td class="text-center">
                                         @if ($invoice_item->product)
                                         <strong>{{$invoice_item->product ? $invoice_item->product->name : ""}}</strong>  <br>
                                         {{$invoice_item->product ? $invoice_item->product->description : ""}}
                                         @elseif ($invoice_item->trip)
                                         {{$invoice_item->description ? $invoice_item->description : $invoice_item->trip_details}}
-                                        @endif
-                                           
+                                        @endif 
                                     </td>
                                     <td class="unit text-center"> {{$invoice_item->qty}}</td>
                                     <td class="unit text-center">
@@ -164,7 +172,7 @@
                         </tbody>
                         <tfoot>
                             <tr>
-                                <td colspan="3"></td>
+                                <td colspan="4"></td>
                                 <td colspan="2">SUB-TOTAL {{ $invoice->currency ? $invoice->currency->name : "" }} <small>(Excl)</small></td>
                                 <td>  
                                     @if (isset($invoice->invoice_items))
@@ -173,7 +181,7 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td colspan="3"></td>
+                                <td colspan="4"></td>
                                 <td colspan="2">VAT TOTAL</td>
                                  
                                 <td>
@@ -184,8 +192,22 @@
                                     @endif
                                 </td>
                             </tr>
+                             @if ($invoice->discount)
+                                <tr>
+                                    <td colspan="4"></td>
+                                    <td colspan="2">DISCOUNT {{$invoice->discount->description}}</td>
+                                    
+                                    <td>
+                                         @if ($invoice->discount->unit == "currency")
+                                            {{$invoice->currency ? $invoice->currency->symbol : ""}}{{number_format($invoice->discount->amount ? $invoice->discount->amount : 0,2)}}
+                                            @elseif($invoice->discount->unit == "percentage")
+                                            {{number_format($invoice->discount->amount ? $invoice->discount->amount : 0,2)}} %
+                                            @endif 
+                                    </td>
+                                </tr>
+                            @endif
                             <tr>
-                                <td colspan="3"></td>
+                                <td colspan="4"></td>
                                 <td colspan="2">CREDIT NOTE TOTAL {{ $invoice->currency ? $invoice->currency->name : "" }} </td>
                                 <td>
                                     @if ($credit_note->total)

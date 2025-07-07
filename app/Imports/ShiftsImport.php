@@ -76,6 +76,28 @@ WithBatchInserts
         return null;
     }
 
+    private function parseExcelTime($value)
+    {
+        if (empty($value)) {
+            return null;
+        }
+
+        try {
+            if (is_numeric($value)) {
+                // Excel stores time as fraction of a day (e.g. 0.5 = 12:00 PM)
+                $time = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($value);
+                return $time->format('H:i:s');
+            }
+
+            // If it is already a string like '1:10:00 AM'
+            $parsed = Carbon::createFromFormat('g:i:s A', $value);
+            return $parsed->format('H:i:s');
+
+        } catch (\Exception $e) {
+            return null; // fallback
+        }
+    }
+
     public function limit(): int
     {
         return 2500;
@@ -87,6 +109,7 @@ WithBatchInserts
 
         foreach ($rows as $row) {
             if ($row->filter()->isNotEmpty()) {
+                
                 $customer = Customer::where('name', $row->get('customer'))->first();
                 $horse = Horse::where('fleet_number', $row->get('horse'))->first();
                 $cargo = Cargo::where('name', $row->get('cargo'))->first();
@@ -104,8 +127,8 @@ WithBatchInserts
                         default => null
                     },
                     'date' => $date,
-                    'shift_start_time' => $row->get('shift_start'),
-                    'shift_end_time' => $row->get('shift_close'),
+                    'shift_start_time' => $this->parseExcelTime($row->get('shift_start')),
+                    'shift_end_time' => $this->parseExcelTime($row->get('shift_close')),
                     'horse_id' => $horse?->id,
                     'driver_id' => $driver?->id,
                     'customer_id' => $customer?->id,
