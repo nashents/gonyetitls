@@ -71,6 +71,7 @@ class Edit extends Component
     public $amount = [];
     public $description = [];
     public $tax_rate;
+    public $hs_code;
 
         //discount vars
         public $discount_name;
@@ -89,6 +90,7 @@ class Edit extends Component
     public $current_amount;
     public $current_description;
     public $current_tax_rate;
+    public $current_hs_code;
     public $current_tax_id;
 
     public $currentSelectedCargo;
@@ -227,6 +229,7 @@ class Edit extends Component
             $this->current_description[] = $item->description;
             $this->current_amount[] = $item->amount;
             $this->current_tax_rate[] = $item->tax_rate;
+            $this->current_hs_code[] = $item->hs_code;
             $this->currentSelectedTax[] = $item->tax_id;
 
             $this->currentSelectedCargo[] = $item->cargo_id;
@@ -332,6 +335,7 @@ class Edit extends Component
                     $tax = Account::find($product->tax_id);
                     if (isset($tax)) {
                         $this->current_tax_rate[$key] = $tax->rate;
+                        $this->current_hs_code[$key] = $tax->hs_code;
                     }
                     
                 }  
@@ -345,8 +349,10 @@ class Edit extends Component
             $tax = Account::find($id);
             if (isset($tax)) {
                 $this->current_tax_rate[$key] = $tax->rate;
+                $this->current_hs_code[$key] = $tax->hs_code;
             }else{
                 $this->current_tax_rate[$key] = "";
+                $this->current_hs_code[$key] = "";
             }
            
         }
@@ -366,6 +372,7 @@ class Edit extends Component
                     $tax = Account::find($product->tax_id);
                     if (isset($tax)) {
                         $this->tax_rate[$key] = $tax->rate;
+                        $this->hs_code[$key] = $tax->hs_code;
                     }
                     
                 }  
@@ -379,8 +386,10 @@ class Edit extends Component
             $tax = Account::find($id);
             if (isset($tax)) {
                 $this->tax_rate[$key] = $tax->rate;
+                $this->hs_code[$key] = $tax->hs_code;
             }else{
                 $this->tax_rate[$key] = "";
+                $this->hs_code[$key] = "";
             }
            
         }
@@ -456,6 +465,7 @@ class Edit extends Component
                         $tax = Account::find($product->tax_id);
                         if (isset($tax)) {
                             $this->current_tax_rate[$this->item_key] = $tax->rate;
+                            $this->current_hs_code[$this->item_key] = $tax->hs_code;
                         }
                         
                     }  
@@ -474,6 +484,7 @@ class Edit extends Component
                         $tax = Account::find($product->tax_id);
                         if (isset($tax)) {
                             $this->tax_rate[$this->item_key] = $tax->rate;
+                            $this->hs_code[$this->item_key] = $tax->hs_code;
                         }
                         
                     }  
@@ -673,6 +684,9 @@ class Edit extends Component
             if (isset($this->current_tax_rate[$key])) {
                 $quotation_item->tax_rate = $this->current_tax_rate[$key];
             }
+            if (isset($this->current_hs_code[$key])) {
+                $quotation_item->hs_code = $this->current_hs_code[$key];
+            }
             if (isset($this->current_amount[$key])) {
                 $quotation_item->amount = $this->current_amount[$key];
             }
@@ -787,6 +801,9 @@ class Edit extends Component
                 if (isset($this->tax_rate[$key])) {
                     $quotation_item->tax_rate = $this->tax_rate[$key];
                 }
+                if (isset($this->hs_code[$key])) {
+                    $quotation_item->hs_code = $this->hs_code[$key];
+                }
                
                 if ((isset($this->amount[$key]) && is_numeric($this->amount[$key])) && ( isset($this->qty[$key]) && is_numeric($this->qty[$key]) ) ) {
 
@@ -867,6 +884,9 @@ class Edit extends Component
             if (isset($this->current_tax_rate[$key])) {
                 $quotation_item->tax_rate = $this->current_tax_rate[$key];
             }
+            if (isset($this->current_hs_code[$key])) {
+                $quotation_item->hs_code = $this->current_hs_code[$key];
+            }
             if (isset($this->current_amount[$key])) {
                 $quotation_item->amount = $this->current_amount[$key];
             }
@@ -931,6 +951,9 @@ class Edit extends Component
                 }
                 if (isset($this->tax_rate[$key])) {
                     $quotation_item->tax_rate = $this->tax_rate[$key];
+                }
+                if (isset($this->hs_code[$key])) {
+                    $quotation_item->hs_code = $this->hs_code[$key];
                 }
                 if (isset($this->description[$key])) {
                     $quotation_item->description = $this->description[$key];

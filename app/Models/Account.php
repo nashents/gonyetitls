@@ -78,5 +78,6 @@ class Account extends Model implements Auditable
         'account_number',
         'name',
         'description',
+        'hs_code',
     ];
 }

@@ -80,6 +80,7 @@ class Edit extends Component
     public $current_weight;
     public $current_amount;
     public $current_tax_rate;
+    public $current_hs_code;
     public $current_tax_id;
   
     public $recorded_payments;
@@ -101,6 +102,7 @@ class Edit extends Component
     public $selectedCurrency;
     public $selected_currency;
     public $tax_rate = [];
+    public $hs_code = [];
    
     public $measurements;
     public $invoice_amount = 0;
@@ -225,6 +227,7 @@ class Edit extends Component
                     $tax = Account::find($product->tax_id);
                     if (isset($tax)) {
                         $this->tax_rate[$key] = $tax->rate;
+                        $this->hs_code[$key] = $tax->hs_code;
                     }
                     
                 }  
@@ -247,6 +250,7 @@ class Edit extends Component
                 $tax = Account::find($product->tax_id);
                 if (isset($tax)) {
                     $this->tax_rate[$key] = $tax->rate;
+                    $this->hs_code[$key] = $tax->hs_code;
                 }
                 
             }  
@@ -260,8 +264,10 @@ class Edit extends Component
             $tax = Account::find($id);
             if (isset($tax)) {
                 $this->tax_rate[$key] = $tax->rate;
+                $this->hs_code[$key] = $tax->hs_code;
             }else{
                 $this->tax_rate[$key] = "";
+                $this->hs_code[$key] = "";
             }
            
         }
@@ -473,6 +479,7 @@ class Edit extends Component
                 $tax = Account::find($product->tax_id);
                 if (isset($tax)) {
                     $this->current_tax_rate[$key] = $tax->rate;
+                    $this->current_hs_code[$key] = $tax->hs_code;
                 }
                 
             }  
@@ -497,6 +504,7 @@ class Edit extends Component
                     $tax = Account::find($product->tax_id);
                     if (isset($tax)) {
                         $this->current_tax_rate[$key] = $tax->rate;
+                        $this->current_hs_code[$key] = $tax->hs_code;
                     }
                     
                 }  
@@ -510,8 +518,10 @@ class Edit extends Component
             $tax = Account::find($id);
             if (isset($tax)) {
                 $this->current_tax_rate[$key] = $tax->rate;
+                $this->current_hs_code[$key] = $tax->hs_code;
             }else{
                 $this->current_tax_rate[$key] = "";
+                $this->current_hs_code[$key] = "";
             }
            
         }
@@ -728,6 +738,7 @@ class Edit extends Component
             }
             
             $this->current_tax_rate[] = $item->tax_rate;
+            $this->current_hs_code[] = $item->hs_code;
             $this->selectedCurrentTax[] = $item->tax_id;
            }
         }
@@ -848,6 +859,9 @@ class Edit extends Component
                 if (isset($this->current_tax_rate[$key])) {
                     $invoice_item->tax_rate = $this->current_tax_rate[$key];
                 }
+                if (isset($this->current_hs_code[$key])) {
+                    $invoice_item->hs_code = $this->current_hs_code[$key];
+                }
                 if (isset($this->current_amount[$key])) {
                     $invoice_item->amount = $this->current_amount[$key];
                 }
@@ -912,6 +926,9 @@ class Edit extends Component
                 }
                 if (isset($this->tax_rate[$key])) {
                     $invoice_item->tax_rate = $this->tax_rate[$key];
+                }
+                if (isset($this->hs_code[$key])) {
+                    $invoice_item->hs_code = $this->hs_code[$key];
                 }
                 if (isset($this->selectedAccount[$key])) {
                     $invoice_item->account_id = $this->selectedAccount[$key];
@@ -1013,6 +1030,9 @@ class Edit extends Component
                     if (isset($this->current_tax_rate[$key])) {
                         $invoice_item->tax_rate = $this->current_tax_rate[$key];
                     }
+                    if (isset($this->current_hs_code[$key])) {
+                        $invoice_item->hs_code = $this->current_hs_code[$key];
+                    }
                     if (isset($this->current_amount[$key])) {
                         $invoice_item->amount = $this->current_amount[$key];
                     }
@@ -1078,6 +1098,9 @@ class Edit extends Component
                     }
                     if (isset($this->tax_rate[$key])) {
                         $invoice_item->tax_rate = $this->tax_rate[$key];
+                    }
+                    if (isset($this->hs_code[$key])) {
+                        $invoice_item->hs_code = $this->hs_code[$key];
                     }
                     if (isset($this->selectedAccount[$key])) {
                         $invoice_item->account_id = $this->selectedAccount[$key];
@@ -1181,6 +1204,9 @@ class Edit extends Component
                 if (isset($this->current_tax_rate[$key])) {
                     $invoice_item->tax_rate = $this->current_tax_rate[$key];
                 }
+                if (isset($this->current_hs_code[$key])) {
+                    $invoice_item->hs_code = $this->current_hs_code[$key];
+                }
                 if (isset($this->selectedCurrentTax[$key])) {
                     $invoice_item->tax_id = $this->selectedCurrentTax[$key];
                 }
@@ -1276,6 +1302,9 @@ class Edit extends Component
                 }
                 if (isset($this->tax_rate[$key])) {
                     $invoice_item->tax_rate = $this->tax_rate[$key];
+                }
+                if (isset($this->hs_code[$key])) {
+                    $invoice_item->hs_code = $this->hs_code[$key];
                 }
                 if (isset($this->selectedTax[$key])) {
                     $invoice_item->tax_id = $this->selectedTax[$key];

@@ -117,11 +117,12 @@ Quotation Print |@if (Auth::user()->employee->company)
                             <table>
                                 <thead>
                                     <tr>
+                                        <th class="text-left"> <strong>HS Code</strong></th>
                                         <th class="text-left"> <strong>Description</strong></th>
                                         <th class="text-center"> <strong>Qty</strong></th>
                                         <th class="text-center"><strong>Unit Price</th> 
                                         <th class="text-center"><strong>Total(Excl)</strong></th>
-                                        <th class="text-center"><strong>VAT AMT</strong></th>
+                                        <th class="text-center"><strong>VAT Amount</strong></th>
                                         <th class="text-center"><strong>Total(Incl)</strong></th>
                                     </tr>
                                 </thead>
@@ -129,6 +130,14 @@ Quotation Print |@if (Auth::user()->employee->company)
                                    
                                     @foreach ($quotation->quotation_items as $item)
                                     <tr>
+                                        @php
+                                            $tax = App\Models\Account::find($item->tax_id);
+                                        @endphp
+                                        <td class="unit text-center"> 
+                                            @if ($tax && $tax->hs_code)
+                                                    {{$tax->hs_code}}
+                                            @endif
+                                        </td>
                                         <td class="text-left">
                                             @if ($quotation->for_trips == False)
                                             <strong>{{$item->product ? $item->product->name : ""}} {{$item->product ? $item->product->identification_number : ""}} {{$item->inventory ? $item->inventory->serial_number : ""}}</strong>  <br>
@@ -153,7 +162,7 @@ Quotation Print |@if (Auth::user()->employee->company)
                                 </tbody>
                                 <tfoot >
                                     <tr >
-                                        <td colspan="3"></td>
+                                        <td colspan="4"></td>
                                         <td colspan="2">SUB-TOTAL {{ $quotation->currency ? $quotation->currency->name : "" }} <small>(Excl)</small></td>
                                         <td class="">  
                                             @if ($quotation->subtotal)
@@ -162,13 +171,26 @@ Quotation Print |@if (Auth::user()->employee->company)
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td colspan="3"></td>
+                                        <td colspan="4"></td>
                                         <td colspan="2"> VAT TOTAL</td>
                                         <td>{{ $quotation->currency ? $quotation->currency->symbol : "" }}{{number_format($quotation->tax_amount ? $quotation->tax_amount : 0,2)}}</td>
                                     </tr>
-                                  
+                                    @if ($quotation->discount)
+                                        <tr>
+                                            <td colspan="4"></td>
+                                            <td colspan="2">DISCOUNT {{$quotation->discount->description}}</td>
+                                            
+                                            <td>
+                                                @if ($quotation->discount->unit == "currency")
+                                                    {{$quotation->currency ? $quotation->currency->symbol : ""}}{{number_format($quotation->discount->amount ? $quotation->discount->amount : 0,2)}}
+                                                    @elseif($quotation->discount->unit == "percentage")
+                                                    {{number_format($quotation->discount->amount ? $quotation->discount->amount : 0,2)}} %
+                                                    @endif 
+                                            </td>
+                                        </tr>
+                                    @endif
                                     <tr>
-                                        <td colspan="3"></td>
+                                        <td colspan="4"></td>
                                         <td colspan="2">QUOTATION TOTAL {{ $quotation->currency ? $quotation->currency->name : "" }} </td>
                                         <td>
                                             @if ($quotation->total)

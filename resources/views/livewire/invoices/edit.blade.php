@@ -313,7 +313,7 @@
                                                     <select wire:model.debounce.300ms="selectedTax.{{$value}}"  class="form-control">
                                                         <option value=""></option>
                                                             @foreach ($tax_accounts as $tax)
-                                                            <option value="{{$tax->id}}">{{$tax->abbreviation}} {{$tax->rate ? $tax->rate."%" : ""}}</option> 
+                                                            <option value="{{$tax->id}}">{{$tax->abbreviation}} </option> 
                                                             @endforeach
                                                         </select>
                                                         <small><a href="{{ route('taxes.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small> 
@@ -451,7 +451,7 @@
                                                                 <select wire:model.debounce.300ms="selectedTax.{{$value}}"  class="form-control">
                                                                     <option value=""></option>
                                                                         @foreach ($tax_accounts as $tax)
-                                                                        <option value="{{$tax->id}}">{{$tax->abbreviation}} {{$tax->rate ? $tax->rate."%" : ""}}</option> 
+                                                                        <option value="{{$tax->id}}">{{$tax->abbreviation}} </option> 
                                                                         @endforeach
                                                                     </select>
                                                                     <small><a href="{{ route('taxes.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small> 
@@ -628,7 +628,7 @@
                                                             <select wire:model.debounce.300ms="selectedTax.{{$value}}"  class="form-control">
                                                                 <option value=""></option>
                                                                     @foreach ($tax_accounts as $tax)
-                                                                    <option value="{{$tax->id}}">{{$tax->abbreviation}} {{$tax->rate ? $tax->rate."%" : ""}}</option> 
+                                                                    <option value="{{$tax->id}}">{{$tax->abbreviation}}</option> 
                                                                     @endforeach
                                                                 </select>
                                                                 <small><a href="{{ route('taxes.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small> 

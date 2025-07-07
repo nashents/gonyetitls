@@ -12,7 +12,6 @@
                 <li role="presentation"><a href="#inspection" aria-controls="inspection" role="tab" data-toggle="tab">Inspection Results</a></li>
                 <li role="presentation"><a href="#parts" aria-controls="parts" role="tab" data-toggle="tab">Inventory</a></li>
                 <li role="presentation"><a href="#expenses" aria-controls="expenses" role="tab" data-toggle="tab">Expenses</a></li>
-
             </ul>
             <div class="tab-content bg-white p-15">
                 <div role="tabpanel" class="tab-pane active" id="jd">

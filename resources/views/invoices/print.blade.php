@@ -141,6 +141,7 @@ Invoice Print | @if (Auth::user()->employee->company)
                             <table>
                                 <thead>
                                     <tr>
+                                        <th class="text-center"> <strong>HS Code</strong></th>
                                         <th class="text-center"> <strong>Description</strong></th>
                                         <th class="text-right"><strong>Qty</strong></th>
                                         <th class="text-right"><strong>Price</strong></th>
@@ -153,6 +154,14 @@ Invoice Print | @if (Auth::user()->employee->company)
                                    
                                     @foreach ($invoice_items as $invoice_item)
                                          <tr>
+                                            @php
+                                                $tax = App\Models\Account::find($invoice_item->tax_id);
+                                            @endphp
+                                            <td class="unit text-center"> 
+                                                @if ($tax && $tax->hs_code)
+                                                    {{$tax->hs_code}}
+                                                @endif
+                                            </td>
                                             <td class="text-center">
                                                 @if ($invoice_item->product)
                                                 <strong>{{$invoice_item->product ? $invoice_item->product->name : ""}}</strong>  <br>
@@ -194,7 +203,7 @@ Invoice Print | @if (Auth::user()->employee->company)
                                 </tbody>
                                 <tfoot>
                                     <tr>
-                                        <td colspan="3"></td>
+                                        <td colspan="4"></td>
                                         <td colspan="2">SUB-TOTAL {{ $invoice->currency ? $invoice->currency->name : "" }} <small>(Excl)</small></td>
                                         <td>  
                                             @if (isset($invoice->invoice_items))
@@ -203,7 +212,7 @@ Invoice Print | @if (Auth::user()->employee->company)
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td colspan="3"></td>
+                                        <td colspan="4"></td>
                                         <td colspan="2">VAT TOTAL</td>
                                          
                                         <td>
@@ -216,7 +225,7 @@ Invoice Print | @if (Auth::user()->employee->company)
                                     </tr>
                                     @if ($invoice->discount)
                                         <tr>
-                                            <td colspan="3"></td>
+                                            <td colspan="4"></td>
                                             <td colspan="2">DISCOUNT {{$invoice->discount->description}}</td>
                                             
                                             <td>
@@ -229,7 +238,7 @@ Invoice Print | @if (Auth::user()->employee->company)
                                         </tr>
                                     @endif
                                     <tr>
-                                        <td colspan="3"></td>
+                                        <td colspan="4"></td>
                                         <td colspan="2">INVOICE TOTAL {{ $invoice->currency ? $invoice->currency->name : "" }} </td>
                                         <td>
                                             @if ($invoice->total)

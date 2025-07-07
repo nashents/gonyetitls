@@ -89,6 +89,7 @@ class Create extends Component
     public $selectedTrip = [];
     public $trip_sum = [];
     public $tax_rate = [];
+    public $hs_code = [];
     public $tax_amount;
     public $total_tax_amount;
     public $measurements;
@@ -473,6 +474,7 @@ class Create extends Component
                     $tax = Account::find($product->tax_id);
                     if (isset($tax)) {
                         $this->tax_rate[$key] = $tax->rate;
+                        $this->hs_code[$key] = $tax->hs_code;
                     }
                     
                 }  
@@ -495,6 +497,7 @@ class Create extends Component
                 $tax = Account::find($product->tax_id);
                 if (isset($tax)) {
                     $this->tax_rate[$key] = $tax->rate;
+                    $this->hs_code[$key] = $tax->hs_code;
                 }
                 
             }  
@@ -508,8 +511,10 @@ class Create extends Component
             $tax = Account::find($id);
             if (isset($tax)) {
                 $this->tax_rate[$key] = $tax->rate;
+                $this->hs_code[$key] = $tax->rate;
             }else{
                 $this->tax_rate[$key] = "";
+                $this->hs_code[$key] = "";
             }
            
         }
@@ -794,6 +799,7 @@ class Create extends Component
                     $tax = Account::find($product->tax_id);
                     if (isset($tax)) {
                         $this->tax_rate[$this->item_key] = $tax->rate;
+                        $this->hs_code[$this->item_key] = $tax->hs_code;
                     }
                     
                 }  
@@ -919,6 +925,9 @@ class Create extends Component
                 if (isset($this->tax_rate[$key])) {
                     $invoice_item->tax_rate = $this->tax_rate[$key];
                 }
+                if (isset($this->hs_code[$key])) {
+                    $invoice_item->hs_code = $this->hs_code[$key];
+                }
                 if (isset($this->selectedTax[$key])) {
                     $invoice_item->tax_id = $this->selectedTax[$key];
                 }
@@ -1001,6 +1010,9 @@ class Create extends Component
                 if (isset($this->tax_rate[$key])) {
                     $invoice_item->tax_rate = $this->tax_rate[$key];
                 }
+                if (isset($this->hs_code[$key])) {
+                    $invoice_item->hs_code = $this->hs_code[$key];
+                }
                 if (isset($this->selectedTax[$key])) {
                     $invoice_item->tax_id = $this->selectedTax[$key];
                 }
@@ -1079,6 +1091,9 @@ class Create extends Component
                 }
                 if (isset($this->tax_rate[$key])) {
                     $invoice_item->tax_rate = $this->tax_rate[$key];
+                }
+                if (isset($this->hs_code[$key])) {
+                    $invoice_item->hs_code = $this->hs_code[$key];
                 }
                 if (isset($this->selectedTax[$key])) {
                     $invoice_item->tax_id = $this->selectedTax[$key];

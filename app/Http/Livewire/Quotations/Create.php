@@ -70,6 +70,7 @@ class Create extends Component
     public $amount = [];
     public $description = [];
     public $tax_rate;
+    public $hs_code;
   
 
     public $item_name;
@@ -342,6 +343,7 @@ public function quotationNumber(){
                     $tax = Account::find($product->tax_id);
                     if (isset($tax)) {
                         $this->tax_rate[$key] = $tax->rate;
+                        $this->hs_code[$key] = $tax->hs_code;
                     }
                     
                 }  
@@ -355,8 +357,10 @@ public function quotationNumber(){
             $tax = Account::find($id);
             if (isset($tax)) {
                 $this->tax_rate[$key] = $tax->rate;
+                $this->hs_code[$key] = $tax->hs_code;
             }else{
                 $this->tax_rate[$key] = "";
+                $this->hs_code[$key] = "";
             }
            
         }
@@ -497,6 +501,7 @@ public function quotationNumber(){
                     $tax = Account::find($product->tax_id);
                     if (isset($tax)) {
                         $this->tax_rate[$this->item_key] = $tax->rate;
+                        $this->hs_code[$this->item_key] = $tax->hs_code;
                     }
                     
                 }  
@@ -701,6 +706,9 @@ public function quotationNumber(){
             }
             if (isset($this->tax_rate[$key])) {
                 $quotation_item->tax_rate = $this->tax_rate[$key];
+            }
+            if (isset($this->hs_code[$key])) {
+                $quotation_item->hs_code = $this->hs_code[$key];
             }
             if (isset($this->qty[$key])) {
                 $quotation_item->qty = $this->qty[$key];
