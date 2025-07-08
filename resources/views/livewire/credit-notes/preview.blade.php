@@ -65,32 +65,32 @@
                     </header>
                 <main>
                     <div class="row contacts">
-                        <div class="col invoice-to">
-                            <div class="text-gray-light">BILL TO:</div>
-                            <h4 class="to">{{$credit_note->customer ? $credit_note->customer->name : ""}}</h4>
-                          
-                            <div class="address" >
-                                @if (isset($credit_note->customer->street_address) || isset($credit_note->customer->suburb))
-                                 {{$credit_note->customer ? $credit_note->customer->street_address : ""}} {{$credit_note->customer ? $credit_note->customer->suburb : ""}}, <br>  
-                                @endif
-                                 {{$credit_note->customer ? $credit_note->customer->city : ""}} {{$credit_note->customer ? $credit_note->customer->country : ""}}
-                            </div>
-                            
-                            @if (isset($credit_note->customer->email))
-                            <div class="email"><a href="mailto:{{$credit_note->customer->email}}">{{$credit_note->customer->email}}</a></div>
-                            @endif
-                            
-                            <div class="email">
-                                @if (isset($credit_note->customer->vat_number))
-                                    VAT No.: {{$credit_note->customer ? $credit_note->customer->vat_number : ""}}
-                                @endif
-                            </div>
-                            <div class="email">
-                                @if (isset($credit_note->customer->tin_number))
-                                    TIN.: {{$credit_note->customer ? $credit_note->customer->tin_number : ""}}
-                                @endif
-                            </div>
-                        </div>
+                       <div class="col invoice-to">
+                                    <div class="text-gray-light">BILL TO:</div>
+                                    <h4 class="to">Customer Name: {{$credit_note->customer ? $credit_note->customer->name : ""}}</h4>
+                                  
+                                    <div class="address" >
+                                        Customer Address:
+                                        @if (isset($credit_note->customer->street_address) || isset($credit_note->customer->suburb))
+                                         {{$credit_note->customer ? $credit_note->customer->street_address : ""}} {{$credit_note->customer ? $credit_note->customer->suburb : ""}}, <br>  
+                                        @endif
+                                         {{$credit_note->customer ? $credit_note->customer->city : ""}} {{$credit_note->customer ? $credit_note->customer->country : ""}}
+                                    </div>
+                                    
+                                    @if (isset($credit_note->customer->email))
+                                    <div class="email">Customer Email: <a href="mailto:{{$credit_note->customer->email}}">{{$credit_note->customer->email}}</a></div>
+                                    @endif
+                                    @if (isset($credit_note->customer->phonenumber))
+                                    <div class="email">Customer Phonenumber: <a href="mailto:{{$credit_note->customer->phonenumber}}">{{$credit_note->customer->phonenumber}}</a></div>
+                                    @endif
+                                    
+                                    <div class="email">
+                                       VAT No.: {{$credit_note->customer ? $credit_note->customer->vat_number : ""}}
+                                    </div>
+                                    <div class="email">
+                                       TIN.: {{$credit_note->customer ? $credit_note->customer->tin_number : ""}}
+                                    </div>
+                                </div>
                         <div class="col invoice-details">
                             @if (Auth::user()->employee->company->fiscalize == TRUE)
                             <div class="date" style="padding-bottom: 3px"> <strong>Document No.:</strong> {{$credit_note->credit_note_number}}</div>
@@ -220,7 +220,7 @@
                     <br>
                     @if ($credit_note->credit_note_reason)
                     <div class="notices">
-                        <div><strong>Reason</strong></div>
+                        <div><strong>REASON FOR CREDIT: </strong></div>
                         <div class="notice">{{$credit_note->credit_note_reason}}</div>
                     </div>
                     @endif
