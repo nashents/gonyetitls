@@ -94,7 +94,7 @@
                             </div>
                             <div class="email">
                                 
-                                <strong>Customer TIN No:</strong> {{$credit_note->customer ? $credit_note->customer->tin_number : ""}}
+                                <strong>Customer TINs No:</strong> {{$credit_note->customer ? $credit_note->customer->tin_number : ""}}
                                 
                             </div>
                         </div>

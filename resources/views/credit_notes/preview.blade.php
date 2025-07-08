@@ -8,7 +8,7 @@
 @endif
 @endsection
 @section('title')
-Credit Note Preview |@if (Auth::user()->employee->company)
+Credit Note | @if (Auth::user()->employee->company)
 {{Auth::user()->employee->company->name}}
 @elseif (Auth::user()->company)
 {{Auth::user()->company->name}}
