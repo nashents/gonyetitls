@@ -1,82 +1,79 @@
 <div>
     <div id="invoice">
+        <x-loading/>
         <div class="toolbar hidden-print">
             <div class="text-end">
-                <button type="button" onclick="goBack()" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-arrow-left"></i> Back</button>
-                {{-- <a href="{{route('credit_notes.print',$credit_note->id)}}" class="btn btn-danger"><i class="fa fa-envelope"></i> Send</a> --}}
+                <button type="button" onclick="goBack()" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-arrow-left" style="color:black"></i> Back</button>
+                {{-- <a href="#" wire:click="sendEmail({{$credit_note->id}})" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-envelope" style="color:red"></i> Send</a> --}}
                 <a href="{{route('credit_notes.print',$credit_note->id)}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-print" style="color:black"></i> Print</a>
-                <a href="{{route('credit_notes.pdf', $credit_note->id)}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-file-pdf-o"  style="color:red"></i> Export as PDF</a>
+                <a href="{{route('credit_notes.pdf', $credit_note->id)}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-file-pdf-o" style="color:red"></i> Export as PDF</a>
             </div>
             <hr>
         </div>
         <div class="invoice overflow-auto">
             <div style="min-width: 600px">
                 <header>
-                    <header>
-                        <div class="row">
-                            <div class="col">
-                                <a href="javascript:;">
-                                                <img src="{{asset('images/uploads/'.$company->logo)}}" width="200" alt="">
-                                            </a>
+                    <div class="row">
+                        <div class="col">
+                            <a href="javascript:;">
+                                            <img src="{{asset('images/uploads/'.$company->logo)}}" width="200" alt="">
+                                        </a>
+                        </div>
+                        <div class="col company-details">
+                          
+                            <h4 class="name" >
+                                <a target="_blank" href="javascript:;" style="color:  {{$company->color ? $company->color : "#000000" }}">
+                                    {{$company->name}}
+                                </a>
+                            </h4>
+                            <div>{{$company->street_address}} {{$company->suburb}} <br>
+                                {{$company->city}}, {{$company->country}}</div>
+                            <div>
+                                {{$company->phonenumber}}
+                                @if ($company->second_phonenumber)
+                                | {{$company->second_phonenumber}}
+                                @endif
+                                @if ($company->third_phonenumber)
+                                | {{$company->third_phonenumber}}
+                                @endif
                             </div>
-                            <div class="col company-details">
-                              
-                                <h4 class="name" >
-                                    <a target="_blank" href="javascript:;" style="color:  {{Auth::user()->employee->company ? Auth::user()->employee->company->color : Auth::user()->company->color }}">
-                                        {{$company->name}}
-                                    </a>
-                                </h4>
-                                <div>{{$company->street_address}}, {{$company->suburb}}, {{$company->city}} {{$company->country}}</div>
-                                <div>
-                                    {{$company->phonenumber}}
-                                    @if ($company->second_phonenumber)
-                                    | {{$company->second_phonenumber}}
-                                    @endif
-                                    @if ($company->third_phonenumber)
-                                    | {{$company->third_phonenumber}}
-                                    @endif
-                                </div>
-                              
-                                
-                                <div>{{$company->email}}</div>
-                                @if ($company->second_email)
-                                <div>{{$company->second_email}}</div>
-                                @endif
-                                @if ($company->third_email)
-                                <div>{{$company->third_email}}</div>
-                                <br>
-                                @endif
-                                <div>
-                                    @if (isset($company->vat_number))
-                                        VAT No.: {{$company->vat_number}}
-                                    @endif
-                                </div>
-                                <div>
-                                    @if (isset($company->tin_number))
-                                        TIN.: {{$company->tin_number}}
-                                    @endif
-                                </div>
+                          
+                            <div>{{$company->email}}</div>
+                            @if ($company->second_email)
+                            <div>{{$company->second_email}}</div>
+                            @endif
+                            @if ($company->third_email)
+                            <div>{{$company->third_email}}</div>
+                            <br>
+                            @endif
+                            <div>
+                                VAT No.: {{$company->vat_number}}
+                            </div>
+                            <div>
+                                TIN.: {{$company->tin_number}}
                             </div>
                         </div>
-                      
-                        <div style="padding-top: 25px; padding-bottom:15px">
-                            <center><h2>CREDIT NOTE </h2>  </center>
-                        </div>  
-                    </header>
+                    </div>
+                  
+                    <div style="padding-top: 25px; padding-bottom:15px">
+                        <center><h2>CREDIT NOTE</h2></center>
+                    </div>
+                
+                </header>
                 <main>
                     <div class="row contacts">
                         <div class="col invoice-to" >
                             <div class="text-gray-light">BILL TO:</div>
-                            <h4 class="to"> <strong>Customer Name: </strong> {{$credit_note->customer ? $credit_note->customer->name : ""}}</h4>
-                            
+                            <h6 class="to"> <strong>Customer Name: </strong> {{$credit_note->customer ? $credit_note->customer->name : ""}}</h6>
+                          
                             <div class="address" >
                                 <strong>Customer Address: </strong>
                                 @if (isset($credit_note->customer->street_address) || isset($credit_note->customer->suburb))
-                                    {{$credit_note->customer ? $credit_note->customer->street_address : ""}} {{$credit_note->customer ? $credit_note->customer->suburb : ""}}, <br>  
+                                 {{$credit_note->customer ? $credit_note->customer->street_address : ""}} {{$credit_note->customer ? $credit_note->customer->suburb : ""}}, <br>  
                                 @endif
-                                    {{$credit_note->customer ? $credit_note->customer->city : ""}} {{$credit_note->customer ? $credit_note->customer->country : ""}}
+                                 {{$credit_note->customer ? $credit_note->customer->city : ""}} {{$credit_note->customer ? $credit_note->customer->country : ""}}
                             </div>
-                            
+                         
                             @if (isset($credit_note->customer->email))
                             <div class="email">
                                 <strong>Customer Email: </strong><a href="mailto:{{$credit_note->customer->email}}">{{$credit_note->customer->email}}</a>
@@ -88,14 +85,14 @@
                             </div>
                             @endif
                             <div class="email">
-                                
+                             
                                 <strong>Customer VAT No:</strong> {{$credit_note->customer ? $credit_note->customer->vat_number : ""}}
-                                
+                              
                             </div>
                             <div class="email">
-                                
-                                <strong>Customer TINs No:</strong> {{$credit_note->customer ? $credit_note->customer->tin_number : ""}}
-                                
+                              
+                                <strong>Customer TIN No:</strong> {{$credit_note->customer ? $credit_note->customer->tin_number : ""}}
+                               
                             </div>
                         </div>
                         <div class="col invoice-details">
@@ -113,10 +110,10 @@
                             <div class="date" style="padding-bottom: 3px"><strong>Payment Due:</strong> {{$credit_note->expiry}}</div>
                             @endif
                             <div class="date" style="padding-bottom: 3px"><strong>Currency:</strong> {{$credit_note->currency ? $credit_note->currency->name : ""}}</div>
-                            
                         </div>
                     </div>
-                    <table>
+
+                      <table>
                         <thead>
                             <tr class="text-center">
                                 <th class="text-center"> <strong>HS Code</strong></th>
@@ -226,24 +223,29 @@
                     </table>
                     <br>
                     @if ($credit_note->credit_note_reason)
-                    <div class="notices">
-                        <div><strong>REASON FOR CREDIT: </strong></div>
-                        <div class="notice">{{$credit_note->credit_note_reason}}</div>
-                    </div>
+                        <div class="notices">
+                        <strong>REASON FOR CREDIT: </strong>{{$credit_note->credit_note_reason}}
+                        </div>
                     @endif
                     @if ($credit_note->memo)
-                    <div class="notices">
-                        <div><strong>Terms & Conditions</strong></div>
-                        <div class="notice">{{$credit_note->memo}}</div>
-                    </div>
+                        <div class="notices">
+                            <div><strong>Notes / Terms & Conditions</strong></div>
+                            <div class="notice">{{$credit_note->memo}}</div>
+                        </div>
                     @endif
+                  
+                    <br>
                    
-                    <br>
-                    <br>
                 </main>
              
+                <center> 
+                    <footer style=" bottom: 0px; left: 0px; right: 0px; ">
+                        {{$credit_note->footer}}
+                        <br>
+                        <strong style="font-size: 18px;">Powered By</strong> <img src="{{asset('images/basilmark-logo.png')}}" alt="" style="width: 20%; height:20%">    
+                    </footer>
+                </center>  
             </div>
-            <center> <footer>{{$credit_note->footer}}</footer></center>  
             <!--DO NOT DELETE THIS div. IT is responsible for showing footer always at the bottom-->
             <div></div>
         </div>
