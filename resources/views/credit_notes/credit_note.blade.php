@@ -62,32 +62,39 @@
                         </header>
                         <main>
                             <div class="row contacts" >
-                                <div class="col invoice-to">
-                                    <div class="text-gray-light">BILL TO:</div>
-                                    <h4 class="to">Customer Name: {{$credit_note->customer ? $credit_note->customer->name : ""}}</h4>
-                                  
-                                    <div class="address" >
-                                        Customer Address:
-                                        @if (isset($credit_note->customer->street_address) || isset($credit_note->customer->suburb))
-                                         {{$credit_note->customer ? $credit_note->customer->street_address : ""}} {{$credit_note->customer ? $credit_note->customer->suburb : ""}}, <br>  
+                                   <div class="col invoice-to" >
+                                        <div class="text-gray-light">BILL TO:</div>
+                                        <h4 class="to"> <strong>Customer Name: </strong> {{$credit_note->customer ? $credit_note->customer->name : ""}}</h4>
+                                      
+                                        <div class="address" >
+                                            <strong>Customer Address: </strong>
+                                            @if (isset($credit_note->customer->street_address) || isset($credit_note->customer->suburb))
+                                             {{$credit_note->customer ? $credit_note->customer->street_address : ""}} {{$credit_note->customer ? $credit_note->customer->suburb : ""}}, <br>  
+                                            @endif
+                                             {{$credit_note->customer ? $credit_note->customer->city : ""}} {{$credit_note->customer ? $credit_note->customer->country : ""}}
+                                        </div>
+                                     
+                                        @if (isset($credit_note->customer->email))
+                                        <div class="email">
+                                            <strong>Customer Email: </strong><a href="mailto:{{$credit_note->customer->email}}">{{$credit_note->customer->email}}</a>
+                                        </div>
                                         @endif
-                                         {{$credit_note->customer ? $credit_note->customer->city : ""}} {{$credit_note->customer ? $credit_note->customer->country : ""}}
+                                        @if (isset($credit_note->customer->email))
+                                        <div class="email">
+                                            <strong>Customer Phonenumber: </strong>{{$credit_note->customer->phonenumber}}
+                                        </div>
+                                        @endif
+                                        <div class="email">
+                                         
+                                            <strong>Customer VAT No:</strong> {{$credit_note->customer ? $credit_note->customer->vat_number : ""}}
+                                          
+                                        </div>
+                                        <div class="email">
+                                          
+                                            <strong>Customer TIN No:</strong> {{$credit_note->customer ? $credit_note->customer->tin_number : ""}}
+                                           
+                                        </div>
                                     </div>
-                                    
-                                    @if (isset($credit_note->customer->email))
-                                    <div class="email">Customer Email: <a href="mailto:{{$credit_note->customer->email}}">{{$credit_note->customer->email}}</a></div>
-                                    @endif
-                                    @if (isset($credit_note->customer->phonenumber))
-                                    <div class="email">Customer Phonenumber: <a href="mailto:{{$credit_note->customer->phonenumber}}">{{$credit_note->customer->phonenumber}}</a></div>
-                                    @endif
-                                    
-                                    <div class="email">
-                                       Customer VAT No.: {{$credit_note->customer ? $credit_note->customer->vat_number : ""}}
-                                    </div>
-                                    <div class="email">
-                                       Customer TIN No.: {{$credit_note->customer ? $credit_note->customer->tin_number : ""}}
-                                    </div>
-                                </div>
                            
                                 <div class="col invoice-details"  style="margin-top:-120px;">
                                     @if (Auth::user()->employee->company->fiscalize == TRUE)
@@ -122,10 +129,10 @@
                                 </thead>
                                 <tbody>
                   
-                                    @foreach ($invoice_items as $invoice_item)
+                                    @foreach ($credit_note_items as $credit_note_item)
                                          <tr>
                                              @php
-                                                $tax = App\Models\Account::find($invoice_item->tax_id);
+                                                $tax = App\Models\Account::find($credit_note_item->tax_id);
                                             @endphp
                                             <td class="unit text-center"> 
                                                 @if ($tax && $tax->hs_code)
@@ -133,37 +140,37 @@
                                                 @endif
                                             </td>
                                             <td class="text-center">
-                                                @if ($invoice_item->product)
-                                                <strong>{{$invoice_item->product ? $invoice_item->product->name : ""}}</strong>  <br>
-                                                {{$invoice_item->product ? $invoice_item->product->description : ""}}
-                                                @elseif ($invoice_item->trip)
-                                                {{$invoice_item->description ? $invoice_item->description : $invoice_item->trip_details}}
+                                                @if ($credit_note_item->product)
+                                                <strong>{{$credit_note_item->product ? $credit_note_item->product->name : ""}}</strong>  <br>
+                                                {{$credit_note_item->product ? $credit_note_item->product->description : ""}}
+                                                @elseif ($credit_note_item->trip)
+                                                {{$credit_note_item->description ? $credit_note_item->description : $credit_note_item->trip_details}}
                                                 @endif
                                                    
                                             </td>
-                                            <td class="unit text-center"> {{$invoice_item->qty}}</td>
+                                            <td class="unit text-center"> {{$credit_note_item->qty}}</td>
                                             <td class="unit text-center">
-                                                @if ($invoice_item->amount)
-                                                {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format($invoice_item->amount,2)}}        
+                                                @if ($credit_note_item->amount)
+                                                {{ $credit_note->currency ? $credit_note->currency->symbol : "" }}{{number_format($credit_note_item->amount,2)}}        
                                                 @endif
                                             </td>
                                             <td class="unit text-center">
-                                                @if ($invoice_item->subtotal)
-                                                    {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format($invoice_item->subtotal,2)}}
+                                                @if ($credit_note_item->subtotal)
+                                                    {{ $credit_note->currency ? $credit_note->currency->symbol : "" }}{{number_format($credit_note_item->subtotal,2)}}
                                                 @endif
                                             </td>
         
                                             <td class="unit text-center">
-                                                @if (isset($invoice->tax_amount) && $invoice->tax_amount > 0)
-                                                    {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format($invoice_item->tax_amount,2)}}
+                                                @if (isset($credit_note->tax_amount) && $credit_note->tax_amount > 0)
+                                                    {{ $credit_note->currency ? $credit_note->currency->symbol : "" }}{{number_format($credit_note_item->tax_amount,2)}}
                                                 @else
-                                                    {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format(0,2)}}
+                                                    {{ $credit_note->currency ? $credit_note->currency->symbol : "" }}{{number_format(0,2)}}
                                                 @endif
                                             </td>
                                           
                                             <td class="unit text-center">
-                                                @if (isset($invoice_item->subtotal_incl))
-                                                    {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format($invoice_item->subtotal_incl,2)}}
+                                                @if (isset($credit_note_item->subtotal_incl))
+                                                    {{ $credit_note->currency ? $credit_note->currency->symbol : "" }}{{number_format($credit_note_item->subtotal_incl,2)}}
                                                 @endif
                                             </td>
                                         </tr>
@@ -173,10 +180,10 @@
                                 <tfoot>
                                     <tr>
                                         <td colspan="4"></td>
-                                        <td colspan="2">SUB-TOTAL {{ $invoice->currency ? $invoice->currency->name : "" }} <small>(Excl)</small></td>
+                                        <td colspan="2">SUB-TOTAL {{ $credit_note->currency ? $credit_note->currency->name : "" }} <small>(Excl)</small></td>
                                         <td>  
-                                            @if (isset($invoice->invoice_items))
-                                                {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format($invoice->invoice_items->where('subtotal','!=',Null)->where('subtotal','!=','')->sum('subtotal'),2)}}  
+                                            @if (isset($credit_note->invoice_items))
+                                                {{ $credit_note->currency ? $credit_note->currency->symbol : "" }}{{number_format($credit_note->invoice_items->where('subtotal','!=',Null)->where('subtotal','!=','')->sum('subtotal'),2)}}  
                                             @endif
                                         </td>
                                     </tr>
@@ -185,33 +192,33 @@
                                         <td colspan="2">VAT TOTAL</td>
                                          
                                         <td>
-                                            @if (isset($invoice->tax_amount) && $invoice->tax_amount > 0) 
-                                            {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format($invoice->tax_amount,2)}}
+                                            @if (isset($credit_note->tax_amount) && $credit_note->tax_amount > 0) 
+                                            {{ $credit_note->currency ? $credit_note->currency->symbol : "" }}{{number_format($credit_note->tax_amount,2)}}
                                             @else
-                                            {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format(0,2)}}
+                                            {{ $credit_note->currency ? $credit_note->currency->symbol : "" }}{{number_format(0,2)}}
                                             @endif
                                         </td>
                                     </tr>
-                                     @if ($invoice->discount)
+                                     @if ($credit_note->discount)
                                         <tr>
                                             <td colspan="4"></td>
-                                            <td colspan="2">DISCOUNT {{$invoice->discount->description}}</td>
+                                            <td colspan="2">DISCOUNT {{$credit_note->discount->description}}</td>
                                             
                                             <td>
-                                                @if ($invoice->discount->unit == "currency")
-                                                    {{$invoice->currency ? $invoice->currency->symbol : ""}}{{number_format($invoice->discount->amount ? $invoice->discount->amount : 0,2)}}
-                                                    @elseif($invoice->discount->unit == "percentage")
-                                                    {{number_format($invoice->discount->amount ? $invoice->discount->amount : 0,2)}} %
+                                                @if ($credit_note->discount->unit == "currency")
+                                                    {{$credit_note->currency ? $credit_note->currency->symbol : ""}}{{number_format($credit_note->discount->amount ? $credit_note->discount->amount : 0,2)}}
+                                                    @elseif($credit_note->discount->unit == "percentage")
+                                                    {{number_format($credit_note->discount->amount ? $credit_note->discount->amount : 0,2)}} %
                                                     @endif 
                                             </td>
                                         </tr>
                                     @endif
                                     <tr>
                                         <td colspan="4"></td>
-                                        <td colspan="2">CREDIT NOTE TOTAL {{ $invoice->currency ? $invoice->currency->name : "" }} </td>
+                                        <td colspan="2">CREDIT NOTE TOTAL {{ $credit_note->currency ? $credit_note->currency->name : "" }} </td>
                                         <td>
                                             @if ($credit_note->total)
-                                                  {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format($credit_note->total,2)}}
+                                                  {{ $credit_note->currency ? $credit_note->currency->symbol : "" }}{{number_format($credit_note->total,2)}}
                                             @endif
                                         </td>
                                     </tr>
