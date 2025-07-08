@@ -109,12 +109,13 @@ WithBatchInserts
 
         foreach ($rows as $row) {
             if ($row->filter()->isNotEmpty()) {
-                
+
                 $customer = Customer::where('name', $row->get('customer'))->first();
                 $horse = Horse::where('fleet_number', $row->get('horse'))->first();
                 $cargo = Cargo::where('name', $row->get('cargo'))->first();
 
                 $employee = Employee::where('surname', $row->get('driver'))->first();
+                
                 $driver = $employee?->driver;
 
                 $date = $this->parseExcelDate($row->get('date'))?->format('Y-m-d');

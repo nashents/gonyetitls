@@ -417,7 +417,7 @@ class Create extends Component
                 if (isset($this->selectedTax[$key])) {
                     $bill_expense->tax_id = $this->selectedTax[$key];
                 }
-                if (is_numeric($this->amount[$key]) && is_numeric($this->qty[$key])) {
+                if ((isset($this->amount[$key]) && is_numeric($this->amount[$key])) && (isset($this->qty[$key]) && is_numeric($this->qty[$key]))) {
                     $expense_subtotal = $this->amount[$key]*$this->qty[$key];
                     $bill_expense->subtotal = $expense_subtotal;
                     $this->subtotal = $this->subtotal + $expense_subtotal;
