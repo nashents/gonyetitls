@@ -69,11 +69,17 @@ class CreditNoteController extends Controller
     }
 
     public function generatePDF($id){
-      $credit_note = CreditNote::find($id);
+        $credit_note = CreditNote::find($id);
+        $invoice = $credit_note->invoice;
+        $invoice_items = $invoice->invoice_items;
+        $credit_note_items = $credit_note->credit_note_items;
+        $company = $credit_note->company;
         $data = [
             'credit_note' => $credit_note,
-            'credit_note_items' => $credit_note->credit_note_items,
-            'company' =>  $company = $credit_note->company
+            'invoice' => $invoice,
+            'invoice_items' => $invoice_items,
+            'company' => $company,
+            'credit_note_items' => $credit_note_items,
         ];
         $pdf = PDF::loadView('credit_notes.credit_note', $data);
 
