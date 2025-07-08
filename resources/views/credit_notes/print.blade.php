@@ -96,10 +96,10 @@ Credit Note Print |@if (Auth::user()->employee->company)
                                     @endif
                                     
                                     <div class="email">
-                                       VAT No.: {{$credit_note->customer ? $credit_note->customer->vat_number : ""}}
+                                       Customer VAT No.: {{$credit_note->customer ? $credit_note->customer->vat_number : ""}}
                                     </div>
                                     <div class="email">
-                                       TIN.: {{$credit_note->customer ? $credit_note->customer->tin_number : ""}}
+                                       Customer TIN No.: {{$credit_note->customer ? $credit_note->customer->tin_number : ""}}
                                     </div>
                                 </div>
                                 <div class="col invoice-details">
