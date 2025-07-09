@@ -232,6 +232,7 @@ class Create extends Component
     public $starting_mileage;
     public $ending_mileage;
     public $starting_hours;
+    public $hours;
     public $ending_hours;
     public $distance;
     public $trip_fuel;
@@ -1558,8 +1559,9 @@ class Create extends Component
                         $fuel->amount = $this->fuel_amount;
                         $fuel->transporter_price = $this->transporter_price;
                         $fuel->transporter_total = $this->transporter_total;
-                        $fuel->profit = $this->fuel_profit;
+                        $fuel->hours = $this->fuel_profit;
                         $fuel->odometer = $this->odometer;
+                        $fuel->odometer = $this->hours;
                         $fuel->category = $this->fuel_category;
                         $fuel->exchange_amount = $this->fuel_exchange_amount;
                         $fuel->exchange_rate = $this->fuel_exchange_rate;

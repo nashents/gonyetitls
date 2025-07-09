@@ -75,6 +75,7 @@ class Edit extends Component
     public $ending_mileage;
     public $starting_hours;
     public $ending_hours;
+    public $hours;
     public $exchange_rate;
     public $exchange_customer_freight;
     public $exchange_transporter_freight;
@@ -1801,6 +1802,7 @@ class Edit extends Component
                     $fuel->transporter_total = $this->transporter_total;
                     $fuel->profit = $this->fuel_profit;
                     $fuel->odometer = $this->odometer;
+                    $fuel->odometer = $this->hours;
                     $fuel->category = $this->fuel_category;
                     $fuel->exchange_amount = $this->fuel_exchange_amount;
                     $fuel->exchange_rate = $this->fuel_exchange_rate;
@@ -1888,6 +1890,7 @@ class Edit extends Component
                 $fuel->transporter_total = $this->transporter_total;
                 $fuel->profit = $this->fuel_profit;
                 $fuel->odometer = $this->odometer;
+                 $fuel->odometer = $this->hours;
                 $fuel->category = $this->fuel_category;
                 $fuel->exchange_amount = $this->fuel_exchange_amount;
                 $fuel->exchange_rate = $this->fuel_exchange_rate;
