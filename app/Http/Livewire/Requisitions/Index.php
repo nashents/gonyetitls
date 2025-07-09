@@ -226,7 +226,6 @@ class Index extends Component
         $this->employees = Employee::where('archive', 0)->where('status',1)->orderBy('surname','asc')->get()->sortBy('name');
         $this->departments = Department::orderBy('name','asc')->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
-        $this->expenses = Expense::orderBy('name','asc')->get();
         $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name','Expenses');
         })->orderBy('name','asc')->get();
@@ -291,9 +290,25 @@ class Index extends Component
 
     }
 
+      public function refresh($category){
+
+        if($category == "products"){
+           $this->products = Product::where('buy',True)->where('status',True)->orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Products Refreshed Successfully!!."
+            ]);
+        }elseif ($category == "expenses") {
+            $this->expenses = Expense::orderBy('name','asc')->where('status',1)->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Expenses Refreshed Successfully!!."
+            ]);
+        }
+    }
    
     
-   public function showItem($key){
+    public function showItem($key){
         $this->item_key = $key;
         $this->dispatchBrowserEvent('show-product_serviceModal');
     }
@@ -637,8 +652,8 @@ class Index extends Component
         $user = Auth::user();
         $employee = $user->employee;
       
-        $this->expenses = Expense::orderBy('name','asc')->get();
-        $this->products = Product::where('buy',True)->orderBy('name','asc')->get();
+        $this->expenses = Expense::orderBy('name','asc')->where('status',1)->get();
+        $this->products = Product::where('buy',True)->where('status',True)->orderBy('name','asc')->get();
         $employee_departments = $employee->departments;
         foreach($employee_departments as $department){
             $department_names[] = $department->name;

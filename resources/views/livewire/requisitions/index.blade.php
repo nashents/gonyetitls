@@ -503,7 +503,10 @@
                                                 </option> 
                                             @endforeach
                                         </select>
-                                          <small><a href="#" wire:click.prevent="showItem({{0}})"><i class="fa fa-plus-square-o"></i> New Product / Service</a></small> 
+                                            <small>
+                                                <a href="{{route('product_services.all',['category' => 'bills'])}}" target="_blank"><i class="fa fa-plus-square-o"></i> New Product / Service</a>
+                                                <a href="#" wire:click.prevent="refresh('products')"  style="float: right; margin-top:5px;"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                            </small> 
                                         @error('selectedProduct.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 @endif
@@ -551,7 +554,10 @@
                                                 </option> 
                                             @endforeach
                                         </select>
-                                         <small><a href="#" wire:click.prevent="showItem({{$value}})"><i class="fa fa-plus-square-o"></i> New Product / Service</a></small> 
+                                        <small>
+                                            <a href="{{route('product_services.all',['category' => 'bills'])}}" target="_blank"><i class="fa fa-plus-square-o"></i> New Product / Service</a>
+                                            <a href="#" wire:click.prevent="refresh('products')"  style="float: right; margin-top:5px;"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                        </small> 
                                         @error('selectedProduct.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 @endif
@@ -805,7 +811,7 @@
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fas fa-plus"></i> New Product / Service<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                 </div>
-                <form wire:submit.prevent="storeItem()" >
+                <form >
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-md-6">
@@ -912,7 +918,7 @@
                 <div class="modal-footer">
                     <div class="btn-group" role="group">
                         <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
-                        <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Save</button>
+                        <button wire:click.prevent="storeItem()" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Save</button>
                     </div>
                     <!-- /.btn-group -->
                 </div>

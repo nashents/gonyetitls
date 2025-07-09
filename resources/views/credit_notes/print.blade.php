@@ -131,7 +131,7 @@ Credit Note | @if (Auth::user()->employee->company)
                                     <th class="text-center"><strong>Qty</strong></th>
                                     <th class="text-center"><strong>Price</strong></th>
                                     <th class="text-center"><strong>Total</strong><small>(Excl)</small></th>
-                                    <th class="text-center"><strong>VAT AMT</strong></th>
+                                    <th class="text-center"><strong>VAT Amount</strong></th>
                                     <th class="text-center"><strong>Total</strong><small>(Incl)</small></th>
                                 </tr>
                             </thead>
