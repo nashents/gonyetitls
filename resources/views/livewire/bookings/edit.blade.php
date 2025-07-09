@@ -7,61 +7,36 @@
                     <div class="panel">
                     
                         <div class="panel-body">
-
                             <form wire:submit.prevent="update()" class="p-20" enctype="multipart/form-data">
-                                        <h5 class="underline mt-30">Booking For ?</h5>
-                                        <div class="mb-10">
-                                            <input type="radio" wire:model.debounce.300ms="type" value="Asset"  class="line-style"  />
-                                            <label for="one" class="radio-label">Asset</label>
-                                            <input type="radio" wire:model.debounce.300ms="type" value="Horse"  class="line-style"  />
-                                            <label for="one" class="radio-label">Horse</label>
-                                            <input type="radio" wire:model.debounce.300ms="type" value="Trailer"  class="line-style"  />
-                                            <label for="one" class="radio-label">Trailer</label>
-                                            <input type="radio" wire:model.debounce.300ms="type" value="Vehicle"  class="line-style" />
-                                            <label for="one" class="radio-label">Vehicle</label>
-                                        </div>      
-                                        <hr>
-                                  
-                              
+                                
+                            <h5 class="underline mt-30">Booking For ?</h5>
+                                <div class="mb-10">
+                                    <input type="radio" wire:model.debounce.300ms="type" value="Asset"  class="line-style"  />
+                                    <label for="one" class="radio-label">Asset</label>
+                                    <input type="radio" wire:model.debounce.300ms="type" value="Horse"  class="line-style"  />
+                                    <label for="one" class="radio-label">Horse</label>
+                                    <input type="radio" wire:model.debounce.300ms="type" value="Trailer"  class="line-style"  />
+                                    <label for="one" class="radio-label">Trailer</label>
+                                    <input type="radio" wire:model.debounce.300ms="type" value="Vehicle"  class="line-style" />
+                                    <label for="one" class="radio-label">Vehicle</label>
+                                </div>      
+                                <hr>
+                             
                                 <div class="row">
                                     <div class="col-md-4">
                                         @if ($type == "Horse")
-                                            <div class="form-group">
-                                                <label for="exampleInputEmail13">Horses<span class="required" style="color: red">*</span></label>
-                                                <input type="text" wire:model.debounce.300ms="searchHorse" placeholder="Search horse..." class="form-control" >
-                                                <select wire:model.debounce.300ms="selectedHorse" class="form-control" required size="4">
-                                                    <option value="">Select Horse </option>
-                                                    @foreach ($horses as $horse)
-                                                        <option value="{{$horse->id}}">{{$horse->registration_number}} {{$horse->horse_make ? $horse->horse_make->name : ""}} {{$horse->horse_model ? $horse->horse_model->name : ""}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}}</option>
-                                                    @endforeach
-                                                </select>
-                                                @error('selectedHorse') <span class="text-danger error">{{ $message }}</span>@enderror
-                                            </div>
-                                        @elseif($type == "Trailer")
-                                            <div class="form-group">
-                                                <label for="exampleInputEmail13">Trailers<span class="required" style="color: red">*</span></label>
-                                                <input type="text" wire:model.debounce.300ms="searchTrailer" placeholder="Search trailer..." class="form-control" >
-                                                <select wire:model.debounce.300ms="trailer_id" class="form-control" required size="4">
-                                                    <option value="">Select Trailer</option>
-                                                    @foreach ($trailers as $trailer)
-                                                        <option value="{{$trailer->id}}">{{$trailer->registration_number}} {{$trailer->make}} {{$trailer->model}} {{$trailer->fleet_number ? "(".$trailer->fleet_number.")" : ""}}</option>
-                                                    @endforeach
-                                                </select>
-                                                @error('trailer_id') <span class="text-danger error">{{ $message }}</span>@enderror
-                                            </div>
-                                        @elseif($type == "Vehicle")
-                                            <div class="form-group">
-                                                <label for="exampleInputEmail13">Vehicles<span class="required" style="color: red">*</span></label>
-                                                <input type="text" wire:model.debounce.300ms="searchVehicle" placeholder="Search vehicle..." class="form-control" >
-                                                <select wire:model.debounce.300ms="selectedVehicle" class="form-control" required size="4">
-                                                    <option value="">Select Vehicle</option>
-                                                    @foreach ($vehicles as $vehicle)
-                                                        <option value="{{$vehicle->id}}">{{$vehicle->registration_number}} {{$vehicle->vehicle_make ? $vehicle->vehicle_make->name : ""}} {{$vehicle->vehicle_model ? $vehicle->vehicle_model->name : ""}} {{$vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : ""}}</option>
-                                                    @endforeach
-                                                </select>
-                                                @error('selectedVehicle') <span class="text-danger error">{{ $message }}</span>@enderror
-                                            </div>
-                                        @elseif($type == "Asset")
+                                        <div class="form-group">
+                                            <label for="exampleInputEmail13">Horses<span class="required" style="color: red">*</span></label>
+                                            <input type="text" wire:model.debounce.300ms="searchHorse" placeholder="Search horse..." class="form-control" >
+                                            <select wire:model.debounce.300ms="selectedHorse" class="form-control" required size="4">
+                                                <option value="">Select Horse </option>
+                                                @foreach ($horses as $horse)
+                                                    <option value="{{$horse->id}}">{{$horse->registration_number}} {{$horse->horse_make ? $horse->horse_make->name : ""}} {{$horse->horse_model ? $horse->horse_model->name : ""}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('selectedHorse') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                        @elseif ($type == "Asset")
                                         <div class="form-group">
                                             <label for="exampleInputEmail13">Assets<span class="required" style="color: red">*</span></label>
                                             <input type="text" wire:model.debounce.300ms="searchAsset" placeholder="Search vehicle..." class="form-control" >
@@ -72,6 +47,30 @@
                                                 @endforeach
                                             </select>
                                             @error('selectedAsset') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                        @elseif ($type == "Vehicle")
+                                        <div class="form-group">
+                                            <label for="exampleInputEmail13">Vehicles<span class="required" style="color: red">*</span></label>
+                                            <input type="text" wire:model.debounce.300ms="searchVehicle" placeholder="Search vehicle..." class="form-control" >
+                                            <select wire:model.debounce.300ms="selectedVehicle" class="form-control" required size="4">
+                                                <option value="">Select Vehicle</option>
+                                                @foreach ($vehicles as $vehicle)
+                                                    <option value="{{$vehicle->id}}">{{$vehicle->registration_number}} {{$vehicle->vehicle_make ? $vehicle->vehicle_make->name : ""}} {{$vehicle->vehicle_model ? $vehicle->vehicle_model->name : ""}} {{$vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : ""}}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('selectedVehicle') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                        @elseif ($type == "Trailer")
+                                        <div class="form-group">
+                                            <label for="exampleInputEmail13">Trailers<span class="required" style="color: red">*</span></label>
+                                            <input type="text" wire:model.debounce.300ms="searchTrailer" placeholder="Search trailer..." class="form-control" >
+                                            <select wire:model.debounce.300ms="selectedTrailer" class="form-control" required size="4">
+                                                <option value="">Select Trailer</option>
+                                                @foreach ($trailers as $trailer)
+                                                    <option value="{{$trailer->id}}">{{$trailer->registration_number}} {{$trailer->make}} {{$trailer->model}} {{$trailer->fleet_number ? "(".$trailer->fleet_number.")" : ""}}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('selectedTrailer') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                         @endif
                                     </div>

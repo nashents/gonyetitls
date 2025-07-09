@@ -25,6 +25,7 @@ use Maatwebsite\Excel\Excel;
 use App\Exports\ShiftsExport;
 use App\Imports\ShiftsImport;
 use Livewire\WithFileUploads;
+use App\Imports\ShiftTripsImport;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Session;
@@ -127,6 +128,7 @@ class Index extends Component
     public $closing_employee_id;
     public $fuel_id;
     public $importFile;
+    public $shift_tripsimportFile;
 
 
     private function resetInputFields(){
@@ -351,6 +353,21 @@ class Index extends Component
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
             'message'=>"Shift(s) Imported Successfully!!"
+        ]);
+
+        return redirect(request()->header('Referer'));
+    }
+        
+    public function importShiftTrips(){
+      
+        $file = $this->shift_tripsimportFile;
+        $import = new ShiftTripsImport($this->for);
+        $import->import($file);
+
+        $this->dispatchBrowserEvent('hide-shiftsImportModal');
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Shift Trips(s) Imported Successfully!!"
         ]);
 
         return redirect(request()->header('Referer'));

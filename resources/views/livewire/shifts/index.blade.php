@@ -43,7 +43,8 @@
                             </div>
                             <div class="panel-title">
                                 <a href="" data-toggle="modal" data-target="#shiftModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Shift</a>
-                                <a href="" data-toggle="modal" data-target="#shiftsImportModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import</a>
+                                <a href="" data-toggle="modal" data-target="#shiftsImportModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import Shifts</a>
+                                <a href="" data-toggle="modal" data-target="#shiftTripsImportModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import Shift Trips</a>
                                 <a href="#" wire:click="exportShiftsExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
                                 <a href="#" wire:click="exportShiftsCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
                                 <a href="#" wire:click="exportShiftsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
@@ -201,6 +202,33 @@
                         </div>
                     </div>
                  
+                </div>
+                <div class="modal-footer">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                        <button  type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-upload"></i>Upload</button>
+                    </div>
+                    <!-- /.btn-group -->
+                </div>
+            </form>
+            </div>
+        </div>
+    </div>
+   
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="shiftTripsImportModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modal4Label"><i class="fa fa-upload"></i>Import Shift Trip(s) <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                </div>
+                <form wire:submit.prevent="importShiftTrips()" method="POST" enctype="multipart/form-data">
+                  
+                <div class="modal-body">
+                   <div class="form-group">
+                        <label for="name">Upload Shift(s) Excel File</label>
+                        <input type="file" class="form-control" wire:model.debounce.300ms="shift_tripsimportFile"placeholder="Upload Shifts File" required>
+                        @error('shift_tripsimportFile') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">
