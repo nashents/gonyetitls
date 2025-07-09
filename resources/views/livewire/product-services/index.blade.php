@@ -124,8 +124,9 @@
                         </div>
                     </div>
                     <div class="row">
-                        @if (!is_null($sell) && $sell == True)
+                       
                         <div class="col-md-6">
+                             @if (!is_null($sell) && $sell == True)
                             <div class="form-group">
                                 <label for="subheading">Income Accounts<span class="required" style="color: red">*</span></label>
                                 <select wire:model.debounce.300ms="income_account_id" class="form-control" required>
@@ -136,10 +137,12 @@
                                     </select>
                                 @error('income_account_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
+                             @endif
                         </div>
-                        @endif
-                        @if (!is_null($buy) && $buy == True)
+                       
+                       
                         <div class="col-md-6">
+                             @if (!is_null($buy) && $buy == True)
                             <div class="form-group">
                                 <label for="subheading">Expense Accounts<span class="required" style="color: red">*</span></label>
                                 <select wire:model.debounce.300ms="expense_account_id" class="form-control" required>
@@ -150,8 +153,9 @@
                                     </select>
                                 @error('expense_account_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
+                             @endif
                         </div>
-                        @endif
+                       
                        
                     </div>
                     <div class="row">
@@ -238,8 +242,9 @@
                         </div>
                     </div>
                     <div class="row">
-                        @if (!is_null($sell) && $sell == True)
+                       
                         <div class="col-md-6">
+                             @if (!is_null($sell) && $sell == True)
                             <div class="form-group">
                                 <label for="subheading">Income Accounts<span class="required" style="color: red">*</span></label>
                                 <select wire:model.debounce.300ms="income_account_id" class="form-control" required>
@@ -250,10 +255,12 @@
                                     </select>
                                 @error('income_account_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
+                            @endif
                         </div>
-                        @endif
-                        @if (!is_null($buy) && $buy == True)
+                      
+                      
                         <div class="col-md-6">
+                              @if (!is_null($buy) && $buy == True)
                             <div class="form-group">
                                 <label for="subheading">Expense Accounts<span class="required" style="color: red">*</span></label>
                                 <select wire:model.debounce.300ms="expense_account_id" class="form-control" required>
@@ -264,8 +271,9 @@
                                     </select>
                                 @error('expense_account_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
+                               @endif
                         </div>
-                        @endif
+                     
                        
                     </div>
                     <div class="row">

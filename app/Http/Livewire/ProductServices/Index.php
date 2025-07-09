@@ -23,8 +23,8 @@ class Index extends Component
     public $expense_accounts;
     public $expense_account_id;
     public $category;
-    public $buy = false;
-    public $sell = false;
+    public $buy;
+    public $sell;
     public $price;
     public $sell_price;
     public $description;
@@ -32,8 +32,10 @@ class Index extends Component
     public function mount($category){
         $this->category = $category;
         if ($category == "invoices") {
+            $this->sell = True;
             $this->products = Product::where('sell',True)->orderBy('name','asc')->get();
         }elseif ($category == "bills") {
+            $this->buy = True;
             $this->products = Product::where('buy',True)->orderBy('name','asc')->get();
         }
        
@@ -148,8 +150,10 @@ class Index extends Component
     {
 
         if ($this->category == "invoices") {
+             $this->sell = True;
             $this->products = Product::where('sell',True)->orderBy('name','asc')->get();
         }elseif ($this->category == "bills") {
+             $this->buy = True;
             $this->products = Product::where('buy',True)->orderBy('name','asc')->get();
         }
         return view('livewire.product-services.index',[
