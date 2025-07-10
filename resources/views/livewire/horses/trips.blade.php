@@ -121,10 +121,10 @@
                 @endif
                 @if ($company->rates_managed_by_finance == True)
                                             @if (in_array('Finance', $department_names) ||  in_array('Super Admin', $role_names))
-                                                <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                                <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight : 0,2)}}</td>
                                             @endif
                                         @else
-                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight : 0,2)}}</td>
                                         @endif
                  <td class="w-10 line-height-35 table-dropdown">
                     <div class="dropdown">
@@ -221,10 +221,10 @@
                 @endif
                    @if ($company->rates_managed_by_finance == True)
                                             @if (in_array('Finance', $department_names) ||  in_array('Super Admin', $role_names))
-                                                <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                                <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight: 0,2)}}</td>
                                             @endif
                                         @else
-                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight: 0,2)}}</td>
                                         @endif
                  <td class="w-10 line-height-35 table-dropdown">
                     <div class="dropdown">
@@ -326,10 +326,10 @@
             
                @if ($company->rates_managed_by_finance == True)
                                             @if (in_array('Finance', $department_names) ||  in_array('Super Admin', $role_names))
-                                                <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                                <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight: 0,2)}}</td>
                                             @endif
                                         @else
-                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight: 0,2)}}</td>
                                         @endif
              <td class="w-10 line-height-35 table-dropdown">
                 <div class="dropdown">
@@ -431,10 +431,10 @@
                
                 @if ($company->rates_managed_by_finance == True)
                                             @if (in_array('Finance', $department_names) ||  in_array('Super Admin', $role_names))
-                                                <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                                <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight: 0,2)}}</td>
                                             @endif
                                         @else
-                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight: 0,2)}}</td>
                                         @endif
                 
                  <td class="w-10 line-height-35 table-dropdown">
@@ -536,10 +536,10 @@
                 @endif
                   @if ($company->rates_managed_by_finance == True)
                                             @if (in_array('Finance', $department_names) ||  in_array('Super Admin', $role_names))
-                                                <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                                <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight: 0,2)}}</td>
                                             @endif
                                         @else
-                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight: 0,2)}}</td>
                                         @endif
                  <td class="w-10 line-height-35 table-dropdown">
                     <div class="dropdown">
@@ -642,10 +642,10 @@
                 @endif
                   @if ($company->rates_managed_by_finance == True)
                                             @if (in_array('Finance', $department_names) ||  in_array('Super Admin', $role_names))
-                                                <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                                <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight: 0,2)}}</td>
                                             @endif
                                         @else
-                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight: 0,2)}}</td>
                                         @endif
                 
                  <td class="w-10 line-height-35 table-dropdown">
@@ -750,10 +750,10 @@
                 @endif   
                 @if ($company->rates_managed_by_finance == True)
                     @if (in_array('Finance', $department_names) ||  in_array('Super Admin', $role_names))
-                        <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                        <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight: 0,2)}}</td>
                     @endif
                 @else
-                    <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                    <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight: 0,2)}}</td>
                 @endif
                  <td class="w-10 line-height-35 table-dropdown">
                     <div class="dropdown">

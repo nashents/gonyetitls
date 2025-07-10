@@ -177,7 +177,7 @@
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="name">Upload Products Excel File</label>
+                                <label for="name">Upload Products Excel File<span class="required" style="color: red">*</span></label>
                                 <input type="file" class="form-control" wire:model.debounce.300ms="importFile"placeholder="Upload Products File" required>
                                 @error('importFile') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>

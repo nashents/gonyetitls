@@ -85,6 +85,8 @@ class Product extends Model implements Auditable
         'brand_id',
         'name',
         'buy',
+        'price',
+        'sell_price',
         'sell',
         'department',
         'identification_number',

@@ -58,7 +58,7 @@
                                     <td class="w-20 line-height-35">{{$payment->specify_other}}</td>
                                 </tr>
                             @endif
-                            @if ($mode_of_payment == "Bank Payment" || $mode_of_payment == "Credit Card" || $mode_of_payment == "Paypal")
+                            @if ($payment->mode_of_payment == "Bank Payment" || $payment->mode_of_payment == "Credit Card" || $payment->mode_of_payment == "Paypal")
                             <tr>
                                 <th class="w-10 text-center line-height-35">Bank Account</th>
                                 <td class="w-20 line-height-35">{{$payment->bank_account ? $payment->bank_account->name : ""}} {{$payment->bank_account ? $payment->bank_account->account_number : ""}}</td>

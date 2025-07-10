@@ -95,9 +95,18 @@ class Inventory extends Model implements Auditable
         'group',
         'uom',
         'qty',
+        'amount',
+        'subtotal',
+        'subtotal_incl',
+        'total',
         'unit_cost',
+        'cost',
         'total_value',
         'company_name',
+        'weight',
+        'balance',
+        'currency_id',
+        'product_id',
         'user_id', // or 'created_by' depending on your schema
     ];
 }

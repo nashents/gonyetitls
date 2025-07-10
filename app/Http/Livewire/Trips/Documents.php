@@ -78,7 +78,6 @@ class Documents extends Component
 
     public function store(){
    
-
             if (isset($this->file)) {
           
                 foreach ($this->file as $key => $value) {
@@ -149,7 +148,7 @@ class Documents extends Component
         public function update()
         {
             if ($this->document_id) {
-            
+                    $fileNameToStore = Null;
                           if(isset($this->file)){
                               $file = $this->file;
                               // get file with ext
@@ -159,15 +158,16 @@ class Documents extends Component
                               //get extention
                               $extention = $file->getClientOriginalExtension();
                               //file name to store
-                              $fileNameToStore= $filename.'_'.time().'.'.$extention;
+                              $fileNameToStore = $filename.'_'.time().'.'.$extention;
                               $file->storeAs('/documents', $fileNameToStore, 'my_files');
+                           }
 
                               $document = TripDocument::find($this->document_id);
                               $document->trip_id = $this->trip->id;
                               $document->document_number = $this->document_number;
                               $document->title = $this->title;
                               $document->date = $this->date;
-                              if (isset($fileNameToStore)) {
+                              if ($fileNameToStore) {
                                   $document->filename = $fileNameToStore;
                               }
                     
@@ -179,20 +179,7 @@ class Documents extends Component
                                   'type'=>'success',
                                   'message'=>"Document Updated Successfully!!"
                               ]);
-                          }else{
-                            $this->dispatchBrowserEvent('hide-documentEditModal');
-                            $this->resetInputFields();
-                            $this->dispatchBrowserEvent('alert',[
-                                'type'=>'error',
-                                'message'=>"Document details failed to updated!!"
-                            ]);
-                          }
-
-                         
-
-                        
-                  
-          
+                       
 
             }
         }

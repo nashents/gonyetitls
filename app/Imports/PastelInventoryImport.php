@@ -81,10 +81,14 @@ class PastelInventoryImport implements ToCollection, SkipsEmptyRows, WithLimit,
         foreach ($rows as $row) {
             if ($row->filter()->isEmpty()) continue;
            
+            $category = $subCategory = $product = $quantity = $unitPrice = null;
+            
             $category = Category::firstOrCreate(['name' => trim($row->get('type'))], ['status' => 1]);
             $subCategory = CategoryValue::firstOrCreate(['name' => trim($row->get('category'))], ['status' => 1]);
             $product = Product::firstOrNew(['name' => $row->get('description')]);
-
+            $quantity = (int) $row->get('qty');
+            $unitPrice = $row->get('unit_cost');
+            
             if (!$product->exists) {
                 $product->fill([
                     'user_id' => Auth::id(),
@@ -93,14 +97,14 @@ class PastelInventoryImport implements ToCollection, SkipsEmptyRows, WithLimit,
                     'category_value_id' => $subCategory->id,
                     'status' => 1,
                     'buy' => 1,
+                    'price' => $unitPrice,
                     'product_number' => $this->generateNumber('P', ++$this->initialProductId),
                     'department' => $this->department,
                     'identification_number' => $row->get('code'),
                 ])->save();
             }
 
-            $quantity = (int) $row->get('qty');
-            $unitPrice = $row->get('unit_cost');
+           
          
             for ($i = 0; $i < $quantity; $i++) {
 
@@ -121,6 +125,7 @@ class PastelInventoryImport implements ToCollection, SkipsEmptyRows, WithLimit,
                         'weight' => 1,
                         'balance' => 1,
                         'status' => 1,
+                        'cost' => $unitPrice,
                     ])->save();
                 }
               
@@ -135,11 +140,11 @@ class PastelInventoryImport implements ToCollection, SkipsEmptyRows, WithLimit,
 
     public function batchSize(): int
     {
-        return 100;
+        return 150;
     }
 
     public function chunkSize(): int
     {
-        return 100;
+        return 150;
     }
 }
