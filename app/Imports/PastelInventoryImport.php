@@ -31,12 +31,16 @@ class PastelInventoryImport implements ToCollection, SkipsEmptyRows, WithLimit,
     use Importable, SkipsErrors;
 
     protected $company;
+    protected $default_currency;
     protected $initialInventoryId;
     protected $initialProductId;
+    protected $department;
 
-    public function __construct()
+    public function __construct($department)
     {
+        $this->department = $department;
         $this->company = Auth::user()->employee->company;
+        $this->default_currency = $this->company->currency;
         $this->initialInventoryId = Inventory::max('id') ?? 0;
         $this->initialProductId = Product::max('id') ?? 0;
     }
@@ -76,55 +80,50 @@ class PastelInventoryImport implements ToCollection, SkipsEmptyRows, WithLimit,
     {
         foreach ($rows as $row) {
             if ($row->filter()->isEmpty()) continue;
-
-            $store = Store::firstOrCreate(['name' => trim($row->get('store_name'))], ['status' => 1]);
-            $category = Category::firstOrCreate(['name' => trim($row->get('category'))], ['status' => 1]);
-            $subCategory = CategoryValue::firstOrCreate(['name' => trim($row->get('sub_category'))], ['status' => 1]);
-            $brand = Brand::firstOrCreate(['name' => trim($row->get('brand_name'))], ['status' => 1]);
-            $rack = Rack::firstOrCreate(['rack_number' => trim($row->get('rack_number'))], ['status' => 1]);
-            $bin = Bin::firstOrCreate(['bin_number' => trim($row->get('bin_number'))], ['status' => 1]);
-            $currency = Currency::firstOrCreate(['name' => trim($row->get('currency'))], ['status' => 1]);
-
-            $product = Product::firstOrNew(['name' => $row->get('product_name')]);
+           
+            $category = Category::firstOrCreate(['name' => trim($row->get('type'))], ['status' => 1]);
+            $subCategory = CategoryValue::firstOrCreate(['name' => trim($row->get('category'))], ['status' => 1]);
+            $product = Product::firstOrNew(['name' => $row->get('description')]);
 
             if (!$product->exists) {
                 $product->fill([
                     'user_id' => Auth::id(),
-                    'unit_of_measure' => $row->get('unit_of_measure'),
+                    'unit_of_measure' => $row->get('uom'),
                     'category_id' => $category->id,
                     'category_value_id' => $subCategory->id,
-                    'brand_id' => $brand->id,
                     'status' => 1,
                     'buy' => 1,
-                    'product_number' => $this->generateNumber('IP', ++$this->initialProductId),
-                    'department' => 'inventory',
-                    'identification_number' => $row->get('part_number'),
+                    'product_number' => $this->generateNumber('P', ++$this->initialProductId),
+                    'department' => $this->department,
+                    'identification_number' => $row->get('code'),
                 ])->save();
             }
 
-            $quantity = (int) $row->get('quantity');
-            $unitPrice = $row->get('unit_price');
-
+            $quantity = (int) $row->get('qty');
+            $unitPrice = $row->get('unit_cost');
+         
             for ($i = 0; $i < $quantity; $i++) {
-                $inventory = new Inventory;
-                $inventory->fill([
-                    'user_id' => Auth::id(),
-                    'inventory_number' => $this->generateNumber('I', ++$this->initialInventoryId),
-                    'product_id' => $product->id,
-                    'amount' => $unitPrice,
-                    'subtotal' => $unitPrice,
-                    'qty' => 1,
-                    'subtotal_incl' => $unitPrice,
-                    'total' => $unitPrice,
-                    'currency_id' => $currency->id,
-                    'rack_id' => $rack->id,
-                    'bin_id' => $bin->id,
-                    'store_id' => $store->id,
-                    'purchase_date' => $this->parseExcelDate($row->get('purchase_date')),
-                    'weight' => $row->get('item_contents') ?: 1,
-                    'balance' => $row->get('balance') ?: 1,
-                    'status' => 1,
-                ])->save();
+
+                if ($this->department == "inventory") {
+
+                    $inventory = new Inventory;
+                    $inventory->fill([
+                        'user_id' => Auth::id(),
+                        'inventory_number' => $this->generateNumber('I', ++$this->initialInventoryId),
+                        'product_id' => $product->id,
+                        'department' => $this->department,
+                        'amount' => $unitPrice,
+                        'subtotal' => $unitPrice,
+                        'qty' => 1,
+                        'subtotal_incl' => $unitPrice,
+                        'total' => $unitPrice,
+                        'currency_id' => $this->default_currency->id,
+                        'weight' => 1,
+                        'balance' => 1,
+                        'status' => 1,
+                    ])->save();
+                }
+              
             }
         }
     }

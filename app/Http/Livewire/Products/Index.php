@@ -22,18 +22,23 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Exports\StockValuationExport;
 use Intervention\Image\Facades\Image;
+use App\Imports\PastelInventoryImport;
 use Illuminate\Support\Facades\Session;
 
 class Index extends Component
 {
     use WithPagination;
 
+    use WithFileUploads;
+
     protected $paginationTheme = 'bootstrap';
     public $search;
     public $department;
+    public $importFile;
     protected $queryString = ['search'];
     private $products;
     public $base_currency;
+
 
     public function mount($category){
         $this->department = $category;
@@ -60,6 +65,21 @@ class Index extends Component
     public function updatingSearch()
     {
         $this->resetPage();
+    }
+
+      public function importProducts(){
+      
+        $file = $this->importFile;
+        $import = new PastelInventoryImport($this->department);
+        $import->import($file);
+
+        $this->dispatchBrowserEvent('hide-importModal');
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Product(s) Imported Successfully!!"
+        ]);
+
+        return redirect(request()->header('Referer'));
     }
 
     public function calculateTotalValue($id)

@@ -17,6 +17,7 @@
                                 @elseif ($department == "asset")
                                 <a href="{{route('products.create')}}" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Product</a>
                                 @endif
+                                  <a href="" data-toggle="modal" data-target="#importModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import Products (Pastel)</a>
                                 <a href="#" wire:click="exportProductsExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
                                 <a href="#" wire:click="exportProductsCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
                                 <a href="#" wire:click="exportProductsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
@@ -152,6 +153,49 @@
 
 
 
+      <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="importModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modal4Label"><i class="fa fa-upload"></i>Import Product(s) <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                </div>
+                <form wire:submit.prevent="importProducts()" method="POST" enctype="multipart/form-data">
+                  
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                                <div class="form-group">
+                                <label for="name">Categories<span class="required" style="color: red">*</span></label>
+                                <select class="form-control" wire:model.debounce.300ms="department" disabled>
+                                    <option value="">Select Option</option>
+                                    <option value="asset">Assets</option>
+                                    <option value="inventory">Stores Inventory</option>
+                                    <option value="tyre">Tyres</option>
+                                </select>
+                                @error('department') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="name">Upload Products Excel File</label>
+                                <input type="file" class="form-control" wire:model.debounce.300ms="importFile"placeholder="Upload Products File" required>
+                                @error('importFile') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                    </div>
+                 
+                </div>
+                <div class="modal-footer">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                        <button  type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-upload"></i>Upload</button>
+                    </div>
+                    <!-- /.btn-group -->
+                </div>
+            </form>
+            </div>
+        </div>
+    </div>
 
 
 </div>

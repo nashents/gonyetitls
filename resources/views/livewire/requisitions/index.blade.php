@@ -602,7 +602,7 @@
                     <div class="modal-footer">
                         <div class="btn-group" role="group">
                             <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
-                            <button type="submit" class="btn bg-success btn-wide btn-rounded" {{$items == False ? "disabled" : ""}}><i class="fa fa-save"></i>Save</button>
+                            <button type="submit" class="btn bg-success btn-wide btn-rounded" ><i class="fa fa-save"></i>Save</button>
                         </div>
                         <!-- /.btn-group -->
                     </div>

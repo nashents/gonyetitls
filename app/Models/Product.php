@@ -80,9 +80,14 @@ class Product extends Model implements Auditable
         'user_id',
         'product_number',
         'category_id',
+        'unit_of_measure',
+        'category_value_id',
         'brand_id',
         'name',
+        'buy',
+        'sell',
         'department',
+        'identification_number',
         'status',
     ];
 }
