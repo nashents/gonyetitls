@@ -14,7 +14,7 @@ class AddAuthorizationDateToTripsTable extends Migration
     public function up()
     {
         Schema::table('trips', function (Blueprint $table) {
-             $table->string('authorization_date')->nullable();
+             $table->text('authorization_date')->nullable();
         });
     }
 

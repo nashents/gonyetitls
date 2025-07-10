@@ -14,17 +14,17 @@ class AddArriveLoadingPointToTripsTable extends Migration
     public function up()
     {
         Schema::table('trips', function (Blueprint $table) {
-            $table->string('arrive_loading_point')->nullable();
-            $table->string('loading_time')->nullable();
-            $table->string('depart_loading_point')->nullable();
-            $table->string('arrive_offloading_point')->nullable();
-            $table->string('offloading_time')->nullable();
-            $table->string('depart_offloading_point')->nullable();
-            $table->string('drive_time_empty')->nullable();
-            $table->string('drive_time_loaded')->nullable();
-            $table->string('actual_mileage')->nullable();
-            $table->string('calculated_mileage')->nullable();
-            $table->string('fuel_consumption')->nullable();
+            $table->text('arrive_loading_point')->nullable();
+            $table->text('loading_time')->nullable();
+            $table->text('depart_loading_point')->nullable();
+            $table->text('arrive_offloading_point')->nullable();
+            $table->text('offloading_time')->nullable();
+            $table->text('depart_offloading_point')->nullable();
+            $table->text('drive_time_empty')->nullable();
+            $table->text('drive_time_loaded')->nullable();
+            $table->text('actual_mileage')->nullable();
+            $table->text('calculated_mileage')->nullable();
+            $table->text('fuel_consumption')->nullable();
         });
     }
 
