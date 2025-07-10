@@ -90,6 +90,7 @@ class Index extends Component
     public $tax;
     public $tax_accounts;
     public $selectedTax;
+    public $tax_rate;
     public $expense_account_id;
     public $sell = False;
     public $buy = True;
