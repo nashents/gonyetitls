@@ -99,7 +99,7 @@ class Pending extends Component
                 $bill->bill_date = $requisition->date;
                 $bill->notes = $requisition->description;
                 $account_type = Account::find($requisition->account_id) ? Account::find($requisition->account_id)->account_type : Null;
-                $bill->account_id = $requisition->account_id;
+                $bill->account_id = $requisition->account_id ?? null;
                 if ($account_type) {
                     $bill->account_type_id = $account_type->id;
                 }
@@ -122,8 +122,8 @@ class Pending extends Component
                         $bill_expense = new BillExpense;
                         $bill_expense->bill_id = $bill->id;
                         $bill_expense->currency_id = $bill->currency_id;
-                         $account_type = Account::find($requisition->account_id) ? Account::find($requisition->account_id)->account_type : Null;
-                        $bill_expense->account_id = $requisition->account_id;
+                        $account_type = Account::find($requisition->account_id) ? Account::find($requisition->account_id)->account_type : Null;
+                        $bill_expense->account_id = $requisition->account_id ?? null;
                         if (isset($account_type)) {
                             $bill_expense->account_type_id = $account_type->id;
                         }
