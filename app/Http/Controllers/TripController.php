@@ -295,7 +295,7 @@ class TripController extends Controller
             }
         }
 
-        $transportation_order = $trip->transport_order;
+       
         $fuels = $trip->fuels;
         $delivery_note = $trip->delivery_note;
         $cash_flows = $trip->cash_flows;
@@ -343,7 +343,7 @@ class TripController extends Controller
         }
 
         $trip->delete();
-        Session::flash('success','Trip deleted successfully');
+        Session::flash('success','Trip Deleted Successfully');
         return redirect()->back();
     }
 }

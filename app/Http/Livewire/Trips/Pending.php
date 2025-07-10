@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Trips;
 
+use Carbon\Carbon;
 use App\Models\Bill;
 use App\Models\Fuel;
 use App\Models\Hour;
@@ -250,6 +251,7 @@ class Pending extends Component
         $trip = Trip::find($this->trip_id);
         $trip->authorized_by_id = Auth::user()->id;
         $trip->authorization = $this->authorize;
+        $trip->authorization_date = Carbon::today()->format('Y-m-d');
         $trip->reason = $this->comments;
         $trip->update();
 
@@ -548,33 +550,7 @@ class Pending extends Component
 
                 $user = User::find($trip->user_id);
 
-                $transport_order = new TransportOrder;
-                $transport_order->user_id = Auth::user()->id;
-                $transport_order->trip_id = $trip->id;
-                $transport_order->transporter_id = $trip->transporter_id;
-                $transport_order->driver_id = $trip->driver_id;
-                $transport_order->horse_id = $trip->horse_id;
-                if (isset($regnumbers_string)) {
-                    $transport_order->trailer_regnumber = $regnumbers_string;
-                }
-                $transport_order->collection_point = $trip->loading_point ? $trip->loading_point->name : "";
-                $transport_order->delivery_point = $trip->offloading_point ? $trip->offloading_point->name : "";
-                $transport_order->cargo = $trip->cargo ? $trip->cargo->name : "";
-                $transport_order->weight = $trip->weight;
-                if (isset($trip->quantity)) {
-                    $transport_order->quantity = $trip->quantity;
-                }else{
-                    $transport_order->litreage = $trip->litreage;
-                }
-                $transport_order->measurement = $trip->measurement;
-               
-                $transport_order->date = $trip->start_date;
-                $user = $trip->user;
-                $name =  $user->employee ? $user->employee->name : "";
-                $surname = $user->employee ? $user->employee->surname : "";
-                $transport_order->checked_by = $name . ' ' . $surname;
-                $transport_order->authorized_by = Auth::user()->employee->name . ' ' .Auth::user()->employee->surname;
-                $transport_order->save();
+             
              
                 $this->trip_id = $trip->id;
                 $this->driver_id = $trip->driver_id;
@@ -867,6 +843,7 @@ class Pending extends Component
 
                     $trip->authorized_by_id = Auth::user()->id;
                     $trip->authorization = $this->authorize;
+                    $trip->authorization_date = Carbon::today()->format('Y-m-d');
                     $trip->reason = $this->comments;
                     $trip->update();
 
@@ -1082,33 +1059,7 @@ class Pending extends Component
                         
                         $user = User::find($trip->user_id);
 
-                        $transport_order = new TransportOrder;
-                        $transport_order->user_id = Auth::user()->id;
-                        $transport_order->trip_id = $trip->id;
-                        $transport_order->transporter_id = $trip->transporter_id;
-                        $transport_order->driver_id = $trip->driver_id;
-                        $transport_order->horse_id = $trip->horse_id;
-                        if (isset($regnumbers_string)) {
-                            $transport_order->trailer_regnumber = $regnumbers_string;
-                        }
-                        $transport_order->collection_point = $trip->loading_point ? $trip->loading_point->name : "";
-                        $transport_order->delivery_point = $trip->offloading_point ? $trip->offloading_point->name : "";
-                        $transport_order->cargo = $trip->cargo ? $trip->cargo->name : "";
-                        $transport_order->weight = $trip->weight;
-                        if (isset($trip->quantity)) {
-                            $transport_order->quantity = $trip->quantity;
-                        }else{
-                            $transport_order->litreage = $trip->litreage;
-                        }
-                        $transport_order->measurement = $trip->measurement;
-                    
-                        $transport_order->date = $trip->start_date;
-                        $user = $trip->user;
-                        $name =  $user->employee ? $user->employee->name : "";
-                        $surname = $user->employee ? $user->employee->surname : "";
-                        $transport_order->checked_by = $name . ' ' . $surname;
-                        $transport_order->authorized_by = Auth::user()->employee->name . ' ' .Auth::user()->employee->surname;
-                        $transport_order->save();
+                     
                     
                         $this->trip_id = $trip->id;
                         $this->driver_id = $trip->driver_id;

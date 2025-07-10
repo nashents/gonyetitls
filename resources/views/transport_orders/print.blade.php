@@ -44,7 +44,7 @@
                                         | {{$company->third_phonenumber}}
                                         @endif
                                     </div>
-                                  
+                                
                                     
                                     <div>{{$company->email}}</div>
                                     @if ($company->second_email)
@@ -64,112 +64,104 @@
                             <div class="row contacts">
                                 <div class="col invoice-to">
                                     <div class="text-gray-light">TRANSPORTATION ORDER FOR</div>
-                                    @if ($customer)
-                                    <h5 class="to">{{$customer->name}}</h5>
+                                    @if ($trip->customer)
+                                    <h5 class="to">{{$trip->customer->name}}</h5>
                                     <div class="address"> 
-                                        @if ($customer->street_address)
-                                        {{$customer->street_address}} 
+                                        @if ($trip->customer->street_address)
+                                        {{$trip->customer->street_address}} 
                                         @endif
-                                        @if ($customer->suburb)
-                                        {{$customer->suburb}}
+                                        @if ($trip->customer->suburb)
+                                        {{$trip->customer->suburb}}
                                         @endif
-                                        {{$customer->city}} {{$customer->country}}
+                                        {{$trip->customer->city}} {{$trip->customer->country}}
                                     </div>
-                                    <div class="email"><a href="mailto:{{$customer->email}}">{{$customer->email}}</a> </div>
+                                    <div class="email"><a href="mailto:{{$trip->customer->email}}">{{$trip->customer->email}}</a> </div>
                                     @endif
+                            
                                 </div>
                                 <div class="col invoice-details">
-                                    <div class="date"> <strong>Trip Number:</strong> {{$transport_order->trip ? $transport_order->trip->trip_number : ""}}{{ $transport_order->trip ? '/'.$transport_order->trip->trip_ref : ""  }}</div>
+                                    <div class="date"> <strong>Trip Number:</strong> {{$trip->trip_number}}{{ $trip->trip_ref ? '/'.$trip->trip_ref : ""  }}</div>
                                     <div class="date"><strong>Issue Date:</strong>
                                         @php
-                                        $pattern = '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/';
-                                    @endphp
-                                    @if ((preg_match($pattern, $transport_order->created_at)))
-                                    {{Carbon\Carbon::parse($transport_order->created_at)->format('d M Y h:i A')}}
-                                    @else
-                                    {{ $transport_order->created_at }}
-                                    @endif
-                                       </div>
-                                    <div class="date"><strong>Loading Point:</strong> {{$transport_order->collection_point}}</div>
+                                            $pattern = '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/';
+                                        @endphp
+                                        @if ((preg_match($pattern, $trip->created_at)))
+                                            {{Carbon\Carbon::parse($trip->created_at)->format('d M Y h:i A')}}
+                                        @else
+                                            {{ $trip->created_at }}
+                                        @endif
+                                    </div>
+                                    <div class="date"><strong>Loading Point:</strong> {{$trip->loading_point ? $trip->loading_point->name : ""}}</div>
                                 </div>
                             </div>
                             <table class="table table-striped">
-        
+
                                 <tbody>
-                                    @if ($transport_order->trip->start_date)
+                                    @if ($trip->start_date)
                                     <tr>
                                         <th class="text-center"><strong>Date & Time of Dispatch</strong></th>
                                         <td class="text-center">
-                                            @php
-                                                $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
-                                            @endphp
-                                            @if ((preg_match($pattern, $transport_order->trip->start_date)))
-                                            {{Carbon\Carbon::parse($transport_order->trip->start_date)->format('d M Y h:i A')}}
+                                            
+                                            @if ((preg_match($pattern, $trip->start_date)))
+                                            {{Carbon\Carbon::parse($trip->start_date)->format('d M Y h:i A')}}
                                             @else
-                                            {{ $transport_order->trip->start_date }}
+                                            {{ $trip->start_date }}
                                             @endif
                                         </td>
                                     </tr>
                                     @endif
                                     <tr>
                                         <th class="text-center"><strong>Transporter</strong></th>
-                                        <td class="text-center">  @if($transport_order->transporter_id)
-                                            {{ $transport_order->transporter ? $transport_order->transporter->name : ""}}
-                                            @else
-                                            
-                                            @endif</td>
+                                        <td class="text-center"> {{ $trip->transporter ? $trip->transporter->name : ""}}</td>
                                     </tr>
                                     <tr>
                                         <th class="text-center"> <strong>Driver</strong></th>
                                         <td class="text-center">
-                                            @if ($transport_order->driver)
-                                            {{$transport_order->driver->employee ? $transport_order->driver->employee->name : ""}} {{$transport_order->driver->employee ? $transport_order->driver->employee->surname : ""}} {{$transport_order->driver->employee ? $transport_order->driver->employee->idnumber : ""}}
+                                            @if ($trip->driver)
+                                                {{$trip->driver->employee ? $trip->driver->employee->name : ""}} {{$trip->driver->employee ? $trip->driver->employee->surname : ""}} {{$trip->driver->employee ? $trip->driver->employee->idnumber : ""}}
                                             @endif
-                                           </td>
+                                        </td>
                                     </tr>
                                     <tr>
                                         <th class="text-center"><strong>Horse</strong></th>
                                         <td class="text-center">
-                                            @if ($transport_order->horse)
-                                                 {{$transport_order->horse->horse_make ? $transport_order->horse->horse_make->name : "" }}  {{$transport_order->horse->horse_model ? $transport_order->horse->horse_model->name : "" }} {{$transport_order->horse ? $transport_order->horse->registration_number : "" }} {{$transport_order->horse->horse_model ? $transport_order->horse->horse_model->name : "" }} {{$transport_order->horse ? "| ".$transport_order->horse->fleet_number : "" }}
+                                            @if ($trip->horse)
+                                                {{$trip->horse->horse_make ? $trip->horse->horse_make->name : "" }}  {{$trip->horse->horse_model ? $trip->horse->horse_model->name : "" }} {{$trip->horse ? $trip->horse->registration_number : "" }}  {{$trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : "" }}
                                             @endif
                                         </td>
                                     </tr>
-                                    @if ($transport_order->trip->trailers->count()>0)
-                                    <tr>
-                                        <th class="text-center"> <strong>Trailer(s)</strong></th>
-                                        <td class="text-center">
-                                            @foreach ($transport_order->trip->trailers as $trailer)
-                                                {{$trailer->make}} {{$trailer->model}} {{$trailer->registration_number}} {{"| ".$trailer->fleet_number}} <br>
-                                            @endforeach
-                                        </td>
-                                    </tr>
-                                    @endif
-        
-                                    @if ($transport_order->trip->driver_allowances->count()>0)
-                                        @foreach ($transport_order->trip->driver_allowances as $allowance)
+                                            @if ($trip->trailers->count()>0)
                                             <tr>
-                                                <th class="text-center"><strong>{{ $allowance->allowance ? $allowance->allowance->name : "" }}</strong></th>
-                                                <td class="text-center"> 
-                                                    {{ $allowance->currency ? $allowance->currency->name : ""}} {{ $allowance->currency ? $allowance->currency->symbol : ""}}{{ number_format($allowance->amount)}}
+                                                <th class="text-center"> <strong>Trailer(s)</strong></th>
+                                                <td class="text-center">
+                                                    @foreach ($trip->trailers as $trailer)
+                                                        {{$trailer->make}} {{$trailer->model}} {{$trailer->registration_number}} {{$trailer->fleet_number ? "(".$trailer->fleet_number.")" : ""}} <br>
+                                                    @endforeach
                                                 </td>
                                             </tr>
-                                        @endforeach
-                                    @endif
-        
+                                            @endif
+
+                                            @if ($trip->driver_allowances->count()>0)
+                                                @foreach ($trip->driver_allowances as $allowance)
+                                                <tr>
+                                                    <th class="text-center"><strong>{{ $allowance->allowance ? $allowance->allowance->name : "" }}</strong></th>
+                                                    <td class="text-center"> 
+                                                        {{ $allowance->currency ? $allowance->currency->name : ""}} {{ $allowance->currency ? $allowance->currency->symbol : ""}}{{ number_format($allowance->amount)}}
+                                                    </td>
+                                                </tr>
+                                                @endforeach
+                                            @endif
+
                                     <tr>
                                         <th class="text-center"><strong>Customer</strong></th>
-                                        <td class="text-center"> {{$transport_order->trip->customer ? $transport_order->trip->customer->name : ""}}</td>
+                                        <td class="text-center"> {{$trip->customer ? $trip->customer->name : ""}}</td>
                                     </tr>
-                                    @php
-                                        $origin = App\Models\Destination::find($transport_order->trip->from);
-                                        $destination = App\Models\Destination::find($transport_order->trip->to);
-                                    @endphp
+                                
                                     <tr>
                                         <th class="text-center"><strong>From</strong></th>
                                         <td class="text-center">
                                             @if (isset($origin))
-                                            {{$origin->country ? $origin->country->name : ""}} {{ $origin->city }}        
+                                                {{$origin->country ? $origin->country->name : ""}} {{ $origin->city }}        
                                             @endif
                                         </td>
                                     </tr>
@@ -181,52 +173,52 @@
                                             @endif
                                         </td>
                                     </tr>
-                                   
+                                
                                     <tr>
                                         <th class="text-center"><strong>Loading Point</strong></th>
-                                        <td class="text-center"> {{$transport_order->collection_point}}</td>
+                                        <td class="text-center"> {{$trip->loading_point ? $trip->loading_point->name : ""}}</td>
                                     </tr>
                                     <tr>
                                         <th class="text-center"><strong>Offloading Point</strong></th>
-                                        <td class="text-center"> {{$transport_order->delivery_point}}</td>
+                                        <td class="text-center"> {{$trip->offloading_point ? $trip->offloading_point->name : ""}}</td>
                                     </tr>
-                                    @if ($transport_order->trip->distance)
+                                    @if ($trip->distance)
                                     <tr>
                                         <th class="text-center"><strong>Distance</strong></th>
-                                        <td class="text-center">{{$transport_order->trip->distance."Kms"}}</td>
+                                        <td class="text-center">{{$trip->distance ? $trip->distance." Kms" : ""}}</td>
                                     </tr>
                                     @endif
-                                    @if ($transport_order->trip->route)
+                                    @if ($trip->route)
                                         <tr>
                                             <th class="text-center"><strong>Route</strong></th>
-                                            <td class="text-center"> {{$transport_order->trip->route ? $transport_order->trip->route->name : ""}}</td>
+                                            <td class="text-center"> {{$trip->route ? $trip->route->name : ""}}</td>
                                         </tr>
                                     @endif
-                                    @if ($transport_order->trip->truck_stops->count()>0)
+                                    @if ($trip->truck_stops->count()>0)
                                         <tr>
                                             <th class="text-center"><strong>Designated Truck Stops</strong></th>
                                             <td class="text-center"> 
-                                                @foreach ($transport_order->trip->truck_stops as $truck_stop)
+                                                @foreach ($trip->truck_stops as $truck_stop)
                                                     {{ $truck_stop->name }} {{ $truck_stop->rating }}
                                                 @endforeach
                                             </td>
                                         </tr>
                                     @endif
-                                    @if ($transport_order->trip->borders->count()>0)
+                                    @if ($trip->borders->count()>0)
                                         <tr>
                                             <th class="text-center"><strong>Border(s)</strong></th>
                                             <td class="text-center">
-                                                @foreach ($transport_order->trip->borders as $border)
+                                                @foreach ($trip->borders as $border)
                                                 {{$border->name}} <br>
                                                 @endforeach
                                             </td>
                                         </tr>
                                     @endif
-                                    @if ($transport_order->trip->clearing_agents->count()>0)
+                                    @if ($trip->clearing_agents->count()>0)
                                         <tr>
                                             <th class="text-center"><strong>Clearing Agent</strong></th>
                                             <td class="text-center"> 
-                                                @foreach ($transport_order->trip->clearing_agents as $clearing_agent)
+                                                @foreach ($trip->clearing_agents as $clearing_agent)
                                                     {{$clearing_agent->name}} -> Email: {{$clearing_agent->email}} Phonenumber: {{$clearing_agent->phonenumber}} <br>
                                                 @endforeach
                                             </td>
@@ -235,56 +227,53 @@
                                 
                                     <tr>
                                         <th class="text-center"><strong>Cargo</strong></th>
-                                        <td class="text-center"> {{$transport_order->cargo}}</td>
+                                        <td class="text-center"> {{$trip->cargo ? $trip->cargo->name : ""}}</td>
                                     </tr>
-                                   
-                                    @if ($transport_order->weight)
+                                
+                                    @if ($trip->weight)
                                     <tr>
                                         <th class="text-center"><strong>Weight</strong></th>
-                                        <td class="text-center"> {{$transport_order->weight."Tons"}} </td>
+                                        <td class="text-center"> {{$trip->weight." Tons"}} </td>
                                     </tr> 
                                     @endif
                                 
-                                    @if ($transport_order->quantity)
+                                    @if ($trip->quantity)
                                     <tr>
                                         <th class="text-center"><strong>Quantity</strong></th>
-                                        <td class="text-center"> {{$transport_order->quantity}} {{$transport_order->measurement}}</td>
+                                        <td class="text-center"> {{$trip->quantity}} {{$trip->measurement}}</td>
                                     </tr>
                                     @endif
-                                    @if ($transport_order->litreage)
+                                    @if ($trip->litreage)
                                     <tr>
                                         <th class="text-center"><strong>Litreage @ Ambient</strong></th>
-                                        <td class="text-center"> {{$transport_order->litreage}} {{$transport_order->measurement}}</td>
+                                        <td class="text-center"> {{$trip->litreage}} {{$trip->measurement}}</td>
                                     </tr>
                                     @endif
-                                    @if ($transport_order->trip->litreage_at_20)
+                                    @if ($trip->litreage_at_20)
                                     <tr>
                                         <th class="text-center"><strong>Litreage @ 20 Degrees</strong></th>
-                                        <td class="text-center"> {{$transport_order->trip->litreage_at_20}} {{$transport_order->measurement}}</td>
+                                        <td class="text-center"> {{$trip->litreage_at_20}} {{$trip->measurement}}</td>
                                     </tr>
                                     @endif
-                                    @if ($transport_order->trip->fuels->where('authorization','approved')->count()>0)
+                                    @if ($trip->fuels->where('authorization','approved')->count()>0)
                                     <tr>
                                         <th class="text-center"><strong>Fuel Orders</strong></th>
                                         <td class="text-center"> 
-                                            @foreach ($transport_order->trip->fuels as $fuel)
-                                            {{$fuel->order_number}} {{$fuel->fillup == 1 ? "Initial" : "Topup"}} {{$fuel->container ? $fuel->container->name : ""}} {{$fuel->type}} {{ $fuel->quantity."Litres" }} <br>
+                                            @foreach ($trip->fuels as $fuel)
+                                            {{$fuel->order_number}} {{$fuel->fillup == 1 ? "Initial" : "Topup"}} {{$fuel->container ? $fuel->container->name : ""}} {{$fuel->type}} {{ $fuel->quantity ? $fuel->quantity."Litres" : "" }} <br>
                                             @endforeach
                                         </td>
                                     </tr>
-                                @endif
-                                @if ($transport_order->trip->start_date && $transport_order->trip->end_date )
+                                    @endif
+                                @if ($trip->start_date && $trip->end_date )
                                 <tr>
                                     <th class="text-center"><strong>Target day(s) for the trip</strong></th>
                                     <td class="text-center">
                                         
-                                        @php
-                                            $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
-                                        @endphp
-                                        @if ((preg_match($pattern, $transport_order->trip->start_date)) && (preg_match($pattern, $transport_order->trip->end_date)) )
-                                        {{ \Carbon\Carbon::parse($transport_order->trip->start_date)->diffInDays($transport_order->trip->end_date) }} Day(s)
+                                        @if ((preg_match($pattern, $trip->start_date)) && (preg_match($pattern, $trip->end_date)) )
+                                        {{ \Carbon\Carbon::parse($trip->start_date)->diffInDays($trip->end_date) }} Day(s)
                                         @else
-                                        From: {{ $transport_order->trip->start_date }} - To {{ $transport_order->trip->end_date }}
+                                        From: {{ $trip->start_date }} - To {{ $trip->end_date }}
                                         @endif
                                     
                                     </td>
@@ -293,26 +282,22 @@
                                     
                                     <tr>
                                         <th class="text-center"><strong>Checked By</strong></th>
-                                        <td class="text-center"> {{$transport_order->checked_by}}</td>
+                                        <td class="text-center"> {{$trip->user ? $trip->user->name : ""}}</td>
                                     </tr>
                                     <tr>
                                         <th class="text-center"><strong>Authorized By</strong></th>
-                                        <td class="text-center"> {{$transport_order->authorized_by}}</td>
+                                        <td class="text-center"> {{$trip->authorizer ? $trip->authorizer->name : ""}}</td>
                                     </tr>
-        
+
                                 </tbody>
-        
+
                             </table>
                         </main>
-                      <center><footer style="   position: fixed; 
-                        bottom: 0px; 
-                        left: 0px; 
-                        right: 0px;
-                        height: 50px;">{{ucfirst($company->name)}} Transportation Order</footer></center>  
+                        <center><footer>{{ucfirst($company->name)}} Transportation Order</footer></center>  
                     </div>
-                    <!--DO NOT DELETE THIS div. IT is responsible for showing footer always at the bottom-->
-                    <div></div>
-                </div>
+                <!--DO NOT DELETE THIS div. IT is responsible for showing footer always at the bottom-->
+                <div></div>
+            </div>
             </div>
         </div>
     </div>

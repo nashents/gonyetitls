@@ -167,50 +167,65 @@ class Index extends Component
         ]);
     }
 
-    public function updatedSelectedCurrency($id){
-        if(!is_null($id)){
-            $this->selected_currency = Currency::find($id);
-            if($id != $this->company->currency_id){
-                $predefined_exchange_rate = ExchangeRate::where('currency_id', $id)
-                    ->where('status', 1)
-                    ->where('expiry', '>', Carbon::today())
-                    ->first();
-                if ($predefined_exchange_rate) {   
-                    $this->exchange_rate = $predefined_exchange_rate->exchange_rate;
-                }
-            }
-        }
-    }
-
-       public function updatedSelectedProduct($id, $key){
-        if (!is_null($id)) {
-            $product = Product::find($id);
-             $this->qty[$key] = 1;
-            if (isset($product)) {
-                if ($product->price) {
-                    $this->amount[$key] = $product->price;
-                }
-                if ($product->tax_id) {
-                    $this->selectedTax[$key] = $product->tax_id;
-                    $tax = Account::find($product->tax_id);
-                    if (isset($tax)) {
-                        $this->tax_rate[$key] = $tax->rate;
+        public function updatedSelectedCurrency($id){
+            if(!is_null($id)){
+                $this->selected_currency = Currency::find($id);
+                if($id != $this->company->currency_id){
+                    $predefined_exchange_rate = ExchangeRate::where('currency_id', $id)
+                        ->where('status', 1)
+                        ->where('expiry', '>', Carbon::today())
+                        ->first();
+                    if ($predefined_exchange_rate) {   
+                        $this->exchange_rate = $predefined_exchange_rate->exchange_rate;
                     }
-                    
-                }  
+                }
             }
-           
         }
-    }
+
+        public function updatedSelectedProduct($id, $key)
+        {
+            if (is_null($id) || is_null($key)) {
+                return;
+            }
+
+            // Make sure $key is a valid array key (e.g., numeric or string)
+            if (!is_scalar($key)) {
+                return;
+            }
+
+            $this->qty[$key] = 1;
+
+            $product = Product::find($id);
+
+            if (!$product) {
+                return;
+            }
+
+            $this->amount[$key] = $product->price;
+            $this->selectedTax[$key] = $product->tax_id;
+
+            if ($product->tax_id) {
+                $tax = Account::find($product->tax_id);
+                $this->tax_rate[$key] = $tax?->rate ?? 0;
+            } else {
+                $this->tax_rate[$key] = 0;
+            }
+        }
 
         public function updatedSelectedTax($id, $key){
-        if(!is_null($id)){
+            if (is_null($id) || is_null($key)) {
+                return;
+            }
+            
+             // Make sure $key is a valid array key (e.g., numeric or string)
+            if (!is_scalar($key)) {
+                return;
+            }
+            
             $tax = Account::find($id);
-            if (isset($tax)) {
+            if ($tax) {
                 $this->tax_rate[$key] = $tax->rate;
             }
-           
-        }
     }
 
 

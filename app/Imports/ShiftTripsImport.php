@@ -165,14 +165,22 @@ WithBatchInserts
 
                 $shift = Shift::firstOrNew([
                     'type' => $row->get('shift'),
-                    'date' => $row->get('date'),
+                    'date' => $date,
                     'driver_id' => $driver?->id,
                 ]);
 
                 // Update or set remaining fields
+                $shift->user_id = Auth::id();
+                $shift->shift_start_time =  $this->parseExcelTime($row->get('shift_start'));
+                $shift->shift_end_time =  $this->parseExcelTime($row->get('shift_end'));
+                $shift->for = "Trips";
                 $shift->horse_id = $horse?->id;
                 $shift->cargo_id = $cargo?->id;
                 $shift->customer_id = $customer?->id;
+                $shift->authorization = "approved";
+                $shift->authorized_by_id = Auth::id();
+                $shift->authorization_date = Carbon::today()->format('Y-m-d');
+                $shift->status = False;
                 $shift->save();
 
                 $trip = new Trip();
@@ -182,6 +190,7 @@ WithBatchInserts
                 $trip->company_id = $company_id;
                 $trip->transporter_id = $transporter?->id;
                 $trip->start_date = $date;
+                $trip->end_date = $date;
                 $trip->customer_id = $customer?->id;
                 $trip->cargo_id = $cargo?->id;
                 $trip->weight = $row->get('weight');
@@ -204,6 +213,8 @@ WithBatchInserts
                 $trip->trip_fuel = $row->get('fuel');
                 $trip->fuel_consumption = $row->get('fuel_consumption');
                 $trip->authorized_by_id = Auth::id();
+                $trip->authorization = "approved";
+                $trip->authorization_date = Carbon::today()->format('Y-m-d');
                 $trip->save();
 
             }

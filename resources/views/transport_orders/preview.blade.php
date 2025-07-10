@@ -17,7 +17,7 @@
 <div class="container">
     <div class="card">
         <div class="card-body">
-            @livewire('transport-orders.preview',['company'=>$company, 'customer' => $customer, 'transport_order' => $transport_order])
+            @livewire('transport-orders.preview', ['id' => $id])
         </div>
     </div>
 </div>

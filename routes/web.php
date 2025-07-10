@@ -106,9 +106,9 @@ Route::get('tyre_purchase/orders/reports','TyrePurchaseController@reports')->nam
 //Transportation Order Routes
 Route::get('order','TransportOrderController@order')->name('order');
 Route::get('transportation/orders','TransportOrderController@index')->name('transport_orders.index');
-Route::get('transportation/order/{transport_order}/preview','TransportOrderController@preview')->name('transport_orders.preview');
-Route::get('transportation/order/{transport_order}/print','TransportOrderController@print')->name('transport_orders.print');
-Route::get('transportation/order/{transport_order}//export-to-pdf','TransportOrderController@generatePDF')->name('transport_orders.pdf');
+Route::get('transportation/order/{trip}/preview','TransportOrderController@preview')->name('transport_orders.preview');
+Route::get('transportation/order/{trip}/print','TransportOrderController@print')->name('transport_orders.print');
+Route::get('transportation/order/{trip}//export-to-pdf','TransportOrderController@generatePDF')->name('transport_orders.pdf');
 
 //Fuel Suppliers Routes
 Route::get('fuel/supplier/{id}/top-up','TopUpController@manage')->name('top_ups.manage');

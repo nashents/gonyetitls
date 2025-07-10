@@ -1287,12 +1287,7 @@
                     </a></li>
                     @endif
                 
-                    <li class="{{ request()->routeIs('transport_orders.index') ? 'active' : '' }}"><a href="{{route('transport_orders.index')}}" ><i class="fas fa-list "></i> <span>Transportation Orders</span>
-                        @if ($transportOrdersCount>0)
-                        <span class="label label-success ml-5">{{$transportOrdersCount}}</span>
-                        @endif
-                    </a>
-                    </li>
+                    
                     <li class="{{ request()->routeIs('trip_groups.index') ? 'active' : '' }}"><a href="{{route('trip_groups.index')}}" ><i class="fas fa-list"></i> <span>Tracking Groups</span></a></li> 
                         </ul>
                     </li>

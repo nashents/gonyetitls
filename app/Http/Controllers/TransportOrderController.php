@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\Trip;
+use App\Models\User;
+use App\Models\Destination;
 use Illuminate\Http\Request;
 use App\Models\TransportOrder;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 
 class TransportOrderController extends Controller
@@ -22,45 +25,66 @@ class TransportOrderController extends Controller
     {
         return view('transport_orders.order');
     }
-    public function preview(TransportOrder $transport_order){
-        if (isset(Auth::user()->employee->company)) {
-            $company = Auth::user()->employee->company;
-        }elseif (isset(Auth::user()->company)) {
-          $company =  Auth::user()->company;
-        }
-        $customer = $transport_order->trip->customer;
+    public function preview($id){
+      
         return view('transport_orders.preview')->with([
-            'transport_order' => $transport_order,
-            'company' => $company,
-            'customer' => $customer,
+            'id' => $id
           ]);
     }
-    public function print(TransportOrder $transport_order){
-
-        if (isset(Auth::user()->employee->company)) {
-            $company = Auth::user()->employee->company;
-        }elseif (isset(Auth::user()->company)) {
-          $company =  Auth::user()->company;
-        }
-        $customer = $transport_order->trip->customer;
+    public function print($id){
+        $company = Auth::user()->employee->company;
+        $trip = Trip::with([
+        'customer:id,name',
+        'driver.employee',
+        'horse' => function ($q) {
+            $q->select('id', 'registration_number', 'fleet_number', 'horse_make_id', 'horse_model_id')
+            ->with([
+                'horse_make:id,name',
+                'horse_model:id,name',
+            ]);
+        },
+        'transporter:id,name',
+        ])->find($id);
+        $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
+        $origin = Destination::find($trip->from);
+        $destination = Destination::find($trip->to);
+        $authorizer = User::find($trip->authorized_by_id);
+      
         return view('transport_orders.print')->with([
-            'transport_order' => $transport_order,
+            'trip' => $trip,
             'company' => $company,
-            'customer' => $customer,
+            'origin' => $origin,
+            'destination' => $destination,
+            'authorizer' => $authorizer,
+            'pattern' => $pattern,
           ]);
     }
 
-    public function generatePDF(TransportOrder $transportOrder){
-        if (isset(Auth::user()->employee->company)) {
-            $company = Auth::user()->employee->company;
-        }elseif (isset(Auth::user()->company)) {
-          $company =  Auth::user()->company;
-        }
-        $customer = $transportOrder->trip->customer;
+    public function generatePDF($id){
+        $company = Auth::user()->employee->company;
+        $trip = Trip::with([
+        'customer:id,name',
+        'driver.employee',
+        'horse' => function ($q) {
+            $q->select('id', 'registration_number', 'fleet_number', 'horse_make_id', 'horse_model_id')
+            ->with([
+                'horse_make:id,name',
+                'horse_model:id,name',
+            ]);
+        },
+        'transporter:id,name',
+        ])->find($id);
+        $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
+        $origin = Destination::find($trip->from);
+        $destination = Destination::find($trip->to);
+        $authorizer = User::find($trip->authorized_by_id);
         $data = [
-            'transport_order' => $transportOrder,
+            'trip' => $trip,
             'company' => $company,
-            'customer' => $customer,
+            'origin' => $origin,
+            'destination' => $destination,
+            'authorizer' => $authorizer,
+            'pattern' => $pattern,
         ];
         $pdf = PDF::loadView('transport_orders.order', $data);
 

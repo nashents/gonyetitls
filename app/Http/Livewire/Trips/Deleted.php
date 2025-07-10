@@ -27,9 +27,8 @@ class Deleted extends Component
 
         $trip = Trip::withTrashed()->find($this->trip_id)->restore();
         
-        $transportation_order = $trip->transport_order->withTrashed();
-        $transportation_order->restore();
         $fuels = $trip->fuels->withTrashed();
+        
         if (isset($fuels)) {
             foreach($fuels as $fuel){
                 $fuel->restore();
