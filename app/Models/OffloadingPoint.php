@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Shift;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Contracts\Auditable;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -32,6 +33,10 @@ class OffloadingPoint extends Model implements Auditable
     return $this->belongsTo('App\Models\Consignee');
     }
 
+    public function shifts()
+    {
+        return $this->belongsToMany(Shift::class);
+    }
     public function trips(){
         return $this->hasMany('App\Models\Trip');
       }

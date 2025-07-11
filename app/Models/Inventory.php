@@ -90,6 +90,7 @@ class Inventory extends Model implements Auditable
         protected $fillable = [
         'code',
         'description',
+        'inventory_number',
         'type',
         'category',
         'group',

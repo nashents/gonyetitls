@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Shift;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Contracts\Auditable;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -25,7 +26,12 @@ class LoadingPoint extends Model implements Auditable
     ];
     public function rates(){
       return $this->hasMany('App\Models\Rate');
-  }
+    }
+
+    public function shifts()
+    {
+        return $this->belongsToMany(Shift::class);
+    }
 
     public function trips(){
       return $this->hasMany('App\Models\Trip');

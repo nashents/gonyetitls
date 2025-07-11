@@ -73,7 +73,7 @@ class Index extends Component
     {
         if (filled($value)) {
             if ($this->department == "tyre") {
-                $this->products = Product::with('brand','tyres')
+                $this->products = Product::with('brand:id,name','tyres:id,product_id,tyre_number,serial_number,balance,weight,total,currency_id')
                                     ->where(function ($query) use ($value) {
                                         $query
                                         ->where('department', $this->department)
@@ -90,7 +90,7 @@ class Index extends Component
                                             ;
                                     })->get();
             }elseif ($this->department == "asset") {
-                 $this->products = Product::with('brand','assets')
+                 $this->products = Product::with('brand:id,name','assets:id,product_id,asset_number,serial_number,balance,weight,total,currency_id')
                                     ->where(function ($query) use ($value) {
                                         $query
                                         ->where('department', $this->department)
@@ -107,7 +107,7 @@ class Index extends Component
                                             ;
                                     })->get();
             }elseif ($this->department == "inventory") {
-                 $this->products = Product::with('brand', 'inventories')
+                 $this->products = Product::with('brand:id,name', 'inventories:id,product_id,inventory_number,serial_number,balance,weight,total,currency_id')
                                     ->where(function ($query) use ($value) {
                                         $query
                                         ->where('department', $this->department)
@@ -188,10 +188,10 @@ class Index extends Component
             ->orWhereHas('trailer', function ($query) {
                 return $query->where('registration_number', 'like', '%'.$this->searchTicket.'%')
                              ->orWhere('fleet_number', 'like', '%'.$this->searchTicket.'%');
-            })
+            })->orderBy('created_at','desc')
            ->get();
         }else{
-             $this->tickets = Ticket::whereYear('created_at',date('Y'))->where('status',1)->get();
+             $this->tickets = Ticket::whereYear('created_at',date('Y'))->where('status',1)->orderBy('created_at','desc')->get();
         }
     }
 
@@ -202,7 +202,7 @@ class Index extends Component
         $this->department = $department;
         $this->company = Auth::user()->employee->company;
         $this->employees = Employee::where('status',1)->where('archive',0)->orderBy('name','asc')->orderBy('surname','asc')->get();
-        $this->tickets = Ticket::whereYear('created_at',date('Y'))->where('status',1)->get();
+        $this->tickets = Ticket::whereYear('created_at',date('Y'))->where('status',1)->orderBy('created_at','desc')->get();
         $this->all_departments = Department::orderBy('name','asc')->get();
         $this->branches = Branch::orderBy('name','asc')->get();
 

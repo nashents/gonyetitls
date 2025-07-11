@@ -757,7 +757,7 @@ class Index extends Component
             if (isset($this->from) && isset($this->to)) {
                 if (isset($this->search)) {
                     return view('livewire.shifts.index',[
-                        'shifts' => Shift::query()->with('customer:id,name','driver','horse','vehicle','cargo','transporter','fuel')
+                        'shifts' => Shift::query()->with(['loading_points', 'offloading_points','customer:id,name','driver','horse','vehicle','cargo','transporter','fuel'])
                         ->whereDate($this->shift_filter, '>=', $this->from)
                         ->whereDate($this->shift_filter, '<=', $this->to)
                         ->where('shift_number','like', '%'.$this->search.'%')
@@ -789,7 +789,7 @@ class Index extends Component
                     ]);
                 }else {
                     return view('livewire.shifts.index',[
-                        'shifts' => Shift::query()->with('customer:id,name','driver','horse','vehicle','cargo','transporter','fuel')
+                        'shifts' => Shift::query()->with(['loading_points', 'offloading_points','customer:id,name','driver','horse','vehicle','cargo','transporter','fuel'])
                         ->whereDate($this->shift_filter, '>=', $this->from)
                         ->whereDate($this->shift_filter, '<=', $this->to)
                         ->orderBy($this->shift_filter,'desc')->paginate(10),
@@ -799,7 +799,7 @@ class Index extends Component
             }
             elseif (isset($this->search)) {
                 return view('livewire.shifts.index',[
-                    'shifts' => Shift::query()->with('customer:id,name','driver','horse','vehicle','cargo','transporter','fuel')
+                    'shifts' => Shift::query()->with(['loading_points', 'offloading_points','customer:id,name','driver','horse','vehicle','cargo','transporter','fuel'])
                     ->whereMonth($this->shift_filter, date('m'))
                     ->whereYear($this->shift_filter, date('Y'))
                     ->where('shift_number','like', '%'.$this->search.'%')
@@ -833,7 +833,7 @@ class Index extends Component
             else {
                
                 return view('livewire.shifts.index',[
-                    'shifts' => Shift::query()->with('customer:id,name','driver','horse','vehicle','cargo','transporter','fuel')
+                    'shifts' => Shift::query()->with(['loading_points', 'offloading_points','customer:id,name','driver','horse','vehicle','cargo','transporter','fuel'])
                     ->whereMonth($this->shift_filter, date('m'))
                     ->whereYear($this->shift_filter, date('Y'))
                     ->orderBy($this->shift_filter,'desc')->paginate(10),

@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\LoadingPoint;
+use App\Models\OffloadingPoint;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Contracts\Auditable;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -43,20 +45,45 @@ class Shift extends Model implements Auditable
         return $this->hasMany('App\Models\Trip');
     }
 
+    public function loading_points()
+    {
+        return $this->belongsToMany(LoadingPoint::class);
+    }
+    public function offloading_points()
+    {
+        return $this->belongsToMany(OffloadingPoint::class);
+    }
+
     protected $fillable = [
-        'user_id',
         'type',
         'date',
+        'driver_id',
+        'user_id',
+        'shift_number',
         'shift_start_time',
         'shift_end_time',
         'horse_id',
-        'driver_id',
+        'vehicle_id',
         'customer_id',
+        'transporter_id',
         'cargo_id',
         'actual_mileage',
         'calculated_mileage',
         'open_mileage',
         'close_mileage',
         'fuel_consumption_mileage',
+        'equipment',
+        'total_loads',
+        'total_fuel',
+        'authorization',
+        'authorized_by_id',
+        'authorization_date',
+        'status',
+        'for',
+        'reason',
+        'depart_workshop_time',
+        'arrive_location_time',
+        'depart_location_time',
+        'arrive_workshop_time',
     ];
 }

@@ -103,6 +103,19 @@
                                         @elseif($shift->vehicle)
                                                <strong>Vehicle:</strong> {{$shift->horse->registration_number}} <br>
                                         @endif
+                                       @if ($shift->loading_points->isNotEmpty() && $shift->loading_points->count()>0)
+                                            <strong>Loading Points: </strong>
+                                            @foreach ($shift->loading_points as $loading_point)
+                                                {{ $loading_point->name }},
+                                            @endforeach
+                                        @endif
+
+                                        @if ($shift->offloading_points->isNotEmpty())
+                                            <strong>Offloading Points: </strong>
+                                            @foreach ($shift->offloading_points as $offloading_point)
+                                                {{ $offloading_point->name }},
+                                            @endforeach
+                                        @endif
                                     </td>
                                     <td>
                                         <strong>Date:</strong> {{$shift->date}} <br>
@@ -116,9 +129,9 @@
                                         <strong>Arrive Workshop: </strong> {{$shift->arrive_workshop_time}} <br>
                                     </td>
                                    <td>
-                                        {{$shift->fuel_consumption_hours ? $shift->fuel_consumption_hours." L/H" : ""}}
+                                        {{$shift->fuel_consumption_hours ? number_format($shift->fuel_consumption_hours,2)." L/H" : ""}}
                                             <hr style="margin-top:5px; margin-bottom:5px"> 
-                                        {{$shift->fuel_consumption_mileage ? $shift->fuel_consumption_mileage." L/Km" : ""}}
+                                        {{$shift->fuel_consumption_mileage ? number_format($shift->fuel_consumption_mileage,2)." L/Km" : ""}}
                                     </td>
                                     <td><span class="badge bg-{{$shift->status == 1 ? "warning" : "success"}}">{{$shift->status == 1 ? "Open" : "Closed"}}</span></td>
                                     <td class="w-10 line-height-35 table-dropdown">
@@ -255,7 +268,7 @@
                                 <label for="name">Type<span class="required" style="color: red">*</span></label>
                                 <select class="form-control" wire:model.debounce.300ms="type">
                                     <option value="">Select Option</option>
-                                    <option value="Day">Day</option>
+                                    <option value="Morning">Morning</option>
                                     <option value="Night">Night</option>
                                 </select>
                                 @error('type') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -826,7 +839,7 @@
                                 <label for="name">Type<span class="required" style="color: red">*</span></label>
                                 <select class="form-control" wire:model.debounce.300ms="type">
                                     <option value="">Select Option</option>
-                                    <option value="Day">Day</option>
+                                    <option value="Morning">Morning</option>
                                     <option value="Night">Night</option>
                                 </select>
                                 @error('type') <span class="error" style="color:red">{{ $message }}</span> @enderror

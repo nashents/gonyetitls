@@ -42,10 +42,20 @@ WithBatchInserts
     use Importable, SkipsErrors;
 
     public $for;
+    protected $company;
+    protected $initialShiftId;
 
     public function __construct($for)
     {
+        $this->company = Auth::user()->employee->company;
+        $this->initialShiftId = Shift::max('id') ?? 0;
         $this->for = $for;
+    }
+
+    private function generateNumber($prefix, $id)
+    {
+        $initials = collect(explode(' ', $this->company->name))->map(fn($word) => $word[0])->implode('');
+        return $initials . $prefix . str_pad($id + 1, 5, '0', STR_PAD_LEFT);
     }
 
     private function parseExcelDate($value)
@@ -108,38 +118,84 @@ WithBatchInserts
         $userId = Auth::id();
 
         foreach ($rows as $row) {
+
             if ($row->filter()->isNotEmpty()) {
 
+                $transporter = Null;
                 $customer = Customer::where('name', $row->get('customer'))->first();
                 $horse = Horse::where('fleet_number', $row->get('horse'))->first();
+                if ($horse) {
+                    $transporter = $horse->transporter;
+                }
                 $cargo = Cargo::where('name', $row->get('cargo'))->first();
-
-                $employee = Employee::where('surname', $row->get('driver'))->first();
                 
+                $employee = Employee::where('surname', $row->get('driver'))->first();
+
+                 // Loading Point IDs
+                $loading_point_ids = [];
+                $loading_points = explode(',', trim($row->get('loading_points') ?? ''));
+                foreach ($loading_points as $lp) {
+                    $loading_point = LoadingPoint::firstOrCreate(['name' => trim($lp)], ['status' => 1]);
+                    // $loading_point = LoadingPoint::where('name', 'LIKE', '%' . trim($lp) . '%')->first();
+                    if ($loading_point) {
+                        $loading_point_ids[] = $loading_point->id;
+                    }
+                }
+                 // Offloading Point IDs
+                $offloading_point_ids = [];
+                $offloading_points = explode(',', trim($row->get('offloading_points') ?? ''));
+                foreach ($offloading_points as $op) {
+                    $offloading_point = OffloadingPoint::firstOrCreate(['name' => trim($op)], ['status' => 1]);
+                    // $offloading_point = OffloadingPoint::where('name', 'LIKE', '%' . trim($op) . '%')->first();
+                    if ($offloading_point) {
+                        $offloading_point_ids[] = $offloading_point->id;
+                    }
+                }
+
                 $driver = $employee?->driver;
 
                 $date = $this->parseExcelDate($row->get('date'))?->format('Y-m-d');
 
-                Shift::create([
-                    'user_id' => $userId,
-                    'type' => match ($row->get('shift')) {
-                        'Morning' => 'Day',
-                        'Night' => 'Night',
-                        default => null
-                    },
-                    'date' => $date,
-                    'shift_start_time' => $this->parseExcelTime($row->get('shift_start')),
-                    'shift_end_time' => $this->parseExcelTime($row->get('shift_close')),
-                    'horse_id' => $horse?->id,
-                    'driver_id' => $driver?->id,
-                    'customer_id' => $customer?->id,
-                    'cargo_id' => $cargo?->id,
-                    'actual_mileage' => $row->get('actual_mileage'),
-                    'calculated_mileage' => $row->get('cal_mileage'),
-                    'open_mileage' => $row->get('open_mileage'),
-                    'close_mileage' => $row->get('close_mileage'),
-                    'fuel_consumption_mileage' => $row->get('consumption'),
-                ]);
+                
+                if ($this->for == "Trips") {
+
+                    $shift = Shift::firstOrCreate(
+                        [
+                            'type' => $row->get('shift'),
+                            'date' => $date,
+                            'driver_id' => $driver?->id,
+                        ],
+                        [
+                            'user_id' => $userId,
+                            'shift_number' => $this->generateNumber('S', ++$this->initialShiftId),
+                            'shift_start_time' => $this->parseExcelTime($row->get('shift_start')),
+                            'shift_end_time' => $this->parseExcelTime($row->get('shift_close')),
+                            'depart_workshop_time' => $this->parseExcelTime($row->get('depart_workshop')),
+                            'horse_id' => $horse?->id,
+                            'customer_id' => $customer?->id,
+                            'transporter_id' => $transporter?->id,
+                            'cargo_id' => $cargo?->id,
+                            'actual_mileage' => $row->get('actual_mileage'),
+                            'calculated_mileage' => $row->get('cal_mileage'),
+                            'open_mileage' => $row->get('open_mileage'),
+                            'close_mileage' => $row->get('close_mileage'),
+                            'fuel_consumption_mileage' => $row->get('consumption'),
+                            'equipment' => "Horse",
+                            'total_loads' => $row->get('total_loads'),
+                            'total_fuel' => $row->get('fuel'),
+                            'authorization' => "approved",
+                            'authorized_by_id' => Auth::id(),
+                            'authorization_date' => date('Y-m-d'),
+                            'status' => False,
+                            'for' => $this->for,
+                        ]
+                    );
+
+                }
+                
+
+                $shift->loading_points()->sync($loading_point_ids);
+                $shift->offloading_points()->sync($offloading_point_ids);
             }
         }
     }
@@ -153,11 +209,11 @@ WithBatchInserts
 
     public function batchSize(): int
     {
-        return 50;
+        return 150;
     }
 
     public function chunkSize(): int
     {
-        return 50;
+        return 150;
     }
 }

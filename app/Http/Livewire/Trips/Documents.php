@@ -57,16 +57,16 @@ class Documents extends Component
         $this->validateOnly($value);
     }
 
-    // protected $messages = [
-    //     'file*.max:12048' => 'The file must not be greater than 12 Megabytes.',
-    //     'file.0.max:12048' => 'The file must not be greater than 12 Megabytes.',
-    //   ];
+    protected $messages = [
+        'file*.max:10240' => 'The file must not be greater than 10 Megabytes.',
+        'file.0.max:10240' => 'The file must not be greater than 10 Megabytes.',
+      ];
 
     protected $rules = [
         'title.*' => 'required|string',
         'title.0' => 'required|string',
-        'file.*' => 'required|file|max:12048',
-        'file.0' => 'required|file|max:12048',
+        'file.*' => 'required|file|max:10240',
+        'file.0' => 'required|file|max:10240',
         'document_number.*' => 'nullable|unique:trip_documents,document_number,NULL,id,deleted_at,NULL|string|min:2',
         'document_number.0' => 'nullable|unique:trip_documents,document_number,NULL,id,deleted_at,NULL|string|min:2',
     ];
@@ -126,7 +126,7 @@ class Documents extends Component
                 $this->resetInputFields();
                 $this->dispatchBrowserEvent('alert',[
                     'type'=>'error',
-                    'message'=>"Document(s) Failed to Upload!!"
+                    'message'=>"Attach File(s) Failed to Upload!!"
                 ]);
             }
        
@@ -148,37 +148,39 @@ class Documents extends Component
         public function update()
         {
             if ($this->document_id) {
-                    $fileNameToStore = Null;
-                          if(isset($this->file)){
-                              $file = $this->file;
-                              // get file with ext
-                              $fileNameWithExt = $file->getClientOriginalName();
-                              //get filename
-                              $filename = pathinfo($fileNameWithExt, PATHINFO_FILENAME);
-                              //get extention
-                              $extention = $file->getClientOriginalExtension();
-                              //file name to store
-                              $fileNameToStore = $filename.'_'.time().'.'.$extention;
-                              $file->storeAs('/documents', $fileNameToStore, 'my_files');
-                           }
 
-                              $document = TripDocument::find($this->document_id);
-                              $document->trip_id = $this->trip->id;
-                              $document->document_number = $this->document_number;
-                              $document->title = $this->title;
-                              $document->date = $this->date;
-                              if ($fileNameToStore) {
-                                  $document->filename = $fileNameToStore;
-                              }
-                    
-                              $document->update();
+                $fileNameToStore = Null;
 
-                              $this->dispatchBrowserEvent('hide-documentEditModal');
-                              $this->resetInputFields();
-                              $this->dispatchBrowserEvent('alert',[
-                                  'type'=>'success',
-                                  'message'=>"Document Updated Successfully!!"
-                              ]);
+                if(isset($this->file)){
+                    $file = $this->file;
+                    // get file with ext
+                    $fileNameWithExt = $file->getClientOriginalName();
+                    //get filename
+                    $filename = pathinfo($fileNameWithExt, PATHINFO_FILENAME);
+                    //get extention
+                    $extention = $file->getClientOriginalExtension();
+                    //file name to store
+                    $fileNameToStore = $filename.'_'.time().'.'.$extention;
+                    $file->storeAs('/documents', $fileNameToStore, 'my_files');
+                }
+
+                $document = TripDocument::find($this->document_id);
+                $document->trip_id = $this->trip->id;
+                $document->document_number = $this->document_number;
+                $document->title = $this->title;
+                $document->date = $this->date;
+                if ($fileNameToStore) {
+                    $document->filename = $fileNameToStore;
+                }
+    
+                $document->update();
+
+                $this->dispatchBrowserEvent('hide-documentEditModal');
+                $this->resetInputFields();
+                $this->dispatchBrowserEvent('alert',[
+                    'type'=>'success',
+                    'message'=>"Document Details Updated Successfully!!"
+                ]);
                        
 
             }

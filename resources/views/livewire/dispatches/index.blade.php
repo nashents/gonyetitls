@@ -552,22 +552,28 @@
                                             </div>
                                         </div>
                                         @endif
-                                        <div class="col-md-1">
-                                            <div class="form-group">
-                                                <button class="btn btn-danger btn-rounded xs" style="margin-top:23px"  wire:click.prevent="remove({{$key}})"> <i class="fa fa-times"></i></button>
+                                      
+                                            <div class="col-md-1">
+                                                <div class="form-group">
+                                                    <button class="btn btn-danger btn-rounded xs" style="margin-top:23px"  wire:click.prevent="remove({{$key}})"> <i class="fa fa-times"></i></button>
+                                                </div>
                                             </div>
-                                        </div>
+                                       
+                                       
                                     </div>
                                 </div>
                             <br>
                         @endforeach
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div class="form-group">
-                                    <button class="btn btn-success btn-rounded" style="float: right" wire:click.prevent="add({{$i}})"> <i class="fa fa-plus"></i> Product</button>
+                        
+                        @if ($expand == False)
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <button class="btn btn-success btn-rounded" style="float: right" wire:click.prevent="add({{$i}})"> <i class="fa fa-plus"></i> Product</button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        @endif
                     @endif
                 
                 <div class="form-group">
