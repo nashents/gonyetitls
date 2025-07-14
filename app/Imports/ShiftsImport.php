@@ -226,11 +226,13 @@ WithCalculatedFormulas
                         ]
                     );
 
+                $shift->loading_points()->sync($loading_point_ids);
+                $shift->offloading_points()->sync($offloading_point_ids);
+
                 }
                 
 
-                $shift->loading_points()->sync($loading_point_ids);
-                $shift->offloading_points()->sync($offloading_point_ids);
+               
             }
         }
     }
