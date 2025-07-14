@@ -510,6 +510,12 @@
                         @endif
                     </ul>
                 </li>
+                <li class="has-children {{ request()->routeIs('vendor_statements.index') ? 'active' : '' }}" >
+                            <a href="#"><i class="fas fa-file-invoice-dollar"></i> <span>Vendor Statements</span> <i class="fas fa-angle-right arrow"></i></a>
+                            <ul class="child-nav">
+                                <li><a href="{{ route('vendor_statements.index') }}" ><i class="fas fa-list "></i> <span>Manage Statements</span></a></li>
+                            </ul>
+                </li>
                 <li class="has-children {{ request()->routeIs('product_services.all',['category' => 'bills']) ? 'active' : '' }}" >
                     <a href="#"><i class="fas fa-boxes"></i> <span>Products & Services</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">

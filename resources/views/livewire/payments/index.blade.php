@@ -119,10 +119,14 @@
                                                 {{$payment->customer ? $payment->customer->name : ""}} Payment for invoice# <a href="{{route('invoices.show',$payment->invoice->id)}}" style="color: blue">{{$payment->invoice ? $payment->invoice->invoice_number : ""}}</a> <br>
                                             @elseif ($payment->invoice_payment)
                                                 {{$payment->customer ? $payment->customer->name : ""}} Setoff payment for invoice# <a href="{{ route('invoices.show',$payment->invoice_payment->invoice_id) }}" style="color:blue">{{$payment->invoice_payment->invoice ? $payment->invoice_payment->invoice->invoice_number : ""}}</a>
+                                            @elseif ($payment->bill_payment)
+                                                {{$payment->vendor ? $payment->vendor->name : ""}} Setoff payment for bill# <a href="{{ route('bills.show',$payment->bill_payment->bill_id) }}" style="color:blue">{{$payment->bill_payment->bill ? $payment->bill_payment->bill->bill_number : ""}}</a>
                                             @elseif($payment->bill)
                                                 Bill# <a href="{{route('bills.show',$payment->bill->id)}}" style="color: blue">{{$payment->bill ? $payment->bill->bill_number : ""}}</a> Payment to {{$payment->vendor ? $payment->vendor->name : ""}} <br>
                                             @elseif ($payment->customer && !$payment->invoice)
                                                 <a href="{{ route('customers.show',$payment->customer->id) }}" style="color:blue">{{$payment->customer ? $payment->customer->name : ""}}</a> deposit
+                                            @elseif ($payment->vendor && !$payment->bill)
+                                                <a href="{{ route('vendors.show',$payment->vendor->id) }}" style="color:blue">{{$payment->vendor ? $payment->vendor->name : ""}}</a> payment
                                             @elseif ($payment->recovery)
                                             Recovery# <a href="{{ route('recoveries.show',$payment->recovery->id) }}" style="color:blue">{{$payment->recovery ? $payment->recovery->recovery_number : ""}}</a> payment. <br>
                                             @endif
@@ -149,6 +153,10 @@
                                                 Crt
                                             @elseif($payment->bill)
                                                Dbt
+                                            @elseif($payment->bill_payment)
+                                               Dbt
+                                            @elseif ($payment->vendor && !$payment->bill)
+                                                Dbt
                                             @elseif ($payment->customer && !$payment->invoice)
                                                 Crt
                                             @elseif ($payment->recovery)
@@ -229,34 +237,66 @@
 
           <!-- Modal -->
           <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="paymentModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-            <div class="modal-dialog" role="document">
+            <div class="modal-dialog mw-100 w-60" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h4 class="modal-title" id="modal4Label">Record<i class="fas fa-plus"></i> Record bulk payment <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                        <h4 class="modal-title" id="modal4Label"><i class="fas fa-plus"></i> Record bulk payment <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                     </div>
                     <form wire:submit.prevent="recordPayment()" >
                     <div class="modal-body">
-                        <p>Record all bulk payments received from your customers to offset pending invoices.</p>
-                        <div class="form-group">
-                            <label for="name">Customers<span class="required" style="color: red">*</span></label>
-                           <select  class="form-control" wire:model.debounce.300ms="selectedCustomer" required>
-                            <option value="">Select Customer</option>
-                                @foreach ($customers as $customer)
-                                    <option value="{{ $customer->id }}">{{ $customer->name }}</option>
-                                @endforeach
-                           </select>
-                            @error('selectedCustomer') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        <p>Record all bulk payments received from your customers to offset pending invoices OR sent to vendors to offset pending bills.</p>
+                      
+                        <h5 class="underline mt-10">Select Source / Destination</h5>
+                        <div class="mb-10">
+                            <label class="radio-inline">
+                                <input type="radio" wire:model.debounce.300ms="source_destination" value="Customer" name="optradio" >Customer
+                                </label>
+                            <label class="radio-inline">
+                                <input type="radio" wire:model.debounce.300ms="source_destination" value="Vendor" name="optradio">Vendor
+                            </label>
+                            @error('source_destination') <span class="text-danger error">{{ $message }}</span>@enderror
                         </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="name">Date Of Payment<span class="required" style="color: red">*</span></label>
-                                    <input type="date" class="form-control" wire:model.debounce.300ms="date" placeholder="Enter Date" required >
-                                    @error('date') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                     
+                            <div class="row">
+                                <div class="col-md-6">
+                                    @if ($source_destination == "Customer")
+                                        <div class="form-group">
+                                            <label for="name">Customers<span class="required" style="color: red">*</span></label>
+                                            <select  class="form-control" wire:model.debounce.300ms="selectedCustomer" required>
+                                                <option value="">Select Customer</option>
+                                                @foreach ($customers as $customer)
+                                                    <option value="{{ $customer->id }}">{{ $customer->name }}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('selectedCustomer') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    @elseif($source_destination == "Vendor")
+                                        <div class="form-group">
+                                            <label for="name">Vendors<span class="required" style="color: red">*</span></label>
+                                            <select  class="form-control" wire:model.debounce.300ms="selectedVendor" required>
+                                                <option value="">Select Vendor</option>
+                                                    @foreach ($vendors as $vendor)
+                                                        <option value="{{ $vendor->id }}">{{ $vendor->name }}</option>
+                                                    @endforeach
+                                            </select>
+                                            @error('selectedVendor') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    @endif
                                 </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="name">Date Of Payment<span class="required" style="color: red">*</span></label>
+                                        <input type="date" class="form-control" wire:model.debounce.300ms="date" placeholder="Enter Date" required >
+                                        @error('date') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                   
+                                </div>
+                              
                             </div>
-                            <div class="col-md-6">
+          
+                      
+                        <div class="row">
+                                <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="name">Currencies<span class="required" style="color: red">*</span></label>
                                    <select  class="form-control" wire:model.debounce.300ms="selectedCurrency" required>
@@ -282,23 +322,34 @@
                                 @endif
                             @endif 
                             </div>
-                        </div>
-                        
-                        <div class="row">
-                             <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="country">Receiving Accounts<span class="required" style="color: red">*</span> </label>
-                                   <select wire:model.debounce.300ms="account_id" class="form-control" required>
-                                       <option value="">Select Receiving Account</option>
-                                        @foreach ($accounts as $account)
-                                            <option value="{{ $account->id }}">{{ $account->name }} {{ $account->currency ? $account->currency->name : ""}}</option>    
-                                        @endforeach
-                                   </select>
-                                    @error('account_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                </div>
+                            <div class="col-md-4">
+                                @if ($source_destination == "Customer")
+                                    <div class="form-group">
+                                        <label for="country">Receiving Accounts<span class="required" style="color: red">*</span> </label>
+                                        <select wire:model.debounce.300ms="selectedAccount" class="form-control" required>
+                                            <option value="">Select Receiving Account</option>
+                                                @foreach ($accounts as $account)
+                                                    <option value="{{ $account->id }}">{{ $account->name }} {{ $account->currency ? $account->currency->name : ""}}</option>    
+                                                @endforeach
+                                        </select>
+                                        @error('selectedAccount') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                 @elseif($source_destination == "Vendor")   
+                                    <div class="form-group">
+                                        <label for="country">Sending Accounts<span class="required" style="color: red">*</span> </label>
+                                        <select wire:model.debounce.300ms="selectedAccount" class="form-control" required>
+                                            <option value="">Select Sending Account</option>
+                                                @foreach ($accounts as $account)
+                                                    <option value="{{ $account->id }}">{{ $account->name }} {{ $account->currency ? $account->currency->name : ""}}</option>    
+                                                @endforeach
+                                        </select>
+                                        @error('selectedAccount') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                @endif
                             </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
+                        
+                            <div class="col-md-4">
+                                 <div class="form-group">
                                     <label for="country">Method Of Payment<span class="required" style="color: red">*</span></label>
                                    <select wire:model.debounce.300ms="mode_of_payment" class="form-control" required >
                                        <option value="">Select Method Of Payment</option>
@@ -312,12 +363,13 @@
                                     @error('mode_of_payment') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
-                           
                         </div>
+                        
+                      
                        
                      
                         
-                                    @if ($mode_of_payment == "Bank Payment" || $mode_of_payment == "Credit Card" || $mode_of_payment == "Paypal")
+                @if ($mode_of_payment == "Bank Payment" || $mode_of_payment == "Credit Card" || $mode_of_payment == "Paypal")
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">

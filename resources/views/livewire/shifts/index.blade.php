@@ -59,22 +59,30 @@
                             <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
-                                    <th class="th-sm">Shift#
+                                    <th class="th-sm">Shift
                                     </th>
-                                    <th class="th-sm">Type
+                                    <th class="th-sm" style="width: 20%;">Narration
                                     </th>
-                                    <th class="th-sm">Narration
+                                    <th class="th-sm" style="width: 13%;">
+                                        Duty
                                     </th>
-                                    <th class="th-sm">When
-                                    </th>
-                                    <th class="th-sm">
+                                    <th class="th-sm" style="width: 17%;">
                                            Timeline
                                     </th>
                                     <th class="th-sm" style="width:120px;">
-                                        F/C Hours
+                                        Hours
                                         <hr style="margin-top:2px; margin-bottom:2px">
-                                        F/C Mileage
+                                        Distance
                                     </th>
+                                    <th class="th-sm" style="width: 5%;">
+                                        Fuel
+                                    </th>
+                                    <th class="th-sm" style="width:120px;">
+                                        F/C (H)
+                                        <hr style="margin-top:2px; margin-bottom:2px">
+                                        F/C (M)
+                                    </th>
+                                   
                                     <th class="th-sm">Status
                                     </th>
                                     <th class="th-sm">Action
@@ -86,11 +94,9 @@
                                     @forelse($shifts as $shift)
                                   <tr>
                                     <td>
-                                         {{$shift->shift_number}} <br>
+                                         <strong>{{ucfirst($shift->type)}}  {{ucfirst($shift->for)}}</strong>
+                                        <br>
                                          <small><strong>CreatedBy:</strong> {{$shift->user ? $shift->user->name : ""}} {{$shift->user ? $shift->user->surname : ""}}</small>
-                                    </td>
-                                    <td>
-                                         {{ucfirst($shift->type)}}  {{ucfirst($shift->for)}} Shift
                                     </td>
                                      <td>
                                         <strong>Customer:</strong> {{$shift->customer ? $shift->customer->name : ""}} <br>
@@ -99,41 +105,50 @@
                                               <strong>Driver:</strong>  {{$shift->driver->employee ? $shift->driver->employee->name : ""}} {{$shift->driver->employee ? $shift->driver->employee->surname : ""}} <br>        
                                         @endif
                                         @if ($shift->horse)
-                                              <strong>Horse:</strong>  {{$shift->horse->registration_number}} <br>
+                                              <strong>Horse:</strong>  {{$shift->horse->registration_number}} {{$shift->horse->registration_number}} <br>
                                         @elseif($shift->vehicle)
                                                <strong>Vehicle:</strong> {{$shift->horse->registration_number}} <br>
                                         @endif
                                        @if ($shift->loading_points->isNotEmpty() && $shift->loading_points->count()>0)
                                             <strong>Loading Points: </strong>
                                             @foreach ($shift->loading_points as $loading_point)
-                                                {{ $loading_point->name }},
+                                                {{ $loading_point->name }} @if (!$loop->last), @endif
                                             @endforeach
                                         @endif
-
+                                        <br>
                                         @if ($shift->offloading_points->isNotEmpty())
                                             <strong>Offloading Points: </strong>
                                             @foreach ($shift->offloading_points as $offloading_point)
-                                                {{ $offloading_point->name }},
+                                                {{ $offloading_point->name }}@if (!$loop->last), @endif
                                             @endforeach
                                         @endif
                                     </td>
                                     <td>
                                         <strong>Date:</strong> {{$shift->date}} <br>
-                                        <strong>Duty Start Time:</strong> {{$shift->shift_start_time}} <br>
-                                        <strong>Duty Close Time:</strong> {{$shift->shift_end_time}} <br>
+                                        <strong>Start:</strong> {{$shift->shift_start_time}} <br>
+                                        <strong>Close:</strong> {{$shift->shift_end_time}} <br>
                                     </td>
                                     <td>
-                                        <strong>Depart Workshop: </strong> {{$shift->depart_workshop_time}} <br>
-                                        <strong>Arrive Worksite: </strong> {{$shift->arrive_location_time}} <br>
-                                        <strong>Depart Worksite: </strong> {{$shift->depart_location_time}} <br>
-                                        <strong>Arrive Workshop: </strong> {{$shift->arrive_workshop_time}} <br>
+                                        <strong>Dpt Workshop: </strong> {{$shift->depart_workshop_time}} <br>
+                                        <strong>Arv Site: </strong> {{$shift->arrive_location_time}} <br>
+                                        <strong>Dpt Site: </strong> {{$shift->depart_location_time}} <br>
+                                        <strong>Arv Workshop: </strong> {{$shift->arrive_workshop_time}} <br>
+                                    </td>
+                                     <td>
+                                        {{$shift->hours ? $shift->hours." Hrs" : ""}}
+                                            <hr style="margin-top:5px; margin-bottom:5px"> 
+                                         {{$shift->calculated_mileage ? $shift->calculated_mileage." Kms" : ""}}
+                                    </td>
+                                    <td>
+                                        {{$shift->total_fuel ? $shift->total_fuel. " l" : ""}}
                                     </td>
                                    <td>
-                                        {{$shift->fuel_consumption_hours ? number_format($shift->fuel_consumption_hours,2)." L/H" : ""}}
+                                        {{$shift->fuel_consumption_hours ? number_format($shift->fuel_consumption_hours,2)." H/l" : ""}}
                                             <hr style="margin-top:5px; margin-bottom:5px"> 
-                                        {{$shift->fuel_consumption_mileage ? number_format($shift->fuel_consumption_mileage,2)." L/Km" : ""}}
+                                        {{$shift->fuel_consumption_mileage ? number_format($shift->fuel_consumption_mileage,2)." Km/l" : ""}}
                                     </td>
                                     <td><span class="badge bg-{{$shift->status == 1 ? "warning" : "success"}}">{{$shift->status == 1 ? "Open" : "Closed"}}</span></td>
+                                  
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

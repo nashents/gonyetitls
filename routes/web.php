@@ -408,16 +408,27 @@ Route::get('fuel-top-ups/authorization/approved','TopUpController@approved')->na
 Route::get('fuel-top-ups/authorization/rejected','TopUpController@rejected')->name('top_ups.rejected');
 
 Route::get('invoices/customer-statements','InvoiceController@customerStatements')->name('customer_statements.index');
+Route::get('bills/vendor-statements','BillController@vendorStatements')->name('vendor_statements.index');
 
 Route::get('invoices/{selectedCustomer?}/{selectedType?}/customer-statements/send-email/','InvoiceController@customerStatementsEmail')->name('customer_statements.email.outstanding');
 Route::get('invoices/{selectedCustomer?}/{selectedType?}/customer-statements/pdf/','InvoiceController@customerStatementsPDF')->name('customer_statements.pdf.outstanding');
 Route::get('invoices/{selectedCustomer?}/{selectedType?}/customer-statements/print/','InvoiceController@customerStatementsPrint')->name('customer_statements.print.outstanding');
 Route::get('invoices/{selectedCustomer?}/{selectedType?}/customer-statements/','InvoiceController@customerStatementsPreview')->name('customer_statements.preview.outstanding');
 
+Route::get('bills/{selectedCustomer?}/{selectedType?}/vendor-statements/send-email/','BillController@vendorStatementsEmail')->name('vendor_statements.email.outstanding');
+Route::get('bills/{selectedCustomer?}/{selectedType?}/vendor-statements/pdf/','BillController@vendorStatementsPDF')->name('vendor_statements.pdf.outstanding');
+Route::get('bills/{selectedCustomer?}/{selectedType?}/vendor-statements/print/','BillController@vendorStatementsPrint')->name('vendor_statements.print.outstanding');
+Route::get('bills/{selectedCustomer?}/{selectedType?}/vendor-statements/','BillController@vendorStatementsPreview')->name('vendor_statements.preview.outstanding');
+
 Route::get('invoices/{selectedCustomer?}/{selectedType?}/{from?}/{to?}/customer-statements/send-email/','InvoiceController@customerStatementsEmail')->name('customer_statements.email.account');
 Route::get('invoices/{selectedCustomer?}/{selectedType?}/{from?}/{to?}/customer-statements/pdf/','InvoiceController@customerStatementsPDF')->name('customer_statements.pdf.account');
 Route::get('invoices/{selectedCustomer?}/{selectedType?}/{from?}/{to?}/customer-statements/print/','InvoiceController@customerStatementsPrint')->name('customer_statements.print.account');
 Route::get('invoices/{selectedCustomer?}/{selectedType?}/{from?}/{to?}/customer-statements/','InvoiceController@customerStatementsPreview')->name('customer_statements.preview.account');
+
+Route::get('bills/{selectedCustomer?}/{selectedType?}/{from?}/{to?}/vendor-statements/send-email/','BillController@vendorStatementsEmail')->name('vendor_statements.email.account');
+Route::get('bills/{selectedCustomer?}/{selectedType?}/{from?}/{to?}/vendor-statements/pdf/','BillController@vendorStatementsPDF')->name('vendor_statements.pdf.account');
+Route::get('bills/{selectedCustomer?}/{selectedType?}/{from?}/{to?}/vendor-statements/print/','BillController@vendorStatementsPrint')->name('vendor_statements.print.account');
+Route::get('bills/{selectedCustomer?}/{selectedType?}/{from?}/{to?}/vendor-statements/','BillController@vendorStatementsPreview')->name('vendor_statements.preview.account');
 
 
 Route::get('tickets/{ticket}/preview','TicketController@preview')->name('tickets.preview');

@@ -144,10 +144,8 @@ WithCustomStartCell
 
         if ( $trip->horse) {
             $fleet_number =  $trip->horse->fleet_number ? '('.$trip->horse->fleet_number.')' : "";
-            $horse_make =  $trip->horse->horse_make ? $trip->horse->horse_make->name : "";
-            $horse_model = $trip->horse->horse_model ? $trip->horse->horse_model->name : "";
             $horse_registration_number = $trip->horse->registration_number;
-            $horse_full_details = $horse_registration_number.' '.$fleet_number.' '.$horse_make.' '.$horse_model;
+           $horse_full_details = $horse_registration_number.' '."(".$fleet_number.")";
             }else {
                 $horse_full_details = "";
             }

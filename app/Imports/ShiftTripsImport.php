@@ -159,8 +159,23 @@ WithBatchInserts
                 $offloading_point = OffloadingPoint::where('name', 'LIKE', '%' . trim($row->get('offloading_point')) . '%')->first();
                 $cargo = Cargo::where('name', 'LIKE', '%' . trim($row->get('cargo')) . '%')->first();
                 $transporter = Transporter::where('name', 'LIKE', '%' . trim($row->get('transporter')) . '%')->first();
-                $employee = Employee::where('surname', 'LIKE', '%' . trim($row->get('driver')) . '%')->first();
-                $driver = $employee?->driver;
+               
+                $driver_name = trim($row->get('driver'));
+                $driver = null;
+
+                if ($driver_name) {
+                    $name_parts = explode(' ', $driver_name);
+                    if (count($name_parts) >= 2) {
+                        $name = $name_parts[0];
+                        $surname = $name_parts[1] ?? $name_parts[2] ?? null;
+                        if ($surname) {
+                            $employee = Employee::where('name', 'LIKE', "%$name%")
+                                ->where('surname', 'LIKE', "%$surname%")
+                                ->first();
+                            $driver = $employee?->driver;
+                        }
+                    }
+                }
 
 
                 $shift = Shift::firstOrNew([

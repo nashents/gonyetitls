@@ -21,7 +21,6 @@
                     <table class="table table-striped">
 
                         <tbody class="text-center line-height-35 ">
-
                             <tr>
                                 <th class="w-10 text-center line-height-35">CreatedBy</th>
                                 <td class="w-20 line-height-35">{{$shift->user ? $shift->user->name : ""}} {{$shift->user ? $shift->user->surname : ""}} </td>
@@ -34,24 +33,19 @@
                                 <th class="w-10 text-center line-height-35">For</th>
                                 <td class="w-20 line-height-35">{{$shift->for}}</td>
                             </tr>
-                            <tr>
-                                <th class="w-10 text-center line-height-35">Customer</th>
-                                <td class="w-20 line-height-35">{{$shift->customer ? $shift->customer->name : ""}}</td>
-                            </tr>
-                            <tr>
-                                <th class="w-10 text-center line-height-35">Cargo</th>
-                                <td class="w-20 line-height-35">{{$shift->cargo ? $shift->cargo->name : ""}}</td>
-                            </tr>
-                            <tr>
+                              <tr>
                                 <th class="w-10 text-center line-height-35">Transporter</th>
                                 <td class="w-20 line-height-35">{{$shift->transporter ? $shift->transporter->name : ""}}</td>
                             </tr>
-                            <tr>
+                             <tr>
                                 <th class="w-10 text-center line-height-35">Driver</th>
-                                <td class="w-20 line-height-35">{{$shift->driver->employee ? $shift->driver->employee->name : ""}} {{$shift->driver->employee ? $shift->driver->employee->surname : ""}}</td>
+                                <td class="w-20 line-height-35">
+                                    @if ($shift->driver)
+                                        {{$shift->driver->employee ? $shift->driver->employee->name : ""}} {{$shift->driver->employee ? $shift->driver->employee->surname : ""}}
+                                    @endif
+                                </td>
                             </tr>
-                          
-                            <tr>
+                             <tr>
                                 <th class="w-10 text-center line-height-35">Equipment</th>
                                 <td class="w-20 line-height-35">
                                     @if ($shift->horse)
@@ -61,10 +55,100 @@
                                     @endif
                                 </td>
                             </tr>
+                             <tr>
+                                <th class="w-10 text-center line-height-35">Customer</th>
+                                <td class="w-20 line-height-35">{{$shift->customer ? $shift->customer->name : ""}}</td>
+                            </tr>
+                            <tr>
+                                <th class="w-10 text-center line-height-35">Cargo</th>
+                                <td class="w-20 line-height-35">{{$shift->cargo ? $shift->cargo->name : ""}}</td>
+                            </tr>
+                            <tr>
+                                <th class="w-10 text-center line-height-35">Loading Points</th>
+                                <td class="w-20 line-height-35">
+                                    @if ($shift->loading_points && $shift->loading_points->count()>0)
+                                        @foreach ($shift->loading_points as $loading_point)
+                                            {{ $loading_point->name }}@if (!$loop->last), @endif
+                                        @endforeach
+                                    @endif
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="w-10 text-center line-height-35">Offloading Points</th>
+                                <td class="w-20 line-height-35">
+                                    @if ($shift->offloading_points && $shift->offloading_points->count()>0)
+                                        @foreach ($shift->offloading_points as $offloading_point)
+                                            {{ $offloading_point->name }}@if (!$loop->last), @endif
+                                        @endforeach
+                                    @endif
+                                </td>
+                            </tr>
+                             <tr>
+                                <th class="w-10 text-center line-height-35">Date</th>
+                                <td class="w-20 line-height-35">{{$shift->date}}</td>
+                            </tr>
+                             <tr>
+                                <th class="w-10 text-center line-height-35">Shift Start Time</th>
+                                <td class="w-20 line-height-35">{{$shift->shift_start_time}}</td>
+                            </tr>
+                             <tr>
+                                <th class="w-10 text-center line-height-35">Shift End Time</th>
+                                <td class="w-20 line-height-35">{{$shift->shift_end_time}}</td>
+                            </tr>
+                             <tr>
+                                <th class="w-10 text-center line-height-35">Total Loads</th>
+                                <td class="w-20 line-height-35">{{$shift->total_loads}}</td>
+                            </tr>
+                             <tr>
+                                <th class="w-10 text-center line-height-35">Shift Open Mileage</th>
+                                <td class="w-20 line-height-35">{{$shift->open_mileage ? number_format($shift->open_mileage,2)." Kms" : ""}}</td>
+                            </tr>
+                             <tr>
+                                <th class="w-10 text-center line-height-35">Shift Closing Mileage</th>
+                                <td class="w-20 line-height-35">{{$shift->close_mileage ? number_format($shift->close_mileage,2)." Kms" : ""}}</td>
+                            </tr>
+                             <tr>
+                                <th class="w-10 text-center line-height-35">Actual Mileage</th>
+                                <td class="w-20 line-height-35">{{$shift->actual_mileage ? $shift->actual_mileage." Kms" : ""}}</td>
+                            </tr>
+                            <tr>
+                                <th class="w-10 text-center line-height-35">Calculated Mileage</th>
+                                <td class="w-20 line-height-35">{{$shift->calculated_mileage ? number_format($shift->calculated_mileage,2)." Kms" : ""}}</td>
+                            </tr>
+                           
+                            <tr>
+                                <th class="w-10 text-center line-height-35">Fuel Qty</th>
+                                <td class="w-20 line-height-35">{{$shift->total_fuel ? $shift->total_fuel." Litres" : ""}}</td>
+                            </tr>
+                            <tr>
+                                <th class="w-10 text-center line-height-35">Fuel Consumption (Mileage)</th>
+                                <td class="w-20 line-height-35">{{$shift->fuel_consumption_mileage ? number_format($shift->fuel_consumption_mileage,2)." L/Km" : ""}}</td>
+                            </tr>
+                            <tr>
+                                <th class="w-10 text-center line-height-35">Status</th>
+                                <td class="w-20 line-height-35"><span class="badge bg-{{$shift->status == 1 ? "warning" : "success"}}">{{$shift->status == 1 ? "Open" : "Closed"}}</span></td>
+                            </tr>
+                            <tr>
+                                <th class="w-10 text-center line-height-35">Authorization</th>
+                                <td class="w-20 line-height-35"> <span class="badge bg-{{($shift->authorization == 'approved') ? 'success' : (($shift->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($shift->authorization == 'approved') ? 'approved' : (($shift->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
+                            </tr>
+                            @php
+                                $authorizer = App\Models\User::find($shift->authorized_by_id);
+                            @endphp
+                            @if ($authorizer)
                                 <tr>
-                                    <th class="w-10 text-center line-height-35">Status</th>
-                                    <td class="w-20 line-height-35"><span class="badge bg-{{$shift->status == 1 ? "success" : "danger"}}">{{$shift->status == 1 ? "Active" : "Inactive"}}</span></td>
+                                    <th class="w-10 text-center line-height-35">Authorized By</th>
+                                    <td class="w-20 line-height-35"> {{$authorizer->name}} {{$authorizer->surname}}</td>
                                 </tr>
+                            @endif
+                            
+                            @if ($shift->reason)
+                                <tr>
+                                    <th class="w-10 text-center line-height-35">Authorization Comments</th>
+                                    <td class="w-20 line-height-35">{{$shift->reason}}</td>
+                                </tr>
+                            @endif
+                               
                     
                            
                            

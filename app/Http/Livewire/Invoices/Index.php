@@ -518,7 +518,7 @@ class Index extends Component
     }
     public function updateAllInvoices(){
 
-        $invoices = Invoice::whereNotNull('accrual_balance')->orderBy('id','asc')->orderBy('created_at','asc')->get();
+        $invoices = Invoice::whereNotNull('accrual_balance')->orderBy('id','asc')->orderBy($this->invoice_filter,'asc')->get();
         if($invoices){
             foreach($invoices as $invoice){
                 if((isset($invoice->customer_id) && isset($invoice->currency_id))){
@@ -773,7 +773,7 @@ class Index extends Component
                                         ->where('currency_id',$this->selectedCurrency)
                                         ->where('authorization','approved')
                                         ->where('status','!=','Paid')
-                                        ->orderBy('created_at','desc')->get();
+                                        ->orderBy($this->invoice_filter,'desc')->get();
         }
       
 

@@ -25,7 +25,7 @@ class Index extends Component
     public $selectedType;
 
     public function mount(){
-       $this->customers = Customer::orderBy('name','asc')->get(); 
+       $this->customers = Customer::orderBy('name','asc')->where('status',True)->get(); 
     }
 
     public function exportCustomerStatementExcel(Excel $excel){

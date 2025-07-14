@@ -5,6 +5,7 @@ namespace App\Http\Livewire\Bills;
 
 use App\Models\Bill;
 use App\Models\Brand;
+use App\Models\Vendor;
 use App\Models\Account;
 use App\Models\Payment;
 use App\Models\Receipt;
@@ -14,6 +15,7 @@ use App\Models\Category;
 use App\Models\Currency;
 use App\Models\Document;
 use App\Models\BankAccount;
+use App\Models\BillPayment;
 use App\Exports\BillsExport;
 use App\Models\Denomination;
 use Livewire\WithPagination;
@@ -36,6 +38,7 @@ class Index extends Component
     protected $queryString = ['search'];
     public $from;
     public $to;
+    public $tax_status = "all";
     public $bank_accounts;
     public $bank_account_id;
     public $currencies;
@@ -45,12 +48,26 @@ class Index extends Component
     public $trips;
     public $trip;
     public $trip_id;
+    public $drawdown_bill_balance;
+    public $drawdown_amount;
+    public $bill_drawdown_current_balance;
+    public $bill_drawdown_balance;
+    public $payment_drawdown_balance;
+    public $selectedVendorAccount;
+    public $selectedVendor;
     private $bills;
     public $bill;
+    public $selectedBill;
+    public $unpaid_bills;
+    public $account_payments;
     public $bill_id;
     public $bill_balance;
     public $bill_currency;
     public $bill_filter;
+    public $selected_currency;
+    public $selected_vendor;
+    public $vendors;
+    public $last_payment;
     public $pop;
     public $reference_code;
     public $transaction_types;
@@ -62,7 +79,7 @@ class Index extends Component
     public $surname;
     public $notes;
     public $user_id;
-    public $customer_id;
+    public $vendor_id;
     public $amount;
     public $current_balance;
     public $mode_of_payment;
@@ -120,13 +137,13 @@ class Index extends Component
 
 
     public function exportBillsCSV(Excel $excel){
-        return $excel->download(new BillsExport($this->from, $this->to, $this->bill_filter,  $this->search), 'bills_' .time().'.csv', Excel::CSV);
+        return $excel->download(new BillsExport($this->from, $this->to, $this->bill_filter, $this->tax_status,  $this->search), 'bills_' .time().'.csv', Excel::CSV);
     }
     public function exportBillsPDF(Excel $excel){
-        return $excel->download(new BillsExport($this->from, $this->to, $this->bill_filter,  $this->search), 'bills_' .time().'.pdf', Excel::DOMPDF);
+        return $excel->download(new BillsExport($this->from, $this->to, $this->bill_filter, $this->tax_status,  $this->search), 'bills_' .time().'.pdf', Excel::DOMPDF);
     }
     public function exportBillsExcel(Excel $excel){
-        return $excel->download(new BillsExport($this->from, $this->to, $this->bill_filter,  $this->search), 'bills_' .time().'.xlsx');
+        return $excel->download(new BillsExport($this->from, $this->to, $this->bill_filter, $this->tax_status,  $this->search), 'bills_' .time().'.xlsx');
     }
 
     public function mount(){
@@ -136,12 +153,40 @@ class Index extends Component
         $this->bill_filter = "created_at";
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->transaction_type_id = TransactionType::where('name','Withdrawal')->first()->id;
-        $this->bank_accounts = BankAccount::latest()->get();
-        $this->accounts = Account::where('account_type_id',1)->latest()->get();
+        $this->bank_accounts = BankAccount::orderBy('name','asc')->get()->sortBy('account_name');
+        $this->accounts = Account::where('account_type_id',1)->orderBy('name','asc')->get();
+        $this->transaction_category = "Bills";
+        $this->tax_status = "all";
+        $this->vendors = Vendor::orderBy('name','asc')->get();
+    
+    }
+ 
 
-
+      public function updatedSelectedVendor($id){
+        if (!is_null($id)) {
+            $this->selectedVendor = $id;
+            $this->selected_vendor = Vendor::find($id);
+        } 
+    }
+    public function updatedSelectedCurrency($id){
+        if (!is_null($id)) {
+         
+            $this->selected_currency = Currency::find($id);
+        } 
     }
 
+    public function updatedSelectedVendorAccount($id){
+        if (!is_null($id)) {
+            $this->selectedVendorAccount = $id;
+            $account = Account::find($id);
+            $currency_id = $account->currency_id;
+           
+
+            $this->account_payments = Payment::where('vendor_account_id',$id)
+            ->where('drawdown_balance','>',0)
+            ->orderBy('created_at','desc')->get();
+        } 
+    }
 
 
     public function receiptNumber(){
@@ -211,6 +256,109 @@ class Index extends Component
     
     }
 
+        public function updatedSelectedBill($id){
+            if (!is_null($id)) {
+                $this->selectedBill = $id;
+                $this->bill = Bill::find($id);
+                $this->bill_drawdown_balance = $this->bill->balance;
+            }
+        }
+
+        public function drawdownPayments(){
+
+        if (isset($this->drawdown_amount) && isset($this->bill_drawdown_balance) && ($this->drawdown_amount >= $this->bill_drawdown_balance)) {
+            $this->payment_drawdown_balance = $this->drawdown_amount - $this->bill_drawdown_balance;
+            $this->bill_drawdown_balance = 0;
+            $this->amount_paid = $this->bill_drawdown_balance;
+        }else{
+            $this->bill_drawdown_balance = $this->bill_drawdown_balance - $this->drawdown_amount;
+            $this->payment_drawdown_balance = 0;
+            $this->amount_paid = $this->drawdown_amount;
+        }
+
+        $payment = Payment::find($this->last_payment->id);
+        $payment->drawdown_balance = $this->payment_drawdown_balance;
+        $payment->update();
+        
+        $bill = Bill::find($this->selectedBill); 
+
+        $bill_payment = new BillPayment;
+        $bill_payment->bill_id = $this->selectedBill;
+        $bill_payment->vendor_id = $bill->vendor_id;
+        $bill_payment->payment_id =$this->last_payment->id;
+        $bill_payment->currency_id = $bill->currency_id;
+        $bill_payment->amount = $this->amount_paid;
+        $bill_payment->save();
+      
+    
+
+        $bill = Bill::find($this->selectedBill);
+        $bill->balance = $this->bill_drawdown_balance;
+        if ($this->bill_drawdown_balance <= 0) {
+            $bill->status = "Paid";
+        }else {
+            $bill->status = "Partial";
+        }
+        $bill->update();
+ 
+        $this->dispatchBrowserEvent('hide-paymentDrawdownModal');
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Payment Drawdown Effected Successfully!!"
+        ]);
+       
+    }
+
+    public function showBillUpdate(){
+        $this->dispatchBrowserEvent('show-updateBillsModal');
+    }
+    public function updateAllBills(){
+
+        $bills = Bill::whereNotNull('accrual_balance')->orderBy('id','asc')->orderBy($this->bill_filter,'asc')->get();
+        if($bills){
+            foreach($bills as $bill){
+                if((isset($bill->vendor_id) && isset($bill->currency_id))){
+                    if (!is_null($bill->accrual_balance)) {
+                     $last_payment = Payment::where('created_at', '<', $bill->created_at)
+                                            ->where('vendor_id', $bill->vendor_id)
+                                            ->where('currency_id', $bill->currency_id)
+                                            ->whereNotNull('bill_id') // Ensure payment is linked to an bill
+                                            ->whereNotNull('accrual_balance') // Ensure accrual balance exists
+                                            ->orderByDesc('date') // Prioritize latest transaction date
+                                            ->orderByDesc('created_at') // If same date, get most recently recorded
+                                            ->orderByDesc('id') // If same creation time, get latest ID
+                                            ->first();
+    
+                                        // If no valid payment exists, retrieve the last bill with the highest accrual balance
+                    $last_bill = null;
+                    if (!$last_payment) {
+                        $last_bill = Bill::where('authorization', 'approved')
+                            ->where('vendor_id', $bill->vendor_id)
+                            ->where('currency_id', $bill->currency_id)
+                            ->whereNotNull('accrual_balance') // Ensure accrual balance exists
+                            ->orderByDesc('accrual_balance') // Prioritize highest balance
+                            ->orderByDesc('bill_date') // If tie, use latest bill date
+                            ->orderByDesc('id') // If tie, use latest ID
+                            ->first();
+                    }
+    
+                  
+                    // Determine the last accrual balance, prioritizing payments over bills
+                    $previous_balance = $last_payment && is_numeric($last_payment->accrual_balance) 
+                        ? $last_payment->accrual_balance 
+                        : ($last_bill && is_numeric($last_bill->accrual_balance) ? $last_bill->accrual_balance : 0);
+    
+                    // Compute and set the new accrual balance
+                    $bill->accrual_balance = $previous_balance + $bill->total;
+                    $bill->update(); // Save the updated bill
+                       
+                    }
+                }
+            }
+        }
+
+        $this->dispatchBrowserEvent('hide-updateBillsModal');
+    }
     
     public function showPayment($id){
         $this->bill_id = $id ;
@@ -382,7 +530,24 @@ class Index extends Component
 
         }
 
-        if ($this->bill_balance != "" && $this->amount != "") {
+        if (isset($this->selectedVendor) && isset($this->selectedCurrency)) {
+        
+            $this->last_payment = Payment::where('vendor_id',$this->selectedVendor)->where('currency_id',$this->selectedCurrency)->where('transaction_category', "Vendor Deposits")->orderBy('created_at','desc')->first();
+            if(isset($this->last_payment)){
+                $this->drawdown_amount = $this->last_payment->drawdown_balance;
+                $this->payment_drawdown_balance = $this->last_payment->drawdown_balance;
+            }
+        
+
+            $this->unpaid_bills = Bill::where('vendor_id',$this->selectedVendor)
+                                        ->where('currency_id',$this->selectedCurrency)
+                                        ->where('authorization','approved')
+                                        ->where('status','!=','Paid')
+                                        ->orderBy($this->bill_filter,'desc')->get();
+        }
+
+       
+          if ((is_numeric($this->bill_balance) && $this->bill_balance > 0) && (is_numeric($this->amount))) {
             $this->current_balance = $this->bill_balance - $this->amount;
         }
         

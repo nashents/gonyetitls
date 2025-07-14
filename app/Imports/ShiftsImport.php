@@ -3,9 +3,9 @@
 namespace App\Imports;
 
 use Carbon\Carbon;
-use App\Models\Shift;
 use App\Models\Cargo;
 use App\Models\Horse;
+use App\Models\Shift;
 use App\Models\Driver;
 use App\Models\Trailer;
 use App\Models\Vehicle;
@@ -31,13 +31,15 @@ use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
+use Maatwebsite\Excel\Concerns\WithCalculatedFormulas;
 
 class ShiftsImport implements ToCollection, SkipsEmptyRows, WithLimit,
 WithHeadingRow,
 SkipsOnError,
 WithValidation,
 WithChunkReading,
-WithBatchInserts
+WithBatchInserts,
+WithCalculatedFormulas
 {
     use Importable, SkipsErrors;
 
@@ -129,7 +131,7 @@ WithBatchInserts
                 }
                 $cargo = Cargo::where('name', $row->get('cargo'))->first();
                 
-                $employee = Employee::where('surname', $row->get('driver'))->first();
+                
 
                  // Loading Point IDs
                 $loading_point_ids = [];
@@ -152,8 +154,41 @@ WithBatchInserts
                     }
                 }
 
-                $driver = $employee?->driver;
+                $driver_name = trim($row->get('driver')); 
+                $driver = null;
+              
 
+                if ($driver_name) {
+                    // Use regex to split and clean up whitespace
+                    $name_parts = preg_split('/\s+/', $driver_name, -1, PREG_SPLIT_NO_EMPTY);
+                  
+                    if (count($name_parts) >= 2) {
+                        $name = $name_parts[0];
+                        $surname = $name_parts[1] ?? $name_parts[2] ?? null;
+                        if ($surname) {
+                            $employee = Employee::where('name', 'LIKE', "%$name%")
+                                ->where('surname', 'LIKE', "%$surname%")
+                                ->first();
+                            $driver = $employee?->driver;
+                        }
+                    }
+
+                    if (count($name_parts) === 1) {
+                      
+                        $surname = $name_parts[0];
+                        if ($surname) {
+                              
+                            $employee = Employee::where('surname', 'LIKE', "%$surname%")->first();
+                         
+                            $driver = $employee?->driver;
+
+                            
+                        }
+                    }
+                }
+
+             
+                 
                 $date = $this->parseExcelDate($row->get('date'))?->format('Y-m-d');
 
                 

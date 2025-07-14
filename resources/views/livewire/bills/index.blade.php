@@ -20,11 +20,13 @@
                                   </span>
                                   <select wire:model.debounce.300ms="bill_filter" class="form-control" aria-label="..." >
                                     <option value="created_at">Bill Created At</option>
+                                    <option value="bill_date">Bill Date</option>
                                 </select>
                                     </div>
 
                                     <!-- /input-group -->
                                 </div>
+
                             
                                 <div class="col-lg-2" style="margin-right: 7px; margin-left:-15px;">
                                     <div class="input-group">
@@ -52,11 +54,25 @@
                           
                            
                             </div>
-                            <div class="panel-title">
-                                <a href="{{route('bills.create')}}"  class="btn btn-default"><i class="fa fa-plus-square-o"></i>Bill</a>
-                                <a href="#" wire:click="exportBillsExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
+                             <div class="panel-title" style="margin-left:-15px;" >
+                                <div class="col-lg-3">
+                                    <div class="input-group">
+                                        <span class="input-group-addon">Tax Status</span>
+                                        <select wire:model.debounce.300ms="tax_status" class="form-control" aria-label="..." >
+                                          <option value="all">All Bills</option>
+                                          <option value="taxed">Taxed Bills</option>
+                                          <option value="non-taxed">Non Taxed Bills</option>
+                                        </select>
+                                    </div>
+                                </div>
+                               
+                               <a href="#" wire:click="exportBillsExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
                                 <a href="#" wire:click="exportBillsCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
                                 <a href="#" wire:click="exportBillsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
+                            </div>
+                            <div class="panel-title" style="margin-top:10px; margin-left:-1px">
+                                <a href="{{route('bills.create')}}"  class="btn btn-default"><i class="fa fa-plus-square-o"></i>Bill</a>
+                                <a href="#" type="button" data-toggle="modal" data-target="#paymentDrawdownModal" class="btn btn-default btn-rounded btn-wide"><i class="fa fa-credit-card"></i>Bulk Bills Payments</a>
                             </div>
                             
                         </div>
@@ -356,7 +372,7 @@
                                 @if (Auth::user()->employee->company)
                                     @if ($bill_currency->id != Auth::user()->employee->company->currency_id)
                                     <div class="form-group">
-                                        <label for="customer">Conversion Rate<span class="required" style="color: red">*</span></label>
+                                        <label for="vendor">Conversion Rate<span class="required" style="color: red">*</span></label>
                                         <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="exchange_rate"  placeholder="Exchange Rate" required>
                                         @error('exchange_rate') <span class="text-danger error">{{ $message }}</span>@enderror
                                         <small>{{$exchange_amount ? "The converted amount is: ".$exchange_amount : ""}}</small>
@@ -521,6 +537,94 @@
                         @else
                             <button type="submit" class="btn bg-success btn-wide btn-rounded" disabled ><i class="fa fa-save" ></i>Save</button> 
                         @endif
+                    </div>
+                    <!-- /.btn-group -->
+                </div>
+            </form>
+            </div>
+        </div>
+    </div>
+
+      <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="paymentDrawdownModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-plus"></i> Add Payment Drawdown <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                </div>
+                <form wire:submit.prevent="drawdownPayments()" >
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="name">Vendors<span class="required" style="color: red">*</span></label>
+                               <select  class="form-control" wire:model.debounce.300ms="selectedVendor" required>
+                                <option value="">Select Vendor</option>
+                                    @foreach ($vendors as $vendor)
+                                        <option value="{{ $vendor->id }}">{{ $vendor->name }}</option>
+                                    @endforeach
+                               </select>
+                                @error('selectedVendor') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="vat">Currencies<span class="required" style="color: red">*</span></label>
+                               <select class="form-control" wire:model.debounce.300ms="selectedCurrency" required>
+                                <option value="">Select Currency</option>
+                                @foreach ($currencies as $currency)
+                                <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>                                              
+                                @endforeach
+                               </select>
+                                @error('selectedCurrency') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                       
+                    </div>
+                  
+                        @if (isset($selected_vendor) && isset($selected_currency) && isset($last_payment) && $last_payment->drawdown_balance > 0 )
+                            <blockquote>
+                                {{$selected_vendor->name}} has {{$selected_currency->name}} {{$selected_currency->symbol}}{{number_format($last_payment->drawdown_balance ? $last_payment->drawdown_balance : 0,2)}}
+                            </blockquote>
+                        @endif
+                    <div class="form-group">
+                        <label for="country">Bills<span class="required" style="color: red">*</span> </label>
+                        <select wire:model.debounce.300ms="selectedBill" class="form-control" required>
+                            <option value="">Select Bill</option>
+                            @if (!is_null($selectedVendor) && !is_null($selectedCurrency) )
+                                @foreach ($unpaid_bills as $bill)
+                                    <option value="{{ $bill->id }}">{{$bill->bill_number}} | {{$bill->vendor ? $bill->vendor->name : ""}} | Balance: {{$bill->currency ? $bill->currency->name : ""}} {{$bill->currency ? $bill->currency->symbol : ""}}{{number_format($bill->balance ? $bill->balance : 0,2)}} | {{ $bill->status }}</option>
+                                @endforeach
+                            @endif 
+                        </select>
+                         @error('selectedBill') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="name">Drawdown Balance<span class="required" style="color: red">*</span></label>
+                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="payment_drawdown_balance" placeholder="Payment Drawdown Balance" disabled required >
+                                @error('payment_drawdown_balance') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="name">Balance<span class="required" style="color: red">*</span></label>
+                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="bill_drawdown_balance" placeholder="Bill Balance" disabled required >
+                                @error('bill_drawdown_balance') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                    </div>
+            
+                </div>
+                <div class="modal-footer">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                        @if (isset($selected_vendor) && isset($selected_currency) && isset($last_payment) && $last_payment->drawdown_balance > 0 )
+                        <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Save</button>
+                        @else
+                        <button type="submit" class="btn bg-success btn-wide btn-rounded" disabled><i class="fa fa-save"></i>Save</button>
+                        @endif
+                       
                     </div>
                     <!-- /.btn-group -->
                 </div>

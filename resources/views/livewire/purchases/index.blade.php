@@ -115,8 +115,11 @@
                                         <td>{{$purchase->vendor ? $purchase->vendor->name : ""}}</td>
                                         <td>
                                             @foreach ($purchase->purchase_products as $purchase_product )
-                                            {{$purchase_product->product ? $purchase_product->product->name : ""}} {{$purchase_product->product->brand ? $purchase_product->product->brand->name : ""}} ({{$purchase_product->qty}}) <br>
+                                                @if ($purchase_product->product)
+                                                        {{$purchase_product->product ? $purchase_product->product->name : ""}} {{$purchase_product->product->brand ? $purchase_product->product->brand->name : ""}} ({{$purchase_product->qty}}) <br>
+                                                @endif
                                             @endforeach
+                                            
                                             @if ($purchase->description)
                                                 <br>
                                                 <i><strong>Notes: </strong> {{$purchase->description}}</i>

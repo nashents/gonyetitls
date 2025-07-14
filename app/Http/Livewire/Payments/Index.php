@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Payments;
 
+use App\Models\Vendor;
 use App\Models\Account;
 use App\Models\Payment;
 use App\Models\Receipt;
@@ -36,9 +37,11 @@ class Index extends Component
     public $payment_filter;
     public $movement;
     public $invoice_products;
+    public $source_destination;
     public $invoice;
     public $invoice_id;
     public $customers;
+    public $vendors;
     public $currencies;
     public $selectedCurrency;
     public $receipt_number;
@@ -52,8 +55,10 @@ class Index extends Component
     public $transaction_type_id;
     public $transaction_category;
     public $selectedCustomerAccount;
+    public $selectedVendor;
+    public $selectedVendorAccount;
     public $accounts;
-    public $account_id;
+    public $selectedAccount;
     public $bank_accounts;
     public $bank_account_id;
     public $trips;
@@ -171,29 +176,39 @@ class Index extends Component
 
     private function resetInputFields(){
         $this->selectedCustomer = '';
+        $this->selectedvendor = '';
         $this->selectedCurrency = '';
         $this->name = '';
         $this->surname = '';
         $this->notes = '';
         $this->mode_of_payment = "" ;
         $this->specify_other = "" ;
-        $this->account_id = "" ;
+        $this->selectedAccount = "" ;
         $this->reference_code = "" ;
         $this->bank_account_id = "" ;
     }
 
     public function mount(){
-        $this->transaction_type_id = TransactionType::where('name','Deposit')->first();
-        $this->transaction_category = "Customer Deposits";
+      
         $this->resetPage();
         $this->payment_filter = "created_at";
+        $this->source_destination = "Customer";
         $this->movement = "all";
         $this->accounts = collect();
+        $this->vendors = Vendor::orderBy('name','asc')->get();
+        $this->customers = Customer::orderBy('name','asc')->get();
+        $this->currencies = Currency::orderBy('name','asc')->get();
+
     }
    
     public function updatedSelectedCurrency($id){
         if (!is_null($id)) {
             $this->accounts = Account::where('account_type_id',1)->where('currency_id',$id)->orderBy('name','asc')->get();
+        } 
+    }
+    public function updatedSelectedAccount($id){
+        if (!is_null($id)) {
+            $this->selected_account = Account::find($id);
         } 
     }
 
@@ -233,9 +248,32 @@ class Index extends Component
 
     public function recordPayment(){
 
+        if ($this->source_destination === "Vendor" && $this->selected_account && isset($this->selected_account->balance)) {
+            if ($this->selected_account->balance < $this->amount) {
+                $this->dispatchBrowserEvent('hide-paymentModal');
+                $this->resetInputFields();
+                $this->dispatchBrowserEvent('alert', [
+                    'type' => 'error',
+                    'message' => "Insufficient funds in the selected account to process this transaction."
+                ]);
+
+                return;
+            }
+        }
+
         $payment = new Payment;
         $payment->company_id = Auth::user()->employee->company ? Auth::user()->employee->company->id : "";
-        $payment->customer_id = $this->selectedCustomer;
+
+        if ($this->source_destination == "Customer") {
+            $payment->customer_id = $this->selectedCustomer;
+            $payment->category = "customer";
+            $payment->vendor_id = Null;
+        }elseif ($this->source_destination == "Vendor") {
+            $payment->vendor_id = $this->selectedVendor;
+            $payment->category = "vendor";
+            $payment->customer_id = Null;
+        }
+       
         $payment->user_id = Auth::user()->id;
         $payment->currency_id = $this->selectedCurrency;
         $payment->payment_number = $this->paymentNumber();   
@@ -244,11 +282,19 @@ class Index extends Component
         $payment->transaction_type_id = $this->transaction_type_id;
         $payment->transaction_category = $this->transaction_category;
         $payment->specify_other = $this->specify_other;
-        $payment->category = "customer";
         $payment->reference_code = $this->reference_code;
-        $payment->account_id = $this->account_id;
+        $payment->account_id = $this->selectedAccount;
         $payment->amount = $this->amount;
+
         if(isset($this->selectedCustomer) && isset($this->selectedCurrency) &&  $this->transaction_category == "Customer Deposits"){
+            if (isset($this->last_payment) && $this->last_payment->drawdown_balance > 0) {
+                $payment->drawdown_balance = $this->last_payment->drawdown_balance + $this->amount;
+            }else{
+                $payment->drawdown_balance = $this->amount;
+            }
+        }
+        
+        if(isset($this->selectedvendor) && isset($this->selectedCurrency) &&  $this->transaction_category == "Vendor Payments"){
             if (isset($this->last_payment) && $this->last_payment->drawdown_balance > 0) {
                 $payment->drawdown_balance = $this->last_payment->drawdown_balance + $this->amount;
             }else{
@@ -314,23 +360,34 @@ class Index extends Component
             }
         }
 
-        if (isset($this->account_id)) {
-            $account = Account::find($this->account_id);
-            $current_balance = $account->balance;
-            $account->balance = $current_balance + $this->amount;
-            $account->update();
+        if (isset($this->selectedAccount)) {
+            if ($this->source_destination == "Customer") {
+                $account = Account::find($this->selectedAccount);
+                $current_balance = $account->balance;
+                $account->balance = $current_balance + $this->amount;
+                $account->update();
+
+                $receipt =  new Receipt;
+                $receipt->payment_id = $payment->id;
+                $receipt->company_id = $payment->company_id;
+                $receipt->currency_id = $payment->currency_id;
+                $receipt->receipt_number = $this->receiptNumber(); ;
+                $receipt->user_id = Auth::user()->id;
+                $receipt->amount = $this->amount;
+                $receipt->date = $this->date;
+                $receipt->save();
+                
+            }elseif ($this->source_destination == "Vendor") {
+                $account = Account::find($this->selectedAccount);
+                $current_balance = $account->balance;
+                $account->balance = $current_balance - $this->amount;
+                $account->update();
+            }
+            
         }
 
         
-        $receipt =  new Receipt;
-        $receipt->payment_id = $payment->id;
-        $receipt->company_id = $payment->company_id;
-        $receipt->currency_id = $payment->currency_id;
-        $receipt->receipt_number = $this->receiptNumber(); ;
-        $receipt->user_id = Auth::user()->id;
-        $receipt->amount = $this->amount;
-        $receipt->date = $this->date;
-        $receipt->save();
+        
 
        
         $this->dispatchBrowserEvent('hide-paymentModal');
@@ -351,19 +408,27 @@ class Index extends Component
     public function render()
     {
 
+        if ($this->source_destination == "Customer") {
+            $this->transaction_type_id = TransactionType::where('name','Deposit')->first();
+            $this->transaction_category = "Customer Deposits";
+            if (isset($this->selectedCustomer) && isset($this->selectedCurrency)) { 
+            $this->last_payment = Payment::where('customer_id',$this->selectedCustomer)->where('currency_id',$this->selectedCurrency)->where('transaction_category',  $this->transaction_category)->orderBy('created_at','desc')->first();
+        }
+
+        }elseif ($this->source_destination == "Vendor") {
+            $this->transaction_type_id = TransactionType::where('name','Withdrawal')->first();
+            $this->transaction_category = "Vendor Payments";
+            if (isset($this->selectedCustomer) && isset($this->selectedCurrency)) { 
+            $this->last_payment = Payment::where('vendor_id',$this->selectedVendor)->where('currency_id',$this->selectedCurrency)->where('transaction_category',  $this->transaction_category)->orderBy('created_at','desc')->first();
+        }
+
+        }
+
         if ((isset($this->exchange_rate) && $this->exchange_rate > 0)  &&  ( isset($this->amount) && $this->amount > 0 )) {
 
             $this->exchange_amount = $this->exchange_rate * $this->amount;
 
         }
-
-        $this->customers = Customer::orderBy('name','asc')->get();
-        $this->currencies = Currency::orderBy('name','asc')->get();
-
-        if (isset($this->selectedCustomer) && isset($this->selectedCurrency)) { 
-            $this->last_payment = Payment::where('customer_id',$this->selectedCustomer)->where('currency_id',$this->selectedCurrency)->where('transaction_category',  $this->transaction_category)->orderBy('created_at','desc')->first();
-        }
-
 
         if ($this->movement == "all") {
             if (isset($this->from) && isset($this->to)) {
