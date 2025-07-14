@@ -75,7 +75,7 @@ Customer Statement Preview |@if (Auth::user()->employee->company)
                         </header>
                         @php
                             $currencies = App\Models\Currency::all();
-                            $billed_currencies = App\Models\Bill::where('customer_id',$customer->id)->where('authorization','approved')->get()->pluck('currency_id')->toArray();
+                            $billed_currencies = App\Models\Bill::where('vendor_id',$vendor->id)->where('authorization','approved')->get()->pluck('currency_id')->toArray();
                         @endphp
                         @foreach ($currencies as $currency)
                             @if (isset($billed_currencies))
@@ -86,15 +86,15 @@ Customer Statement Preview |@if (Auth::user()->employee->company)
                             <div class="row contacts">
                                 <div class="col invoice-to" >
                                     <div class="text-gray-light">BILL TO:</div>
-                                    <h5 class="to">{{$customer->name}}</h5>
+                                    <h5 class="to">{{$vendor->name}}</h5>
                                     <div class="address" >
-                                        {{$customer->street_address}}
-                                        @if ($customer->suburb)
-                                            {{$customer->suburb ? $customer->suburb."," : ""}} <br>
+                                        {{$vendor->street_address}}
+                                        @if ($vendor->suburb)
+                                            {{$vendor->suburb ? $vendor->suburb."," : ""}} <br>
                                         @endif 
-                                        {{$customer->city ? $customer->city."," : ""}} {{$customer->country}}
+                                        {{$vendor->city ? $vendor->city."," : ""}} {{$vendor->country}}
                                     </div>
-                                    <div class="email"><a href="mailto:{{$customer->email}}">{{$customer->email}}</a>
+                                    <div class="email"><a href="mailto:{{$vendor->email}}">{{$vendor->email}}</a>
                                     </div>
                                 </div>
                                 <div class="col invoice-details">
@@ -102,10 +102,10 @@ Customer Statement Preview |@if (Auth::user()->employee->company)
                                     <div class="date" style="padding-bottom: 3px"> <strong>As of {{date('F j, Y')}}</strong> </div>
                                   
                                     @php
-                                        $balance = App\Models\Bill::where('customer_id',$customer->id)->where('currency_id',$currency->id)
+                                        $balance = App\Models\Bill::where('vendor_id',$vendor->id)->where('currency_id',$currency->id)
                                         ->where('authorization','approved')
                                         ->where('status', 'Unpaid')
-                                        ->orWhere('customer_id',$customer->id)->where('currency_id',$currency->id)
+                                        ->orWhere('vendor_id',$vendor->id)->where('currency_id',$currency->id)
                                         ->where('authorization','approved')
                                         ->where('status', 'Partial')
                                         ->get()->sum('balance');
@@ -166,10 +166,10 @@ Customer Statement Preview |@if (Auth::user()->employee->company)
                                 </tbody>
                                 <tfoot>
                                     @php
-                                        $balance = App\Models\Bill::where('customer_id',$customer->id)->where('currency_id',$currency->id)
+                                        $balance = App\Models\Bill::where('vendor_id',$vendor->id)->where('currency_id',$currency->id)
                                         ->where('status', 'Unpaid')
                                         ->where('authorization','approved')
-                                        ->orWhere('customer_id',$customer->id)->where('currency_id',$currency->id)
+                                        ->orWhere('vendor_id',$vendor->id)->where('currency_id',$currency->id)
                                         ->where('authorization','approved')
                                         ->where('status', 'Partial')
                                         ->get()->sum('balance');
@@ -192,15 +192,15 @@ Customer Statement Preview |@if (Auth::user()->employee->company)
                             <div class="row contacts">
                                 <div class="col invoice-to" >
                                     <div class="text-gray-light">BILL TO:</div>
-                                    <h4 class="to">{{$customer->name}}</h4>
+                                    <h4 class="to">{{$vendor->name}}</h4>
                                     <div class="address" >
-                                        {{$customer->street_address}}
-                                        @if ($customer->suburb)
-                                            {{$customer->suburb ? $customer->suburb."," : ""}} <br>
+                                        {{$vendor->street_address}}
+                                        @if ($vendor->suburb)
+                                            {{$vendor->suburb ? $vendor->suburb."," : ""}} <br>
                                         @endif 
-                                        {{$customer->city ? $customer->city."," : ""}} {{$customer->country}}
+                                        {{$vendor->city ? $vendor->city."," : ""}} {{$vendor->country}}
                                     </div>
-                                    <div class="email"><a href="mailto:{{$customer->email}}">{{$customer->email}}</a>
+                                    <div class="email"><a href="mailto:{{$vendor->email}}">{{$vendor->email}}</a>
                                     </div>
                                 </div>
                                 <div class="col invoice-details">
@@ -213,7 +213,7 @@ Customer Statement Preview |@if (Auth::user()->employee->company)
                                                 // $to = new DateTime($to);
                                                 $opening_balance = App\Models\Bill::where('date','<=',$from)
                                                                         ->where('authorization','approved')
-                                                                        ->where('customer_id',$selectedCustomer)
+                                                                        ->where('vendor_id',$selectedCustomer)
                                                                         ->where('currency_id', $currency->id)
                                                                         ->whereRaw('accrual_balance REGEXP "^-?[0-9]+(\.[0-9]+)?$"')
                                                                         ->where('accrual_balance', function ($query) {
@@ -223,13 +223,13 @@ Customer Statement Preview |@if (Auth::user()->employee->company)
                                                                     
                                                $closing_balance = App\Models\Bill::where('date','<=',$to)
                                                                         ->where('authorization','approved')
-                                                                        ->where('customer_id',$customer->id)
+                                                                        ->where('vendor_id',$vendor->id)
                                                                         ->where('currency_id', $currency->id)
                                                                         ->whereRaw('balance REGEXP "^-?[0-9]+(\.[0-9]+)?$"')
                                                                         ->get()->sum('balance');
         
-                                               $billed = App\Models\Bill::where('customer_id',$customer->id)->where('authorization','approved')->where('currency_id',$currency->id)->where('date','>=',$from)->where('date','<=',$to)->whereRaw('total REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->get()->sum('total');
-                                               $paid = App\Models\Payment::where('customer_id',$customer->id)->where('currency_id',$currency->id)->whereBetween('date',[$from, $to])->whereRaw('amount REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->get()->sum('amount');
+                                               $billed = App\Models\Bill::where('vendor_id',$vendor->id)->where('authorization','approved')->where('currency_id',$currency->id)->where('date','>=',$from)->where('date','<=',$to)->whereRaw('total REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->get()->sum('total');
+                                               $paid = App\Models\Payment::where('vendor_id',$vendor->id)->where('currency_id',$currency->id)->whereBetween('date',[$from, $to])->whereRaw('amount REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->get()->sum('amount');
                                             @endphp
                                             
                                                 <div class="date" style="padding-bottom: 3px" ><strong>Opening Balance({{$currency->name}}) on {{ date('F j, Y', strtotime($from)) }}</strong> {{$currency->symbol}}{{ number_format($opening_balance ? $opening_balance->accrual : 0,2) }}</div>
@@ -282,7 +282,7 @@ Customer Statement Preview |@if (Auth::user()->employee->company)
                                                                 // use $payment
                                                             }
                                                             
-                                                            $accrual_balance = App\Models\Bill::where('authorization','approved')->where('customer_id',$customer->id)->where('currency_id', $currency->id)->whereRaw('balance REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->get()->sum('balance');
+                                                            $accrual_balance = App\Models\Bill::where('authorization','approved')->where('vendor_id',$vendor->id)->where('currency_id', $currency->id)->whereRaw('balance REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->get()->sum('balance');
                                                         @endphp
                                                         @if ($result->transaction_type === 'bill')
                                                             <a href="{{ route('bills.show',$bill->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Bill# {{ $result->number }} </a><br>

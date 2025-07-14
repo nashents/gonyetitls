@@ -5,14 +5,14 @@
             <div class="text-end">
                 <button type="button" onclick="goBack()" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-arrow-left" style="color:black"></i> Back</button>
                 {{-- <a href="#" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-envelope" style="color:red"></i> Send</a> --}}
-                @if (isset($selectedCustomer) && (isset($selectedType) && $selectedType == "Outstanding Bills"))
-                <a href="{{route('vendor_statements.print.outstanding',['selectedCustomer' => $selectedCustomer, 'selectedType' => $selectedType])}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-print" style="color:black"></i> Print</a>
-                <a href="{{route('vendor_statements.pdf.outstanding',['selectedCustomer' => $selectedCustomer, 'selectedType' => $selectedType])}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-file-pdf-o" style="color:red"></i> Export as PDF</a>
-                <a href="{{route('vendor_statements.email.outstanding',['selectedCustomer' => $selectedCustomer, 'selectedType' => $selectedType])}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-envelope" style="color:red"></i> Send Email</a>
-                @elseif(isset($selectedCustomer) && (isset($selectedType) && $selectedType == "Account Activity") && isset($from) && isset($to))  
-                <a href="{{route('vendor_statements.print.account',['selectedCustomer' => $selectedCustomer, 'selectedType' => $selectedType, 'from' => $from, 'to' => $to])}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-print" style="color:black"></i> Print</a>
-                <a href="{{route('vendor_statements.pdf.account',['selectedCustomer' => $selectedCustomer, 'selectedType' => $selectedType, 'from' => $from, 'to' => $to])}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-file-pdf-o" style="color:red"></i> Export as PDF</a>
-                <a href="{{route('vendor_statements.email.account',['selectedCustomer' => $selectedCustomer, 'selectedType' => $selectedType, 'from' => $from, 'to' => $to])}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-envelope" style="color:red"></i> Send Email</a>
+                @if (isset($selectedVendor) && (isset($selectedType) && $selectedType == "Outstanding Bills"))
+                <a href="{{route('vendor_statements.print.outstanding',['selectedVendor' => $selectedVendor, 'selectedType' => $selectedType])}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-print" style="color:black"></i> Print</a>
+                <a href="{{route('vendor_statements.pdf.outstanding',['selectedVendor' => $selectedVendor, 'selectedType' => $selectedType])}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-file-pdf-o" style="color:red"></i> Export as PDF</a>
+                <a href="{{route('vendor_statements.email.outstanding',['selectedVendor' => $selectedVendor, 'selectedType' => $selectedType])}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-envelope" style="color:red"></i> Send Email</a>
+                @elseif(isset($selectedVendor) && (isset($selectedType) && $selectedType == "Account Activity") && isset($from) && isset($to))  
+                <a href="{{route('vendor_statements.print.account',['selectedVendor' => $selectedVendor, 'selectedType' => $selectedType, 'from' => $from, 'to' => $to])}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-print" style="color:black"></i> Print</a>
+                <a href="{{route('vendor_statements.pdf.account',['selectedVendor' => $selectedVendor, 'selectedType' => $selectedType, 'from' => $from, 'to' => $to])}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-file-pdf-o" style="color:red"></i> Export as PDF</a>
+                <a href="{{route('vendor_statements.email.account',['selectedVendor' => $selectedVendor, 'selectedType' => $selectedType, 'from' => $from, 'to' => $to])}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-envelope" style="color:red"></i> Send Email</a>
                 @endif
             </div>
             <hr>
@@ -209,7 +209,7 @@
                                         // $to = new DateTime($to);
                                         $opening_balance = App\Models\Bill::where('date','<=',$from)
                                                                 ->where('authorization','approved')
-                                                                ->where('vendor_id',$selectedCustomer)
+                                                                ->where('vendor_id',$selectedVendor)
                                                                 ->where('currency_id', $currency->id)
                                                                 ->whereRaw('accrual_balance REGEXP "^-?[0-9]+(\.[0-9]+)?$"')
                                                                 ->where('accrual_balance', function ($query) {

@@ -43,7 +43,10 @@
                                                 @foreach ($currencies as $currency)
                                                     @if (isset($selected_trips_ids))
                                                         @if (in_array($currency->id, $selected_trips_ids))
-                                                            <center><strong>Total Revenue {{ $currency->name }} :</strong> {{ $currency->symbol }}{{ number_format($trips->where('currency_id',$currency->id)->where('freight','!=',Null)->where('freight','!=','')->sum('freight'),2) }}</center>
+                                                            @php
+                                                                $total_revenue = $trips->where('currency_id',$currency->id)->where('freight','!=',Null)->where('freight','!=','')->sum('freight');
+                                                            @endphp
+                                                            <center><strong>Total Revenue {{ $currency->name }} :</strong> {{ $currency->symbol }}{{ number_format($total_revenue ? $total_revenue : 0 ,2)}}</center>
                                                         @endif
                                                     @endif
                                                 @endforeach
@@ -58,7 +61,10 @@
                                             @foreach ($currencies as $currency)
                                                 @if (isset($selected_trips_ids))
                                                     @if (in_array($currency->id, $selected_trips_ids))
-                                                    <center><strong>Total Revenue {{ $currency->name }} :</strong> {{ $currency->symbol }}{{ number_format($trips->where('currency_id',$currency->id)->where('freight','!=',Null)->where('freight','!=','')->sum('freight'),2) }}</center>
+                                                    @php
+                                                        $total_revenue = $trips->where('currency_id',$currency->id)->where('freight','!=',Null)->where('freight','!=','')->sum('freight');
+                                                    @endphp
+                                                    <center><strong>Total Revenue {{ $currency->name }} :</strong> {{ $currency->symbol }}{{ number_format($total_revenue ? $total_revenue : 0,2) }}</center>
                                                     @endif
                                                 @endif
                                             @endforeach
@@ -362,10 +368,10 @@
                                         @endif
                                         @if ($company->rates_managed_by_finance == True)
                                             @if (in_array('Finance', $department_names) ||  in_array('Super Admin', $role_names))
-                                                <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                                <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight: 0,2)}}</td>
                                             @endif
                                         @else
-                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight: 0,2)}}</td>
                                         @endif
                                         <td> 
                                             @if ($trip->invoice_items->count()>0)
@@ -548,10 +554,10 @@
                                         @endif
                                          @if ($company->rates_managed_by_finance == True)
                                             @if (in_array('Finance', $department_names) ||  in_array('Super Admin', $role_names))
-                                                <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                                <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight: 0,2)}}</td>
                                             @endif
                                         @else
-                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight: 0,2)}}</td>
                                         @endif
                                         <td> 
                                             @if ($trip->invoice_items->count()>0)
@@ -734,10 +740,10 @@
                                         @endif
                                         @if ($company->rates_managed_by_finance == True)
                                             @if (in_array('Finance', $department_names) ||  in_array('Super Admin', $role_names))
-                                                <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                                <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight: 0,2)}}</td>
                                             @endif
                                         @else
-                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight: 0,2)}}</td>
                                         @endif
                                         <td> 
                                             @if ($trip->invoice_items->count()>0)
@@ -918,10 +924,10 @@
                                     @endif
                                      @if ($company->rates_managed_by_finance == True)
                                             @if (in_array('Finance', $department_names) ||  in_array('Super Admin', $role_names))
-                                                <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                                <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight: 0,2)}}</td>
                                             @endif
                                         @else
-                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight: 0,2)}}</td>
                                         @endif
                                     <td> 
                                         @if ($trip->invoice_items->count()>0)
@@ -1103,10 +1109,10 @@
                                         @endif
                                          @if ($company->rates_managed_by_finance == True)
                                             @if (in_array('Finance', $department_names) ||  in_array('Super Admin', $role_names))
-                                                <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                                <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight: 0,2)}}</td>
                                             @endif
                                         @else
-                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight: 0,2)}}</td>
                                         @endif
                                         <td> 
                                             @if ($trip->invoice_items->count()>0)
@@ -1288,10 +1294,10 @@
                                         @endif
                                         @if ($company->rates_managed_by_finance == True)
                                         @if (in_array('Finance', $department_names) ||  in_array('Super Admin', $role_names))
-                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight: 0,2)}}</td>
                                         @endif
                                         @else
-                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight: 0,2)}}</td>
                                         @endif
                                         <td> 
                                             @if ($trip->invoice_items->count()>0)
@@ -1471,10 +1477,10 @@
                                         @endif
                                         @if ($company->rates_managed_by_finance == True)
                                             @if (in_array('Finance', $department_names) ||  in_array('Super Admin', $role_names))
-                                                <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                                <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight: 0,2)}}</td>
                                             @endif
                                         @else
-                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight: 0,2)}}</td>
                                         @endif
                                         <td> 
                                             @if ($trip->invoice_items->count()>0)
@@ -1655,10 +1661,10 @@
                                         @endif
                                         @if ($company->rates_managed_by_finance == True)
                                             @if (in_array('Finance', $department_names) ||  in_array('Super Admin', $role_names))
-                                                <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                                <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight: 0,2)}}</td>
                                             @endif
                                         @else
-                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight: 0,2)}}</td>
                                         @endif
                                         <td> 
                                             @if ($trip->invoice_items->count()>0)
@@ -1840,10 +1846,10 @@
                                         @endif
                                         @if ($company->rates_managed_by_finance == True)
                                             @if (in_array('Finance', $department_names) ||  in_array('Super Admin', $role_names))
-                                                <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                                <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight: 0,2)}}</td>
                                             @endif
                                         @else
-                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight,2)}}</td>
+                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight: 0,2)}}</td>
                                         @endif
                                         <td> 
                                             @if ($trip->invoice_items->count()>0)

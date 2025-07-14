@@ -8,7 +8,7 @@
 @endif
 @endsection
 @section('title')
-Customer Statement Preview |@if (Auth::user()->employee->company)
+Vendor Statement Preview |@if (Auth::user()->employee->company)
 {{Auth::user()->employee->company->name}}
 @elseif (Auth::user()->company)
 {{Auth::user()->company->name}}

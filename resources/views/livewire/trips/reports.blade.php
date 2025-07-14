@@ -74,14 +74,14 @@
                                                 		<!-- /input-group -->
                                                 	</div>
                                                     <div class="col-md-3">
-                                                		<div class="input-group">
+                                                	  <div class="input-group">
                                                 			<span class="input-group-addon">
                                                        Horses
                                                       </span>
                                                       <select wire:model.debounce.300ms="selectedHorse" class="form-control" aria-label="..." >
                                                             <option value="">Select Horse</option>
                                                             @foreach ($horses as $horse)
-                                                                <option value="{{ $horse->id }}"  > {{ $horse->registration_number }} {{ $horse->horse_make ? $horse->horse_make->name : "" }} {{ $horse->horse_model ? $horse->horse_model->name : "" }}</option>
+                                                                <option value="{{ $horse->id }}"  > {{ $horse->registration_number }} {{ $horse->fleet_number ? "(".$horse->fleet_number.")" : "" }} </option>
                                                             @endforeach
                                                       </select>
                                                 			

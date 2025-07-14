@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Bill;
 use App\Models\Vendor;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\StoreBillRequest;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\UpdateBillRequest;
 
 class BillController extends Controller
@@ -28,6 +30,7 @@ class BillController extends Controller
     }
     
     public function vendorStatementsPreview($selectedVendor = null, $selectedType = null, $from = null, $to = null){
+      
         return view('vendor_statements.preview')->with([
             'selectedVendor' => $selectedVendor,
             'selectedType' => $selectedType,
@@ -41,7 +44,7 @@ class BillController extends Controller
         $vendor = Vendor::find($selectedVendor);
         if ( isset($selectedVendor) && $selectedType == "Outstanding Bills") {
 
-            $invoices = Bill::where('vendor_id', $selectedVendor)
+            $bills = Bill::where('vendor_id', $selectedVendor)
             ->where('authorization', 'approved')
             ->where('status', 'Unpaid')
             ->orWhere('vendor_id', $selectedVendor)
@@ -53,14 +56,14 @@ class BillController extends Controller
                 'selectedType' => $selectedType,
                 'from' => $from,
                 'to' => $to,
-                'invoices' => $invoices,
+                'bills' => $bills,
                 'company' => $company,
                 'vendor' => $vendor,
                 ]);
     
         }elseif ( isset($selectedVendor) && $selectedType == "Account Activity") {
             if (isset($from) && isset($to)) {
-                $invoices = DB::table('invoices')
+                $bills = DB::table('bills')
                 ->select(
                     DB::raw("'invoice' as transaction_type"),
                     'invoice_number as number',
@@ -92,17 +95,17 @@ class BillController extends Controller
                 ->where('deleted_at', NULL)
                 ->whereBetween('date',[$from, $to] )
               
-                ->union($invoices)
+                ->union($bills)
                 ->get();
 
-                // $results = $invoices->union($payments);
+                // $results = $bills->union($payments);
             }
             return view('vendor_statements.print')->with([
                 'selectedVendor' => $selectedVendor,
                 'selectedType' => $selectedType,
                 'from' => $from,
                 'to' => $to,
-                'invoices' => $invoices,
+                'bills' => $bills,
                 'results' => $results,
                 'company' => $company,
                 'vendor' => $vendor,
@@ -116,7 +119,7 @@ class BillController extends Controller
         $company = Auth::user()->employee->company;
         $vendor = Vendor::find($selectedVendor);
         if ( isset($selectedVendor) && $selectedType == "Outstanding Bills") {
-            $invoices = Bill::where('vendor_id', $selectedVendor)
+            $bills = Bill::where('vendor_id', $selectedVendor)
             ->where('authorization', 'approved')
             ->where('status', 'Unpaid')
             ->orWhere('vendor_id', $selectedVendor)
@@ -128,14 +131,14 @@ class BillController extends Controller
                 'selectedType' => $selectedType,
                 'from' => $from,
                 'to' => $to,
-                'invoices' => $invoices,
+                'bills' => $bills,
                 'company' => $company,
                 'vendor' => $vendor,
             ];
     
         }elseif ( isset($selectedVendor) && $selectedType == "Account Activity") {
             if (isset($from) && isset($to)) {
-                $invoices = DB::table('invoices')
+                $bills = DB::table('bills')
                 ->select(
                     DB::raw("'invoice' as transaction_type"),
                     'invoice_number as number',
@@ -166,17 +169,17 @@ class BillController extends Controller
                 ->where('vendor_id', $selectedVendor)
                 ->where('deleted_at', NULL)
                 ->whereBetween('date',[$from, $to] )
-                ->union($invoices)
+                ->union($bills)
                 ->get();
 
-                // $results = $invoices->union($payments);
+                // $results = $bills->union($payments);
             }
             $data = [
                 'selectedVendor' => $selectedVendor,
                 'selectedType' => $selectedType,
                 'from' => $from,
                 'to' => $to,
-                'invoices' => $invoices,
+                'bills' => $bills,
                 'results' => $results,
                 'company' => $company,
                 'vendor' => $vendor,
@@ -208,7 +211,7 @@ class BillController extends Controller
         $company = Auth::user()->employee->company;
         $vendor = Vendor::find($selectedVendor);
         if ( isset($selectedVendor) && $selectedType == "Outstanding Bills") {
-            $invoices = Bill::where('vendor_id', $selectedVendor)
+            $bills = Bill::where('vendor_id', $selectedVendor)
             ->where('authorization', 'approved')
             ->where('status', 'Unpaid')
             ->orWhere('vendor_id', $selectedVendor)
@@ -220,14 +223,14 @@ class BillController extends Controller
                 'selectedType' => $selectedType,
                 'from' => $from,
                 'to' => $to,
-                'invoices' => $invoices,
+                'bills' => $bills,
                 'company' => $company,
                 'vendor' => $vendor,
             ];
     
         }elseif ( isset($selectedVendor) && $selectedType == "Account Activity") {
             if (isset($from) && isset($to)) {
-                $invoices = DB::table('invoices')
+                $bills = DB::table('bills')
                 ->select(
                     DB::raw("'invoice' as transaction_type"),
                     'invoice_number as number',
@@ -258,17 +261,17 @@ class BillController extends Controller
                 ->where('vendor_id', $selectedVendor)
                 ->where('deleted_at', NULL)
                 ->whereBetween('date',[$from, $to] )
-                ->union($invoices)
+                ->union($bills)
                 ->get();
 
-                // $results = $invoices->union($payments);
+                // $results = $bills->union($payments);
             }
             $data = [
                 'selectedVendor' => $selectedVendor,
                 'selectedType' => $selectedType,
                 'from' => $from,
                 'to' => $to,
-                'invoices' => $invoices,
+                'bills' => $bills,
                 'results' => $results,
                 'company' => $company,
                 'vendor' => $vendor,
