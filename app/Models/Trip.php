@@ -12,6 +12,8 @@ class Trip extends Model implements Auditable
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 
+    
+
     public function mileages(){
         return $this->hasMany('App\Models\Mileage');
     }

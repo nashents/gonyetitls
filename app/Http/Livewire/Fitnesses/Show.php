@@ -42,6 +42,7 @@ class Show extends Component
     public $selectedVehicle;
     public $employees;
     public $selectedEmployee;
+    public $pattern;
 
     public $searchHorse;
     public $searchVehicle;
@@ -85,6 +86,8 @@ class Show extends Component
         $this->vehicles = Vehicle::orderBy('registration_number','asc')->where('status',1)->latest()->get();
 
         $this->trailers = Trailer::orderBy('registration_number','asc')->where('status',1)->latest()->get();
+
+        $this->pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
     }
 
 

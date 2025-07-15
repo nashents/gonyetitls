@@ -53,23 +53,56 @@
                                 
                                 <tr>
                                     <th class="w-10 text-center line-height-35">Issued @</th>
-                                    <td class="w-20 line-height-35">{{Carbon\Carbon::parse($fitness->issued_at)->format('d M Y h:i a')}}</td>
+                                    <td class="w-20 line-height-35">
+                                            @if ((preg_match($pattern, $fitness->issued_at)) )
+                                                On {{ \Carbon\Carbon::parse($fitness->issued_at)->format('d M Y g:i A')}}
+                                            @else
+                                                On {{$fitness->issued_at}}
+                                            @endif  
+                                    </td>
                                 </tr>
                                 <tr>
                                     <th class="w-10 text-center line-height-35">First Reminder</th>
-                                    <td class="w-20 line-height-35">{{Carbon\Carbon::parse($fitness->first_reminder_at)->format('d M Y h:i a')}} <span class="badge bg-{{$fitness->first_reminder_at_status == 1 ? "success" : "warning"}}">{{$fitness->first_reminder_at_status == 1 ? "Sent" : "Not Sent"}}</span></td>
+                                    <td class="w-20 line-height-35">
+                                        @if ((preg_match($pattern, $fitness->first_reminder_at)) )
+                                                On {{ \Carbon\Carbon::parse($fitness->first_reminder_at)->format('d M Y g:i A')}}
+                                        @else
+                                            On {{$fitness->first_reminder_at}}
+                                        @endif  
+                                     
+                                        <span class="badge bg-{{$fitness->first_reminder_at_status == 1 ? "success" : "warning"}}">{{$fitness->first_reminder_at_status == 1 ? "Sent" : "Not Sent"}}</span></td>
                                 </tr>
                                 <tr>
                                     <th class="w-10 text-center line-height-35">2nd Reminder</th>
-                                    <td class="w-20 line-height-35">{{Carbon\Carbon::parse($fitness->second_reminder_at)->format('d M Y h:i a')}}  <span class="badge bg-{{$fitness->second_reminder_at_status == 1 ? "success" : "warning"}}">{{$fitness->second_reminder_at_status == 1 ? "Sent" : "Not Sent"}}</span></td>
+                                    <td class="w-20 line-height-35">
+                                        @if ((preg_match($pattern, $fitness->second_reminder_at)) )
+                                            On {{ \Carbon\Carbon::parse($fitness->second_reminder_at)->format('d M Y g:i A')}}
+                                        @else
+                                            On {{$fitness->second_reminder_at}}
+                                        @endif   
+                                        <span class="badge bg-{{$fitness->second_reminder_at_status == 1 ? "success" : "warning"}}">{{$fitness->second_reminder_at_status == 1 ? "Sent" : "Not Sent"}}</span>
+                                    </td>
                                 </tr>
                                 <tr>
                                     <th class="w-10 text-center line-height-35">3rd Reminder</th>
-                                    <td class="w-20 line-height-35">{{Carbon\Carbon::parse($fitness->third_reminder_at)->format('d M Y h:i a')}} <span class="badge bg-{{$fitness->third_reminder_at_status == 1 ? "success" : "warning"}}">{{$fitness->third_reminder_at_status == 1 ? "Sent" : "Not Sent"}}</span></td>
+                                    <td class="w-20 line-height-35">
+                                        @if ((preg_match($pattern, $fitness->third_reminder_at)) )
+                                            On {{ \Carbon\Carbon::parse($fitness->third_reminder_at)->format('d M Y g:i A')}}
+                                        @else
+                                            On {{$fitness->third_reminder_at}}
+                                        @endif  
+                                        <span class="badge bg-{{$fitness->third_reminder_at_status == 1 ? "success" : "warning"}}">{{$fitness->third_reminder_at_status == 1 ? "Sent" : "Not Sent"}}</span>
+                                    </td>
                                 </tr>
                                 <tr>
                                     <th class="w-10 text-center line-height-35">Expiry Date</th>
-                                    <td class="w-20 line-height-35">{{Carbon\Carbon::parse($fitness->expires_at)->format('d M Y h:i a')}}</td>
+                                    <td class="w-20 line-height-35">
+                                        @if ((preg_match($pattern, $fitness->expires_at)) )
+                                            On {{ \Carbon\Carbon::parse($fitness->expires_at)->format('d M Y g:i A')}}
+                                        @else
+                                            On {{$fitness->expires_at}}
+                                        @endif  
+                                    </td>
                                 </tr>
                                 <tr>
                                     <th class="w-10 text-center line-height-35">Status</th>

@@ -23,49 +23,60 @@ class Deleted extends Component
         $this->trip_id = $id;
         $this->dispatchBrowserEvent('show-tripRestoreModal');
     }
-    public function update(){
+    public function update()
+    {
+        $trip = Trip::withTrashed()->find($this->trip_id);
 
-        $trip = Trip::withTrashed()->find($this->trip_id)->restore();
-        
-        $fuels = $trip->fuels->withTrashed();
-        
-        if (isset($fuels)) {
-            foreach($fuels as $fuel){
-                $fuel->restore();
-            }
-        }
-        $delivery_note = $trip->delivery_note->withTrashed();
-        $delivery_note->restore();
-        
-        $cash_flows = $trip->cash_flows->withTrashed();
-        if (isset($cash_flows)) {
-            foreach($cash_flows as $cash_flow){
-                $cash_flow->restore();
-            }
-        }
-        $expenses = $trip->trip_expenses->withTrashed();
-        if (isset($expenses)) {
-            foreach($expenses as $expense){
-                $expense->restore();
-            }
-        }
-        $bills = $trip->bills->withTrashed();
-        if (isset($bills)) {
-            foreach($bills as $bill){
-                $bill->restore();
-            }
+        if (!$trip) {
+            $this->dispatchBrowserEvent('alert', [
+                'type' => 'error',
+                'message' => "Trip not found!"
+            ]);
+            return;
         }
 
-        $this->dispatchBrowserEvent('alert',[
-            'type'=>'success',
-            'message'=>"Trip Restored Successfully!!"
+        $trip->restore();
+
+        // Restore related fuels
+        $fuels = $trip->fuels()->withTrashed()->get();
+        foreach ($fuels as $fuel) {
+            $fuel->restore();
+        }
+
+        // Restore delivery note
+        $delivery_note = $trip->delivery_note()->withTrashed()->first();
+        if ($delivery_note) {
+            $delivery_note->restore();
+        }
+
+        // Restore cash flows
+        $cash_flows = $trip->cash_flows()->withTrashed()->get();
+        foreach ($cash_flows as $cash_flow) {
+            $cash_flow->restore();
+        }
+
+        // Restore expenses
+        $expenses = $trip->trip_expenses()->withTrashed()->get();
+        foreach ($expenses as $expense) {
+            $expense->restore();
+        }
+
+        // Restore bills
+        $bills = $trip->bills()->withTrashed()->get();
+        foreach ($bills as $bill) {
+            $bill->restore();
+        }
+
+        $this->dispatchBrowserEvent('alert', [
+            'type' => 'success',
+            'message' => "Trip Restored Successfully!!"
         ]);
+
         $this->dispatchBrowserEvent('hide-tripRestoreModal');
-       
     }
+
     public function render()
     {
-       
         return view('livewire.trips.deleted',[
             'trips' => Trip::onlyTrashed()->orderBy('deleted_at','desc')->paginate(10),
         ]);
