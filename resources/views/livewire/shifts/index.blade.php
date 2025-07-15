@@ -93,6 +93,7 @@
                                 <tbody>
                                     @forelse($shifts as $shift)
                                   <tr>
+                                    
                                     <td>
                                          <strong>{{ucfirst($shift->type)}}  {{ucfirst($shift->for)}}</strong>
                                         <br>

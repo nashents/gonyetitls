@@ -46,15 +46,13 @@ class Index extends Component
     public $selectedAccount;
     public $requisition_for;
     public $trips;
-    public $trip_id;
+    public $selectedTrip;
     public $purchases;
-    public $purchase_id;
+    public $selectedPurchase;
     public $bookings;
-    public $booking_id;
+    public $selectedBooking;
     public $expenses;
-    public $expense_id;
     public $currencies;
-    public $selectedCurrency;
     private $requisitions;
     public $requisition;
     public $requisition_number;
@@ -72,15 +70,19 @@ class Index extends Component
     public $products;
     public $selectedProduct;
     public $date;
-    public $qty;
-    public $amount;
     public $total;
     public $subtotal;
-    public $exchange_amount;
-    public $selected_currency;
+   
     public $company;
-    public $exchange_rate;
     public $item_totals = 0;
+
+    public $selectedCurrency = [];
+    public $selected_currency = [];
+    public $exchange_rate = [];
+    public $exchange_amount = [];
+    public $expense_id = [];
+    public $qty = [];
+    public $amount = [];
 
     public $item_name;
     public $item_description;
@@ -112,11 +114,16 @@ class Index extends Component
     public function remove($i)
     {
         unset($this->inputs[$i]);
+        unset($this->selectedCurrency[$key]);
+        unset($this->selected_currency[$key]);
+        unset($this->amount[$key]);
+        unset($this->exchange_rate[$key]);
+        unset($this->exchange_amount[$key]);
     }
 
     private function resetInputFields(){
         $this->requisition = Null;
-        $this->trip_id = '';
+        $this->selectedTrip = '';
         $this->employee_id = '';
         $this->department_id = '';
         $this->date = '';
@@ -168,17 +175,51 @@ class Index extends Component
         ]);
     }
 
-        public function updatedSelectedCurrency($id){
-            if(!is_null($id)){
-                $this->selected_currency = Currency::find($id);
-                if($id != $this->company->currency_id){
-                    $predefined_exchange_rate = ExchangeRate::where('currency_id', $id)
-                        ->where('status', 1)
-                        ->where('expiry', '>', Carbon::today())
-                        ->first();
-                    if ($predefined_exchange_rate) {   
-                        $this->exchange_rate = $predefined_exchange_rate->exchange_rate;
-                    }
+    public function updatedSelectedTrip($id)
+    {   
+        if (!is_null($id)) {
+
+            $trip = Trip::with('trip_expenses')->find($id);
+           
+            if ($trip && $trip->trip_expenses) {
+                $this->reset(['inputs', 'selectedCurrency', 'selected_currency', 'amount', 'qty', 'exchange_rate', 'exchange_amount']);
+
+                $index = 0;
+
+                foreach ($trip->trip_expenses as $trip_expense) {
+                    
+                    $this->inputs[] = $index;
+
+                    $this->expense_id[$index] = $trip_expense->expense_id;
+                    $this->selectedCurrency[$index] = $trip_expense->currency_id;
+                    $this->selected_currency[$index] = $trip_expense->currency;
+                    $this->amount[$index] = $trip_expense->amount;
+                    $this->qty[$index] = 1;
+                    $this->exchange_rate[$index] = $trip_expense->exchange_rate;
+                    $this->exchange_amount[$index] = $trip_expense->exchange_amount;
+
+                    $index++;
+                }
+
+                $this->i = $index - 1;
+            }
+        }
+    }
+
+        public function updatedSelectedCurrency($id, $key){
+
+            if(!$id && !$key){
+                return ;
+            }
+
+             $this->selected_currency[$key] = Currency::find($id);
+            if($id != $this->company->currency_id){
+                $predefined_exchange_rate = ExchangeRate::where('currency_id', $id)
+                    ->where('status', 1)
+                    ->where('expiry', '>', Carbon::today())
+                    ->first();
+                if ($predefined_exchange_rate) {   
+                    $this->exchange_rate[$key] = $predefined_exchange_rate->exchange_rate;
                 }
             }
         }
@@ -376,6 +417,8 @@ class Index extends Component
             //     ]);
             //  }
         }
+
+
        
 
     public function store(){
@@ -387,12 +430,11 @@ class Index extends Component
         $requisition->requisition_number = $this->requisitionNumber();
         $requisition->user_id = Auth::user()->id;
         $requisition->department_id = $this->department_id;
-        $requisition->trip_id = $this->trip_id ? $this->trip_id : Null;
-        $requisition->booking_id = $this->booking_id ? $this->booking_id : Null;
-        $requisition->purchase_id = $this->purchase_id ? $this->purchase_id : Null;
+        $requisition->trip_id = $this->selectedTrip ? $this->selectedTrip : Null;
+        $requisition->booking_id = $this->selectedBooking ? $this->selectedBooking : Null;
+        $requisition->purchase_id = $this->selectedPurchase ? $this->selectedPurchase : Null;
         $requisition->employee_id = $this->employee_id;
         $requisition->account_id = $this->selectedAccount;
-        $requisition->currency_id = $this->selectedCurrency;
         $requisition->date = $this->date;
         $requisition->description = $this->description;
         $requisition->items = $this->items;
@@ -413,6 +455,7 @@ class Index extends Component
 
         if ($type && !empty($items)) {
             foreach ($items as $key => $value) {
+               
                 $requisition_item = new RequisitionItem;
                 $requisition_item->requisition_id = $requisition->id;
 
@@ -426,33 +469,38 @@ class Index extends Component
                 // Handle quantity and amount
                 $qty = $this->qty[$key] ?? 0;
                 $amount = $this->amount[$key] ?? 0;
+                $currency_id = $this->selectedCurrency[$key] ?? 0;
+                $exchange_rate = $this->exchange_rate[$key] ?? 0;
+                $exchange_amount = $this->exchange_amount[$key] ?? 0;
 
                 $requisition_item->qty = $qty;
                 $requisition_item->amount = $amount;
+                $requisition_item->currency_id = $currency_id;
+                $requisition_item->exchange_rate = $exchange_rate;
+                $requisition_item->exchange_amount = $exchange_amount;
 
-                // Calculate subtotal
-                $subtotal = $amount * $qty;
+                // Calculate subtotal based on currency
+                $subtotal = ($currency_id !== $this->company->currency_id) 
+                    ? $exchange_amount * $qty 
+                    : $amount * $qty;
+
+                // Assign and save the subtotal
                 $requisition_item->subtotal = $subtotal;
                 $requisition_item->save();
 
-                // Update running total
+                // Add to the cumulative total
                 $this->total += $subtotal;
             }
         }
 
         $requisition = Requisition::find($requisition->id);
 
-        if ($this->purchase_id && $purchase_order = Purchase::find($this->purchase_id)) {
+        if ($this->selectedPurchase && $purchase_order = Purchase::find($this->selectedPurchase)) {
             $requisition->total = $purchase_order->total;
             $requisition->exchange_rate = $purchase_order->exchange_rate;
             $requisition->exchange_amount = $purchase_order->exchange_amount;
         } else {
             $requisition->total = $this->total;
-            $requisition->exchange_rate = $this->exchange_rate;
-
-            if ($this->exchange_rate && $this->total) {
-                $requisition->exchange_amount = $this->exchange_rate * $this->total;
-            }
         }
 
         $requisition->save();
@@ -513,13 +561,13 @@ class Index extends Component
     public function edit($id){
         $requisition = Requisition::find($id);
         $this->selectedCurrency = $requisition->currency_id;
-        $this->trip_id = $requisition->trip_id;
-        $this->booking_id = $requisition->booking_id;
-        if (isset($this->trip_id)) {
+        $this->selectedTrip = $requisition->trip_id;
+        $this->selectedBooking = $requisition->booking_id;
+        if (isset($this->selectedTrip)) {
            $this->requisition_for = "Trip";
-        }elseif(isset($this->booking_id)){
+        }elseif(isset($this->selectedBooking)){
             $this->requisition_for = "Booking";
-        }elseif(isset($this->purchase_id)){
+        }elseif(isset($this->selectedPurchase)){
             $this->requisition_for = "Purchase";
         }
         $this->employee_id = $requisition->employee_id;
@@ -531,6 +579,7 @@ class Index extends Component
         $this->dispatchBrowserEvent('show-requisitionEditModal');
     }
 
+
         public function update(){
 
         // try{
@@ -540,9 +589,9 @@ class Index extends Component
         $requisition =  Requisition::find($this->requisition_id);
         $requisition->user_id = Auth::user()->id;
         $requisition->department_id = $this->department_id;
-        $requisition->trip_id = $this->trip_id ? $this->trip_id : Null;
-        $requisition->booking_id = $this->booking_id ? $this->booking_id : Null;
-        $requisition->purchase_id = $this->purchase_id ? $this->purchase_id : Null;
+        $requisition->trip_id = $this->selectedTrip ? $this->selectedTrip : Null;
+        $requisition->booking_id = $this->selectedBooking ? $this->selectedBooking : Null;
+        $requisition->purchase_id = $this->selectedPurchase ? $this->selectedPurchase : Null;
         $requisition->employee_id = $this->employee_id;
         $requisition->currency_id = $this->selectedCurrency;
         $requisition->date = $this->date;
@@ -582,8 +631,8 @@ class Index extends Component
         if($this->requisition_for == 'Trip'){
             $this->items = True;
             if (filled($this->searchTrip)) {
-                $this->trips = Trip::query()->with([ 'customer:id,name',
-                'horse:id,registration_number',
+                $this->trips = Trip::query()->with(['customer:id,name',
+                'horse:id,registration_number,fleet_number',
                 'loading_point:id,name',
                 'offloading_point:id,name'])
                 ->whereYear('start_date',date('Y'))
@@ -596,11 +645,11 @@ class Index extends Component
                 })
                 ->orderBy('id','desc')->get();
             }else{
-                $this->trips =  Trip::select('id', 'trip_number', 'trip_ref', 'customer_id', 'driver_id', 'horse_id', 'from', 'to', 'loading_point_id', 'offloading_point_id')
+                $this->trips =  Trip::select('id', 'trip_number', 'trip_ref','start_date', 'customer_id', 'driver_id', 'horse_id', 'from', 'to', 'loading_point_id', 'offloading_point_id')
                 ->with([
                     'customer:id,name',
                     'driver',
-                    'horse:id,registration_number',
+                    'horse:id,registration_number,fleet_number',
                     'loading_point:id,name',
                     'offloading_point:id,name'
                 ])

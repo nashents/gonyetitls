@@ -36,6 +36,7 @@ class Index extends Component
     use WithPagination;
     use WithFileUploads;
 
+
     protected $paginationTheme = 'bootstrap';
     public $search;
     public $shift_filter;
@@ -99,9 +100,6 @@ class Index extends Component
     public $freight;
     public $exchange_rate;
     public $exchange_amount;
-
-
-
 
      //fuel vars
 
@@ -481,6 +479,7 @@ class Index extends Component
 
     public function store(){
         // try{
+      
         $shift = new Shift;
         $shift->user_id = Auth::user()->id;
         $shift->shift_number = $this->shiftNumber();
@@ -490,7 +489,7 @@ class Index extends Component
         $shift->shift_end_time = $this->shift_end_time;
         $shift->customer_id = $this->customer_id;
         $shift->driver_id = $this->driver_id;
-        $shift->currency_id = $this->se;
+        $shift->currency_id = $this->selectedCurrency;
         $shift->cargo_id = $this->cargo_id;
         $shift->transporter_id = $this->selectedTransporter;
         $shift->horse_id = $this->equipment === "Horse" ? $this->selectedHorse : null;

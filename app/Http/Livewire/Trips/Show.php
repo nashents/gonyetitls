@@ -222,14 +222,30 @@ class Show extends Component
         'route:id,name,rank','truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name','commission:id,commission,amount'])->find($id);
     }
 
-    private function calculateActualDistance(){
-        
-        if ((isset($this->trip->starting_mileage) && $this->trip->starting_mileage > 0) && (isset($this->trip->ending_mileage) && $this->trip->ending_mileage > 0)) {
-            $this->actual_distance =   $this->trip->ending_mileage - $this->trip->starting_mileage;
-            if($this->actual_distance && is_numeric($this->actual_distance) && $this->actual_distance > 0){
-                if (is_numeric($this->trip->cost_of_sales) && $this->trip->cost_of_sales > 0) {
-                    $this->cpk = $this->trip->cost_of_sales / $this->actual_distance;
-                }
+    private function calculateActualDistance()
+    {
+        $distance = null;
+
+        // Case 1: Use starting and ending mileage if both are set and valid
+        if (
+            isset($this->trip->starting_mileage, $this->trip->ending_mileage) &&
+            $this->trip->starting_mileage > 0 &&
+            $this->trip->ending_mileage > 0
+        ) {
+            $distance = $this->trip->ending_mileage - $this->trip->starting_mileage;
+        }
+
+        // Case 2: Fallback to distance from trip if mileage is not usable
+        if ((!$distance || $distance <= 0) && isset($this->trip->distance) && is_numeric($this->trip->distance) && $this->trip->distance > 0) {
+            $distance = $this->trip->distance;
+        }
+
+        // Store actual distance and calculate CPK
+        if ($distance && is_numeric($distance) && $distance > 0) {
+            $this->actual_distance = $distance;
+
+            if (is_numeric($this->trip->cost_of_sales) && $this->trip->cost_of_sales > 0) {
+                $this->cpk = $this->trip->cost_of_sales / $this->actual_distance;
             }
         }
     }
