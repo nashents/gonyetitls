@@ -744,6 +744,7 @@ class Create extends Component
                 }
                 $this->driver_id = $shift->driver_id;
               
+                $this->selectedCurrency = $shift->currency_id;
                 $this->customer_id = $shift->customer_id;
                 $this->selectedCargo = $shift->cargo_id;
             }
