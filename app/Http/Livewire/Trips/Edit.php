@@ -390,6 +390,9 @@ class Edit extends Component
         }
     }
 
+      public function updatedFuelOrder(){
+        $this->fuel_quantity = $this->trip_fuel;
+    }
 
     public function calculateFuelConsumption($id)
     {

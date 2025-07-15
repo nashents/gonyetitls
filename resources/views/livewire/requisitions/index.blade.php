@@ -184,10 +184,16 @@
                                         <td>{{$requisition->currency ? $requisition->currency->name : "" }}</td>
                                         <td>{{$requisition->currency ? $requisition->currency->symbol : "" }}{{number_format($requisition->total,2)}}</td>
                                         <td><span class="label label-{{($requisition->status == 'Paid') ? 'success' : (($requisition->status == 'Partial') ? 'warning' : 'danger') }}">{{ $requisition->status }}</span></td>
-                                        <td><span class="badge bg-{{($requisition->authorization == 'approved') ? 'success' : (($requisition->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($requisition->authorization == 'approved') ? 'approved' : (($requisition->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
+                                        <td>
+                                            <span class="badge bg-{{($requisition->authorization == 'approved') ? 'success' : (($requisition->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($requisition->authorization == 'approved') ? 'approved' : (($requisition->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
+                                            @if ($requisition->authorization_date)
+                                                <br>
+                                                 <small><strong style="background-color: orange">Date: {{$requisition->authorization_date}}</strong></small>  
+                                               
+                                            @endif
                                             @if ($requisition->reason)
-                                            <br>
-                                            <small><strong style="background-color: orange">{{$requisition->reason}}</strong></small>  
+                                                <br>
+                                                <small><strong style="background-color: orange">Comments: {{$requisition->reason}}</strong></small>  
                                             @endif 
                                         </td>
                                         <td class="w-10 line-height-35 table-dropdown">

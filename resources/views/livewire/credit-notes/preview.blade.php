@@ -52,6 +52,7 @@
                             <div>
                                 TIN.: {{$company->tin_number}}
                             </div>
+                            
                         </div>
                     </div>
                   
@@ -102,27 +103,23 @@
                             <div class="date" style="padding-bottom: 3px"> <strong>Credit Note No.:</strong> {{$credit_note->credit_note_number}}</div>
                             @endif
                             <div class="date" style="padding-bottom: 3px"> <strong>Reference No.:</strong> {{$credit_note->invoice ? $credit_note->invoice->invoice_number : ""}}</div>
-                            @if ($credit_note->subheading)
-                            <div class="date" style="padding-bottom: 3px"> {{$credit_note->subheading}}</div>
-                            @endif
+                           
                             <div class="date" style="padding-bottom: 3px"><strong>Date:</strong> {{$credit_note->date}}</div>
-                            @if ($credit_note->expiry)
-                            <div class="date" style="padding-bottom: 3px"><strong>Payment Due:</strong> {{$credit_note->expiry}}</div>
-                            @endif
+                          
                             <div class="date" style="padding-bottom: 3px"><strong>Currency:</strong> {{$credit_note->currency ? $credit_note->currency->name : ""}}</div>
                         </div>
                     </div>
 
                       <table>
                         <thead>
-                            <tr class="text-center">
+                            <tr >
                                 <th class="text-center"> <strong>HS Code</strong></th>
                                 <th class="text-center"> <strong>Description</strong></th>
-                                <th class="text-center"><strong>Qty</strong></th>
-                                <th class="text-center"><strong>Price</strong></th>
-                                <th class="text-center"><strong>Total</strong><small>(Excl)</small></th>
-                                <th class="text-center"><strong>VAT Amount</strong></th>
-                                <th class="text-center"><strong>Total</strong><small>(Incl)</small></th>
+                                <th class="text-right"><strong>Qty</strong></th>
+                                <th class="text-right"><strong>Price</strong></th>
+                                <th class="text-right"><strong>Total</strong><small>(Excl)</small></th>
+                                <th class="text-right"><strong>VAT Amount</strong></th>
+                                <th class="text-right"><strong>Total</strong><small>(Incl)</small></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -145,19 +142,19 @@
                                         {{$invoice_item->description ? $invoice_item->description : $invoice_item->trip_details}}
                                         @endif 
                                     </td>
-                                    <td class="unit text-center"> {{$invoice_item->qty}}</td>
-                                    <td class="unit text-center">
+                                    <td class="unit text-right"> {{$invoice_item->qty}}</td>
+                                    <td class="unit text-right">
                                         @if ($invoice_item->amount)
                                         {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format($invoice_item->amount,2)}}        
                                         @endif
                                     </td>
-                                    <td class="unit text-center">
+                                    <td class="unit text-right">
                                         @if ($invoice_item->subtotal)
                                             {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format($invoice_item->subtotal,2)}}
                                         @endif
                                     </td>
 
-                                    <td class="unit text-center">
+                                    <td class="unit text-right">
                                         @if (isset($invoice->tax_amount) && $invoice->tax_amount > 0)
                                             {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format($invoice_item->tax_amount,2)}}
                                         @else
@@ -165,7 +162,7 @@
                                         @endif
                                     </td>
                                   
-                                    <td class="unit text-center">
+                                    <td class="unit text-right">
                                         @if (isset($invoice_item->subtotal_incl))
                                             {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format($invoice_item->subtotal_incl,2)}}
                                         @endif

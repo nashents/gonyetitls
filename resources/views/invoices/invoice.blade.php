@@ -153,19 +153,19 @@
                                                     @endif
                                                        
                                                 </td>
-                                                <td class="unit text-center"> {{$invoice_item->qty}}</td>
-                                                <td class="unit text-center">
+                                                <td class="unit text-right"> {{$invoice_item->qty}}</td>
+                                                <td class="unit text-right">
                                                     @if ($invoice_item->amount)
                                                     {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format($invoice_item->amount,2)}}        
                                                     @endif
                                                 </td>
-                                                <td class="unit text-center">
+                                                <td class="unit text-right">
                                                     @if ($invoice_item->subtotal)
                                                         {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format($invoice_item->subtotal,2)}}
                                                     @endif
                                                 </td>
             
-                                                <td class="unit text-center">
+                                                <td class="unit text-right">
                                                     @if (isset($invoice->tax_amount) && $invoice->tax_amount > 0)
                                                         {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format($invoice_item->tax_amount,2)}}
                                                     @else
@@ -173,7 +173,7 @@
                                                     @endif
                                                 </td>
                                               
-                                                <td class="unit text-center">
+                                                <td class="unit text-right">
                                                     @if (isset($invoice_item->subtotal_incl))
                                                         {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format($invoice_item->subtotal_incl,2)}}
                                                     @endif

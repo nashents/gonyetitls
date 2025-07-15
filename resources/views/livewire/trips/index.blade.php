@@ -390,7 +390,18 @@
                                                 @endif
                                             </center>
                                         </td>
-                                         <td><span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
+                                         <td>
+                                            <span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
+                                            @if ($trip->authorization_date)
+                                                <br>
+                                                 <small><strong style="background-color: orange">Date: {{$trip->authorization_date}}</strong></small>  
+                                               
+                                            @endif
+                                            @if ($trip->reason)
+                                                <br>
+                                                <small><strong style="background-color: orange">Comments: {{$trip->reason}}</strong></small>  
+                                            @endif 
+                                        </td>
                                          <td class="w-10 line-height-35 table-dropdown">
                                             <div class="dropdown">
                                                 <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -577,7 +588,18 @@
                                             </center>
                                         </td>
                                         
-                                         <td><span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
+                                        <td>
+                                            <span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
+                                            @if ($trip->authorization_date)
+                                                <br>
+                                                 <small><strong style="background-color: orange">Date: {{$trip->authorization_date}}</strong></small>  
+                                               
+                                            @endif
+                                            @if ($trip->reason)
+                                                <br>
+                                                <small><strong style="background-color: orange">Comments: {{$trip->reason}}</strong></small>  
+                                            @endif 
+                                        </td>
                                          <td class="w-10 line-height-35 table-dropdown">
                                             <div class="dropdown">
                                                 <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -762,7 +784,18 @@
                                                 @endif
                                             </center>
                                         </td>
-                                         <td><span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
+                                        <td>
+                                            <span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
+                                            @if ($trip->authorization_date)
+                                                <br>
+                                                 <small><strong style="background-color: orange">Date: {{$trip->authorization_date}}</strong></small>  
+                                               
+                                            @endif
+                                            @if ($trip->reason)
+                                                <br>
+                                                <small><strong style="background-color: orange">Comments: {{$trip->reason}}</strong></small>  
+                                            @endif 
+                                        </td>
                                          <td class="w-10 line-height-35 table-dropdown">
                                             <div class="dropdown">
                                                 <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -946,7 +979,18 @@
                                             @endif
                                         </center>
                                     </td>
-                                     <td><span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
+                                    <td>
+                                            <span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
+                                            @if ($trip->authorization_date)
+                                                <br>
+                                                 <small><strong style="background-color: orange">Date: {{$trip->authorization_date}}</strong></small>  
+                                               
+                                            @endif
+                                            @if ($trip->reason)
+                                                <br>
+                                                <small><strong style="background-color: orange">Comments: {{$trip->reason}}</strong></small>  
+                                            @endif 
+                                        </td>
                                      <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -1131,7 +1175,18 @@
                                                 @endif
                                             </center>
                                         </td>
-                                         <td><span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
+                                         <td>
+                                            <span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
+                                            @if ($trip->authorization_date)
+                                                <br>
+                                                 <small><strong style="background-color: orange">Date: {{$trip->authorization_date}}</strong></small>  
+                                               
+                                            @endif
+                                            @if ($trip->reason)
+                                                <br>
+                                                <small><strong style="background-color: orange">Comments: {{$trip->reason}}</strong></small>  
+                                            @endif 
+                                        </td>
                                          <td class="w-10 line-height-35 table-dropdown">
                                             <div class="dropdown">
                                                 <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -1316,7 +1371,18 @@
                                                 @endif
                                             </center>
                                         </td>
-                                         <td><span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
+                                         <td>
+                                            <span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
+                                            @if ($trip->authorization_date)
+                                                <br>
+                                                 <small><strong style="background-color: orange">Date: {{$trip->authorization_date}}</strong></small>  
+                                               
+                                            @endif
+                                            @if ($trip->reason)
+                                                <br>
+                                                <small><strong style="background-color: orange">Comments: {{$trip->reason}}</strong></small>  
+                                            @endif 
+                                        </td>
                                          <td class="w-10 line-height-35 table-dropdown">
                                             <div class="dropdown">
                                                 <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -1499,7 +1565,18 @@
                                                 @endif
                                             </center>
                                         </td>
-                                         <td><span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
+                                         <td>
+                                            <span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
+                                            @if ($trip->authorization_date)
+                                                <br>
+                                                 <small><strong style="background-color: orange">Date: {{$trip->authorization_date}}</strong></small>  
+                                               
+                                            @endif
+                                            @if ($trip->reason)
+                                                <br>
+                                                <small><strong style="background-color: orange">Comments: {{$trip->reason}}</strong></small>  
+                                            @endif 
+                                        </td>
                                          <td class="w-10 line-height-35 table-dropdown">
                                             <div class="dropdown">
                                                 <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -1683,7 +1760,18 @@
                                                 @endif
                                             </center>
                                         </td>
-                                         <td><span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
+                                         <td>
+                                            <span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
+                                            @if ($trip->authorization_date)
+                                                <br>
+                                                 <small><strong style="background-color: orange">Date: {{$trip->authorization_date}}</strong></small>  
+                                               
+                                            @endif
+                                            @if ($trip->reason)
+                                                <br>
+                                                <small><strong style="background-color: orange">Comments: {{$trip->reason}}</strong></small>  
+                                            @endif 
+                                        </td>
                                          <td class="w-10 line-height-35 table-dropdown">
                                             <div class="dropdown">
                                                 <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -1868,7 +1956,18 @@
                                                 @endif
                                             </center>
                                         </td>
-                                         <td><span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
+                                         <td>
+                                            <span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
+                                            @if ($trip->authorization_date)
+                                                <br>
+                                                 <small><strong style="background-color: orange">Date: {{$trip->authorization_date}}</strong></small>  
+                                               
+                                            @endif
+                                            @if ($trip->reason)
+                                                <br>
+                                                <small><strong style="background-color: orange">Comments: {{$trip->reason}}</strong></small>  
+                                            @endif 
+                                        </td>
                                          <td class="w-10 line-height-35 table-dropdown">
                                             <div class="dropdown">
                                                 <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

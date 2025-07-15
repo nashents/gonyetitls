@@ -27,8 +27,8 @@ Invoice Print | @if (Auth::user()->employee->company)
                             <div class="row">
                                 <div class="col">
                                     <a href="javascript:;">
-                                                    <img src="{{asset('images/uploads/'.$company->logo)}}" width="150" alt="">
-                                                </a>
+                                        <img src="{{asset('images/uploads/'.$company->logo)}}" width="150" alt="">
+                                    </a>
                                 </div>
                                 <div class="col company-details">
                                   
@@ -59,14 +59,10 @@ Invoice Print | @if (Auth::user()->employee->company)
                                     <br>
                                     @endif
                                     <div>
-                                     
-                                            VAT No.: {{$company->vat_number}}
-                                     
+                                        VAT No.: {{$company->vat_number}}
                                     </div>
                                     <div>
-                                      
-                                            TIN.: {{$company->tin_number}}
-                                      
+                                        TIN.: {{$company->tin_number}}
                                     </div>
                                 </div>
                             </div>
@@ -74,11 +70,6 @@ Invoice Print | @if (Auth::user()->employee->company)
                             <div style="padding-top: 25px; padding-bottom:15px">
                                 <center><h2>{{ $invoice->fiscalize == TRUE ? " FISCAL TAX INVOICE" : "INVOICE"}} </h2>  </center>
                             </div>
-                               
-                                       
-                        
-                          
-                            
                         </header>
                         <main>
                             <div class="row contacts">
@@ -171,19 +162,19 @@ Invoice Print | @if (Auth::user()->employee->company)
                                                 @endif
                                                    
                                             </td>
-                                            <td class="unit text-center"> {{$invoice_item->qty}}</td>
-                                            <td class="unit text-center">
+                                            <td class="unit text-right"> {{$invoice_item->qty}}</td>
+                                            <td class="unit text-right">
                                                 @if ($invoice_item->amount)
                                                 {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format($invoice_item->amount,2)}}        
                                                 @endif
                                             </td>
-                                            <td class="unit text-center">
+                                            <td class="unit text-right">
                                                 @if ($invoice_item->subtotal)
                                                     {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format($invoice_item->subtotal,2)}}
                                                 @endif
                                             </td>
         
-                                            <td class="unit text-center">
+                                            <td class="unit text-right">
                                                 @if (isset($invoice->tax_amount) && $invoice->tax_amount > 0)
                                                     {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format($invoice_item->tax_amount,2)}}
                                                 @else
@@ -191,7 +182,7 @@ Invoice Print | @if (Auth::user()->employee->company)
                                                 @endif
                                             </td>
                                           
-                                            <td class="unit text-center">
+                                            <td class="unit text-right">
                                                 @if (isset($invoice_item->subtotal_incl))
                                                     {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format($invoice_item->subtotal_incl,2)}}
                                                 @endif

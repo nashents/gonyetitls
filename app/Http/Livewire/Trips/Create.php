@@ -391,6 +391,10 @@ class Create extends Component
             
         }
     }
+
+    public function updatedFuelOrder(){
+        $this->fuel_quantity = $this->trip_fuel;
+    }
     
     public function updatedAllHorses($status){
         if(!is_null($status)){

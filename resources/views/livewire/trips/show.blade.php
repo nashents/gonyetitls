@@ -473,20 +473,20 @@
                                                                 <th scope="row">Approximate Trip Fuel</th>
                                                                 <td>
                                                                     @if ($trip->trip_fuel)
-                                                                        {{$trip->trip_fuel}}Litres
+                                                                        {{$trip->trip_fuel}} l
                                                                     @endif
                                                                 </td>
                                                             </tr>
                                                             <tr>
                                                                 <th scope="row">Fuel Consumption Mileage</th>
                                                                 <td>
-                                                                    {{$trip->fuel_consumption_mileage ? $trip->fuel_consumption_mileage."L/Km" : ""}}
+                                                                    {{$trip->fuel_consumption_mileage ? number_format($trip->fuel_consumption_mileage, 2)." l/Km" : ""}}
                                                                 </td>
                                                             </tr>
                                                             <tr>
                                                                 <th scope="row">Fuel Consumption Hours</th>
                                                                 <td>
-                                                                   {{$trip->fuel_consumption_hours ? $trip->fuel_consumption_hours."L/H" : ""}}
+                                                                   {{$trip->fuel_consumption_hours ? number_format($trip->fuel_consumption_hours,2)." l/H" : ""}}
                                                                 </td>
                                                             </tr>
                                                  
