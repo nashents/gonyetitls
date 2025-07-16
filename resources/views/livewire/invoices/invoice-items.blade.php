@@ -38,11 +38,11 @@
                 <td>{{$invoice_item->invoice->invoice_number}}</td>
                 <td>
                     @if ($invoice_item->product)
-                    <strong>{{$invoice_item->product ? $invoice_item->product->name : ""}} {{$invoice_item->product ? $invoice_item->product->identification_number : ""}} {{$invoice_item->inventory ? $invoice_item->inventory->serial_number : ""}}</strong>  
-                    <br>
-                      @elseif($invoice_item->trip)  
-                      <strong>{{$invoice_item->trip ? $invoice_item->trip->trip_number : ""}}</strong>  
-                      <br>
+                        <strong>{{$invoice_item->product ? $invoice_item->product->name : ""}} {{$invoice_item->product ? $invoice_item->product->identification_number : ""}} {{$invoice_item->inventory ? $invoice_item->inventory->serial_number : ""}}</strong>  
+                        <br>
+                    @elseif($invoice_item->trip)  
+                        <strong>{{$invoice_item->trip ? $invoice_item->trip->trip_number : ""}}</strong>  
+                        <br>
                     @endif
                   {{$invoice_item->description}}
                 </td>

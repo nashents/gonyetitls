@@ -125,8 +125,6 @@
                             <thead >
                                 <th class="th-sm">Payment#
                                 </th>
-                                <th class="th-sm">Date
-                                </th>
                                 <th class="th-sm">MOP
                                 </th>
                                 <th class="th-sm">Ccy
@@ -149,9 +147,11 @@
                                 <td>{{ucfirst($payment->payment_number)}}</td>
                                 <td>{{$payment->mode_of_payment}}</td>
                                 <td>{{$payment->currency ? $payment->currency->name : ""}}</td>
-                                <td>@if ($payment->amount)
+                                <td>
+                                    @if ($payment->amount)
                                     {{$payment->currency ? $payment->currency->symbol : ""}}{{number_format($payment->amount,2)}}
-                                @endif</td>
+                                    @endif
+                                </td>
                                 <td>
                                    @if ($payment->bill)
                                    {{$payment->currency ? $payment->currency->symbol : ""}}{{number_format($payment->bill->balance,2)}} 
@@ -160,7 +160,7 @@
                                    @elseif ($payment->invoice)
                                    {{$payment->currency ? $payment->currency->symbol : ""}}{{number_format($payment->invoice->balance,2)}} 
                                     @endif
-                                  </td>
+                                </td>
                                  <td class="w-10 line-height-35 table-dropdown">
                                     <div class="dropdown">
                                         <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -174,13 +174,11 @@
                                            @endif     
                                         </ul>
                                     </div>
-                             
-
-                            </td>
+                                </td>
                               </tr>
                              @empty
                                   <tr>
-                                    <td colspan="7">
+                                    <td colspan="6">
                                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                             No Invoice Payments Recorded....
                                         </div>

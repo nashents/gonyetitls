@@ -100,13 +100,10 @@
                                     <th class="w-10 text-center line-height-35">Date</th>
                                     <td class="w-20 line-height-35">{{$requisition->date}}</td>
                                 </tr>
-                                <tr>
-                                    <th class="w-10 text-center line-height-35">Ccy</th>
-                                    <td class="w-20 line-height-35">{{$requisition->currency ? $requisition->currency->name : ""}}</td>
-                                </tr>
+                    
                                 <tr>
                                     <th class="w-10 text-center line-height-35">Total</th>
-                                    <td class="w-20 line-height-35">{{$requisition->currency ? $requisition->currency->symbol : ""}}{{number_format($requisition->total,2)}}</td>
+                                    <td class="w-20 line-height-35">{{$company->currency ? $company->currency->name : "" }} {{$company->currency ? $company->currency->symbol : "" }}{{number_format($requisition->total,2)}}</td>
                                 </tr>
                                 <tr>
                                     <th class="w-10 text-center line-height-35">Authorization</th>
@@ -118,6 +115,12 @@
                                         @endif  
                                     </td>
                                 </tr>
+                                @if ($requisition->authorization_date)
+                                <tr>
+                                    <th class="w-10 text-center line-height-35">Auth Date:</th>
+                                    <td class="w-20 line-height-35">{{$requisition->authorization_date}}</td>
+                                </tr>
+                                @endif
                                 @if ($requisition->authorized_by_id)
                                 <tr>
                                     <th class="w-10 text-center line-height-35">AuthorizedBy</th>

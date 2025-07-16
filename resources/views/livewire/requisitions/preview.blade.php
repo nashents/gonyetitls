@@ -197,6 +197,10 @@
                                 <td class="text-center"> <span class="badge bg-{{($requisition->authorization == 'approved') ? 'success' : (($requisition->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($requisition->authorization == 'approved') ? 'approved' : (($requisition->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
                             </tr>
                             <tr>
+                                <th class="text-center"><strong>Authorization Date</strong></th>
+                                <td class="text-center"> {{$requisition->authorization_date}}</td>
+                            </tr>
+                            <tr>
                                 <th class="text-center"><strong>Authorized By</strong></th>
                                 @php
                                     $authorized_by = App\Models\User::find($requisition->authorized_by_id);

@@ -63,11 +63,7 @@
                     <div style="padding-top: 25px; padding-bottom:15px">
                         <center><h2>{{ $invoice->fiscalize == TRUE ? " FISCAL TAX INVOICE" : "INVOICE"}} </h2>  </center>
                     </div>
-                       
-                               
-                
-                  
-                    
+            
                 </header>
                 <main>
                     <div class="row contacts">
@@ -154,11 +150,12 @@
                                     </td>
                                     <td class="text-center">
                                         @if ($invoice_item->product)
-                                        <strong>{{$invoice_item->product ? $invoice_item->product->name : ""}}</strong>  <br>
-                                        {{$invoice_item->product ? $invoice_item->product->description : ""}}
+                                            <strong>{{$invoice_item->product ? $invoice_item->product->name : ""}}</strong>  <br>
+                                            {{$invoice_item->description}}
                                         @elseif ($invoice_item->trip)
-                                        {{$invoice_item->description ? $invoice_item->description : $invoice_item->trip_details}}
+                                            {{$invoice_item->description ? $invoice_item->description : $invoice_item->trip_details}}
                                         @endif
+
                                            
                                     </td>
                                     <td class="unit text-right"> {{$invoice_item->qty}}</td>

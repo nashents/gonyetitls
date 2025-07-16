@@ -1,10 +1,10 @@
 <div>
     {{-- <blockquote class="blockquote-reverse mt-20"> --}}
         <x-loading/>
-        <a href="" data-toggle="modal" data-target="#requisition_itemModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Requisition Item</a>
+        {{-- <a href="" data-toggle="modal" data-target="#requisition_itemModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Requisition Item</a>
        
         <br>
-        <br>
+        <br> --}}
         <table id="requisition_itemsTable" class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
             <thead >
                 <th class="th-sm">Item

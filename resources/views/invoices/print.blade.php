@@ -156,7 +156,7 @@ Invoice Print | @if (Auth::user()->employee->company)
                                             <td class="text-center">
                                                 @if ($invoice_item->product)
                                                 <strong>{{$invoice_item->product ? $invoice_item->product->name : ""}}</strong>  <br>
-                                                {{$invoice_item->product ? $invoice_item->product->description : ""}}
+                                                {{$invoice_item->description}}
                                                 @elseif ($invoice_item->trip)
                                                 {{$invoice_item->description ? $invoice_item->description : $invoice_item->trip_details}}
                                                 @endif

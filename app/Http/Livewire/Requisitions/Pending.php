@@ -84,6 +84,7 @@ class Pending extends Component
           DB::transaction(function () {
             
     //   try{
+    
             $requisition = Requisition::find($this->requisition_id);
             $requisition->authorized_by_id = Auth::user()->id;
             $requisition->authorization = $this->authorize;

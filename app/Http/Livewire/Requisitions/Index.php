@@ -68,14 +68,15 @@ class Index extends Component
     public $description;
     public $department_ids;
     public $products;
-    public $selectedProduct;
     public $date;
     public $total;
     public $subtotal;
+    public $requisition_items;
    
     public $company;
     public $item_totals = 0;
 
+    public $selectedProduct = [];
     public $selectedCurrency = [];
     public $selected_currency = [];
     public $exchange_rate = [];
@@ -83,6 +84,15 @@ class Index extends Component
     public $expense_id = [];
     public $qty = [];
     public $amount = [];
+    
+    public $current_selectedProduct = [];
+    public $current_selectedCurrency = [];
+    public $current_selected_currency = [];
+    public $current_exchange_rate = [];
+    public $current_exchange_amount = [];
+    public $current_expense_id = [];
+    public $current_qty = [];
+    public $current_amount = [];
 
     public $item_name;
     public $item_description;
@@ -150,6 +160,24 @@ class Index extends Component
         $this->sell = False;
         $this->buy = True;
         $this->item_key = Null;
+
+        $this->selectedProduct = [];
+        $this->selectedCurrency = [];
+        $this->selected_currency = [];
+        $this->exchange_rate = [];
+        $this->exchange_amount = [];
+        $this->expense_id = [];
+        $this->qty = [];
+        $this->amount = [];
+        
+        $this->current_selectedProduct = [];
+        $this->current_selectedCurrency = [];
+        $this->current_selected_currency = [];
+        $this->current_exchange_rate = [];
+        $this->current_exchange_amount = [];
+        $this->current_expense_id = [];
+        $this->current_qty = [];
+        $this->current_amount = [];
         
     }
     
@@ -448,6 +476,7 @@ class Index extends Component
 
         $items = [];
         $type = null;
+        $requisition_total = 0;
 
         if (!empty($this->expense_id)) {
             $items = $this->expense_id;
@@ -458,7 +487,9 @@ class Index extends Component
         }
 
         if ($type && !empty($items)) {
+
             foreach ($items as $key => $value) {
+              
                
                 $requisition_item = new RequisitionItem;
                 $requisition_item->requisition_id = $requisition->id;
@@ -471,12 +502,13 @@ class Index extends Component
                 }
 
                 // Handle quantity and amount
+               
+
                 $qty = $this->qty[$key] ?? 0;
                 $amount = $this->amount[$key] ?? 0;
                 $currency_id = $this->selectedCurrency[$key] ?? 0;
                 $exchange_rate = $this->exchange_rate[$key] ?? 0;
                 $exchange_amount = $this->exchange_amount[$key] ?? 0;
-
                 $requisition_item->qty = $qty;
                 $requisition_item->amount = $amount;
                 $requisition_item->currency_id = $currency_id;
@@ -484,7 +516,7 @@ class Index extends Component
                 $requisition_item->exchange_amount = $exchange_amount;
 
                 // Calculate subtotal based on currency
-                $subtotal = ($currency_id !== $this->company->currency_id) 
+                $subtotal = ($currency_id != $this->company->currency_id) 
                     ? $exchange_amount * $qty 
                     : $amount * $qty;
 
@@ -493,7 +525,8 @@ class Index extends Component
                 $requisition_item->save();
 
                 // Add to the cumulative total
-                $this->total += $subtotal;
+                $requisition_total += $subtotal;
+
             }
         }
 
@@ -504,7 +537,7 @@ class Index extends Component
             $requisition->exchange_rate = $purchase_order->exchange_rate;
             $requisition->exchange_amount = $purchase_order->exchange_amount;
         } else {
-            $requisition->total = $this->total;
+            $requisition->total = $requisition_total;
         }
 
         $requisition->save();
@@ -522,7 +555,7 @@ class Index extends Component
                 }
             }
         }
-        $this->reset(['searchTrip', 'searchBooking']);
+        $this->reset(['searchTrip', 'searchBooking', 'searchPurchase']);
         $this->dispatchBrowserEvent('hide-requisitionModal');
         $this->resetInputFields();
         $this->dispatchBrowserEvent('alert',[
@@ -530,14 +563,14 @@ class Index extends Component
             'message'=>"Requisition Created Successfully!!"
         ]);
 
-//     }
-//     catch(\Exception $e){
-//     // Set Flash Message
-//     $this->dispatchBrowserEvent('alert',[
-//         'type'=>'error',
-//         'message'=>"Something goes wrong while creating requisition!!"
-//     ]);
-// }
+    //     }
+    //     catch(\Exception $e){
+    //     // Set Flash Message
+    //     $this->dispatchBrowserEvent('alert',[
+    //         'type'=>'error',
+    //         'message'=>"Something goes wrong while creating requisition!!"
+    //     ]);
+    // }
 
     });
 
@@ -576,19 +609,37 @@ class Index extends Component
         }
         $this->employee_id = $requisition->employee_id;
         $this->department_id = $requisition->department_id;
+        $this->selectedAccount = $requisition->account_id;
         $this->date = $requisition->date;
         $this->description = $requisition->description;
         $this->subject = $requisition->subject;
         $this->requisition_id = $requisition->id;
+        $this->requisition_items = $requisition->requisition_items;
+        $this->items = $requisition->items;
+        if($this->requisition_items){
+
+                 foreach ($this->requisition_items as $key => $requisition_item) {
+                    
+                    $this->current_expense_id[$key] = $requisition_item->expense_id;
+                    $this->current_selectedProduct[$key] = $requisition_item->product_id;
+                    $this->current_selectedCurrency[$key] = $requisition_item->currency_id;
+                    $this->current_selected_currency[$key] = $requisition_item->currency;
+                    $this->current_amount[$key] = $requisition_item->amount;
+                    $this->current_qty[$key] = $requisition_item->qty;
+                    $this->current_exchange_rate[$key] = $requisition_item->exchange_rate;
+                    $this->current_exchange_amount[$key] = $requisition_item->exchange_amount;
+
+                   
+                }
+        }
         $this->dispatchBrowserEvent('show-requisitionEditModal');
     }
 
 
         public function update(){
-
         // try{
 
-          DB::transaction(function () {
+        DB::transaction(function () {
 
         $requisition =  Requisition::find($this->requisition_id);
         $requisition->user_id = Auth::user()->id;
@@ -597,13 +648,117 @@ class Index extends Component
         $requisition->booking_id = $this->selectedBooking ? $this->selectedBooking : Null;
         $requisition->purchase_id = $this->selectedPurchase ? $this->selectedPurchase : Null;
         $requisition->employee_id = $this->employee_id;
-        $requisition->currency_id = $this->selectedCurrency;
+        $requisition->account_id = $this->selectedAccount;
         $requisition->date = $this->date;
         $requisition->description = $this->description;
         $requisition->subject = $this->subject;
+        $requisition->items = $this->items;
         $requisition->update();
 
-        $this->reset(['searchTrip', 'searchBooking']);
+        $items = [];
+        $current_items = [];
+        $type = null;
+        $requisition_total = 0;
+
+        foreach($this->requisition_items as $key => $requisition_item){
+               
+                $expense_id = $this->current_expense_id[$key] ?? 0;
+                $product_id = $this->current_selectedProduct[$key] ?? 0;
+                $qty = $this->current_qty[$key] ?? 0;
+                $amount = $this->current_amount[$key] ?? 0;
+                $currency_id = $this->current_selectedCurrency[$key] ?? 0;
+                $exchange_rate = $this->current_exchange_rate[$key] ?? 0;
+                $exchange_amount = $this->current_exchange_amount[$key] ?? 0;
+                
+                $requisition_item->expense_id = $expense_id;
+                $requisition_item->product_id = $product_id;
+                $requisition_item->qty = $qty;
+                $requisition_item->amount = $amount;
+                $requisition_item->currency_id = $currency_id;
+                $requisition_item->exchange_rate = $exchange_rate;
+                $requisition_item->exchange_amount = $exchange_amount;
+
+                // Calculate subtotal based on currency
+                $subtotal = ($currency_id != $this->company->currency_id) 
+                    ? $exchange_amount * $qty 
+                    : $amount * $qty;
+
+                // Assign and save the subtotal
+                $requisition_item->subtotal = $subtotal;
+                $requisition_item->update();
+
+                // Add to the cumulative total
+                $requisition_total += $subtotal;
+        }
+
+       
+
+        if (!empty($this->expense_id)) {
+            $items = $this->expense_id;
+            $type = 'expense';
+        } elseif (!empty($this->selectedProduct)) {
+            $items = $this->selectedProduct;
+            $type = 'product';
+        }
+
+        if ($type && !empty($items)) {
+
+            foreach ($items as $key => $value) {
+              
+                $requisition_item = new RequisitionItem;
+                $requisition_item->requisition_id = $requisition->id;
+
+                // Assign either expense_id or product_id
+                if ($type === 'expense') {
+                    $requisition_item->expense_id = $value;
+                } else {
+                    $requisition_item->product_id = $value;
+                }
+
+                // Handle quantity and amount
+               
+                $qty = $this->qty[$key] ?? 0;
+                $amount = $this->amount[$key] ?? 0;
+                $currency_id = $this->selectedCurrency[$key] ?? 0;
+                $exchange_rate = $this->exchange_rate[$key] ?? 0;
+                $exchange_amount = $this->exchange_amount[$key] ?? 0;
+                $requisition_item->qty = $qty;
+                $requisition_item->amount = $amount;
+                $requisition_item->currency_id = $currency_id;
+                $requisition_item->exchange_rate = $exchange_rate;
+                $requisition_item->exchange_amount = $exchange_amount;
+
+                // Calculate subtotal based on currency
+                $subtotal = ($currency_id != $this->company->currency_id) 
+                    ? $exchange_amount * $qty 
+                    : $amount * $qty;
+
+                // Assign and save the subtotal
+                $requisition_item->subtotal = $subtotal;
+                $requisition_item->save();
+
+                // Add to the cumulative total
+                $requisition_total += $subtotal;
+
+            }
+        }
+
+        
+
+        $requisition = Requisition::find($requisition->id);
+
+        if ($this->selectedPurchase && $purchase_order = Purchase::find($this->selectedPurchase)) {
+            $requisition->total = $purchase_order->total;
+            $requisition->exchange_rate = $purchase_order->exchange_rate;
+            $requisition->exchange_amount = $purchase_order->exchange_amount;
+        } else {
+          
+            $requisition->total = $requisition_total;
+        }
+
+        $requisition->update();
+        
+        $this->reset(['searchTrip', 'searchBooking','selectedPurchase']);
         $this->dispatchBrowserEvent('hide-requisitionEditModal');
         $this->resetInputFields();
         $this->dispatchBrowserEvent('alert',[
