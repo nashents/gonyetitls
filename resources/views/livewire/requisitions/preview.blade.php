@@ -153,18 +153,36 @@
                                             @endif
                                 </td>
                             </tr>
-                          
+                            @if ($requisition->requisition_items)
+                                <tr>
+                                    <th class="text-center"><strong>Requisted Items</strong></th>
+                                    <td class="text-center">
+                                        @if ($requisition->requisition_items)
+                                                @foreach ($requisition->requisition_items as $requisition_item)
+                                                    @if ($requisition_item->expense)
+                                                        {{$requisition_item->expense ? $requisition_item->expense->name : ""}} 
+                                                    @elseif($requisition_item->product)
+                                                        {{ $requisition_item->product->brand ? $requisition_item->product->brand->name : ""}} {{ $requisition_item->product ? $requisition_item->product->name : ""}}
+                                                    @elseif($requisition_item->inventory)
+                                                        {{ $requisition_item->inventory->product->brand ? $requisition_item->inventory->product->brand->name : ""}} {{ $requisition_item->inventory->product ? $requisition_item->inventory->product->name : ""}}
+                                                    @endif
+                                                        @ @if ($requisition_item->amount)
+                                                        {{ $requisition_item->currency ? $requisition_item->currency->name : ""}} {{ $requisition_item->currency ? $requisition_item->currency->symbol : ""}}{{ number_format($requisition_item->amount,2)}}
+                                                    @endif
+                                                    @if (!$loop->last), <br> @endif
+                                                @endforeach
+                                            @endif
+                                    </td>
+                                </tr>
+                            @endif
+                    
                             <tr>
                                 <th class="text-center"><strong>Date</strong></th>
                                 <td class="text-center"> {{$requisition->date}}</td>
                             </tr>
                             <tr>
-                                <th class="text-center"><strong>Currency</strong></th>
-                                <td class="text-center"> {{$requisition->currency ? $requisition->currency->name : ""}}</td>
-                            </tr>
-                            <tr>
                                 <th class="text-center"><strong>Total</strong></th>
-                                <td class="text-center"> {{$requisition->currency ? $requisition->currency->symbol : ""}}{{number_format($requisition->total,2)}}</td>
+                                <td class="text-center"> {{Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->name : ""}} {{Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->symbol : ""}}{{number_format($requisition->total,2)}}</td>
                             </tr>
                             <tr>
                                 <th class="text-center"><strong>Paid</strong></th>

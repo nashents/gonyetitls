@@ -66,7 +66,7 @@
                                 </div>
                                 <table  class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                     <thead >
-                                           <th class="th-sm">Requisition#
+                                         <th class="th-sm">Requisition#
                                         </th>
                                         <th class="th-sm">CreatedBy
                                         </th>
@@ -78,8 +78,6 @@
                                         </th>
                                         <th class="th-sm">Date
                                         </th>
-                                        <th class="th-sm">Ccy
-                                        </th>
                                         <th class="th-sm">Total
                                         </th>
                                         <th class="th-sm">Status
@@ -88,14 +86,13 @@
                                         </th>
                                         <th class="th-sm">Actions
                                         </th>
-
                                       </tr>
                                     </thead>
                                     @if (isset($requisitions))
                                     <tbody>
                                         @forelse ($requisitions as $requisition)
                                       <tr>
-                                               <td>{{ucfirst($requisition->requisition_number)}}</td>
+                                                       <td>{{ucfirst($requisition->requisition_number)}}</td>
                                         <td>{{ucfirst($requisition->user->name)}} {{ucfirst($requisition->user->surname)}}</td>
                                         <td>
                                             {{ucfirst($requisition->employee ? $requisition->employee->name : "")}} {{ucfirst($requisition->employee ? $requisition->employee->surname : "")}}
@@ -112,10 +109,10 @@
                                                 @elseif($requisition_item->inventory)
                                                     {{ $requisition_item->inventory->product->brand ? $requisition_item->inventory->product->brand->name : ""}} {{ $requisition_item->inventory->product ? $requisition_item->inventory->product->name : ""}}
                                                 @endif
-                                                @   @if ($requisition_item->amount)
-                                                {{ $requisition_item->requisition->currency ? $requisition_item->requisition->currency->symbol : ""}}{{ number_format($requisition_item->amount,2)}}
-                                            @endif
-                                                @if (!$loop->last),@endif
+                                                    @ @if ($requisition_item->amount)
+                                                    {{ $requisition_item->currency ? $requisition_item->currency->name : ""}} {{ $requisition_item->currency ? $requisition_item->currency->symbol : ""}}{{ number_format($requisition_item->amount,2)}}
+                                                @endif
+                                                @if (!$loop->last), @endif
                                             @endforeach
                                         @endif
                                            
@@ -152,12 +149,7 @@
                                                     @endif
                                                 </a>
 
-                                            @elseif ($requisition->purchase_id)
-                                                @php
-                                                    $purchase = \App\Models\Purchase::find($requisition->purchase_id);
-                                                @endphp
-                                                @if($purchase)
-                                                   
+                                            @elseif ( $purchase = $requisition->purchase)
                                                     Purchase Order:
                                                     <a href="{{ route('purchases.show', $purchase->id) }}" style="color: blue" target="_blank"> 
                                                         {{ $purchase->purchase_number }} | 
@@ -166,7 +158,7 @@
                                                         {{ $purchase->currency?->name }} 
                                                         {{ $purchase->currency?->symbol }}{{ number_format($purchase->total ?? 0, 2) }}
                                                     </a>
-                                                @endif
+                                               
                                             @endif
 
                                             @if ($requisition->description)
@@ -174,13 +166,19 @@
                                             @endif
                                         </td>
                                         <td>{{$requisition->date }}</td>
-                                        <td>{{$requisition->currency ? $requisition->currency->name : "" }}</td>
-                                        <td>{{$requisition->currency ? $requisition->currency->symbol : "" }}{{number_format($requisition->total,2)}}</td>
+                                        <td>
+                                            {{$company->currency ? $company->currency->name : "" }} {{$company->currency ? $company->currency->symbol : "" }}{{number_format($requisition->total,2)}}</td>
                                         <td><span class="label label-{{($requisition->status == 'Paid') ? 'success' : (($requisition->status == 'Partial') ? 'warning' : 'danger') }}">{{ $requisition->status }}</span></td>
-                                        <td><span class="badge bg-{{($requisition->authorization == 'approved') ? 'success' : (($requisition->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($requisition->authorization == 'approved') ? 'approved' : (($requisition->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
+                                        <td>
+                                            <span class="badge bg-{{($requisition->authorization == 'approved') ? 'success' : (($requisition->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($requisition->authorization == 'approved') ? 'approved' : (($requisition->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
+                                            @if ($requisition->authorization_date)
+                                                <br>
+                                                 <small><strong style="background-color: orange">Date: {{$requisition->authorization_date}}</strong></small>  
+                                               
+                                            @endif
                                             @if ($requisition->reason)
-                                            <br>
-                                            <small><strong style="background-color: orange">{{$requisition->reason}}</strong></small>  
+                                                <br>
+                                                <small><strong style="background-color: orange">Comments: {{$requisition->reason}}</strong></small>  
                                             @endif 
                                         </td>
                                         <td class="w-10 line-height-35 table-dropdown">

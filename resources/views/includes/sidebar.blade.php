@@ -540,7 +540,7 @@
                 ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
                 $department_head = App\Models\DepartmentHead::where('employee_id',$employee->id)->first();
                 @endphp
-                <li class="has-children {{ request()->routeIs('requisitions.index') ? 'active' : '' }}" >
+                <li class="has-children {{ request()->routeIs('requisitions.*') ? 'active' : '' }}" >
                     <a href="#"><i class="fas fa-hand-holding-usd"></i> <span>Requisitions</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
                         <li><a href="{{route('requisitions.index')}}" ><i class="fas fa-list "></i> <span>Manage Requisitions</span></a></li>

@@ -29,8 +29,10 @@ class Rejected extends Component
     public $authorize;
     public $comments;
     public $requisition;
+    public $company;
 
     public function mount(){
+        $this->company = Auth::user()->employee->company;
         $this->requisition_filter = 'created_at';
         $this->resetPage();
     }

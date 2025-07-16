@@ -5,6 +5,7 @@ namespace App\Http\Livewire\Requisitions;
 use Livewire\Component;
 use App\Models\Requisition;
 use Livewire\WithPagination;
+use Illuminate\Support\Facades\Auth;
 
 class Approved extends Component
 {
@@ -25,8 +26,10 @@ class Approved extends Component
     public $authorize;
     public $comments;
     public $requisition;
+    public $company;
 
     public function mount(){
+        $this->company = Auth::user()->employee->company;
         $this->requisition_filter = 'created_at';
         $this->resetPage();
     }

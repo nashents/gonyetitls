@@ -28,6 +28,7 @@ use App\Imports\ShiftsImport;
 use Livewire\WithFileUploads;
 use App\Models\OffloadingPoint;
 use App\Imports\ShiftTripsImport;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Session;
@@ -489,6 +490,8 @@ class Index extends Component
     
 
     public function store(){
+
+         DB::transaction(function () {
         // try{
       
         $shift = new Shift;
@@ -626,6 +629,7 @@ class Index extends Component
 //         'message'=>"Something goes wrong while creating shift!!"
 //     ]);
 // }
+    });
     }
 
 
@@ -692,6 +696,7 @@ class Index extends Component
 
     public function update()
     {
+         DB::transaction(function () {
         if ($this->shift_id) {
 
             // try{
@@ -812,6 +817,8 @@ class Index extends Component
     //     ]);
     // }
         }
+    });
+    
     }
     public function render()
     {

@@ -114,11 +114,14 @@ class Index extends Component
     public function remove($i)
     {
         unset($this->inputs[$i]);
-        unset($this->selectedCurrency[$key]);
-        unset($this->selected_currency[$key]);
-        unset($this->amount[$key]);
-        unset($this->exchange_rate[$key]);
-        unset($this->exchange_amount[$key]);
+        unset($this->selectedCurrency[$i]);
+        unset($this->selected_currency[$i]);
+        unset($this->expense_id[$i]);
+        unset($this->selectedProduct[$i]);
+        unset($this->amount[$i]);
+        unset($this->qty[$i]);
+        unset($this->exchange_rate[$i]);
+        unset($this->exchange_amount[$i]);
     }
 
     private function resetInputFields(){
@@ -312,6 +315,7 @@ class Index extends Component
         'amount.*' => 'required',
     ];
     
+
 
     public function requisitionNumber(){
 
