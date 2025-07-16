@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Requisitions;
 
+use Carbon\Carbon;
 use App\Models\Bill;
 use App\Models\Account;
 use Livewire\Component;
@@ -86,6 +87,7 @@ class Pending extends Component
             $requisition = Requisition::find($this->requisition_id);
             $requisition->authorized_by_id = Auth::user()->id;
             $requisition->authorization = $this->authorize;
+            $requisition->authorization_date = Carbon::today()->format('Y-m-d');
             $requisition->reason = $this->comments;
             $requisition->update();
 

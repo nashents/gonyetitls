@@ -80,10 +80,13 @@ class Rejected extends Component
       public function update(){
 
           DB::transaction(function () {
+
     //   try{
+    
             $requisition = Requisition::find($this->requisition_id);
             $requisition->authorized_by_id = Auth::user()->id;
             $requisition->authorization = $this->authorize;
+            $requisition->authorization_date = Carbon::today()->format('Y-m-d');
             $requisition->reason = $this->comments;
             $requisition->update();
 
