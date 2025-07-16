@@ -64,15 +64,13 @@
                     <div class="row contacts">
                         <div class="col invoice-to" >
                             <div class="text-gray-light">Request From</div>
-                            <h4 class="to">{{$requisition->department ? $requisition->department->name : ""}}</h4>
-                          
+                            <h6 class="to"><strong>Employee: </strong> {{$requisition->employee ? $requisition->employee->name : ""}} {{$requisition->employee ? $requisition->employee->surname : ""}}</h4>
+                            <div class="email"><strong>Dpt:</strong> {{$requisition->department ? $requisition->department->name : ""}}</div>
                           
                         </div>
                         <div class="col invoice-details">
                             <div class="date" style="padding-bottom: 3px"> <strong>Requisition No.:</strong> {{$requisition->requisition_number}}</div>
                             <div class="date" style="padding-bottom: 3px"><strong>Date:</strong> {{$requisition->date}}</div>
-                            <div class="date" style="padding-bottom: 3px"><strong>Currency:</strong> {{$requisition->currency ? $requisition->currency->name : ""}}</div>
-                            
                         </div>
                     </div>
                 
