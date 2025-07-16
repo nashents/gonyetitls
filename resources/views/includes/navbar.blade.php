@@ -98,24 +98,29 @@
                             <li><a href="{{route('drivers.create')}}"><i class="fa fa-plus-square-o"></i>Driver</a></li>
                             <li><a href="{{route('employees.create')}}"><i class="fa fa-plus-square-o"></i>Employee</a></li>
                             @endif
+                            
                             @if (in_array('Finance', $department_names)|| in_array('Super Admin', $role_names))
+                              <li role="separator" class="divider"></li>
                              <li><a href="{{route('assets.create')}}"><i class="fa fa-plus-square-o"></i>Asset</a></li>
                              <li><a href="{{route('bills.create')}}"><i class="fa fa-plus-square-o"></i>Bill</a></li>
                             <li><a href="{{route('invoices.create')}}"><i class="fa fa-plus-square-o"></i>Invoice</a></li>
                             <li><a href="{{route('quotations.create')}}"><i class="fa fa-plus-square-o"></i>Quotation</a></li>
-                           
                             @endif
                             @if (in_array('Transport & Logistics', $department_names) || in_array('Super Admin', $role_names))
+                              <li role="separator" class="divider"></li>
                             <li><a href="{{route('fuels.index')}}"><i class="fa fa-plus-square-o"></i>Fuel</a></li>
                             <li><a href="{{route('horses.create')}}"><i class="fa fa-plus-square-o"></i>Horse</a></li>
                             <li><a href="{{route('trailers.index')}}"><i class="fa fa-plus-square-o"></i>Trailer</a></li>
+                            <li><a href="{{route('shifts.index')}}"><i class="fa fa-plus-square-o"></i>Shift</a></li>
                             <li><a href="{{route('trips.create')}}"><i class="fa fa-plus-square-o"></i>Trip</a></li>
                             <li><a href="{{route('vehicles.create')}}"><i class="fa fa-plus-square-o"></i>Vehicle</a></li>
                             @endif
                             @if (in_array('Workshop', $department_names) || in_array('Super Admin', $role_names))
+                                <li role="separator" class="divider"></li>
                                 <li><a href="{{route('bookings.create')}}"><i class="fa fa-plus-square-o"></i>Booking</a></li>
                             @endif
                             @if (in_array('Stores', $department_names) || in_array('Super Admin', $role_names))
+                              <li role="separator" class="divider"></li>
                                 <li><a href="{{route('inventories.create')}}"><i class="fa fa-plus-square-o"></i>Inventory</a></li>
                                 <li><a href="{{route('tyres.create')}}"><i class="fa fa-plus-square-o"></i>Tyre</a></li>
                             @endif

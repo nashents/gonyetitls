@@ -20,11 +20,13 @@ use App\Models\Container;
 use App\Models\Rehandling;
 use App\Models\Transporter;
 use App\Models\ExchangeRate;
+use App\Models\LoadingPoint;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Excel;
 use App\Exports\ShiftsExport;
 use App\Imports\ShiftsImport;
 use Livewire\WithFileUploads;
+use App\Models\OffloadingPoint;
 use App\Imports\ShiftTripsImport;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
@@ -85,11 +87,17 @@ class Index extends Component
 
     public $cargos;
     public $cargo_id;
+    public $loading_points;
+    public $loading_point_id;
+    public $offloading_points;
+    public $offloading_point_id;
+    public $total_loads;
 
     public $works;
     public $work_id;
     public $locations;
     public $location_id;
+    public $calculated_mileage;
     public $start_time;
     public $open_hours;
     public $open_mileage;
@@ -165,6 +173,7 @@ class Index extends Component
     public function mount(){
         $this->resetPage();
         $this->user = Auth::user();
+        $this->equipment = "Horse";
         $this->shift_filter = "created_at";
         $this->employee =  $this->user->employee;
         $this->company = Company::with('currency')->find( $this->employee->company_id);
@@ -175,6 +184,8 @@ class Index extends Component
         $this->transporters = Transporter::with('vehicles:id,registration_number','vehicles.vehicle_make:id,name','vehicles.vehicle_model:id,name','horses:id,registration_number','horses.horse_make:id,name','horses.horse_model:id,name','cargos:id,name','trailers:id,registration_number,make,model','drivers:id','drivers.employee:id,name,surname')->where('authorization','approved')->orderBy('name','asc')->get();
         $this->vehicles = Vehicle::orderBy('registration_number','asc')->get();
         $this->containers = Container::orderBy('name','asc')->get();
+        $this->loading_points = LoadingPoint::orderBy('name','asc')->get();
+        $this->offloading_points = OffloadingPoint::orderBy('name','asc')->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->works = Work::orderBy('description','asc')->get();
         $this->locations = Location::orderBy('name','asc')->get();
@@ -244,7 +255,7 @@ class Index extends Component
 
             
 
-                    public function updatedAllHorses($status){
+        public function updatedAllHorses($status){
         if(!is_null($status)){
             if($status == True){
                 $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')
@@ -464,11 +475,11 @@ class Index extends Component
         $total_fuel = $fuel->quantity;
 
         if (is_numeric($distance) && $distance > 0) {
-            $shift->fuel_consumption_mileage = $total_fuel / $distance;
+            $shift->fuel_consumption_mileage = $distance / $total_fuel;
         }
 
         if (is_numeric($hours_distance) && $hours_distance > 0) {
-            $shift->fuel_consumption_hours = $total_fuel / $hours_distance;
+            $shift->fuel_consumption_hours = $hours_distance / $total_fuel ;
         }
 
         $shift->save();
@@ -502,11 +513,31 @@ class Index extends Component
         $shift->arrive_location_time = $this->arrive_location_time;
         $shift->depart_location_time = $this->depart_location_time;
         $shift->arrive_workshop_time = $this->arrive_workshop_time;
+        $shift->total_loads = $this->total_loads;
+        $shift->total_fuel = $this->fuel_quantity;
+        $shift->open_mileage = $this->open_mileage;
+        $shift->close_mileage = $this->close_mileage;
+
+        if ($this->for === "Trips") {
+            if (is_numeric($this->open_mileage) && is_numeric($this->close_mileage)) {
+                $actual_mileage = $this->close_mileage - $this->open_mileage;
+                $shift->actual_mileage = $actual_mileage;
+
+                if ($actual_mileage > 0 && is_numeric($this->fuel_quantity) && $this->fuel_quantity > 0) {
+                    $shift->fuel_consumption_mileage = $actual_mileage / $this->fuel_quantity;
+                }
+            }
+        }
+        
+        $shift->calculated_mileage = $this->calculated_mileage;
         $shift->date = $this->date;
         $shift->exchange_amount = $this->exchange_amount;
         $shift->exchange_rate = $this->exchange_rate;
         $shift->status = '1';
         $shift->save();
+
+        $shift->loading_points()->sync($this->loading_point_id);
+        $shift->offloading_points()->sync($this->offloading_point_id);
 
         if ($this->work_id) {
             foreach ($this->work_id as $key => $value) {
@@ -618,10 +649,27 @@ class Index extends Component
     $this->depart_workshop_time = $shift->depart_workshop_time;
     $this->arrive_location_time = $shift->arrive_location_time;
     $this->depart_location_time = $shift->depart_location_time;
-    $this->arrive_workshop_time = $shift->arrive_workshop_time;
+    $this->depart_location_time = $shift->depart_location_time;
+    $this->calculated_mileage = $shift->calculated_mileage;
+    $this->open_mileage = $shift->open_mileage;
+    $this->close_mileage = $shift->close_mileage;
     $this->shift_id = $shift->id;
     $this->fuel_order = $shift->fuel_order;
-    $this->fuel_order = $shift->fuel_order;
+    $this->total_loads = $shift->total_loads;
+    $this->status = $shift->status;
+    $loading_points = $shift->loading_points;
+    if($loading_points){
+        foreach ($loading_points as $loading_point) {
+            $this->loading_point_id[] = $loading_point->id;
+        }
+    }
+    $offloading_points = $shift->offloading_points;
+    if($offloading_points){
+        foreach ($offloading_points as $offloading_point) {
+            $this->offloading_point_id[] = $offloading_point->id;
+        }
+    }
+    
     $fuel = $shift->fuel;
     if($fuel){
     $this->selectedFuelCurrency = $fuel->currency_id;          
@@ -645,7 +693,9 @@ class Index extends Component
     public function update()
     {
         if ($this->shift_id) {
-            try{
+
+            // try{
+
             $shift = Shift::find($this->shift_id);
             $shift->for = $this->for;
             $shift->type = $this->type;
@@ -665,11 +715,32 @@ class Index extends Component
             $shift->arrive_location_time = $this->arrive_location_time;
             $shift->depart_location_time = $this->depart_location_time;
             $shift->arrive_workshop_time = $this->arrive_workshop_time;
+            $shift->open_mileage = $this->open_mileage;
+            $shift->close_mileage = $this->close_mileage;
+            $shift->total_loads = $this->total_loads;
+            $shift->total_fuel = $this->fuel_quantity;
+            
+            if ($this->for === "Trips") {
+                if (is_numeric($this->open_mileage) && is_numeric($this->close_mileage)) {
+                    $actual_mileage = $this->close_mileage - $this->open_mileage;
+                    $shift->actual_mileage = $actual_mileage;
+
+                    if ($actual_mileage > 0 && is_numeric($this->fuel_quantity) && $this->fuel_quantity > 0) {
+                        $shift->fuel_consumption_mileage = $actual_mileage / $this->fuel_quantity;
+                    }
+                }
+            }
+            $shift->calculated_mileage = $this->calculated_mileage;
             $shift->exchange_amount = $this->exchange_amount;
             $shift->exchange_rate = $this->exchange_rate;
             $shift->date = $this->date;
             $shift->status = $this->status;
             $shift->update();
+
+            $shift->loading_points()->detach();
+            $shift->loading_points()->sync($this->loading_point_id);
+            $shift->offloading_points()->detach();
+            $shift->offloading_points()->sync($this->offloading_point_id);
 
                 if ($this->fuel_order) {
                 $fuel = $shift->fuel;
@@ -732,14 +803,14 @@ class Index extends Component
                 'message'=>"Shift Updated Successfully!!"
             ]);
 
-        }
-        catch(\Exception $e){
-        $this->dispatchBrowserEvent('hide-shiftEditModal');
-        $this->dispatchBrowserEvent('alert',[
-            'type'=>'error',
-            'message'=>"Something goes wrong while updating shift!!"
-        ]);
-    }
+    //     }
+    //     catch(\Exception $e){
+    //     $this->dispatchBrowserEvent('hide-shiftEditModal');
+    //     $this->dispatchBrowserEvent('alert',[
+    //         'type'=>'error',
+    //         'message'=>"Something goes wrong while updating shift!!"
+    //     ]);
+    // }
         }
     }
     public function render()
