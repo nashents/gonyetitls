@@ -5,6 +5,7 @@ namespace App\Http\Livewire\Documents;
 use Carbon\Carbon;
 use App\Models\Bill;
 use App\Models\Trip;
+use App\Models\Tyre;
 use App\Models\Agent;
 use App\Models\Asset;
 use App\Models\Horse;
@@ -27,6 +28,7 @@ use App\Models\Purchase;
 use App\Models\Recovery;
 use App\Models\cash_flow;
 use App\Models\Consignee;
+use App\Models\Inventory;
 use App\Models\TruckStop;
 use App\Models\Department;
 use App\Models\Requisition;
@@ -94,6 +96,10 @@ class Index extends Component
     public $item_id;
     public $asset;
     public $asset_id;
+    public $inventory;
+    public $inventory_id;
+    public $tyre;
+    public $tyre_id;
     public $transporter;
     public $transporter_id;
     public $customer;
@@ -273,6 +279,18 @@ class Index extends Component
         $this->folders = Folder::where('category', $this->category)->latest()->get();
         $this->documents = Document::where('category', $this->category)
         ->where('asset_id', $this->asset->id)->latest()->get();
+    }
+    elseif ($this->category == "inventory") {
+        $this->inventory = Inventory::find($id);
+        $this->folders = Folder::where('category', $this->category)->latest()->get();
+        $this->documents = Document::where('category', $this->category)
+        ->where('inventory_id', $this->inventory->id)->latest()->get();
+    }
+    elseif ($this->category == "tyre") {
+        $this->tyre = Tyre::find($id);
+        $this->folders = Folder::where('category', $this->category)->latest()->get();
+        $this->documents = Document::where('category', $this->category)
+        ->where('tyre_id', $this->tyre->id)->latest()->get();
     }
     elseif ($this->category == "clearing_agent") {
         $this->clearing_agent = ClearingAgent::find($id);
@@ -461,6 +479,20 @@ class Index extends Component
                 $this->asset = Asset::find($this->item_id);
                 $this->documents = Document::where('category', $this->category)
                 ->where('asset_id', $this->asset->id)
+                ->where('folder_id', $selected_folder_id)
+                ->latest()->get();
+            }
+            elseif ($this->category == "inventory") {
+                $this->inventory = Inventory::find($this->item_id);
+                $this->documents = Document::where('category', $this->category)
+                ->where('inventory_id', $this->inventory->id)
+                ->where('folder_id', $selected_folder_id)
+                ->latest()->get();
+            }
+            elseif ($this->category == "tyre") {
+                $this->tyre = Tyre::find($this->item_id);
+                $this->documents = Document::where('category', $this->category)
+                ->where('tyre_id', $this->tyre->id)
                 ->where('folder_id', $selected_folder_id)
                 ->latest()->get();
             }
@@ -684,6 +716,12 @@ class Index extends Component
             elseif (isset($this->asset)) {
                 $document->asset_id = $this->asset->id;
             }
+            elseif (isset($this->inventory)) {
+                $document->inventory_id = $this->inventory->id;
+            }
+            elseif (isset($this->tyre)) {
+                $document->tyre_id = $this->tyre->id;
+            }
             elseif (isset($this->transporter)) {
                 $document->transporter_id = $this->transporter->id;
             }
@@ -755,6 +793,8 @@ class Index extends Component
         $this->user_id = $document->user_id;
         $this->purchase_id = $document->purchase_id;
         $this->asset_id = $document->asset_id;
+        $this->inventory_id = $document->inventory_id;
+        $this->tyre_id = $document->tyre_id;
         $this->customer_id = $document->customer_id;
         $this->folder_id = $document->folder_id;
         $this->offloading_point_id = $document->offloading_point_id;
@@ -869,6 +909,12 @@ class Index extends Component
                 }
                 elseif (isset($this->asset_id)) {
                     $document->asset_id = $this->asset_id;
+                }
+                elseif (isset($this->inventory_id)) {
+                    $document->inventory_id = $this->inventory_id;
+                }
+                elseif (isset($this->tyre_id)) {
+                    $document->tyre_id = $this->tyre_id;
                 }
                 elseif (isset($this->cash_flow_id)) {
                     $document->cash_flow_id = $this->cash_flow_id;
@@ -1024,6 +1070,16 @@ class Index extends Component
             $this->folders = Folder::where('category', $this->category)->latest()->get();
             $this->documents = Document::where('category', $this->category)
             ->where('asset_id', $this->asset->id)->latest()->get();
+        }
+        elseif ($this->category == "inventory") {
+            $this->folders = Folder::where('category', $this->category)->latest()->get();
+            $this->documents = Document::where('category', $this->category)
+            ->where('inventory_id', $this->inventory->id)->latest()->get();
+        }
+        elseif ($this->category == "tyre") {
+            $this->folders = Folder::where('category', $this->category)->latest()->get();
+            $this->documents = Document::where('category', $this->category)
+            ->where('tyre_id', $this->tyre->id)->latest()->get();
         }
         elseif ($this->category == "horse") {
             $this->folders = Folder::where('category', $this->category)->latest()->get();

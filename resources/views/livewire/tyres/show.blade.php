@@ -10,6 +10,7 @@
             <ul class="nav nav-tabs nav-justified" role="tablist">
                 <li role="presentation" class="active"><a href="#basic" aria-controls="basic" role="tab" data-toggle="tab"><strong>Tyre Details</strong> </a></li>
                 <li role="presentation" ><a href="#assignments" aria-controls="assignments" role="tab" data-toggle="tab"><strong>Assignments</strong> </a></li>
+                 <li role="presentation"><a href="#documents" aria-controls="documents" role="tab" data-toggle="tab">Attachments</a></li>
             </ul>
             <div class="tab-content bg-white p-15">
                 <div role="tabpanel" class="tab-pane active" id="basic">
@@ -87,6 +88,12 @@
                                 <th class="w-10 text-center line-height-35">Tax Amt</th>
                                 <td class="w-20 line-height-35">
                                     {{$tyre->currency ? $tyre->currency->symbol : ""}}{{number_format($tyre->tax_amount ? $tyre->tax_amount : 0,2)}}
+                                </td>
+                            </tr>
+                             <tr>
+                                <th class="w-10 text-center line-height-35">Additional Cost</th>
+                                <td class="w-20 line-height-35">
+                                    {{$tyre->currency ? $tyre->currency->symbol : ""}}{{number_format( $tyre->cost ? $tyre->cost : 0,2)}}
                                 </td>
                             </tr>
                             <tr>
@@ -197,7 +204,9 @@
                                  @endif
                               </table>
                 </div>
-
+                  <div role="tabpanel" class="tab-pane" id="documents">
+                    @livewire('documents.index', ['id' => $tyre->id,'category' =>'tyre'])
+                  </div>
                 <div class="row">
                     <div class="col-md-12">
                         <div class="btn-group pull-right mt-10" >

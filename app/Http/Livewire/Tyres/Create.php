@@ -29,6 +29,7 @@ use App\Models\GoodsReceived;
 use Livewire\WithFileUploads;
 use App\Models\TyreAssignment;
 use App\Models\PurchaseProduct;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
@@ -415,10 +416,15 @@ class Create extends Component
 
       public function store(){
 
+            DB::transaction(function () {
+
           if (isset($this->selectedProduct)) {
             foreach ($this->selectedProduct as $key => $value) {
                 $tyre = new Tyre;
                 $tyre->user_id = Auth::user()->id;
+
+                $subtotal = 0;
+
                 if ($this->selectedGoodsReceived) {
                     $tyre->goods_received_id = $this->selectedGoodsReceived;
                 }else{
@@ -443,8 +449,15 @@ class Create extends Component
                 }
                
                 if (isset($this->amount[$key])) {
-                    $tyre->subtotal = $this->amount[$key];
-                }
+                         if (isset($this->cost[$key])) {
+                            $subtotal = $this->amount[$key] + $this->cost[$key];
+                            $tyre->subtotal = $subtotal ;
+                        }else{
+                            $subtotal = $this->amount[$key];
+                            $tyre->subtotal = $subtotal;
+                        }
+                        
+                    }
                 if (isset($this->width[$key])) {
                     $tyre->width = $this->width[$key];
                 }
@@ -468,21 +481,26 @@ class Create extends Component
                 if (isset($this->selectedTax[$key])) {
                     $tyre->tax_id = $this->selectedTax[$key];
                 }
-               if (isset($this->tax_rate[$key]) && is_numeric($this->tax_rate[$key])) {
-                    if (isset($this->amount[$key])) {
-                        $tyre->tax_amount = ($this->amount[$key] * ($this->tax_rate[$key] / 100 ));
-                        $this->total = ($this->amount[$key] * ($this->tax_rate[$key] / 100 )) + $this->amount[$key];
-                        $tyre->subtotal_incl = $this->total;
-                        $tyre->total = $this->total;
+                
+                if (isset($this->tax_rate[$key]) && is_numeric($this->tax_rate[$key])) {
+
+                        if (is_numeric($subtotal)) {
+                            $tax_amount = ($subtotal * ($this->tax_rate[$key] / 100 ));
+                            $tyre->tax_amount = $tax_amount;
+                            $this->total = $tax_amount + $subtotal;
+                            $tyre->subtotal_incl = $this->total;
+                            $tyre->total = $this->total;
+                           
+                        }
+
+                    }else{
+                        if (is_numeric($subtotal)) {
+                            $this->total = $subtotal;
+                            $tyre->subtotal_incl =  $this->total;
+                            $tyre->total =  $this->total;
+                        }
+                       
                     }
-                }else{
-                    if (isset($this->amount[$key])) {
-                        $this->total = $this->amount[$key];
-                        $tyre->subtotal_incl =  $this->total;
-                        $tyre->total =  $this->total;
-                    }
-                    
-                }
 
                 $tyre->exchange_rate = $this->exchange_rate;
                 $tyre->exchange_amount = $this->exchange_amount;
@@ -639,11 +657,12 @@ class Create extends Component
             return redirect()->route('tyres.index');
           }
 
+        });
          
       }
 
 
-      public function refresh($category){
+         public function refresh($category){
 
         if($category == "racks"){
             $this->racks = Rack::orderBy('name','asc')->get();
@@ -662,6 +681,20 @@ class Create extends Component
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"GRVs Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "products"){
+            $this->products = Product::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Products Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "stores"){
+            $this->stores = Store::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Stores Refreshed Successfully!!."
             ]);
         }
     }

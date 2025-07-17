@@ -87,14 +87,10 @@
                                         </div>
                                         @endif
                                         <div class="email">
-                                         
                                             <strong>Customer VAT No:</strong> {{$invoice->customer ? $invoice->customer->vat_number : ""}}
-                                          
                                         </div>
                                         <div class="email">
-                                          
                                             <strong>Customer TIN No:</strong> {{$invoice->customer ? $invoice->customer->tin_number : ""}}
-                                           
                                         </div>
                                     </div>
                                     <div class="col invoice-details"  style="margin-top:-120px;">

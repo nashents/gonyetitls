@@ -42,6 +42,15 @@ class Bill extends Model implements Auditable
     public function ticket_expense(){
         return $this->BelongsTo('App\Models\TicketExpense');
     }
+    public function inventory(){
+        return $this->BelongsTo('App\Models\Inventory');
+    }
+    public function asset(){
+        return $this->BelongsTo('App\Models\Asset');
+    }
+    public function tyre(){
+        return $this->BelongsTo('App\Models\Tyre');
+    }
     public function ticket(){
         return $this->BelongsTo('App\Models\Ticket');
     }

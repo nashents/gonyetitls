@@ -564,7 +564,143 @@
                     </ul>
                 </li>
                 
-               
+                      @if (in_array('Super Admin', $role_names)  || (in_array('Finance', $department_names)))
+                <li class="nav-header">
+                    <span class="">Asset Management</span>
+                </li>
+                <li class="has-children">
+                    <a href="#"><i class="fas fa-cog"></i> <span>Master</span> <i class="fas fa-angle-right arrow"></i></a>
+                    <ul class="child-nav">
+                        <li><a href="{{route('categories.index')}}" ><i class="fas fa-list "></i> <span>Manage Categories</span></a></li>
+                        <li><a href="{{route('attributes.index')}}"><i class="fas fa-list "></i> <span>Manage Attributes</span></a></li>
+                        <li><a href="{{route('brands.index')}}"><i class="fas fa-list "></i> <span>Manage Brands</span></a></li>
+                    </ul>
+                </li>
+                <li class="has-children {{ request()->routeIs('products.*') ? 'active' : '' }}">
+                    <a href="#"><i class="fas fa-boxes"></i> <span>Products</span> <i class="fas fa-angle-right arrow"></i></a>
+                    <ul class="child-nav">
+
+                        <li><a href="{{route('products.create')}}" ><i class="fas fa-plus "></i> <span>Create Product</span></a></li>
+                        <li><a href="{{route('products.index')}}"><i class="fas fa-list "></i> <span>Manage Products</span></a></li>
+                    </ul>
+                </li>
+                <li class="has-children {{ request()->routeIs('purchases.index') ? 'active' : '' }}" >
+                    @php
+                        $purchasesPendingCount = App\Models\Purchase::where('authorization','pending')
+                        ->where('department','asset')
+                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
+                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
+                        // ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
+                        $purchasesApprovedCount = App\Models\Purchase::where('authorization','approved')
+                        ->where('department','asset')
+                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
+                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
+                        $purchasesRejectedCount = App\Models\Purchase::where('authorization','rejected')
+                        ->where('department','asset')
+                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
+                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
+                        $purchasesDeletedCount = App\Models\Purchase::onlyTrashed()
+                        ->where('department','asset')
+                        ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
+                        $department = App\Models\Department::where('name','Finance')->first();
+                    if (isset($department)) {
+                        $department_head = App\Models\DepartmentHead::where('department_id',$department->id)->where('employee_id',$employee->id)->first();
+                    }
+                    @endphp
+                    <a href="#"><i class="fas fa-hand-holding-usd"></i> <span>Purchase Orders</span> <i class="fas fa-angle-right arrow"></i></a>
+                    <ul class="child-nav">
+                        <li><a href="{{route('purchases.index')}}" ><i class="fas fa-list "></i> <span>Manage Orders</span></a></li>
+                        @if (isset($department_head)  || (in_array('Management', $rank_names) && in_array('Finance', $department_names)) || in_array('Super Admin', $role_names))
+                        <li>
+                            <a href="{{route('purchases.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Orders</span>
+                                @if ($purchasesPendingCount>0)
+                                <span class="label label-success ml-5">{{$purchasesPendingCount}}</span>
+                                @endif
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{route('purchases.approved')}}" ><i class="fas fa-check "></i> <span>Approved Orders</span>
+                                @if ($purchasesApprovedCount>0)
+                                <span class="label label-success ml-5">{{$purchasesApprovedCount}}</span>
+                                @endif
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{route('purchases.rejected')}}" ><i class="fas fa-ban "></i> <span>Rejected Orders</span>
+                                @if ($purchasesRejectedCount>0)
+                                <span class="label label-success ml-5">{{$purchasesRejectedCount}}</span>
+                                @endif
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{route('purchases.deleted')}}" ><i class="fas fa-trash "></i> <span>Deleted Orders</span>
+                                @if ($purchasesDeletedCount>0)
+                                <span class="label label-success ml-5">{{$purchasesDeletedCount}}</span>
+                                @endif
+                            </a>
+                        </li>
+                        @endif
+                    </ul>
+                </li>
+                 <li class="has-children" {{ request()->routeIs('goods_receiveds.assets') ? 'active' : '' }}>
+                    <a href="#"><i class="fas fa-th-list"></i> <span>GRV (Assets)</span> <i class="fas fa-angle-right arrow"></i></a>
+                    <ul class="child-nav">
+                        <li><a href="{{route('goods_receiveds.assets')}}"><i class="fas fa-list "></i> <span>Manage Assets GRVs</span></a></li>
+                    </ul>
+                </li>
+                <li class="has-children {{ request()->routeIs('assets.*') ? 'active' : '' }}" >
+                    <a href="#"><i class="fas fa-th-list"></i> <span>Assets</span> <i class="fas fa-angle-right arrow"></i></a>
+                    <ul class="child-nav">
+                        <li><a href="{{route('assets.create')}}" ><i class="fas fa-plus "></i> <span>Create Asset</span></a></li>
+                        <li><a href="{{route('assets.index')}}"><i class="fas fa-list "></i> <span>Manage Assets</span></a></li>
+                    </ul>
+                </li>
+                 <li class="has-children {{ request()->routeIs('asset_dispatches.*') ? 'active' : '' }}">
+                    @php
+                        $dispatchesPendingCount = App\Models\Dispatch::where('authorization','pending')
+                        ->where('department','asset')
+                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
+                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
+                        // ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
+                        $dispatchesApprovedCount = App\Models\Dispatch::where('authorization','approved')
+                        ->where('department','asset')
+                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
+                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
+                        $dispatchesRejectedCount = App\Models\Dispatch::where('authorization','rejected')
+                        ->where('department','asset')
+                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
+                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
+                       
+                    @endphp
+                    <a href="#"><i class="fas fa-list"></i> <span>Dispatches (Assets) </span> <i class="fas fa-angle-right arrow"></i></a>
+                    <ul class="child-nav">
+                        <li><a href="{{route('asset_dispatches.index')}}" ><i class="fas fa-list "></i> <span>Manage Dispatches</span></a></li>
+                        @if (in_array('Management', $rank_names) || in_array('Admin', $role_names) || in_array('Super Admin', $role_names))
+                        <li>
+                            <a href="{{route('asset_dispatches.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Dispatches</span>
+                                @if ($dispatchesPendingCount>0)
+                                <span class="label label-success ml-5">{{$dispatchesPendingCount}}</span>
+                                @endif
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{route('asset_dispatches.approved')}}" ><i class="fas fa-check "></i> <span>Approved Dispatches</span>
+                                @if ($dispatchesApprovedCount>0)
+                                <span class="label label-success ml-5">{{$dispatchesApprovedCount}}</span>
+                                @endif
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{route('asset_dispatches.rejected')}}" ><i class="fas fa-ban "></i> <span>Rejected Dispatches</span>
+                                @if ($dispatchesRejectedCount>0)
+                                <span class="label label-success ml-5">{{$dispatchesRejectedCount}}</span>
+                                @endif
+                            </a>
+                        </li>
+                        @endif
+                    </ul>
+                </li>
+                @endif
 
                 @if (in_array('Finance', $department_names) || in_array('Super Admin', $role_names))
                 <li class="nav-header">
@@ -723,143 +859,7 @@
 
                 @endif
 
-                @if (in_array('Super Admin', $role_names)  || (in_array('Finance', $department_names)))
-                <li class="nav-header">
-                    <span class="">Asset Management</span>
-                </li>
-                <li class="has-children">
-                    <a href="#"><i class="fas fa-cog"></i> <span>Master</span> <i class="fas fa-angle-right arrow"></i></a>
-                    <ul class="child-nav">
-                        <li><a href="{{route('categories.index')}}" ><i class="fas fa-list "></i> <span>Manage Categories</span></a></li>
-                        <li><a href="{{route('attributes.index')}}"><i class="fas fa-list "></i> <span>Manage Attributes</span></a></li>
-                        <li><a href="{{route('brands.index')}}"><i class="fas fa-list "></i> <span>Manage Brands</span></a></li>
-                    </ul>
-                </li>
-                <li class="has-children {{ request()->routeIs('products.*') ? 'active' : '' }}">
-                    <a href="#"><i class="fas fa-boxes"></i> <span>Products</span> <i class="fas fa-angle-right arrow"></i></a>
-                    <ul class="child-nav">
-
-                        <li><a href="{{route('products.create')}}" ><i class="fas fa-plus "></i> <span>Create Product</span></a></li>
-                        <li><a href="{{route('products.index')}}"><i class="fas fa-list "></i> <span>Manage Products</span></a></li>
-                    </ul>
-                </li>
-                <li class="has-children {{ request()->routeIs('purchases.index') ? 'active' : '' }}" >
-                    @php
-                        $purchasesPendingCount = App\Models\Purchase::where('authorization','pending')
-                        ->where('department','asset')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        // ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                        $purchasesApprovedCount = App\Models\Purchase::where('authorization','approved')
-                        ->where('department','asset')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        $purchasesRejectedCount = App\Models\Purchase::where('authorization','rejected')
-                        ->where('department','asset')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        $purchasesDeletedCount = App\Models\Purchase::onlyTrashed()
-                        ->where('department','asset')
-                        ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                        $department = App\Models\Department::where('name','Finance')->first();
-                    if (isset($department)) {
-                        $department_head = App\Models\DepartmentHead::where('department_id',$department->id)->where('employee_id',$employee->id)->first();
-                    }
-                    @endphp
-                    <a href="#"><i class="fas fa-hand-holding-usd"></i> <span>Purchase Orders</span> <i class="fas fa-angle-right arrow"></i></a>
-                    <ul class="child-nav">
-                        <li><a href="{{route('purchases.index')}}" ><i class="fas fa-list "></i> <span>Manage Orders</span></a></li>
-                        @if (isset($department_head)  || (in_array('Management', $rank_names) && in_array('Finance', $department_names)) || in_array('Super Admin', $role_names))
-                        <li>
-                            <a href="{{route('purchases.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Orders</span>
-                                @if ($purchasesPendingCount>0)
-                                <span class="label label-success ml-5">{{$purchasesPendingCount}}</span>
-                                @endif
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{route('purchases.approved')}}" ><i class="fas fa-check "></i> <span>Approved Orders</span>
-                                @if ($purchasesApprovedCount>0)
-                                <span class="label label-success ml-5">{{$purchasesApprovedCount}}</span>
-                                @endif
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{route('purchases.rejected')}}" ><i class="fas fa-ban "></i> <span>Rejected Orders</span>
-                                @if ($purchasesRejectedCount>0)
-                                <span class="label label-success ml-5">{{$purchasesRejectedCount}}</span>
-                                @endif
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{route('purchases.deleted')}}" ><i class="fas fa-trash "></i> <span>Deleted Orders</span>
-                                @if ($purchasesDeletedCount>0)
-                                <span class="label label-success ml-5">{{$purchasesDeletedCount}}</span>
-                                @endif
-                            </a>
-                        </li>
-                        @endif
-                    </ul>
-                </li>
-                 <li class="has-children">
-                    <a href="#"><i class="fas fa-th-list"></i> <span>GRV (Assets)</span> <i class="fas fa-angle-right arrow"></i></a>
-                    <ul class="child-nav">
-                        <li class="{{ request()->routeIs('goods_receiveds.assets') ? 'active' : '' }}"><a href="{{route('goods_receiveds.assets')}}"><i class="fas fa-list "></i> <span>Manage Assets GRVs</span></a></li>
-                    </ul>
-                </li>
-                <li class="has-children {{ request()->routeIs('assets.*') ? 'active' : '' }}" >
-                    <a href="#"><i class="fas fa-th-list"></i> <span>Assets</span> <i class="fas fa-angle-right arrow"></i></a>
-                    <ul class="child-nav">
-                        <li><a href="{{route('assets.create')}}" ><i class="fas fa-plus "></i> <span>Create Asset</span></a></li>
-                        <li><a href="{{route('assets.index')}}"><i class="fas fa-list "></i> <span>Manage Assets</span></a></li>
-                    </ul>
-                </li>
-                 <li class="has-children {{ request()->routeIs('asset_dispatches.*') ? 'active' : '' }}">
-                    @php
-                        $dispatchesPendingCount = App\Models\Dispatch::where('authorization','pending')
-                        ->where('department','asset')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        // ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                        $dispatchesApprovedCount = App\Models\Dispatch::where('authorization','approved')
-                        ->where('department','asset')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        $dispatchesRejectedCount = App\Models\Dispatch::where('authorization','rejected')
-                        ->where('department','asset')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                       
-                    @endphp
-                    <a href="#"><i class="fas fa-list"></i> <span>Dispatches (Assets) </span> <i class="fas fa-angle-right arrow"></i></a>
-                    <ul class="child-nav">
-                        <li><a href="{{route('asset_dispatches.index')}}" ><i class="fas fa-list "></i> <span>Manage Dispatches</span></a></li>
-                        @if (in_array('Management', $rank_names) || in_array('Admin', $role_names) || in_array('Super Admin', $role_names))
-                        <li>
-                            <a href="{{route('asset_dispatches.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Dispatches</span>
-                                @if ($dispatchesPendingCount>0)
-                                <span class="label label-success ml-5">{{$dispatchesPendingCount}}</span>
-                                @endif
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{route('asset_dispatches.approved')}}" ><i class="fas fa-check "></i> <span>Approved Dispatches</span>
-                                @if ($dispatchesApprovedCount>0)
-                                <span class="label label-success ml-5">{{$dispatchesApprovedCount}}</span>
-                                @endif
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{route('asset_dispatches.rejected')}}" ><i class="fas fa-ban "></i> <span>Rejected Dispatches</span>
-                                @if ($dispatchesRejectedCount>0)
-                                <span class="label label-success ml-5">{{$dispatchesRejectedCount}}</span>
-                                @endif
-                            </a>
-                        </li>
-                        @endif
-                    </ul>
-                </li>
-                @endif
+         
                
                     @if (in_array('Transport & Logistics', $department_names) || in_array('Workshop', $department_names) || in_array('Super Admin', $role_names))
                   
@@ -1645,18 +1645,18 @@
                         @endif
                     </ul>
                 </li>
-                <li class="has-children">
+                <li class="has-children" {{ request()->routeIs('goods_receiveds.index') ? 'active' : '' }}>
                     <a href="#"><i class="fas fa-th-list"></i> <span>GRV (Inventory)</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
-                        <li class="{{ request()->routeIs('goods_receiveds.index') ? 'active' : '' }}"><a href="{{route('goods_receiveds.index')}}"><i class="fas fa-list "></i> <span>Manage Inventory GRVs</span></a></li>
+                        <li ><a href="{{route('goods_receiveds.index')}}"><i class="fas fa-list "></i> <span>Manage Inventory GRVs</span></a></li>
                     </ul>
                 </li>
-                <li class="has-children">
+                <li class="has-children" {{ request()->routeIs('inventories.*') ? 'active' : '' }}>
                     <a href="#"><i class="fas fa-th-list"></i> <span>Inventory</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
-                        <li class="{{ request()->routeIs('inventories.create') ? 'active' : '' }}"><a href="{{route('inventories.create')}}" ><i class="fas fa-plus "></i> <span>Create Inventory</span></a></li>
-                        <li class="{{ request()->routeIs('inventories.index') ? 'active' : '' }}"><a href="{{route('inventories.index')}}"><i class="fas fa-list "></i> <span>Manage Inventory</span></a></li>
-                        <li class="{{ request()->routeIs('disposes.index') ? 'active' : '' }}"> <a href="{{route('disposes.index')}}"><i class="fas fa-list "></i> <span>Disposed Items</span></a></li>
+                        <li ><a href="{{route('inventories.create')}}" ><i class="fas fa-plus "></i> <span>Create Inventory</span></a></li>
+                        <li ><a href="{{route('inventories.index')}}"><i class="fas fa-list "></i> <span>Manage Inventory</span></a></li>
+                        <li > <a href="{{route('disposes.index')}}"><i class="fas fa-list "></i> <span>Disposed Items</span></a></li>
                     </ul>
                 </li>
                 <li class="has-children {{ request()->routeIs('inventory_dispatches.*') ? 'active' : '' }}">
@@ -1769,18 +1769,18 @@
                         @endif
                     </ul>
                 </li>
-                    <li class="has-children">
+                    <li class="has-children" {{ request()->routeIs('goods_receiveds.tyres') ? 'active' : '' }}>
                         <a href="#"><i class="fas fa-th-list"></i> <span>GRV (Tyres)</span> <i class="fas fa-angle-right arrow"></i></a>
                         <ul class="child-nav">
-                            <li class="{{ request()->routeIs('goods_receiveds.tyres') ? 'active' : '' }}"><a href="{{route('goods_receiveds.tyres')}}"><i class="fas fa-list "></i> <span>Manage Tyre GRVs</span></a></li>
+                            <li ><a href="{{route('goods_receiveds.tyres')}}"><i class="fas fa-list "></i> <span>Manage Tyre GRVs</span></a></li>
                         </ul>
                     </li>
-                    <li class="has-children">
+                    <li class="has-children"  class="{{ request()->routeIs('tyres.*') ? 'active' : '' }}">
                         <a href="#"><i class="fas fa-th-list"></i> <span>Tyres</span> <i class="fas fa-angle-right arrow"></i></a>
                         <ul class="child-nav">
-                            <li class="{{ request()->routeIs('tyres.create') ? 'active' : '' }}"><a href="{{route('tyres.create')}}" ><i class="fas fa-plus "></i> <span>Create Tyre</span></a></li>
-                            <li class="{{ request()->routeIs('tyres.index') ? 'active' : '' }}"><a href="{{route('tyres.index')}}"><i class="fas fa-list "></i> <span>Manage Tyres</span></a></li>
-                            <li class="{{ request()->routeIs('disposes.index') ? 'active' : '' }}"><a href="{{route('disposes.index')}}"><i class="fas fa-list "></i> <span>Disposed Items</span></a></li>
+                            <li><a href="{{route('tyres.create')}}" ><i class="fas fa-plus "></i> <span>Create Tyre</span></a></li>
+                            <li ><a href="{{route('tyres.index')}}"><i class="fas fa-list "></i> <span>Manage Tyres</span></a></li>
+                            <li ><a href="{{route('disposes.index')}}"><i class="fas fa-list "></i> <span>Disposed Items</span></a></li>
                         </ul>
                     </li>
                     @php

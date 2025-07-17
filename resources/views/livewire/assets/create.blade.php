@@ -23,14 +23,14 @@
                                     <small><a href="{{ route('goods_receiveds.assets') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Goods Received Voucher</a></small>  <a href="#" wire:click.prevent="refresh('goods_receiveds')" class="float-end"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                     @error('selectedGoodsReceived') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
-                                <div class="row">
-                                        <div class="col-md-4">
-                                        <div class="form-group">
+                               <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="form-group">
                                         <label for="country">Purchase Orders</label>
                                         <select wire:model.debounce.300ms="selectedPurchase" class="form-control" >
                                             <option value="">Select Purchase Order</option>
                                             @foreach ($purchases as $purchase)
-                                            @if ($purchase->assets && $purchase->assets->count() > 0)
+                                            @if ($purchase->inventories && $purchase->inventories->count() > 0)
                                                  <option value="{{$purchase->id}}" style="color: orange">{{$purchase->purchase_number}} | {{ $purchase->date }} | {{$purchase->vendor ? $purchase->vendor->name : ""}} | {{ $purchase->currency ? $purchase->currency->name : "" }} {{ $purchase->currency ? $purchase->currency->symbol : "" }}{{number_format($purchase->total,2)}}</option>
                                             @else
                                                 <option value="{{$purchase->id}}">{{$purchase->purchase_number}} | {{ $purchase->date }} | {{$purchase->vendor ? $purchase->vendor->name : ""}} | {{ $purchase->currency ? $purchase->currency->name : "" }} {{ $purchase->currency ? $purchase->currency->symbol : "" }}{{number_format($purchase->total,2)}}</option>
@@ -45,7 +45,7 @@
                                     </div>
                                         </div>
     
-                                        <div class="col-md-4">
+                                        <div class="col-md-3">
                                             <div class="form-group">
                                                 <label for="country">Vendors</label>
                                                <select wire:model.debounce.300ms="vendor_id" class="form-control">
@@ -58,8 +58,8 @@
                                                 @error('vendor_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         </div>
-                                       
-                                        <div class="col-md-4">              
+                
+                                        <div class="col-md-3">              
                                             <div class="form-group">
                                                 <label for="name">Currencies</label>
                                                 <select wire:model.debounce.300ms="selectedCurrency" class="form-control">
@@ -84,9 +84,21 @@
                                             @endif
                                             @endif
                                         </div>
-    
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label for="Product">Expense Category</label>
+                                                <select wire:model.debounce.300ms="selectedAccount" class="form-control" {{$selectedPurchase ? "disabled" : ""}}>
+                                                    <option value="">Select Category</option>
+                                                    @foreach ($expense_accounts as $account)
+                                                      <option value="{{$account->id}}">{{$account->name}}</option>
+                                                    @endforeach
+                                                </select>
+                                                {{-- <small>  <a href="{{ route('accounts.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Category</a></small>  --}}
+                                                @error('selectedAccount') <span class="text-danger error">{{ $message }}</span>@enderror
+                                            </div>
+                                        </div>
                                 </div>
-                                 <div style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">
+                                 <div class="mt-30" style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">
                                 <div class="row">
                                     <div class="col-md-5">
                                         @if (is_null($selectedPurchase))
@@ -98,7 +110,7 @@
                                                         <option value="{{$product->id}}"> {{$product->brand ? $product->brand->name : ""}} {{$product->name}} {{$product->identification_number}}</option>
                                                     @endforeach
                                                 </select>
-                                                <small>  <a href="{{ route('products.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Product</a></small> 
+                                                 <small><a href="{{ route('products.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Product</a></small><a href="#" wire:click.prevent="refresh('products')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>  
                                                 @error('selectedProduct.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         @else   
@@ -110,7 +122,7 @@
                                                     <option value="{{$purchase_product->id}}"> {{$purchase_product->product->brand ? $purchase_product->product->brand->name : ""}} {{$purchase_product->product ? $purchase_product->product->name : ""}} {{$purchase_product->product ? $purchase_product->product->identification_number : ""}}</option>
                                                 @endforeach
                                             </select>
-                                            <small>  <a href="{{ route('products.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Product</a></small> 
+                                           
                                                 @error('selectedPurchaseProduct.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         @endif
@@ -137,7 +149,7 @@
                                 <div class="row">
                                     <div class="col-md-3">
                                         <div class="form-group">
-                                            <label for="name">Identification#</label>
+                                            <label for="name">Serial#</label>
                                             <input type="text" class="form-control" wire:model.debounce.300ms="serial_number.0" {{ count($qty) > 1 ? 'disabled' : '' }} placeholder="Serial# / UniqueID"/>
                                             @error('serial_number.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
@@ -203,7 +215,7 @@
                                                                 <option value="{{$product->id}}"> {{$product->brand ? $product->brand->name : ""}} {{$product->name}} {{$product->identification_number}}</option>
                                                             @endforeach
                                                         </select>
-                                                        <small>  <a href="{{ route('products.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Product</a></small> 
+                                                         <small><a href="{{ route('products.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Product</a></small><a href="#" wire:click.prevent="refresh('products')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>  
                                                         @error('selectedProduct.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                                     </div>
                                                 @else   
@@ -215,7 +227,6 @@
                                                             <option value="{{$purchase_product->id}}"> {{$purchase_product->product->brand ? $purchase_product->product->brand->name : ""}} {{$purchase_product->product ? $purchase_product->product->name : ""}} {{$purchase_product->product ? $purchase_product->product->identification_number : ""}}</option>
                                                         @endforeach
                                                     </select>
-                                                    <small>  <a href="{{ route('products.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Product</a></small> 
                                                         @error('selectedPurchaseProduct.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                                     </div>
                                                 @endif
@@ -241,7 +252,7 @@
                                         <div class="row">
                                         <div class="col-md-3">
                                             <div class="form-group">
-                                                <label for="name">Identification#</label>
+                                                <label for="name">Serial#</label>
                                                 <input type="text" class="form-control" wire:model.debounce.300ms="serial_number.{{$value}}" {{ count($qty) > 1 ? 'disabled' : '' }} placeholder="Serial#/UniqueID"/>
                                                 @error('serial_number.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
@@ -308,9 +319,10 @@
                                 </div>
     
                 <br>               
-                <br>               
+                <br>                <br>               
+                                <br>   
                 
-                                <div class="row">
+                                 <div class="row">
                                     <div class="col-md-3">
                                         <div class="form-group">
                                             <label for="purchase_date">Date<span class="required" style="color: red">*</span></label>
@@ -327,10 +339,40 @@
                                                     <option value="{{$store->id}}">{{$store->name}}</option>
                                                  @endforeach
                                                </select>
-                                               <small>  <a href="#" data-toggle="modal" data-target="#storeModal" ><i class="fa fa-plus-square-o"></i> New Store</a></small> 
+                                               <small>  <a href="#" data-toggle="modal" data-target="#storeModal" ><i class="fa fa-plus-square-o"></i> New Store</a></small><a href="#" wire:click.prevent="refresh('stores')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>  
                                                 @error('store_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label for="country">Racks</label>
+                                               <select wire:model.debounce.300ms="rack_id" class="form-control">
+                                                   <option value="">Select Rack</option>
+                                                 @foreach ($racks as $rack)
+                                                    <option value="{{$rack->id}}">{{$rack->name}} {{$rack->rack_number}}</option>
+                                                 @endforeach
+                                               </select>
+                                               <small><a href="{{route('racks.index')}}" target="_blank" ><i class="fa fa-plus-square-o"></i> New Rack</a></small><a href="#" wire:click.prevent="refresh('racks')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                                @error('rack_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label for="country">Bins</label>
+                                               <select wire:model.debounce.300ms="bin_id" class="form-control">
+                                                   <option value="">Select Bin</option>
+                                                 @foreach ($bins as $bin)
+                                                    <option value="{{$bin->id}}">{{$bin->name}} {{$bin->bin_number}}</option>
+                                                 @endforeach
+                                               </select>
+                                               <small> <a href="{{route('bins.index')}}" target="_blank"><i class="fa fa-plus-square-o"></i> New Bin</a></small><a href="#" wire:click.prevent="refresh('bins')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
+                                                @error('bin_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            </div>
+                                        </div>
+                                      
+                 
+                                </div>
+                                <div class="row">
                                     <div class="col-md-3">
                                         <div class="form-group">
                                             <label for="condition">Conditions</label>
@@ -356,23 +398,21 @@
                                                 @error('purchase_type') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-4">
+                                    <div class="col-md-2">
                                         <div class="form-group">
                                             <label for="purchase_date">Warranty Expiry Date</label>
                                         <input type="date" class="form-control" wire:model.debounce.300ms="warranty_exp_date" placeholder="Warranty Expiry Date">
                                             @error('warranty_exp_date') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
                                         </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-2">
                                         <div class="form-group">
                                             <label for="purchase_date">Useful Life</label>
                                         <input type="number" step="any" class="form-control" wire:model.debounce.300ms="life" placeholder="Useful Life" >
                                             @error('life') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
                                         </div>
-                                        <div class="col-md-4">
+                                        <div class="col-md-2">
                                             <div class="form-group">
                                                 <label for="condition">Depriciation Types</label>
                                                <select wire:model.debounce.300ms="depreciation_type" class="form-control" >
@@ -401,6 +441,12 @@
                                             @error('description') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
                                         </div>
+                                </div>
+
+                                <div class="mb-10 mt-10" style="float: right;">
+                                    <input type="checkbox" wire:model.debounce.300ms="to_bills" {{$selectedPurchase ? "disabled" : ""}}   class="line-style" />
+                                    <label for="one" class="radio-label">Add item(s) to bills</label>
+                                    @error('to_bills') <span class="text-danger error">{{ $message }}</span>@enderror
                                 </div>
                             <div class="row">
                                 <div class="col-md-12">

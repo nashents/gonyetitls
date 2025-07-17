@@ -23,17 +23,23 @@
                             <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
-                                    <th class="th-sm">Product
+                                   <th class="th-sm">Product
                                     </th>
-                                    <th class="th-sm">Identification/Serial#
+                                    <th class="th-sm">ID/Serial#
                                     </th>
-                                    <th class="th-sm">Purchase Date
+                                    <th class="th-sm">Location
                                     </th>
-                                    <th class="th-sm">Currency
+                                    <th class="th-sm">Item Contents
+                                    </th>
+                                    <th class="th-sm">Date
+                                    </th>
+                                    <th class="th-sm">Ccy
                                     </th>
                                     <th class="th-sm">Amt
                                     </th>
-                                    <th class="th-sm">Tax Amt
+                                    <th class="th-sm">Tax
+                                    </th>
+                                    <th class="th-sm">Cost
                                     </th>
                                     <th class="th-sm">Total
                                     </th>
@@ -47,34 +53,52 @@
                                 <tbody>
                                     @forelse ($assets as $asset)
                                   <tr>
-                                  
-                                    <td>{{$asset->product ? $asset->product->name : ""}} {{$asset->product ? $asset->product->model : ""}} </td>
-                                    <td>{{$asset->serial_number? "SN#:".$asset->serial_number : ""}} {{$asset->product->identification_number ? "ID#:".$asset->product->identification_number : ""}}</td>
-                                    <td>{{$asset->purchase_date}}</td>
+                                    <td>{{$asset->product->brand ? $asset->product->brand->name : ""}} {{$asset->product ? $asset->product->name : ""}}</td>
+                                    <td>{{$asset->serial_number ? "SN#: ".$asset->serial_number : ""}} {{$asset->product->identification_number ? "PN#: ".$asset->product->identification_number : ""}}</td>
+                                    <td>
+                                        @if ($asset->store)
+                                             <strong>Store:</strong>  {{$asset->store ? $asset->store->name : ""}}
+                                             <br>
+                                        @endif
+                                        @if ($asset->product->category)
+                                           <strong>Category:</strong> {{$asset->product->category ? $asset->product->category->name : ""}}  {{$asset->product->category_value ? $asset->product->category_value->name : ""}} 
+                                           <br>
+                                        @endif
+                                        @if ($asset->rack)
+                                          
+                                              <strong>Rack:</strong> {{$asset->rack ? $asset->rack->name : ""}} {{$asset->rack ? $asset->rack->rack_number : ""}}
+                                                <br>
+                                        @endif
+                                        @if ($asset->bin)
+                                              <strong>Bin:</strong> {{$asset->bin ? $asset->bin->name : ""}} {{$asset->bin ? $asset->bin->bin_number : ""}} 
+                                               <br>
+                                        @endif
+                                       
+                                    </td>
+                                    <td> <strong>Content(s): </strong> {{$asset->weight}} <strong>Bal: </strong> {{$asset->balance ? $asset->balance : ""}} {{$asset->product ? $asset->product->unit_of_measure : ""}}</td>
+                                    <td>
+                                        @if ($asset->purchase_date)
+                                            {{Carbon\Carbon::parse($asset->purchase_date)->format('Y-m-d')}}        
+                                        @endif
+                                    </td>
                                     <td>{{$asset->currency ? $asset->currency->name : ""}}</td>
                                     <td>
                                         @if ($asset->amount)
-                                        {{$asset->currency ? $asset->currency->symbol : ""}}{{number_format($asset->amount,2)}}        
+                                            {{$asset->currency ? $asset->currency->symbol : ""}}{{number_format($asset->amount,2)}}  
                                         @endif
                                     </td>
                                     <td>
-                                     
                                         {{$asset->currency ? $asset->currency->symbol : ""}}{{number_format($asset->tax_amount ? $asset->tax_amount : 0,2)}}  
-                                  
+                                    </td>
+                                    <td>
+                                        {{$asset->currency ? $asset->currency->symbol : ""}}{{number_format($asset->cost ? $asset->cost : 0,2)}}  
                                     </td>
                                     <td>
                                         @if ($asset->subtotal_incl)
                                             {{$asset->currency ? $asset->currency->symbol : ""}}{{number_format($asset->subtotal_incl,2)}}  
                                         @endif
                                     </td>
-                                    <td>
-                                        @if ($asset->asset_assignments->count()>0)
-                                        <a href="{{ route('asset_assignments.show',$asset->asset_assignments->first()->id) }}" target="_blank">  <span class="badge bg-{{$asset->status == 1 ? "success" : "danger"}}">{{$asset->status == 1 ? "Instore" : "Dispatched"}}</span></a>
-                                       
-                                        @else   
-                                        <span class="badge bg-{{$asset->status == 1 ? "success" : "danger"}}">{{$asset->status == 1 ? "Instore" : "Dispatched"}}</span>
-                                        @endif
-                                    </td>
+                                    <td><span class="badge bg-{{$asset->status == 1 ? "success" : "danger"}}">{{$asset->status == 1 ? "Instore" : "Out Of stock"}}</span></td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

@@ -92,7 +92,7 @@
                                 </div>
                             </div>
 
-                       <div style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">
+                       <div class="mt-30" style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">
                         <div class="row">
                             <div class="col-md-5">
                                 @if (is_null($selectedPurchase))
@@ -104,7 +104,7 @@
                                                 <option value="{{$product->id}}"> {{$product->brand ? $product->brand->name : ""}} {{$product->name}} {{$product->identification_number}}</option>
                                             @endforeach
                                         </select>
-                                        <small>  <a href="{{ route('products.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Product</a></small> 
+                                         <small><a href="{{ route('products.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Product</a></small><a href="#" wire:click.prevent="refresh('products')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>  
                                         @error('selectedProduct') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 @else   
@@ -116,7 +116,6 @@
                                                 <option value="{{$purchase_product->id}}"> {{$purchase_product->product->brand ? $purchase_product->product->brand->name : ""}} {{$purchase_product->product ? $purchase_product->product->name : ""}} {{$purchase_product->product ? $purchase_product->product->identification_number : ""}}</option>
                                             @endforeach
                                         </select>
-                                        <small>  <a href="{{ route('products.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Product</a></small> 
                                         @error('selectedPurchaseProduct') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 @endif
@@ -193,7 +192,8 @@
                                 </div>     
                         </div>
                        </div>
-                                    
+                                <br>               
+                                <br>    
                                 <div class="row">
                                     <div class="col-md-3">
                                         <div class="form-group">
@@ -211,7 +211,7 @@
                                                     <option value="{{$store->id}}">{{$store->name}}</option>
                                                  @endforeach
                                                </select>
-                                               <small>  <a href="#" data-toggle="modal" data-target="#storeModal" ><i class="fa fa-plus-square-o"></i> New Store</a></small> 
+                                               <small>  <a href="#" data-toggle="modal" data-target="#storeModal" ><i class="fa fa-plus-square-o"></i> New Store</a></small><a href="#" wire:click.prevent="refresh('stores')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>  
                                                 @error('store_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         </div>

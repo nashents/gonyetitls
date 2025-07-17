@@ -13,6 +13,9 @@ class Asset extends Model implements Auditable
 
     use \OwenIt\Auditing\Auditable;
 
+    public function bill(){
+        return $this->hasOne('App\Models\Bill');
+    }
     public function goods_received(){
         return $this->belongsTo('App\Models\GoodsReceived');
     }

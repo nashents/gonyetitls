@@ -32,13 +32,15 @@
                                     </th>
                                     <th class="th-sm">Item Contents
                                     </th>
-                                    <th class="th-sm">Purchase Date
+                                    <th class="th-sm">Date
                                     </th>
-                                    <th class="th-sm">Currency
+                                    <th class="th-sm">Ccy
                                     </th>
                                     <th class="th-sm">Amt
                                     </th>
-                                    <th class="th-sm">Tax Amt
+                                    <th class="th-sm">Tax
+                                    </th>
+                                    <th class="th-sm">Cost
                                     </th>
                                     <th class="th-sm">Total
                                     </th>
@@ -74,7 +76,7 @@
                                         @endif
                                        
                                     </td>
-                                    <td>{{$inventory->weight}} {{$inventory->measurement}} {{$inventory->balance ? "Bal: ".$inventory->balance." ".$inventory->measurement : ""}}</td>
+                                    <td> <strong>Content(s): </strong> {{$inventory->weight}} <strong>Bal: </strong> {{$inventory->balance ? $inventory->balance : ""}} {{$inventory->product ? $inventory->product->unit_of_measure : ""}}</td>
                                     <td>
                                         @if ($inventory->purchase_date)
                                             {{Carbon\Carbon::parse($inventory->purchase_date)->format('Y-m-d')}}        
@@ -87,9 +89,10 @@
                                         @endif
                                     </td>
                                     <td>
-                                     
-                                            {{$inventory->currency ? $inventory->currency->symbol : ""}}{{number_format($inventory->tax_amount ? $inventory->tax_amount : 0,2)}}  
-                                      
+                                        {{$inventory->currency ? $inventory->currency->symbol : ""}}{{number_format($inventory->tax_amount ? $inventory->tax_amount : 0,2)}}  
+                                    </td>
+                                    <td>
+                                        {{$inventory->currency ? $inventory->currency->symbol : ""}}{{number_format($inventory->cost ? $inventory->cost : 0,2)}}  
                                     </td>
                                     <td>
                                         @if ($inventory->subtotal_incl)

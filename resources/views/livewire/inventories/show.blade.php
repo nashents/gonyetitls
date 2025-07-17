@@ -9,9 +9,7 @@
 
             <ul class="nav nav-tabs nav-justified" role="tablist">
                 <li role="presentation" class="active"><a href="#basic" aria-controls="basic" role="tab" data-toggle="tab"><strong>Inventory Details</strong> </a></li>
-
-                {{-- <li role="presentation"><a href="#inventorys" aria-controls="inventorys" role="tab" data-toggle="tab">inventorys</a></li> --}}
-
+                <li role="presentation"><a href="#documents" aria-controls="documents" role="tab" data-toggle="tab">Attachments</a></li>
             </ul>
             <div class="tab-content bg-white p-15">
                 <div role="tabpanel" class="tab-pane active" id="basic">
@@ -22,14 +20,6 @@
                                 <td class="w-20 line-height-35">{{$inventory->inventory_number}} </td>
                             </tr>
                             <tr>
-                                <th class="w-10 text-center line-height-35">Vendor</th>
-                                <td class="w-20 line-height-35"> {{$inventory->vendor ? $inventory->vendor->name : ""}}</td>
-                            </tr>
-                            <tr>
-                                <th class="w-10 text-center line-height-35">Store</th>
-                                <td class="w-20 line-height-35"> {{$inventory->store ? $inventory->store->name : ""}}</td>
-                            </tr>
-                            <tr>
                                 <th class="w-10 text-center line-height-35">Product</th>
                                 <td class="w-20 line-height-35">{{$inventory->product ? $inventory->product->name : ""}}</td>
                             </tr>
@@ -37,21 +27,36 @@
                                 <th class="w-10 text-center line-height-35">ID#s</th>
                                 <td class="w-20 line-height-35">{{$inventory->serial_number ? "SN#: ".$inventory->serial_number : ""}} {{$inventory->part_number ? "PN#: ".$inventory->part_number : ""}}</td>
                             </tr>
-                            @if (isset($inventory->horse_make))
                             <tr>
-                                <th class="w-10 text-center line-height-35">Horse</th>
-                                <td class="w-20 line-height-35">{{$inventory->horse_make ? $inventory->horse_make->name : ""}} {{$inventory->horse_model ? $inventory->horse_model->name : ""}}</td>
+                                <th class="w-10 text-center line-height-35">Vendor</th>
+                                <td class="w-20 line-height-35"> {{$inventory->vendor ? $inventory->vendor->name : ""}}</td>
                             </tr>
-                            @endif
-                            @if (isset($inventory->vehicle_make))
                             <tr>
-                                <th class="w-10 text-center line-height-35">Vehicle</th>
-                                <td class="w-20 line-height-35">{{$inventory->vehicle_make ? $inventory->vehicle_make->name : ""}} {{$inventory->vehicle_model ? $inventory->vehicle_model->name : ""}}</td>
+                                <th class="w-10 text-center line-height-35">Location</th>
+                                <td class="w-20 line-height-35">
+                                     @if ($inventory->store)
+                                             <strong>Store:</strong>  {{$inventory->store ? $inventory->store->name : ""}}
+                                             <br>
+                                        @endif
+                                        @if ($inventory->product->category)
+                                           <strong>Category:</strong> {{$inventory->product->category ? $inventory->product->category->name : ""}}  {{$inventory->product->category_value ? $inventory->product->category_value->name : ""}} 
+                                           <br>
+                                        @endif
+                                        @if ($inventory->rack)
+                                          
+                                              <strong>Rack:</strong> {{$inventory->rack ? $inventory->rack->name : ""}} {{$inventory->rack ? $inventory->rack->rack_number : ""}}
+                                                <br>
+                                        @endif
+                                        @if ($inventory->bin)
+                                              <strong>Bin:</strong> {{$inventory->bin ? $inventory->bin->name : ""}} {{$inventory->bin ? $inventory->bin->bin_number : ""}} 
+                                               <br>
+                                        @endif
+                                </td>
                             </tr>
-                            @endif
+                          
                             <tr>
                                 <th class="w-10 text-center line-height-35">Item Contents</th>
-                                <td class="w-20 line-height-35">{{$inventory->weight}} {{$inventory->measurement}} {{$inventory->balance ? "Bal: ".$inventory->balance." ".$inventory->measurement : ""}}</td>
+                                <td class="w-20 line-height-35"><strong>Content(s): </strong> {{$inventory->weight}} <strong>Bal: </strong> {{$inventory->balance ? $inventory->balance : ""}} {{$inventory->product ? $inventory->product->unit_of_measure : ""}}</td>
                             </tr>
                             <tr>
                                 <th class="w-10 text-center line-height-35">Currency</th>
@@ -59,7 +64,7 @@
                             </tr>
 
                             <tr>
-                                <th class="w-10 text-center line-height-35">Rate</th>
+                                <th class="w-10 text-center line-height-35">Amount</th>
                                 <td class="w-20 line-height-35">
                                     @if ($inventory->amount)
                                         {{$inventory->currency ? $inventory->currency->symbol : ""}}{{number_format($inventory->amount,2)}}
@@ -73,20 +78,27 @@
                                 </td>
                             </tr>
                             <tr>
-                                <th class="w-10 text-center line-height-35">Rate</th>
+                                <th class="w-10 text-center line-height-35">Additional Cost</th>
                                 <td class="w-20 line-height-35">
-                                    @if ($inventory->subtotal_incl)
-                                        {{$inventory->currency ? $inventory->currency->symbol : ""}}{{number_format($inventory->subtotal_incl,2)}}
-                                    @endif
+                                    {{$inventory->currency ? $inventory->currency->symbol : ""}}{{number_format( $inventory->cost ? $inventory->cost : 0,2)}}
                                 </td>
                             </tr>
                             <tr>
+                                <th class="w-10 text-center line-height-35">Total</th>
+                                <td class="w-20 line-height-35">
+                                    @if ($inventory->total)
+                                        {{$inventory->currency ? $inventory->currency->symbol : ""}}{{number_format($inventory->total,2)}}
+                                    @endif
+                                </td>
+                            </tr>
+                           
+                            <tr>
+                                <th class="w-10 text-center line-height-35">Date</th>
+                                <td class="w-20 line-height-35">{{$inventory->purchase_date}}</td>
+                            </tr>
+                             <tr>
                                 <th class="w-10 text-center line-height-35">Condition </th>
                                 <td class="w-20 line-height-35">{{$inventory->condition}}</td>
-                            </tr>
-                            <tr>
-                                <th class="w-10 text-center line-height-35">Purchase Date</th>
-                                <td class="w-20 line-height-35">{{$inventory->purchase_date}}</td>
                             </tr>
                             <tr>
                                 <th class="w-10 text-center line-height-35">Purchase Type</th>
@@ -132,7 +144,9 @@
                         </div>
                         </div>
                 </div>
-
+                <div role="tabpanel" class="tab-pane" id="documents">
+                    @livewire('documents.index', ['id' => $inventory->id,'category' =>'inventory'])
+                  </div>
 
 
                 <!-- /.section-title -->

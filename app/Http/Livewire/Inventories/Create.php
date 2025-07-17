@@ -33,6 +33,7 @@ use App\Models\AttributeValue;
 use App\Models\PurchaseProduct;
 use App\Models\inventorieserial;
 use App\Models\ProductAttribute;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
@@ -196,7 +197,7 @@ class Create extends Component
         }
     }
 
-      public function refresh($category){
+       public function refresh($category){
 
         if($category == "racks"){
             $this->racks = Rack::orderBy('name','asc')->get();
@@ -215,6 +216,20 @@ class Create extends Component
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"GRVs Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "products"){
+            $this->products = Product::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Products Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "stores"){
+            $this->stores = Store::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Stores Refreshed Successfully!!."
             ]);
         }
     }
@@ -559,12 +574,12 @@ class Create extends Component
 
     public function store(){
 
+            DB::transaction(function () {
 
         if (isset($this->selectedProduct)) {
             
             foreach ($this->selectedProduct as $key => $value) {
 
-    
             if (isset($this->qty[$key])) {
     
                 for ($i=0; $i < $this->qty[$key] ; $i++) { 
@@ -575,13 +590,14 @@ class Create extends Component
                     $inventory->vendor_id = $this->vendor_id ? $this->vendor_id : NULL;
                     $inventory->currency_id = $this->selectedCurrency ? $this->selectedCurrency : null;
 
+                    $subtotal = 0;
+
                     if ($this->selectedGoodsReceived) {
                       $inventory->goods_received_id = $this->selectedGoodsReceived;
                     }else{
                         $inventory->goods_received_id = $this->createGRV();
                     }
                     
-    
                     if (isset($this->selectedProduct[$key])) {
                         $inventory->product_id = $this->selectedProduct[$key];
                     }
@@ -600,7 +616,14 @@ class Create extends Component
                     }
                    
                     if (isset($this->amount[$key])) {
-                        $inventory->subtotal = $this->amount[$key];
+                         if (isset($this->cost[$key])) {
+                            $subtotal = $this->amount[$key] + $this->cost[$key];
+                            $inventory->subtotal = $subtotal ;
+                        }else{
+                            $subtotal = $this->amount[$key];
+                            $inventory->subtotal = $subtotal;
+                        }
+                        
                     }
                   
                     if (isset($this->weight[$key])) {
@@ -616,16 +639,19 @@ class Create extends Component
                     }
                     
                     if (isset($this->tax_rate[$key]) && is_numeric($this->tax_rate[$key])) {
-                        if (isset($this->amount[$key])) {
-                            $inventory->tax_amount = ($this->amount[$key] * ($this->tax_rate[$key] / 100 ));
-                            $this->total = ($this->amount[$key] * ($this->tax_rate[$key] / 100 )) + $this->amount[$key];
+
+                        if (is_numeric($subtotal)) {
+                            $tax_amount = ($subtotal * ($this->tax_rate[$key] / 100 ));
+                            $inventory->tax_amount = $tax_amount;
+                            $this->total = $tax_amount + $subtotal;
                             $inventory->subtotal_incl = $this->total;
                             $inventory->total = $this->total;
                            
                         }
+
                     }else{
-                        if (isset($this->amount[$key])) {
-                            $this->total = $this->amount[$key];
+                        if (is_numeric($subtotal)) {
+                            $this->total = $subtotal;
                             $inventory->subtotal_incl =  $this->total;
                             $inventory->total =  $this->total;
                         }
@@ -712,7 +738,7 @@ class Create extends Component
                     'message'=>"Select Product(s) to continue!!"
                 ]);
             }
-    
+        });
     }
 
     public function updatedSelectedCurrency($id){

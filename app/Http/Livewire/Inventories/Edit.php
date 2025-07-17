@@ -20,6 +20,7 @@ use App\Models\Measurement;
 use App\Models\ExchangeRate;
 use App\Models\GoodsReceived;
 use Livewire\WithFileUploads;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
@@ -228,6 +229,7 @@ class Edit extends Component
         $this->inventory_number = $inventory->inventory_number;
         $this->part_number = $inventory->part_number;
         $this->serial_number = $inventory->serial_number;
+        $this->selectedGoodsReceived = $inventory->goods_received_id;
         $this->selectedPurchase = $inventory->purchase_id;
         $this->purchase_order = Purchase::find($inventory->purchase_id);
         if (isset($this->purchase_order)) {
@@ -287,8 +289,7 @@ class Edit extends Component
            
         }
     }
-
-        public function refresh($category){
+    public function refresh($category){
 
         if($category == "racks"){
             $this->racks = Rack::orderBy('name','asc')->get();
@@ -307,6 +308,20 @@ class Edit extends Component
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"GRVs Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "products"){
+            $this->products = Product::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Products Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "stores"){
+            $this->stores = Store::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Stores Refreshed Successfully!!."
             ]);
         }
     }
@@ -377,6 +392,8 @@ class Edit extends Component
 
     public function update(){
 
+        DB::transaction(function () {
+
         $inventory = Inventory::find($this->inventory_id);
         $inventory->user_id = Auth::user()->id;
         $inventory->vendor_id = $this->vendor_id ?? null;
@@ -389,6 +406,17 @@ class Edit extends Component
         $inventory->amount = $this->amount;
         $inventory->cost = $this->cost;
         $inventory->qty = $this->qty;
+
+        $subtotal = 0;
+
+        if (isset($this->cost)) {
+            $subtotal = $this->amount + $this->cost;
+            $inventory->subtotal = $subtotal ;
+        }else{
+            $subtotal = $this->amount;
+            $inventory->subtotal = $subtotal;
+        }
+                        
     
         $inventory->weight = $this->weight;
         $inventory->balance = $this->weight;
@@ -397,15 +425,19 @@ class Edit extends Component
         $inventory->tax_id = $this->selectedTax;
 
         if (isset($this->tax_rate) && is_numeric($this->tax_rate) && isset($this->selectedTax)) {
-            if (isset($this->amount)) {
-                $inventory->tax_amount = ($this->amount * ($this->tax_rate / 100 ));
-                $inventory->subtotal_incl = ($this->amount * ($this->tax_rate / 100 )) + $this->amount;
-                $inventory->total = ($this->amount * ($this->tax_rate / 100 )) + $this->amount;
+            if (is_numeric($subtotal)) {
+                $tax_amount = ($subtotal * ($this->tax_rate / 100 ));
+                $inventory->tax_amount = $tax_amount;
+                $this->total = $tax_amount + $subtotal;
+                $inventory->subtotal_incl =  $this->total;
+                $inventory->total =  $this->total;
             }
         }else{
-            $inventory->tax_amount = 0;
-            $inventory->subtotal_incl = $this->amount;
-            $inventory->total = $this->amount;
+            if (is_numeric($subtotal)) {
+                $inventory->subtotal_incl = $subtotal;
+                $inventory->total = $subtotal;
+            }
+            
         }
        
         $inventory->account_id = $this->selectedAccount;
@@ -509,6 +541,7 @@ class Edit extends Component
         Session::flash('success','Invetory Updated Successfully!!');
         return redirect(route('inventories.index'));
        
+    });
     }
 
      public function updatedSelectedGoodsReceived($id){

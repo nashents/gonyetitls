@@ -4,6 +4,7 @@ namespace App\Http\Livewire\Assets;
 
 use Carbon\Carbon;
 use App\Models\Bin;
+use App\Models\Bill;
 use App\Models\Rack;
 use App\Models\Asset;
 use App\Models\Store;
@@ -15,11 +16,13 @@ use App\Models\Category;
 use App\Models\Currency;
 use App\Models\Purchase;
 use App\Models\VendorType;
+use App\Models\BillExpense;
 use App\Models\Measurement;
 use App\Models\ExchangeRate;
 use App\Models\CategoryValue;
 use App\Models\GoodsReceived;
 use Livewire\WithFileUploads;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
 class Edit extends Component
@@ -29,6 +32,10 @@ class Edit extends Component
 
     public $stores;
     public $store_id;
+    public $bins;
+    public $bin_id;
+    public $racks;
+    public $rack_id;
     public $purchases;
     public $selectedPurchase;
     public $purchase_products;
@@ -74,6 +81,8 @@ class Edit extends Component
     public $tax_id;
     public $tax;
     public $tax_accounts;
+    
+    public $to_bills;
   
     public $income_accounts;
     public $expense_accounts;
@@ -147,6 +156,8 @@ class Edit extends Component
       
         $this->categories = Category::orderBy('name','asc')->get();
         $this->stores = Store::orderBy('name','asc')->get();
+        $this->racks = Rack::orderBy('name','asc')->get();
+        $this->bins = Bin::orderBy('name','asc')->get();
         $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name','Expenses');
         })->orderBy('name','asc')->get();
@@ -163,7 +174,9 @@ class Edit extends Component
         $this->selectedAccount = $asset->account_id;
         $this->purchase_date = $asset->purchase_date;
         $this->selectedPurchase = $asset->purchase_id;
+        $this->selectedGoodsReceived = $asset->goods_received_id;
         $this->qty = $asset->qty;
+        $this->to_bills = $asset->bill ? True : False;
         $this->amount = $asset->amount;
         $this->cost = $asset->cost;
         $this->tax_amount = $asset->tax_amount;
@@ -180,6 +193,8 @@ class Edit extends Component
      
         $this->weight = $asset->weight;
         $this->store_id = $asset->store_id;
+        $this->bin_id = $asset->bin_id;
+        $this->rack_id = $asset->rack_id;
         $this->balance = $asset->balance;
         $this->condition = $asset->condition;
         $this->warranty_exp_date = $asset->warranty_exp_date;
@@ -236,7 +251,7 @@ class Edit extends Component
         }
     }
 
-    public function refresh($category){
+      public function refresh($category){
 
         if($category == "racks"){
             $this->racks = Rack::orderBy('name','asc')->get();
@@ -257,8 +272,21 @@ class Edit extends Component
                 'message'=>"GRVs Refreshed Successfully!!."
             ]);
         }
+        elseif($category == "products"){
+            $this->products = Product::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Products Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "stores"){
+            $this->stores = Store::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Stores Refreshed Successfully!!."
+            ]);
+        }
     }
-
     
 
      public function updatedSelectedCurrency($id){
@@ -285,57 +313,197 @@ class Edit extends Component
         'purchase_date' => 'required',
     ];
 
+            public function billNumber(){
+
+        if (isset(Auth::user()->company)) {
+            $str = Auth::user()->company->name;
+            $words = explode(' ', $str);
+            if (isset($words[1][0])) {
+                $initials = $words[0][0].$words[1][0];
+            }else {
+                $initials = $words[0][0];
+            }
+        }elseif (isset(Auth::user()->employee->company)) {
+            $str = Auth::user()->employee->company->name;
+            $words = explode(' ', $str);
+            if (isset($words[1][0])) {
+                $initials = $words[0][0].$words[1][0];
+            }else {
+                $initials = $words[0][0];
+            }
+        }
+
+        $bill = Bill::latest()->orderBy('id','desc')->first();
+
+        if (!$bill) {
+            $bill_number =  $initials .'B'. str_pad(1, 5, "0", STR_PAD_LEFT);
+        }else {
+            $number = $bill->id + 1;
+            $bill_number =  $initials .'B'. str_pad($number, 5, "0", STR_PAD_LEFT);
+        }
+
+        return  $bill_number;
+
+
+    }
+
 
 
     public function update(){
 
-                    $asset =  Asset::find($this->asset_id);
-                    $asset->vendor_id = $this->vendor_id ? $this->vendor_id : NULL;
-                    $asset->currency_id = $this->selectedCurrency ? $this->selectedCurrency : null;
-                    $asset->goods_received_id = $this->selectedGoodsReceived ? $this->selectedGoodsReceived : null;
-                    $asset->product_id = $this->selectedProduct;
-                    $asset->account_id = $this->selectedAccount;
-                    $asset->serial_number = $this->serial_number;
-                    $asset->amount = $this->amount;
-                    $asset->cost = $this->cost;
-                    $asset->qty = $this->qty;
-                    $asset->subtotal = $this->amount;
-                  
-                    $asset->weight = $this->weight;
-                    $asset->balance = $this->weight;
-                    $asset->tax_rate = $this->tax_rate;
-                    $asset->tax_id = $this->selectedTax;
-                    if (isset($this->tax_rate) && is_numeric($this->tax_rate) && isset($this->selectedTax)) {
-                        if (isset($this->amount)) {
-                            $asset->tax_amount = ($this->amount * ($this->tax_rate / 100 ));
-                            $asset->subtotal_incl = ($this->amount * ($this->tax_rate / 100 )) + $this->amount;
-                            $asset->total = ($this->amount * ($this->tax_rate / 100 )) + $this->amount;
-                        }
-                    }else{
-                        $asset->tax_amount = 0;
-                        $asset->subtotal_incl = $this->amount;
-                        $asset->total = $this->amount;
-                    }
-                   
-                    $asset->residual_value = $this->residual_value;
-                    $asset->store_id = $this->store_id ? $this->store_id : null;
-                    $asset->depreciation_type = $this->depreciation_type;
-                    $asset->purchase_date = $this->purchase_date;
-                    $asset->purchase_type = $this->purchase_type;
-                    $asset->purchase_id = $this->selectedPurchase ? $this->selectedPurchase : null;
-                    $asset->condition = $this->condition;
-                    $asset->warranty_exp_date = $this->warranty_exp_date;
-                    $asset->life = $this->life;
-                    $asset->description = $this->description;
-                    $asset->status = 1;
-                    $asset->disposed = 0;
-                    $asset->update();
+    DB::transaction(function () {
 
-                    return redirect(route('assets.index'));
-                    $this->dispatchBrowserEvent('alert',[
-                        'type'=>'success',
-                        'message'=>"Asset Updated Successfully!!"
-                    ]);
+        $asset = Asset::find($this->asset_id);
+        $asset->user_id = Auth::user()->id;
+        $asset->vendor_id = $this->vendor_id ?? null;
+        $asset->goods_received_id = $this->selectedGoodsReceived ? $this->selectedGoodsReceived : null;
+        $asset->store_id = $this->store_id ?? null;
+        $asset->bin_id = $this->bin_id ?? null;
+        $asset->rack_id = $this->rack_id ?? null;
+        $asset->product_id = $this->selectedProduct ?? null;
+        $asset->currency_id = $this->selectedCurrency ?? null;
+        $asset->amount = $this->amount;
+        $asset->cost = $this->cost;
+        $asset->qty = $this->qty;
+
+        $subtotal = 0;
+
+        if (isset($this->cost)) {
+            $subtotal = $this->amount + $this->cost;
+            $asset->subtotal = $subtotal ;
+        }else{
+            $subtotal = $this->amount;
+            $asset->subtotal = $subtotal;
+        }
+                        
+    
+        $asset->weight = $this->weight;
+        $asset->balance = $this->weight;
+
+        $asset->tax_rate = $this->tax_rate;
+        $asset->tax_id = $this->selectedTax;
+
+        if (isset($this->tax_rate) && is_numeric($this->tax_rate) && isset($this->selectedTax)) {
+            if (is_numeric($subtotal)) {
+                $tax_amount = ($subtotal * ($this->tax_rate / 100 ));
+                $asset->tax_amount = $tax_amount;
+                $this->total = $tax_amount + $subtotal;
+                $asset->subtotal_incl =  $this->total;
+                $asset->total =  $this->total;
+            }
+        }else{
+            if (is_numeric($subtotal)) {
+                $asset->subtotal_incl = $subtotal;
+                $asset->total = $subtotal;
+            }
+            
+        }
+       
+        $asset->account_id = $this->selectedAccount;
+        $asset->residual_value = $this->residual_value;
+        $asset->depreciation_type = $this->depreciation_type;
+        $asset->purchase_date = $this->purchase_date;
+        $asset->purchase_type = $this->purchase_type;
+        $asset->purchase_id = $this->selectedPurchase ? $this->selectedPurchase : null;
+        $asset->condition = $this->condition;
+        $asset->serial_number = $this->serial_number;
+        $asset->warranty_exp_date = $this->warranty_exp_date;
+        $asset->life = $this->life;
+        $asset->description = $this->description;
+        $asset->status = $this->status;
+        $asset->disposed = 0;
+        $asset->update();
+
+        if ($this->to_bills) {
+            
+            $bill = $asset->bill;
+
+            if($bill){     
+
+            $bill->asset_id = $asset->id;
+            $bill->category = "Inventory Item";
+            $bill->bill_date = $asset->purchase_date;
+            $bill->account_id = $asset->account_id;
+            $account = Account::find($asset->account_id);
+            $account_type = $account ?  $account->account_type : "";
+            if (isset($account_type)) {
+                $bill->account_type_id = $account_type->id;
+            }
+            $bill->currency_id = $asset->currency_id;
+            $bill->authorized_by_id = Auth::user()->id;
+            $bill->authorization = "pending";
+         
+            $bill->total = $asset->subtotal_incl;
+            $bill->balance = $asset->subtotal_incl;
+            $bill->to_be_paid = True;
+            $bill->update();
+
+                $bill_expense = $bill->bill_expenses->first();
+                if($bill_expense){
+                    $bill_expense->bill_id = $bill->id;
+                    $bill_expense->currency_id = $bill->currency_id;
+                    $bill_expense->account_id = $bill->account_id;
+                    $account = Account::find($bill->account_id);
+                    $account_type = $account ? $account->account_type : "";
+                    if (isset($account_type)) {
+                        $bill_expense->account_type_id = $account_type->id;
+                    }
+                    $bill_expense->product_id = $asset->product_id;
+                    $bill_expense->qty = 1;
+                    $bill_expense->amount = $asset->amount;
+                    $bill_expense->subtotal = $asset->subtotal;
+                    $bill_expense->tax_amount = $asset->tax_amount;
+                    $bill_expense->subtotal_incl = $asset->subtotal_incl;
+                    $bill_expense->update();
+                }
+            }else{
+                $bill = new Bill;
+                $bill->user_id = Auth::user()->id;
+                $bill->bill_number = $this->billNumber();
+                $bill->asset_id = $asset->id;
+                $bill->category = "Inventory Item";
+                $bill->bill_date = $asset->purchase_date;
+                $bill->account_id = $asset->account_id;
+                $account = Account::find($asset->account_id);
+                $account_type = $account ?  $account->account_type : "";
+                if (isset($account_type)) {
+                    $bill->account_type_id = $account_type->id;
+                }
+                $bill->currency_id = $asset->currency_id;
+                $bill->authorized_by_id = Auth::user()->id;
+                $bill->authorization = "pending";
+             
+                $bill->total = $asset->subtotal_incl;
+                $bill->balance = $asset->subtotal_incl;
+                $bill->to_be_paid = True;
+                $bill->save();
+
+                $bill_expense = new BillExpense;
+                $bill_expense->bill_id = $bill->id;
+                $bill_expense->currency_id = $bill->currency_id;
+                $bill_expense->account_id = $bill->account_id;
+                $account = Account::find($bill->account_id);
+                $account_type = $account ? $account->account_type : "";
+                if (isset($account_type)) {
+                    $bill_expense->account_type_id = $account_type->id;
+                }
+                $bill_expense->product_id = $asset->product_id;
+                $bill_expense->qty = 1;
+                $bill_expense->amount = $asset->amount;
+                $bill_expense->subtotal = $asset->subtotal;
+                $bill_expense->tax_amount = $asset->tax_amount;
+                $bill_expense->subtotal_incl = $asset->subtotal_incl;
+                $bill_expense->save();
+            }
+        }
+
+        return redirect(route('assets.index'));
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Asset Updated Successfully!!"
+        ]);
+
+    });
     }
 
      public function updatedSelectedGoodsReceived($id){
@@ -352,17 +520,16 @@ class Edit extends Component
             $this->exchange_amount = $this->exchange_rate * $this->total;
 
         }
-           $this->goods_receiveds = GoodsReceived::where('status',1)->where('department','asset')->where('created_at', '>=', Carbon::now()->subMonth())->orderBy('created_at','desc')->get();
-       
+        $this->goods_receiveds = GoodsReceived::where('status',1)->where('department','asset')->where('created_at', '>=', Carbon::now()->subMonth())->orderBy('created_at','desc')->get();
         $this->products = Product::with('brand')->orderBy('name','asc')->where('department','asset')->where('status',True)->where('buy',True)->get()->sortBy('brand.name');
         $this->vendor_types = VendorType::orderBy('name','asc')->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();
-       $this->purchases = Purchase::where('department','inventory')->where('status',1)->where('created_at', '>=', Carbon::now()->subMonth())->where('authorization','approved')->orderBy('created_at','desc')->get();
-        return view('livewire.assets.edit',[
-            'products' => $this->products,
-            'vendor_types' => $this->vendor_types,
-            'vendors' => $this->vendors,
-            'purchases' => $this->purchases,
-        ]);
+        $this->purchases = Purchase::where('department','asset')->where('status',1)->where('created_at', '>=', Carbon::now()->subMonth())->where('authorization','approved')->orderBy('created_at','desc')->get();
+            return view('livewire.assets.edit',[
+                'products' => $this->products,
+                'vendor_types' => $this->vendor_types,
+                'vendors' => $this->vendors,
+                'purchases' => $this->purchases,
+            ]);
     }
 }

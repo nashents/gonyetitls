@@ -5,6 +5,7 @@ namespace App\Http\Livewire\Assets;
 
 use Carbon\Carbon;
 use App\Models\Bin;
+use App\Models\Bill;
 use App\Models\Rack;
 use App\Models\Asset;
 use App\Models\Brand;
@@ -24,6 +25,7 @@ use App\Models\Department;
 use App\Models\VendorType;
 use App\Models\AssetDetail;
 use App\Models\AssetSerial;
+use App\Models\BillExpense;
 use App\Models\Measurement;
 use App\Models\ExchangeRate;
 use App\Models\AssetDocument;
@@ -33,6 +35,7 @@ use Livewire\WithFileUploads;
 use App\Models\AttributeValue;
 use App\Models\PurchaseProduct;
 use App\Models\ProductAttribute;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
@@ -43,6 +46,10 @@ class Create extends Component
 
     public $stores;
     public $store_id;
+    public $bins;
+    public $bin_id;
+    public $racks;
+    public $rack_id;
     public $purchases;
     public $selectedPurchase;
     public $selectedPurchaseProduct;
@@ -89,6 +96,8 @@ class Create extends Component
     public $tax;
     public $tax_accounts;
     public $selectedAccount;
+
+    public $to_bills = False;
   
     public $income_accounts;
     public $expense_accounts;
@@ -156,7 +165,8 @@ class Create extends Component
     public function mount(){
         $this->company = Auth::user()->employee->company;
         $this->department = "asset";
-       
+        $this->racks = Rack::orderBy('name','asc')->get();
+        $this->bins = Bin::orderBy('name','asc')->get();
         $this->stores = Store::orderBy('name','asc')->get();
        
         $this->vendors = Vendor::orderBy('name','asc')->get();
@@ -181,6 +191,41 @@ class Create extends Component
         $this->city = '';
         $this->suburb = '';
         $this->street_address = '';
+    }
+
+
+            public function billNumber(){
+
+        if (isset(Auth::user()->company)) {
+            $str = Auth::user()->company->name;
+            $words = explode(' ', $str);
+            if (isset($words[1][0])) {
+                $initials = $words[0][0].$words[1][0];
+            }else {
+                $initials = $words[0][0];
+            }
+        }elseif (isset(Auth::user()->employee->company)) {
+            $str = Auth::user()->employee->company->name;
+            $words = explode(' ', $str);
+            if (isset($words[1][0])) {
+                $initials = $words[0][0].$words[1][0];
+            }else {
+                $initials = $words[0][0];
+            }
+        }
+
+        $bill = Bill::latest()->orderBy('id','desc')->first();
+
+        if (!$bill) {
+            $bill_number =  $initials .'B'. str_pad(1, 5, "0", STR_PAD_LEFT);
+        }else {
+            $number = $bill->id + 1;
+            $bill_number =  $initials .'B'. str_pad($number, 5, "0", STR_PAD_LEFT);
+        }
+
+        return  $bill_number;
+
+
     }
 
     public function vendorNumber(){
@@ -488,32 +533,34 @@ class Create extends Component
 
     public function store(){
 
+        DB::transaction(function () {
+
         if (isset($this->selectedProduct)) {
-            
-            foreach ($this->selectedProduct as $key => $value) {
-    
+          
+              foreach ($this->selectedProduct as $key => $value) {
+                
             if (isset($this->qty[$key])) {
     
                 for ($i=0; $i < $this->qty[$key] ; $i++) { 
-    
+                       
+                   
                     $asset = new Asset;
                     $asset->user_id = Auth::user()->id;
                     $asset->vendor_id = $this->vendor_id ? $this->vendor_id : NULL;
                     $asset->currency_id = $this->selectedCurrency ? $this->selectedCurrency : null;
-                  
+
+                    $subtotal = 0;
+
                     if ($this->selectedGoodsReceived) {
                       $asset->goods_received_id = $this->selectedGoodsReceived;
                     }else{
                         $asset->goods_received_id = $this->createGRV();
                     }
                     
-
                     if (isset($this->selectedProduct[$key])) {
                         $asset->product_id = $this->selectedProduct[$key];
                     }
-                    if (isset($this->selectedAccount[$key])) {
-                        $asset->account_id = $this->selectedAccount[$key];
-                    }
+                  
                     if (isset($this->serial_number[$key])) {
                         $asset->serial_number = $this->serial_number[$key];
                     }
@@ -528,7 +575,14 @@ class Create extends Component
                     }
                    
                     if (isset($this->amount[$key])) {
-                        $asset->subtotal = $this->amount[$key];
+                         if (isset($this->cost[$key])) {
+                            $subtotal = $this->amount[$key] + $this->cost[$key];
+                            $asset->subtotal = $subtotal ;
+                        }else{
+                            $subtotal = $this->amount[$key];
+                            $asset->subtotal = $subtotal;
+                        }
+                        
                     }
                   
                     if (isset($this->weight[$key])) {
@@ -542,17 +596,21 @@ class Create extends Component
                     if (isset($this->selectedTax[$key])) {
                         $asset->tax_id = $this->selectedTax[$key];
                     }
-
+                    
                     if (isset($this->tax_rate[$key]) && is_numeric($this->tax_rate[$key])) {
-                        if (isset($this->amount[$key])) {
-                            $asset->tax_amount = ($this->amount[$key] * ($this->tax_rate[$key] / 100 ));
-                            $this->total = ($this->amount[$key] * ($this->tax_rate[$key] / 100 )) + $this->amount[$key];
+
+                        if (is_numeric($subtotal)) {
+                            $tax_amount = ($subtotal * ($this->tax_rate[$key] / 100 ));
+                            $asset->tax_amount = $tax_amount;
+                            $this->total = $tax_amount + $subtotal;
                             $asset->subtotal_incl = $this->total;
                             $asset->total = $this->total;
+                           
                         }
+
                     }else{
-                        if (isset($this->amount[$key])) {
-                            $this->total = $this->amount[$key];
+                        if (is_numeric($subtotal)) {
+                            $this->total = $subtotal;
                             $asset->subtotal_incl =  $this->total;
                             $asset->total =  $this->total;
                         }
@@ -561,9 +619,12 @@ class Create extends Component
 
                     $asset->exchange_rate = $this->exchange_rate;
                     $asset->exchange_amount = $this->exchange_amount;
-                   
+
+                    $asset->account_id = $this->selectedAccount;
                     $asset->residual_value = $this->residual_value;
-                    $asset->store_id = $this->store_id ? $this->store_id : null;
+                    $asset->store_id = $this->store_id ?? null;
+                    $asset->bin_id = $this->bin_id ?? null;
+                    $asset->rack_id = $this->rack_id ?? null;
                     $asset->depreciation_type = $this->depreciation_type;
                     $asset->purchase_date = $this->purchase_date;
                     $asset->purchase_type = $this->purchase_type;
@@ -576,11 +637,56 @@ class Create extends Component
                     $asset->status = 1;
                     $asset->disposed = 0;
                     $asset->save();
+
+                    
+                    if ($this->to_bills == True) {
+                      
+                    $bill = new Bill;
+                    $bill->user_id = Auth::user()->id;
+                    $bill->bill_number = $this->billNumber();
+                    $bill->asset_id = $asset->id;
+                    $bill->category = "Inventory Item";
+                    $bill->bill_date = $asset->purchase_date;
+                    $bill->account_id = $asset->account_id;
+                    $account = Account::find($asset->account_id);
+                    $account_type = $account ?  $account->account_type : "";
+                    if (isset($account_type)) {
+                        $bill->account_type_id = $account_type->id;
+                    }
+                    $bill->currency_id = $asset->currency_id;
+                    $bill->vendor_id =  $asset->vendor_id;
+                    $bill->authorized_by_id = Auth::user()->id;
+                    $bill->authorization = "pending";
+                 
+                    $bill->total = $asset->total;
+                    $bill->balance = $asset->total;
+                    $bill->to_be_paid = True;
+                    $bill->save();
+
+                    $bill_expense = new BillExpense;
+                    $bill_expense->bill_id = $bill->id;
+                    $bill_expense->currency_id = $bill->currency_id;
+                    $bill_expense->account_id = $bill->account_id;
+                    $account = Account::find($bill->account_id);
+                    $account_type = $account ? $account->account_type : "";
+                    if (isset($account_type)) {
+                        $bill_expense->account_type_id = $account_type->id;
+                    }
+                    $bill_expense->product_id = $asset->product_id;
+                    $bill_expense->qty = 1;
+                    $bill_expense->amount = $asset->amount;
+                    $bill_expense->subtotal = $asset->subtotal;
+                    $bill_expense->tax_amount = $asset->tax_amount;
+                    $bill_expense->subtotal_incl = $asset->subtotal_incl;
+                    $bill_expense->save();
+
+                    }
     
                 }
     
               }
             }
+          
             Session::flash('success','Asset Added Successfully!!');
             return redirect(route('assets.index'));
            
@@ -593,6 +699,8 @@ class Create extends Component
                 ]);
             }
     
+        });
+
     }
 
    public function updatedSelectedCurrency($id){
@@ -629,6 +737,20 @@ class Create extends Component
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"GRVs Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "products"){
+            $this->products = Product::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Products Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "stores"){
+            $this->stores = Store::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Stores Refreshed Successfully!!."
             ]);
         }
     }

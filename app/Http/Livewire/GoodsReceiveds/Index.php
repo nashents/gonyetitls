@@ -114,7 +114,7 @@ class Index extends Component
         $this->resetInputFields();
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
-            'message'=>"Good Received Record Created Successfully!!"
+            'message'=>"Good Received Voucher Created Successfully!!"
         ]);
 
     }
@@ -152,7 +152,7 @@ class Index extends Component
         $this->resetInputFields();
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
-            'message'=>"Goods Received Updated Successfully!!"
+            'message'=>"Goods Received Voucher Updated Successfully!!"
         ]);
 
         }
@@ -160,7 +160,7 @@ class Index extends Component
         // Set Flash Message
         $this->dispatchBrowserEvent('alert',[
             'type'=>'error',
-            'message'=>"Something goes wrong while updating goods received!!"
+            'message'=>"Something goes wrong while updating goods received voucher !!"
         ]);
     }
     }
@@ -180,7 +180,7 @@ class Index extends Component
         $this->resetInputFields();
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
-            'message'=>"GRV Closed Successfully!!"
+            'message'=>"Goods Received Voucher Closed Successfully!!"
         ]);
     }
 
@@ -192,6 +192,7 @@ class Index extends Component
                 if (isset($this->search)) {
                     return view('livewire.goods-receiveds.index',[
                         'goods_receiveds' => GoodsReceived::query()->with('vendor','employee')
+                          ->where('department',$this->department)
                         ->whereDate($this->goods_received_filter, '>=', $this->from)
                         ->whereDate($this->goods_received_filter, '<=', $this->to)
                         ->where('goods_received_number','like', '%'.$this->search.'%')
@@ -213,6 +214,7 @@ class Index extends Component
                 }else {
                     return view('livewire.goods-receiveds.index',[
                         'goods_receiveds' => GoodsReceived::query()->with('vendor','employee')
+                          ->where('department',$this->department)
                         ->whereDate($this->goods_received_filter, '>=', $this->from)
                         ->whereDate($this->goods_received_filter, '<=', $this->to)
                         ->where('to_be_paid', True)
@@ -226,6 +228,7 @@ class Index extends Component
                
                 return view('livewire.goods-receiveds.index',[
                     'goods_receiveds' => GoodsReceived::query()->with('vendor','employee')
+                      ->where('department',$this->department)
                     ->whereMonth($this->goods_received_filter, date('m'))
                     ->whereYear($this->goods_received_filter, date('Y'))
                     ->where('goods_received_number','like', '%'.$this->search.'%')
@@ -246,6 +249,7 @@ class Index extends Component
                
                 return view('livewire.goods-receiveds.index',[
                     'goods_receiveds' => GoodsReceived::query()->with('vendor','employee')
+                    ->where('department',$this->department)
                     ->whereMonth($this->goods_received_filter, date('m'))
                     ->whereYear($this->goods_received_filter, date('Y'))
                     ->orderBy($this->goods_received_filter,'desc')->paginate(10),

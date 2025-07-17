@@ -80,7 +80,7 @@
                                 </div>
 
                         </div>
-                         <div style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">
+                         <div class="mt-30" style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">
                         <div class="row">
                             <div class="col-md-5">
                                 @if (is_null($selectedPurchase))
@@ -92,7 +92,7 @@
                                                 <option value="{{$product->id}}"> {{$product->brand ? $product->brand->name : ""}} {{$product->name}} {{$product->identification_number}}</option>
                                             @endforeach
                                         </select>
-                                        <small>  <a href="{{ route('products.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Product</a></small> 
+                                       <small><a href="{{ route('products.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Product</a></small><a href="#" wire:click.prevent="refresh('products')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>  
                                         @error('selectedProduct') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 @else   
@@ -104,7 +104,6 @@
                                             <option value="{{$purchase_product->id}}"> {{$purchase_product->product->brand ? $purchase_product->product->brand->name : ""}} {{$purchase_product->product ? $purchase_product->product->name : ""}} {{$purchase_product->product ? $purchase_product->product->identification_number : ""}}</option>
                                         @endforeach
                                     </select>
-                                    <small>  <a href="{{ route('products.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Product</a></small> 
                                         @error('selectedPurchaseProduct') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 @endif
@@ -181,82 +180,112 @@
                                     </div>
                         </div>
                          </div>
-                        <div class="row">
-                            <div class="col-md-3">
-                                <div class="form-group">
-                                    <label for="purchase_date">Date<span class="required" style="color: red">*</span></label>
-                                <input type="date" class="form-control" wire:model.debounce.300ms="purchase_date" placeholder="Purchase Date" required>
-                                    @error('purchase_date') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                          <br>               
+                                <br>   
+                                       <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="purchase_date">Date<span class="required" style="color: red">*</span></label>
+                                        <input type="date" class="form-control" wire:model.debounce.300ms="purchase_date" placeholder="Purchase Date" required>
+                                            @error('purchase_date') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label for="country">Stores</label>
+                                               <select wire:model.debounce.300ms="store_id" class="form-control">
+                                                   <option value="">Select Store</option>
+                                                 @foreach ($stores as $store)
+                                                    <option value="{{$store->id}}">{{$store->name}}</option>
+                                                 @endforeach
+                                               </select>
+                                               <small>  <a href="#" data-toggle="modal" data-target="#storeModal" ><i class="fa fa-plus-square-o"></i> New Store</a></small><a href="#" wire:click.prevent="refresh('stores')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>  
+                                                @error('store_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label for="country">Racks</label>
+                                               <select wire:model.debounce.300ms="rack_id" class="form-control">
+                                                   <option value="">Select Rack</option>
+                                                 @foreach ($racks as $rack)
+                                                    <option value="{{$rack->id}}">{{$rack->name}} {{$rack->rack_number}}</option>
+                                                 @endforeach
+                                               </select>
+                                                <small><a href="{{route('racks.index')}}" target="_blank"><i class="fa fa-plus-square-o"></i> New Rack</a></small><a href="#" wire:click.prevent="refresh('racks')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                                @error('rack_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label for="country">Bins</label>
+                                               <select wire:model.debounce.300ms="bin_id" class="form-control">
+                                                   <option value="">Select Bin</option>
+                                                 @foreach ($bins as $bin)
+                                                    <option value="{{$bin->id}}">{{$bin->name}} {{$bin->bin_number}}</option>
+                                                 @endforeach
+                                               </select>
+                                                <small> <a href="{{route('bins.index')}}" target="_blank"><i class="fa fa-plus-square-o"></i> New Bin</a></small><a href="#" wire:click.prevent="refresh('bins')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
+                                                @error('bin_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            </div>
+                                        </div>
+                                      
+                 
                                 </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="form-group">
-                                        <label for="country">Stores</label>
-                                       <select wire:model.debounce.300ms="store_id" class="form-control">
-                                           <option value="">Select Store</option>
-                                         @foreach ($stores as $store)
-                                            <option value="{{$store->id}}">{{$store->name}}</option>
-                                         @endforeach
-                                       </select>
-                                       <small>  <a href="#" data-toggle="modal" data-target="#storeModal" ><i class="fa fa-plus-square-o"></i> New Store</a></small> 
-                                        @error('store_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="condition">Conditions</label>
+                                           <select wire:model.debounce.300ms="condition" class="form-control" >
+                                               <option value="">Select Condition</option>
+                                               <option value="New">New</option>
+                                               <option value="Refurbished">Refurbished</option>
+                                               <option value="Second Hand">Second Hand</option>
+                                           </select>
+                                            @error('condition') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
                                     </div>
+    
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label for="condition">Purchase Types</label>
+                                               <select wire:model.debounce.300ms="purchase_type" class="form-control" >
+                                                   <option value="">Select Purchase Type</option>
+                                                   <option value="Owned">Owned</option>
+                                                   <option value="Rented">Rented</option>
+                                                   <option value="Leased">Leased</option>
+                                               </select>
+                                                @error('purchase_type') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            </div>
+                                        </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label for="purchase_date">Warranty Expiry Date</label>
+                                        <input type="date" class="form-control" wire:model.debounce.300ms="warranty_exp_date" placeholder="Warranty Expiry Date">
+                                            @error('warranty_exp_date') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                        </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label for="purchase_date">Useful Life</label>
+                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="life" placeholder="Useful Life" >
+                                            @error('life') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label for="condition">Depriciation Types</label>
+                                               <select wire:model.debounce.300ms="depreciation_type" class="form-control" >
+                                                   <option value="">Select Depriciation Type</option>
+                                                   <option value="Declining Balance">Declining Balance</option>
+                                                   <option value="Double Declining Balance">Double Declining Balance</option>
+                                                   <option value="Straight line">Straight line</option>
+                                                   <option value="Sum of the years digit">Sum of the years digit</option>
+                                               </select>
+                                                @error('depreciation_type') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            </div>
+                                        </div>
                                 </div>
-                            <div class="col-md-3">
-                                <div class="form-group">
-                                    <label for="condition">Conditions</label>
-                                   <select wire:model.debounce.300ms="condition" class="form-control" >
-                                       <option value="">Select Condition</option>
-                                       <option value="New">New</option>
-                                       <option value="Refurbished">Refurbished</option>
-                                       <option value="Second Hand">Second Hand</option>
-                                   </select>
-                                    @error('condition') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                </div>
-                            </div>
-
-                                <div class="col-md-3">
-                                    <div class="form-group">
-                                        <label for="condition">Purchase Types</label>
-                                       <select wire:model.debounce.300ms="purchase_type" class="form-control" >
-                                           <option value="">Select Purchase Type</option>
-                                           <option value="Owned">Owned</option>
-                                           <option value="Rented">Rented</option>
-                                           <option value="Leased">Leased</option>
-                                       </select>
-                                        @error('purchase_type') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                    </div>
-                                </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="purchase_date">Warranty Expiry Date</label>
-                                <input type="date" class="form-control" wire:model.debounce.300ms="warranty_exp_date" placeholder="Warranty Expiry Date">
-                                    @error('warranty_exp_date') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                </div>
-                                </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="purchase_date">Useful Life</label>
-                                <input type="number" step="any" class="form-control" wire:model.debounce.300ms="life" placeholder="Useful Life" >
-                                    @error('life') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label for="condition">Depriciation Types</label>
-                                       <select wire:model.debounce.300ms="depreciation_type" class="form-control" >
-                                           <option value="">Select Depriciation Type</option>
-                                           <option value="Declining Balance">Declining Balance</option>
-                                           <option value="Double Declining Balance">Double Declining Balance</option>
-                                           <option value="Straight line">Straight line</option>
-                                           <option value="Sum of the years digit">Sum of the years digit</option>
-                                       </select>
-                                        @error('depreciation_type') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                    </div>
-                                </div>
-                        </div>
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
@@ -272,6 +301,12 @@
                                     @error('description') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                                 </div>
+                        </div>
+
+                        <div class="mb-10 mt-10" style="float: right;">
+                            <input type="checkbox" wire:model.debounce.300ms="to_bills"  {{$selectedPurchase ? "disabled" : ""}}  class="line-style" />
+                            <label for="one" class="radio-label">Add item(s) to bills</label>
+                            @error('to_bills') <span class="text-danger error">{{ $message }}</span>@enderror
                         </div>
                         <div class="row">
                             <div class="col-md-12">

@@ -20,6 +20,7 @@ use App\Models\BillExpense;
 use App\Models\ExchangeRate;
 use App\Models\GoodsReceived;
 use Livewire\WithFileUploads;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
@@ -184,6 +185,7 @@ class Edit extends Component
         $this->depreciation_type = $tyre->depreciation_type;
         $this->description = $tyre->description;
         $this->selectedPurchase = $tyre->purchase_id;
+         $this->selectedGoodsReceived = $tyre->goods_received_id;
         if ($this->selectedPurchase) {
           $this->vendor_id = Purchase::find($this->selectedPurchase)->vendor->id;
           $this->selectedCurrency = Purchase::find($this->selectedPurchase)->currency->id;
@@ -283,7 +285,7 @@ public function updatedSelectedTax($id){
     }
 }
 
-public function refresh($category){
+         public function refresh($category){
 
         if($category == "racks"){
             $this->racks = Rack::orderBy('name','asc')->get();
@@ -302,6 +304,20 @@ public function refresh($category){
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"GRVs Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "products"){
+            $this->products = Product::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Products Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "stores"){
+            $this->stores = Store::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Stores Refreshed Successfully!!."
             ]);
         }
     }
@@ -343,6 +359,8 @@ public function refresh($category){
 
       public function update(){
 
+    DB::transaction(function () {
+
               $tyre = Tyre::find($this->tyre_id);
               $tyre->user_id = Auth::user()->id;
               $tyre->goods_received_id = $this->selectedGoodsReceived ? $this->selectedGoodsReceived : null;
@@ -353,7 +371,15 @@ public function refresh($category){
               $tyre->qty = $this->qty;
               $tyre->amount = $this->amount;
               $tyre->cost = $this->cost;
-              $tyre->subtotal = $this->qty * $this->amount;
+                $subtotal = 0;
+
+                if (isset($this->cost)) {
+                    $subtotal = $this->amount + $this->cost;
+                    $tyre->subtotal = $subtotal ;
+                }else{
+                    $subtotal = $this->amount;
+                    $tyre->subtotal = $subtotal;
+                }
   
               $tyre->tax_rate = $this->tax_rate;
               $tyre->tax_id = $this->selectedTax;
@@ -365,17 +391,21 @@ public function refresh($category){
                   $this->tax_rate = "";
               }
              
-              if (isset($this->tax_rate) && is_numeric($this->tax_rate) && isset($this->selectedTax)) {
-                if (isset($this->amount)) {
-                    $tyre->tax_amount = ($this->amount * ($this->tax_rate / 100 ));
-                    $tyre->subtotal_incl = ($this->amount * ($this->tax_rate / 100 )) + $this->amount;
-                    $tyre->total = ($this->amount * ($this->tax_rate / 100 )) + $this->amount;
+                if (isset($this->tax_rate) && is_numeric($this->tax_rate) && isset($this->selectedTax)) {
+                    if (is_numeric($subtotal)) {
+                        $tax_amount = ($subtotal * ($this->tax_rate / 100 ));
+                        $tyre->tax_amount = $tax_amount;
+                        $this->total = $tax_amount + $subtotal;
+                        $tyre->subtotal_incl =  $this->total;
+                        $tyre->total =  $this->total;
+                    }
+                }else{
+                    if (is_numeric($subtotal)) {
+                        $tyre->subtotal_incl = $subtotal;
+                        $tyre->total = $subtotal;
+                    }
+                    
                 }
-            }else{
-                $tyre->tax_amount = 0;
-                $tyre->subtotal_incl = $this->amount;
-                $tyre->total = $this->amount;
-            }
 
               $tyre->width = $this->width;
               $tyre->account_id = $this->selectedAccount;
@@ -488,6 +518,8 @@ public function refresh($category){
 
         Session::flash('success','Tyre(s) added successfully');
         return redirect()->route('tyres.index');
+
+    });
       }
 
        public function updatedSelectedGoodsReceived($id){
