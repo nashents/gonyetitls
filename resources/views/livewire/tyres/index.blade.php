@@ -50,8 +50,11 @@
                                     @forelse ($tyres as $tyre)
                                   <tr>
                                     <td>
-                                        <strong>Product:</strong> {{$tyre->product->brand ? $tyre->product->brand->name : ""}} {{$tyre->product ? $tyre->product->name : ""}}
-                                        <br>
+                                        @if ($tyre->product)
+                                            <strong>Product:</strong> {{$tyre->product->brand ? $tyre->product->brand->name : ""}} {{$tyre->product ? $tyre->product->name : ""}}
+                                            <br>
+                                        @endif
+                                       
                                         <strong>Type:</strong> {{$tyre->type}}
                                         <br>
                                         <strong>S/N:</strong> {{$tyre->serial_number}}

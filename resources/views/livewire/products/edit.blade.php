@@ -19,8 +19,9 @@
                                         <label for="country">Department<span class="required" style="color: red">*</span></label>
                                        <select wire:model.debounce.300ms="department" class="form-control" required>
                                            <option value="">Select Department</option>
-                                           <option value="asset">Asset</option>
+                                           <option value="asset">Assets</option>
                                            <option value="inventory">Inventory</option>
+                                           <option value="tyre">Tyres</option>
                                        </select>
                                         @error('department') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>

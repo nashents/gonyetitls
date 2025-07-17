@@ -54,7 +54,11 @@
                                 <tbody>
                                     @forelse ($inventories as $inventory)
                                   <tr> 
-                                    <td>{{$inventory->product->brand ? $inventory->product->brand->name : ""}} {{$inventory->product ? $inventory->product->name : ""}}</td>
+                                    <td>
+                                        @if ($inventory->product)
+                                            {{$inventory->product->brand ? $inventory->product->brand->name : ""}} {{$inventory->product ? $inventory->product->name : ""}}
+                                        @endif
+                                    </td>    
                                     <td>{{$inventory->serial_number ? "SN#: ".$inventory->serial_number : ""}} {{$inventory->product->identification_number ? "PN#: ".$inventory->product->identification_number : ""}}</td>
                                     <td>
                                         @if ($inventory->store)
