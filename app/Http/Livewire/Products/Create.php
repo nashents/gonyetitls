@@ -31,7 +31,7 @@ class Create extends Component
     public $status;
     public $name;
     public $model;
-    public $product_number;
+
     public $identification_number;
     public $manufacturer;
     public $description;
@@ -114,7 +114,7 @@ class Create extends Component
 
     public function mount($category){
         $this->brands = Brand::orderBy('name','asc')->get();
-        $this->product_number =$this->productNumber();
+       
         $this->categories = Category::orderBy('name','asc')->get();
         $this->category_values = CategoryValue::orderBy('name','asc')->get();
         $this->department = $category;
@@ -243,7 +243,7 @@ class Create extends Component
         $product->category_value_id = $this->selectedCategoryValue;
         $product->brand_id = $this->brand_id;
         $product->name = $this->name;
-        $product->product_number = $this->product_number;
+        $product->product_number = $this->productNumber();;
         $product->identification_number = $this->identification_number;
         $product->price = $this->buy_price;
         $product->unit_of_measure = $this->unit_of_measure;
