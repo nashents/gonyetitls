@@ -455,7 +455,8 @@
                         </div>
                         @if ($items == True)   
 
-                            @if ($this->requisition_for != "Trips")
+                            @if ($this->requisition_for && $this->requisition_for != "Trip")
+
                                  <div class="row">
                                     <div class="col-md-5">
                                         <div class="form-group">
