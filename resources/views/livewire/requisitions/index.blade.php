@@ -621,7 +621,7 @@
                             </div>
                             <br>
                             @endforeach
-                            @if ($requisition_for != "Trip")
+                            @if (!in_array($this->requisition_for, ['Trip', 'Purchase']))
                                 <div class="row">
                                     <div class="col-md-12">
                                         <div class="form-group">
@@ -759,7 +759,7 @@
                                 </div>
                             </div>
                             <div class="col-md-3">
-                                @if ($requisition_for == "Trip" || $requisition_for == "Purchase" || $requisition_for == "Booking")
+                                @if (in_array($this->requisition_for, ['Trip', 'Purchase', 'Booking']))
                                     <div class="form-group">
                                         <label for="Product">Expense Category</label>
                                         <select wire:model.debounce.300ms="selectedAccount" class="form-control" disabled>
@@ -804,24 +804,38 @@
                         
                             @if ($requisition_items)
                                 @foreach ($requisition_items as $key => $value)
+                                 <div class="mt-15" style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">
                                     <div class="row">
-                                        <div class="col-md-5">
-                                            <div class="form-group">
-                                                <label for="country">Items<span class="required" style="color: red">*</span></label>
-                                                <select wire:model.debounce.300ms="current_selectedProduct.{{$key}}" class="form-control" required>
-                                                <option value="">Select Item</option>
-                                                    @foreach ($products as $product)
-                                                        <option value="{{$product->id}}">
-                                                            <strong>{{$product->name}}</strong> {{$product->description ? "| ".$product->description : ""}}
-                                                        </option> 
-                                                    @endforeach
-                                                </select>
-                                                <small>
-                                                    <a href="{{route('product_services.all',['category' => 'bills'])}}" target="_blank"><i class="fa fa-plus-square-o"></i> New Product / Service</a>
-                                                    <a href="#" wire:click.prevent="refresh('products')"  style="float: right; margin-top:5px;"><i class="fa fa-refresh" aria-hidden="true"></i></a>
-                                                </small> 
-                                                @error('current_selectedProduct.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                            </div>
+                                        <div class="col-md-4">
+                                            @if ($requisition_for == "Trip")
+                                                <div class="form-group">
+                                                    <label for="country">Expenses<span class="required" style="color: red">*</span></label>
+                                                    <select wire:model.debounce.300ms="current_expense_id.{{ $key }}" {{in_array($this->requisition_for, ['Trip', 'Purchase']) ? "disabled" : ""}} class="form-control" required >
+                                                        <option value="">Select Expense</option>
+                                                        @foreach ($expenses as $expense)
+                                                        <option value="{{ $expense->id }}">{{ $expense->name }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                    @error('current_expense_id.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                </div>
+                                            @else
+                                                <div class="form-group">
+                                                    <label for="country">Items<span class="required" style="color: red">*</span></label>
+                                                    <select wire:model.debounce.300ms="current_selectedProduct.{{$key}}" class="form-control" required {{in_array($this->requisition_for, ['Trip', 'Purchase']) ? "disabled" : ""}}>
+                                                        <option value="">Select Item</option>
+                                                        @foreach ($products as $product)
+                                                            <option value="{{$product->id}}">
+                                                                <strong>{{$product->name}}</strong> {{$product->description ? "| ".$product->description : ""}}
+                                                            </option> 
+                                                        @endforeach
+                                                    </select>
+                                                    <small>
+                                                        <a href="{{route('product_services.all',['category' => 'bills'])}}" target="_blank"><i class="fa fa-plus-square-o"></i> New Product / Service</a>
+                                                        <a href="#" wire:click.prevent="refresh('products')"  style="float: right; margin-top:5px;"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                                    </small> 
+                                                    @error('current_selectedProduct.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                </div>
+                                            @endif
                                         </div>
                                         <div class="col-md-3">
                                             <div class="form-group">
@@ -872,11 +886,20 @@
                                                 @error('current_amount.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         </div>
+                                        <div class="col-md-1">
+                                            <div class="form-group">
+                                                <label for=""></label>
+                                                <button class="btn btn-danger btn-rounded xs" style="margin-top:23px"  wire:click.prevent="remove({{$key}})"> <i class="fa fa-times"></i></button>
+                                            </div>
+                                        </div>
                                     </div>
+                                 </div>
+                                 <br>
                                 @endforeach
                             @endif
 
                             @foreach ($inputs as $key => $value)
+                             <div class="mt-15" style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">
                                 <div class="row">
                                     <div class="col-md-4">
                                         @if ($requisition_for == "Trip")
@@ -965,9 +988,9 @@
                                         </div>
                                     </div>
                                 </div>
-                        
+                             <br>
                             @endforeach
-                            @if ($requisition_for != "Trip")
+                            @if (!in_array($this->requisition_for, ['Trip', 'Purchase']))
                                 <div class="row">
                                     <div class="col-md-12">
                                         <div class="form-group">

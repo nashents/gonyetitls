@@ -1156,7 +1156,7 @@ class Index extends Component
                 if (isset($this->search)) {
                     return view('livewire.trips.index',[
                         'trips' => Trip::query()->with(['breakdowns','breakdown_assignments','trip_destinations','trip_expenses','trip_locations','delivery_note','fuel:id,order_number','transporter:id,name','trip_type:id,name','border:id,name',
-                        'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model',
+                        'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model','vehicle','vehicle.vehicle_make','vehicle.vehicle_model',
                         'trailers:id,make,model,registration_number','driver.employee:id,name,surname','loading_point:id,name','offloading_point:id,name',
                         'route:id,name,rank','truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name','commission:id,commission,amount'])
                         ->whereHas('delivery_note', function ($query) {
@@ -1180,11 +1180,14 @@ class Index extends Component
                             return $query->where('name', 'like', '%'.$this->search.'%');
                         })
                         ->orWhereHas('horse', function ($query) {
-                            return $query->where('registration_number', 'like', '%'.$this->search.'%');
+                            return $query->where('registration_number', 'like', '%'.$this->search.'%')
+                            ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
                         })
-                        ->orWhereHas('horse', function ($query) {
-                            return $query->where('fleet_number', 'like', '%'.$this->search.'%');
+                        ->orWhereHas('vehicle', function ($query) {
+                            return $query->where('registration_number', 'like', '%'.$this->search.'%')
+                            ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
                         })
+                      
                         ->orWhereHas('user.employee', function ($query) {
                             return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
                         })
@@ -1210,7 +1213,7 @@ class Index extends Component
                 }else {
                     return view('livewire.trips.index',[
                         'trips' => Trip::query()->with(['breakdowns','breakdown_assignments','trip_destinations','trip_expenses','trip_locations','delivery_note','fuel:id,order_number','transporter:id,name','trip_type:id,name','border:id,name',
-                        'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model',
+                        'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model','vehicle','vehicle.vehicle_make','vehicle.vehicle_model',
                         'trailers:id,make,model,registration_number','driver.employee:id,name,surname','loading_point:id,name','offloading_point:id,name',
                         'route:id,name,rank','truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name','commission:id,commission,amount'])
                         ->whereHas('delivery_note', function ($query) {
@@ -1227,7 +1230,7 @@ class Index extends Component
                
                 return view('livewire.trips.index',[
                     'trips' => Trip::query()->with(['breakdowns','breakdown_assignments','trip_destinations','trip_expenses','trip_locations','delivery_note','fuel:id,order_number','transporter:id,name','trip_type:id,name','border:id,name',
-                    'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model',
+                    'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model','vehicle','vehicle.vehicle_make','vehicle.vehicle_model',
                     'trailers:id,make,model,registration_number','driver.employee:id,name,surname','loading_point:id,name','offloading_point:id,name',
                     'route:id,name,rank','truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name','commission:id,commission,amount'])
                     ->whereHas('delivery_note', function ($query) {
@@ -1260,11 +1263,13 @@ class Index extends Component
                     ->orWhereHas('transporter', function ($query) {
                         return $query->where('name', 'like', '%'.$this->search.'%');
                     })
-                    ->orWhereHas('horse', function ($query) {
-                        return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('horse', function ($query) {
-                        return $query->where('fleet_number', 'like', '%'.$this->search.'%');
+                   ->orWhereHas('horse', function ($query) {
+                            return $query->where('registration_number', 'like', '%'.$this->search.'%')
+                            ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
+                        })
+                    ->orWhereHas('vehicle', function ($query) {
+                        return $query->where('registration_number', 'like', '%'.$this->search.'%')
+                        ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
                     })
                     ->orWhereHas('loading_point', function ($query) {
                         return $query->where('name', 'like', '%'.$this->search.'%');
@@ -1284,7 +1289,7 @@ class Index extends Component
                
                 return view('livewire.trips.index',[
                     'trips' => Trip::query()->with(['breakdowns','breakdown_assignments','trip_destinations','trip_expenses','trip_locations','delivery_note','fuel:id,order_number','transporter:id,name','trip_type:id,name','border:id,name',
-                    'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model',
+                    'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model','vehicle','vehicle.vehicle_make','vehicle.vehicle_model',
                     'trailers:id,make,model,registration_number','driver.employee:id,name,surname','loading_point:id,name','offloading_point:id,name',
                     'route:id,name,rank','truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name','commission:id,commission,amount'])
                     ->whereHas('delivery_note', function ($query) {
@@ -1304,7 +1309,7 @@ class Index extends Component
                 if (isset($this->search)) {
                     return view('livewire.trips.index',[
                         'trips' => Trip::query()->with(['breakdowns','breakdown_assignments','trip_destinations','trip_expenses','trip_locations','delivery_note','fuel:id,order_number','transporter:id,name','trip_type:id,name','border:id,name',
-                        'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model',
+                        'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model','vehicle','vehicle.vehicle_make','vehicle.vehicle_model',
                         'trailers:id,make,model,registration_number','driver.employee:id,name,surname','loading_point:id,name','offloading_point:id,name',
                         'route:id,name,rank','truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name','commission:id,commission,amount'])->whereBetween($this->trip_filter,[$this->from, $this->to] )
                         ->where('trip_number','like', '%'.$this->search.'%')
@@ -1325,10 +1330,12 @@ class Index extends Component
                             return $query->where('name', 'like', '%'.$this->search.'%');
                         })
                         ->orWhereHas('horse', function ($query) {
-                            return $query->where('registration_number', 'like', '%'.$this->search.'%');
+                            return $query->where('registration_number', 'like', '%'.$this->search.'%')
+                            ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
                         })
-                        ->orWhereHas('horse', function ($query) {
-                            return $query->where('fleet_number', 'like', '%'.$this->search.'%');
+                        ->orWhereHas('vehicle', function ($query) {
+                            return $query->where('registration_number', 'like', '%'.$this->search.'%')
+                            ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
                         })
                        ->orWhereHas('user.employee', function ($query) {
                             return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
@@ -1354,7 +1361,7 @@ class Index extends Component
                 }else {
                     return view('livewire.trips.index',[
                         'trips' => Trip::query()->with(['breakdowns','breakdown_assignments','trip_destinations','trip_expenses','trip_locations','delivery_note','fuel:id,order_number','transporter:id,name','trip_type:id,name','border:id,name',
-                        'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model',
+                        'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model','vehicle','vehicle.vehicle_make','vehicle.vehicle_model',
                         'trailers:id,make,model,registration_number','driver.employee:id,name,surname','loading_point:id,name','offloading_point:id,name',
                         'route:id,name,rank','truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name','commission:id,commission,amount'])->whereBetween($this->trip_filter,[$this->from, $this->to] )->orderBy($this->trip_filter,'desc')->paginate(10),
                         'trip_filter' => $this->trip_filter
@@ -1366,7 +1373,7 @@ class Index extends Component
                
                 return view('livewire.trips.index',[
                     'trips' => Trip::query()->with(['breakdowns','breakdown_assignments','trip_destinations','trip_expenses','trip_locations','delivery_note','fuel:id,order_number','transporter:id,name','trip_type:id,name','border:id,name',
-                    'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model',
+                    'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model','vehicle','vehicle.vehicle_make','vehicle.vehicle_model',
                     'trailers:id,make,model,registration_number','driver.employee:id,name,surname','loading_point:id,name','offloading_point:id,name',
                     'route:id,name,rank','truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name','commission:id,commission,amount'])->whereMonth($this->trip_filter, date('m'))
                     ->whereYear($this->trip_filter, date('Y'))
@@ -1396,11 +1403,13 @@ class Index extends Component
                     ->orWhereHas('transporter', function ($query) {
                         return $query->where('name', 'like', '%'.$this->search.'%');
                     })
-                    ->orWhereHas('horse', function ($query) {
-                        return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('horse', function ($query) {
-                        return $query->where('fleet_number', 'like', '%'.$this->search.'%');
+                   ->orWhereHas('horse', function ($query) {
+                            return $query->where('registration_number', 'like', '%'.$this->search.'%')
+                            ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
+                        })
+                    ->orWhereHas('vehicle', function ($query) {
+                        return $query->where('registration_number', 'like', '%'.$this->search.'%')
+                        ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
                     })
                     ->orWhereHas('loading_point', function ($query) {
                         return $query->where('name', 'like', '%'.$this->search.'%');
@@ -1419,7 +1428,7 @@ class Index extends Component
                
                 return view('livewire.trips.index',[
                     'trips' => Trip::query()->with(['breakdowns','breakdown_assignments','trip_destinations','trip_expenses','trip_locations','delivery_note','fuel:id,order_number','transporter:id,name','trip_type:id,name','border:id,name',
-                    'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model',
+                    'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model','vehicle','vehicle.vehicle_make','vehicle.vehicle_model',
                     'trailers:id,make,model,registration_number','driver.employee:id,name,surname','loading_point:id,name','offloading_point:id,name',
                     'route:id,name,rank','truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name','commission:id,commission,amount'])->whereMonth($this->trip_filter, date('m'))
                     ->whereYear($this->trip_filter, date('Y'))->orderBy($this->trip_filter,'desc')->paginate(10),
