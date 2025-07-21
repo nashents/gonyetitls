@@ -58,7 +58,6 @@ class Index extends Component
     public $requisition_number;
     public $subject;
     public $requisition_id;
-    public $items = False;
     public $employees;
     public $employee;
     public $employee_id;
@@ -151,7 +150,7 @@ class Index extends Component
         $this->subtotal = Null;
         $this->requisition_for = Null;
         $this->inputs = [];
-        $this->items = False;
+   
 
         $this->item_name = '';
         $this->item_description = '';
@@ -207,10 +206,16 @@ class Index extends Component
         ]);
     }
 
+    public function updatedSelectedBooking(){
+        if (!is_null($id)) {
+         
+        }
+    }
+
     public function updatedSelectedTrip($id)
     {   
         if (!is_null($id)) {
-
+             
             $trip = Trip::with('trip_expenses')->find($id);
            
             if ($trip && $trip->trip_expenses) {
@@ -241,7 +246,7 @@ class Index extends Component
     public function updatedSelectedPurchase($id)
     {   
         if (!is_null($id)) {
-
+        
             $purchase = Purchase::with('purchase_products')->find($id);
            
             if ($purchase && $purchase->purchase_products) {
@@ -501,7 +506,6 @@ class Index extends Component
         $requisition->account_id = $this->selectedAccount;
         $requisition->date = $this->date;
         $requisition->description = $this->description;
-        $requisition->items = $this->items;
         $requisition->subject = $this->subject;
         $requisition->status = "Unpaid";
         $requisition->save();
@@ -647,7 +651,6 @@ class Index extends Component
         $this->subject = $requisition->subject;
         $this->requisition_id = $requisition->id;
         $this->requisition_items = $requisition->requisition_items;
-        $this->items = $requisition->items;
         if($this->requisition_items){
 
                  foreach ($this->requisition_items as $key => $requisition_item) {
@@ -684,7 +687,6 @@ class Index extends Component
         $requisition->date = $this->date;
         $requisition->description = $this->description;
         $requisition->subject = $this->subject;
-        $requisition->items = $this->items;
         $requisition->update();
 
         $items = [];
@@ -821,7 +823,7 @@ class Index extends Component
 
         if($this->requisition_for == 'Trip'){
 
-          
+        
 
             if (filled($this->searchTrip)) {
                 $this->trips = Trip::query()->with(['customer:id,name',
@@ -853,6 +855,7 @@ class Index extends Component
                 ->get();
             }
         }elseif($this->requisition_for == 'Booking'){
+           
                
                 if (filled($this->searchBooking)) {
                     $this->bookings = Booking::query()->with([
@@ -885,6 +888,7 @@ class Index extends Component
                 }
             
         }elseif($this->requisition_for == 'Purchase'){
+           
            
               if (filled($this->searchPurchase)) {
                     $this->purchases = Purchase::query()->with(['vendor','currency'])
