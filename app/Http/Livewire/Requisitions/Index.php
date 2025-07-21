@@ -151,6 +151,7 @@ class Index extends Component
         $this->subtotal = Null;
         $this->requisition_for = Null;
         $this->inputs = [];
+        $this->items = False;
 
         $this->item_name = '';
         $this->item_description = '';
@@ -228,6 +229,37 @@ class Index extends Component
                     $this->qty[$index] = 1;
                     $this->exchange_rate[$index] = $trip_expense->exchange_rate;
                     $this->exchange_amount[$index] = $trip_expense->exchange_amount;
+
+                    $index++;
+                }
+
+                $this->i = $index - 1;
+            }
+        }
+    }
+
+    public function updatedSelectedPurchase($id)
+    {   
+        if (!is_null($id)) {
+
+            $purchase = Purchase::with('purchase_products')->find($id);
+           
+            if ($purchase && $purchase->purchase_products) {
+                $this->reset(['inputs', 'selectedCurrency', 'selected_currency', 'amount', 'qty', 'exchange_rate', 'exchange_amount']);
+
+                $index = 0;
+
+                foreach ($purchase->purchase_products as $purchase_product) {
+                    
+                    $this->inputs[] = $index;
+
+                    $this->selectedProduct[$index] = $purchase_product->product_id;
+                    $this->selectedCurrency[$index] = $purchase_product->currency_id;
+                    $this->selected_currency[$index] = $purchase_product->currency;
+                    $this->amount[$index] = $purchase_product->amount;
+                    $this->qty[$index] = 1;
+                    $this->exchange_rate[$index] = $purchase_product->exchange_rate;
+                    $this->exchange_amount[$index] = $purchase_product->exchange_amount;
 
                     $index++;
                 }
@@ -788,7 +820,9 @@ class Index extends Component
     {
 
         if($this->requisition_for == 'Trip'){
-            $this->items = True;
+
+          
+
             if (filled($this->searchTrip)) {
                 $this->trips = Trip::query()->with(['customer:id,name',
                 'horse:id,registration_number,fleet_number',
@@ -819,7 +853,7 @@ class Index extends Component
                 ->get();
             }
         }elseif($this->requisition_for == 'Booking'){
-                $this->items = True;
+               
                 if (filled($this->searchBooking)) {
                     $this->bookings = Booking::query()->with([
                     'horse:id,registration_number',
@@ -851,6 +885,7 @@ class Index extends Component
                 }
             
         }elseif($this->requisition_for == 'Purchase'){
+           
               if (filled($this->searchPurchase)) {
                     $this->purchases = Purchase::query()->with(['vendor','currency'])
                     ->whereYear('date',date('Y'))

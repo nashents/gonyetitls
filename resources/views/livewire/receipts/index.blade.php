@@ -9,7 +9,6 @@
                             <div>
                                 @include('includes.messages')
                             </div>
-
                             {{-- <div class="panel-title">
                                 <a href="{{route('receipts.create')}}"  class="btn btn-default"><i class="fa fa-plus-square-o"></i>receipt</a>
                             </div> --}}

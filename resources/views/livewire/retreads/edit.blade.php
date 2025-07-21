@@ -80,13 +80,16 @@
                                         <select wire:model.debounce.300ms="tyre_id" class="form-control" required  multiple>
                                             <option value="">Select Tyre</option>
                                             @foreach ($tyres as $tyre)
-                                                <option value="{{$tyre->id}}">{{$tyre->tyre_number}}  {{$tyre->product->brand ? $tyre->product->brand->name : ""}} {{$tyre->product ? $tyre->product->name : ""}} - {{$tyre->serial_number}} ({{$tyre->width}} / {{$tyre->aspect_ratio}} R {{$tyre->diameter}})</option>
+                                                <option value="{{$tyre->id}}">{{$tyre->tyre_number}}
+                                                    @if ($tyre->product)
+                                                        {{$tyre->product->brand ? $tyre->product->brand->name : ""}} {{$tyre->product ? $tyre->product->name : ""}}
+                                                    @endif
+                                                     - {{$tyre->serial_number}} ({{$tyre->width}} / {{$tyre->aspect_ratio}} R {{$tyre->diameter}})
+                                                </option>
                                             @endforeach
                                         </select>
                                         @error('tyre_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
-                               
-                         
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
