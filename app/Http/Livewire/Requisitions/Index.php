@@ -254,8 +254,8 @@ class Index extends Component
                     $this->inputs[] = $index;
 
                     $this->selectedProduct[$index] = $purchase_product->product_id;
-                    $this->selectedCurrency[$index] = $purchase_product->currency_id;
-                    $this->selected_currency[$index] = $purchase_product->currency;
+                    $this->selectedCurrency[$index] = $purchase->currency_id;
+                    $this->selected_currency[$index] = $purchase->currency;
                     $this->amount[$index] = $purchase_product->amount;
                     $this->qty[$index] = 1;
                     $this->exchange_rate[$index] = $purchase_product->exchange_rate;
