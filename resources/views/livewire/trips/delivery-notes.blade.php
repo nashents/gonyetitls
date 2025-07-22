@@ -160,6 +160,10 @@
                             </td>
                         </tr>
                         @endif
+
+                        @if ($delivery_note)
+                            
+                      
                         <tr>
                             <th style="width: 30%; padding-left:20px;" >Loading Date</th>
                             <td>
@@ -474,6 +478,7 @@
                                 @endif
                             </td>
                         </tr>
+                          @endif
                     </tbody>
                 </table>
                 <table class="table table-condensed mb-0 border-top table-striped">
