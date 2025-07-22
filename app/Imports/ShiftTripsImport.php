@@ -48,15 +48,23 @@ WithBatchInserts
     * @return \Illuminate\Database\Eloquent\Model|null
     */
 
-    public $company;
-    public $trailer_ids;
-    public $transporter;
+    protected $company;
+    protected $initialShiftId;
+    
 
     public function __construct()
     {
+        $this->initialShiftId = Shift::max('id') ?? 0;
         $this->company = Auth::user()->employee->company;
-        $this->transporter = $this->company->transporters->first();
+    
     }
+
+    private function generateNumber($prefix, $id)
+    {
+        $initials = collect(explode(' ', $this->company->name))->map(fn($word) => $word[0])->implode('');
+        return $initials . $prefix . str_pad($id + 1, 5, '0', STR_PAD_LEFT);
+    }
+
 
     public function tripNumber(){
 
@@ -153,12 +161,12 @@ WithBatchInserts
 
                 $date = $this->parseExcelDate($row->get('date'))?->format('Y-m-d');
             
-                $horse = Horse::where('fleet_number', 'LIKE', '%' . trim($row->get('fleet_number')) . '%')->first();
-                $customer = Customer::where('name', 'LIKE', '%' . trim($row->get('customer')) . '%')->first();
-                $loading_point = LoadingPoint::where('name', 'LIKE', '%' . trim($row->get('loading_point')) . '%')->first();
-                $offloading_point = OffloadingPoint::where('name', 'LIKE', '%' . trim($row->get('offloading_point')) . '%')->first();
-                $cargo = Cargo::where('name', 'LIKE', '%' . trim($row->get('cargo')) . '%')->first();
-                $transporter = Transporter::where('name', 'LIKE', '%' . trim($row->get('transporter')) . '%')->first();
+                $horse = Horse::where('fleet_number',$row->get('fleet_number'))->first();
+                $customer = Customer::where('name',$row->get('customer'))->first();
+                $loading_point = LoadingPoint::where('name',$row->get('loading_point'))->first();
+                $offloading_point = OffloadingPoint::where('name',$row->get('offloading_point'))->first();
+                $cargo = Cargo::where('name',$row->get('cargo'))->first();
+                $transporter = Transporter::where('name',$row->get('transporter'))->first();
                
                 $driver_name = trim($row->get('driver'));
                 $driver = null;
@@ -200,6 +208,7 @@ WithBatchInserts
 
                 // Update or set remaining fields
                 $shift->user_id = Auth::id();
+                $shift->shift_number = $this->generateNumber('S', ++$this->initialShiftId);
                 $shift->shift_start_time =  $this->parseExcelTime($row->get('shift_start'));
                 $shift->shift_end_time =  $this->parseExcelTime($row->get('shift_end'));
                 $shift->for = "Trips";

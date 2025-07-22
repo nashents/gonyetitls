@@ -692,40 +692,46 @@ class DeliveryNotes extends Component
                
 
             }
-        }
-        
-        if ((is_numeric($this->delivery_note->loaded_weight) && $this->delivery_note->loaded_weight > 0 ) && ( is_numeric($this->delivery_note->offloaded_weight) && $this->delivery_note->offloaded_weight > 0 )) {
-            $this->weight_loss = $this->delivery_note->loaded_weight - $this->delivery_note->offloaded_weight;
-            if ((is_numeric($this->weight_loss) && $this->weight_loss > 0) && (is_numeric($this->trip->allowable_loss_weight) && $this->trip->allowable_loss_weight > 0)) {
-                $this->chargeable_weight_loss =   $this->weight_loss - $this->trip->allowable_loss_weight;
+
+            if ((is_numeric($this->delivery_note->loaded_weight) && $this->delivery_note->loaded_weight > 0 ) && ( is_numeric($this->delivery_note->offloaded_weight) && $this->delivery_note->offloaded_weight > 0 )) {
+                $this->weight_loss = $this->delivery_note->loaded_weight - $this->delivery_note->offloaded_weight;
+                if ((is_numeric($this->weight_loss) && $this->weight_loss > 0) && (is_numeric($this->trip->allowable_loss_weight) && $this->trip->allowable_loss_weight > 0)) {
+                    $this->chargeable_weight_loss =   $this->weight_loss - $this->trip->allowable_loss_weight;
+                }
+            }
+
+            if ((is_numeric($this->delivery_note->loaded_quantity) && $this->delivery_note->loaded_quantity > 0 ) && (is_numeric($this->delivery_note->offloaded_quantity) && $this->delivery_note->offloaded_quantity > 0) ) {
+                $this->quantity_loss = $this->delivery_note->loaded_quantity - $this->delivery_note->offloaded_quantity;
+            }
+
+             if ((is_numeric($this->delivery_note->loaded_litreage) && $this->delivery_note->loaded_litreage > 0) && (is_numeric($this->delivery_note->offloaded_litreage) && $this->delivery_note->offloaded_litreage > 0)) {
+            $this->litreage_loss = $this->delivery_note->loaded_litreage - $this->delivery_note->offloaded_litreage;
+            }
+
+            if ((is_numeric($this->delivery_note->loaded_litreage_at_20) && $this->delivery_note->loaded_litreage_at_20 > 0 ) && (is_numeric($this->delivery_note->offloaded_litreage_at_20) && $this->delivery_note->offloaded_litreage_at_20 > 0)) {
+                $this->litreage_at_20_loss = $this->delivery_note->loaded_litreage_at_20 - $this->delivery_note->offloaded_litreage_at_20;
+            }
+
+            if ((is_numeric($this->litreage_at_20_loss) && $this->litreage_at_20_loss > 0) && (is_numeric($this->trip->allowable_loss_litreage) && $this->trip->allowable_loss_litreage > 0)) {
+                $this->chargeable_litreage_loss =   $this->litreage_at_20_loss - $this->trip->allowable_loss_litreage;
+            }
+
+            if ((is_numeric($this->delivery_note->loaded_freight) && $this->delivery_note->loaded_freight > 0) && (is_numeric($this->delivery_note->offloaded_freight) && $this->delivery_note->offloaded_freight > 0)) {
+                $this->freight_loss = $this->delivery_note->loaded_freight - $this->delivery_note->offloaded_freight;
             }
         }
+        
+        
 
        
 
-        if ((is_numeric($this->delivery_note->loaded_quantity) && $this->delivery_note->loaded_quantity > 0 ) && (is_numeric($this->delivery_note->offloaded_quantity) && $this->delivery_note->offloaded_quantity > 0) ) {
-            $this->quantity_loss = $this->delivery_note->loaded_quantity - $this->delivery_note->offloaded_quantity;
-        }
+       
 
         if ((is_numeric($this->quantity_loss) && $this->quantity_loss > 0) && (is_numeric($this->trip->allowable_loss_quantity) && $this->trip->allowable_loss_quantity > 0)) {
             $this->chargeable_quantity_loss =   $this->quantity_loss - $this->trip->allowable_loss_quantity;
         }
 
-        if ((is_numeric($this->delivery_note->loaded_litreage) && $this->delivery_note->loaded_litreage > 0) && (is_numeric($this->delivery_note->offloaded_litreage) && $this->delivery_note->offloaded_litreage > 0)) {
-            $this->litreage_loss = $this->delivery_note->loaded_litreage - $this->delivery_note->offloaded_litreage;
-        }
-
-        if ((is_numeric($this->delivery_note->loaded_litreage_at_20) && $this->delivery_note->loaded_litreage_at_20 > 0 ) && (is_numeric($this->delivery_note->offloaded_litreage_at_20) && $this->delivery_note->offloaded_litreage_at_20 > 0)) {
-            $this->litreage_at_20_loss = $this->delivery_note->loaded_litreage_at_20 - $this->delivery_note->offloaded_litreage_at_20;
-        }
-
-        if ((is_numeric($this->litreage_at_20_loss) && $this->litreage_at_20_loss > 0) && (is_numeric($this->trip->allowable_loss_litreage) && $this->trip->allowable_loss_litreage > 0)) {
-            $this->chargeable_litreage_loss =   $this->litreage_at_20_loss - $this->trip->allowable_loss_litreage;
-           }
-
-        if ((is_numeric($this->delivery_note->loaded_freight) && $this->delivery_note->loaded_freight > 0) && (is_numeric($this->delivery_note->offloaded_freight) && $this->delivery_note->offloaded_freight > 0)) {
-            $this->freight_loss = $this->delivery_note->loaded_freight - $this->delivery_note->offloaded_freight;
-        }
+       
      
         return view('livewire.trips.delivery-notes');
     }
