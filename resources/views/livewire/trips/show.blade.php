@@ -409,7 +409,7 @@
                                                             <tr>
                                                                 <th scope="row">Actual Offloading Date</th>
                                                                 <td>
-                                                                    {{$delivery_note->offloaded_date}}
+                                                                    {{$trip->delivery_note? $trip->delivery_note->offloaded_date : ""}}
                                                                 </td>
                                                             </tr>
                                                             @if (isset($trip->start_date) && isset($trip->end_date))

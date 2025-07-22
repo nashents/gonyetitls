@@ -163,8 +163,14 @@ WithBatchInserts
                 $driver_name = trim($row->get('driver'));
                 $driver = null;
 
+                 $driver_name = trim($row->get('driver')); 
+                $driver = null;
+              
+
                 if ($driver_name) {
-                    $name_parts = explode(' ', $driver_name);
+                    // Use regex to split and clean up whitespace
+                    $name_parts = preg_split('/\s+/', $driver_name, -1, PREG_SPLIT_NO_EMPTY);
+                  
                     if (count($name_parts) >= 2) {
                         $name = $name_parts[0];
                         $surname = $name_parts[1] ?? $name_parts[2] ?? null;
@@ -173,6 +179,14 @@ WithBatchInserts
                                 ->where('surname', 'LIKE', "%$surname%")
                                 ->first();
                             $driver = $employee?->driver;
+                        }
+                    }
+
+                    if (count($name_parts) === 1) {
+                        $surname = $name_parts[0];
+                        if ($surname) {
+                            $employee = Employee::where('surname', 'LIKE', "%$surname%")->first();
+                            $driver = $employee?->driver;    
                         }
                     }
                 }
