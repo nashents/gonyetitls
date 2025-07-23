@@ -190,7 +190,9 @@
                                                    @if ($payment->receipt)
                                                    <li><a href="{{route('receipts.preview',$payment->receipt->id)}}"  ><i class="fas fa-receipt color-primary"></i> Receipt</a></li>
                                                    @endif    
-                                                   {{-- <li><a href="#" data-toggle="modal" data-target="#paymentDeleteModal{{$payment->id}}"><i class="fas fa-trash color-danger"></i>Delete</a></li>  --}}
+                                                   @if (Auth::user()->is_admin())
+                                                        <li><a href="#" data-toggle="modal" data-target="#paymentDeleteModal{{$payment->id}}"><i class="fas fa-trash color-danger"></i>Delete</a></li> 
+                                                   @endif
                                                 </ul>
                                             </div>
                                      

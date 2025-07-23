@@ -88,15 +88,15 @@ class PaymentController extends Controller
         $payment_account = $payment->account;
         $customer_account = Account::find($payment->customer_account_id);
         
-        if (isset($payment_account)) {
+        if ($payment_account) {
             $payment_account->balance = $payment_account->balance - $payment->amount;
             $payment_account->update();
         }
-        if (isset($customer_account)) {
+        if ($customer_account) {
             $customer_account->balance = $customer_account->balance - $payment->amount;
             $customer_account->update();
         }
-        if (isset($invoice)) {
+        if ($invoice) {
             $invoice->balance = $invoice->balance + $payment->amount;
             if ($invoice->balance == $invoice->total) {
                 $invoice->status = "Unpaid";
