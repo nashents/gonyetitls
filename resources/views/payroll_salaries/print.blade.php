@@ -109,31 +109,31 @@ Payslip Print |@if (Auth::user()->employee->company)
                                    
 
                                 </tbody>
-                                <tfoot>
+                                    <tfoot>
                                     <tr>
                                         <td colspan="1"></td>
                                         <td colspan="2">Basic Pay</td>
-                                        <td class="text-right">  {{$payroll_salary_item->payroll_salary->salary->currency->symbol}}{{number_format($payroll_salary->basic,2)}}</td>
+                                        <td class="text-right">  {{$payroll_salary->salary->currency->symbol}}{{number_format($payroll_salary->basic,2)}}</td>
                                     </tr>
                                     <tr>
                                         <td colspan="1"></td>
                                         <td colspan="2">Total Earnings</td>
-                                        <td class="text-right">  {{$payroll_salary_item->payroll_salary->salary->currency->symbol}}{{number_format($payroll_salary->total_allowances,2)}}</td>
+                                        <td class="text-right">  {{$payroll_salary->salary->currency->symbol}}{{number_format($payroll_salary->total_allowances,2)}}</td>
                                     </tr>
                                     <tr>
                                         <td colspan="1"></td>
                                         <td colspan="2">Total Deductions</td>
-                                        <td class="text-right">  {{$payroll_salary_item->payroll_salary->salary->currency->symbol}}{{number_format($payroll_salary->total_deductions,2)}}</td>
+                                        <td class="text-right">  {{$payroll_salary->salary->currency->symbol}}{{number_format($payroll_salary->total_deductions,2)}}</td>
                                     </tr>
                                     <tr>
                                         <td colspan="1"></td>
                                         <td colspan="2">Gross Pay</td>
-                                        <td class="text-right">  {{$payroll_salary_item->payroll_salary->salary->currency->symbol}}{{number_format($payroll_salary->gross,2)}}</td>
+                                        <td class="text-right">  {{$payroll_salary->salary->currency->symbol}}{{number_format($payroll_salary->gross,2)}}</td>
                                     </tr>
                                     <tr>
                                         <td colspan="1"></td>
                                         <td colspan="2">Net Pay</td>
-                                        <td class="text-right">  {{$payroll_salary_item->payroll_salary->salary->currency->symbol}}{{number_format($payroll_salary->net,2)}}</td>
+                                        <td class="text-right">  {{$payroll_salary->salary->currency->symbol}}{{number_format($payroll_salary->net,2)}}</td>
                                     </tr>
                                 </tfoot>
                             </table>
