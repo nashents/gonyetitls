@@ -2379,7 +2379,7 @@ class Create extends Component
             ]);
         }
         elseif($category == 'stations'){
-            $this->containers = Container::orderBy('name','asc')->latest()->get();
+            $this->containers = Container::orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Fueling Stations Refreshed Successfully!!."

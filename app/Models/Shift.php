@@ -35,6 +35,12 @@ class Shift extends Model implements Auditable
     public function driver(){
         return $this->belongsTo('App\Models\Driver');
     }
+    public function currency(){
+        return $this->belongsTo('App\Models\Currency');
+    }
+    public function company(){
+        return $this->belongsTo('App\Models\Company');
+    }
     public function fuel(){
         return $this->hasOne('App\Models\Fuel');
     }
@@ -58,6 +64,7 @@ class Shift extends Model implements Auditable
         'type',
         'date',
         'driver_id',
+        'company_id',
         'user_id',
         'shift_number',
         'shift_start_time',
@@ -65,6 +72,7 @@ class Shift extends Model implements Auditable
         'horse_id',
         'vehicle_id',
         'customer_id',
+        'currency_id',
         'transporter_id',
         'cargo_id',
         'actual_mileage',
@@ -72,6 +80,7 @@ class Shift extends Model implements Auditable
         'open_mileage',
         'close_mileage',
         'fuel_consumption_mileage',
+        'fuel_consumption_hours',
         'equipment',
         'total_loads',
         'total_fuel',
@@ -85,5 +94,7 @@ class Shift extends Model implements Auditable
         'arrive_location_time',
         'depart_location_time',
         'arrive_workshop_time',
+        'total_weight',
+        'freight',
     ];
 }

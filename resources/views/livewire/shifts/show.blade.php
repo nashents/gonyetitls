@@ -99,6 +99,15 @@
                                 <th class="w-10 text-center line-height-35">Total Loads</th>
                                 <td class="w-20 line-height-35">{{$shift->total_loads}}</td>
                             </tr>
+                            <tr>
+                                <th class="w-10 text-center line-height-35">Total Weight</th>
+                                <td class="w-20 line-height-35">{{$shift->total_weight ? $shift->total_weight : "tons"}}</td>
+                            </tr>
+                           
+                             <tr>
+                                <th class="w-10 text-center line-height-35">Total Freight</th>
+                                <td class="w-20 line-height-35">{{$shift->currency ? $shift->currency->name : ""}} {{$shift->currency ? $shift->currency->symbol : ""}}{{number_format($shift->total_freight,2)}}</td>
+                            </tr>
                              <tr>
                                 <th class="w-10 text-center line-height-35">Shift Open Mileage</th>
                                 <td class="w-20 line-height-35">{{$shift->open_mileage ? number_format($shift->open_mileage,2)." Kms" : ""}}</td>

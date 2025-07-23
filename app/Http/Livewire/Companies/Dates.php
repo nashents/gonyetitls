@@ -16,6 +16,7 @@ class Dates extends Component
     public $company_id;
     public $user_id;
     public $admin_id;
+    public $default_rate;
     public $interest;
     public $rates_managed_by_finance;
 
@@ -28,6 +29,7 @@ class Dates extends Component
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->currency_id = $company->currency_id;
         $this->interest = $company->interest;
+        $this->default_rate = $company->default_rate;
         $this->frequency = $company->exchange_rate_frequency;
         $this->rates_managed_by_finance = $company->rates_managed_by_finance;
 
@@ -39,6 +41,7 @@ class Dates extends Component
         $company->currency_id = $this->currency_id;
         $company->exchange_rate_frequency = $this->frequency;
         $company->interest = $this->interest;
+        $company->default_rate = $this->default_rate;
         $company->update();
 
         $this->dispatchBrowserEvent('alert',[

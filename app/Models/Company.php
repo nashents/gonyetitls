@@ -18,6 +18,9 @@ class Company extends Model  implements Auditable
     public function sales(){
         return $this->hasMany('App\Models\Sale');
     }
+    public function shifts(){
+        return $this->hasMany('App\Models\Shift');
+    }
     public function receipts(){
         return $this->hasMany('App\Models\Receipt');
     }

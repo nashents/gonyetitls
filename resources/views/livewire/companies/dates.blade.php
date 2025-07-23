@@ -43,14 +43,21 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="vat">Default Shifts Rate</label>
+                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="default_rate" placeholder="Default Shift Rate" >
+                        @error('default_rate') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    </div>
+                </div>
+                <div class="col-md-4">
                     <div class="form-group">
                         <label for="vat">Interest Rate</label>
                         <input type="number" step="any" class="form-control" wire:model.debounce.300ms="interest" placeholder="Company Loans Interest %" >
                         @error('interest') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <div class="mb-10" style="margin-top:30px;">
                         <input type="checkbox" wire:model.debounce.300ms="rates_managed_by_finance"   class="line-style" />
                         <label for="one" class="radio-label">Trip Rates Managed By Finance</label>

@@ -1152,6 +1152,7 @@ class Index extends Component
         }
 
         if($this->trip_filter == "offloaded_date"){
+            
             if (isset($this->from) && isset($this->to)) {
                 if (isset($this->search)) {
                     return view('livewire.trips.index',[

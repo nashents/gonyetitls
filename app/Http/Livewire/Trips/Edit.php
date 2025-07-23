@@ -804,7 +804,7 @@ class Edit extends Component
         $this->company = Company::with('currency')->find( $this->employee->company_id);
         $this->defined_customer_rates = Rate::where('category','Customer')->with('loading_point:id,name','offloading_point:id,name')->latest()->get();
         $this->defined_transporter_rates = Rate::where('category','Transporter')->with('loading_point:id,name','offloading_point:id,name')->latest()->get();
-        $this->containers = Container::where('balance','>',0)->orderBy('name','asc')->latest()->get();
+        $this->containers = Container::orderBy('name','asc')->latest()->get();
         $this->transporters = Transporter::with('vehicles:id,registration_number','vehicles.vehicle_make:id,name','vehicles.vehicle_model:id,name','horses:id,registration_number','horses.horse_make:id,name','horses.horse_model:id,name','cargos:id,name','trailers:id,registration_number,make,model','drivers:id','drivers.employee:id,name,surname')->where('authorization','approved')->orderBy('name','asc')->get();
         $this->offloading_points = OffloadingPoint::orderBy('name','asc')->get();
         $this->loading_points = LoadingPoint::orderBy('name','asc')->get();
@@ -2809,7 +2809,7 @@ class Edit extends Component
                 ]);
             }
             elseif($category == 'stations'){
-                $this->containers = Container::orderBy('name','asc')->latest()->get();
+                $this->containers = Container::orderBy('name','asc')->get();
                 $this->dispatchBrowserEvent('alert',[
                     'type'=>'success',
                     'message'=>"Fueling Stations Refreshed Successfully!!."

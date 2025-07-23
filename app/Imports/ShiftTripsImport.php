@@ -148,116 +148,193 @@ WithBatchInserts
         return 2500; // Import only the first 100 rows
     }
 
+    private function calculateFuelConsumption($actual_mileage, $fuel)
+    {
+        if (is_numeric($actual_mileage) && $actual_mileage > 0 && is_numeric($fuel) && $fuel > 0) {
+            return round($actual_mileage / $fuel, 2); // km per litre
+        }
+        return null;
+    }
+
     public function collection(Collection $rows)
     {
+        foreach ($rows as $row) {
+          
+             if ($row->filter()->isNotEmpty()) {
 
-
-       foreach($rows as $row){
-            if($row->filter()->isNotEmpty()){
-                
+                 
                 $trip_number = $this->tripNumber();
                 $user_id = Auth::id();
                 $company_id = $this->company->id;
 
-                $date = $this->parseExcelDate($row->get('date'))?->format('Y-m-d');
-            
-                $horse = Horse::where('fleet_number',$row->get('fleet_number'))->first();
-                $customer = Customer::where('name',$row->get('customer'))->first();
-                $loading_point = LoadingPoint::where('name',$row->get('loading_point'))->first();
-                $offloading_point = OffloadingPoint::where('name',$row->get('offloading_point'))->first();
-                $cargo = Cargo::where('name',$row->get('cargo'))->first();
-                $transporter = Transporter::where('name',$row->get('transporter'))->first();
-               
+                $date = $this->parseExcelDate($row->get('date'))?->format('Y-m-d') ?? Carbon::today()->format('Y-m-d');
+
+                // Vehicle & Entities
+                $horse = Horse::where('fleet_number', $row->get('fleet_number'))->first();
+                $transporter = $horse?->transporter;
+
+                $customer = Customer::where('name', $row->get('customer'))->first();
+                $loading_point = LoadingPoint::where('name', $row->get('loading_point'))->first();
+                $offloading_point = OffloadingPoint::where('name', $row->get('offloading_point'))->first();
+                $cargo = Cargo::where('name', $row->get('cargo'))->first();
+
+                // Driver resolution
+                $employee = null;
+                $driver = null;
                 $driver_name = trim($row->get('driver'));
-                $driver = null;
-
-                 $driver_name = trim($row->get('driver')); 
-                $driver = null;
-              
-
                 if ($driver_name) {
-                    // Use regex to split and clean up whitespace
-                    $name_parts = preg_split('/\s+/', $driver_name, -1, PREG_SPLIT_NO_EMPTY);
-                  
-                    if (count($name_parts) >= 2) {
-                        $name = $name_parts[0];
-                        $surname = $name_parts[1] ?? $name_parts[2] ?? null;
-                        if ($surname) {
-                            $employee = Employee::where('name', 'LIKE', "%$name%")
-                                ->where('surname', 'LIKE', "%$surname%")
-                                ->first();
-                            $driver = $employee?->driver;
-                        }
-                    }
+                    $name_parts = preg_split('/\s+/', $driver_name);
 
-                    if (count($name_parts) === 1) {
-                        $surname = $name_parts[0];
-                        if ($surname) {
+                    if ($name_parts && count($name_parts) >= 2) {
+                        $name = $name_parts[0] ?? null;
+                        $surname = $name_parts[1] ?? null;
+
+                        if ($name && $surname) {
+                            $employee = Employee::where('name', 'LIKE', "%$name%")
+                                                ->where('surname', 'LIKE', "%$surname%")
+                                                ->first();
+                        } elseif ($surname) {
                             $employee = Employee::where('surname', 'LIKE', "%$surname%")->first();
-                            $driver = $employee?->driver;    
+                        }
+
+                    }elseif ($name_parts && count($name_parts) === 1) {
+                        $surname = $name_parts[0] ?? null;
+                       
+                       if ($surname) {
+                            $employee = Employee::where('surname', 'LIKE', "%$surname%")->first();
                         }
                     }
+                  
+                    $driver = $employee?->driver;
+
+                    
                 }
 
+                // Mileage
+                $open_mileage = $row->get('starting_mileage');
+                $close_mileage = $row->get('ending_mileage');
+                $actual_mileage = null;
 
-                $shift = Shift::firstOrNew([
-                    'type' => $row->get('shift'),
-                    'date' => $date,
-                    'driver_id' => $driver?->id,
-                ]);
+                if (is_numeric($open_mileage) && is_numeric($close_mileage) && $close_mileage >= $open_mileage) {
+                    $actual_mileage = $close_mileage - $open_mileage;
+                }
 
-                // Update or set remaining fields
-                $shift->user_id = Auth::id();
-                $shift->shift_number = $this->generateNumber('S', ++$this->initialShiftId);
-                $shift->shift_start_time =  $this->parseExcelTime($row->get('shift_start'));
-                $shift->shift_end_time =  $this->parseExcelTime($row->get('shift_end'));
-                $shift->for = "Trips";
-                $shift->horse_id = $horse?->id;
-                $shift->cargo_id = $cargo?->id;
-                $shift->customer_id = $customer?->id;
-                $shift->authorization = "approved";
-                $shift->authorized_by_id = Auth::id();
-                $shift->authorization_date = Carbon::today()->format('Y-m-d');
-                $shift->status = False;
-                $shift->save();
+                $fuel = $row->get('fuel');
+             
+                // Shift Creation
+                $shift = Shift::firstOrCreate(
+                    [
+                        'type' => $row->get('shift'),
+                        'date' => $date,
+                        'driver_id' => $driver?->id,
+                    ],
+                    [
+                        'user_id' => $user_id,
+                        'shift_number' => $this->generateNumber('S', ++$this->initialShiftId),
+                        'shift_start_time' => $this->parseExcelTime($row->get('shift_start')),
+                        'shift_end_time' => $this->parseExcelTime($row->get('shift_end')),
+                        'horse_id' => $horse?->id,
+                        'customer_id' => $customer?->id,
+                        'transporter_id' => $transporter?->id,
+                        'cargo_id' => $cargo?->id,
+                        'calculated_mileage' => $row->get('calculated_mileage'),
+                        'open_mileage' => $open_mileage,
+                        'close_mileage' => $close_mileage,
+                        'actual_mileage' => $actual_mileage,
+                        'fuel_consumption_mileage' => $this->calculateFuelConsumption($actual_mileage, $fuel),
+                        'equipment' => 'Horse',
+                        'total_fuel' => $fuel,
+                        'currency_id' => $this->company->currency_id,
+                        'company_id' => $this->company->id,
+                        'authorization' => 'approved',
+                        'authorized_by_id' => $user_id,
+                        'authorization_date' => $date,
+                        'status' => false,
+                        'for' => 'Trips',
+                    ]
+                );
+                if ($loading_point) {
+                     $shift->loading_points()->syncWithoutDetaching($loading_point->id);
+                }
+                if ($offloading_point) {
+                     $shift->offloading_points()->syncWithoutDetaching($offloading_point->id);
+                }
+             
+               
 
+                // Trip Timing
+                $arrive_loading_point = $this->parseExcelTime($row->get('arrive_loading_point'));
+                $depart_loading_point = $this->parseExcelTime($row->get('depart_loading_point'));
+                $arrive_offloading_point = $this->parseExcelTime($row->get('arrive_offloading_point'));
+                $depart_offloading_point = $this->parseExcelTime($row->get('depart_offloading_point'));
+
+                $weight = $row->get('weight');
+                $rate = $this->company->default_rate;
+                $freight = 0;
+
+                if (($weight && is_numeric($weight) && $weight>0) && ($rate && is_numeric($rate) && $rate > 0)) {
+                    $freight = $weight * $rate;
+                }
+                // Trip Creation
                 $trip = new Trip();
                 $trip->trip_number = $trip_number;
                 $trip->user_id = $user_id;
-                $trip->shift_id = $shift?->id;
+                $trip->shift_id = $shift->id;
                 $trip->company_id = $company_id;
                 $trip->transporter_id = $transporter?->id;
                 $trip->start_date = $date;
                 $trip->end_date = $date;
                 $trip->customer_id = $customer?->id;
                 $trip->cargo_id = $cargo?->id;
-                $trip->weight = $row->get('weight');
+                $trip->weight = $weight;
+                $trip->rate = $rate;
+                $trip->currency_id = $this->company->currency_id;
+                $trip->freight = $freight;
                 $trip->driver_id = $driver?->id;
                 $trip->horse_id = $horse?->id;
-                $trip->trip_status = "Offloaded";
+                $trip->trip_status = 'Offloaded';
                 $trip->trip_status_date = $date;
                 $trip->loading_point_id = $loading_point?->id;
-                $trip->arrive_loading_point =  $this->parseExcelTime($row->get('arrive_loading_point'));
-                $trip->loading_time = trim($row->get('loading_time'));
-                $trip->depart_loading_point =  $this->parseExcelTime($row->get('depart_loading_point'));
+                $trip->arrive_loading_point = $arrive_loading_point;
+                $trip->depart_loading_point = $depart_loading_point;
+                $trip->loading_time = $this->calculateTimeDifference($arrive_loading_point, $depart_loading_point);
                 $trip->offloading_point_id = $offloading_point?->id;
-                $trip->arrive_offloading_point=  $this->parseExcelTime($row->get('arrive_offloading_point'));
-                $trip->offloading_time = trim($row->get('offloading_time'));
-                $trip->depart_offloading_point =  $this->parseExcelTime($row->get('depart_offloading_point'));
-                $trip->starting_mileage = $row->get('starting_mileage');
-                $trip->ending_mileage = $row->get('ending_mileage');
-                $trip->actual_mileage = $row->get('actual_mileage');
-                $trip->calculated_mileage = $row->get('calculated_mileage');
-                $trip->trip_fuel = $row->get('fuel');
-                $trip->fuel_consumption = $row->get('fuel_consumption');
-                $trip->authorized_by_id = Auth::id();
-                $trip->authorization = "approved";
-                $trip->authorization_date = Carbon::today()->format('Y-m-d');
+                $trip->arrive_offloading_point = $arrive_offloading_point;
+                $trip->depart_offloading_point = $depart_offloading_point;
+                $trip->offloading_time = $this->calculateTimeDifference($arrive_offloading_point, $depart_offloading_point);
+                $trip->authorized_by_id = $user_id;
+                $trip->authorization = 'approved';
+                $trip->authorization_date = $date;
                 $trip->save();
 
+                $shift->load('trips');
+                $shift->total_loads = $shift->trips->count();
+                $shift->total_freight = $shift->trips->sum(function ($trip) {
+                    return is_numeric($trip->freight) ? $trip->freight : 0;
+                });
+
+                $shift->total_weight = $shift->trips->sum(function ($trip) {
+                    return is_numeric($trip->weight) ? $trip->weight : 0;
+                });
+                $shift->save();
+
             }
-       }
+
+        }
     }
+
+    // Helper method to calculate time difference in HH:MM
+    private function calculateTimeDifference($start, $end)
+    {
+        if ($start && $end) {
+            $start = $start instanceof Carbon ? $start : Carbon::parse($start);
+            $end = $end instanceof Carbon ? $end : Carbon::parse($end);
+            $diff = $end->diffInMinutes($start);
+            return sprintf('%02d:%02d', floor($diff / 60), $diff % 60);
+        }
+        return null;
+    }
+
 
     public function rules(): array{
         return[
