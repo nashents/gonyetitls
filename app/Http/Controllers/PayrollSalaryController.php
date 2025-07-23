@@ -23,11 +23,11 @@ class PayrollSalaryController extends Controller
     public function preview($id){
         $payroll_salary = PayrollSalary::find($id);
         $company = Auth::user()->employee->company;
-        $payroll_salary_details = $payroll_salary->payroll_salary_details;
+        $payroll_salary_items = $payroll_salary->payroll_salary_items;
         $employee = $payroll_salary->employee;
         return view('payroll_salaries.preview')->with([
             'payroll_salary' => $payroll_salary,
-            'payroll_salary_details' => $payroll_salary_details,
+            'payroll_salary_items' => $payroll_salary_items,
             'employee' => $employee,
             'company' => $company,
         ]);
@@ -36,11 +36,11 @@ class PayrollSalaryController extends Controller
     public function print($id){
         $payroll_salary = PayrollSalary::find($id);
         $company = Auth::user()->employee->company;
-        $payroll_salary_details = $payroll_salary->payroll_salary_details;
+        $payroll_salary_items = $payroll_salary->payroll_salary_items;
         $employee = $payroll_salary->employee;
         return view('payroll_salaries.print')->with([
             'payroll_salary' => $payroll_salary,
-            'payroll_salary_details' => $payroll_salary_details,
+            'payroll_salary_items' => $payroll_salary_items,
             'employee' => $employee,
             'company' => $company,
         ]);
@@ -49,11 +49,11 @@ class PayrollSalaryController extends Controller
     public function generatePDF($id){
       $payroll_salary = PayrollSalary::find($id);
       $company = Auth::user()->employee->company;
-      $payroll_salary_details = $payroll_salary->payroll_salary_details;
+      $payroll_salary_items = $payroll_salary->payroll_salary_items;
       $employee = $payroll_salary->employee;
         $data = [
             'payroll_salary' => $payroll_salary,
-            'payroll_salary_details' => $payroll_salary_details,
+            'payroll_salary_items' => $payroll_salary_items,
             'employee' => $employee,
             'company' => $company,
         ];

@@ -1394,8 +1394,8 @@
                 <li class="has-children">
                     <a href="#"><i class="fas fa-cog"></i> <span>Master</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
-                        <li class="has-children " style="padding-left:10px">
-                            <a href="#"><i class="fas fa-tasks"></i> <span>Fleet Inspections</span> <i class="fas fa-angle-right arrow"></i></a>
+                        <li class="has-children">
+                            <a href="#"><i class="fas fa-circle"></i> <span>Fleet Inspections</span> <i class="fas fa-angle-right arrow"></i></a>
                             <ul class="child-nav">
                                 <li class="{{ request()->routeIs('checklist_categories.index') ? 'active' : '' }}" style="padding-left: 10px"><a href="{{route('checklist_categories.index')}}" ><i class="fas fa-list "></i> <span>Checklists</span></a></li>
                                 <li class="{{ request()->routeIs('checklist_sub_categories.index') ? 'active' : '' }}" style="padding-left: 10px"><a href="{{route('checklist_sub_categories.index')}}"><i class="fas fa-list "></i> <span>Inspection Groups</span></a></li>
@@ -1411,28 +1411,6 @@
                         <li class="{{ request()->routeIs('inspection_types.index') ? 'active' : '' }}">
                             <a href="{{route('inspection_types.index')}}"><i class="fas fa-list"></i> <span>Inspection Items</span> </a>
                         </li>
-
-                        <li class="has-children {{ request()->routeIs('categories.index') ? 'active' : '' }}" >
-                            <a href="#"><i class="fas fa-sitemap"></i> <span>Product Categories</span> <i class="fas fa-angle-right arrow"></i></a>
-                            <ul class="child-nav">
-                                <li><a href="{{route('categories.index')}}" ><i class="fas fa-list "></i> <span>Manage Categories</span></a></li>
-                            </ul>
-                        </li>
-                        <li class="has-children {{ request()->routeIs('attributes.index') ? 'active' : '' }}">
-                            <a href="#"><i class="fas fa-th-list"></i> <span>Product Attributes</span> <i class="fas fa-angle-right arrow"></i></a>
-                            <ul class="child-nav">
-                                <li><a href="{{route('attributes.index')}}"><i class="fas fa-list "></i> <span>Manage Attributes</span></a></li>
-                            </ul>
-                        </li>
-                       
-                        <li class="has-children {{ request()->routeIs('brands.index') ? 'active' : '' }}">
-                            <a href="#"><i class="fas fa-th-list"></i> <span>Product Brands</span> <i class="fas fa-angle-right arrow"></i></a>
-                            <ul class="child-nav">
-                                <li><a href="{{route('brands.index')}}"><i class="fas fa-list "></i> <span>Manage Brands</span></a></li>
-                            </ul>
-                        </li>
-                       
-
                     </ul>
                 </li>
 
@@ -1576,6 +1554,18 @@
                 <li class="nav-header">
                     <span class="">Stores & Inventory Management</span>
                 </li>
+                 @if ( isset($stdepartment_head) || (in_array('Admin', $role_names) && in_array('Stores', $department_names)) || in_array('Super Admin', $role_names))
+                  <li class="has-children">
+                    <a href="#"><i class="fas fa-cog"></i> <span>Master</span> <i class="fas fa-angle-right arrow"></i></a>
+                    <ul class="child-nav">
+                        <li class="{{ request()->routeIs('attributes.index') ? 'active' : '' }}" ><a href="{{route('attributes.index')}}"><i class="fas fa-list "></i> <span> Attributes</span></a></li>
+                        <li class="{{ request()->routeIs('bins.index') ? 'active' : '' }}"><a href="{{route('bins.index')}}"><i class="fas fa-list "></i> <span> Bins</span></a></li>
+                        <li class="{{ request()->routeIs('brands.index') ? 'active' : '' }}"><a href="{{route('brands.index')}}"><i class="fas fa-list "></i> <span> Brands</span></a></li>
+                        <li class="{{ request()->routeIs('categories.index') ? 'active' : '' }}"><a href="{{route('categories.index')}}" ><i class="fas fa-list "></i> <span> Categories</span></a></li>
+                        <li class="{{ request()->routeIs('racks.index') ? 'active' : '' }}"><a href="{{route('racks.index')}}"><i class="fas fa-list "></i> <span> Racks</span></a></li>
+                    </ul>
+                </li>
+                @endif
                 <li class="has-children">
                     <a href="#"><i class="fas fa-building"></i> <span>Stores</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
