@@ -101,7 +101,7 @@
                             </tr>
                             <tr>
                                 <th class="w-10 text-center line-height-35">Total Weight</th>
-                                <td class="w-20 line-height-35">{{$shift->total_weight ? $shift->total_weight : "tons"}}</td>
+                                <td class="w-20 line-height-35">{{$shift->total_weight ? $shift->total_weight." Ton(s)" : ""}}</td>
                             </tr>
                            
                              <tr>
@@ -110,11 +110,11 @@
                             </tr>
                              <tr>
                                 <th class="w-10 text-center line-height-35">Shift Open Mileage</th>
-                                <td class="w-20 line-height-35">{{$shift->open_mileage ? number_format($shift->open_mileage,2)." Kms" : ""}}</td>
+                                <td class="w-20 line-height-35">{{$shift->open_mileage ? number_format($shift->open_mileage)." Kms" : ""}}</td>
                             </tr>
                              <tr>
                                 <th class="w-10 text-center line-height-35">Shift Closing Mileage</th>
-                                <td class="w-20 line-height-35">{{$shift->close_mileage ? number_format($shift->close_mileage,2)." Kms" : ""}}</td>
+                                <td class="w-20 line-height-35">{{$shift->close_mileage ? number_format($shift->close_mileage)." Kms" : ""}}</td>
                             </tr>
                              <tr>
                                 <th class="w-10 text-center line-height-35">Actual Mileage</th>
@@ -122,7 +122,7 @@
                             </tr>
                             <tr>
                                 <th class="w-10 text-center line-height-35">Calculated Mileage</th>
-                                <td class="w-20 line-height-35">{{$shift->calculated_mileage ? number_format($shift->calculated_mileage,2)." Kms" : ""}}</td>
+                                <td class="w-20 line-height-35">{{$shift->calculated_mileage ? number_format($shift->calculated_mileage)." Kms" : ""}}</td>
                             </tr>
                            
                             <tr>
@@ -131,7 +131,7 @@
                             </tr>
                             <tr>
                                 <th class="w-10 text-center line-height-35">Fuel Consumption (Mileage)</th>
-                                <td class="w-20 line-height-35">{{$shift->fuel_consumption_mileage ? number_format($shift->fuel_consumption_mileage,2)." L/Km" : ""}}</td>
+                                <td class="w-20 line-height-35">{{$shift->fuel_consumption_mileage ? number_format($shift->fuel_consumption_mileage,2)." Km/l" : ""}}</td>
                             </tr>
                             <tr>
                                 <th class="w-10 text-center line-height-35">Status</th>

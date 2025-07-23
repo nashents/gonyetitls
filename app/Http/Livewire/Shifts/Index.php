@@ -374,7 +374,8 @@ class Index extends Component
         $import = new ShiftTripsImport($this->for);
         $import->import($file);
 
-        $this->dispatchBrowserEvent('hide-shiftsImportModal');
+        $this->dispatchBrowserEvent('hide-shiftTripsImportModal');
+
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
             'message'=>"Shift Trips(s) Imported Successfully!!"

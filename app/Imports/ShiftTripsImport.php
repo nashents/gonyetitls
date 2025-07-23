@@ -260,7 +260,7 @@ WithBatchInserts
                      $shift->offloading_points()->syncWithoutDetaching($offloading_point->id);
                 }
              
-               
+               $trip_type = TripType::where('name','Local')->first();
 
                 // Trip Timing
                 $arrive_loading_point = $this->parseExcelTime($row->get('arrive_loading_point'));
@@ -279,6 +279,7 @@ WithBatchInserts
                 $trip = new Trip();
                 $trip->trip_number = $trip_number;
                 $trip->user_id = $user_id;
+                $trip->trip_type_id = $trip_type?->id;
                 $trip->shift_id = $shift->id;
                 $trip->company_id = $company_id;
                 $trip->transporter_id = $transporter?->id;
@@ -306,6 +307,21 @@ WithBatchInserts
                 $trip->authorization = 'approved';
                 $trip->authorization_date = $date;
                 $trip->save();
+
+                $delivery_note = new DeliveryNote();
+                $delivery_note->user_id = $user_id;
+                $delivery_note->trip_id = $trip->id;
+                $delivery_note->loaded_date = $date;
+                $delivery_note->offloaded_date = $date;
+                $delivery_note->loaded_litreage = $trip->litreage;
+                $delivery_note->loaded_litreage_at_20 = $trip->litreage_at_20;
+                $delivery_note->loaded_weight = $trip->weight;
+                $delivery_note->loaded_rate = $trip->rate;
+                $delivery_note->loaded_freight = $trip->freight;
+                $delivery_note->offloaded_weight = $trip->weight;
+                $delivery_note->offloaded_litreage = $trip->litreage;
+                $delivery_note->offloaded_litreage_at_20 = $trip->litreage_at_20;
+                $delivery_note->save();
 
                 $shift->load('trips');
                 $shift->total_loads = $shift->trips->count();
