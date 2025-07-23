@@ -637,7 +637,7 @@ class Edit extends Component
 
             $trailer_assignments = $this->horse->trailer_assignments->where('status',1);
                                     
-            $this->odometer = $this->horse->mileage;
+           
             $this->hours = $this->horse->hours;
             $this->fuel_consumption_loaded_standard = $this->horse->fuel_consumption_loaded_standard;
             $this->fuel_consumption_empty_standard = $this->horse->fuel_consumption_empty_standard;
@@ -668,7 +668,7 @@ class Edit extends Component
             $assignment = VehicleAssignment::where('vehicle_id',$vehicle)
                                     ->where('status', 1)->first();
                                     
-            $this->odometer = $this->vehicle->mileage;
+           
             $this->hours = $this->vehicle->hours;
             $this->fuel_tank_capacity = $this->vehicle->fuel_tank_capacity;
             $this->starting_mileage = $this->vehicle->mileage;
@@ -1805,7 +1805,7 @@ class Edit extends Component
                     $fuel->transporter_total = $this->transporter_total;
                     $fuel->profit = $this->fuel_profit;
                     $fuel->odometer = $this->odometer;
-                    $fuel->odometer = $this->hours;
+                    $fuel->hours = $this->hours;
                     $fuel->category = $this->fuel_category;
                     $fuel->exchange_amount = $this->fuel_exchange_amount;
                     $fuel->exchange_rate = $this->fuel_exchange_rate;
@@ -1893,7 +1893,7 @@ class Edit extends Component
                 $fuel->transporter_total = $this->transporter_total;
                 $fuel->profit = $this->fuel_profit;
                 $fuel->odometer = $this->odometer;
-                 $fuel->odometer = $this->hours;
+                 $fuel->hours = $this->hours;
                 $fuel->category = $this->fuel_category;
                 $fuel->exchange_amount = $this->fuel_exchange_amount;
                 $fuel->exchange_rate = $this->fuel_exchange_rate;
