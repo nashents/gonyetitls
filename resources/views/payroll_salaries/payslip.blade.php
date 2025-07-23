@@ -39,23 +39,22 @@
                             </header>
                             <main>
                                 <div class="row contacts">
-                                     <div class="col invoice-to">
-                                    <h6 class="to"><strong>Emp.:</strong> {{$employee->employee_number ? "(".$employee->employee_number.")" : "" }} {{$employee->name}} {{$employee->surname}} </h6>
-                                    <div class="text-gray-light"><strong>Dpt.:</strong> {{$employee->departments->first()->name}}</div>
-                                    <div class="text-gray-light">Title.:<strong></strong> {{$employee->post}}</div>
-                                    <div class="address"><strong>Add.:</strong> {{$employee->street_address}} {{$employee->suburb}}, {{$employee->city}}, {{$employee->country}}</div>
-                                    <div class="email"><strong>Email.:</strong> <a href="mailto:{{$employee->email}}">{{$employee->email}}</a></div>
-                                    <div class="text-gray-light"><strong>ID.:</strong> {{$employee->idnumber}}</div>
-                                    <div class="text-gray-light"><strong>Pay Date.:</strong> {{$company->pay_date}}</div>
-                                </div>
-                                <div class="col invoice-details"  style="margin-top:-120px;">
-                                    <div class="date"  style="font-size: 16px;"><strong></strong>Payslip for.: {{$payroll_salary->payroll->month}} {{$payroll_salary->payroll->year}}</div>
-                                    <div class="date"  style="font-size: 16px;"><span><strong>Leave Due.:</strong> {{$employee->leave_days}}</span> <span class="ml-2"><strong>Leave Taken.:</strong> {{$employee->leaves->count()}}</span> <span class="ml-2"><strong>GRD.:</strong> {{$employee->grade}}</span></div>
-                                    <div class="date"  style="font-size: 16px;"><span><strong>Date Joined.:</strong> {{$employee->start_date}}</span> <span class="ml-2"><strong>D.O.B.:</strong> {{$employee->dob}}</span> </div>
-                                    <div class="date"  style="font-size: 16px;"><span><strong>Exchange Rate.:</strong> {{$payroll_salary->payroll ? $payroll_salary->payroll->exchange_rate : ""}}</span></div>
-                                    <div class="date"  style="font-size: 16px;"><span><strong>Bank.:</strong> {{$employee->bank ? $employee->bank->name : ""}}</span></div>
-                                </div>
-                        
+                                    <div class="col invoice-to">
+                                        <h6 class="to"><strong>Emp.:</strong> {{$employee->employee_number ? "(".$employee->employee_number.")" : "" }} {{$employee->name}} {{$employee->surname}} </h6>
+                                        <div class="text-gray-light"><strong>Dpt.:</strong> {{$employee->departments->first()->name}}</div>
+                                        <div class="text-gray-light">Title.:<strong></strong> {{$employee->post}}</div>
+                                        <div class="address"><strong>Add.:</strong> {{$employee->street_address}} {{$employee->suburb}}, {{$employee->city}}, {{$employee->country}}</div>
+                                        <div class="email"><strong>Email.:</strong> <a href="mailto:{{$employee->email}}">{{$employee->email}}</a></div>
+                                        <div class="text-gray-light"><strong>ID.:</strong> {{$employee->idnumber}}</div>
+                                        <div class="text-gray-light"><strong>Pay Date.:</strong> {{$company->pay_date}}</div>
+                                    </div>
+                                    <div class="col invoice-details"  style="margin-top:-120px;">
+                                        <div class="date"  style="font-size: 16px;"><strong></strong>Payslip for.: {{$payroll_salary->payroll->month}} {{$payroll_salary->payroll->year}}</div>
+                                        <div class="date"  style="font-size: 16px;"><span><strong>Leave Due.:</strong> {{$employee->leave_days}}</span> <span class="ml-2"><strong>Leave Taken.:</strong> {{$employee->leaves->count()}}</span> <span class="ml-2"><strong>GRD.:</strong> {{$employee->grade}}</span></div>
+                                        <div class="date"  style="font-size: 16px;"><span><strong>Date Joined.:</strong> {{$employee->start_date}}</span> <span class="ml-2"><strong>D.O.B.:</strong> {{$employee->dob}}</span> </div>
+                                        <div class="date"  style="font-size: 16px;"><span><strong>Exchange Rate.:</strong> {{$payroll_salary->payroll ? $payroll_salary->payroll->exchange_rate : ""}}</span></div>
+                                        <div class="date"  style="font-size: 16px;"><span><strong>Bank.:</strong> {{$employee->bank ? $employee->bank->name : ""}}</span></div>
+                                    </div>
                                 </div>
                                 <br>
                                 <br>

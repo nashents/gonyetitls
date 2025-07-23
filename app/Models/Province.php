@@ -18,5 +18,10 @@ class Province extends Model implements Auditable
         return $this->belongsTo('App\Models\Country');
     }
 
+    protected $fillable = [
+        'user_id',
+        'country_id',
+        'name',
+    ];
     
 }
