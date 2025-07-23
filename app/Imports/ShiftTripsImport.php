@@ -32,13 +32,15 @@ use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
+use Maatwebsite\Excel\Concerns\WithCalculatedFormulas;
 
 class ShiftTripsImport implements ToCollection, SkipsEmptyRows, WithLimit, 
 WithHeadingRow,
 SkipsOnError,
 WithValidation,
 WithChunkReading,
-WithBatchInserts
+WithBatchInserts,
+WithCalculatedFormulas
 {
     use Importable, SkipsErrors;
 
@@ -361,11 +363,11 @@ WithBatchInserts
 
     public function batchSize(): int
     {
-        return 50;
+        return 150;
     }
 
     public function chunkSize(): int
     {
-        return 50;
+        return 150;
     }
 }

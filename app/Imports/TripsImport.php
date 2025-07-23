@@ -266,11 +266,11 @@ WithBatchInserts
 
     public function batchSize(): int
     {
-        return 10;
+        return 150;
     }
 
     public function chunkSize(): int
     {
-        return 10;
+        return 150;
     }
 }
