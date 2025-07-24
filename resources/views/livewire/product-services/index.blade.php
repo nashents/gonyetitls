@@ -16,7 +16,7 @@
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
 
-                            <table id="productsTable" class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
+                            <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
                                     <th class="th-sm">Name
@@ -31,7 +31,7 @@
                                 </thead>
                                 @if ($products->count()>0)
                                 <tbody>
-                                    @foreach ($products as $product)
+                                    @forelse ($products as $product)
                                   <tr>
                                     <td>{{ucfirst($product->name)}}</td>
                                     <td>{{$product->description}}</td>

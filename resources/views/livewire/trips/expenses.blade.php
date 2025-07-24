@@ -148,6 +148,9 @@
                                </select>
                                 @error('selectedExpense.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 <small>  <a href="{{ route('expenses.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Expense</a></small> 
+                                  <a href="#" wire:click.prevent="refresh('expenses')" class="float-end">
+                                        <i class="fa fa-refresh" aria-hidden="true"></i>
+                                    </a>
                             </div>
                         </div>
                         @elseif (isset($trip_expense_type[0]) && $trip_expense_type[0] === 'allowance')
@@ -161,7 +164,10 @@
                                    @endforeach
                                </select>
                                 @error('selectedAllowance.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                <small>  <a href="{{ route('allowances.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Allowance</a></small> 
+                                <small>  <a href="{{ route('allowances.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Allowance</a></small>
+                                <a href="#" wire:click.prevent="refresh('allowances')" class="float-end">
+                                        <i class="fa fa-refresh" aria-hidden="true"></i>
+                                    </a> 
                             </div>
                         </div>
                         @endif
@@ -239,6 +245,9 @@
                            </select>
                             @error('selectedExpense.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             <small>  <a href="{{ route('expenses.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Expense</a></small> 
+                            <a href="#" wire:click.prevent="refresh('expenses')" class="float-end">
+                                        <i class="fa fa-refresh" aria-hidden="true"></i>
+                                    </a>
                         </div>
                     </div>
                     @elseif (isset($trip_expense_type[$value]) && $trip_expense_type[$value] === 'allowance')
@@ -253,6 +262,9 @@
                            </select>
                             @error('selectedAllowance.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             <small>  <a href="{{ route('allowances.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Allowance</a></small> 
+                            <a href="#" wire:click.prevent="refresh('allowances')" class="float-end">
+                                        <i class="fa fa-refresh" aria-hidden="true"></i>
+                                    </a>
                         </div>
                     </div>
                     @endif
@@ -362,6 +374,9 @@
                                </select>
                                 @error('selectedExpense') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 <small>  <a href="{{ route('expenses.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Expense</a></small> 
+                                <a href="#" wire:click.prevent="refresh('expenses')" class="float-end">
+                                        <i class="fa fa-refresh" aria-hidden="true"></i>
+                                    </a>
                             </div>
                         </div>
                         @elseif (isset($trip_expense_type) && $trip_expense_type == "allowance")   
@@ -376,6 +391,9 @@
                                </select>
                                 @error('selectedAllowance') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 <small>  <a href="{{ route('allowances.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Allowance</a></small> 
+                                <a href="#" wire:click.prevent="refresh('allowances')" class="float-end">
+                                        <i class="fa fa-refresh" aria-hidden="true"></i>
+                                    </a>
                             </div>
                         </div>
                         @endif

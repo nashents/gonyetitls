@@ -18,6 +18,9 @@ class Allowance extends Model implements Auditable
     public function allowance_drivers(){
         return $this->hasMany('App\Models\AllowanceDriver');
     }
+    public function requisition_items(){
+        return $this->hasMany('App\Models\RequisitionItem');
+    }
     public function salary_items(){
         return $this->hasMany('App\Models\SalaryItem');
     }

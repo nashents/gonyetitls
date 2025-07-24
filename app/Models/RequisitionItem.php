@@ -12,6 +12,9 @@ class RequisitionItem extends Model implements Auditable
     use \OwenIt\Auditing\Auditable;
     use HasFactory, SoftDeletes;
 
+    public function allowance(){
+        return $this->belongsTo('App\Models\Allowance');
+    }
     public function currency(){
         return $this->belongsTo('App\Models\Currency');
     }

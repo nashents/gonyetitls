@@ -30,12 +30,12 @@
                 </th>
                 <th class="th-sm">Status
                 </th>
-                   @if ($company->rates_managed_by_finance == True)
+                @if ($company->rates_managed_by_finance == True)
                     @if (in_array('Finance', $department_names) ||  in_array('Super Admin', $role_names))
-                    <th>Freight</th>
+                        <th class="th-sm">Freight</th>
                     @endif
                 @else 
-                    <th>Freight</th>
+                    <th class="th-sm">Freight</th>
                 @endif
                 <th class="th-sm">Actions
                 </th>

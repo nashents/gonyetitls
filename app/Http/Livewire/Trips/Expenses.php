@@ -173,6 +173,25 @@ class Expenses extends Component
         }
     }
 
+       public function refresh($category){
+
+        if($category == "expenses"){
+            $this->expenses = Expense::whereHas('account', function($q){
+                $q->where('name', 'Trip Expense');
+             })->orderBy('name','asc')->get();
+             $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Expenses Refreshed Successfully!!."
+            ]);
+        } elseif($category == 'allowances'){
+            $this->allowances = Allowance::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Allowances Refreshed Successfully!!."
+            ]);
+        }
+    }
+
     public function updatedSelectedCurrency($id, $key = Null){
         if(!is_null($id)){
             if ($key) {

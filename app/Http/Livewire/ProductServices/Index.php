@@ -33,9 +33,11 @@ class Index extends Component
         $this->category = $category;
         if ($category == "invoices") {
             $this->sell = True;
+            $this->buy = False;
             $this->products = Product::where('sell',True)->orderBy('name','asc')->get();
         }elseif ($category == "bills") {
             $this->buy = True;
+            $this->sell = False;
             $this->products = Product::where('buy',True)->orderBy('name','asc')->get();
         }
        

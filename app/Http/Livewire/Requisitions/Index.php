@@ -12,6 +12,7 @@ use Livewire\Component;
 use App\Models\Currency;
 use App\Models\Employee;
 use App\Models\Purchase;
+use App\Models\Allowance;
 use App\Models\Department;
 use App\Models\Requisition;
 use App\Models\ExchangeRate;
@@ -52,6 +53,7 @@ class Index extends Component
     public $bookings;
     public $selectedBooking;
     public $expenses;
+    public $allowances;
     public $currencies;
     private $requisitions;
     public $requisition;
@@ -81,6 +83,7 @@ class Index extends Component
     public $exchange_rate = [];
     public $exchange_amount = [];
     public $expense_id = [];
+    public $allowance_id = [];
     public $qty = [];
     public $amount = [];
     
@@ -90,6 +93,7 @@ class Index extends Component
     public $current_exchange_rate = [];
     public $current_exchange_amount = [];
     public $current_expense_id = [];
+    public $current_allowance_id = [];
     public $current_qty = [];
     public $current_amount = [];
 
@@ -126,6 +130,7 @@ class Index extends Component
         unset($this->selectedCurrency[$i]);
         unset($this->selected_currency[$i]);
         unset($this->expense_id[$i]);
+        unset($this->allowance_id[$i]);
         unset($this->selectedProduct[$i]);
         unset($this->amount[$i]);
         unset($this->qty[$i]);
@@ -141,6 +146,7 @@ class Index extends Component
         $this->date = '';
         $this->selectedCurrency = '';
         $this->expense_id = '';
+        $this->allowance_id = '';
         $this->selectedAccount = '';
         $this->qty = '';
         $this->amount = '';
@@ -167,6 +173,7 @@ class Index extends Component
         $this->exchange_rate = [];
         $this->exchange_amount = [];
         $this->expense_id = [];
+        $this->allowance_id = [];
         $this->qty = [];
         $this->amount = [];
         
@@ -176,6 +183,7 @@ class Index extends Component
         $this->current_exchange_rate = [];
         $this->current_exchange_amount = [];
         $this->current_expense_id = [];
+        $this->current_allowance_id = [];
         $this->current_qty = [];
         $this->current_amount = [];
         
@@ -228,6 +236,7 @@ class Index extends Component
                     $this->inputs[] = $index;
 
                     $this->expense_id[$index] = $trip_expense->expense_id;
+                    $this->allowance_id[$index] = $trip_expense->allowance_id;
                     $this->selectedCurrency[$index] = $trip_expense->currency_id;
                     $this->selected_currency[$index] = $trip_expense->currency;
                     $this->amount[$index] = $trip_expense->amount;
@@ -370,11 +379,15 @@ class Index extends Component
     protected $rules = [
         'selectedCurrency' => 'required',
         'expense_id.0' => 'required',
+        'allowance_id.0' => 'required',
+        'selectedProduct.0' => 'required',
         'selectedAccount.0' => 'required',
         'employee_id.0' => 'required',
         'qty.0' => 'required',
         'amount.0' => 'required',
+        'selectedProduct.*' => 'required',
         'expense_id.*' => 'required',
+        'allowance_id.*' => 'required',
         'selectedAccount.*' => 'required',
         'qty.*' => 'required',
         'amount.*' => 'required',
@@ -429,6 +442,12 @@ class Index extends Component
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Expenses Refreshed Successfully!!."
+            ]);
+        }elseif($category == "allowances"){
+            $this->allowances = Allowance::orderBy('name','asc')->where('status',1)->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Allowances Refreshed Successfully!!."
             ]);
         }
     }
@@ -514,37 +533,31 @@ class Index extends Component
         $type = null;
         $requisition_total = 0;
 
-        if (!empty($this->expense_id)) {
-            $items = $this->expense_id;
-            $type = 'expense';
-        } elseif (!empty($this->selectedProduct)) {
-            $items = $this->selectedProduct;
-            $type = 'product';
-        }
+        if ($this->amount) {
 
-        if ($type && !empty($items)) {
-
-            foreach ($items as $key => $value) {
+            foreach ($this->amount as $key => $value) {
               
                
                 $requisition_item = new RequisitionItem;
                 $requisition_item->requisition_id = $requisition->id;
 
                 // Assign either expense_id or product_id
-                if ($type === 'expense') {
-                    $requisition_item->expense_id = $value;
-                } else {
-                    $requisition_item->product_id = $value;
-                }
-
+    
                 // Handle quantity and amount
                
 
+                $product_id = $this->selectedProduct[$key] ?? Null;
+                $expense_id = $this->expense_id[$key] ?? Null;
+                $allowance_id = $this->allowance_id[$key] ?? Null;
                 $qty = $this->qty[$key] ?? 0;
                 $amount = $this->amount[$key] ?? 0;
                 $currency_id = $this->selectedCurrency[$key] ?? 0;
                 $exchange_rate = $this->exchange_rate[$key] ?? 0;
                 $exchange_amount = $this->exchange_amount[$key] ?? 0;
+
+                $requisition_item->allowance_id = $allowance_id;
+                $requisition_item->product_id = $product_id;
+                $requisition_item->product_id = $product_id;
                 $requisition_item->qty = $qty;
                 $requisition_item->amount = $amount;
                 $requisition_item->currency_id = $currency_id;
@@ -656,6 +669,7 @@ class Index extends Component
                  foreach ($this->requisition_items as $key => $requisition_item) {
                     
                     $this->current_expense_id[$key] = $requisition_item->expense_id;
+                    $this->current_allowance_id[$key] = $requisition_item->allowance_id;
                     $this->current_selectedProduct[$key] = $requisition_item->product_id;
                     $this->current_selectedCurrency[$key] = $requisition_item->currency_id;
                     $this->current_selected_currency[$key] = $requisition_item->currency;
@@ -697,6 +711,7 @@ class Index extends Component
         foreach($this->requisition_items as $key => $requisition_item){
                
                 $expense_id = $this->current_expense_id[$key] ?? 0;
+                $allowance_id = $this->current_allowance_id[$key] ?? 0;
                 $product_id = $this->current_selectedProduct[$key] ?? 0;
                 $qty = $this->current_qty[$key] ?? 0;
                 $amount = $this->current_amount[$key] ?? 0;
@@ -705,6 +720,7 @@ class Index extends Component
                 $exchange_amount = $this->current_exchange_amount[$key] ?? 0;
                 
                 $requisition_item->expense_id = $expense_id;
+                $requisition_item->allowance_id = $allowance_id;
                 $requisition_item->product_id = $product_id;
                 $requisition_item->qty = $qty;
                 $requisition_item->amount = $amount;
@@ -727,35 +743,32 @@ class Index extends Component
 
        
 
-        if (!empty($this->expense_id)) {
-            $items = $this->expense_id;
-            $type = 'expense';
-        } elseif (!empty($this->selectedProduct)) {
-            $items = $this->selectedProduct;
-            $type = 'product';
-        }
+   
+         if ($this->amount) {
 
-        if ($type && !empty($items)) {
-
-            foreach ($items as $key => $value) {
+            foreach ($this->amount as $key => $value) {
               
+               
                 $requisition_item = new RequisitionItem;
                 $requisition_item->requisition_id = $requisition->id;
 
                 // Assign either expense_id or product_id
-                if ($type === 'expense') {
-                    $requisition_item->expense_id = $value;
-                } else {
-                    $requisition_item->product_id = $value;
-                }
-
+    
                 // Handle quantity and amount
                
+
+                $product_id = $this->selectedProduct[$key] ?? Null;
+                $expense_id = $this->expense_id[$key] ?? Null;
+                $allowance_id = $this->allowance_id[$key] ?? Null;
                 $qty = $this->qty[$key] ?? 0;
                 $amount = $this->amount[$key] ?? 0;
                 $currency_id = $this->selectedCurrency[$key] ?? 0;
                 $exchange_rate = $this->exchange_rate[$key] ?? 0;
                 $exchange_amount = $this->exchange_amount[$key] ?? 0;
+
+                $requisition_item->allowance_id = $allowance_id;
+                $requisition_item->product_id = $product_id;
+                $requisition_item->product_id = $product_id;
                 $requisition_item->qty = $qty;
                 $requisition_item->amount = $amount;
                 $requisition_item->currency_id = $currency_id;
@@ -916,6 +929,7 @@ class Index extends Component
         $employee = $user->employee;
       
         $this->expenses = Expense::orderBy('name','asc')->where('status',1)->get();
+        $this->allowances = Allowance::orderBy('name','asc')->where('status',1)->get();
         $this->products = Product::where('buy',True)->where('status',True)->orderBy('name','asc')->get();
         $employee_departments = $employee->departments;
         foreach($employee_departments as $department){
