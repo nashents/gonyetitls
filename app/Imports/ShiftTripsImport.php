@@ -363,11 +363,11 @@ WithCalculatedFormulas
 
     public function batchSize(): int
     {
-        return 150;
+        return 200;
     }
 
     public function chunkSize(): int
     {
-        return 150;
+        return 200;
     }
 }
