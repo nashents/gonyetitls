@@ -32,6 +32,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Session;
+use Maatwebsite\Excel\Validators\ValidationException;
+use Maatwebsite\Excel\Exceptions\NoFilePathGivenException;
 
 class Index extends Component
 {
@@ -368,18 +370,48 @@ class Index extends Component
         return redirect(request()->header('Referer'));
     }
         
-    public function importShiftTrips(){
-      
-        $file = $this->shift_tripsimportFile;
-        $import = new ShiftTripsImport($this->for);
-        $import->import($file);
-
-        $this->dispatchBrowserEvent('hide-shiftTripsImportModal');
-
-        $this->dispatchBrowserEvent('alert',[
-            'type'=>'success',
-            'message'=>"Shift Trips(s) Imported Successfully!!"
+    public function importShiftTrips()
+    {
+        // Validate the file before doing anything
+        $this->validate([
+            'shift_tripsimportFile' => 'required|file|mimes:xlsx,xls|max:2048',
         ]);
+
+        try {
+            $file = $this->shift_tripsimportFile;
+
+            // Additional guard: make sure it's a valid UploadedFile instance
+            if (!$file instanceof \Illuminate\Http\UploadedFile) {
+                throw new \Exception("Invalid file uploaded.");
+            }
+
+            $import = new ShiftTripsImport($this->for);
+            $import->import($file);
+
+            $this->dispatchBrowserEvent('hide-shiftTripsImportModal');
+
+            $this->dispatchBrowserEvent('alert', [
+                'type' => 'success',
+                'message' => "Shift Trip(s) Imported Successfully!"
+            ]);
+        } catch (NoFilePathGivenException $e) {
+            $this->dispatchBrowserEvent('alert', [
+                'type' => 'error',
+                'message' => "No file was received. Please upload a file first."
+            ]);
+        } catch (ValidationException $e) {
+            $failures = $e->failures();
+            $this->dispatchBrowserEvent('alert', [
+                'type' => 'error',
+                'message' => "Import failed due to validation errors in the file."
+            ]);
+            // Optionally, handle and log $failures
+        } catch (\Exception $e) {
+            $this->dispatchBrowserEvent('alert', [
+                'type' => 'error',
+                'message' => "Import failed: " . $e->getMessage()
+            ]);
+        }
 
         return redirect(request()->header('Referer'));
     }
