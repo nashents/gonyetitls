@@ -512,7 +512,7 @@ class Index extends Component
     public function store(){
 
         // try{
-          DB::transaction(function () {
+        DB::transaction(function () {
 
         $requisition = new Requisition;
         $requisition->requisition_number = $this->requisitionNumber();
@@ -532,6 +532,7 @@ class Index extends Component
         $items = [];
         $type = null;
         $requisition_total = 0;
+       
 
         if ($this->amount) {
 
@@ -544,8 +545,8 @@ class Index extends Component
                 // Assign either expense_id or product_id
     
                 // Handle quantity and amount
+             
                
-
                 $product_id = $this->selectedProduct[$key] ?? Null;
                 $expense_id = $this->expense_id[$key] ?? Null;
                 $allowance_id = $this->allowance_id[$key] ?? Null;
@@ -557,7 +558,7 @@ class Index extends Component
 
                 $requisition_item->allowance_id = $allowance_id;
                 $requisition_item->product_id = $product_id;
-                $requisition_item->product_id = $product_id;
+                $requisition_item->expense_id = $expense_id;
                 $requisition_item->qty = $qty;
                 $requisition_item->amount = $amount;
                 $requisition_item->currency_id = $currency_id;
@@ -710,9 +711,9 @@ class Index extends Component
 
         foreach($this->requisition_items as $key => $requisition_item){
                
-                $expense_id = $this->current_expense_id[$key] ?? 0;
-                $allowance_id = $this->current_allowance_id[$key] ?? 0;
-                $product_id = $this->current_selectedProduct[$key] ?? 0;
+                $expense_id = $this->current_expense_id[$key] ?? Null;
+                $allowance_id = $this->current_allowance_id[$key] ?? Null;
+                $product_id = $this->current_selectedProduct[$key] ?? Null;
                 $qty = $this->current_qty[$key] ?? 0;
                 $amount = $this->current_amount[$key] ?? 0;
                 $currency_id = $this->current_selectedCurrency[$key] ?? 0;
@@ -760,6 +761,7 @@ class Index extends Component
                 $product_id = $this->selectedProduct[$key] ?? Null;
                 $expense_id = $this->expense_id[$key] ?? Null;
                 $allowance_id = $this->allowance_id[$key] ?? Null;
+                
                 $qty = $this->qty[$key] ?? 0;
                 $amount = $this->amount[$key] ?? 0;
                 $currency_id = $this->selectedCurrency[$key] ?? 0;
@@ -768,7 +770,7 @@ class Index extends Component
 
                 $requisition_item->allowance_id = $allowance_id;
                 $requisition_item->product_id = $product_id;
-                $requisition_item->product_id = $product_id;
+                $requisition_item->expense_id = $expense_id;
                 $requisition_item->qty = $qty;
                 $requisition_item->amount = $amount;
                 $requisition_item->currency_id = $currency_id;

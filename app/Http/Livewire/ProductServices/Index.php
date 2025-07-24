@@ -6,14 +6,20 @@ use App\Models\Tax;
 use App\Models\Account;
 use App\Models\Product;
 use Livewire\Component;
+use Livewire\WithPagination;
 use App\Models\ProductService;
 use Illuminate\Support\Facades\Auth;
 
 class Index extends Component
 {
+
+    use WithPagination;
+    protected $paginationTheme = 'bootstrap';
+    public $search;
+    
     public $name;
     public $response;
-    public $products;
+    private $products;
     public $product;
     public $product_id;
     public $tax_accounts;
@@ -153,13 +159,14 @@ class Index extends Component
 
         if ($this->category == "invoices") {
              $this->sell = True;
-            $this->products = Product::where('sell',True)->orderBy('name','asc')->get();
+             return view('livewire.product-services.index',[
+            'products' =>   Product::where('sell',True)->orderBy('name','asc')->paginate(10)
+            ]);
+          
         }elseif ($this->category == "bills") {
              $this->buy = True;
             $this->products = Product::where('buy',True)->orderBy('name','asc')->get();
         }
-        return view('livewire.product-services.index',[
-            'products' =>   $this->products
-        ]);
+        
     }
 }

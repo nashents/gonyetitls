@@ -104,6 +104,8 @@
                                             @foreach ($requisition->requisition_items as $requisition_item)
                                                 @if ($requisition_item->expense)
                                                     {{$requisition_item->expense ? $requisition_item->expense->name : ""}} 
+                                                         @elseif($requisition_item->allowance)
+                                                    {{ $requisition_item->allowance ? $requisition_item->allowance->name : ""}}
                                                 @elseif($requisition_item->product)
                                                     {{ $requisition_item->product->brand ? $requisition_item->product->brand->name : ""}} {{ $requisition_item->product ? $requisition_item->product->name : ""}}
                                                 @elseif($requisition_item->inventory)
