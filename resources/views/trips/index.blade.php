@@ -21,9 +21,6 @@
 
 @section('content')
 
-
-
-
                     <div class="main-page">
                         <div class="container-fluid">
                             <div class="row page-title-div">

@@ -141,6 +141,10 @@ class Index extends Component
     public function updated($value){
         $this->validateOnly($value);
     }
+
+      protected $rules = [
+        'name' => 'required|unique:vendors,name,NULL,id,deleted_at,NULL|string|min:2',
+    ];
     private function resetInputFields(){
         $this->contact_name = "";
         $this->contact_surname = "";
@@ -163,9 +167,7 @@ class Index extends Component
         $this->file = "";
         $this->expires_at = "";
     }
-    protected $rules = [
-        'name' => 'required|unique:vendors,name,NULL,id,deleted_at,NULL|string|min:2',
-    ];
+  
 
     public function generatePIN($digits = 4){
         $i = 0; //counter
