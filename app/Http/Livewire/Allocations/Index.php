@@ -272,10 +272,10 @@ class Index extends Component
             $rank_names[] = $rank->name;
         }
         if (in_array('Admin', $role_names) || in_array('Super Admin', $role_names)) {
-            $this->allocations = Allocation::whereDate('created_at', \Carbon\Carbon::today())->latest()->take(5)->get();
+            $this->allocations = Allocation::whereDate('created_at', \Carbon\Carbon::today())->latest()->get();
         } else {
             $this->allocations = Allocation::where('user_id',Auth::user()->id)
-        ->whereDate('created_at', \Carbon\Carbon::today())->latest()->take(5)->get();
+        ->whereDate('created_at', \Carbon\Carbon::today())->latest()->get();
         }
 
         if ($this->quantity != null && $this->rate != null) {

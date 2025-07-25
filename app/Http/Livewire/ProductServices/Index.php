@@ -36,18 +36,8 @@ class Index extends Component
     public $description;
 
     public function mount($category){
+        $this->resetPage();
         $this->category = $category;
-        if ($category == "invoices") {
-            $this->sell = True;
-            $this->buy = False;
-            $this->products = Product::where('sell',True)->orderBy('name','asc')->get();
-        }elseif ($category == "bills") {
-            $this->buy = True;
-            $this->sell = False;
-            $this->products = Product::where('buy',True)->orderBy('name','asc')->get();
-        }
-       
-
         $this->income_accounts = Account::whereHas('account_type', function($q){
             $q->where('name', 'Income');
          })->orderBy('name','asc')->get();
@@ -154,18 +144,51 @@ class Index extends Component
                     ]);
                  }
             }
+
+    public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+
     public function render()
     {
 
         if ($this->category == "invoices") {
              $this->sell = True;
-             return view('livewire.product-services.index',[
-            'products' =>   Product::where('sell',True)->orderBy('name','asc')->paginate(10)
-            ]);
+             $this->buy = False;
+             if (filled($this->search)) {
+                 return view('livewire.product-services.index',[
+                'products' =>   Product::where('sell',True)
+                ->where('name','like', '%'.$this->search.'%')
+                ->orWhere('description','like', '%'.$this->search.'%')
+                ->orWhere('sell_price','like', '%'.$this->search.'%')
+                ->orderBy('name','asc')->paginate(10)
+                ]);
+             }else{
+                 return view('livewire.product-services.index',[
+                'products' =>   Product::where('sell',True)->orderBy('name','asc')->paginate(10)
+                ]);
+             }
+            
           
         }elseif ($this->category == "bills") {
              $this->buy = True;
-            $this->products = Product::where('buy',True)->orderBy('name','asc')->get();
+             $this->sell = False;
+             if (filled($this->search)) {
+                return view('livewire.product-services.index',[
+                'products' =>  Product::where('buy',True)
+                 ->where('name','like', '%'.$this->search.'%')
+                ->orWhere('description','like', '%'.$this->search.'%')
+                ->orWhere('price','like', '%'.$this->search.'%')
+                ->orderBy('name','asc')->paginate(10)
+                ]);
+             }else{
+                return view('livewire.product-services.index',[
+                'products' =>  Product::where('buy',True)->orderBy('name','asc')->paginate(10)
+                ]);
+             }
+              
+           
         }
         
     }

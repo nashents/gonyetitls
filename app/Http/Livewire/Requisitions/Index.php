@@ -214,12 +214,6 @@ class Index extends Component
         ]);
     }
 
-    public function updatedSelectedBooking(){
-        if (!is_null($id)) {
-         
-        }
-    }
-
     public function updatedSelectedTrip($id)
     {   
         if (!is_null($id)) {

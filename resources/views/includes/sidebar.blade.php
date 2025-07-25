@@ -1054,8 +1054,7 @@
                             @endif
                         </a></li>
                         @if ((in_array('Transport & Logistics', $department_names) && in_array('Admin', $role_names)) || (in_array('Transport & Logistcs', $role_names) && in_array('HOD', $rank_names)) || in_array('Super Admin', $role_names))
-                            <li><a href="{{route('allocations.index')}}" ><i class="fas fa-plus "></i> <span>Create Allocation</span></a></li>
-                            <li><a href="{{route('allocations.manage')}}" ><i class="fas fa-list "></i> <span>Manage Allocations</span></a></li>
+                            <li><a href="{{route('allocations.index')}}" ><i class="fas fa-list "></i> <span>Manage Allocation</span></a></li>
                         @endif
                     </ul>
                 </li>
