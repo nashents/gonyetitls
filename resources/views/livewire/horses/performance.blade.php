@@ -136,7 +136,7 @@
                                     </td>
                                     <td>
                                         @if (isset($horse))
-                                            {{$horse->horse_make ? $horse->horse_make->name : ""}} {{$horse->horse_model ? $horse->horse_model->name : ""}} {{$horse->registration_number}} {{$horse->fleet_number}}
+                                            {{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}}
                                         @endif
                                     </td>
                                     <td>{{$selected_horse->total_trips ? $selected_horse->total_trips : ""}}</td>
