@@ -351,33 +351,27 @@
                             <li class="profile-menu bg-gray">
                                 <div class="">
                                     @if ($employee)
-                                    <img src="{{asset('images/uploads/'.$company->logo)}}" alt="{{$company->name}}" class="img-circle profile-img">
-                                    <div class="profile-name">
-                                        <h6>{{$company->name}}</h6>
-                                    </div>
+                                        <img src="{{asset('images/uploads/'.$company->logo)}}" alt="{{$company->name}}" class="img-circle profile-img">
+                                        <div class="profile-name">
+                                            <h6>{{$company->name}}</h6>
+                                        </div>
                                     @elseif($user->company)
-                                    <img src="{{asset('images/uploads/'.$user->company->logo)}}" alt="{{$user->company->name}}" class="img-circle profile-img">
-                                    <div class="profile-name">
-                                        <h6>{{$user->company->name}}</h6>
-                                    </div>
+                                        <img src="{{asset('images/uploads/'.$user->company->logo)}}" alt="{{$user->company->name}}" class="img-circle profile-img">
+                                        <div class="profile-name">
+                                            <h6>{{$user->company->name}}</h6>
+                                        </div>
                                     @endif
                                    
                                     <div class="clearfix"></div>
                                 </div>
                             </li>
-                            @php
-                                $roles = $user->roles;
-                                    foreach($roles as $role){
-                                        $role_names[] = $role->name;
-                                    }
-                                
-                            @endphp
+                           
                             @if (in_array('Super Admin', $role_names))
-                            @if ($employee)
-                                <li><a href="{{route('company-profile',$company->id)}}"><i class="fa fa-cog"></i>Business Settings</a></li>
-                            @else   
-                                <li><a href="{{route('company-profile',$user->company->id)}}"><i class="fa fa-cog"></i>Business Settings</a></li>
-                            @endif
+                                @if ($employee)
+                                    <li><a href="{{route('company-profile', $company->id)}}"><i class="fa fa-cog"></i>Business Settings</a></li>
+                                @else   
+                                    <li><a href="{{route('company-profile',$user->company->id)}}"><i class="fa fa-cog"></i>Business Settings</a></li>
+                                @endif
                                
                             @endif
                      

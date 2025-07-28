@@ -100,18 +100,21 @@
                                     <input type="text" wire:model.lazy="searchTrip" placeholder="Search with trip#, trip reference , horse reg#..." class="form-control">
                                     <select class="form-control" wire:model.debounce.300ms="selectedTrip" size="4">
                                         <option value="">Select Initial Trip </option>
-                                        @foreach ($trips as $trip)
-                                            <option value="{{$trip->id}}">{{$trip->trip_number}}{{$trip->trip_ref ? '/'.$trip->trip_ref : ""}} | {{$trip->start_date}} | {{$trip->customer ? $trip->customer->name : ""}} | {{$trip->horse ? $trip->horse->registration_number : ""}} | 
-                                                @if ($this->getDestination($trip->from))
-                                                {{$this->getDestination($trip->from)->country ? $this->getDestination($trip->from)->country->name : ""}} {{$this->getDestination($trip->from) ? $this->getDestination($trip->from)->city : ""}}
-                                                @endif 
-                                                {{$trip->loading_point ? "(".$trip->loading_point->name.")" : ""}} - 
-                                                @if ($this->getDestination($trip->to))
-                                                {{$this->getDestination($trip->to)->country ? $this->getDestination($trip->to)->country->name : ""}} {{$this->getDestination($trip->to) ? $this->getDestination($trip->to)->city : ""}}
-                                                @endif 
-                                                {{$trip->offloading_point ? "(".$trip->offloading_point->name.")" : ""}}
-                                            </option>
-                                        @endforeach
+                                        @if ($trips)
+                                            @foreach ($trips as $trip)
+                                                <option value="{{$trip->id}}">{{$trip->trip_number}}{{$trip->trip_ref ? '/'.$trip->trip_ref : ""}} | {{$trip->start_date}} | {{$trip->customer ? $trip->customer->name : ""}} | {{$trip->horse ? $trip->horse->registration_number : ""}} | 
+                                                    @if ($this->getDestination($trip->from))
+                                                    {{$this->getDestination($trip->from)->country ? $this->getDestination($trip->from)->country->name : ""}} {{$this->getDestination($trip->from) ? $this->getDestination($trip->from)->city : ""}}
+                                                    @endif 
+                                                    {{$trip->loading_point ? "(".$trip->loading_point->name.")" : ""}} - 
+                                                    @if ($this->getDestination($trip->to))
+                                                    {{$this->getDestination($trip->to)->country ? $this->getDestination($trip->to)->country->name : ""}} {{$this->getDestination($trip->to) ? $this->getDestination($trip->to)->city : ""}}
+                                                    @endif 
+                                                    {{$trip->offloading_point ? "(".$trip->offloading_point->name.")" : ""}}
+                                                </option>
+                                            @endforeach
+                                        @endif
+                                       
                                       </select>
                                       <small>Select the initial trip to link with the return trip</small> 
                                       @error('selectedTrip') <span class="text-danger error">{{ $message }}</span>@enderror
