@@ -153,11 +153,15 @@
                                             @endphp
                                             @if ($user)
                                                 <br>
-                                               <small><strong style="background-color: orange">AuthBy: {{$user->name}} {{$user->surname}}</strong></small>  
+                                               <small  style="background-color: orange"><strong>AuthBy: </strong>{{$user->name}} {{$user->surname}}</small>  
+                                            @endif
+                                            @if ($purchase->authorization_date)
+                                                <br>
+                                               <small  style="background-color: orange"><strong>Date: </strong> {{$purchase->authorization_date}}</small>  
                                             @endif
                                             @if ($purchase->authorization_comments)
                                             <br>
-                                            <small><strong style="background-color: orange">Auth Comments: {{$purchase->authorization_comments}}</strong></small>  
+                                            <small style="background-color: orange"><strong>Comments: </strong> {{$purchase->authorization_comments}}</small>  
                                             @endif 
                                         </td>
                                         <td class="w-10 line-height-35 table-dropdown">

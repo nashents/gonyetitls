@@ -14,27 +14,23 @@
                             <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                     <tr>
-                                        <th class="th-sm">Purchase#
+                                  <th class="th-sm">Purchase#
                                         </th>
-                                        <th class="th-sm">Order Date
+                                        <th class="th-sm">CreatedBy
                                         </th>
-                                        <th class="th-sm">Expiry Date
+                                        <th class="th-sm">Date
+                                        </th>
+                                        <th class="th-sm">Expiry
                                         </th>
                                         <th class="th-sm">Vendor
                                         </th>
-                                        <th class="th-sm">Notes
+                                        <th class="th-sm">Summary
                                         </th>
-                                        <th class="th-sm">Products
-                                        </th>
-                                        <th class="th-sm">Currency
-                                        </th>
-                                        <th class="th-sm">Subtotal
-                                        </th>
-                                        <th class="th-sm">Tax Amt
+                                        <th class="th-sm">Ccy
                                         </th>
                                         <th class="th-sm">Total
                                         </th>
-                                        <th class="th-sm">Authorization
+                                        <th class="th-sm">Auth
                                         </th>
                                         <th class="th-sm">Action
                                         </th>
@@ -44,21 +40,46 @@
                                 <tbody>
                                     @forelse ($purchases as $purchase)
                                     <tr>
-                                        <td>{{$purchase->purchase_number}}</td>
+                                             <td>{{$purchase->purchase_number}}</td>
+                                        <td>
+                                            @if ($purchase->user)
+                                                 {{$purchase->user ? $purchase->user->name : ""}} {{$purchase->user ? $purchase->user->surname : ""}}
+                                                @if ($purchase->user->employee)
+                                                    <br>
+                                                    <small><strong>{{$purchase->user->employee->departments ? $purchase->user->employee->departments->first()->name : ""}}</strong></small>
+                                                @endif
+                                            @endif
+                                        </td>
                                         <td>{{$purchase->date}}</td>
-                                        <td><span class="label label-{{Carbon\Carbon::now() < $purchase->expiry ? 'success' : 'danger' }}">{{Carbon\Carbon::parse($purchase->expiry)->format('d-m-Y')}}</span></td>
+                                        <td><span class="badge bg-{{Carbon\Carbon::now() < $purchase->expiry ? 'success' : 'danger' }}">{{Carbon\Carbon::parse($purchase->expiry)->format('d-m-Y')}}</span></td>
                                         <td>{{$purchase->vendor ? $purchase->vendor->name : ""}}</td>
-                                        <td>{{$purchase->description}}</td>
                                         <td>
                                             @foreach ($purchase->purchase_products as $purchase_product )
-                                                {{$purchase_product->product ? $purchase_product->product->name : ""}} <br>
+                                                @if ($purchase_product->product)
+                                                        {{$purchase_product->product ? $purchase_product->product->name : ""}} {{$purchase_product->product->brand ? $purchase_product->product->brand->name : ""}} ({{$purchase_product->qty}}) <br>
+                                                @endif
                                             @endforeach
+                                            
+                                            @if ($purchase->description)
+                                                <br>
+                                                <i><strong>Notes: </strong> {{$purchase->description}}</i>
+                                            @endif
                                         </td>
                                         <td>{{$purchase->currency ? $purchase->currency->name : ""}}</td>
-                                        <td>{{$purchase->currency ? $purchase->currency->symbol : ""}}{{number_format($purchase->subtotal ? $purchase->subtotal : 0,2)}}</td>
-                                        <td>{{$purchase->currency ? $purchase->currency->symbol : ""}}{{number_format($purchase->tax_amount ? $purchase->tax_amount : 0,2)}}</td>
                                         <td>{{$purchase->currency ? $purchase->currency->symbol : ""}}{{number_format($purchase->total ? $purchase->total : 0,2)}}</td>
-                                        <td><span class="badge bg-{{($purchase->authorization == 'approved') ? 'success' : (($purchase->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($purchase->authorization == 'approved') ? 'approved' : (($purchase->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
+                                        <td><span class="badge bg-{{($purchase->authorization == 'approved') ? 'success' : (($purchase->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($purchase->authorization == 'approved') ? 'approved' : (($purchase->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
+                                            @php
+                                                $user = App\Models\User::find($purchase->authorized_by_id);
+                                            @endphp
+                                            @if ($user)
+                                                <br>
+                                               <small><strong style="background-color: orange">AuthBy: {{$user->name}} {{$user->surname}}</strong></small>  
+                                            @endif
+                                            @if ($purchase->authorization_comments)
+                                            <br>
+                                            <small><strong style="background-color: orange">Auth Comments: {{$purchase->authorization_comments}}</strong></small>  
+                                            @endif 
+                                        </td>
                                         <td class="w-10 line-height-35 table-dropdown">
                                             <div class="dropdown">
                                                 <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

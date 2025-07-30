@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\Shift;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Events\AfterSheet;
 use Maatwebsite\Excel\Concerns\FromQuery;
@@ -46,69 +47,78 @@ WithCustomStartCell
     { 
         if (isset($this->from) && isset($this->to)) {
             if (isset($this->search)) {
-                return Shift::query()->with(['customer:id,name','driver','horse','vehicle','cargo','transporter','fuel'])->whereBetween($this->shift_filter,[$this->from, $this->to] )
-                            ->where('shift_number','like', '%'.$this->search.'%')
-                            ->orWhere('date','like', '%'.$this->search.'%')
-                            ->orWhere('type','like', '%'.$this->search.'%')
-                            ->orWhere('for','like', '%'.$this->search.'%')
-                            ->orWhereHas('customer', function ($query) {
-                                return $query->where('name', 'like', '%'.$this->search.'%');
-                            })
-                            ->orWhereHas('horse', function ($query) {
-                                return $query->where('registration_number', 'like', '%'.$this->search.'%')
-                                            ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
-                            })
-                            ->orWhereHas('vehicle', function ($query) {
-                                return $query->where('registration_number', 'like', '%'.$this->search.'%')
-                                            ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
-                            })
-                            ->orWhereHas('cargo', function ($query) {
-                                return $query->where('name', 'like', '%'.$this->search.'%');
-                            })
-                            ->orWhereHas('transporter', function ($query) {
-                                return $query->where('name', 'like', '%'.$this->search.'%');
-                            })
-                            ->orWhereHas('driver.employee', function ($query) {
-                                return $query->where('name', 'like', '%'.$this->search.'%')
-                                            ->orWhere('surname', 'like', '%'.$this->search.'%');
-                            })
-                            ->orderBy($this->shift_filter,'desc');
+                return Shift::query()->with(['loading_points', 'offloading_points','customer:id,name','driver','horse','vehicle','cargo','transporter','fuel'])
+                            ->whereDate($this->shift_filter, '>=', $this->from)
+                            ->whereDate($this->shift_filter, '<=', $this->to)
+                            ->where(function ($query) {
+                                $query->where('shift_number','like', '%'.$this->search.'%')
+                                    ->orWhere('type','like', '%'.$this->search.'%')
+                                    ->orWhere('date','like', '%'.$this->search.'%')
+                                    ->orWhere('for','like', '%'.$this->search.'%')
+                                    ->orWhereHas('customer', function ($q) {
+                                        $q->where('name', 'like', '%'.$this->search.'%');
+                                    })
+                                    ->orWhereHas('horse', function ($q) {
+                                        $q->where('registration_number', 'like', '%'.$this->search.'%')
+                                        ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
+                                    })
+                                    ->orWhereHas('vehicle', function ($q) {
+                                        $q->where('registration_number', 'like', '%'.$this->search.'%')
+                                        ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
+                                    })
+                                    ->orWhereHas('cargo', function ($q) {
+                                        $q->where('name', 'like', '%'.$this->search.'%');
+                                    })
+                                    ->orWhereHas('transporter', function ($q) {
+                                        $q->where('name', 'like', '%'.$this->search.'%');
+                                    })
+                                    ->orWhereHas('driver.employee', function ($q) {
+                                        $q->where(DB::raw("concat(name, ' ', surname)"), 'LIKE', "%".$this->search."%")
+                                        ->orWhere('name', 'like', '%'.$this->search.'%')
+                                        ->orWhere('surname', 'like', '%'.$this->search.'%');
+                                    });
+                                })
+                            ->orderBy($this->shift_filter, 'desc');
             }else {
                return Shift::query()->with(['customer:id,name','driver','horse','vehicle','cargo','transporter','fuel'])
-                            ->whereBetween($this->shift_filter,[$this->from, $this->to] )->orderBy($this->shift_filter,'desc');
+                ->whereDate($this->shift_filter, '>=', $this->from)
+                ->whereDate($this->shift_filter, '<=', $this->to)             
+                ->orderBy($this->shift_filter,'desc');
             }
            
         }elseif ($this->search) {
-            return Shift::query()->with(['customer:id,name','driver','horse','vehicle','cargo','transporter','fuel'])
-                        ->whereMonth($this->shift_filter, date('m'))
-                        ->whereYear($this->shift_filter, date('Y'))
-                        ->where('shift_number','like', '%'.$this->search.'%')
-                        ->where('shift_number','like', '%'.$this->search.'%')
-                        ->orWhere('date','like', '%'.$this->search.'%')
-                        ->orWhere('type','like', '%'.$this->search.'%')
-                        ->orWhere('for','like', '%'.$this->search.'%')
-                        ->orWhereHas('customer', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('horse', function ($query) {
-                            return $query->where('registration_number', 'like', '%'.$this->search.'%')
-                                        ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('vehicle', function ($query) {
-                            return $query->where('registration_number', 'like', '%'.$this->search.'%')
-                                        ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('cargo', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('transporter', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('driver.employee', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%')
-                                        ->orWhere('surname', 'like', '%'.$this->search.'%');
-                        })
-                        ->orderBy($this->shift_filter,'desc');
+            return Shift::query()->with(['loading_points', 'offloading_points','customer:id,name','driver','horse','vehicle','cargo','transporter','fuel'])
+                    ->whereMonth($this->shift_filter, date('m'))
+                    ->whereYear($this->shift_filter, date('Y'))
+                    ->where(function ($query) {
+                        $query->where('shift_number','like', '%'.$this->search.'%')
+                            ->orWhere('type','like', '%'.$this->search.'%')
+                            ->orWhere('date','like', '%'.$this->search.'%')
+                            ->orWhere('for','like', '%'.$this->search.'%')
+                            ->orWhereHas('customer', function ($q) {
+                                $q->where('name', 'like', '%'.$this->search.'%');
+                            })
+                            ->orWhereHas('horse', function ($q) {
+                                $q->where('registration_number', 'like', '%'.$this->search.'%')
+                                ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
+                            })
+                            ->orWhereHas('vehicle', function ($q) {
+                                $q->where('registration_number', 'like', '%'.$this->search.'%')
+                                ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
+                            })
+                            ->orWhereHas('cargo', function ($q) {
+                                $q->where('name', 'like', '%'.$this->search.'%');
+                            })
+                            ->orWhereHas('transporter', function ($q) {
+                                $q->where('name', 'like', '%'.$this->search.'%');
+                            })
+                            ->orWhereHas('driver.employee', function ($q) {
+                                $q->where(DB::raw("concat(name, ' ', surname)"), 'LIKE', "%".$this->search."%")
+                                ->orWhere('name', 'like', '%'.$this->search.'%')
+                                ->orWhere('surname', 'like', '%'.$this->search.'%');
+                            });
+                    })
+                    ->orderBy($this->shift_filter, 'desc');
         }
         else {
            return Shift::query()->with(['customer:id,name','driver','horse','vehicle','cargo','transporter','fuel'])
@@ -126,18 +136,20 @@ WithCustomStartCell
 
                 $equipment = "";
                 if ($shift->equipment == "Horse") {
-                    $reg_number = $shift->horse->registration_number;
-                    $fleet_number = $shift->horse->fleet_number;
-                    $equipment = $reg_number."(".$fleet_number.")";
+                    $reg_number = $shift->horse->registration_number ?? Null;
+                    $fleet_number = optional($shift->horse)->fleet_number ? "(" . optional($shift->horse)->fleet_number . ")" : null;
+                    $equipment = $reg_number." ".$fleet_number;
                 }elseif ($shift->equipment == "Vehicle") {
-                    $reg_number = $shift->vehicle->registration_number;
-                    $fleet_number = $shift->vehicle->fleet_number;
-                    $equipment = $reg_number."(".$fleet_number.")";
+                    $reg_number = $shift->vehicle->registration_number ?? Null;
+                    $fleet_number = optional($shift->vehicle)->fleet_number ? "(" . optional($shift->vehicle)->fleet_number . ")" : null;
+                    $equipment = $reg_number." ".$fleet_number;
                 }
 
-                $driver = $shift->driver->employee->name ." ". $shift->driver->employee->surname;
-
-               
+              
+                $employee = optional(optional($shift->driver)->employee);
+                $driver = $employee->name && $employee->surname
+                    ? $employee->name . ' ' . $employee->surname
+                    : '';
       
                 return   [
                     $shift->shift_number ,
@@ -149,7 +161,13 @@ WithCustomStartCell
                     $shift->customer ? $shift->customer->name : "",
                     $shift->cargo ? $shift->cargo->name : "",
                     $equipment,
-                    $driver
+                    $driver,
+                    $shift->total_loads,
+                    $shift->total_weight,
+                    $shift->calculated_mileage,
+                    $shift->actual_mileage,
+                    $shift->total_fuel,
+                    $shift->fuel_consumption_mileage,
                      ];
 
     }
@@ -166,12 +184,18 @@ WithCustomStartCell
                 'Cargo',
                 'Equipment',
                 'Driver',
+                'Total Loads',
+                'Total Weight',
+                'Calculated Mileage',
+                'Actual Mileage',
+                'Fuel',
+                'F/C (Mileage) (Km/l)',
             ];
     }
     public function registerEvents(): array{
         return[
             AfterSheet::class    => function(AfterSheet $event) {
-                $event->sheet->getStyle('A7:J7')->applyFromArray([
+                $event->sheet->getStyle('A7:Q7')->applyFromArray([
                     'font' => [
                         'bold' => true
                     ],

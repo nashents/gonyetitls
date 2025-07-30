@@ -13,7 +13,7 @@
                                                 <span class="input-group-addon">
                                                 Filter By
                                                 </span>
-                                                <select wire:model.debounce.300ms="invoice_filter" class="form-control" aria-label="..." >
+                                                <select wire:model.debounce.300ms="shift_filter" class="form-control" aria-label="..." >
                                                     <option value="created_at">Shift Created At</option>
                                                     <option value="date">Shift Date</option>
                                                 </select>
@@ -61,11 +61,12 @@
                                   <tr>
                                     <th class="th-sm">Shift
                                     </th>
-                                    <th class="th-sm" style="width: 20%;">Narration
-                                    </th>
-                                    <th class="th-sm" style="width: 13%;">
+                                     <th class="th-sm" style="width: 13%;">
                                         Duty
                                     </th>
+                                    <th class="th-sm" style="width: 20%;">Narration
+                                    </th>
+                                   
                                     <th class="th-sm" style="width:120px;">
                                         Hours
                                         <hr style="margin-top:2px; margin-bottom:2px">
@@ -96,6 +97,11 @@
                                         <br>
                                          <small><strong>CreatedBy:</strong> {{$shift->user ? $shift->user->name : ""}} {{$shift->user ? $shift->user->surname : ""}}</small>
                                     </td>
+                                      <td>
+                                        <strong>Date:</strong> {{$shift->date}} <br>
+                                        <strong>Start:</strong> {{$shift->shift_start_time}} <br>
+                                        <strong>Close:</strong> {{$shift->shift_end_time}} <br>
+                                    </td>
                                      <td>
                                         <strong>Customer:</strong> {{$shift->customer ? $shift->customer->name : ""}} <br>
                                         <strong>Cargo:</strong> {{$shift->cargo ? $shift->cargo->name : ""}} <br>
@@ -121,11 +127,7 @@
                                             @endforeach
                                         @endif
                                     </td>
-                                    <td>
-                                        <strong>Date:</strong> {{$shift->date}} <br>
-                                        <strong>Start:</strong> {{$shift->shift_start_time}} <br>
-                                        <strong>Close:</strong> {{$shift->shift_end_time}} <br>
-                                    </td>
+                                  
                                      <td>
                                         {{$shift->hours ? $shift->hours." Hrs" : ""}}
                                             <hr style="margin-top:5px; margin-bottom:5px"> 

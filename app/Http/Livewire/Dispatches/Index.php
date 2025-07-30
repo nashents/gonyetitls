@@ -344,6 +344,7 @@ class Index extends Component
         'date' => 'required',
     ];
 
+    
     private function resetInputFields(){
         $this->date = '';
         $this->requested_by_id = '';
@@ -373,6 +374,287 @@ class Index extends Component
         $dispatch->currency_id = $this->company->currency_id;
         $dispatch->description = $this->description;
         $dispatch->date = $this->date;
+        $dispatch->expand = $this->expand;
+        $dispatch->save();
+
+        $dispatch_total = 0;
+
+        if ($this->expand == True) {
+
+            if ($this->department == "inventory") {
+                foreach ($this->selectedInventory as $key => $id) {
+
+                    $amount = 0;
+                    $exchange_amount = 0;
+
+                    $inventory = Inventory::find($id);
+
+                    if ($inventory) {
+
+                        $dispatch_item = new DispatchItem;
+                        $dispatch_item->dispatch_id = $dispatch->id;
+                        $dispatch_item->product_id = $inventory->product_id;
+                        $dispatch_item->currency_id = $inventory->currency_id;
+                        $dispatch_item->inventory_id = $id;
+
+                       
+
+                        if (isset($this->weight[$key]) && is_numeric($this->weight[$key]) && 
+                            is_numeric($inventory->weight) && $inventory->weight > 0) {
+
+                            $dispatch_item->weight = $this->weight[$key];
+                            $ratio = $this->weight[$key] / $inventory->weight;
+
+                            if ($inventory->currency_id != $this->company->currency_id) {
+                                if (is_numeric($inventory->exchange_amount) && is_numeric($inventory->total)) {
+                                    $exchange_amount = $ratio * $inventory->exchange_amount;
+                                    $amount = $ratio * $inventory->total;
+                                }
+                            } else {
+                                if (is_numeric($inventory->total)) {
+                                    $amount = $ratio * $inventory->total;
+                                }
+                            }
+
+                            $dispatch_item->amount = $amount;
+                            $dispatch_item->exchange_amount = $exchange_amount;
+                        }
+
+                        $dispatch_item->exchange_rate = $inventory->exchange_rate;
+                        $dispatch_item->save();
+
+                        $dispatch_total += $inventory->currency_id != $this->company->currency_id
+                            ? $exchange_amount
+                            : $amount;
+
+                    }
+                }
+            }elseif ($this->department == "tyre") {
+                foreach ($this->selectedTyre as $key => $id) {  
+
+                    $tyre = Tyre::find($id);
+
+                    if ($tyre) {
+                        $dispatch_item = new DispatchItem;
+                        $dispatch_item->dispatch_id = $dispatch->id;
+                        $dispatch_item->product_id = $tyre->product_id;
+                        $dispatch_item->currency_id = $tyre->currency_id;
+                        $dispatch_item->amount = $tyre->total;
+                        $dispatch_item->exchange_amount = $tyre->exchange_amount;
+                        $dispatch_item->exchange_rate = $tyre->exchange_rate;
+                        $dispatch_item->tyre_id = $this->selectedTyre[$key];
+                        $dispatch_item->save();   
+
+                        $dispatch_total += $tyre->currency_id != $this->company->currency_id
+                            ? $tyre->exchange_amount
+                            : $tyre->total;
+                    }
+                }
+            }elseif ($this->department == "asset") {
+
+                foreach ($this->selectedAsset as $key => $id) {
+
+                    $amount = 0;
+                    $exchange_amount = 0;
+
+                    $asset = Asset::find($id);
+
+                    if ($asset) {
+
+                        $dispatch_item = new DispatchItem;
+                        $dispatch_item->dispatch_id = $dispatch->id;
+                        $dispatch_item->product_id = $asset->product_id;
+                        $dispatch_item->currency_id = $asset->currency_id;
+                        $dispatch_item->asset_id = $id;
+
+                        if (isset($this->weight[$key]) && is_numeric($this->weight[$key]) && 
+                            is_numeric($asset->weight) && $asset->weight > 0) {
+
+                            $dispatch_item->weight = $this->weight[$key];
+                            $ratio = $this->weight[$key] / $asset->weight;
+
+                            if ($asset->currency_id != $this->company->currency_id) {
+                                if (is_numeric($asset->exchange_amount) && is_numeric($asset->total)) {
+                                    $exchange_amount = $ratio * $asset->exchange_amount;
+                                    $amount = $ratio * $asset->total;
+                                }
+                            } else {
+                                if (is_numeric($asset->total)) {
+                                    $amount = $ratio * $asset->total;
+                                }
+                            }
+
+                            $dispatch_item->amount = $amount;
+                            $dispatch_item->exchange_amount = $exchange_amount;
+                        }
+
+                        $dispatch_item->exchange_rate = $asset->exchange_rate;
+                        $dispatch_item->save();
+
+                        $dispatch_total += $asset->currency_id != $this->company->currency_id
+                            ? $exchange_amount
+                            : $amount;
+
+                    }
+                }
+            }
+        }elseif ($this->expand == False) {
+
+            if ($this->selectedProduct) {
+
+                foreach ($this->selectedProduct as $key => $productId) {
+
+                    $qty = $this->qty[$key] ?? 0;
+                    if (!$qty || $qty < 1) continue;
+
+                    $product = Product::find($productId);
+                    if (!$product) continue;
+
+                    switch ($this->department) {
+                        case 'inventory':
+                            $items = Inventory::where('product_id', $product->id)
+                                ->orderBy('created_at', 'asc')
+                                ->take($qty)
+                                ->get();
+
+                            foreach ($items as $item) {
+                                $dispatch_item = new DispatchItem;
+                                $dispatch_item->dispatch_id = $dispatch->id;
+                                $dispatch_item->product_id = $product->id;
+                                $dispatch_item->inventory_id = $item->id;
+                                $dispatch_item->currency_id = $item->currency_id;
+                                $dispatch_item->amount = $item->total;
+                                $dispatch_item->exchange_amount = $item->exchange_amount;
+                                $dispatch_item->exchange_rate = $item->exchange_rate;
+                                $dispatch_item->weight = $item->balance;
+                                $dispatch_item->save();
+
+                                $dispatch_total += $item->currency_id != $this->company->currency_id
+                                ? $item->exchange_amount
+                                : $item->total;
+                                
+                            }
+                            break;
+
+                        case 'asset':
+                            $items = Asset::where('product_id', $product->id)
+                                ->orderBy('created_at', 'asc')
+                                ->take($qty)
+                                ->get();
+
+                            foreach ($items as $item) {
+                                $dispatch_item = new DispatchItem;
+                                $dispatch_item->dispatch_id = $dispatch->id;
+                                $dispatch_item->product_id = $product->id;
+                                $dispatch_item->asset_id = $item->id;
+                                $dispatch_item->amount = $item->total;
+                                $dispatch_item->currency_id = $item->currency_id;
+                                $dispatch_item->exchange_amount = $item->exchange_amount;
+                                $dispatch_item->exchange_rate = $item->exchange_rate;
+                                $dispatch_item->weight = $item->balance;
+                                $dispatch_item->save();
+
+                                $dispatch_total += $item->currency_id != $this->company->currency_id
+                                ? $item->exchange_amount
+                                : $item->total;
+                            }
+                            break;
+
+                        case 'tyre':
+                            $items = Tyre::where('product_id', $product->id)
+                                ->orderBy('created_at', 'asc')
+                                ->take($qty)
+                                ->get();
+
+                            foreach ($items as $item) {
+                                $dispatch_item = new DispatchItem;
+                                $dispatch_item->dispatch_id = $dispatch->id;
+                                $dispatch_item->product_id = $product->id;
+                                $dispatch_item->tyre_id = $item->id;
+                                $dispatch_item->currency_id = $item->currency_id;
+                                $dispatch_item->amount = $item->total;
+                                $dispatch_item->exchange_amount = $item->exchange_amount;
+                                $dispatch_item->exchange_rate = $item->exchange_rate;
+                                $dispatch_item->save();
+
+                                $dispatch_total += $item->currency_id != $this->company->currency_id
+                                ? $item->exchange_amount
+                                : $item->total;
+                            }
+                            break;
+                    }
+                }
+            }
+        }
+
+        $dispatch->total = $dispatch_total;
+        $dispatch->save();
+
+        $this->dispatchBrowserEvent('hide-dispatchModal');
+        $this->resetInputFields();
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Items Dispatched Successfully!!"
+        ]);
+
+    });
+    
+    }
+
+    public function edit($id){
+        $dispatch = Dispatch::find($id);
+        $this->horse_id = $dispatch->horse_id;
+        $this->horse_id = $dispatch->trailer_id;
+        $this->horse_id = $dispatch->vehicle_id;
+        $this->selectedTicket = $dispatch->ticket_id;
+        $this->selectedEmployee = $dispatch->ticket_id;
+        $this->requested_by_id = $dispatch->requested_by_id;
+        $this->department = $dispatch->department;
+        $this->asset_department_id = $dispatch->department_id;
+        $this->branch_id = $dispatch->branch_id;
+        $this->currency_id = $dispatch->currency_id;
+        $this->description = $dispatch->description;
+        $this->date = $dispatch->date;
+        $dispatch_items = $dispatch->dispatch_items;
+
+        if($dispatch_items){
+            foreach($dispatch_items as $dispatch_item){
+                $this->selectedInventory[] = $dispatch_item->inventory_id; 
+                $this->selectedProduct[] = $dispatch_item->inventory_id; 
+                $this->selectedTyre[] = $dispatch_item->tyre_id; 
+                $this->selectedAsset[] = $dispatch_item->tyre_id; 
+                $this->weight[] = $dispatch_item->weight; 
+                $this->qty[] = $dispatch_item->qty; 
+            }
+        }
+        
+        if (!empty($this->selectedInventory) || !empty($this->selectedAsset) || !empty($this->selectedTyre)) {
+            $this->expand = true;
+        }
+         $this->dispatchBrowserEvent('show-dispatchEditModal');
+
+    }
+
+    public function update(){
+
+        DB::transaction(function () {
+        
+        $dispatch = new Dispatch;
+        $dispatch->user_id = Auth::user()->id;
+        $dispatch->dispatch_number = $this->dispatchNumber();
+        $dispatch->horse_id = $this->horse_id;
+        $dispatch->trailer_id = $this->trailer_id;
+        $dispatch->vehicle_id = $this->vehicle_id;
+        $dispatch->ticket_id = $this->selectedTicket;
+        $dispatch->employee_id = $this->selectedEmployee;
+        $dispatch->requested_by_id = $this->requested_by_id;
+        $dispatch->department = $this->department;
+        $dispatch->department_id = $this->asset_department_id;
+        $dispatch->branch_id = $this->branch_id;
+        $dispatch->currency_id = $this->company->currency_id;
+        $dispatch->description = $this->description;
+        $dispatch->date = $this->date;
+        $dispatch->expand = $this->expand;
         $dispatch->save();
 
         $dispatch_total = 0;
