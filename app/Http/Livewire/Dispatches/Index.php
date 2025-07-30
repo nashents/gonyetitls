@@ -374,7 +374,6 @@ class Index extends Component
         $dispatch->currency_id = $this->company->currency_id;
         $dispatch->description = $this->description;
         $dispatch->date = $this->date;
-        $dispatch->expand = $this->expand;
         $dispatch->save();
 
         $dispatch_total = 0;
@@ -654,7 +653,6 @@ class Index extends Component
         $dispatch->currency_id = $this->company->currency_id;
         $dispatch->description = $this->description;
         $dispatch->date = $this->date;
-        $dispatch->expand = $this->expand;
         $dispatch->save();
 
         $dispatch_total = 0;

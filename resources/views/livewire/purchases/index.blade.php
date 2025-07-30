@@ -72,10 +72,12 @@
                                         </th>
                                         <th class="th-sm">CreatedBy
                                         </th>
-                                        <th class="th-sm">Date
+                                        <th class="th-sm">
+                                            Date
+                                           <hr style="margin-top:2px; margin-bottom:2px">
+                                            Expiry
                                         </th>
-                                        <th class="th-sm">Expiry
-                                        </th>
+                                      
                                         <th class="th-sm">Vendor
                                         </th>
                                         <th class="th-sm">Summary
@@ -86,7 +88,9 @@
                                         </th>
                                         <th class="th-sm">Paid
                                         </th>
-                                        <th class="th-sm">GReceived
+                                        <th class="th-sm">Item(s)
+                                        </th>
+                                        <th class="th-sm">Received
                                         </th>
                                         <th class="th-sm">Sent
                                         </th>
@@ -110,8 +114,12 @@
                                                 @endif
                                             @endif
                                         </td>
-                                        <td>{{$purchase->date}}</td>
-                                        <td><span class="badge bg-{{Carbon\Carbon::now() < $purchase->expiry ? 'success' : 'danger' }}">{{Carbon\Carbon::parse($purchase->expiry)->format('d-m-Y')}}</span></td>
+                                        <td>
+                                            {{$purchase->date}}
+                                           <hr style="margin-top:2px; margin-bottom:2px">
+                                            <span class="badge bg-{{Carbon\Carbon::now() < $purchase->expiry ? 'success' : 'danger' }}">{{Carbon\Carbon::parse($purchase->expiry)->format('d-m-Y')}}</span>
+                                        </td>
+
                                         <td>{{$purchase->vendor ? $purchase->vendor->name : ""}}</td>
                                         <td>
                                             @foreach ($purchase->purchase_products as $purchase_product )
@@ -134,6 +142,7 @@
                                             {{$purchase->currency ? $purchase->currency->symbol : ""}}0.00
                                             @endif
                                         </td>
+                                        <td>{{$purchase->purchase_products->count()}}</td>
                                         <td>
 
                                             @if ($department == "tyre")
