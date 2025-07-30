@@ -83,128 +83,51 @@ WithBatchInserts
 
     public function collection(Collection $rows)
     {
-
-       foreach($rows as $row){
-        if($row->filter()->isNotEmpty()){
-
-            $horse = Horse::where('registration_number', $row['registration_number'])->first();
-
-            if (isset($horse)) {
-               
-                $transporter = Transporter::where('transporter_number', $row['transporter_number'])->first();
-                if (isset($transporter)) {
-                    $transporter_id = $transporter->id;
-                }  
-
-                $make = HorseMake::where('name', $row['make'])->first();
-                if (isset($make)) {
-                    $make_id = $make->id;
-                }    
-                $model = HorseModel::where('name', $row['model'])->first();
-                if (isset($model)) {
-                    $model_id = $model->id;
-                }    
-              
-                if (isset($transporter_id) && $transporter_id != "") {
-                    $horse->transporter_id     = $transporter_id;
-                }
-                if (isset($make_id) && $make_id != "") {
-                    $horse->horse_make_id     = $make_id;
-                }else {
-                    $make = new HorseMake;
-                    $make->name = $row['make'];
-                    $make->save();
-                    $horse->horse_make_id = $make->id;
-                    $make_id = $make->id;
-                }
-                if (isset($model_id) && $model_id != "") {
-                    $horse->horse_model_id     = $model_id;
-                }else {
-                    $model = new HorseModel;
-                    $model->name = $row['model'];
-                    $model->save();
-                    $horse->horse_model_id = $model->id;
-                    $model_id = $model->id;
-                }
-
-                $horse->chasis_number    = $row['chasisnumber'];
-                $horse->engine_number    = $row['enginenumber'];
-                $horse->registration_number     = $row['registration_number'];
-                $horse->fleet_number     = $row['fleetnumber'];
-                $horse->year    = $row['year'];
-                $horse->color    = $row['color'];
-                $horse->manufacturer =  $row['manufacturer'];
-                $horse->country_of_origin    = $row['country_of_origin'];
-                $horse->mileage   = $row['mileage'];
-                $horse->hours   = $row['engine_hours'];
-                $horse->fuel_consumption_empty_standard    = $row['fuel_consumption_empty'] ? $row['fuel_consumption_empty'] : 0.5;
-                $horse->fuel_consumption_loaded_standard    = $row['fuel_consumption_loaded'] ? $row['fuel_consumption_loaded'] : 0.5;
-                $horse->update();
-                $transporter_id = "";
-                $make_id = "";
-                $model_id = "";
-                
-               
-      
-            } else {
-               
-            $transporter = Transporter::where('transporter_number', $row['transporter_number'])->first();
-            if (isset($transporter)) {
-                $transporter_id = $transporter->id;
-            }    
-            $make = HorseMake::where('name', $row['make'])->first();
-            if (isset($make)) {
-                $make_id = $make->id;
-            }    
-            $model = HorseModel::where('name', $row['model'])->first();
-            if (isset($model)) {
-                $model_id = $model->id;
-            }    
-            $horse = new Horse;
-            $horse->user_id     = Auth::user()->id;
-            if (isset($transporter_id) && $transporter_id != "") {
-                $horse->transporter_id = $transporter_id;
+        foreach ($rows as $row) {
+            if ($row->filter()->isEmpty()) {
+                continue;
             }
-            if (isset($make_id) && $make_id != "") {
-                $horse->horse_make_id = $make_id;
-            }else {
-                $make = new HorseMake;
-                $make->name = $row['make'];
-                $make->save();
-                $horse->horse_make_id = $make->id;
-                $make_id = $make->id;
+
+            $registrationNumber = $row->get('registration_number');
+            $transporterNumber = $row->get('transporter_number');
+            $makeName = $row->get('make');
+            $modelName = $row->get('model');
+
+            $horse = Horse::firstOrNew(['registration_number' => $registrationNumber]);
+
+            $transporter = Transporter::where('transporter_number', $transporterNumber)->first();
+            if ($transporter) {
+                $horse->transporter_id = $transporter->id;
             }
-            if (isset($model_id) && $model_id != "") {
-                $horse->horse_model_id = $model_id;
-            }else {
-                $model = new HorseModel;
-                $model->name = $row['model'];
-                $model->save();
-                $horse->horse_model_id = $model->id;
-                $model_id = $model->id;
+
+            $make = HorseMake::firstOrCreate(['name' => $makeName]);
+            $horse->horse_make_id = $make->id;
+
+            $model = HorseModel::firstOrCreate(['name' => $modelName]);
+            $horse->horse_model_id = $model->id;
+
+            // Always set user_id only if creating a new record
+            if (!$horse->exists) {
+                $horse->user_id = Auth::id();
+                $horse->horse_number = $this->horseNumber();
             }
-            $horse->chasis_number    = $row['chasisnumber'];
-            $horse->engine_number    = $row['enginenumber'];
-            $horse->registration_number     = $row['registration_number'];
-            $horse->fleet_number     = $row['fleetnumber'];
-            $horse->horse_number     =  $this->horseNumber();
-            $horse->year    = $row['year'];
-            $horse->color    = $row['color'];
-            $horse->manufacturer =  $row['manufacturer'];
-            $horse->country_of_origin    = $row['country_of_origin'];
-            $horse->mileage   = $row['mileage'];
-            $horse->hours   = $row['engine_hours'];
-            $horse->fuel_consumption_empty_standard    = $row['fuel_consumption_empty'] ? $row['fuel_consumption_empty'] : 0.5;
-            $horse->fuel_consumption_loaded_standard    = $row['fuel_consumption_loaded'] ? $row['fuel_consumption_loaded'] : 0.5;
+
+            // Set other fields
+            $horse->chasis_number = $row->get('chasisnumber');
+            $horse->engine_number = $row->get('enginenumber');
+            $horse->fleet_number = $row->get('fleetnumber');
+            $horse->year = $row->get('year');
+            $horse->color = $row->get('color');
+            $horse->manufacturer = $row->get('manufacturer');
+            $horse->country_of_origin = $row->get('country_of_origin');
+            $horse->mileage = $row->get('mileage');
+            $horse->hours = $row->get('engine_hours');
+            $horse->fuel_consumption_empty_standard = $row->get('fuel_consumption_empty', 0.5);
+            $horse->fuel_consumption_loaded_standard = $row->get('fuel_consumption_loaded', 0.5);
+
+            // Save new or update existing
             $horse->save();
-            $transporter_id = "";
-            $make_id = "";
-            $model_id = "";
-            }
-            
-    }
-       }
-
+        }
     }
 
     public function rules(): array{
