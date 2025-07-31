@@ -104,15 +104,15 @@
                                         </th>
                                         <th class="th-sm">AssignedTo
                                         </th>
-                                        <th class="th-sm">Service Type
+                                        <th class="th-sm">ServiceType
                                         </th>
-                                        <th class="th-sm">In Date
+                                        <th class="th-sm">InDate
                                         </th>
-                                        <th class="th-sm">In Time
+                                        <th class="th-sm">InTime
                                         </th>
-                                        <th class="th-sm">Out Date
+                                        <th class="th-sm">OutDate
                                         </th>
-                                        <th class="th-sm">Out Time
+                                        <th class="th-sm">OutTime
                                         </th>
                                         <th class="th-sm">Station
                                         </th>
@@ -140,13 +140,13 @@
                                         </td>
                                         <td>
                                             @if (isset($ticket->booking->horse))
-                                            Horse | {{ucfirst($ticket->booking->horse->horse_make ? $ticket->booking->horse->horse_make->name : "")}} {{ucfirst($ticket->booking->horse->horse_model ? $ticket->booking->horse->horse_model->name : "" )}} {{ucfirst($ticket->booking->horse->registration_number)}}
-                                            @elseif(isset($ticket->booking->vehicle))
-                                            Vehicle | {{ucfirst($ticket->booking->vehicle->vehicle_make->name)}} {{ucfirst($ticket->booking->vehicle->vehicle_model->name)}} {{ucfirst($ticket->booking->vehicle->registration_number)}}
-                                            @elseif(isset($ticket->booking->asset))
-                                            Asset | {{ucfirst($ticket->booking->asset->product->brand ? $ticket->booking->asset->product->brand->name : "")}} {{ucfirst($ticket->booking->asset->product ? $ticket->booking->asset->product->name : "")}}  {{$ticket->booking->asset->serial_number}}
-                                            @elseif(isset($ticket->booking->trailer))
-                                            Trailer | {{ucfirst($ticket->booking->trailer->make)}} {{ucfirst($ticket->booking->trailer->model)}} {{ucfirst($ticket->booking->trailer->registration_number)}}
+                                                Horse |  {{$ticket->booking->horse->registration_number}} {{$ticket->booking->horse->fleet_number ? "(".$ticket->booking->horse->fleet_number.")" : ""}}
+                                                @elseif(isset($ticket->booking->vehicle))
+                                                Vehicle |  {{$ticket->booking->vehicle->registration_number}} {{$ticket->booking->vehicle->fleet_number ? "(".$ticket->booking->vehicle->fleet_number.")" : ""}}
+                                                @elseif(isset($ticket->booking->asset))
+                                                Asset | {{$ticket->booking->asset->product->brand ? $ticket->booking->asset->product->brand->name : ""}} {{ucfirst($ticket->booking->asset->product ? $ticket->booking->asset->product->name : "")}}  {{$ticket->booking->asset->serial_number}}
+                                                @elseif(isset($ticket->booking->trailer))
+                                                Trailer | {{$ticket->booking->trailer->registration_number}} {{$ticket->booking->trailer->registration_number ? "(".$ticket->booking->trailer->registration_number.")" : ""}} 
                                             @endif
                                            </td>
                                            <td>

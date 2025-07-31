@@ -275,15 +275,15 @@
                                        
                                         <td>
                                             @if ($trip->horse)
-                                                Horse | {{ucfirst($trip->horse->horse_make ? $trip->horse->horse_make->name : "")}} {{ucfirst($trip->horse->horse_model ? $trip->horse->horse_model->name : "")}} {{ucfirst($trip->horse ? $trip->horse->registration_number : "")}} {{$trip->horse ? "| ".$trip->horse->fleet_number : ""}}
+                                                Horse |  {{ucfirst($trip->horse ? $trip->horse->registration_number : "")}} {{$trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : ""}}
                                             @elseif ($trip->vehicle)
-                                               Vehicle | {{ucfirst($trip->vehicle->vehicle_make ? $trip->vehicle->vehicle_make->name : "")}} {{ucfirst($trip->vehicle->vehicle_model ? $trip->vehicle->vehicle_model->name : "")}} {{ucfirst($trip->vehicle ? $trip->vehicle->registration_number : "")}}
+                                               Vehicle |   {{ucfirst($trip->vehicle ? $trip->vehicle->registration_number : "")}} {{$trip->vehicle->fleet_number ? "(".$trip->vehicle->fleet_number.")" : ""}}
                                             @endif
                                          
                                             @if (isset($trip->trailers) && $trip->trailers->count()>0)
                                             <hr style="margin-top:5px; margin-bottom:5px">
                                                 @foreach ($trip->trailers as $trailer)
-                                                    {{ $trailer->registration_number }} 
+                                                    {{ $trailer->registration_number }} {{ $trailer->fleet_number ? "(".$trailer->fleet_number.")" : "" }} 
                                                 @endforeach
                                             @endif
                                         </td>
@@ -470,17 +470,17 @@
                                             <hr style="margin-top:5px; margin-bottom:5px"> 
                                             {{$trip->driver->employee ? $trip->driver->employee->name : ""}} {{$trip->driver->employee ? $trip->driver->employee->surname : ""}}
                                             @endif</td>
-                                        <td>
+                                       <td>
                                             @if ($trip->horse)
-                                                Horse | {{ucfirst($trip->horse->horse_make ? $trip->horse->horse_make->name : "")}} {{ucfirst($trip->horse->horse_model ? $trip->horse->horse_model->name : "")}} {{ucfirst($trip->horse ? $trip->horse->registration_number : "")}} {{$trip->horse ? "| ".$trip->horse->fleet_number : ""}}
+                                                Horse |  {{ucfirst($trip->horse ? $trip->horse->registration_number : "")}} {{$trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : ""}}
                                             @elseif ($trip->vehicle)
-                                               Vehicle | {{ucfirst($trip->vehicle->vehicle_make ? $trip->vehicle->vehicle_make->name : "")}} {{ucfirst($trip->vehicle->vehicle_model ? $trip->vehicle->vehicle_model->name : "")}} {{ucfirst($trip->vehicle ? $trip->vehicle->registration_number : "")}}
+                                               Vehicle |   {{ucfirst($trip->vehicle ? $trip->vehicle->registration_number : "")}} {{$trip->vehicle->fleet_number ? "(".$trip->vehicle->fleet_number.")" : ""}}
                                             @endif
                                          
                                             @if (isset($trip->trailers) && $trip->trailers->count()>0)
                                             <hr style="margin-top:5px; margin-bottom:5px">
                                                 @foreach ($trip->trailers as $trailer)
-                                                    {{ $trailer->registration_number }} 
+                                                    {{ $trailer->registration_number }} {{ $trailer->fleet_number ? "(".$trailer->fleet_number.")" : "" }} 
                                                 @endforeach
                                             @endif
                                         </td>
@@ -669,15 +669,15 @@
                                             @endif</td>
                                         <td>
                                             @if ($trip->horse)
-                                                Horse | {{ucfirst($trip->horse->horse_make ? $trip->horse->horse_make->name : "")}} {{ucfirst($trip->horse->horse_model ? $trip->horse->horse_model->name : "")}} {{ucfirst($trip->horse ? $trip->horse->registration_number : "")}} {{$trip->horse ? "| ".$trip->horse->fleet_number : ""}}
+                                                Horse |  {{ucfirst($trip->horse ? $trip->horse->registration_number : "")}} {{$trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : ""}}
                                             @elseif ($trip->vehicle)
-                                               Vehicle | {{ucfirst($trip->vehicle->vehicle_make ? $trip->vehicle->vehicle_make->name : "")}} {{ucfirst($trip->vehicle->vehicle_model ? $trip->vehicle->vehicle_model->name : "")}} {{ucfirst($trip->vehicle ? $trip->vehicle->registration_number : "")}}
+                                               Vehicle |   {{ucfirst($trip->vehicle ? $trip->vehicle->registration_number : "")}} {{$trip->vehicle->fleet_number ? "(".$trip->vehicle->fleet_number.")" : ""}}
                                             @endif
                                          
                                             @if (isset($trip->trailers) && $trip->trailers->count()>0)
                                             <hr style="margin-top:5px; margin-bottom:5px">
                                                 @foreach ($trip->trailers as $trailer)
-                                                    {{ $trailer->registration_number }} 
+                                                    {{ $trailer->registration_number }} {{ $trailer->fleet_number ? "(".$trailer->fleet_number.")" : "" }} 
                                                 @endforeach
                                             @endif
                                         </td>
@@ -864,19 +864,19 @@
                                             {{$trip->driver->employee ? $trip->driver->employee->name : ""}} {{$trip->driver->employee ? $trip->driver->employee->surname : ""}}
                                             @endif</td>
                                     <td>
-                                        @if ($trip->horse)
-                                            Horse | {{ucfirst($trip->horse->horse_make ? $trip->horse->horse_make->name : "")}} {{ucfirst($trip->horse->horse_model ? $trip->horse->horse_model->name : "")}} {{ucfirst($trip->horse ? $trip->horse->registration_number : "")}} {{$trip->horse ? "| ".$trip->horse->fleet_number : ""}}
-                                        @elseif ($trip->vehicle)
-                                           Vehicle | {{ucfirst($trip->vehicle->vehicle_make ? $trip->vehicle->vehicle_make->name : "")}} {{ucfirst($trip->vehicle->vehicle_model ? $trip->vehicle->vehicle_model->name : "")}} {{ucfirst($trip->vehicle ? $trip->vehicle->registration_number : "")}}
-                                        @endif
-                                     
-                                        @if (isset($trip->trailers) && $trip->trailers->count()>0)
-                                        <hr style="margin-top:5px; margin-bottom:5px">
-                                            @foreach ($trip->trailers as $trailer)
-                                                {{ $trailer->registration_number }} 
-                                            @endforeach
-                                        @endif
-                                    </td>
+                                            @if ($trip->horse)
+                                                Horse |  {{ucfirst($trip->horse ? $trip->horse->registration_number : "")}} {{$trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : ""}}
+                                            @elseif ($trip->vehicle)
+                                               Vehicle |   {{ucfirst($trip->vehicle ? $trip->vehicle->registration_number : "")}} {{$trip->vehicle->fleet_number ? "(".$trip->vehicle->fleet_number.")" : ""}}
+                                            @endif
+                                         
+                                            @if (isset($trip->trailers) && $trip->trailers->count()>0)
+                                            <hr style="margin-top:5px; margin-bottom:5px">
+                                                @foreach ($trip->trailers as $trailer)
+                                                    {{ $trailer->registration_number }} {{ $trailer->fleet_number ? "(".$trailer->fleet_number.")" : "" }} 
+                                                @endforeach
+                                            @endif
+                                        </td>
                                     <td>
                                         @if (isset($from))
                                         {{$from->country ? $from->country->name : ""}} {{ $from->city }}
@@ -1061,15 +1061,15 @@
                                             @endif</td>
                                         <td>
                                             @if ($trip->horse)
-                                                Horse | {{ucfirst($trip->horse->horse_make ? $trip->horse->horse_make->name : "")}} {{ucfirst($trip->horse->horse_model ? $trip->horse->horse_model->name : "")}} {{ucfirst($trip->horse ? $trip->horse->registration_number : "")}} {{$trip->horse ? "| ".$trip->horse->fleet_number : ""}}
+                                                Horse |  {{ucfirst($trip->horse ? $trip->horse->registration_number : "")}} {{$trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : ""}}
                                             @elseif ($trip->vehicle)
-                                               Vehicle | {{ucfirst($trip->vehicle->vehicle_make ? $trip->vehicle->vehicle_make->name : "")}} {{ucfirst($trip->vehicle->vehicle_model ? $trip->vehicle->vehicle_model->name : "")}} {{ucfirst($trip->vehicle ? $trip->vehicle->registration_number : "")}}
+                                               Vehicle |   {{ucfirst($trip->vehicle ? $trip->vehicle->registration_number : "")}} {{$trip->vehicle->fleet_number ? "(".$trip->vehicle->fleet_number.")" : ""}}
                                             @endif
                                          
                                             @if (isset($trip->trailers) && $trip->trailers->count()>0)
                                             <hr style="margin-top:5px; margin-bottom:5px">
                                                 @foreach ($trip->trailers as $trailer)
-                                                    {{ $trailer->registration_number }} 
+                                                    {{ $trailer->registration_number }} {{ $trailer->fleet_number ? "(".$trailer->fleet_number.")" : "" }} 
                                                 @endforeach
                                             @endif
                                         </td>
@@ -1257,15 +1257,15 @@
                                             @endif</td>
                                         <td>
                                             @if ($trip->horse)
-                                                Horse | {{ucfirst($trip->horse->horse_make ? $trip->horse->horse_make->name : "")}} {{ucfirst($trip->horse->horse_model ? $trip->horse->horse_model->name : "")}} {{ucfirst($trip->horse ? $trip->horse->registration_number : "")}} {{$trip->horse ? "| ".$trip->horse->fleet_number : ""}}
+                                                Horse |  {{ucfirst($trip->horse ? $trip->horse->registration_number : "")}} {{$trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : ""}}
                                             @elseif ($trip->vehicle)
-                                               Vehicle | {{ucfirst($trip->vehicle->vehicle_make ? $trip->vehicle->vehicle_make->name : "")}} {{ucfirst($trip->vehicle->vehicle_model ? $trip->vehicle->vehicle_model->name : "")}} {{ucfirst($trip->vehicle ? $trip->vehicle->registration_number : "")}}
+                                               Vehicle |   {{ucfirst($trip->vehicle ? $trip->vehicle->registration_number : "")}} {{$trip->vehicle->fleet_number ? "(".$trip->vehicle->fleet_number.")" : ""}}
                                             @endif
                                          
                                             @if (isset($trip->trailers) && $trip->trailers->count()>0)
                                             <hr style="margin-top:5px; margin-bottom:5px">
                                                 @foreach ($trip->trailers as $trailer)
-                                                    {{ $trailer->registration_number }} 
+                                                    {{ $trailer->registration_number }} {{ $trailer->fleet_number ? "(".$trailer->fleet_number.")" : "" }} 
                                                 @endforeach
                                             @endif
                                         </td>
@@ -1449,17 +1449,17 @@
                                             <hr style="margin-top:5px; margin-bottom:5px"> 
                                             {{$trip->driver->employee ? $trip->driver->employee->name : ""}} {{$trip->driver->employee ? $trip->driver->employee->surname : ""}}
                                             @endif</td>
-                                        <td>
+                                         <td>
                                             @if ($trip->horse)
-                                                Horse | {{ucfirst($trip->horse->horse_make ? $trip->horse->horse_make->name : "")}} {{ucfirst($trip->horse->horse_model ? $trip->horse->horse_model->name : "")}} {{ucfirst($trip->horse ? $trip->horse->registration_number : "")}} {{$trip->horse ? "| ".$trip->horse->fleet_number : ""}}
+                                                Horse |  {{ucfirst($trip->horse ? $trip->horse->registration_number : "")}} {{$trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : ""}}
                                             @elseif ($trip->vehicle)
-                                               Vehicle | {{ucfirst($trip->vehicle->vehicle_make ? $trip->vehicle->vehicle_make->name : "")}} {{ucfirst($trip->vehicle->vehicle_model ? $trip->vehicle->vehicle_model->name : "")}} {{ucfirst($trip->vehicle ? $trip->vehicle->registration_number : "")}}
+                                               Vehicle |   {{ucfirst($trip->vehicle ? $trip->vehicle->registration_number : "")}} {{$trip->vehicle->fleet_number ? "(".$trip->vehicle->fleet_number.")" : ""}}
                                             @endif
                                          
                                             @if (isset($trip->trailers) && $trip->trailers->count()>0)
                                             <hr style="margin-top:5px; margin-bottom:5px">
                                                 @foreach ($trip->trailers as $trailer)
-                                                    {{ $trailer->registration_number }} 
+                                                    {{ $trailer->registration_number }} {{ $trailer->fleet_number ? "(".$trailer->fleet_number.")" : "" }} 
                                                 @endforeach
                                             @endif
                                         </td>
@@ -1645,15 +1645,15 @@
                                             @endif</td>
                                         <td>
                                             @if ($trip->horse)
-                                                Horse | {{ucfirst($trip->horse->horse_make ? $trip->horse->horse_make->name : "")}} {{ucfirst($trip->horse->horse_model ? $trip->horse->horse_model->name : "")}} {{ucfirst($trip->horse ? $trip->horse->registration_number : "")}} {{$trip->horse ? "| ".$trip->horse->fleet_number : ""}}
+                                                Horse |  {{ucfirst($trip->horse ? $trip->horse->registration_number : "")}} {{$trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : ""}}
                                             @elseif ($trip->vehicle)
-                                               Vehicle | {{ucfirst($trip->vehicle->vehicle_make ? $trip->vehicle->vehicle_make->name : "")}} {{ucfirst($trip->vehicle->vehicle_model ? $trip->vehicle->vehicle_model->name : "")}} {{ucfirst($trip->vehicle ? $trip->vehicle->registration_number : "")}}
+                                               Vehicle |   {{ucfirst($trip->vehicle ? $trip->vehicle->registration_number : "")}} {{$trip->vehicle->fleet_number ? "(".$trip->vehicle->fleet_number.")" : ""}}
                                             @endif
                                          
                                             @if (isset($trip->trailers) && $trip->trailers->count()>0)
                                             <hr style="margin-top:5px; margin-bottom:5px">
                                                 @foreach ($trip->trailers as $trailer)
-                                                    {{ $trailer->registration_number }} 
+                                                    {{ $trailer->registration_number }} {{ $trailer->fleet_number ? "(".$trailer->fleet_number.")" : "" }} 
                                                 @endforeach
                                             @endif
                                         </td>
@@ -1842,15 +1842,15 @@
                                             @endif</td>
                                         <td>
                                             @if ($trip->horse)
-                                                Horse | {{ucfirst($trip->horse->horse_make ? $trip->horse->horse_make->name : "")}} {{ucfirst($trip->horse->horse_model ? $trip->horse->horse_model->name : "")}} {{ucfirst($trip->horse ? $trip->horse->registration_number : "")}} {{$trip->horse ? "| ".$trip->horse->fleet_number : ""}}
+                                                Horse |  {{ucfirst($trip->horse ? $trip->horse->registration_number : "")}} {{$trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : ""}}
                                             @elseif ($trip->vehicle)
-                                               Vehicle | {{ucfirst($trip->vehicle->vehicle_make ? $trip->vehicle->vehicle_make->name : "")}} {{ucfirst($trip->vehicle->vehicle_model ? $trip->vehicle->vehicle_model->name : "")}} {{ucfirst($trip->vehicle ? $trip->vehicle->registration_number : "")}}
+                                               Vehicle |   {{ucfirst($trip->vehicle ? $trip->vehicle->registration_number : "")}} {{$trip->vehicle->fleet_number ? "(".$trip->vehicle->fleet_number.")" : ""}}
                                             @endif
                                          
                                             @if (isset($trip->trailers) && $trip->trailers->count()>0)
                                             <hr style="margin-top:5px; margin-bottom:5px">
                                                 @foreach ($trip->trailers as $trailer)
-                                                    {{ $trailer->registration_number }} 
+                                                    {{ $trailer->registration_number }} {{ $trailer->fleet_number ? "(".$trailer->fleet_number.")" : "" }} 
                                                 @endforeach
                                             @endif
                                         </td>

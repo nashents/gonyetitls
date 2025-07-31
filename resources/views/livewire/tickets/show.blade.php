@@ -10,8 +10,8 @@
             <ul class="nav nav-tabs nav-justified" role="tablist">
                 <li role="presentation" class="active"><a href="#jd" aria-controls="jd" role="tab" data-toggle="tab">Ticket Description</a></li>
                 <li role="presentation"><a href="#inspection" aria-controls="inspection" role="tab" data-toggle="tab">Inspection Results</a></li>
-                <li role="presentation"><a href="#parts" aria-controls="parts" role="tab" data-toggle="tab">Inventory</a></li>
-                <li role="presentation"><a href="#expenses" aria-controls="expenses" role="tab" data-toggle="tab">Expenses</a></li>
+                <li role="presentation"><a href="#parts" aria-controls="parts" role="tab" data-toggle="tab">Dispatched Items</a></li>
+                <li role="presentation"><a href="#expenses" aria-controls="expenses" role="tab" data-toggle="tab">Other Expenses</a></li>
             </ul>
             <div class="tab-content bg-white p-15">
                 <div role="tabpanel" class="tab-pane active" id="jd">
@@ -34,16 +34,16 @@
                                 <td class="w-20 line-height-35">{{$ticket->booking ? $ticket->booking->created_at : ""}}</td>
                             </tr>
                             <tr>
-                                <th class="w-10 text-center line-height-35">Booking For</th>
+                                <th class="w-10 text-center line-height-35">Ticket For</th>
                                 <td class="w-20 line-height-35">
                                     @if (isset($ticket->booking->horse))
-                                        Horse | {{ucfirst($ticket->booking->horse->horse_make ? $ticket->booking->horse->horse_make->name : "")}} {{ucfirst($ticket->booking->horse->horse_model ? $ticket->booking->horse->horse_model->name : "" )}} {{ucfirst($ticket->booking->horse->registration_number)}}
+                                        Horse |  {{$ticket->booking->horse->registration_number}} {{$ticket->booking->horse->fleet_number ? "(".$ticket->booking->horse->fleet_number.")" : ""}}
                                         @elseif(isset($ticket->booking->vehicle))
-                                        Vehicle | {{ucfirst($ticket->booking->vehicle->vehicle_make->name)}} {{ucfirst($ticket->booking->vehicle->vehicle_model->name)}} {{ucfirst($ticket->booking->vehicle->registration_number)}}
+                                        Vehicle |  {{$ticket->booking->vehicle->registration_number}} {{$ticket->booking->vehicle->fleet_number ? "(".$ticket->booking->vehicle->fleet_number.")" : ""}}
                                         @elseif(isset($ticket->booking->asset))
-                                        Asset | {{ucfirst($ticket->booking->asset->product->brand ? $ticket->booking->asset->product->brand->name : "")}} {{ucfirst($ticket->booking->asset->product ? $ticket->booking->asset->product->name : "")}}  {{$ticket->booking->asset->serial_number}}
+                                        Asset | {{$ticket->booking->asset->product->brand ? $ticket->booking->asset->product->brand->name : ""}} {{ucfirst($ticket->booking->asset->product ? $ticket->booking->asset->product->name : "")}}  {{$ticket->booking->asset->serial_number}}
                                         @elseif(isset($ticket->booking->trailer))
-                                        Trailer | {{ucfirst($ticket->booking->trailer->make)}} {{ucfirst($ticket->booking->trailer->model)}} {{ucfirst($ticket->booking->trailer->registration_number)}}
+                                        Trailer | {{$ticket->booking->trailer->registration_number}} {{$ticket->booking->trailer->registration_number ? "(".$ticket->booking->trailer->registration_number.")" : ""}} 
                                     @endif
                                 </td>
                             </tr>

@@ -1464,22 +1464,7 @@
                             </ul>
 
                         </li>
-                        <li class="has-children {{ request()->routeIs('inspections.index') ? 'active' : '' }}" >
-                            @php
-                            $inspectionsCount = $employee->inspections
-                            ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                            ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->where('status',1)->count();
-                            @endphp
-                            <a href="#"><i class="fas fa-search"></i> <span>Job Card Inspections</span> <i class="fas fa-angle-right arrow"></i></a>
-                            <ul class="child-nav">
-                                <li><a href="{{route('inspections.index')}}" ><i class="fas fa-list"></i> <span>Manage Inspections</span>
-                                    @if ($inspectionsCount>0)
-                                    <span class="label label-success ml-5">{{$inspectionsCount}}</span>
-                                    @endif</a></li>
-                            </ul>
-                        </li>
-
-                        <li class="has-children {{ request()->routeIs('tickets.index') ? 'active' : '' }}" >
+                              <li class="has-children {{ request()->routeIs('tickets.index') ? 'active' : '' }}" >
                             @php
                             $jobCardsCount = $employee->tickets
                             ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
@@ -1491,7 +1476,7 @@
                                 <li><a href="{{route('tickets.index')}}" ><i class="fas fa-list "></i> <span>Manage Tickets</span></a></li>
                                 @endif
                                 @if (in_array('Workshop', $department_names))
-                                <li><a href="{{route('tickets.cards', $employee->id)}}" ><i class="fas fa-newspaper-o "></i> <span>Job Cards</span>
+                                <li><a href="{{route('tickets.cards', $employee->id)}}" ><i class="fas fa-newspaper-o "></i> <span>My Tickets</span>
                                     @if ($jobCardsCount>0)
                                    <span class="label label-success ml-5">{{$jobCardsCount}}</span>
                                    @endif
@@ -1500,6 +1485,22 @@
                                 @endif
                             </ul>
                         </li>
+                        <li class="has-children {{ request()->routeIs('inspections.index') ? 'active' : '' }}" >
+                            @php
+                            $inspectionsCount = $employee->inspections
+                            ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
+                            ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->where('status',1)->count();
+                            @endphp
+                            <a href="#"><i class="fas fa-search"></i> <span>Ticket Inspections</span> <i class="fas fa-angle-right arrow"></i></a>
+                            <ul class="child-nav">
+                                <li><a href="{{route('inspections.index')}}" ><i class="fas fa-list"></i> <span>Manage Inspections</span>
+                                    @if ($inspectionsCount>0)
+                                    <span class="label label-success ml-5">{{$inspectionsCount}}</span>
+                                    @endif</a></li>
+                            </ul>
+                        </li>
+
+                  
 
                         <li class="has-children {{ request()->routeIs('checklists.index') ? 'active' : '' }}" >
                             <a href="#"><i class="fas fa-search"></i> <span>Fleet Inspections</span> <i class="fas fa-angle-right arrow"></i></a>

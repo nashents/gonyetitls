@@ -19,12 +19,20 @@
                                 </div> --}}
                             </div>
                             <div class="panel-body p-20" style="overflow-x:auto; width:100%; height:100%;">
-
-                                <table id="inspectionsTable" class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
+                                <div class="col-md-5" style="float: right; padding-right:2px">
+                                    <div class="form-group">
+                                        <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search Inspections...">
+                                    </div>
+                                </div>
+                                <table  class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                     <thead >
                                         <th class="th-sm">Inspection#
                                         </th>
-                                        <th class="th-sm">CreatedBy
+                                        <th class="th-sm">Booking#
+                                        </th>
+                                        <th class="th-sm">Ticket#
+                                        </th>
+                                        <th class="th-sm">ServiceType
                                         </th>
                                         <th class="th-sm">AssignedTo
                                         </th>
@@ -37,12 +45,22 @@
 
                                       </tr>
                                     </thead>
-                                    @if ($inspections->count()>0)
+                                    @if (isset($inspections))
                                     <tbody>
-                                        @foreach ($inspections as $inspection)
+                                        @forelse ($inspections as $inspection)
                                       <tr>
-                                        <td>{{ucfirst($inspection->inspection_number)}}</td>
-                                        <td>{{ucfirst($inspection->user ? $inspection->user->name : "undefined")}} {{ucfirst($inspection->user ? $inspection->user->surname : "undefined")}}</td> 
+                                        <td>{{$inspection->inspection_number}}</td>
+                                        <td>
+                                            @if ($inspection->booking)
+                                                <a href="{{route('bookings.show',$inspection->booking->id)}}" target="_blank" style="color: blue">{{$inspection->booking ? $inspection->booking->booking_number : ""}}</a>        
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if ($inspection->ticket)
+                                                <a href="{{route('tickets.show',$inspection->ticket->id)}}" target="_blank" style="color: blue">{{$inspection->ticket ? $inspection->ticket->ticket_number : ""}}</a>        
+                                            @endif
+                                        </td>
+                                        <td>{{$inspection->service_type ? $inspection->service_type->name : ""}}</td> 
                                         <td>
                                             @if (isset($inspection->booking->employees) && $inspection->booking->employees->count()>0)
                                                 @foreach ($inspection->booking->employees as $mechanic)
@@ -86,13 +104,31 @@
 
                                     </td>
                                       </tr>
-                                      @endforeach
+                                      @empty
+                                      <tr>
+                                        <td colspan="6">
+                                            <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
+                                                No Inspections Found ....
+                                            </div>
+                                           
+                                        </td>
+                                      </tr> 
+                                      @endforelse
                                     </tbody>
                                     @else
                                     <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
                                     @endif
 
                                   </table>
+                                    <nav class="text-center" style="float: right">
+                                    <ul class="pagination rounded-corners">
+                                        @if (isset($inspections))
+                                            @if ($inspections->count()>0)
+                                                {{ $inspections->links() }} 
+                                            @endif
+                                        @endif 
+                                    </ul>
+                                </nav>   
 
                                 <!-- /.col-md-12 -->
                             </div>

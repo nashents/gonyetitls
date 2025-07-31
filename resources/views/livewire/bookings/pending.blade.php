@@ -60,13 +60,13 @@
                                         </th>
                                         <th class="th-sm">AssignedTo
                                         </th>
-                                        <th class="th-sm">Booking For
+                                        <th class="th-sm">BookingFor
                                         </th>
-                                        <th class="th-sm">Service Type
+                                        <th class="th-sm">ServiceType
                                         </th>
                                         <th class="th-sm">Date
                                         </th>
-                                        <th class="th-sm">Authorization
+                                        <th class="th-sm">Auth
                                         </th>
                                         <th class="th-sm">Status
                                         </th>
@@ -93,15 +93,14 @@
                                             @endif
                                         </td>
                                         <td>
-                                            @if (isset($booking->horse))
-                                            Horse | {{ucfirst($booking->horse->horse_make ? $booking->horse->horse_make->name : "")}} {{ucfirst($booking->horse->horse_model ? $booking->horse->horse_model->name : "" )}} {{ucfirst($booking->horse ? $booking->horse->registration_number : "")}} {{ucfirst($booking->horse ? "| ".$booking->horse->fleet_number : "")}}
-                                            @elseif(isset($booking->vehicle))
-                                            Vehicle | {{ucfirst($booking->vehicle->vehicle_make ? $booking->vehicle->vehicle_make->name : "")}} {{ucfirst($booking->vehicle->vehicle_model ? $booking->vehicle->vehicle_model->name : "")}} {{ucfirst($booking->vehicle ? $booking->vehicle->registration_number : "")}} {{ucfirst($booking->vehicle ? "| ".$booking->vehicle->fleet_number : "")}}
-                                            @elseif(isset($booking->asset))
-                                            Asset | {{ucfirst($booking->asset->product->brand ? $booking->asset->product->brand->name : "")}} {{ucfirst($booking->asset->product ? $booking->asset->product->name : "")}}  {{$booking->asset->serial_number}}
-                                            @elseif(isset($booking->trailer))
-                                            @elseif(isset($booking->trailer))
-                                            Trailer | {{ucfirst($booking->trailer ? $booking->trailer->make : "")}} {{ucfirst($booking->trailer ? $booking->trailer->model : "")}} {{ucfirst($booking->trailer ? $booking->trailer->registration_number : "")}} {{ucfirst($booking->trailer ? "| ".$booking->trailer->fleet_number : "")}}
+                                           @if (isset($booking->horse))
+                                                Horse |  {{$booking->horse->registration_number}} {{$booking->horse->fleet_number ? "(".$booking->horse->fleet_number.")" : ""}}
+                                                @elseif(isset($booking->vehicle))
+                                                Vehicle |  {{$booking->vehicle->registration_number}} {{$booking->vehicle->fleet_number ? "(".$booking->vehicle->fleet_number.")" : ""}}
+                                                @elseif(isset($booking->asset))
+                                                Asset | {{$booking->asset->product->brand ? $booking->asset->product->brand->name : ""}} {{ucfirst($booking->asset->product ? $booking->asset->product->name : "")}}  {{$booking->asset->serial_number}}
+                                                @elseif(isset($booking->trailer))
+                                                Trailer | {{$booking->trailer->registration_number}} {{$booking->trailer->registration_number ? "(".$booking->trailer->registration_number.")" : ""}} 
                                             @endif
                                         </td>
                                            <td>{{ucfirst($booking->service_type ? $booking->service_type->name : "")}}</td>

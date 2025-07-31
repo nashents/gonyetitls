@@ -152,6 +152,14 @@ class Index extends Component
             $ticket->closed_comments = $this->comments;
             $ticket->update();
         }
+        
+        $inspection = $booking->inspection;
+        if (isset($inspection)) {
+            $inspection->closed_by_id = Auth::user()->id;
+            $inspection->status = $this->status;
+            $inspection->closed_comments = $this->comments;
+            $inspection->update();
+        }
       
 
         $horse = $booking->horse;
