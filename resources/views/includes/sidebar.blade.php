@@ -1236,6 +1236,7 @@
                                     @endif
                                 </a></li>
                             @endif
+                            <li><a href="{{route('shifts.reports')}}" ><i class="fas fa-list "></i> <span>Shifts Reports</span></a></li>
                         </ul>
                     </li>
                     @endif
@@ -1499,8 +1500,6 @@
                                     @endif</a></li>
                             </ul>
                         </li>
-
-                  
 
                         <li class="has-children {{ request()->routeIs('checklists.index') ? 'active' : '' }}" >
                             <a href="#"><i class="fas fa-search"></i> <span>Fleet Inspections</span> <i class="fas fa-angle-right arrow"></i></a>

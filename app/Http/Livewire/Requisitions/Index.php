@@ -560,9 +560,12 @@ class Index extends Component
                 $requisition_item->exchange_amount = $exchange_amount;
 
                 // Calculate subtotal based on currency
-                $subtotal = ($currency_id != $this->company->currency_id) 
+                if (is_numeric($amount) && is_numeric($qty)) {
+                    $subtotal = ($currency_id != $this->company->currency_id) 
                     ? $exchange_amount * $qty 
                     : $amount * $qty;
+                }
+                
 
                 // Assign and save the subtotal
                 $requisition_item->subtotal = $subtotal;
@@ -724,9 +727,11 @@ class Index extends Component
                 $requisition_item->exchange_amount = $exchange_amount;
 
                 // Calculate subtotal based on currency
-                $subtotal = ($currency_id != $this->company->currency_id) 
+                 if (is_numeric($amount) && is_numeric($qty)) {
+                    $subtotal = ($currency_id != $this->company->currency_id) 
                     ? $exchange_amount * $qty 
                     : $amount * $qty;
+                }
 
                 // Assign and save the subtotal
                 $requisition_item->subtotal = $subtotal;
@@ -772,9 +777,11 @@ class Index extends Component
                 $requisition_item->exchange_amount = $exchange_amount;
 
                 // Calculate subtotal based on currency
-                $subtotal = ($currency_id != $this->company->currency_id) 
+                 if (is_numeric($amount) && is_numeric($qty)) {
+                    $subtotal = ($currency_id != $this->company->currency_id) 
                     ? $exchange_amount * $qty 
                     : $amount * $qty;
+                }
 
                 // Assign and save the subtotal
                 $requisition_item->subtotal = $subtotal;

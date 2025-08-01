@@ -180,7 +180,7 @@ class Index extends Component
         if (!is_null($id) ) {
         $this->horse = Horse::find($id);
         $this->selected_horse = Horse::find($id);
-        $this->trips = Trip::with('horse','destination')->where('authorization','approved')->where('horse_id',$id)->orderBy('created_at','desc')->take(100)->get();
+        $this->trips = Trip::with('horse','destination')->where('authorization','approved')->where('trip_status','!=','Cancelled')->whereYear('start_date',date('Y'))->where('horse_id',$id)->orderBy('created_at','desc')->take(100)->get();
         $this->horse_id = $id;
         $this->mileage = $this->horse->mileage;
         $this->hours = $this->horse->hours;
@@ -240,7 +240,7 @@ class Index extends Component
         if (!is_null($id) ) {
             $this->vehicle = Vehicle::find($id);
             $this->selected_vehicle = Vehicle::find($id);
-            $this->trips = Trip::with('vehicle','destination')->where('authorization','approved')->where('vehicle_id',$id)->orderBy('created_at','desc')->take(100)->get();
+            $this->trips = Trip::with('vehicle','destination')->where('authorization','approved')->where('trip_status','!=','Cancelled')->whereYear('start_date',date('Y'))->where('vehicle_id',$id)->orderBy('created_at','desc')->take(100)->get();
             $this->vehicle_id = $id;
             $this->mileage = $this->vehicle->mileage;
             $this->hours = $this->vehicle->hours;

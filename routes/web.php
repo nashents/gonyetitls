@@ -137,6 +137,8 @@ Route::get('fuels/{fuel}/print','FuelController@print')->name('fuels.print');
 Route::get('horses/perfomance/','HorseController@performance')->name('horses.performance');
 Route::get('drivers/perfomance/','DriverController@performance')->name('drivers.performance');
 
+Route::get('shifts/reports/','ShiftController@reports')->name('shifts.reports');
+
 Route::get('horses/next-service/mileage','HorseController@mileage')->name('horses.mileage');
 Route::get('vehicles/next-service/mileage','VehicleController@mileage')->name('vehicles.mileage');
 Route::get('trailers/next-service/mileage','TrailerController@mileage')->name('trailers.mileage');

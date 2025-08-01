@@ -368,11 +368,11 @@
                         <div class="col-md-6">
                             @if ($type == "Horse")
                             <div class="form-group">
-                                <label for="vehicles">Horses<span class="required" style="color: red">*</span></label>
+                                <label for="horses">Horses<span class="required" style="color: red">*</span></label>
                                <select wire:model.debounce.300ms="selectedHorse" class="form-control" required>
                                    <option value="">Select Horse</option>
                                   @foreach ($horses as $horse)
-                                      <option value="{{$horse->id}}">{{$horse->registration_number}} {{$horse->horse_make ? $horse->horse_make->name : ""}} {{$horse->horse_model ? $horse->horse_model->name : ""}}</option>
+                                      <option value="{{$horse->id}}">{{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}}</option>
                                   @endforeach
                                </select>
                                 @error('selectedHorse') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -383,7 +383,7 @@
                                <select wire:model.debounce.300ms="selectedVehicle" class="form-control" required>
                                    <option value="">Select Vehicle</option>
                                   @foreach ($vehicles as $vehicle)
-                                      <option value="{{$vehicle->id}}"> {{$vehicle->registration_number}} {{$vehicle->vehicle_make ? $vehicle->vehicle_make->name : ""}} {{$vehicle->vehicle_model ? $vehicle->vehicle_model->name : ""}}</option>
+                                      <option value="{{$vehicle->id}}"> {{$vehicle->registration_number}} {{$vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : ""}} </option>
                                   @endforeach
                                </select>
                                 @error('selectedVehicle') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -396,9 +396,21 @@
                                 <label for="employees">Trips</label>
                                <select wire:model.debounce.300ms="selectedTrip" class="form-control" >
                                    <option value="">Select Trip</option>
-                                  @foreach ($trips as $trip)
-                                      <option value="{{$trip->id}}">{{ $trip->trip_number }}{{ $trip->trip_ref ? "/".$trip->trip_ref : "" }} | {{ $trip->horse ? $trip->horse->registration_number : "" }} | <strong>From:</strong> {{$trip->loading_point ? $trip->loading_point->name : ""}} <strong>To:</strong> {{$trip->offloading_point ? $trip->offloading_point->name : ""}}</option>
-                                  @endforeach
+                                    @foreach ($trips as $trip)
+                                      <option value="{{$trip->id}}">{{ $trip->trip_number }}{{ $trip->trip_ref ? "/".$trip->trip_ref : "" }} | {{$trip->start_date}} |
+                                        @if ($trip->horse)
+                                            {{ $trip->horse ? $trip->horse->registration_number : "" }} {{ $trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : "" }}   
+                                        @endif
+                                        @if ($trip->vehicle)
+                                            {{ $trip->vehicle ? $trip->vehicle->registration_number : "" }} {{ $trip->vehicle->fleet_number ? "(".$trip->vehicle->fleet_number.")" : "" }}   
+                                        @endif
+                                          |
+                                          @php
+                                              $from = App\Models\Destination::find($trip->from);
+                                              $to = App\Models\Destination::find($trip->to);
+                                          @endphp
+                                          From: {{$from ? $from->country->name : ""}} {{$from ? $from->city : ""}} {{$trip->loading_point ? $trip->loading_point->name : ""}} To: {{$to ? $to->country->name : ""}} {{$to ? $to->city : ""}} {{$trip->offloading_point ? $trip->offloading_point->name : ""}}</option>
+                                    @endforeach
                                </select>
                                 @error('selectedTrip') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
@@ -702,11 +714,11 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="vehicles">Horses<span class="required" style="color: red">*</span></label>
+                                    <label for="horses">Horses<span class="required" style="color: red">*</span></label>
                                    <select wire:model.debounce.300ms="selectedHorse" class="form-control" required>
                                        <option value="">Select Horse</option>
                                       @foreach ($horses as $horse)
-                                          <option value="{{$horse->id}}">{{$horse->registration_number}} {{$horse->horse_make ? $horse->horse_make->name : ""}} {{$horse->horse_model ? $horse->horse_model->name : ""}}</option>
+                                          <option value="{{$horse->id}}">{{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}}</option>
                                       @endforeach
                                    </select>
                                     @error('selectedHorse') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -717,9 +729,21 @@
                                     <label for="employees">Trips</label>
                                    <select wire:model.debounce.300ms="selectedTrip" class="form-control" >
                                        <option value="">Select Trip</option>
-                                      @foreach ($trips as $trip)
-                                      <option value="{{$trip->id}}">{{ $trip->trip_number }}{{ $trip->trip_ref ? "/".$trip->trip_ref : "" }} | {{ $trip->horse ? $trip->horse->registration_number : "" }} | <strong>From:</strong> {{$trip->loading_point ? $trip->loading_point->name : ""}} <strong>To:</strong> {{$trip->offloading_point ? $trip->offloading_point->name : ""}}</option>
-                                      @endforeach
+                                    @foreach ($trips as $trip)
+                                      <option value="{{$trip->id}}">{{ $trip->trip_number }}{{ $trip->trip_ref ? "/".$trip->trip_ref : "" }} | {{$trip->start_date}} |
+                                        @if ($trip->horse)
+                                            {{ $trip->horse ? $trip->horse->registration_number : "" }} {{ $trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : "" }}   
+                                        @endif
+                                        @if ($trip->vehicle)
+                                            {{ $trip->vehicle ? $trip->vehicle->registration_number : "" }} {{ $trip->vehicle->fleet_number ? "(".$trip->vehicle->fleet_number.")" : "" }}   
+                                        @endif
+                                          |
+                                          @php
+                                              $from = App\Models\Destination::find($trip->from);
+                                              $to = App\Models\Destination::find($trip->to);
+                                          @endphp
+                                          From: {{$from ? $from->country->name : ""}} {{$from ? $from->city : ""}} {{$trip->loading_point ? $trip->loading_point->name : ""}} To: {{$to ? $to->country->name : ""}} {{$to ? $to->city : ""}} {{$trip->offloading_point ? $trip->offloading_point->name : ""}}</option>
+                                    @endforeach
                                    </select>
                                     @error('selectedTrip') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
@@ -894,7 +918,7 @@
                                    <select wire:model.debounce.300ms="selectedVehicle" class="form-control" required>
                                        <option value="">Select Vehicle</option>
                                       @foreach ($vehicles as $vehicle)
-                                          <option value="{{$vehicle->id}}"> {{$vehicle->registration_number}} {{$vehicle->vehicle_make ? $vehicle->vehicle_make->name : ""}} {{$vehicle->vehicle_model ? $vehicle->vehicle_model->name : ""}}</option>
+                                          <option value="{{$vehicle->id}}"> {{$vehicle->registration_number}} {{$vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : ""}} </option>
                                       @endforeach
                                    </select>
                                     @error('selectedVehicle') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -1406,11 +1430,11 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="vehicles">Horses<span class="required" style="color: red">*</span></label>
+                                    <label for="horses">Horses<span class="required" style="color: red">*</span></label>
                                    <select wire:model.debounce.300ms="selectedHorse" class="form-control" required>
                                        <option value="">Select Horse</option>
                                       @foreach ($horses as $horse)
-                                          <option value="{{$horse->id}}">{{$horse->registration_number}} {{$horse->horse_make ? $horse->horse_make->name : ""}} {{$horse->horse_model ? $horse->horse_model->name : ""}}</option>
+                                          <option value="{{$horse->id}}">{{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}}</option>
                                       @endforeach
                                    </select>
                                     @error('selectedHorse') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -1582,7 +1606,7 @@
                                    <select wire:model.debounce.300ms="selectedVehicle" class="form-control" required>
                                        <option value="">Select Vehicle</option>
                                       @foreach ($vehicles as $vehicle)
-                                          <option value="{{$vehicle->id}}"> {{$vehicle->registration_number}} {{$vehicle->vehicle_make ? $vehicle->vehicle_make->name : ""}} {{$vehicle->vehicle_model ? $vehicle->vehicle_model->name : ""}}</option>
+                                          <option value="{{$vehicle->id}}"> {{$vehicle->registration_number}} {{$vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : ""}} </option>
                                       @endforeach
                                    </select>
                                     @error('selectedVehicle') <span class="error" style="color:red">{{ $message }}</span> @enderror

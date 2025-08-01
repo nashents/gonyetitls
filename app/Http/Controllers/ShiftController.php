@@ -18,6 +18,10 @@ class ShiftController extends Controller
     {
         return view('shifts.index');
     }
+    public function reports()
+    {
+        return view('shifts.reports');
+    }
 
         public function pending()
     {
