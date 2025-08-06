@@ -44,10 +44,6 @@
 
                     </div>
 
-
-
-
-
 @endsection
 
 @section('extra-js')

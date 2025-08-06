@@ -6,6 +6,7 @@ use App\Models\Shift;
 use Illuminate\Support\Facades\Session;
 use App\Http\Requests\StoreShiftRequest;
 use App\Http\Requests\UpdateShiftRequest;
+use Illuminate\Http\Request;
 
 class ShiftController extends Controller
 {
@@ -21,6 +22,15 @@ class ShiftController extends Controller
     public function reports()
     {
         return view('shifts.reports');
+    }
+
+    public function preview(Request $request)
+    {
+        // You can now access all passed parameters via $request
+        $filters = $request->all();
+       
+        // Pass data to view, perform filtering, etc.
+        return view('shifts.preview', compact('filters'));
     }
 
         public function pending()

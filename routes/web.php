@@ -1,8 +1,10 @@
 <?php
 
+// use App\Http\Livewire\Shifts\Preview;
 use Illuminate\Support\Facades\Route;
 use App\Http\Livewire\Pyramids\Horses;
 use App\Http\Controllers\SmsController;
+use App\Http\Controllers\ShiftController;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,9 +26,9 @@ Route::get('/forgot-password','LoginController@forgotPassword')->name('forgot-pa
 Route::get('/{token}/reset-password/{id}', 'LoginController@resetPassword')->name('reset-password');
 
 
-
-
 Route::group(['middleware' => 'auth'], function(){
+
+Route::get('/shifts/reports/preview', [ShiftController::class, 'preview'])->name('shifts.preview');
 
 //**Human Resources Route**
 
@@ -142,6 +144,9 @@ Route::get('shifts/reports/','ShiftController@reports')->name('shifts.reports');
 Route::get('horses/next-service/mileage','HorseController@mileage')->name('horses.mileage');
 Route::get('vehicles/next-service/mileage','VehicleController@mileage')->name('vehicles.mileage');
 Route::get('trailers/next-service/mileage','TrailerController@mileage')->name('trailers.mileage');
+
+
+
 
 Route::get('vendors/age/','VendorController@age')->name('vendors.age');
 Route::get('horses/age/','HorseController@age')->name('horses.age');

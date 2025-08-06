@@ -137,9 +137,9 @@
                                         {{$shift->total_fuel ? $shift->total_fuel. " l" : ""}}
                                     </td>
                                    <td>
-                                        {{$shift->fuel_consumption_hours ? number_format($shift->fuel_consumption_hours,2)." H/l" : ""}}
+                                        {{$shift->fuel_consumption_hours ? number_format($shift->fuel_consumption_hours,2)." l/H" : ""}}
                                             <hr style="margin-top:5px; margin-bottom:5px"> 
-                                        {{$shift->fuel_consumption_mileage ? number_format($shift->fuel_consumption_mileage,2)." Km/l" : ""}}
+                                        {{$shift->fuel_consumption_mileage ? number_format($shift->fuel_consumption_mileage,2)." l/Km" : ""}}
                                     </td>
                                     <td><span class="badge bg-{{$shift->status == 1 ? "warning" : "success"}}">{{$shift->status == 1 ? "Open" : "Closed"}}</span></td>
                                   

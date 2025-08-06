@@ -153,7 +153,7 @@ WithCalculatedFormulas
     private function calculateFuelConsumption($actual_mileage, $fuel)
     {
         if (is_numeric($actual_mileage) && $actual_mileage > 0 && is_numeric($fuel) && $fuel > 0) {
-            return round($actual_mileage / $fuel, 2); // km per litre
+            return round($fuel / $actual_mileage, 2); // km per litre
         }
         return null;
     }

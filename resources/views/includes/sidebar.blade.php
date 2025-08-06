@@ -1219,7 +1219,7 @@
                         <a href="#"><i class="fas fa-clock"></i> <span>Shifts</span> <i class="fas fa-angle-right arrow"></i></a>
                         <ul class="child-nav">
                             <li><a href="{{route('shifts.index')}}" ><i class="fas fa-list "></i> <span>Manage Shifts</span></a></li>          
-                            @if (in_array('Management', $rank_names) || isset($department_head) || in_array('Super Admin', $role_names))
+                            {{-- @if (in_array('Management', $rank_names) || isset($department_head) || in_array('Super Admin', $role_names))
                                 <li><a href="{{route('shifts.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Shifts</span>
                                     @if ($shiftsPendingCount>0)
                                         <span class="label label-success ml-5">{{$shiftsPendingCount}}</span>
@@ -1235,8 +1235,8 @@
                                         <span class="label label-success ml-5">{{$shiftsRejectedCount}}</span>
                                     @endif
                                 </a></li>
-                            @endif
-                            <li><a href="{{route('shifts.reports')}}" ><i class="fas fa-list "></i> <span>Shifts Reports</span></a></li>
+                            @endif --}}
+                            <li><a href="{{route('shifts.reports')}}" ><i class="fas fa-line-chart"></i> <span>Shifts Reports</span></a></li>
                         </ul>
                     </li>
                     @endif
