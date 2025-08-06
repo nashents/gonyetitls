@@ -210,11 +210,11 @@
                                     </div>
                                 </div>
                                 
-                                <div class="col-md-4">
+                                {{-- <div class="col-md-4">
                                         <a href="#" wire:click.prevent="previewReports" class="btn btn-default border-primary btn-wide btn-rounded btn-xs" type="button"  aria-haspopup="true" aria-expanded="true">
                                                 <i class="fas fa-eye"></i> Preview
                                             </a>
-                                </div>
+                                </div> --}}
                             </div>
                         </div>
                     </div>
