@@ -19,4 +19,9 @@ class Group extends Model implements Auditable
     public function gate_passes(){
         return $this->hasMany('App\Models\GatePass');
     }
+
+     protected $fillable = [
+        'name',
+        'user_id',
+    ];
 }

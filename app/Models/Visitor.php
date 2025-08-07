@@ -18,4 +18,13 @@ class Visitor extends Model implements Auditable
     public function group(){
         return $this->belongsTo('App\Models\Group');
     }
+
+    protected $fillable = [
+        'name',
+        'user_id',
+        'surname',
+        'phonenumber',
+        'group_id',
+        'idnumber',
+    ];
 }

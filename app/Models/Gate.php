@@ -19,4 +19,9 @@ class Gate extends Model implements Auditable
         return $this->hasMany('App\Models\GatePass');
     }
     
+    protected $fillable = [
+        'name',
+        'user_id',
+        'group_id',
+    ];
 }

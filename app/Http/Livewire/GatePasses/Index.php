@@ -53,6 +53,8 @@ class Index extends Component
     public $exit;
     public $reason;
     public $invited_by_id;
+    public $acknowledgement = False;
+    public $signature;
 
     public $gate_name;
     public $group_name;
@@ -80,11 +82,11 @@ class Index extends Component
     public function mount(){
       
         $this->branches = Branch::latest()->get();
-        $this->gates = collect();
-        $this->employees = Employee::latest()->get();
-        $this->visitors = Visitor::latest()->get();
+         $this->gates = Gate::latest()->get();
+        $this->employees = Employee::orderBy('name','asc')->orderBy('surname','asc')->get();
+        $this->visitors = Visitor::orderBy('created_at','desc')->get();
         $this->trips = Trip::latest()->whereYear('start_date',date('Y'))->get();
-        $this->groups = Group::latest()->get();
+        $this->groups = Group::orderBy('created_at','desc')->get();
         $this->horses = Horse::orderBy('registration_number','asc')->get();
         $this->drivers = Driver::with('employee:id,name,surname')->latest()->get();
         $this->trailers = Trailer::latest()->get();
@@ -119,120 +121,172 @@ class Index extends Component
         return $gate_pass_number;
     }
 
-    public function updated($value){
-        $this->validateOnly($value);
-    }
-    protected $rules = [
-        'gate_name' => 'required|unique:gates,name,NULL,id,deleted_at,NULL|string',
-    ];
+    // public function updated($value){
+    //     $this->validateOnly($value);
+    // }
+    // // protected $rules = [
+        
+    // // ];
 
 
     public function updatedSelectedBranch($branch){
         if (!is_null($branch)) {
             $branch = Branch::find($branch);
             $this->branch = $branch;
-            $this->gates = $branch->gates;
+          
         }
     }
 
     private function resetInputFields(){
-        $this->group_name = '';
+        $this->selectedBranch = '';
+        $this->gate_id = '';
+        $this->group_id = '';
+        $this->visitor_id = '';
+        $this->invited_by_id = '';
+        $this->reason = '';
+        $this->exit = '';
+        $this->entry = '';
+        $this->acknowledgement = '';
+        $this->signature = '';
+    }
+    private function resetVisitorInputFields(){
         $this->name = '';
         $this->surname = '';
         $this->idnumber = '';
         $this->phonenumber = '';
-        $this->reason = '';
-        $this->exit = '';
-        $this->entry = '';
-        $this->selectedBranch = '';
-        $this->gate_id = '';
-        $this->type = '';
+    }
+  
+    private function resetGroupInputFields(){
+        $this->group_name = '';
+    }
+    private function resetGateInputFields(){
+        $this->gate_name = '';
+    }
+
+        public function refresh($category){
+
+        if($category == "gates"){
+            $this->gates = Gate::latest()->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Gates Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "visitors"){
+            $this->visitors = Visitor::latest()->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Visitors Refreshed Successfully!!."
+            ]);
+        } 
+        elseif($category == "groups"){
+            $this->groups = Group::latest()->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Groups Refreshed Successfully!!."
+            ]);
+        } 
     }
 
     public function storeGroup(){
 
-        try{
+        $this->validate([
+           'group_name' => 'required|unique:groups,name,NULL,id,deleted_at,NULL|string',
+        ]);
 
-        $group = new Group;
-        $group->name = $this->group_name;
-        $group->save();
+
+        $group = Group::firstOrNew([
+            'name' => $this->group_name,
+        ]);
+
+        if (!$group->exists) {
+            $group->user_id = Auth::id();
+            $group->save();
+        }
+
         $this->group_id = $group->id;
+        $this->groups = Group::latest()->get();
 
         $this->dispatchBrowserEvent('hide-groupModal');
-        $this->resetInputFields();
+        $this->resetGroupInputFields();
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
             'message'=>"Group Created Successfully!!"
         ]);
 
-        }
-        catch(\Exception $e){
-        // Set Flash Message
-        $this->dispatchBrowserEvent('alert',[
-            'type'=>'error',
-            'message'=>"Something goes wrong while creating group!!"
-        ]);
-    }
+      
     }
     public function storeGate(){
+    
+        $this->validate([
+           'gate_name' => 'required|unique:gates,name,NULL,id,deleted_at,NULL|string',
+        ]);
 
-        try{
 
-        $gate = new Gate;
-        $gate->user_id = Auth::user()->id;
-        $gate->branch_id = $this->selectedBranch;
-        $gate->name = $this->gate_name;
-        $gate->save();
+        $gate = Gate::firstOrNew([
+            'name' => $this->gate_name,
+            'branch_id' => $this->selectedBranch,
+        ]);
+
+        if (!$gate->exists) {
+            $gate->user_id = Auth::id();
+            $gate->save();
+        }
+
         $this->gate_id = $gate->id;
 
+        $branch = Branch::find($this->selectedBranch);
+         $this->gates = Gate::latest()->get();
+
         $this->dispatchBrowserEvent('hide-gateModal');
-        $this->resetInputFields();
+        $this->resetGateInputFields();
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
             'message'=>"Gate Created Successfully!!"
         ]);
 
-        }
-        catch(\Exception $e){
-        // Set Flash Message
-        $this->dispatchBrowserEvent('alert',[
-            'type'=>'error',
-            'message'=>"Something goes wrong while creating group!!"
-        ]);
-    }
+      
+    
     }
 
 
     public function storeVisitor(){
 
-        try{
+        $this->validate([
+           'name' => 'required|string',
+           'surname' => 'required|string',
+           'idnumber' => 'required|unique:visitors,name,NULL,id,deleted_at,NULL|string',
+        ]);
 
-        $visitor = new Visitor;
-        $visitor->user_id = Auth::user()->id;
-        $visitor->group_id = $this->group_id;
-        $visitor->name = $this->name;
-        $visitor->surname = $this->surname;
-        $visitor->idnumber = $this->idnumber;
+        $visitor = Visitor::firstOrNew([
+            'name' => $this->name,
+            'surname' => $this->surname,
+            'idnumber' => $this->idnumber,
+        ]);
+
+        // Always update editable fields
         $visitor->phonenumber = $this->phonenumber;
+        $visitor->group_id = $this->group_id;
+
+        // Only assign user_id on new record
+        if (!$visitor->exists) {
+            $visitor->user_id = Auth::id();
+        }
+
         $visitor->save();
         $this->visitor_id = $visitor->id;
 
         $this->dispatchBrowserEvent('hide-visitorModal');
-        $this->resetInputFields();
+        $this->resetVisitorInputFields();
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
             'message'=>"Visitor Created Successfully!!"
         ]);
 
-        }
-        catch(\Exception $e){
-        // Set Flash Message
-        $this->dispatchBrowserEvent('alert',[
-            'type'=>'error',
-            'message'=>"Something goes wrong while creating visitor!!"
-        ]);
+     
     }
-    }
+
+
     public function store(){
         $gate_pass = new GatePass;
         $gate_pass->user_id = Auth::user()->id;
@@ -247,10 +301,9 @@ class Index extends Component
         $gate_pass->visitor_id = $this->visitor_id ? $this->visitor_id : null;
         $gate_pass->group_id = $this->group_id ? $this->group_id : null;
         $gate_pass->authorization = "approved";
+        $gate_pass->acknowledgement = $this->acknowledgement;
         $gate_pass->save();
        
-       
-
         $this->dispatchBrowserEvent('hide-gate_passModal');
         $this->resetInputFields();
         $this->dispatchBrowserEvent('alert',[
@@ -320,7 +373,7 @@ class Index extends Component
         return view('livewire.gate-passes.index',[
             'trip_gate_passes' => GatePass::with('trip','horse','driver','branch:id,name')->where('type','Trip')->orderBy('gate_pass_number','desc')->take(100)->paginate(10),
             'individual_gate_passes' => GatePass::with('branch:id,name')->where('type','Individual')->orderBy('gate_pass_number','desc')->take(100)->paginate(10),
-            'gates' => Gate::all(),
+            'gates' => Gate::latest()->get(),
             'gate_id' => $this->gate_id,
             'groups' => $this->groups,
             'group_id' => $this->group_id,
@@ -328,4 +381,4 @@ class Index extends Component
             'visitor_id' => $this->visitor_id,
         ]);
     }
-}
+}  

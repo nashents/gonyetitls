@@ -1,4 +1,13 @@
 <div>
+    @section('extra-css')
+        <style>
+            #signature-pad {
+                border: 1px solid #ccc;
+                width: 400px;
+                height: 200px;
+            }
+        </style>
+    @endsection
     <section class="section">
         <x-loading/>
         <div class="container-fluid">
@@ -246,7 +255,7 @@
 
 
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="gate_passModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fas fa-plus"></i> Create Gate Pass <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -275,7 +284,7 @@
                                         <option value="{{ $gate->id }}">{{ $gate->name }}</option>
                                     @endforeach
                                 </select>
-                                <small>  <a href="#" data-toggle="modal" data-target="#gateModal" ><i class="fa fa-plus-square-o"></i> New Gate</a></small> 
+                                <small><a href="#" data-toggle="modal" data-target="#gateModal" ><i class="fa fa-plus-square-o"></i> New Gate</a></small>
                                 @error('gate_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -284,14 +293,14 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="name">Groups</label>
+                                <label for="name">Companies / Groups</label>
                                 <select class="form-control" wire:model.debounce.300ms="group_id">
-                                    <option value="">Select Group</option>
+                                    <option value="">Select Company / Group</option>
                                     @foreach ($groups as $group)
                                         <option value="{{ $group->id }}">{{ $group->name }}</option>
                                     @endforeach
                                 </select>
-                                <small>  <a href="{{ route('groups.index') }}" target="_blank" ><i class="fa fa-plus-square-o"></i> New Group</a></small> 
+                                <small>  <a href="#" data-toggle="modal" data-target="#groupModal" ><i class="fa fa-plus-square-o"></i> New Company / Group</a></small> 
                                 @error('group_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -304,8 +313,9 @@
                                         <option value="{{ $visitor->id }}">{{ $visitor->name }} {{ $visitor->surname }}</option>
                                     @endforeach
                                 </select>
+                                 <small><a href="#" data-toggle="modal" data-target="#visitorModal" ><i class="fa fa-plus-square-o"></i> New Visitor</a></small>
                                 @error('visitor_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                <small>  <a href="{{ route('visitors.index') }}" target="_blank" ><i class="fa fa-plus-square-o"></i> New Visitor</a></small> 
+                               
                             </div>
                         </div>
                        
@@ -316,7 +326,7 @@
                         <select class="form-control" wire:model.debounce.300ms="invited_by_id">
                             <option value="">Select Employee</option>
                             @foreach ($employees as $employee)
-                                <option value="{{ $employee->id }}">{{ $employee->employee_number }} {{ $employee->name }} {{ $employee->surname }}</option>
+                                <option value="{{ $employee->id }}">{{ $employee->name }} {{ $employee->surname }}</option>
                             @endforeach
                         </select>
                         @error('invited_by_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -343,6 +353,21 @@
                        <textarea wire:model.debounce.300ms="reason" class="form-control" cols="30" rows="4"></textarea>
                         @error('reason') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
+                    <div class="mb-10">
+                            <input type="checkbox" wire:model.debounce.300ms="acknowledgement"   class="line-style blue-style" />
+                            <label for="one" class="radio-label">I was briefed of the safety instructions before entry</label>
+                            @error('acknowledgement') <span class="text-danger error">{{ $message }}</span>@enderror
+                    </div>
+                    {{-- @if ($acknowledgement == True)
+                         <div style="margin-top: 10px;">
+                            <label>Signature<span class="required" style="color: red">*</span></label><br>
+                           <canvas id="signature-pad" style="border: 1px solid #ccc; width: 100%; max-width: 400px; height: 200px;"></canvas>
+                            <input type="hidden" id="signature" wire:model.defer="signature" required>
+                            @error('signature') <span style="color:red">{{ $message }}</span> @enderror
+                            <br>
+                            <button type="button" onclick="clearPad()">Clear</button>
+                        </div>
+                    @endif --}}
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">
@@ -533,14 +558,14 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-plus"></i> Add Group <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-plus"></i> Add Company / Group <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                 </div>
                 <form wire:submit.prevent="storeGroup()" >
                 <div class="modal-body">
             
                     <div class="form-group">
                         <label for="name">Name<span class="required" style="color: red">*</span></label>
-                        <input type="text" class="form-control" wire:model.debounce.300ms="group_name" placeholder="Enter Name" required />
+                        <input type="text" class="form-control" wire:model.debounce.300ms="group_name" placeholder="Enter Company / Group Name" required />
                         @error('group_name') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
                 </div>
@@ -564,8 +589,8 @@
                 <form wire:submit.prevent="storeGate()" >
                 <div class="modal-body">
                     <div class="form-group">
-                        <label for="name">Branches</label>
-                        <select class="form-control" wire:model.debounce.300ms="selectedBranch">
+                        <label for="name">Branches<span class="required" style="color: red">*</span></label>
+                        <select class="form-control" wire:model.debounce.300ms="selectedBranch" required>
                             <option value="">Select Branch</option>
                             @foreach ($branches as $branch)
                                 <option value="{{ $branch->id }}">{{ $branch->name }}</option>
@@ -655,6 +680,51 @@
             </div>
         </div>
     </div>
+
+@section('extra-css')
+    
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const canvas = document.getElementById('signature-pad');
+        const signaturePad = new SignaturePad(canvas);
+
+        function resizeCanvas() {
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            canvas.width = canvas.offsetWidth * ratio;
+            canvas.height = canvas.offsetHeight * ratio;
+            canvas.getContext("2d").scale(ratio, ratio);
+            signaturePad.clear(); // Clear after resize to avoid distortion
+        }
+
+        resizeCanvas();
+        window.addEventListener("resize", resizeCanvas);
+
+        // Enable touch drawing for touchscreen laptops and tablets
+        canvas.addEventListener("touchstart", function (e) {
+            e.preventDefault();
+        }, { passive: false });
+
+        canvas.addEventListener("touchmove", function (e) {
+            e.preventDefault();
+        }, { passive: false });
+
+        window.clearPad = function () {
+            signaturePad.clear();
+        }
+
+        window.saveSignature = function () {
+            if (!signaturePad.isEmpty()) {
+                const dataUrl = signaturePad.toDataURL();
+                @this.set('signature', dataUrl);
+            } else {
+                alert('Please sign before submitting.');
+            }
+        }
+    });
+</script>
+@endsection
 
 </div>
 

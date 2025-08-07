@@ -22,6 +22,9 @@
         <link rel="stylesheet" href="{{asset('css/bootstrap-tour/bootstrap-tour.css')}}" >
         <script src="https://kit.fontawesome.com/0154e08647.js" crossorigin="anonymous"></script>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+       
+
         <!-- ========== THEME CSS ========== -->
         <link rel="stylesheet" href="{{asset('css/main.css')}}" media="screen" >
         <!-- ========== MODERNIZR ========== -->
@@ -96,6 +99,9 @@
         <script src="{{asset('js/toastr/toastr.min.js')}}"></script>
         <script src="{{asset('js/icheck/icheck.min.js')}}"></script>
         <script src="{{asset('js/bootstrap-tour/bootstrap-tour.js')}}"></script>
+
+        
+
 
         <!-- ========== THEME JS ========== -->
         <script src="{{asset('js/main.js')}}"></script>
