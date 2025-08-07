@@ -2,6 +2,7 @@
 
 namespace App\Exports;
 
+use Carbon\Carbon;
 use App\Models\Shift;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -162,6 +163,19 @@ WithCustomStartCell
                 $driver = $employee->name && $employee->surname
                     ? $employee->name . ' ' . $employee->surname
                     : '';
+
+                $start = Carbon::parse($shift->shift_start_time);
+                $end = Carbon::parse($shift->shift_end_time);
+
+                // Get the difference in seconds
+                $diffInSeconds = $end->diffInSeconds($start);
+
+                // Convert to hours, minutes, and seconds
+                $hours = floor($diffInSeconds / 3600);
+                $minutes = floor(($diffInSeconds % 3600) / 60);
+                $seconds = $diffInSeconds % 60;
+
+                $durationFormatted = sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
       
                 return   [
                     $shift->shift_number ,
@@ -170,6 +184,7 @@ WithCustomStartCell
                     $shift->date ,
                     $shift->shift_start_time ,
                     $shift->shift_end_time ,
+                    $durationFormatted,
                     $shift->customer ? $shift->customer->name : "",
                     $shift->cargo ? $shift->cargo->name : "",
                     $equipment,
@@ -192,6 +207,7 @@ WithCustomStartCell
                 'Date',
                 'Start Time',
                 'Close Time',
+                'Duration',
                 'Customer',
                 'Cargo',
                 'Equipment',

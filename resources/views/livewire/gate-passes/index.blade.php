@@ -1,13 +1,5 @@
 <div>
-    @section('extra-css')
-        <style>
-            #signature-pad {
-                border: 1px solid #ccc;
-                width: 400px;
-                height: 200px;
-            }
-        </style>
-    @endsection
+    
     <section class="section">
         <x-loading/>
         <div class="container-fluid">
@@ -680,51 +672,6 @@
             </div>
         </div>
     </div>
-
-@section('extra-css')
-    
-    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
-
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const canvas = document.getElementById('signature-pad');
-        const signaturePad = new SignaturePad(canvas);
-
-        function resizeCanvas() {
-            const ratio = Math.max(window.devicePixelRatio || 1, 1);
-            canvas.width = canvas.offsetWidth * ratio;
-            canvas.height = canvas.offsetHeight * ratio;
-            canvas.getContext("2d").scale(ratio, ratio);
-            signaturePad.clear(); // Clear after resize to avoid distortion
-        }
-
-        resizeCanvas();
-        window.addEventListener("resize", resizeCanvas);
-
-        // Enable touch drawing for touchscreen laptops and tablets
-        canvas.addEventListener("touchstart", function (e) {
-            e.preventDefault();
-        }, { passive: false });
-
-        canvas.addEventListener("touchmove", function (e) {
-            e.preventDefault();
-        }, { passive: false });
-
-        window.clearPad = function () {
-            signaturePad.clear();
-        }
-
-        window.saveSignature = function () {
-            if (!signaturePad.isEmpty()) {
-                const dataUrl = signaturePad.toDataURL();
-                @this.set('signature', dataUrl);
-            } else {
-                alert('Please sign before submitting.');
-            }
-        }
-    });
-</script>
-@endsection
 
 </div>
 
