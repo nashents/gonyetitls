@@ -297,7 +297,6 @@
                     console.log("No details available for input: '" + place.name + "'");
                     return;
                 }
-
                 Livewire.emit('setLocationData', {
                     city: place.name,
                     lat: place.geometry.location.lat(),

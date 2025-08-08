@@ -226,7 +226,7 @@
                             <tr>
                                 <th class="th-sm">Shift
                                 </th>
-                                <th class="th-sm" style="width: 13%;">
+                                <th class="th-sm" style="width: 17%;">
                                     Duty
                                 </th>
                                 <th class="th-sm" style="width: 20%;">Narration
@@ -266,6 +266,7 @@
                                         <strong>Date:</strong> {{$shift->date}} <br>
                                         <strong>Start:</strong> {{$shift->shift_start_time}} <br>
                                         <strong>Close:</strong> {{$shift->shift_end_time}} <br>
+                                        <strong>Duration:</strong> {{$this->calculatedShiftDuration($shift)}}
                                     </td>
                                     <td>
                                         <strong>Customer:</strong> {{$shift->customer ? $shift->customer->name : ""}} <br>

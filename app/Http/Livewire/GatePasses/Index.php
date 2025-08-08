@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\GatePasses;
 
+use Storage;
 use App\Models\Gate;
 use App\Models\Trip;
 use App\Models\Group;
@@ -66,6 +67,14 @@ class Index extends Component
     public $trailer_inputs = [];
     public $t = 1;
     public $s = 1;
+
+    protected $listeners = ['setSignatureData'];
+
+    public function setSignatureData($signature)
+    {
+        $this->signature = $signature;
+   
+    }
 
     public function trailerAdd($t)
     {
@@ -286,8 +295,20 @@ class Index extends Component
      
     }
 
-
+    
     public function store(){
+
+     
+
+        //  $this->validate([
+        //    'entry' => 'required',
+        //    'reason' => 'required',
+        //    'visitor_id' => 'required',
+        //    'invited_by_id' => 'required',
+        //    'acknowledgement' => 'required',
+        // //    'signature' => 'required',
+        // ]);
+
         $gate_pass = new GatePass;
         $gate_pass->user_id = Auth::user()->id;
         $gate_pass->gate_pass_number = $this->gate_passNumber();
@@ -302,6 +323,15 @@ class Index extends Component
         $gate_pass->group_id = $this->group_id ? $this->group_id : null;
         $gate_pass->authorization = "approved";
         $gate_pass->acknowledgement = $this->acknowledgement;
+        $gate_pass->signature = $this->signature;
+
+        if ($this->signature) {
+            $image = str_replace('data:image/png;base64,', '', $this->signature);
+            $image = str_replace(' ', '+', $image);
+            $imageName = 'images/uploads' . uniqid() . '.png';
+            Storage::disk('public')->put($imageName, base64_decode($image));
+        }
+       
         $gate_pass->save();
        
         $this->dispatchBrowserEvent('hide-gate_passModal');

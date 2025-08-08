@@ -139,7 +139,15 @@ WithCustomStartCell
                 $start = Carbon::parse($shift->shift_start_time);
                 $end = Carbon::parse($shift->shift_end_time);
 
-                // Get the difference in seconds
+                // If you have dates for the shift times, parse them directly
+                // Otherwise, handle cases where only the time is given
+
+                // If only time is stored and end is "before" start, assume it's the next day
+                if ($end->lessThan($start)) {
+                    $end->addDay();
+                }
+
+                // Get total seconds difference (works for > 24 hours too)
                 $diffInSeconds = $end->diffInSeconds($start);
 
                 // Convert to hours, minutes, and seconds
@@ -147,7 +155,8 @@ WithCustomStartCell
                 $minutes = floor(($diffInSeconds % 3600) / 60);
                 $seconds = $diffInSeconds % 60;
 
-                $durationFormatted = sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
+                // Format as HH:MM:SS, even if hours > 24
+                 $durationFormatted = sprintf('%02dH: %02dM: %02dS', $hours, $minutes, $seconds);
       
                 return   [
                     $shift->shift_number ,
@@ -179,6 +188,7 @@ WithCustomStartCell
                 'Date',
                 'Start Time',
                 'Close Time',
+                'Duration',
                 'Customer',
                 'Cargo',
                 'Equipment',

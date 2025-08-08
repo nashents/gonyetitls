@@ -101,6 +101,7 @@
                                         <strong>Date:</strong> {{$shift->date}} <br>
                                         <strong>Start:</strong> {{$shift->shift_start_time}} <br>
                                         <strong>Close:</strong> {{$shift->shift_end_time}} <br>
+                                        <strong>Duration:</strong> {{$this->calculatedShiftDuration($shift)}}
                                     </td>
                                      <td>
                                         <strong>Customer:</strong> {{$shift->customer ? $shift->customer->name : ""}} <br>

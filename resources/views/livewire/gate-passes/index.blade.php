@@ -350,16 +350,16 @@
                             <label for="one" class="radio-label">I was briefed of the safety instructions before entry</label>
                             @error('acknowledgement') <span class="text-danger error">{{ $message }}</span>@enderror
                     </div>
-                    {{-- @if ($acknowledgement == True)
-                         <div style="margin-top: 10px;">
-                            <label>Signature<span class="required" style="color: red">*</span></label><br>
-                           <canvas id="signature-pad" style="border: 1px solid #ccc; width: 100%; max-width: 400px; height: 200px;"></canvas>
-                            <input type="hidden" id="signature" wire:model.defer="signature" required>
-                            @error('signature') <span style="color:red">{{ $message }}</span> @enderror
-                            <br>
-                            <button type="button" onclick="clearPad()">Clear</button>
-                        </div>
-                    @endif --}}
+
+                     <div>
+                        <label>Signature</label>
+                      <canvas id="signature-pad" width="600" height="200" style="border:1px solid #ccc;"></canvas>
+                      <br>
+                        <button type="button" id="clear" class="btn btn-gray btn-wide btn-rounded"><i class="fa fa-undo"></i>Clear</button>
+                        @error('signature') <span>{{ $message }}</span> @enderror
+                    </div>
+                    <input type="hidden" id="signature-data" wire:model.debounce.300ms="signature">
+
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">
@@ -672,6 +672,37 @@
             </div>
         </div>
     </div>
+
+@section('extra-js')
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.6/dist/signature_pad.umd.min.js">
+    </script>
+
+    <script>
+        document.addEventListener('livewire:load', function () {
+
+            let canvas = document.getElementById('signature-pad');
+            let signaturePad = new SignaturePad(canvas);
+
+            // On signature end → emit event to Livewire
+           signaturePad.addEventListener('endStroke', () => {
+                let dataUrl = signaturePad.toDataURL();
+                Livewire.emit('setSignatureData', dataUrl);
+            });
+
+            document.getElementById('clear').addEventListener('click', function () {
+                signaturePad.clear();
+                Livewire.emit('setSignatureData', null);
+            });
+
+            // Listen for reset from Livewire
+            window.addEventListener('clear-signature', () => {
+                signaturePad.clear();
+                Livewire.emit('setSignatureData', null);
+            });
+        });
+    </script>
+    
+@endsection
 
 </div>
 

@@ -522,6 +522,32 @@ class Index extends Component
         $shift->save();
     }
 
+
+    public function calculatedShiftDuration($shift){
+
+        $start = Carbon::parse($shift->shift_start_time);
+        $end = Carbon::parse($shift->shift_end_time);
+
+        // If you have dates for the shift times, parse them directly
+        // Otherwise, handle cases where only the time is given
+
+        // If only time is stored and end is "before" start, assume it's the next day
+        if ($end->lessThan($start)) {
+            $end->addDay();
+        }
+
+        // Get total seconds difference (works for > 24 hours too)
+        $diffInSeconds = $end->diffInSeconds($start);
+
+        // Convert to hours, minutes, and seconds
+        $hours = floor($diffInSeconds / 3600);
+        $minutes = floor(($diffInSeconds % 3600) / 60);
+        $seconds = $diffInSeconds % 60;
+
+        // Format as HH:MM:SS, even if hours > 24
+         $durationFormatted = sprintf('%02dH: %02dM: %02dS', $hours, $minutes, $seconds);
+        return $durationFormatted;
+    }
     
     
 
