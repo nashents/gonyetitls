@@ -12,6 +12,46 @@
                             </div>
 
                             <div class="panel-title">
+                                           <div class="row">
+                                
+                                <div class="col-lg-3">
+                                    <div class="input-group">
+                                        <span class="input-group-addon">
+                                  Filter By
+                                  </span>
+                                  <select wire:model.debounce.300ms="gate_pass_filter" class="form-control" aria-label="..." >
+                                    <option value="created_at">Created At</option>
+                                    <option value="date"> Date</option>
+                                </select>
+                                    </div>
+
+                                    <!-- /input-group -->
+                                </div>
+
+                            
+                                <div class="col-lg-2" style="margin-right: 7px; margin-left:-15px;">
+                                    <div class="input-group">
+                                        <span class="input-group-addon">
+                                From
+                                </span>
+                                <input type="date" wire:model.debounce.300ms="from"  class="form-control" aria-label="...">
+                                    </div>
+                                    <!-- /input-group -->
+                                </div>
+                                <div class="col-lg-2" style="margin-left: 7px">
+                                    <div class="input-group">
+                                        <span class="input-group-addon">
+                                To
+                                </span>
+                                <input type="date" wire:model.debounce.300ms="to"  class="form-control" aria-label="...">
+                                    </div>
+                                    <!-- /input-group -->
+                                </div>
+                          
+                               
+                               
+                                <!-- /input-group -->
+                            </div>
                                 <a href="#" data-toggle="modal" data-target="#gate_passModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Gate Pass</a>
                             </div>
                         </div>
@@ -21,22 +61,27 @@
                                 <li role="presentation"><a href="#trips" aria-controls="trips" role="tab" data-toggle="tab">Trips</a></li>
                             </ul>
                             <div class="tab-content bg-white p-15">
-                                <div role="tabpanel" class="tab-pane active" id="individual">
+                            <div role="tabpanel" class="tab-pane active" id="individual">
+                                <div class="col-md-3" style="float: right; padding-right:0px">
+                                    <div class="form-group">
+                                        <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search gate passes...">
+                                    </div>
+                                </div>
                             <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <caption>Individual Gatepass</caption>
                                 <thead>
                                   <tr>
-                                    <th class="th-sm">GatePass#
-                                    </th>
                                     <th class="th-sm">Branch
                                     </th>
                                     <th class="th-sm">Visitor
                                     </th>
-                                    <th class="th-sm">InvitedBy
+                                    <th class="th-sm">WishToSee
                                     </th>
-                                    <th class="th-sm">In
+                                    <th class="th-sm">Entry
                                     </th>
-                                    <th class="th-sm">Out
+                                    <th class="th-sm">Exit
+                                    </th>
+                                    <th class="th-sm">Signed
                                     </th>
                                     <th class="th-sm">Auth
                                     </th>
@@ -54,7 +99,6 @@
                                         $invited_by = App\Models\Employee::find($gate_pass->invited_by_id);
                                         $authorized_by = App\Models\Employee::find($gate_pass->authorized_by_id);
                                     @endphp
-                                    <td>{{$gate_pass->gate_pass_number}}</td>
                                     <td>
                                         @if ($gate_pass->branch)
                                         {{$gate_pass->branch ? $gate_pass->branch->name : ""}} <br> 
@@ -63,18 +107,28 @@
                                     </td>
                                     <td>
                                         @if ($gate_pass->group)
-                                        <small>{{$gate_pass->group ? $gate_pass->group->name : ""}}</small> <br>
+                                            <small>{{$gate_pass->group ? $gate_pass->group->name : ""}}</small> <br>
                                         @endif
-                                        {{ucfirst($gate_pass->visitor ? $gate_pass->visitor->name : "")}} {{ucfirst($gate_pass->visitor ? $gate_pass->visitor->surname : "")}}
-                                        
+                                        @if ($gate_pass->visitor)
+                                                {{$gate_pass->visitor ? $gate_pass->visitor->name : ""}} {{$gate_pass->visitor ? $gate_pass->visitor->surname : ""}}
+                                        @endif
+                                        @if ($gate_pass->vrn)
+                                        <br>
+                                            {{$gate_pass->make}} {{$gate_pass->vrn}}
+                                        @endif
                                     </td>
-                                    <td>{{ucfirst($invited_by->name)}} {{ucfirst($invited_by->surname)}}</td>
+                                    <td>
+                                        @if ($invited_by)
+                                            {{$invited_by->name}} {{$invited_by->surname}}
+                                        @endif
+                                    </td>
                                     <td>
                                         {{$gate_pass->entry}}
                                     </td>
                                     <td>
                                        {{$gate_pass->exit}}
                                     </td>
+                                    <td><span class="label label-{{$gate_pass->signature ? 'success'  : 'warning' }}">{{$gate_pass->signature  ? 'signed' : 'pending' }}</span></td>
                                     <td><span class="label label-{{($gate_pass->authorization == 'approved') ? 'success' : (($gate_pass->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($gate_pass->authorization == 'approved') ? 'approved' : (($gate_pass->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td> 
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
@@ -119,8 +173,6 @@
                                 <caption>Trip Gatepass</caption>
                                 <thead>
                                   <tr>
-                                    <th class="th-sm">GatePass#
-                                    </th>
                                     <th class="th-sm">Trip
                                     </th>
                                      <th class="th-sm">Entry
@@ -257,8 +309,8 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="name">Branches</label>
-                                <select class="form-control" wire:model.debounce.300ms="selectedBranch">
+                                <label for="name">Branches<span class="required" style="color: red">*</span></label>
+                                <select class="form-control" wire:model.debounce.300ms="selectedBranch" required>
                                     <option value="">Select Branch</option>
                                     @foreach ($branches as $branch)
                                         <option value="{{ $branch->id }}">{{ $branch->name }}</option>
@@ -269,8 +321,8 @@
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="name">Gate</label>
-                                <select class="form-control" wire:model.debounce.300ms="gate_id">
+                                <label for="name">Gate<span class="required" style="color: red">*</span></label>
+                                <select class="form-control" wire:model.debounce.300ms="gate_id" required>
                                     <option value="">Select Gate</option>
                                     @foreach ($gates as $gate)
                                         <option value="{{ $gate->id }}">{{ $gate->name }}</option>
@@ -298,8 +350,8 @@
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="name">Visitors</label>
-                                <select class="form-control" wire:model.debounce.300ms="visitor_id">
+                                <label for="name">Visitors<span class="required" style="color: red">*</span></label>
+                                <select class="form-control" wire:model.debounce.300ms="visitor_id" required>
                                     <option value="">Select Visitor</option>
                                     @foreach ($visitors as $visitor)
                                         <option value="{{ $visitor->id }}">{{ $visitor->name }} {{ $visitor->surname }}</option>
@@ -312,10 +364,26 @@
                         </div>
                        
                     </div>
-                   
+                    <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                        <label for="name">Vehicle Make & Model</label>
+                                        <input type="text" class="form-control" wire:model.debounce.300ms="make" placeholder="Enter Vehicle Make & Model"/>
+                                        @error('make') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                        <label for="name">Vehicle Registration Number</label>
+                                        <input type="text" class="form-control" wire:model.debounce.300ms="vrn" placeholder="Enter Visitor VRN"/>
+                                        @error('vrn') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                    </div>
+
                     <div class="form-group">
-                        <label for="name">Invited By</label>
-                        <select class="form-control" wire:model.debounce.300ms="invited_by_id">
+                        <label for="name">Wish To See?<span class="required" style="color: red">*</span></label>
+                        <select class="form-control" wire:model.debounce.300ms="invited_by_id" required>
                             <option value="">Select Employee</option>
                             @foreach ($employees as $employee)
                                 <option value="{{ $employee->id }}">{{ $employee->name }} {{ $employee->surname }}</option>
@@ -347,19 +415,18 @@
                     </div>
                     <div class="mb-10">
                             <input type="checkbox" wire:model.debounce.300ms="acknowledgement"   class="line-style blue-style" />
-                            <label for="one" class="radio-label">I was briefed of the safety instructions before entry</label>
+                            <label for="one" class="radio-label"> <strong>I acknowledge that i was briefed on safety precautions before entry.</strong></label>
                             @error('acknowledgement') <span class="text-danger error">{{ $message }}</span>@enderror
                     </div>
-
-                     <div>
-                        <label>Signature</label>
-                      <canvas id="signature-pad" width="600" height="200" style="border:1px solid #ccc;"></canvas>
-                      <br>
-                        <button type="button" id="clear" class="btn btn-gray btn-wide btn-rounded"><i class="fa fa-undo"></i>Clear</button>
-                        @error('signature') <span>{{ $message }}</span> @enderror
-                    </div>
-                    <input type="hidden" id="signature-data" wire:model.debounce.300ms="signature">
-
+                 
+                        <div  style="{{ $acknowledgement ? '' : 'display:none;' }}">
+                            <label>Please Sign Below</label>
+                            <canvas id="signature-pad" width="725" height="200" style="border:1px solid #ccc;"></canvas>
+                            <br>
+                            <button type="button" id="clear" class="btn btn-gray btn-wide btn-rounded"><i class="fa fa-undo"></i>Clear</button>
+                            @error('signature') <span>{{ $message }}</span> @enderror
+                        </div>
+                 
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">
@@ -380,15 +447,6 @@
                 </div>
                 <form wire:submit.prevent="update()" >
                     <div class="modal-body">
-                        <div class="form-group">
-                            <label for="name">Type</label>
-                            <select class="form-control" wire:model.debounce.300ms="type" disabled>
-                                <option value="">Select Type</option>
-                                <option value="Individual">Individual</option>
-                                <option value="Trip">Trip</option>
-                            </select>
-                            @error('type') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                        </div>
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
@@ -417,46 +475,64 @@
                             </div>
                         </div>
                         @if ($type == "Individual")
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="name">Groups</label>
-                                    <select class="form-control" wire:model.debounce.300ms="group_id">
-                                        <option value="">Select Group</option>
-                                        @foreach ($groups as $group)
-                                            <option value="{{ $group->id }}">{{ $group->name }}</option>
-                                        @endforeach
-                                    </select>
-                                    <small>  <a href="{{ route('groups.index') }}" target="_blank" ><i class="fa fa-plus-square-o"></i> New Group</a></small> 
-                                    @error('group_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                </div>
+                          <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="name">Companies / Groups</label>
+                                <select class="form-control" wire:model.debounce.300ms="group_id">
+                                    <option value="">Select Company / Group</option>
+                                    @foreach ($groups as $group)
+                                        <option value="{{ $group->id }}">{{ $group->name }}</option>
+                                    @endforeach
+                                </select>
+                                <small>  <a href="#" data-toggle="modal" data-target="#groupModal" ><i class="fa fa-plus-square-o"></i> New Company / Group</a></small> 
+                                @error('group_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="name">Visitors</label>
-                                    <select class="form-control" wire:model.debounce.300ms="visitor_id">
-                                        <option value="">Select Visitor</option>
-                                        @foreach ($visitors as $visitor)
-                                            <option value="{{ $visitor->id }}">{{ $visitor->name }} {{ $visitor->surname }}</option>
-                                        @endforeach
-                                    </select>
-                                    @error('visitor_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                    <small>  <a href="{{ route('visitors.index') }}" target="_blank" ><i class="fa fa-plus-square-o"></i> New Visitor</a></small> 
-                                </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="name">Visitors<span class="required" style="color: red">*</span></label>
+                                <select class="form-control" wire:model.debounce.300ms="visitor_id" required>
+                                    <option value="">Select Visitor</option>
+                                    @foreach ($visitors as $visitor)
+                                        <option value="{{ $visitor->id }}">{{ $visitor->name }} {{ $visitor->surname }}</option>
+                                    @endforeach
+                                </select>
+                                 <small><a href="#" data-toggle="modal" data-target="#visitorModal" ><i class="fa fa-plus-square-o"></i> New Visitor</a></small>
+                                @error('visitor_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                               
                             </div>
-                           
                         </div>
                        
-                        <div class="form-group">
-                            <label for="name">Invited By</label>
-                            <select class="form-control" wire:model.debounce.300ms="invited_by_id">
-                                <option value="">Select Employee</option>
-                                @foreach ($employees as $employee)
-                                    <option value="{{ $employee->id }}">{{ $employee->employee_number }} {{ $employee->name }} {{ $employee->surname }}</option>
-                                @endforeach
-                            </select>
-                            @error('invited_by_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                        </div>
+                    </div>
+                       
+                      <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                        <label for="name">Vehicle Make & Model</label>
+                                        <input type="text" class="form-control" wire:model.debounce.300ms="make" placeholder="Enter Vehicle Make & Model"/>
+                                        @error('make') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                        <label for="name">Vehicle Registration Number</label>
+                                        <input type="text" class="form-control" wire:model.debounce.300ms="vrn" placeholder="Enter Visitor VRN"/>
+                                        @error('vrn') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="name">Wish To See?<span class="required" style="color: red">*</span></label>
+                        <select class="form-control" wire:model.debounce.300ms="invited_by_id" required>
+                            <option value="">Select Employee</option>
+                            @foreach ($employees as $employee)
+                                <option value="{{ $employee->id }}">{{ $employee->name }} {{ $employee->surname }}</option>
+                            @endforeach
+                        </select>
+                        @error('invited_by_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    </div>
                         @elseif ($type == "Trip")
                         <div class="row">
                             <div class="col-md-6">

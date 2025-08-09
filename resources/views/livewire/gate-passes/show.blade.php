@@ -36,7 +36,13 @@
                             @if ($gate_pass->visitor)
                                 <tr>
                                     <th class="w-10 text-center line-height-35">Group</th>
-                                    <td class="w-20 line-height-35">{{$gate_pass->visitor ? $gate_pass->visitor->name : ""}}</td>
+                                    <td class="w-20 line-height-35">
+                                        {{$gate_pass->visitor ? $gate_pass->visitor->name : ""}}
+                                        @if ($gate_pass->vrn)
+                                            <br>
+                                            {{$gate_pass->make}} {{$gate_pass->vrn}}
+                                        @endif
+                                    </td>
                                 </tr>
                             @endif
                             @if ($gate_pass->invited_by_id)
@@ -45,7 +51,11 @@
                             @endphp
                                 <tr>
                                     <th class="w-10 text-center line-height-35">Invited By</th>
-                                    <td class="w-20 line-height-35">{{ucfirst($invited_by->name)}}</td>
+                                    <td class="w-20 line-height-35">
+                                        @if ($invited_by)
+                                            {{$invited_by->name}} {{$invited_by->surname}}
+                                        @endif
+                                    </td>
                                 </tr>
                             @endif
                             @if ($gate_pass->trip)
@@ -88,6 +98,14 @@
                             <tr>
                                 <th class="w-10 text-center line-height-35">Reason</th>
                                 <td class="w-20 line-height-35">{{$gate_pass->reason}}</td>
+                            </tr>
+                            <tr>
+                                <th class="w-10 text-center line-height-35">Signature</th>
+                                <td class="w-20 line-height-35"><img src="{{ asset('images/uploads/' . $gate_pass->signature) }}" style="width: 25%; height:25%" alt="Signature" /></td>
+                            </tr>
+                            <tr>
+                                <th class="w-10 text-center line-height-35">Authorization</th>
+                                <td class="w-20 line-height-35"><span class="badge bg-{{($gate_pass->authorization == 'approved') ? 'success' : (($gate_pass->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($gate_pass->authorization == 'approved') ? 'approved' : (($gate_pass->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
                             </tr>
                               
                              

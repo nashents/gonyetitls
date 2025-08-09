@@ -14,6 +14,7 @@ use App\Models\Visitor;
 use Livewire\Component;
 use App\Models\Employee;
 use App\Models\GatePass;
+use Illuminate\Http\UploadedFile;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
 
@@ -22,12 +23,14 @@ class Index extends Component
 
     use WithPagination;
 
+
     protected $paginationTheme = 'bootstrap';
     public $search;
     protected $queryString = ['search'];
     public $from;
     public $to;
 
+    private $gate_pass_filter;
     private $individual_gate_passes;
     private $trip_gate_passes;
     public $type;
@@ -56,6 +59,9 @@ class Index extends Component
     public $invited_by_id;
     public $acknowledgement = False;
     public $signature;
+    public $vrn;
+    public $make;
+    
 
     public $gate_name;
     public $group_name;
@@ -154,6 +160,8 @@ class Index extends Component
         $this->invited_by_id = '';
         $this->reason = '';
         $this->exit = '';
+        $this->make = '';
+        $this->vrn = '';
         $this->entry = '';
         $this->acknowledgement = '';
         $this->signature = '';
@@ -323,13 +331,34 @@ class Index extends Component
         $gate_pass->group_id = $this->group_id ? $this->group_id : null;
         $gate_pass->authorization = "approved";
         $gate_pass->acknowledgement = $this->acknowledgement;
-        $gate_pass->signature = $this->signature;
+        $gate_pass->vrn = $this->vrn;
+        $gate_pass->make = $this->make;
 
         if ($this->signature) {
+
             $image = str_replace('data:image/png;base64,', '', $this->signature);
             $image = str_replace(' ', '+', $image);
-            $imageName = 'images/uploads' . uniqid() . '.png';
-            Storage::disk('public')->put($imageName, base64_decode($image));
+            $imageData = base64_decode($image);
+
+            // Save to a temp file
+            $tmpFilePath = sys_get_temp_dir() . '/' . uniqid() . '.png';
+            file_put_contents($tmpFilePath, $imageData);
+
+            // Wrap as UploadedFile
+            $file = new UploadedFile(
+                $tmpFilePath,
+                uniqid() . '.png',
+                'image/png',
+                null,
+                true
+            );
+
+            // Store like normal
+            $fileNameToStore = uniqid() . '.png';
+            $file->storeAs('/uploads', $fileNameToStore, 'path');
+
+            $gate_pass->signature = $fileNameToStore;
+           
         }
        
         $gate_pass->save();
@@ -367,6 +396,8 @@ class Index extends Component
         $this->invited_by_id = $gate_pass->invited_by_id;
         $this->gate_pass_id = $gate_pass->id;
         $this->branch = $gate_pass->branch;
+        $this->vrn = $gate_pass->vrn;
+        $this->make = $gate_pass->make;
         $this->gates = Gate::latest()->get();
     
         $this->dispatchBrowserEvent('show-gate_passEditModal');
@@ -385,6 +416,8 @@ class Index extends Component
         $gate_pass->branch_id = $this->selectedBranch;
         $gate_pass->visitor_id = $this->visitor_id;
         $gate_pass->group_id = $this->group_id;
+        $gate_pass->vrn = $this->vrn;
+        $gate_pass->make = $this->make;
         $gate_pass->update();
 
         $this->dispatchBrowserEvent('hide-gate_passEditModal');
@@ -399,16 +432,127 @@ class Index extends Component
     {
         $this->visitors = Visitor::latest()->get();
         $this->groups = Group::latest()->get();
+
+        if (isset($this->from) && isset($this->to)) {
+            if (filled($this->search)) {
+                 return view('livewire.gate-passes.index',[
+                'trip_gate_passes' => GatePass::with('trip','horse','driver','branch:id,name')
+                ->whereBetween('created_at',[$this->from, $this->to])
+                ->where('type','Trip')
+                ->where(function ($query) {
+                        $query->where($this->gate_pass_filter,'like', '%'.$this->search.'%')
+                                ->orWhereHas('visitor', function ($q) {
+                                    $q->where('name', 'like', '%'.$this->search.'%')
+                                    ->orWhere('surname', 'like', '%'.$this->search.'%')
+                                    ->orWhere('phonenumber', 'like', '%'.$this->search.'%')
+                                    ->orWhere('idnumber', 'like', '%'.$this->search.'%');
+                                    })
+                                ->orWhereHas('gate', function ($q) {
+                                    $q->where('name', 'like', '%'.$this->search.'%');
+                                    })
+                                ->orWhereHas('group', function ($q) {
+                                    $q->where('name', 'like', '%'.$this->search.'%');
+                                    })
+                                ->orWhereHas('branch', function ($q) {
+                                    $q->where('name', 'like', '%'.$this->search.'%');
+                                    })
+                                ->orWhere('vrn','like', '%'.$this->search.'%')
+                                ->orWhere('make','like', '%'.$this->search.'%')
+                                ->orWhere('exit','like', '%'.$this->search.'%')
+                                ->orWhere('reason','like', '%'.$this->search.'%')
+                                ->orWhere('entry','like', '%'.$this->search.'%');
+                })
+                ->orderBy($this->gate_pass_filter,'desc')->paginate(10),
+                'individual_gate_passes' => GatePass::with('branch:id,name')
+                ->whereBetween('created_at',[$this->from, $this->to])
+                ->where('type','Individual')
+                ->where(function ($query) {
+                        $query->where($this->gate_pass_filter,'like', '%'.$this->search.'%')
+                                ->orWhereHas('visitor', function ($q) {
+                                    $q->where('name', 'like', '%'.$this->search.'%')
+                                    ->orWhere('surname', 'like', '%'.$this->search.'%')
+                                    ->orWhere('phonenumber', 'like', '%'.$this->search.'%')
+                                    ->orWhere('idnumber', 'like', '%'.$this->search.'%');
+                                    })
+                                ->orWhereHas('gate', function ($q) {
+                                    $q->where('name', 'like', '%'.$this->search.'%');
+                                    })
+                                ->orWhereHas('group', function ($q) {
+                                    $q->where('name', 'like', '%'.$this->search.'%');
+                                    })
+                                ->orWhereHas('branch', function ($q) {
+                                    $q->where('name', 'like', '%'.$this->search.'%');
+                                    })
+                                ->orWhere('vrn','like', '%'.$this->search.'%')
+                                ->orWhere('make','like', '%'.$this->search.'%')
+                                ->orWhere('exit','like', '%'.$this->search.'%')
+                                ->orWhere('reason','like', '%'.$this->search.'%')
+                                ->orWhere('entry','like', '%'.$this->search.'%');
+                })
+                ->orderBy($this->gate_pass_filter,'desc')->paginate(10),
+            ]);
+            }else{
+                 return view('livewire.gate-passes.index',[
+                'trip_gate_passes' => GatePass::with('trip','horse','driver','branch:id,name')
+                ->whereBetween('created_at',[$this->from, $this->to])
+                ->where('type','Trip')
+                ->orderBy($this->gate_pass_filter,'desc')->paginate(10),
+                'individual_gate_passes' => GatePass::with('branch:id,name')
+                ->whereBetween('created_at',[$this->from, $this->to])
+                ->where('type','Individual')
+                ->orderBy($this->gate_pass_filter,'desc')->paginate(10),
+            ]);
+            }
+        }elseif (filled($this->search)) {
+             return view('livewire.gate-passes.index',[
+                'trip_gate_passes' => GatePass::with('trip','horse','driver','branch:id,name')
+                ->whereMonth('created_at',date('m'))
+                ->whereYear('created_at',date('Y'))
+                ->where('type','Trip')
+                ->where(function ($query) {
+                        $query->where($this->gate_pass_filter,'like', '%'.$this->search.'%')
+                                ->orWhereHas('visitor', function ($q) {
+                                    $q->where('name', 'like', '%'.$this->search.'%')
+                                    ->orWhere('surname', 'like', '%'.$this->search.'%')
+                                    ->orWhere('phonenumber', 'like', '%'.$this->search.'%')
+                                    ->orWhere('idnumber', 'like', '%'.$this->search.'%');
+                                    })
+                                ->orWhereHas('gate', function ($q) {
+                                    $q->where('name', 'like', '%'.$this->search.'%');
+                                    })
+                                ->orWhereHas('group', function ($q) {
+                                    $q->where('name', 'like', '%'.$this->search.'%');
+                                    })
+                                ->orWhereHas('branch', function ($q) {
+                                    $q->where('name', 'like', '%'.$this->search.'%');
+                                    })
+                                ->orWhere('vrn','like', '%'.$this->search.'%')
+                                ->orWhere('make','like', '%'.$this->search.'%')
+                                ->orWhere('exit','like', '%'.$this->search.'%')
+                                ->orWhere('reason','like', '%'.$this->search.'%')
+                                ->orWhere('entry','like', '%'.$this->search.'%');
+                })
+                ->orderBy($this->gate_pass_filter,'desc')->paginate(10),
+                'individual_gate_passes' => GatePass::with('branch:id,name')
+                ->whereMonth('created_at',date('m'))
+                ->whereYear('created_at',date('Y'))
+                ->where('type','Individual')->orderBy($this->gate_pass_filter,'desc')->paginate(10),
+            ]);
+        }else{
+            return view('livewire.gate-passes.index',[
+                'trip_gate_passes' => GatePass::with('trip','horse','driver','branch:id,name')
+                ->whereMonth('created_at',date('m'))
+                ->whereYear('created_at',date('Y'))
+                ->where('type','Trip')
+                ->orderBy($this->gate_pass_filter,'desc')->paginate(10),
+                'individual_gate_passes' => GatePass::with('branch:id,name')
+                ->whereMonth('created_at',date('m'))
+                ->whereYear('created_at',date('Y'))
+                ->where('type','Individual')->orderBy($this->gate_pass_filter,'desc')->paginate(10),
+               
+            ]);
+        }
         
-        return view('livewire.gate-passes.index',[
-            'trip_gate_passes' => GatePass::with('trip','horse','driver','branch:id,name')->where('type','Trip')->orderBy('gate_pass_number','desc')->take(100)->paginate(10),
-            'individual_gate_passes' => GatePass::with('branch:id,name')->where('type','Individual')->orderBy('gate_pass_number','desc')->take(100)->paginate(10),
-            'gates' => Gate::latest()->get(),
-            'gate_id' => $this->gate_id,
-            'groups' => $this->groups,
-            'group_id' => $this->group_id,
-            'visitors' => $this->visitors,
-            'visitor_id' => $this->visitor_id,
-        ]);
+       
     }
 }  
