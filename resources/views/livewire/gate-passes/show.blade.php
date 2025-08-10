@@ -96,7 +96,7 @@
                                 <td class="w-20 line-height-35">{{$gate_pass->exit}}</td>
                             </tr>
                             <tr>
-                                <th class="w-10 text-center line-height-35">Reason</th>
+                                <th class="w-10 text-center line-height-35">Purpose of visit</th>
                                 <td class="w-20 line-height-35">{{$gate_pass->reason}}</td>
                             </tr>
                             <tr>

@@ -14,8 +14,9 @@ use App\Models\Visitor;
 use Livewire\Component;
 use App\Models\Employee;
 use App\Models\GatePass;
-use Illuminate\Http\UploadedFile;
 use Livewire\WithPagination;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
 class Index extends Component
@@ -30,7 +31,7 @@ class Index extends Component
     public $from;
     public $to;
 
-    private $gate_pass_filter;
+    public $gate_pass_filter;
     private $individual_gate_passes;
     private $trip_gate_passes;
     public $type;
@@ -56,7 +57,6 @@ class Index extends Component
     public $entry;
     public $exit;
     public $reason;
-    public $invited_by_id;
     public $acknowledgement = False;
     public $signature;
     public $vrn;
@@ -95,7 +95,7 @@ class Index extends Component
     }
 
     public function mount(){
-      
+        $this->gate_pass_filter = "created_at";
         $this->branches = Branch::latest()->get();
          $this->gates = Gate::latest()->get();
         $this->employees = Employee::orderBy('name','asc')->orderBy('surname','asc')->get();
@@ -157,7 +157,7 @@ class Index extends Component
         $this->gate_id = '';
         $this->group_id = '';
         $this->visitor_id = '';
-        $this->invited_by_id = '';
+        $this->employee_id = '';
         $this->reason = '';
         $this->exit = '';
         $this->make = '';
@@ -308,14 +308,14 @@ class Index extends Component
 
      
 
-        //  $this->validate([
-        //    'entry' => 'required',
-        //    'reason' => 'required',
-        //    'visitor_id' => 'required',
-        //    'invited_by_id' => 'required',
-        //    'acknowledgement' => 'required',
-        // //    'signature' => 'required',
-        // ]);
+         $this->validate([
+           'entry' => 'required',
+           'reason' => 'required',
+           'visitor_id' => 'required',
+           'employee_id' => 'required',
+           'acknowledgement' => 'required',
+        //    'signature' => 'required',
+        ]);
 
         $gate_pass = new GatePass;
         $gate_pass->user_id = Auth::user()->id;
@@ -324,7 +324,7 @@ class Index extends Component
         $gate_pass->entry = $this->entry;
         $gate_pass->exit = $this->exit;
         $gate_pass->reason = $this->reason;
-        $gate_pass->invited_by_id = $this->invited_by_id ? $this->invited_by_id : null;
+        $gate_pass->employee_id = $this->employee_id ? $this->employee_id : null;
         $gate_pass->gate_id = $this->gate_id ? $this->gate_id : null;
         $gate_pass->branch_id = $this->selectedBranch;
         $gate_pass->visitor_id = $this->visitor_id ? $this->visitor_id : null;
@@ -393,7 +393,7 @@ class Index extends Component
         $this->visitor_id = $gate_pass->visitor_id;
         $this->group_id = $gate_pass->group_id;
         $this->type = $gate_pass->type;
-        $this->invited_by_id = $gate_pass->invited_by_id;
+        $this->employee_id = $gate_pass->employee_id;
         $this->gate_pass_id = $gate_pass->id;
         $this->branch = $gate_pass->branch;
         $this->vrn = $gate_pass->vrn;
@@ -411,7 +411,7 @@ class Index extends Component
         $gate_pass->entry = $this->entry;
         $gate_pass->exit = $this->exit;
         $gate_pass->reason = $this->reason;
-        $gate_pass->invited_by_id = $this->invited_by_id;
+        $gate_pass->employee_id = $this->employee_id;
         $gate_pass->gate_id = $this->gate_id;
         $gate_pass->branch_id = $this->selectedBranch;
         $gate_pass->visitor_id = $this->visitor_id;
@@ -436,59 +436,35 @@ class Index extends Component
         if (isset($this->from) && isset($this->to)) {
             if (filled($this->search)) {
                  return view('livewire.gate-passes.index',[
-                'trip_gate_passes' => GatePass::with('trip','horse','driver','branch:id,name')
-                ->whereBetween('created_at',[$this->from, $this->to])
-                ->where('type','Trip')
-                ->where(function ($query) {
-                        $query->where($this->gate_pass_filter,'like', '%'.$this->search.'%')
-                                ->orWhereHas('visitor', function ($q) {
-                                    $q->where('name', 'like', '%'.$this->search.'%')
-                                    ->orWhere('surname', 'like', '%'.$this->search.'%')
-                                    ->orWhere('phonenumber', 'like', '%'.$this->search.'%')
-                                    ->orWhere('idnumber', 'like', '%'.$this->search.'%');
-                                    })
-                                ->orWhereHas('gate', function ($q) {
-                                    $q->where('name', 'like', '%'.$this->search.'%');
-                                    })
-                                ->orWhereHas('group', function ($q) {
-                                    $q->where('name', 'like', '%'.$this->search.'%');
-                                    })
-                                ->orWhereHas('branch', function ($q) {
-                                    $q->where('name', 'like', '%'.$this->search.'%');
-                                    })
-                                ->orWhere('vrn','like', '%'.$this->search.'%')
-                                ->orWhere('make','like', '%'.$this->search.'%')
-                                ->orWhere('exit','like', '%'.$this->search.'%')
-                                ->orWhere('reason','like', '%'.$this->search.'%')
-                                ->orWhere('entry','like', '%'.$this->search.'%');
-                })
-                ->orderBy($this->gate_pass_filter,'desc')->paginate(10),
                 'individual_gate_passes' => GatePass::with('branch:id,name')
                 ->whereBetween('created_at',[$this->from, $this->to])
                 ->where('type','Individual')
                 ->where(function ($query) {
-                        $query->where($this->gate_pass_filter,'like', '%'.$this->search.'%')
-                                ->orWhereHas('visitor', function ($q) {
-                                    $q->where('name', 'like', '%'.$this->search.'%')
-                                    ->orWhere('surname', 'like', '%'.$this->search.'%')
-                                    ->orWhere('phonenumber', 'like', '%'.$this->search.'%')
-                                    ->orWhere('idnumber', 'like', '%'.$this->search.'%');
-                                    })
-                                ->orWhereHas('gate', function ($q) {
-                                    $q->where('name', 'like', '%'.$this->search.'%');
-                                    })
-                                ->orWhereHas('group', function ($q) {
-                                    $q->where('name', 'like', '%'.$this->search.'%');
-                                    })
-                                ->orWhereHas('branch', function ($q) {
-                                    $q->where('name', 'like', '%'.$this->search.'%');
-                                    })
-                                ->orWhere('vrn','like', '%'.$this->search.'%')
-                                ->orWhere('make','like', '%'.$this->search.'%')
-                                ->orWhere('exit','like', '%'.$this->search.'%')
-                                ->orWhere('reason','like', '%'.$this->search.'%')
-                                ->orWhere('entry','like', '%'.$this->search.'%');
-                })
+                            $query->where('gate_pass_number','like', '%'.$this->search.'%')
+                                    ->orWhereHas('visitor', function ($q) {
+                                        $q->where('name', 'like', '%'.$this->search.'%')
+                                        ->orWhere('surname', 'like', '%'.$this->search.'%')
+                                        ->orWhere('phonenumber', 'like', '%'.$this->search.'%')
+                                        ->orWhere('idnumber', 'like', '%'.$this->search.'%');
+                                        })
+                                    ->orWhereHas('employee', function ($q) {
+                                        $q->where(DB::raw("concat(name, ' ', surname)"), 'LIKE', "%".$this->search."%");
+                                        })
+                                    ->orWhereHas('gate', function ($q) {
+                                        $q->where('name', 'like', '%'.$this->search.'%');
+                                        })
+                                    ->orWhereHas('group', function ($q) {
+                                        $q->where('name', 'like', '%'.$this->search.'%');
+                                        })
+                                    ->orWhereHas('branch', function ($q) {
+                                        $q->where('name', 'like', '%'.$this->search.'%');
+                                        })
+                                    ->orWhere('vrn','like', '%'.$this->search.'%')
+                                    ->orWhere('make','like', '%'.$this->search.'%')
+                                    ->orWhere('exit','like', '%'.$this->search.'%')
+                                    ->orWhere('reason','like', '%'.$this->search.'%')
+                                    ->orWhere('entry','like', '%'.$this->search.'%');
+                    })
                 ->orderBy($this->gate_pass_filter,'desc')->paginate(10),
             ]);
             }else{
@@ -505,38 +481,37 @@ class Index extends Component
             }
         }elseif (filled($this->search)) {
              return view('livewire.gate-passes.index',[
-                'trip_gate_passes' => GatePass::with('trip','horse','driver','branch:id,name')
-                ->whereMonth('created_at',date('m'))
-                ->whereYear('created_at',date('Y'))
-                ->where('type','Trip')
-                ->where(function ($query) {
-                        $query->where($this->gate_pass_filter,'like', '%'.$this->search.'%')
-                                ->orWhereHas('visitor', function ($q) {
-                                    $q->where('name', 'like', '%'.$this->search.'%')
-                                    ->orWhere('surname', 'like', '%'.$this->search.'%')
-                                    ->orWhere('phonenumber', 'like', '%'.$this->search.'%')
-                                    ->orWhere('idnumber', 'like', '%'.$this->search.'%');
-                                    })
-                                ->orWhereHas('gate', function ($q) {
-                                    $q->where('name', 'like', '%'.$this->search.'%');
-                                    })
-                                ->orWhereHas('group', function ($q) {
-                                    $q->where('name', 'like', '%'.$this->search.'%');
-                                    })
-                                ->orWhereHas('branch', function ($q) {
-                                    $q->where('name', 'like', '%'.$this->search.'%');
-                                    })
-                                ->orWhere('vrn','like', '%'.$this->search.'%')
-                                ->orWhere('make','like', '%'.$this->search.'%')
-                                ->orWhere('exit','like', '%'.$this->search.'%')
-                                ->orWhere('reason','like', '%'.$this->search.'%')
-                                ->orWhere('entry','like', '%'.$this->search.'%');
-                })
-                ->orderBy($this->gate_pass_filter,'desc')->paginate(10),
                 'individual_gate_passes' => GatePass::with('branch:id,name')
                 ->whereMonth('created_at',date('m'))
                 ->whereYear('created_at',date('Y'))
-                ->where('type','Individual')->orderBy($this->gate_pass_filter,'desc')->paginate(10),
+                ->where('type','Individual')
+                ->where(function ($query) {
+                    $query->where('gate_pass_number','like', '%'.$this->search.'%')
+                            ->orWhereHas('visitor', function ($q) {
+                                $q->where('name', 'like', '%'.$this->search.'%')
+                                ->orWhere('surname', 'like', '%'.$this->search.'%')
+                                ->orWhere('phonenumber', 'like', '%'.$this->search.'%')
+                                ->orWhere('idnumber', 'like', '%'.$this->search.'%');
+                                })
+                            ->orWhereHas('employee', function ($q) {
+                                $q->where(DB::raw("concat(name, ' ', surname)"), 'LIKE', "%".$this->search."%");
+                                })
+                            ->orWhereHas('gate', function ($q) {
+                                $q->where('name', 'like', '%'.$this->search.'%');
+                                })
+                            ->orWhereHas('group', function ($q) {
+                                $q->where('name', 'like', '%'.$this->search.'%');
+                                })
+                            ->orWhereHas('branch', function ($q) {
+                                $q->where('name', 'like', '%'.$this->search.'%');
+                                })
+                            ->orWhere('vrn','like', '%'.$this->search.'%')
+                            ->orWhere('make','like', '%'.$this->search.'%')
+                            ->orWhere('exit','like', '%'.$this->search.'%')
+                            ->orWhere('reason','like', '%'.$this->search.'%')
+                            ->orWhere('entry','like', '%'.$this->search.'%');
+                })
+                ->orderBy($this->gate_pass_filter,'desc')->paginate(10),
             ]);
         }else{
             return view('livewire.gate-passes.index',[

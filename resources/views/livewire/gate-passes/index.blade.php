@@ -21,7 +21,7 @@
                                   </span>
                                   <select wire:model.debounce.300ms="gate_pass_filter" class="form-control" aria-label="..." >
                                     <option value="created_at">Created At</option>
-                                    <option value="date"> Date</option>
+                                    <option value="entry"> Date</option>
                                 </select>
                                     </div>
 
@@ -77,6 +77,8 @@
                                     </th>
                                     <th class="th-sm">WishToSee
                                     </th>
+                                    <th class="th-sm">Purpose
+                                    </th>
                                     <th class="th-sm">Entry
                                     </th>
                                     <th class="th-sm">Exit
@@ -120,7 +122,12 @@
                                     <td>
                                         @if ($invited_by)
                                             {{$invited_by->name}} {{$invited_by->surname}}
+                                        @elseif($gate_pass->employee)
+                                            {{$gate_pass->employee ? $gate_pass->employee->name : ""}} {{$gate_pass->employee ? $gate_pass->employee->surname : ""}} 
                                         @endif
+                                    </td>
+                                    <td>
+                                        {{$gate_pass->reason}}
                                     </td>
                                     <td>
                                         {{$gate_pass->entry}}
@@ -383,13 +390,13 @@
 
                     <div class="form-group">
                         <label for="name">Wish To See?<span class="required" style="color: red">*</span></label>
-                        <select class="form-control" wire:model.debounce.300ms="invited_by_id" required>
+                        <select class="form-control" wire:model.debounce.300ms="employee_id" required>
                             <option value="">Select Employee</option>
                             @foreach ($employees as $employee)
                                 <option value="{{ $employee->id }}">{{ $employee->name }} {{ $employee->surname }}</option>
                             @endforeach
                         </select>
-                        @error('invited_by_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        @error('employee_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
                    
                     <div class="row">
@@ -409,7 +416,7 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="name">Reason</label>
+                        <label for="name">Purpose of visit?</label>
                        <textarea wire:model.debounce.300ms="reason" class="form-control" cols="30" rows="4"></textarea>
                         @error('reason') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
@@ -440,7 +447,7 @@
         </div>
     </div>
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="gate_passEditModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fas fa-edit"></i> Edit Gate Pass <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -450,8 +457,8 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="name">Branches</label>
-                                    <select class="form-control" wire:model.debounce.300ms="selectedBranch">
+                                    <label for="name">Branches<span class="required" style="color: red">*</span></label>
+                                    <select class="form-control" wire:model.debounce.300ms="selectedBranch" required>
                                         <option value="">Select Branch</option>
                                         @foreach ($branches as $branch)
                                             <option value="{{ $branch->id }}">{{ $branch->name }}</option>
@@ -462,8 +469,8 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="name">Gate</label>
-                                    <select class="form-control" wire:model.debounce.300ms="gate_id">
+                                    <label for="name">Gate<span class="required" style="color: red">*</span></label>
+                                    <select class="form-control" wire:model.debounce.300ms="gate_id" required>
                                         <option value="">Select Gate</option>
                                         @foreach ($gates as $gate)
                                             <option value="{{ $gate->id }}">{{ $gate->name }}</option>
@@ -525,20 +532,20 @@
 
                     <div class="form-group">
                         <label for="name">Wish To See?<span class="required" style="color: red">*</span></label>
-                        <select class="form-control" wire:model.debounce.300ms="invited_by_id" required>
+                        <select class="form-control" wire:model.debounce.300ms="employee_id" required>
                             <option value="">Select Employee</option>
                             @foreach ($employees as $employee)
                                 <option value="{{ $employee->id }}">{{ $employee->name }} {{ $employee->surname }}</option>
                             @endforeach
                         </select>
-                        @error('invited_by_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        @error('employee_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
                         @elseif ($type == "Trip")
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="name">Trips</label>
-                                    <select class="form-control" wire:model.debounce.300ms="trip_id">
+                                    <label for="name">Trips<span class="required" style="color: red">*</span></label>
+                                    <select class="form-control" wire:model.debounce.300ms="trip_id" required>
                                         <option value="">Select Trip</option>
                                         @foreach ($trips as $trip)
                                             <option value="{{ $trip->id }}">{{$trip->trip_number}} | {{$trip->loading_point ? $trip->loading_point->name : ""}}-{{$trip->offloading_point ? $trip->offloading_point->name : ""}} | {{$trip->customer ? $trip->customer->name : ""}}</option>
@@ -549,8 +556,8 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="name">Horses</label>
-                                    <select class="form-control" wire:model.debounce.300ms="horse_id" disabled>
+                                    <label for="name">Horses<span class="required" style="color: red">*</span></label>
+                                    <select class="form-control" wire:model.debounce.300ms="horse_id" disabled required>
                                         <option value="">Select Horse</option>
                                         @foreach ($horses as $horse)
                                             <option value="{{ $horse->id }}">{{ $horse->registration_number }}</option>
@@ -564,8 +571,8 @@
                         <div class="row">
                             <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="stops"><a href="{{ route('trailers.index') }}" target="_blank" style="color: blue">Trailer(s)</a></label>
-                                            <select class="form-control" wire:model.debounce.300ms="trailer_id" multiple disabled>
+                                        <label for="stops"><a href="{{ route('trailers.index') }}" target="_blank" style="color: blue">Trailer(s)<span class="required" style="color: red">*</span></a></label>
+                                            <select class="form-control" wire:model.debounce.300ms="trailer_id" multiple disabled required>
                                               <option value="">Select Trailer </option>
                                                 @foreach ($trailers as $trailer)
                                                     <option value="{{$trailer->id}}">({{$trailer->registration_number}}) {{$trailer->make}} {{$trailer->model}} </option>
@@ -576,8 +583,8 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="name">Drivers</label>
-                                    <select class="form-control" wire:model.debounce.300ms="driver_id" disabled>
+                                    <label for="name">Drivers<span class="required" style="color: red">*</span></label>
+                                    <select class="form-control" wire:model.debounce.300ms="driver_id" disabled required>
                                         <option value="">Select Driver</option>
                                         @foreach ($drivers as $driver)
                                             <option value="{{ $driver->id }}">{{ $driver->employee ? $driver->employee->name : ""}} {{ $driver->employee ? $driver->employee->surname : "" }}</option>
@@ -591,21 +598,29 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="name">Entry</label>
-                                    <input type="datetime-local" class="form-control" wire:model.debounce.300ms="entry" placeholder="Enter Entry Time"/>
+                                    <label for="name">Entry
+                                        @if ($type == 'Individual')
+                                            <span class="required" style="color: red">*</span>
+                                        @endif
+                                    </label>
+                                    <input type="datetime-local" class="form-control" wire:model.debounce.300ms="entry" placeholder="Enter Entry Time" {{$type == 'Individual' ? "required" : ""}}/>
                                     @error('entry') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="name">Exit</label>
-                                    <input type="datetime-local" class="form-control" wire:model.debounce.300ms="exit" placeholder="Enter Exit Time" />
+                                    <label for="name">Exit
+                                         @if ($type == 'Trip')
+                                            <span class="required" style="color: red">*</span>
+                                        @endif
+                                    </label>
+                                    <input type="datetime-local" class="form-control" wire:model.debounce.300ms="exit" placeholder="Enter Exit Time" {{$type == 'Trip' ? "required" : ""}} />
                                     @error('exit') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                         </div>
                         <div class="form-group">
-                            <label for="name">Reason</label>
+                            <label for="name">Purpose of visit?</label>
                            <textarea wire:model.debounce.300ms="reason" class="form-control" cols="30" rows="4"></textarea>
                             @error('reason') <span class="error" style="color:red">{{ $message }}</span> @enderror
                         </div>

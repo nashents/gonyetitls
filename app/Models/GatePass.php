@@ -12,6 +12,9 @@ class GatePass extends Model implements Auditable
     use \OwenIt\Auditing\Auditable;
     use HasFactory, SoftDeletes;
 
+    public function employee(){
+        return $this->belongsTo('App\Models\Employee');
+    }
     public function visitor(){
         return $this->belongsTo('App\Models\Visitor');
     }
