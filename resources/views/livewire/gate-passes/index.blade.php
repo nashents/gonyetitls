@@ -420,9 +420,10 @@
                        <textarea wire:model.debounce.300ms="reason" class="form-control" cols="30" rows="4"></textarea>
                         @error('reason') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
+                    <h5 class="underline mt-30">Acknowledgement <span class="required" style="color: red">*</span> </h5>
                     <div class="mb-10">
-                            <input type="checkbox" wire:model.debounce.300ms="acknowledgement"   class="line-style blue-style" />
-                            <label for="one" class="radio-label"> <strong>I acknowledge that i was briefed on safety precautions before entry.</strong></label>
+                            <input type="checkbox" wire:model.debounce.300ms="acknowledgement"   class="line-style blue-style" required/>
+                            <label for="one" class="radio-label"><strong>I acknowledge that i was briefed on safety precautions before entry.</strong></label>
                             @error('acknowledgement') <span class="text-danger error">{{ $message }}</span>@enderror
                     </div>
                  
