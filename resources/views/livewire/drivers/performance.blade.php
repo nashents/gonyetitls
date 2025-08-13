@@ -31,8 +31,7 @@
                                 </div>
                                     <!-- /input-group -->
                                 </div>
-                                @if ($filter == "created_at")
-                                <div class="col-lg-2" style="margin-right: 7px">
+                               <div class="col-lg-2" style="margin-right: 7px">
                                     <div class="input-group">
                                         <span class="input-group-addon">
                                   From
@@ -50,26 +49,6 @@
                                     </div>
                                     <!-- /input-group -->
                                 </div>
-                                @elseif ($filter == "start_date")
-                                <div class="col-lg-2" style="margin-right: 42px">
-                                    <div class="input-group">
-                                        <span class="input-group-addon">
-                                  From
-                                  </span>
-                                  <input type="datetime-local" wire:model.debounce.300ms="from"  class="form-control" aria-label="...">
-                                    </div>
-                                    <!-- /input-group -->
-                                </div>
-                                <div class="col-lg-2" style="margin-left: 42px">
-                                    <div class="input-group">
-                                        <span class="input-group-addon">
-                                  To
-                                  </span>
-                                  <input type="datetime-local" wire:model.debounce.300ms="to"  class="form-control" aria-label="...">
-                                    </div>
-                                    <!-- /input-group -->
-                                </div>
-                                @endif
                                
                                 <!-- /input-group -->
                             </div>
