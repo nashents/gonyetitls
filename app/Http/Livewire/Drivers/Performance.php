@@ -212,7 +212,7 @@ class Performance extends Component
                                 CASE 
                                     WHEN trips.starting_hours IS NOT NULL AND trips.ending_hours IS NOT NULL 
                                     THEN trips.ending_hours - trips.starting_hours
-                                    ELSE trips.hours 
+                                   
                                 END
                             ) as total_hours
                         "),
@@ -264,7 +264,6 @@ class Performance extends Component
                                 CASE 
                                     WHEN trips.starting_hours IS NOT NULL AND trips.ending_hours IS NOT NULL 
                                     THEN trips.ending_hours - trips.starting_hours 
-                                    ELSE trips.hours 
                                 END
                             ) as total_hours
                         "),
