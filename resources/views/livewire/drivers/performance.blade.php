@@ -25,7 +25,8 @@
                                   <span class="input-group-addon">Filter By</span>
                                   <select wire:model.debounce.300ms="filter" class="form-control" aria-label="..." >
                                     <option value="">Select Filter</option>
-                                    <option value="created_at">Trip Created At</option>
+                                    <option value="created_at">Created At</option>
+                                    <option value="start_date">Date</option>
                                   </select>
                                 </div>
                                     <!-- /input-group -->
@@ -96,7 +97,10 @@
                                     </th>
                                     <th class="th-sm">Revenue({{$currency->name}})
                                     </th>
-                                    <th class="th-sm">Dist(Km) 
+                                    <th class="th-sm">
+                                        Dist(Km) 
+                                         <hr style="margin-top:2px; margin-bottom:2px">
+                                        Hours(H)
                                     </th>
                                     <th class="th-sm">Fuel(l) 
                                     </th>
@@ -142,12 +146,34 @@
                                     <td>
                                         {{$this->calculateTotalRevenue($selected_driver->driver_id)}}
                                     </td>
-                                    <td>{{$selected_driver->total_kilometers ? $selected_driver->total_kilometers."Kms" : ""}}</td>
-                                    <td>{{$selected_driver->total_fuel_quantity ? $selected_driver->total_fuel_quantity."l" : ""}}</td>
                                     <td>
-                                        {{$selected_driver->avg_fuel_consumption_mileage ? $selected_driver->avg_fuel_consumption_mileage." L/Km" : ""}} 
-                                            <hr style="margin-top:5px; margin-bottom:5px">  
-                                        {{$selected_driver->avg_fuel_consumption_hours ? $selected_driver->avg_fuel_consumption_hours." L/H"  : ""}}
+                                        @if ($selected_driver->total_kilometers)
+                                          {{$selected_driver->total_kilometers ? $selected_driver->total_kilometers."Kms" : ""}}
+                                          <hr style="margin-top:5px; margin-bottom:5px">
+                                           {{$selected_driver->total_hours ? $selected_driver->total_hours."H" : ""}}  
+                                        @else
+                                              {{$this->calculateShiftsDistance($selected_driver->driver_id)}}  
+                                               <hr style="margin-top:5px; margin-bottom:5px">
+                                            {{$this->calculateShiftsHours($selected_driver->driver_id)}}  
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if ($selected_driver->total_fuel_quantity)
+                                            {{$selected_driver->total_fuel_quantity ? $selected_driver->total_fuel_quantity."l" : ""}}
+                                        @else
+                                            {{$this->calculateShiftsFuel($selected_driver->driver_id)}}     
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if ($selected_driver->avg_fuel_consumption_mileage || $selected_driver->avg_fuel_consumption_hours)
+                                            {{$selected_driver->avg_fuel_consumption_mileage ? $selected_driver->avg_fuel_consumption_mileage." L/Km" : ""}} 
+                                                <hr style="margin-top:5px; margin-bottom:5px">  
+                                            {{$selected_driver->avg_fuel_consumption_hours ? $selected_driver->avg_fuel_consumption_hours." L/H"  : ""}}
+                                        @else
+                                            {{$this->calculateFuelConsumptionMileage($selected_driver->driver_id)}}
+                                                <hr style="margin-top:5px; margin-bottom:5px">  
+                                            {{$this->calculateFuelConsumptionHours($selected_driver->driver_id)}}
+                                        @endif
                                     </td>
                                     <td>
                                         {{$selected_driver->total_volume ? $selected_driver->total_volume."l" : ""}}

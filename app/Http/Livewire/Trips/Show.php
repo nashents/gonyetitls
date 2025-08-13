@@ -256,8 +256,8 @@ class Show extends Component
         if(isset($this->trip_expenses)){
             foreach ($this->trip_expenses as $expense) {
                 $amount = $expense->currency_id == $this->company->currency_id ? $expense->amount : $expense->exchange_amount;
-            
-                switch ($expense->category) {
+                if ($amount && is_numeric($amount)) {
+                    switch ($expense->category) {
                     case 'Transporter':
                         $this->total_transporter_expenses += $amount;
                         break;
@@ -267,7 +267,9 @@ class Show extends Component
                     case 'Self':
                         $this->total_expenses += $amount;
                         break;
+                    }
                 }
+                
             }
         }
     }

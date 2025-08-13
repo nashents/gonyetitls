@@ -4,6 +4,7 @@ namespace App\Http\Livewire\Drivers;
 
 use Carbon\Carbon;
 use App\Models\Trip;
+use App\Models\Shift;
 use App\Models\Driver;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -112,6 +113,82 @@ class Performance extends Component
         return $this->currency->symbol . number_format($total_freight, 2);
     }
 
+            // RAW total fuel
+    private function getTotalFuel($id)
+    {
+        if (!isset($this->from, $this->to)) return 0;
+
+        $dateColumn = $this->filter === "start_date" ? "date" : $this->filter;
+
+        return Shift::whereBetween($dateColumn, [$this->from, $this->to])
+            ->where('driver_id', $id)
+            ->sum('total_fuel');
+    }
+
+    // RAW total distance
+    private function getTotalDistance($id)
+    {
+        if (!isset($this->from, $this->to)) return 0;
+
+        $dateColumn = $this->filter === "start_date" ? "date" : $this->filter;
+
+        return Shift::whereBetween($dateColumn, [$this->from, $this->to])
+            ->where('driver_id', $id)
+            ->sum('actual_mileage');
+    }
+    // RAW total hours
+    private function getTotalHours($id)
+    {
+        if (!isset($this->from, $this->to)) return 0;
+
+        $dateColumn = $this->filter === "start_date" ? "date" : $this->filter;
+
+        return Shift::whereBetween($dateColumn, [$this->from, $this->to])
+            ->where('driver_id', $id)
+            ->sum('actual_hours');
+    }
+
+    // Existing public display functions
+    public function calculateShiftsFuel($id)
+    {
+        return number_format($this->getTotalFuel($id)) . " l";
+    }
+
+    public function calculateShiftsDistance($id)
+    {
+        return number_format($this->getTotalDistance($id)) . " Km(s)";
+    }
+    public function calculateShiftsHours($id)
+    {
+        return number_format($this->getTotalHours($id)) . " H";
+    }
+
+    // NEW: Fuel consumption function (Km per L)
+    public function calculateFuelConsumptionMileage($id)
+    {
+        $fuel = $this->getTotalFuel($id);
+        $distance = $this->getTotalDistance($id);
+
+        if ($fuel <= 0 || $distance <= 0) {
+            return ;
+        }
+
+        $ltrsPerKil = $fuel / $distance; // or $fuel / $distance * 100 for L/100km
+        return number_format($ltrsPerKil, 2) . " l/Km";
+    }
+    public function calculateFuelConsumptionHours($id)
+    {
+        $fuel = $this->getTotalFuel($id);
+        $hours = $this->getTotalHours($id);
+
+        if ($fuel <= 0 || $hours <= 0) {
+            return ;
+        }
+
+        $LPerH = $fuel/ $hours; // or $fuel / $hours * 100 for L/100H
+        return number_format($LPerH, 2) . " l/H";
+    }
+
     public function render()
     {
         if (isset($this->from) && isset($this->to) ) {
@@ -129,6 +206,15 @@ class Performance extends Component
                                     ELSE trips.distance 
                                 END
                             ) as total_kilometers
+                        "),
+                        DB::raw("
+                            SUM(
+                                CASE 
+                                    WHEN trips.starting_hours IS NOT NULL AND trips.ending_hours IS NOT NULL 
+                                    THEN trips.ending_hours - trips.starting_hours
+                                    ELSE trips.hours 
+                                END
+                            ) as total_hours
                         "),
                         DB::raw('sum(litreage_at_20) as total_volume'),
                         DB::raw('sum(weight) as total_tonnage'),
@@ -172,6 +258,15 @@ class Performance extends Component
                                     ELSE trips.distance 
                                 END
                             ) as total_kilometers
+                        "),
+                        DB::raw("
+                            SUM(
+                                CASE 
+                                    WHEN trips.starting_hours IS NOT NULL AND trips.ending_hours IS NOT NULL 
+                                    THEN trips.ending_hours - trips.starting_hours 
+                                    ELSE trips.hours 
+                                END
+                            ) as total_hours
                         "),
                         DB::raw('sum(litreage_at_20) as total_volume'),
                         DB::raw('sum(weight) as total_tonnage'),

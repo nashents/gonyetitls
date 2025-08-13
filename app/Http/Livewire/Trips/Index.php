@@ -1153,8 +1153,8 @@ class Index extends Component
 
         if($this->trip_filter == "offloaded_date"){
             
-            if (isset($this->from) && isset($this->to)) {
-                if (isset($this->search)) {
+            if (filled($this->from) && filled($this->to)) {
+                if (filled($this->search)) {
                     return view('livewire.trips.index',[
                         'trips' => Trip::query()->with(['breakdowns','breakdown_assignments','trip_destinations','trip_expenses','trip_locations','delivery_note','fuel:id,order_number','transporter:id,name','trip_type:id,name','border:id,name',
                         'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model','vehicle','vehicle.vehicle_make','vehicle.vehicle_model',
@@ -1164,7 +1164,7 @@ class Index extends Component
                             return $query->whereBetween($this->trip_filter,[$this->from, $this->to] );
                         })
                         ->where(function ($query) {
-                            $query->where('trip_number','like', '%'.$this->search.'%')
+                        $query->where('trip_number','like', '%'.$this->search.'%')
                                 ->orWhere('trip_status','like', '%'.$this->search.'%')
                                 ->orWhere('authorization','like', '%'.$this->search.'%')
                                 ->orWhereHas('horse', function ($query) {
@@ -1173,21 +1173,13 @@ class Index extends Component
                                 ->orWhereHas('customer', function ($query) {
                                     return $query->where('name', 'like', '%'.$this->search.'%');
                                 })
+                                ->orWhereHas('cargo', function ($query) {
+                                    return $query->where('name', 'like', '%'.$this->search.'%');
+                                })
                                 ->orWhereDate('start_date','like', '%'.$this->search.'%')
                                 ->orWhereDate('end_date','like', '%'.$this->search.'%')
                                 ->orWhereHas('delivery_note', function ($query) {
                                     return $query->whereDate('offloaded_date', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('cargo', function ($query) {
-                                    return $query->where('name', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('horse', function ($query) {
-                                    return $query->where('registration_number', 'like', '%'.$this->search.'%')
-                                    ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('vehicle', function ($query) {
-                                    return $query->where('registration_number', 'like', '%'.$this->search.'%')
-                                    ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
                                 })
                                 ->orWhereHas('user.employee', function ($query) {
                                     return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
@@ -1198,18 +1190,25 @@ class Index extends Component
                                 ->orWhereHas('transporter', function ($query) {
                                     return $query->where('name', 'like', '%'.$this->search.'%');
                                 })
-                                ->orWhereHas('loading_point', function ($query) {
-                                    return $query->where('name', 'like', '%'.$this->search.'%');
+                                ->orWhereHas('horse', function ($query) {
+                                        return $query->where('registration_number', 'like', '%'.$this->search.'%')
+                                        ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
+                                    })
+                                ->orWhereHas('vehicle', function ($query) {
+                                    return $query->where('registration_number', 'like', '%'.$this->search.'%')
+                                    ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
                                 })
-                                ->orWhereHas('offloading_point', function ($query) {
+                                ->orWhereHas('loading_point', function ($query) {
                                     return $query->where('name', 'like', '%'.$this->search.'%');
                                 })
                                 ->orWhereHas('trip_documents', function ($query) {
                                     return $query->where('document_number', 'like', '%'.$this->search.'%');
-                                });
-                            })
-                          
-                        ->join('delivery_notes', 'delivery_notes.trip_id', '=', 'trips.id')
+                                })
+                                ->orWhereHas('offloading_point', function ($query) {
+                                    return $query->where('name', 'like', '%'.$this->search.'%');
+                                })
+                                ->join('delivery_notes', 'delivery_notes.trip_id', '=', 'trips.id');
+                    })
                         ->orderBy('delivery_notes.offloaded_date','desc')->paginate(10),
                         'trip_filter' => $this->trip_filter
                     ]);
@@ -1229,7 +1228,7 @@ class Index extends Component
                 }
                
             }
-            elseif (isset($this->search)) {
+            elseif (filled($this->search)) {
                
                 return view('livewire.trips.index',[
                     'trips' => Trip::query()->with(['breakdowns','breakdown_assignments','trip_destinations','trip_expenses','trip_locations','delivery_note','fuel:id,order_number','transporter:id,name','trip_type:id,name','border:id,name',
@@ -1239,51 +1238,52 @@ class Index extends Component
                     ->whereHas('delivery_note', function ($query) {
                         return $query->whereMonth($this->trip_filter, date('m'))->whereYear($this->trip_filter, date('Y'));
                     })
-                    
-                    ->where('trip_number','like', '%'.$this->search.'%')
-                    ->orWhere('trip_status','like', '%'.$this->search.'%')
-                    ->orWhere('authorization','like', '%'.$this->search.'%')
-                    ->orWhereHas('horse', function ($query) {
-                        return $query->where('registration_number', 'like', '%'.$this->search.'%');
+                    ->where(function ($query) {
+                        $query->where('trip_number','like', '%'.$this->search.'%')
+                                ->orWhere('trip_status','like', '%'.$this->search.'%')
+                                ->orWhere('authorization','like', '%'.$this->search.'%')
+                                ->orWhereHas('horse', function ($query) {
+                                    return $query->where('registration_number', 'like', '%'.$this->search.'%');
+                                })
+                                ->orWhereHas('customer', function ($query) {
+                                    return $query->where('name', 'like', '%'.$this->search.'%');
+                                })
+                                ->orWhereHas('cargo', function ($query) {
+                                    return $query->where('name', 'like', '%'.$this->search.'%');
+                                })
+                                ->orWhereDate('start_date','like', '%'.$this->search.'%')
+                                ->orWhereDate('end_date','like', '%'.$this->search.'%')
+                                ->orWhereHas('delivery_note', function ($query) {
+                                    return $query->whereDate('offloaded_date', 'like', '%'.$this->search.'%');
+                                })
+                                ->orWhereHas('user.employee', function ($query) {
+                                    return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
+                                })
+                                ->orWhereHas('driver.employee', function ($query) {
+                                    return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
+                                })
+                                ->orWhereHas('transporter', function ($query) {
+                                    return $query->where('name', 'like', '%'.$this->search.'%');
+                                })
+                                ->orWhereHas('horse', function ($query) {
+                                        return $query->where('registration_number', 'like', '%'.$this->search.'%')
+                                        ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
+                                    })
+                                ->orWhereHas('vehicle', function ($query) {
+                                    return $query->where('registration_number', 'like', '%'.$this->search.'%')
+                                    ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
+                                })
+                                ->orWhereHas('loading_point', function ($query) {
+                                    return $query->where('name', 'like', '%'.$this->search.'%');
+                                })
+                                ->orWhereHas('trip_documents', function ($query) {
+                                    return $query->where('document_number', 'like', '%'.$this->search.'%');
+                                })
+                                ->orWhereHas('offloading_point', function ($query) {
+                                    return $query->where('name', 'like', '%'.$this->search.'%');
+                                })
+                                ->join('delivery_notes', 'delivery_notes.trip_id', '=', 'trips.id');
                     })
-                    ->orWhereHas('customer', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('cargo', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereDate('start_date','like', '%'.$this->search.'%')
-                    ->orWhereDate('end_date','like', '%'.$this->search.'%')
-                    ->orWhereHas('delivery_note', function ($query) {
-                        return $query->whereDate('offloaded_date', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('user.employee', function ($query) {
-                        return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('driver.employee', function ($query) {
-                        return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('transporter', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                   ->orWhereHas('horse', function ($query) {
-                            return $query->where('registration_number', 'like', '%'.$this->search.'%')
-                            ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
-                        })
-                    ->orWhereHas('vehicle', function ($query) {
-                        return $query->where('registration_number', 'like', '%'.$this->search.'%')
-                        ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('loading_point', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('trip_documents', function ($query) {
-                        return $query->where('document_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('offloading_point', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->join('delivery_notes', 'delivery_notes.trip_id', '=', 'trips.id')
                     ->orderBy('delivery_notes.offloaded_date','desc')->paginate(10),
                     'trip_filter' => $this->trip_filter
                 ]);
@@ -1308,55 +1308,58 @@ class Index extends Component
             // end of offloaded date
 
         }else{
-            if (isset($this->from) && isset($this->to)) {
-                if (isset($this->search)) {
+            if (filled($this->from) && filled($this->to)) {
+                if (filled($this->search)) {
                     return view('livewire.trips.index',[
                         'trips' => Trip::query()->with(['breakdowns','breakdown_assignments','trip_destinations','trip_expenses','trip_locations','delivery_note','fuel:id,order_number','transporter:id,name','trip_type:id,name','border:id,name',
                         'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model','vehicle','vehicle.vehicle_make','vehicle.vehicle_model',
                         'trailers:id,make,model,registration_number','driver.employee:id,name,surname','loading_point:id,name','offloading_point:id,name',
-                        'route:id,name,rank','truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name','commission:id,commission,amount'])->whereBetween($this->trip_filter,[$this->from, $this->to] )
-                        ->where('trip_number','like', '%'.$this->search.'%')
-                        ->orWhere('trip_status','like', '%'.$this->search.'%')
-                        ->orWhere('authorization','like', '%'.$this->search.'%')
-                        ->orWhereDate('start_date','like', '%'.$this->search.'%')
-                        ->orWhereDate('end_date','like', '%'.$this->search.'%')
-                        ->orWhereHas('delivery_note', function ($query) {
-                            return $query->whereDate('offloaded_date', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('horse', function ($query) {
-                            return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('customer', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('cargo', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('horse', function ($query) {
-                            return $query->where('registration_number', 'like', '%'.$this->search.'%')
-                            ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('vehicle', function ($query) {
-                            return $query->where('registration_number', 'like', '%'.$this->search.'%')
-                            ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
-                        })
-                       ->orWhereHas('user.employee', function ($query) {
-                            return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('driver.employee', function ($query) {
-                            return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('transporter', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('loading_point', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('offloading_point', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('trip_documents', function ($query) {
-                            return $query->where('document_number', 'like', '%'.$this->search.'%');
+                        'route:id,name,rank','truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name','commission:id,commission,amount'])
+                        ->whereBetween($this->trip_filter,[$this->from, $this->to] )
+                        ->where(function ($query) {
+                        $query->where('trip_number','like', '%'.$this->search.'%')
+                                ->orWhere('trip_status','like', '%'.$this->search.'%')
+                                ->orWhere('authorization','like', '%'.$this->search.'%')
+                                ->orWhereHas('horse', function ($query) {
+                                    return $query->where('registration_number', 'like', '%'.$this->search.'%');
+                                })
+                                ->orWhereHas('customer', function ($query) {
+                                    return $query->where('name', 'like', '%'.$this->search.'%');
+                                })
+                                ->orWhereHas('cargo', function ($query) {
+                                    return $query->where('name', 'like', '%'.$this->search.'%');
+                                })
+                                ->orWhereDate('start_date','like', '%'.$this->search.'%')
+                                ->orWhereDate('end_date','like', '%'.$this->search.'%')
+                                ->orWhereHas('delivery_note', function ($query) {
+                                    return $query->whereDate('offloaded_date', 'like', '%'.$this->search.'%');
+                                })
+                                ->orWhereHas('user.employee', function ($query) {
+                                        return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
+                                    })
+                                ->orWhereHas('driver.employee', function ($query) {
+                                    return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
+                                })
+                                ->orWhereHas('transporter', function ($query) {
+                                    return $query->where('name', 'like', '%'.$this->search.'%');
+                                })
+                                ->orWhereHas('horse', function ($query) {
+                                        return $query->where('registration_number', 'like', '%'.$this->search.'%')
+                                        ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
+                                    })
+                                ->orWhereHas('vehicle', function ($query) {
+                                    return $query->where('registration_number', 'like', '%'.$this->search.'%')
+                                    ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
+                                })
+                                ->orWhereHas('loading_point', function ($query) {
+                                    return $query->where('name', 'like', '%'.$this->search.'%');
+                                })
+                                ->orWhereHas('trip_documents', function ($query) {
+                                    return $query->where('document_number', 'like', '%'.$this->search.'%');
+                                })
+                                ->orWhereHas('offloading_point', function ($query) {
+                                    return $query->where('name', 'like', '%'.$this->search.'%');
+                                });
                         })
                         ->orderBy($this->trip_filter,'desc')->paginate(10),
                         'trip_filter' => $this->trip_filter
@@ -1372,57 +1375,61 @@ class Index extends Component
                 }
                
             }
-            elseif (isset($this->search)) {
+            elseif (filled($this->search)) {
                
                 return view('livewire.trips.index',[
                     'trips' => Trip::query()->with(['breakdowns','breakdown_assignments','trip_destinations','trip_expenses','trip_locations','delivery_note','fuel:id,order_number','transporter:id,name','trip_type:id,name','border:id,name',
                     'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model','vehicle','vehicle.vehicle_make','vehicle.vehicle_model',
                     'trailers:id,make,model,registration_number','driver.employee:id,name,surname','loading_point:id,name','offloading_point:id,name',
-                    'route:id,name,rank','truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name','commission:id,commission,amount'])->whereMonth($this->trip_filter, date('m'))
+                    'route:id,name,rank','truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name','commission:id,commission,amount'])
+                    ->whereMonth($this->trip_filter, date('m'))
                     ->whereYear($this->trip_filter, date('Y'))
-                    ->where('trip_number','like', '%'.$this->search.'%')
-                    ->orWhere('trip_status','like', '%'.$this->search.'%')
-                    ->orWhere('authorization','like', '%'.$this->search.'%')
-                    ->orWhereHas('horse', function ($query) {
-                        return $query->where('registration_number', 'like', '%'.$this->search.'%');
+                    ->where(function ($query) {
+                        $query->where('trip_number','like', '%'.$this->search.'%')
+                                ->orWhere('trip_status','like', '%'.$this->search.'%')
+                                ->orWhere('authorization','like', '%'.$this->search.'%')
+                                ->orWhereHas('horse', function ($query) {
+                                    return $query->where('registration_number', 'like', '%'.$this->search.'%');
+                                })
+                                ->orWhereHas('customer', function ($query) {
+                                    return $query->where('name', 'like', '%'.$this->search.'%');
+                                })
+                                ->orWhereHas('cargo', function ($query) {
+                                    return $query->where('name', 'like', '%'.$this->search.'%');
+                                })
+                                ->orWhereDate('start_date','like', '%'.$this->search.'%')
+                                ->orWhereDate('end_date','like', '%'.$this->search.'%')
+                                ->orWhereHas('delivery_note', function ($query) {
+                                    return $query->whereDate('offloaded_date', 'like', '%'.$this->search.'%');
+                                })
+                                ->orWhereHas('user.employee', function ($query) {
+                                        return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
+                                    })
+                                ->orWhereHas('driver.employee', function ($query) {
+                                    return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
+                                })
+                                ->orWhereHas('transporter', function ($query) {
+                                    return $query->where('name', 'like', '%'.$this->search.'%');
+                                })
+                                ->orWhereHas('horse', function ($query) {
+                                        return $query->where('registration_number', 'like', '%'.$this->search.'%')
+                                        ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
+                                    })
+                                ->orWhereHas('vehicle', function ($query) {
+                                    return $query->where('registration_number', 'like', '%'.$this->search.'%')
+                                    ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
+                                })
+                                ->orWhereHas('loading_point', function ($query) {
+                                    return $query->where('name', 'like', '%'.$this->search.'%');
+                                })
+                                ->orWhereHas('trip_documents', function ($query) {
+                                    return $query->where('document_number', 'like', '%'.$this->search.'%');
+                                })
+                                ->orWhereHas('offloading_point', function ($query) {
+                                    return $query->where('name', 'like', '%'.$this->search.'%');
+                                });
                     })
-                    ->orWhereHas('customer', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('cargo', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereDate('start_date','like', '%'.$this->search.'%')
-                    ->orWhereDate('end_date','like', '%'.$this->search.'%')
-                    ->orWhereHas('delivery_note', function ($query) {
-                        return $query->whereDate('offloaded_date', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('user.employee', function ($query) {
-                            return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
-                        })
-                    ->orWhereHas('driver.employee', function ($query) {
-                        return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('transporter', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                   ->orWhereHas('horse', function ($query) {
-                            return $query->where('registration_number', 'like', '%'.$this->search.'%')
-                            ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
-                        })
-                    ->orWhereHas('vehicle', function ($query) {
-                        return $query->where('registration_number', 'like', '%'.$this->search.'%')
-                        ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('loading_point', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('trip_documents', function ($query) {
-                        return $query->where('document_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('offloading_point', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
+                 
                     ->orderBy($this->trip_filter,'desc')->paginate(10),
                     'trip_filter' => $this->trip_filter
                 ]);
