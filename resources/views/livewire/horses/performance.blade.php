@@ -9,12 +9,6 @@
                             <div>
                                 @include('includes.messages')
                             </div>
-
-                            <div class="panel-title">
-                                {{-- <a href="#" wire:click="exportHorsesPerformanceExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
-                                <a href="#" wire:click="exportHorsesPerformanceCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
-                                <a href="#" wire:click="exportHorsesPerformancePDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a> --}}
-                            </div>
                         </div>
 
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
@@ -63,7 +57,12 @@
                                     W/Loss(t) = Total weight/tonnage losses in tons, W/Loss(%) = Total weight/tonnage losses in percentage.
                                 </small>
                                 <br>
-                                <br>
+                             <div class="mt-15 mb-15">
+                                <a href="#" wire:click="exportHorsesPerformanceExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
+                                <a href="#" wire:click="exportHorsesPerformanceCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
+                                <a href="#" wire:click="exportHorsesPerformancePDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
+                            </div>
+                                
                             
                             </div>
 

@@ -512,11 +512,11 @@ class Index extends Component
         $total_fuel = $fuel->quantity;
 
         if (is_numeric($distance) && $distance > 0) {
-            $shift->fuel_consumption_mileage = $total_fuel / $distance;
+            $shift->fuel_consumption_mileage = $distance / $total_fuel;
         }
 
         if (is_numeric($hours_distance) && $hours_distance > 0) {
-            $shift->fuel_consumption_hours = $total_fuel / $hours_distance ;
+            $shift->fuel_consumption_hours = $hours_distance / $total_fuel;
         }
 
         $shift->save();
@@ -589,7 +589,7 @@ class Index extends Component
                 $shift->actual_mileage = $actual_mileage;
 
                 if ($actual_mileage > 0 && is_numeric($this->fuel_quantity) && $this->fuel_quantity > 0) {
-                    $shift->fuel_consumption_mileage = $this->fuel_quantity / $actual_mileage;
+                    $shift->fuel_consumption_mileage = $actual_mileage / $this->fuel_quantity;
                 }
             }
         }

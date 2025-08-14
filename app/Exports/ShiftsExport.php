@@ -50,7 +50,8 @@ WithCustomStartCell
             $this->totals = (clone $query)->selectRaw('
                 SUM(total_loads) as total_loads,
                 SUM(total_fuel) as total_fuel,
-                AVG(fuel_consumption_mileage) as avg_fuel_consumption,
+                AVG(fuel_consumption_mileage) as avg_fuel_consumption_mileage,
+                AVG(fuel_consumption_hours) as avg_fuel_consumption_hours,
                 SUM(total_weight) as total_weight,
                 SUM(actual_mileage) as total_distance,
                 COUNT(*) as shift_count
@@ -281,7 +282,7 @@ WithCustomStartCell
                 $row++;
 
                 $event->sheet->setCellValue("K{$row}", 'Average Fuel Consumption (l/Km)');
-                $event->sheet->setCellValue("L{$row}", round($this->totals->avg_fuel_consumption, 2) ?? 0);
+                $event->sheet->setCellValue("L{$row}", round($this->totals->avg_fuel_consumption_mileage, 2) ?? 0);
 
                 // Optional: style the values
                 $event->sheet->getStyle("K8:L13")->applyFromArray([

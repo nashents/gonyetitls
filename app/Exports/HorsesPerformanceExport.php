@@ -2,8 +2,10 @@
 
 namespace App\Exports;
 
+use App\Models\Trip;
 use App\Models\Horse;
 use App\Models\Shift;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Events\AfterSheet;
 use Maatwebsite\Excel\Concerns\FromQuery;
@@ -32,108 +34,330 @@ WithCustomStartCell
     */
     public $from;
     public $to;
-    public $shift_filter;
-    public $search;
+    public $filter;  
+    public $currency;  
    
 
-    public function __construct($from, $to, $shift_filter, $search)
+    public function __construct($from, $to, $filter)
     {
             $this->from = $from;
             $this->to = $to;
-            $this->shift_filter = $shift_filter;
-            $this->search = $search; 
-
-            $query = $this->query();
-
-            // Clone the query for clean execution
-            $this->totals = (clone $query)->selectRaw('
-                SUM(total_loads) as total_loads,
-                SUM(total_fuel) as total_fuel,
-                AVG(fuel_consumption_mileage) as avg_fuel_consumption,
-                SUM(total_weight) as total_weight,
-                SUM(actual_mileage) as total_distance,
-                COUNT(*) as shift_count
-            ')->first();
+            $this->filter = $filter;
+            $this->currency = Auth::user()->employee->company->currency;  
+ 
     }
     public function query()
     { 
         if (isset($this->from) && isset($this->to)) {
-             return Shift::query()->with(['customer:id,name','driver','horse','vehicle','cargo','transporter','fuel'])
-                ->whereDate($this->shift_filter, '>=', $this->from)
-                ->whereDate($this->shift_filter, '<=', $this->to)             
-                ->orderBy($this->shift_filter,'desc');
-           
-        }else {
-           return Shift::query()->with(['customer:id,name','driver','horse','vehicle','cargo','transporter','fuel'])
-                        ->whereMonth($this->shift_filter, date('m'))
-                        ->whereYear($this->shift_filter, date('Y'))
-                        ->orderBy($this->shift_filter,'desc');
-          
+            return DB::table('trips')
+                ->select(
+                    'trips.horse_id',
+                    DB::raw('count(*) as total_trips'),
+                    DB::raw("
+                        SUM(
+                            CASE 
+                                WHEN trips.starting_mileage IS NOT NULL AND trips.ending_mileage IS NOT NULL 
+                                THEN trips.ending_mileage - trips.starting_mileage 
+                                ELSE trips.distance 
+                            END
+                        ) as total_kilometers
+                    "),
+                    DB::raw("
+                        SUM(
+                            CASE 
+                                WHEN trips.starting_hours IS NOT NULL AND trips.ending_hours IS NOT NULL 
+                                THEN trips.ending_hours - trips.starting_hours 
+                                ELSE trips.hours 
+                            END
+                        ) as total_hours
+                    "),
+                    DB::raw('sum(litreage_at_20) as total_volume'),
+                    DB::raw('sum(weight) as total_tonnage'),
+                    DB::raw('sum(delivery_notes.loaded_litreage_at_20 - delivery_notes.offloaded_litreage_at_20) as total_volume_loss'),
+                    DB::raw('sum(delivery_notes.loaded_weight - delivery_notes.offloaded_weight) as total_tonnage_loss'),
+                    DB::raw("
+                        SUM(
+                            CASE 
+                                WHEN fuels.quantity IS NOT NULL THEN fuels.quantity
+                                ELSE COALESCE(trips.trip_fuel, 0)
+                            END
+                        ) as total_fuel_quantity
+                    "),
+                    DB::raw('avg(trips.fuel_consumption_mileage) as avg_fuel_consumption_mileage'),
+                    DB::raw('avg(trips.fuel_consumption_hours) as avg_fuel_consumption_hours')
+                )
+                ->join('delivery_notes', 'trips.id', '=', 'delivery_notes.trip_id')
+                ->join('horses', 'trips.horse_id', '=', 'horses.id')
+                ->leftJoin('fuels', 'trips.id', '=', 'fuels.trip_id')
+                ->where('horses.archive', '=', false)
+                ->where('trips.trip_status', '=', 'Offloaded')
+                ->whereBetween('trips.'.$this->filter, [$this->from, $this->to])
+                ->whereNull('trips.deleted_at')
+                ->where('trips.authorization', 'approved')
+                ->groupBy('trips.horse_id')
+                ->orderByDesc('total_trips');
+        } else {
+            return DB::table('trips')
+                ->select(
+                    'trips.horse_id',
+                    DB::raw('count(*) as total_trips'),
+                    DB::raw("
+                        SUM(
+                            CASE 
+                                WHEN trips.starting_mileage IS NOT NULL AND trips.ending_mileage IS NOT NULL 
+                                THEN trips.ending_mileage - trips.starting_mileage 
+                                ELSE trips.distance 
+                            END
+                        ) as total_kilometers
+                    "),
+                    DB::raw("
+                        SUM(
+                            CASE 
+                                WHEN trips.starting_hours IS NOT NULL AND trips.ending_hours IS NOT NULL 
+                                THEN trips.ending_hours - trips.starting_hours 
+                                ELSE trips.hours 
+                            END
+                        ) as total_hours
+                    "),
+                    DB::raw('sum(litreage_at_20) as total_volume'),
+                    DB::raw('sum(weight) as total_tonnage'),
+                    DB::raw('sum(delivery_notes.loaded_litreage_at_20 - delivery_notes.offloaded_litreage_at_20) as total_volume_loss'),
+                    DB::raw('sum(delivery_notes.loaded_weight - delivery_notes.offloaded_weight) as total_tonnage_loss'),
+                    DB::raw("
+                        SUM(
+                            CASE 
+                                WHEN fuels.quantity IS NOT NULL THEN fuels.quantity
+                                ELSE COALESCE(trips.trip_fuel, 0)
+                            END
+                        ) as total_fuel_quantity
+                    "),
+                    DB::raw('avg(trips.fuel_consumption_mileage) as avg_fuel_consumption_mileage'),
+                    DB::raw('avg(trips.fuel_consumption_hours) as avg_fuel_consumption_hours')
+                )
+                ->join('delivery_notes', 'trips.id', '=', 'delivery_notes.trip_id')
+                ->join('horses', 'trips.horse_id', '=', 'horses.id')
+                ->leftJoin('fuels', 'trips.id', '=', 'fuels.trip_id')
+                ->where('horses.archive', '=', false)
+                ->where('trips.trip_status', '=', 'Offloaded')
+                ->whereYear('trips.'.$this->filter, date('Y'))
+                ->whereMonth('trips.'.$this->filter, now()->month)
+                ->whereNull('trips.deleted_at')
+                ->where('trips.authorization', 'approved')
+                ->groupBy('trips.horse_id')
+                ->orderByDesc('total_trips');
         }
        
        
     }
 
+          public function calculateVolumeLosses($selected_horse){
 
-    public function map($shift): array{
+         $vol_loss_percentage = Null; 
 
-                $equipment = "";
-                if ($shift->equipment == "Horse") {
-                    $reg_number = $shift->horse->registration_number ?? Null;
-                    $fleet_number = optional($shift->horse)->fleet_number ? "(" . optional($shift->horse)->fleet_number . ")" : null;
-                    $equipment = $reg_number." ".$fleet_number;
-                }elseif ($shift->equipment == "Vehicle") {
-                    $reg_number = $shift->vehicle->registration_number ?? Null;
-                    $fleet_number = optional($shift->vehicle)->fleet_number ? "(" . optional($shift->vehicle)->fleet_number . ")" : null;
-                    $equipment = $reg_number." ".$fleet_number;
-                }
+        if (($selected_horse->total_volume_loss && is_numeric($selected_horse->total_volume_loss) && $selected_horse->total_volume_loss > 0) && ($selected_horse->total_volume && is_numeric($selected_horse->total_volume) && $selected_horse->total_volume > 0)) {
+            $vol_loss_percentage = ($selected_horse->total_volume_loss / $selected_horse->total_volume ) * 100;
+        }
 
-              
-                $employee = optional(optional($shift->driver)->employee);
-                $driver = $employee->name && $employee->surname
-                    ? $employee->name . ' ' . $employee->surname
-                    : '';
-
-                 $start = Carbon::parse($shift->shift_start_time);
-                $end = Carbon::parse($shift->shift_end_time);
-
-                // If you have dates for the shift times, parse them directly
-                // Otherwise, handle cases where only the time is given
-
-                // If only time is stored and end is "before" start, assume it's the next day
-                if ($end->lessThan($start)) {
-                    $end->addDay();
-                }
-
-                // Get total seconds difference (works for > 24 hours too)
-                $diffInSeconds = $end->diffInSeconds($start);
-
-                // Convert to hours, minutes, and seconds
-                $hours = floor($diffInSeconds / 3600);
-                $minutes = floor(($diffInSeconds % 3600) / 60);
-                $seconds = $diffInSeconds % 60;
-
-                // Format as HH:MM:SS, even if hours > 24
-                 $durationFormatted = sprintf('%02dH: %02dM: %02dS', $hours, $minutes, $seconds);
+         return $vol_loss_percentage ? $vol_loss_percentage."%" : "";
       
+    }
+    public function calculateTonnageLosses($selected_horse){
+       
+        $tonnage_loss_percentage = Null;
+
+        if (($selected_horse->total_tonnage_loss && is_numeric($selected_horse->total_tonnage_loss)  && $selected_horse->total_tonnage_loss > 0) && ($selected_horse->total_tonnage && is_numeric($selected_horse->total_tonnage) && $selected_horse->total_tonnage > 0)) {
+            $tonnage_loss_percentage = ($selected_horse->total_tonnage_loss / $selected_horse->total_tonnage ) * 100;
+        }
+
+        return $tonnage_loss_percentage ? $tonnage_loss_percentage."%" : "";
+    }
+
+    public function calculateTotalRevenue($id)
+    {
+        if (is_null($id)) return;
+
+        if (!$this->currency) {
+            return "Currency not set.";
+        }
+
+        $total_freight = Null;
+
+        if ($this->from && $this->to) {
+            $default_currency_trips_freight = Trip::where('horse_id', $id)
+                ->whereBetween($this->filter, [$this->from, $this->to])
+                ->where('currency_id', $this->currency->id)
+                ->whereNotNull('freight')
+                ->where('freight', '!=', 0)
+                ->sum('freight');
+
+            $other_currency_trips_freight = Trip::where('horse_id', $id)
+                ->whereBetween($this->filter, [$this->from, $this->to])
+                ->where('currency_id', '!=', $this->currency->id)
+                ->whereNotNull('exchange_customer_freight')
+                ->where('exchange_customer_freight', '!=', 0)
+                ->sum('exchange_customer_freight');
+        } else {
+            $default_currency_trips_freight = Trip::where('horse_id', $id)
+                ->whereMonth($this->filter, Carbon::now()->month)
+                ->whereYear($this->filter, date('Y'))
+                ->where('currency_id', $this->currency->id)
+                ->whereNotNull('freight')
+                ->where('freight', '!=', 0)
+                ->sum('freight');
+
+            $other_currency_trips_freight = Trip::where('horse_id', $id)
+                ->whereMonth($this->filter, Carbon::now()->month)
+                ->whereYear($this->filter, date('Y'))
+                ->where('currency_id', '!=', $this->currency->id)
+                ->whereNotNull('exchange_customer_freight')
+                ->where('exchange_customer_freight', '!=', 0)
+                ->sum('exchange_customer_freight');
+        }
+
+        $total_freight = $default_currency_trips_freight + $other_currency_trips_freight;
+
+        return $this->currency->symbol . number_format($total_freight, 2);
+    }
+
+            // RAW total fuel
+    private function getTotalFuel($id)
+    {
+        if (!isset($this->from, $this->to)) return 0;
+
+        $dateColumn = $this->filter === "start_date" ? "date" : $this->filter;
+
+        return Shift::whereBetween($dateColumn, [$this->from, $this->to])
+            ->where('horse_id', $id)
+            ->sum('total_fuel');
+    }
+
+    // RAW total distance
+    private function getTotalDistance($id)
+    {
+        if (!isset($this->from, $this->to)) return 0;
+
+        $dateColumn = $this->filter === "start_date" ? "date" : $this->filter;
+
+        return Shift::whereBetween($dateColumn, [$this->from, $this->to])
+            ->where('horse_id', $id)
+            ->sum('actual_mileage');
+    }
+    // RAW total hours
+    private function getTotalHours($id)
+    {
+        if (!isset($this->from, $this->to)) return 0;
+
+        $dateColumn = $this->filter === "start_date" ? "date" : $this->filter;
+
+        return Shift::whereBetween($dateColumn, [$this->from, $this->to])
+            ->where('horse_id', $id)
+            ->sum('actual_hours');
+    }
+
+    // Existing public display functions
+    public function calculateShiftsFuel($id)
+    {
+        return number_format($this->getTotalFuel($id));
+    }
+
+    public function calculateShiftsDistance($id)
+    {
+        return number_format($this->getTotalDistance($id));
+    }
+    public function calculateShiftsHours($id)
+    {
+        return number_format($this->getTotalHours($id));
+    }
+
+    // NEW: Fuel consumption function (Km per L)
+    public function calculateFuelConsumptionMileage($id)
+    {
+        $fuel = $this->getTotalFuel($id);
+        $distance = $this->getTotalDistance($id);
+
+        if ($fuel <= 0 || $distance <= 0) {
+            return ;
+        }
+
+        $KPerL = $distance / $fuel; // or $fuel / $distance * 100 for L/100km
+        return number_format($KPerL, 2);
+    }
+    public function calculateFuelConsumptionHours($id)
+    {
+        $fuel = $this->getTotalFuel($id);
+        $hours = $this->getTotalHours($id);
+
+        if ($fuel <= 0 || $hours <= 0) {
+            return ;
+        }
+
+        $HPerL = $hours / $fuel; // or $fuel / $hours * 100 for L/100H
+        return number_format($HPerL, 2);
+    }
+
+
+    public function map($selected_horse): array{
+
+            $horse = Horse::find($selected_horse->horse_id);
+            $regnumber = $horse->registration_number;
+            $fleetnumber = $horse->fleet_number  ? "(".$horse->fleet_number.")" : "";
+            $horse_details = $regnumber." ".$fleetnumber;
+            $transporter = $horse->transporter ? $horse->transporter->name : "";
+
+            $total_kilometers = "";
+            if ($selected_horse->total_kilometers) {
+                $total_kilometers = $selected_horse->total_kilometers;
+            }else{
+                 $total_kilometers = $this->calculateShiftsDistance($selected_horse->horse_id);
+            }
+            $total_hours = "";
+            if ($selected_horse->total_hours) {
+                $total_hours = $selected_horse->total_hours;
+            }else{
+                $total_hours = $this->calculateShiftsHours($selected_horse->horse_id);
+            }
+            $total_fuel_quantity = "";
+            if ($selected_horse->total_fuel_quantity) {
+                $total_fuel_quantity = $selected_horse->total_fuel_quantity;
+            }else{
+                $total_fuel_quantity = $this->calculateShiftsFuel($selected_horse->horse_id);
+            }
+
+            $tonnage_loss = $this->calculateTonnageLosses($selected_horse);
+            $volume_loss = $this->calculateVolumeLosses($selected_horse);
+
+            $fuel_consumption_mileage = "";
+
+            if ($selected_horse->avg_fuel_consumption_mileage) {
+                $fuel_consumption_mileage = $selected_horse->avg_fuel_consumption_mileage;
+            }else{
+                $fuel_consumption_mileage = $this->calculateFuelConsumptionMileage($selected_horse->horse_id);
+            }
+           
+            $fuel_consumption_hours = "";
+
+            if ($selected_horse->avg_fuel_consumption_hours) {
+                $fuel_consumption_hours = $selected_horse->avg_fuel_consumption_hours;
+            }else{
+                $fuel_consumption_hours = $this->calculateFuelConsumptionHours($selected_horse->horse_id);
+            }
+         
                 return   [
-                    $shift->shift_number ,
-                    $shift->type ,
-                    $shift->for ,
-                    $shift->date ,
-                    $shift->shift_start_time ,
-                    $shift->shift_end_time ,
-                    $durationFormatted,
-                    $shift->customer ? $shift->customer->name : "",
-                    $shift->cargo ? $shift->cargo->name : "",
-                    $equipment,
-                    $driver,
-                    $shift->total_loads,
-                    $shift->total_weight,
-                    $shift->calculated_mileage,
-                    $shift->actual_mileage,
-                    $shift->total_fuel,
-                    $shift->fuel_consumption_mileage,
+                    $transporter,
+                    $horse_details,
+                    $selected_horse->total_trips ,
+                    $this->calculateTotalRevenue($selected_horse->horse_id),
+                    $total_kilometers ,
+                    $total_hours ,
+                    $total_fuel_quantity,
+                    $fuel_consumption_mileage,
+                    $fuel_consumption_hours,
+                    $selected_horse->total_volume,
+                    $selected_horse->total_volume_loss,
+                    $volume_loss,
+                    $selected_horse->total_tonnage,
+                    $selected_horse->total_tonnage_loss,
+                    $tonnage_loss,
                      ];
 
     }
@@ -157,67 +381,20 @@ WithCustomStartCell
                 'W/Loss(%)',
             ];
     }
-    public function registerEvents(): array
-    {
-        return [
-            AfterSheet::class => function (AfterSheet $event) {
-                // Styling for headings (now on A15)
-                $event->sheet->getStyle('A15:O15')->applyFromArray([
-                    'font' => ['bold' => true],
+    
+     public function registerEvents(): array{
+        return[
+            AfterSheet::class    => function(AfterSheet $event) {
+                $event->sheet->getStyle('A7:O7')->applyFromArray([
+                    'font' => [
+                        'bold' => true
+                    ],
                     'borders' => [
                         'outline' => [
                             'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THICK,
                             'color' => ['argb' => 'FFFF0000'],
                         ],
-                    ],
-                ]);
-
-                // Inject totals below the logo (starting row 6 or 7)
-                $row = 7;
-
-                $event->sheet->setCellValue("A{$row}", 'Totals Summary');
-                $event->sheet->mergeCells("A{$row}:Q{$row}");
-                $event->sheet->getStyle("A{$row}")->applyFromArray([
-                    'font' => ['bold' => true, 'size' => 14],
-                ]);
-
-                $row++;
-
-                $event->sheet->setCellValue("K{$row}", 'Total Shifts');
-                $event->sheet->setCellValue("L{$row}", $this->totals->shift_count ?? 0);
-
-                $row++;
-
-                $event->sheet->setCellValue("K{$row}", 'Total Loads');
-                $event->sheet->setCellValue("L{$row}", $this->totals->total_loads ?? 0);
-
-                $row++;
-
-                $event->sheet->setCellValue("K{$row}", 'Total Weight');
-                $event->sheet->setCellValue("L{$row}", $this->totals->total_weight ?? 0);
-
-                $row++;
-
-                $event->sheet->setCellValue("K{$row}", 'Total Fuel');
-                $event->sheet->setCellValue("L{$row}", $this->totals->total_fuel ?? 0);
-
-                $row++;
-
-                $event->sheet->setCellValue("K{$row}", 'Distance Travelled (Km)');
-                $event->sheet->setCellValue("L{$row}", $this->totals->total_distance ?? 0);
-
-                $row++;
-
-                $event->sheet->setCellValue("K{$row}", 'Average Fuel Consumption (l/Km)');
-                $event->sheet->setCellValue("L{$row}", round($this->totals->avg_fuel_consumption, 2) ?? 0);
-
-                // Optional: style the values
-                $event->sheet->getStyle("K8:L13")->applyFromArray([
-                    'font' => ['bold' => true],
-                    'fill' => [
-                        'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                        'startColor' => ['rgb' => 'FCE4D6'],
-                    ],
+                    ]
                 ]);
             },
         ];
@@ -245,6 +422,6 @@ WithCustomStartCell
     }
 
     public function startCell(): string{
-        return 'A15';
+        return 'A7';
     }
 }

@@ -249,12 +249,16 @@
                                             <hr style="margin-top:5px; margin-bottom:5px">
                                             @php
                                             $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
+                                            $offloaded_date = $trip->delivery_note->offloaded_date;
                                             @endphp
-                                            @if ((preg_match($pattern, $trip->end_date)) )
-                                                {{ \Carbon\Carbon::parse($trip->end_date)->format('d M Y g:i A')}}
-                                            @else
-                                            {{$trip->end_date}}
-                                            @endif    
+                                            @if ($offloaded_date)
+                                                 @if ((preg_match($pattern, $offloaded_date)) )
+                                                    {{ \Carbon\Carbon::parse($offloaded_date)->format('d M Y g:i A')}}
+                                                @else
+                                                    {{$offloaded_date}}
+                                                @endif  
+                                            @endif
+                                             
                                         </td>
                                        
                                         <td>
@@ -451,12 +455,15 @@
                                             <hr style="margin-top:5px; margin-bottom:5px">
                                             @php
                                             $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
+                                            $offloaded_date = $trip->delivery_note->offloaded_date;
                                             @endphp
-                                            @if ((preg_match($pattern, $trip->end_date)) )
-                                                {{ \Carbon\Carbon::parse($trip->end_date)->format('d M Y g:i A')}}
-                                            @else
-                                            {{$trip->end_date}}
-                                            @endif    
+                                            @if ($offloaded_date)
+                                                 @if ((preg_match($pattern, $offloaded_date)) )
+                                                    {{ \Carbon\Carbon::parse($offloaded_date)->format('d M Y g:i A')}}
+                                                @else
+                                                    {{$offloaded_date}}
+                                                @endif  
+                                            @endif
                                         </td>
                                          <td>
                                             {{ucfirst($trip->customer ? $trip->customer->name : "")}}
@@ -648,12 +655,15 @@
                                             <hr style="margin-top:5px; margin-bottom:5px">
                                             @php
                                             $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
+                                            $offloaded_date = $trip->delivery_note->offloaded_date;
                                             @endphp
-                                            @if ((preg_match($pattern, $trip->end_date)) )
-                                                {{ \Carbon\Carbon::parse($trip->end_date)->format('d M Y g:i A')}}
-                                            @else
-                                            {{$trip->end_date}}
-                                            @endif    
+                                            @if ($offloaded_date)
+                                                 @if ((preg_match($pattern, $offloaded_date)) )
+                                                    {{ \Carbon\Carbon::parse($offloaded_date)->format('d M Y g:i A')}}
+                                                @else
+                                                    {{$offloaded_date}}
+                                                @endif  
+                                            @endif  
                                         </td>
                                          <td>
                                             {{ucfirst($trip->customer ? $trip->customer->name : "")}}
@@ -844,12 +854,15 @@
                                         <hr style="margin-top:5px; margin-bottom:5px">
                                         @php
                                         $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
+                                        $offloaded_date = $trip->delivery_note->offloaded_date;
                                         @endphp
-                                        @if ((preg_match($pattern, $trip->end_date)) )
-                                            {{ \Carbon\Carbon::parse($trip->end_date)->format('d M Y g:i A')}}
-                                        @else
-                                        {{$trip->end_date}}
-                                        @endif    
+                                        @if ($offloaded_date)
+                                                @if ((preg_match($pattern, $offloaded_date)) )
+                                                {{ \Carbon\Carbon::parse($offloaded_date)->format('d M Y g:i A')}}
+                                            @else
+                                                {{$offloaded_date}}
+                                            @endif  
+                                        @endif  
                                     </td>
                                      <td>
                                             {{ucfirst($trip->customer ? $trip->customer->name : "")}}
@@ -1040,12 +1053,15 @@
                                             <hr style="margin-top:5px; margin-bottom:5px">
                                             @php
                                             $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
+                                            $offloaded_date = $trip->delivery_note->offloaded_date;
                                             @endphp
-                                            @if ((preg_match($pattern, $trip->end_date)) )
-                                                {{ \Carbon\Carbon::parse($trip->end_date)->format('d M Y g:i A')}}
-                                            @else
-                                            {{$trip->end_date}}
-                                            @endif    
+                                            @if ($offloaded_date)
+                                                 @if ((preg_match($pattern, $offloaded_date)) )
+                                                    {{ \Carbon\Carbon::parse($offloaded_date)->format('d M Y g:i A')}}
+                                                @else
+                                                    {{$offloaded_date}}
+                                                @endif  
+                                            @endif  
                                         </td>
                                          <td>
                                             {{ucfirst($trip->customer ? $trip->customer->name : "")}}
@@ -1226,22 +1242,25 @@
                                         <td>  {{ $trip->user->employee ? $trip->user->employee->name : "" }} {{ $trip->user->employee ? $trip->user->employee->surname : "" }}</td>
                                         <td>
                                             @php
-                                            $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
+                                                $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
                                             @endphp
                                             @if ((preg_match($pattern, $trip->start_date)) )
                                                 {{ \Carbon\Carbon::parse($trip->start_date)->format('d M Y g:i A')}}
                                             @else
-                                            {{$trip->start_date}}
+                                                {{$trip->start_date}}
                                             @endif    
                                             <hr style="margin-top:5px; margin-bottom:5px">
                                             @php
-                                            $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
+                                                $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
+                                                $offloaded_date = $trip->delivery_note->offloaded_date;
                                             @endphp
-                                            @if ((preg_match($pattern, $trip->end_date)) )
-                                                {{ \Carbon\Carbon::parse($trip->end_date)->format('d M Y g:i A')}}
-                                            @else
-                                            {{$trip->end_date}}
-                                            @endif    
+                                            @if ($offloaded_date)
+                                                 @if ((preg_match($pattern, $offloaded_date)) )
+                                                    {{ \Carbon\Carbon::parse($offloaded_date)->format('d M Y g:i A')}}
+                                                @else
+                                                    {{$offloaded_date}}
+                                                @endif  
+                                            @endif 
                                         </td>
                                          <td>
                                             {{ucfirst($trip->customer ? $trip->customer->name : "")}}
@@ -1430,12 +1449,15 @@
                                             <hr style="margin-top:5px; margin-bottom:5px">
                                             @php
                                             $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
+                                            $offloaded_date = $trip->delivery_note->offloaded_date;
                                             @endphp
-                                            @if ((preg_match($pattern, $trip->end_date)) )
-                                                {{ \Carbon\Carbon::parse($trip->end_date)->format('d M Y g:i A')}}
-                                            @else
-                                            {{$trip->end_date}}
-                                            @endif    
+                                            @if ($offloaded_date)
+                                                 @if ((preg_match($pattern, $offloaded_date)) )
+                                                    {{ \Carbon\Carbon::parse($offloaded_date)->format('d M Y g:i A')}}
+                                                @else
+                                                    {{$offloaded_date}}
+                                                @endif  
+                                            @endif 
                                         </td>
                                          <td>
                                             {{ucfirst($trip->customer ? $trip->customer->name : "")}}
@@ -1624,12 +1646,15 @@
                                             <hr style="margin-top:5px; margin-bottom:5px">
                                             @php
                                             $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
+                                            $offloaded_date = $trip->delivery_note->offloaded_date;
                                             @endphp
-                                            @if ((preg_match($pattern, $trip->end_date)) )
-                                                {{ \Carbon\Carbon::parse($trip->end_date)->format('d M Y g:i A')}}
-                                            @else
-                                            {{$trip->end_date}}
-                                            @endif    
+                                            @if ($offloaded_date)
+                                                 @if ((preg_match($pattern, $offloaded_date)) )
+                                                    {{ \Carbon\Carbon::parse($offloaded_date)->format('d M Y g:i A')}}
+                                                @else
+                                                    {{$offloaded_date}}
+                                                @endif  
+                                            @endif 
                                         </td>
                                          <td>
                                             {{ucfirst($trip->customer ? $trip->customer->name : "")}}
@@ -1821,12 +1846,15 @@
                                             <hr style="margin-top:5px; margin-bottom:5px">
                                             @php
                                             $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
+                                            $offloaded_date = $trip->delivery_note->offloaded_date;
                                             @endphp
-                                            @if ((preg_match($pattern, $trip->end_date)) )
-                                                {{ \Carbon\Carbon::parse($trip->end_date)->format('d M Y g:i A')}}
-                                            @else
-                                            {{$trip->end_date}}
-                                            @endif    
+                                            @if ($offloaded_date)
+                                                 @if ((preg_match($pattern, $offloaded_date)) )
+                                                    {{ \Carbon\Carbon::parse($offloaded_date)->format('d M Y g:i A')}}
+                                                @else
+                                                    {{$offloaded_date}}
+                                                @endif  
+                                            @endif  
                                         </td>
                                          <td>
                                             {{ucfirst($trip->customer ? $trip->customer->name : "")}}

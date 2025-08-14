@@ -899,11 +899,11 @@ class Create extends Component
             : ($this->trip_fuel ?? 0);
 
         if (is_numeric($distance) && $distance > 0 && $total_fuel > 0) {
-            $trip->fuel_consumption_mileage = $total_fuel / $distance;
+            $trip->fuel_consumption_mileage = $distance / $total_fuel;
         }
 
         if (is_numeric($hours_distance) && $hours_distance > 0 && $total_fuel > 0) {
-            $trip->fuel_consumption_hours = $total_fuel / $hours_distance;
+            $trip->fuel_consumption_hours = $hours_distance / $total_fuel;
         }
 
         $trip->save();

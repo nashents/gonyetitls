@@ -9,12 +9,6 @@
                             <div>
                                 @include('includes.messages')
                             </div>
-
-                            <div class="panel-title">
-                                {{-- <a href="#" wire:click="exportDriversPerformanceExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
-                                <a href="#" wire:click="exportDriversPerformanceCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
-                                <a href="#" wire:click="exportDriversPerformancePDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a> --}}
-                            </div>
                         </div>
 
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
@@ -63,9 +57,9 @@
                             </small>
                             <br>
                             <div class="mt-15 mb-15">
-                                <a href="#" wire:click="exportDriversPerfomanceExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
-                                <a href="#" wire:click="exportDriversPerfomanceCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
-                                <a href="#" wire:click="exportDriversPerfomancePDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
+                                <a href="#" wire:click="exportDriversPerformanceExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
+                                <a href="#" wire:click="exportDriversPerformanceCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
+                                <a href="#" wire:click="exportDriversPerformancePDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
                             </div>
                                 
                             </div>

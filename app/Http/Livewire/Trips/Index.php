@@ -941,6 +941,64 @@ class Index extends Component
         }
       }
 
+    private function calculateFreight(
+    $rate,
+    $cargoType,
+    $freightCalculation,
+    $measurement,
+    $weight,
+    $litreageAt20,
+    $litreage,
+    $distance
+    ) {
+        if (!is_numeric($rate)) {
+            return null;
+        }
+
+        switch ($freightCalculation) {
+            case 'rate_weight':
+                if ($cargoType === "Solid" && is_numeric($weight)) {
+                    return $rate * $weight;
+                }
+                if ($cargoType === "Liquid") {
+                    if ($measurement === "litreage_at_20" && is_numeric($litreageAt20)) {
+                        return $rate * $litreageAt20;
+                    }
+                    if ($measurement === "litreage_at_ambient" && is_numeric($litreage)) {
+                        return $rate * $litreage;
+                    }
+                }
+                break;
+
+            case 'rate_distance':
+                if (is_numeric($distance)) {
+                    return $rate * $distance;
+                }
+                break;
+
+            case 'rate_weight_distance':
+                if ($cargoType === "Solid" && is_numeric($weight) && is_numeric($distance)) {
+                    return $rate * $weight * $distance;
+                }
+                if ($cargoType === "Liquid" && is_numeric($distance)) {
+                    if ($measurement === "litreage_at_20" && is_numeric($litreageAt20)) {
+                        return $rate * $litreageAt20 * $distance;
+                    }
+                    if ($measurement === "litreage_at_ambient" && is_numeric($litreage)) {
+                        return $rate * $litreage * $distance;
+                    }
+                }
+                break;
+
+            case 'flat_rate':
+                return $rate;
+
+            default:
+                return null;
+        }
+
+        return null;
+    }
     
     public function render()
     {
@@ -952,505 +1010,132 @@ class Index extends Component
             $this->loaded_date = $this->trip_status_date;
         }
 
-        if ($this->freight_calculation == "rate_weight") {
-            if ($this->cargo_type == "Solid") {
-                if(is_numeric($this->offloaded_rate) && is_numeric($this->offloaded_weight)){
-                    $this->offloaded_freight = $this->offloaded_rate * $this->offloaded_weight;
-                }
-               
-            }elseif($this->cargo_type == "Liquid"){
-                if(is_numeric($this->offloaded_rate) && (is_numeric($this->offloaded_litreage_at_20) || is_numeric($this->offloaded_litreage))){
-                    if($this->calculation_measurement == "litreage_at_20"){
-                        $this->offloaded_freight = $this->offloaded_rate * $this->offloaded_litreage_at_20;
-                    }elseif($this->calculation_measurement == "litreage_at_ambient"){
-                        $this->offloaded_freight = $this->offloaded_rate * $this->offloaded_litreage;
-                    }
-                   
-                }
-                
-            }
-        }
-        elseif ($this->freight_calculation == "rate_distance") {
-            if (is_numeric($this->offloaded_rate)  && is_numeric($this->offloaded_distance)) {
-                $this->offloaded_freight = $this->offloaded_rate * $this->offloaded_distance;
-            }
-        }
-        elseif ($this->freight_calculation == "rate_weight_distance") {
-            if ($this->cargo_type == "Solid") {
-                if(is_numeric($this->offloaded_rate) && is_numeric($this->offloaded_weight) && is_numeric($this->offloaded_distance)){
-                    $this->offloaded_freight = $this->offloaded_rate * $this->offloaded_weight * $this->offloaded_distance;
-                }
-               
-            }elseif($this->cargo_type == "Liquid"){
-                if(is_numeric($this->offloaded_rate) && (is_numeric($this->offloaded_litreage_at_20) || is_numeric($this->offloaded_litreage) ) && is_numeric($this->offloaded_distance)){
-                    if($this->calculation_measurement == "litreage_at_20"){
-                        $this->offloaded_freight = $this->offloaded_rate * $this->offloaded_litreage_at_20 * $this->offloaded_distance ;
-                    }elseif($this->calculation_measurement == "litreage_at_ambient"){
-                        $this->offloaded_freight = $this->offloaded_rate * $this->offloaded_litreage * $this->offloaded_distance ;
-                    }
-                   
-                }
-               
-            }
-        }
-        elseif ($this->freight_calculation == "flat_rate") {
-            if ($this->cargo_type == "Solid") {
-                if(is_numeric($this->offloaded_rate)){
-                    $this->offloaded_freight = $this->offloaded_rate;
-                }
-               
-            }elseif($this->cargo_type == "Liquid"){
-                if(is_numeric($this->offloaded_rate)){
-                    $this->offloaded_freight = $this->offloaded_rate;
-                }
-            }   
-        }
-
-        if ($this->freight_calculation == "rate_weight") {
-            if ($this->cargo_type == "Solid") {
-                if(is_numeric($this->transporter_offloaded_rate) && is_numeric($this->offloaded_weight)){
-                    $this->transporter_offloaded_freight = $this->transporter_offloaded_rate * $this->offloaded_weight;
-                }
-               
-            }elseif($this->cargo_type == "Liquid"){
-                if(is_numeric($this->transporter_offloaded_rate) && (is_numeric($this->offloaded_litreage_at_20) || is_numeric($this->offloaded_litreage) )){
-                    if($this->calculation_measurement == "litreage_at_20"){
-                        $this->transporter_offloaded_freight = $this->transporter_offloaded_rate * $this->offloaded_litreage_at_20;
-                    }elseif($this->calculation_measurement == "litreage_at_ambient"){
-                        $this->transporter_offloaded_freight = $this->transporter_offloaded_rate * $this->offloaded_litreage;
-                    }
-                 
-                }
-              
-            } 
-        }
-        elseif ($this->freight_calculation == "rate_distance") {
-            if(is_numeric($this->transporter_offloaded_rate) && is_numeric($this->offloaded_distance)){
-                $this->transporter_offloaded_freight = $this->transporter_offloaded_rate * $this->offloaded_distance;
-            }
-        }
-        elseif ($this->freight_calculation == "rate_weight_distance") {
-            if ($this->cargo_type == "Solid") {
-                if(is_numeric($this->transporter_offloaded_rate) && is_numeric($this->offloaded_weight) && is_numeric($this->offloaded_distance)){
-                    $this->transporter_offloaded_freight = $this->transporter_offloaded_rate * $this->offloaded_weight * $this->offloaded_distance;
-                }
-              
-            }elseif($this->cargo_type == "Liquid"){
-                if(is_numeric($this->transporter_offloaded_rate) && (is_numeric($this->offloaded_litreage_at_20) || is_numeric($this->offloaded_litreage) ) && is_numeric($this->offloaded_distance)){
-                    if($this->calculation_measurement == "litreage_at_20"){
-                        $this->transporter_offloaded_freight = $this->transporter_offloaded_rate * $this->offloaded_litreage_at_20 * $this->offloaded_distance;
-                    }elseif($this->calculation_measurement == "litreage_at_ambient"){
-                        $this->transporter_offloaded_freight = $this->transporter_offloaded_rate * $this->offloaded_litreage * $this->offloaded_distance;
-                    } 
-                }
-              
-            } 
-        }
-        elseif ($this->freight_calculation == "flat_rate") {
-            $this->transporter_offloaded_freight = $this->transporter_offloaded_rate;
-        }
-
-        ///loaded calculations
-
-        if ($this->freight_calculation == "rate_weight") {
-            if ($this->cargo_type == "Solid") {
-                if(is_numeric($this->loaded_rate) && is_numeric($this->loaded_weight)){
-                    $this->loaded_freight = $this->loaded_rate * $this->loaded_weight;
-                }
-               
-            }elseif($this->cargo_type == "Liquid"){
-                if(is_numeric($this->offloaded_rate) && (is_numeric($this->loaded_litreage_at_20) || is_numeric($this->loaded_litreage))){
-                    if($this->calculation_measurement == "litreage_at_20"){
-                        $this->loaded_freight = $this->loaded_rate * $this->loaded_litreage_at_20;
-                    }elseif($this->calculation_measurement == "litreage_at_ambient"){
-                        $this->loaded_freight = $this->loaded_rate * $this->loaded_litreage;
-                    } 
-                   
-                }
-                
-            }
-        }
-        elseif ($this->freight_calculation == "rate_distance") {
-            if (is_numeric($this->loaded_rate)  && is_numeric($this->distance)) {
-                $this->loaded_freight = $this->loaded_rate * $this->distance;
-            }
-        }
-        elseif ($this->freight_calculation == "rate_weight_distance") {
-            if ($this->cargo_type == "Solid") {
-                if(is_numeric($this->loaded_rate) && is_numeric($this->loaded_weight) && is_numeric($this->distance)){
-                    $this->loaded_freight = $this->loaded_rate * $this->loaded_weight * $this->distance;
-                }
-               
-            }elseif($this->cargo_type == "Liquid"){
-                if(is_numeric($this->loaded_rate) && (is_numeric($this->loaded_litreage_at_20) || is_numeric($this->loaded_litreage)) && is_numeric($this->distance)){
-                    if($this->calculation_measurement == "litreage_at_20"){
-                        $this->loaded_freight = $this->loaded_rate * $this->loaded_litreage_at_20 * $this->distance ;
-                    }elseif($this->calculation_measurement == "litreage_at_ambient"){
-                        $this->loaded_freight = $this->loaded_rate * $this->loaded_litreage * $this->distance ;
-                    } 
-                   
-                }
-               
-            }
-        }
-        elseif ($this->freight_calculation == "flat_rate") {
-            if ($this->cargo_type == "Solid") {
-                if(is_numeric($this->loaded_rate)){
-                    $this->loaded_freight = $this->loaded_rate;
-                }
-               
-            }elseif($this->cargo_type == "Liquid"){
-                if(is_numeric($this->offloaded_rate)){
-                    $this->loaded_freight = $this->loaded_rate;
-                }
-            }   
-        }
-
-        if ($this->freight_calculation == "rate_weight") {
-            if ($this->cargo_type == "Solid") {
-                if(is_numeric($this->transporter_loaded_rate) && is_numeric($this->loaded_weight)){
-                    $this->transporter_loaded_freight = $this->transporter_loaded_rate * $this->loaded_weight;
-                }
-               
-            }elseif($this->cargo_type == "Liquid"){
-                if(is_numeric($this->transporter_loaded_rate) && (is_numeric($this->loaded_litreage_at_20) || is_numeric($this->loaded_litreage))){
-                    if($this->calculation_measurement == "litreage_at_20"){
-                        $this->transporter_loaded_freight = $this->transporter_loaded_rate * $this->loaded_litreage_at_20;
-                    }elseif($this->calculation_measurement == "litreage_at_ambient"){
-                        $this->transporter_loaded_freight = $this->transporter_loaded_rate * $this->loaded_litreage;
-                    } 
-                   
-                }
-              
-            } 
-        }
-        elseif ($this->freight_calculation == "rate_distance") {
-            if(is_numeric($this->transporter_loaded_rate) && is_numeric($this->distance)){
-                $this->transporter_loaded_freight = $this->transporter_loaded_rate * $this->distance;
-            }
-        }
-        elseif ($this->freight_calculation == "rate_weight_distance") {
-            if ($this->cargo_type == "Solid") {
-                if(is_numeric($this->transporter_loaded_rate) && is_numeric($this->loaded_weight) && is_numeric($this->distance)){
-                    $this->transporter_loaded_freight = $this->transporter_loaded_rate * $this->loaded_weight * $this->distance;
-                }
-              
-            }elseif($this->cargo_type == "Liquid"){
-                if(is_numeric($this->transporter_loaded_rate) && (is_numeric($this->loaded_litreage_at_20) || is_numeric($this->loaded_litreage)) && is_numeric($this->distance)){
-                    if($this->calculation_measurement == "litreage_at_20"){
-                        $this->transporter_loaded_freight = $this->transporter_loaded_rate * $this->loaded_litreage_at_20 * $this->distance;
-                    }elseif($this->calculation_measurement == "litreage_at_ambient"){
-                        $this->transporter_loaded_freight = $this->transporter_loaded_rate * $this->loaded_litreage * $this->distance;
-                    } 
-                   
-                }
-              
-            } 
-        }
-        elseif ($this->freight_calculation == "flat_rate") {
-            $this->transporter_loaded_freight = $this->transporter_loaded_rate;
-        }
-
-        if($this->trip_filter == "offloaded_date"){
-            
-            if (filled($this->from) && filled($this->to)) {
-                if (filled($this->search)) {
-                    return view('livewire.trips.index',[
-                        'trips' => Trip::query()->with(['breakdowns','breakdown_assignments','trip_destinations','trip_expenses','trip_locations','delivery_note','fuel:id,order_number','transporter:id,name','trip_type:id,name','border:id,name',
-                        'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model','vehicle','vehicle.vehicle_make','vehicle.vehicle_model',
-                        'trailers:id,make,model,registration_number','driver.employee:id,name,surname','loading_point:id,name','offloading_point:id,name',
-                        'route:id,name,rank','truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name','commission:id,commission,amount'])
-                        ->whereHas('delivery_note', function ($query) {
-                            return $query->whereBetween($this->trip_filter,[$this->from, $this->to] );
-                        })
-                        ->where(function ($query) {
-                        $query->where('trip_number','like', '%'.$this->search.'%')
-                                ->orWhere('trip_status','like', '%'.$this->search.'%')
-                                ->orWhere('authorization','like', '%'.$this->search.'%')
-                                ->orWhereHas('horse', function ($query) {
-                                    return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('customer', function ($query) {
-                                    return $query->where('name', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('cargo', function ($query) {
-                                    return $query->where('name', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereDate('start_date','like', '%'.$this->search.'%')
-                                ->orWhereDate('end_date','like', '%'.$this->search.'%')
-                                ->orWhereHas('delivery_note', function ($query) {
-                                    return $query->whereDate('offloaded_date', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('user.employee', function ($query) {
-                                    return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('driver.employee', function ($query) {
-                                    return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('transporter', function ($query) {
-                                    return $query->where('name', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('horse', function ($query) {
-                                        return $query->where('registration_number', 'like', '%'.$this->search.'%')
-                                        ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
-                                    })
-                                ->orWhereHas('vehicle', function ($query) {
-                                    return $query->where('registration_number', 'like', '%'.$this->search.'%')
-                                    ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('loading_point', function ($query) {
-                                    return $query->where('name', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('trip_documents', function ($query) {
-                                    return $query->where('document_number', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('offloading_point', function ($query) {
-                                    return $query->where('name', 'like', '%'.$this->search.'%');
-                                })
-                                ->join('delivery_notes', 'delivery_notes.trip_id', '=', 'trips.id');
-                    })
-                        ->orderBy('delivery_notes.offloaded_date','desc')->paginate(10),
-                        'trip_filter' => $this->trip_filter
-                    ]);
-                }else {
-                    return view('livewire.trips.index',[
-                        'trips' => Trip::query()->with(['breakdowns','breakdown_assignments','trip_destinations','trip_expenses','trip_locations','delivery_note','fuel:id,order_number','transporter:id,name','trip_type:id,name','border:id,name',
-                        'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model','vehicle','vehicle.vehicle_make','vehicle.vehicle_model',
-                        'trailers:id,make,model,registration_number','driver.employee:id,name,surname','loading_point:id,name','offloading_point:id,name',
-                        'route:id,name,rank','truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name','commission:id,commission,amount'])
-                        ->whereHas('delivery_note', function ($query) {
-                            return $query->whereBetween($this->trip_filter,[$this->from, $this->to] );
-                        })
-                        ->join('delivery_notes', 'delivery_notes.trip_id', '=', 'trips.id')
-                        ->orderBy('delivery_notes.offloaded_date','desc')->paginate(10),
-                        'trip_filter' => $this->trip_filter
-                    ]);
-                }
-               
-            }
-            elseif (filled($this->search)) {
-               
-                return view('livewire.trips.index',[
-                    'trips' => Trip::query()->with(['breakdowns','breakdown_assignments','trip_destinations','trip_expenses','trip_locations','delivery_note','fuel:id,order_number','transporter:id,name','trip_type:id,name','border:id,name',
-                    'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model','vehicle','vehicle.vehicle_make','vehicle.vehicle_model',
-                    'trailers:id,make,model,registration_number','driver.employee:id,name,surname','loading_point:id,name','offloading_point:id,name',
-                    'route:id,name,rank','truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name','commission:id,commission,amount'])
-                    ->whereHas('delivery_note', function ($query) {
-                        return $query->whereMonth($this->trip_filter, date('m'))->whereYear($this->trip_filter, date('Y'));
-                    })
-                    ->where(function ($query) {
-                        $query->where('trip_number','like', '%'.$this->search.'%')
-                                ->orWhere('trip_status','like', '%'.$this->search.'%')
-                                ->orWhere('authorization','like', '%'.$this->search.'%')
-                                ->orWhereHas('horse', function ($query) {
-                                    return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('customer', function ($query) {
-                                    return $query->where('name', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('cargo', function ($query) {
-                                    return $query->where('name', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereDate('start_date','like', '%'.$this->search.'%')
-                                ->orWhereDate('end_date','like', '%'.$this->search.'%')
-                                ->orWhereHas('delivery_note', function ($query) {
-                                    return $query->whereDate('offloaded_date', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('user.employee', function ($query) {
-                                    return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('driver.employee', function ($query) {
-                                    return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('transporter', function ($query) {
-                                    return $query->where('name', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('horse', function ($query) {
-                                        return $query->where('registration_number', 'like', '%'.$this->search.'%')
-                                        ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
-                                    })
-                                ->orWhereHas('vehicle', function ($query) {
-                                    return $query->where('registration_number', 'like', '%'.$this->search.'%')
-                                    ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('loading_point', function ($query) {
-                                    return $query->where('name', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('trip_documents', function ($query) {
-                                    return $query->where('document_number', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('offloading_point', function ($query) {
-                                    return $query->where('name', 'like', '%'.$this->search.'%');
-                                })
-                                ->join('delivery_notes', 'delivery_notes.trip_id', '=', 'trips.id');
-                    })
-                    ->orderBy('delivery_notes.offloaded_date','desc')->paginate(10),
-                    'trip_filter' => $this->trip_filter
-                ]);
-            }
-            else {
-               
-                return view('livewire.trips.index',[
-                    'trips' => Trip::query()->with(['breakdowns','breakdown_assignments','trip_destinations','trip_expenses','trip_locations','delivery_note','fuel:id,order_number','transporter:id,name','trip_type:id,name','border:id,name',
-                    'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model','vehicle','vehicle.vehicle_make','vehicle.vehicle_model',
-                    'trailers:id,make,model,registration_number','driver.employee:id,name,surname','loading_point:id,name','offloading_point:id,name',
-                    'route:id,name,rank','truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name','commission:id,commission,amount'])
-                    ->whereHas('delivery_note', function ($query) {
-                        return $query->whereMonth($this->trip_filter, date('m'))->whereYear($this->trip_filter, date('Y'));
-                    })
-                    ->join('delivery_notes', 'delivery_notes.trip_id', '=', 'trips.id')
-                    ->orderBy('delivery_notes.offloaded_date','desc')->paginate(10),
-                    'trip_filter' => $this->trip_filter
-                ]);
-              
-            }
-
-            // end of offloaded date
-
-        }else{
-            if (filled($this->from) && filled($this->to)) {
-                if (filled($this->search)) {
-                    return view('livewire.trips.index',[
-                        'trips' => Trip::query()->with(['breakdowns','breakdown_assignments','trip_destinations','trip_expenses','trip_locations','delivery_note','fuel:id,order_number','transporter:id,name','trip_type:id,name','border:id,name',
-                        'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model','vehicle','vehicle.vehicle_make','vehicle.vehicle_model',
-                        'trailers:id,make,model,registration_number','driver.employee:id,name,surname','loading_point:id,name','offloading_point:id,name',
-                        'route:id,name,rank','truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name','commission:id,commission,amount'])
-                        ->whereBetween($this->trip_filter,[$this->from, $this->to] )
-                        ->where(function ($query) {
-                        $query->where('trip_number','like', '%'.$this->search.'%')
-                                ->orWhere('trip_status','like', '%'.$this->search.'%')
-                                ->orWhere('authorization','like', '%'.$this->search.'%')
-                                ->orWhereHas('horse', function ($query) {
-                                    return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('customer', function ($query) {
-                                    return $query->where('name', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('cargo', function ($query) {
-                                    return $query->where('name', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereDate('start_date','like', '%'.$this->search.'%')
-                                ->orWhereDate('end_date','like', '%'.$this->search.'%')
-                                ->orWhereHas('delivery_note', function ($query) {
-                                    return $query->whereDate('offloaded_date', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('user.employee', function ($query) {
-                                        return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
-                                    })
-                                ->orWhereHas('driver.employee', function ($query) {
-                                    return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('transporter', function ($query) {
-                                    return $query->where('name', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('horse', function ($query) {
-                                        return $query->where('registration_number', 'like', '%'.$this->search.'%')
-                                        ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
-                                    })
-                                ->orWhereHas('vehicle', function ($query) {
-                                    return $query->where('registration_number', 'like', '%'.$this->search.'%')
-                                    ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('loading_point', function ($query) {
-                                    return $query->where('name', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('trip_documents', function ($query) {
-                                    return $query->where('document_number', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('offloading_point', function ($query) {
-                                    return $query->where('name', 'like', '%'.$this->search.'%');
-                                });
-                        })
-                        ->orderBy($this->trip_filter,'desc')->paginate(10),
-                        'trip_filter' => $this->trip_filter
-                    ]);
-                }else {
-                    return view('livewire.trips.index',[
-                        'trips' => Trip::query()->with(['breakdowns','breakdown_assignments','trip_destinations','trip_expenses','trip_locations','delivery_note','fuel:id,order_number','transporter:id,name','trip_type:id,name','border:id,name',
-                        'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model','vehicle','vehicle.vehicle_make','vehicle.vehicle_model',
-                        'trailers:id,make,model,registration_number','driver.employee:id,name,surname','loading_point:id,name','offloading_point:id,name',
-                        'route:id,name,rank','truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name','commission:id,commission,amount'])->whereBetween($this->trip_filter,[$this->from, $this->to] )->orderBy($this->trip_filter,'desc')->paginate(10),
-                        'trip_filter' => $this->trip_filter
-                    ]);
-                }
-               
-            }
-            elseif (filled($this->search)) {
-               
-                return view('livewire.trips.index',[
-                    'trips' => Trip::query()->with(['breakdowns','breakdown_assignments','trip_destinations','trip_expenses','trip_locations','delivery_note','fuel:id,order_number','transporter:id,name','trip_type:id,name','border:id,name',
-                    'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model','vehicle','vehicle.vehicle_make','vehicle.vehicle_model',
-                    'trailers:id,make,model,registration_number','driver.employee:id,name,surname','loading_point:id,name','offloading_point:id,name',
-                    'route:id,name,rank','truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name','commission:id,commission,amount'])
-                    ->whereMonth($this->trip_filter, date('m'))
-                    ->whereYear($this->trip_filter, date('Y'))
-                    ->where(function ($query) {
-                        $query->where('trip_number','like', '%'.$this->search.'%')
-                                ->orWhere('trip_status','like', '%'.$this->search.'%')
-                                ->orWhere('authorization','like', '%'.$this->search.'%')
-                                ->orWhereHas('horse', function ($query) {
-                                    return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('customer', function ($query) {
-                                    return $query->where('name', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('cargo', function ($query) {
-                                    return $query->where('name', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereDate('start_date','like', '%'.$this->search.'%')
-                                ->orWhereDate('end_date','like', '%'.$this->search.'%')
-                                ->orWhereHas('delivery_note', function ($query) {
-                                    return $query->whereDate('offloaded_date', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('user.employee', function ($query) {
-                                        return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
-                                    })
-                                ->orWhereHas('driver.employee', function ($query) {
-                                    return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('transporter', function ($query) {
-                                    return $query->where('name', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('horse', function ($query) {
-                                        return $query->where('registration_number', 'like', '%'.$this->search.'%')
-                                        ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
-                                    })
-                                ->orWhereHas('vehicle', function ($query) {
-                                    return $query->where('registration_number', 'like', '%'.$this->search.'%')
-                                    ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('loading_point', function ($query) {
-                                    return $query->where('name', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('trip_documents', function ($query) {
-                                    return $query->where('document_number', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('offloading_point', function ($query) {
-                                    return $query->where('name', 'like', '%'.$this->search.'%');
-                                });
-                    })
-                 
-                    ->orderBy($this->trip_filter,'desc')->paginate(10),
-                    'trip_filter' => $this->trip_filter
-                ]);
-            }
-            else {
-               
-                return view('livewire.trips.index',[
-                    'trips' => Trip::query()->with(['breakdowns','breakdown_assignments','trip_destinations','trip_expenses','trip_locations','delivery_note','fuel:id,order_number','transporter:id,name','trip_type:id,name','border:id,name',
-                    'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model','vehicle','vehicle.vehicle_make','vehicle.vehicle_model',
-                    'trailers:id,make,model,registration_number','driver.employee:id,name,surname','loading_point:id,name','offloading_point:id,name',
-                    'route:id,name,rank','truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name','commission:id,commission,amount'])->whereMonth($this->trip_filter, date('m'))
-                    ->whereYear($this->trip_filter, date('Y'))->orderBy($this->trip_filter,'desc')->paginate(10),
-                    'trip_filter' => $this->trip_filter
-                ]);
-              
-            }
-        }
-   
      
-          
+        $this->offloaded_freight = $this->calculateFreight(
+            $this->offloaded_rate,
+            $this->cargo_type,
+            $this->freight_calculation,
+            $this->calculation_measurement,
+            $this->offloaded_weight,
+            $this->offloaded_litreage_at_20,
+            $this->offloaded_litreage,
+            $this->offloaded_distance
+        );
 
-      
+        $this->transporter_offloaded_freight = $this->calculateFreight(
+            $this->transporter_offloaded_rate,
+            $this->cargo_type,
+            $this->freight_calculation,
+            $this->calculation_measurement,
+            $this->offloaded_weight,
+            $this->offloaded_litreage_at_20,
+            $this->offloaded_litreage,
+            $this->offloaded_distance
+        );
+
+        $this->loaded_freight = $this->calculateFreight(
+            $this->loaded_rate,
+            $this->cargo_type,
+            $this->freight_calculation,
+            $this->calculation_measurement,
+            $this->loaded_weight,
+            $this->loaded_litreage_at_20,
+            $this->loaded_litreage,
+            $this->distance
+        );
+
+        $this->transporter_loaded_freight = $this->calculateFreight(
+            $this->transporter_loaded_rate,
+            $this->cargo_type,
+            $this->freight_calculation,
+            $this->calculation_measurement,
+            $this->loaded_weight,
+            $this->loaded_litreage_at_20,
+            $this->loaded_litreage,
+            $this->distance
+        );
+
+       
+
+        $withRelations = [
+        'breakdowns','breakdown_assignments','trip_destinations','trip_expenses','trip_locations','delivery_note',
+        'fuel:id,order_number','transporter:id,name','trip_type:id,name','border:id,name','clearing_agent:id,name',
+        'trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model',
+        'vehicle','vehicle.vehicle_make','vehicle.vehicle_model','trailers:id,make,model,registration_number',
+        'driver.employee:id,name,surname','loading_point:id,name','offloading_point:id,name','route:id,name,rank',
+        'truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name',
+        'commission:id,commission,amount'
+        ];
+
+        // Base query
+        $trips = Trip::query()->with($withRelations);
+
+        // Common search logic
+        $applySearch = function ($query) {
+            $search = $this->search;
+            $query->where('trip_number', 'like', "%$search%")
+                ->orWhere('trip_status', 'like', "%$search%")
+                ->orWhere('authorization', 'like', "%$search%")
+                ->orWhereHas('horse', fn($q) => $q->where('registration_number', 'like', "%$search%")
+                                                ->orWhere('fleet_number', 'like', "%$search%"))
+                ->orWhereHas('customer', fn($q) => $q->where('name', 'like', "%$search%"))
+                ->orWhereHas('cargo', fn($q) => $q->where('name', 'like', "%$search%"))
+                ->orWhereRaw("DATE_FORMAT(start_date, '%Y-%m-%d') LIKE ?", ["%$search%"])
+                ->orWhereRaw("DATE_FORMAT(end_date, '%Y-%m-%d') LIKE ?", ["%$search%"])
+                ->orWhereHas('delivery_note', fn($q) => $q->whereRaw("DATE_FORMAT(offloaded_date, '%Y-%m-%d') LIKE ?", ["%$search%"]))
+                ->orWhereHas('user.employee', fn($q) => $q->where(DB::raw("concat(name, ' ', surname)"), 'like', "%$search%"))
+                ->orWhereHas('driver.employee', fn($q) => $q->where(DB::raw("concat(name, ' ', surname)"), 'like', "%$search%"))
+                ->orWhereHas('transporter', fn($q) => $q->where('name', 'like', "%$search%"))
+                ->orWhereHas('vehicle', fn($q) => $q->where('registration_number', 'like', "%$search%")
+                                                    ->orWhere('fleet_number', 'like', "%$search%"))
+                ->orWhereHas('loading_point', fn($q) => $q->where('name', 'like', "%$search%"))
+                ->orWhereHas('trip_documents', fn($q) => $q->where('document_number', 'like', "%$search%"))
+                ->orWhereHas('offloading_point', fn($q) => $q->where('name', 'like', "%$search%"));
+        };
+
+        // Handle offloaded_date case
+        if ($this->trip_filter === "offloaded_date") {
+            $trips->whereHas('delivery_note', function ($q) {
+                if (filled($this->from) && filled($this->to)) {
+                    $q->whereBetween('offloaded_date', [$this->from, $this->to]);
+                } else {
+                    $q->whereMonth('offloaded_date', date('m'))
+                    ->whereYear('offloaded_date', date('Y'));
+                }
+            });
+
+            if (filled($this->search)) {
+                $trips->where(function ($q) use ($applySearch) {
+                    $applySearch($q);
+                });
+            }
+
+            // Join only for sorting
+            $trips->join('delivery_notes', 'delivery_notes.trip_id', '=', 'trips.id')
+                ->orderBy('delivery_notes.offloaded_date', 'desc');
+
+        } else {
+            // Other trip_filter cases
+            if (filled($this->from) && filled($this->to)) {
+                $trips->whereBetween($this->trip_filter, [$this->from, $this->to]);
+            } else {
+                $trips->whereMonth($this->trip_filter, date('m'))
+                    ->whereYear($this->trip_filter, date('Y'));
+            }
+
+            if (filled($this->search)) {
+                $trips->where(function ($q) use ($applySearch) {
+                    $applySearch($q);
+                });
+            }
+
+            $trips->orderBy($this->trip_filter, 'desc');
+        }
+
+        return view('livewire.trips.index', [
+            'trips' => $trips->paginate(10),
+            'trip_filter' => $this->trip_filter
+        ]);
+    
     }
 }

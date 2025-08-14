@@ -403,7 +403,7 @@
                                                             disabled 
                                                         @endif
                                                         >
-                                                        {{$tyre->tyre_number}} {{$tyre->serial_number ? "SN#: ".$tyre->serial_number : ""}} {{$tyre->balance ? "Bal: ".$tyre->balance: ""}} {{$tyre->product->unit_of_measure ? $tyre->product->unit_of_measure : ""}}
+                                                        {{$tyre->tyre_number}} {{$tyre->serial_number ? "SN#: ".$tyre->serial_number : ""}} {{$tyre->product->unit_of_measure ? $tyre->product->unit_of_measure : ""}}
                                                         @if ($tyre->total)
                                                             {{$tyre->currency ? $tyre->currency->name : ""}} {{$tyre->currency ? $tyre->currency->symbol : ""}}{{number_format($tyre->total,2)}}  
                                                         @endif
@@ -512,7 +512,7 @@
                                                                     disabled 
                                                                 @endif
                                                                 >
-                                                                {{$tyre->tyre_number}} {{$tyre->serial_number ? "SN#: ".$tyre->serial_number : ""}} {{$tyre->balance ? "Bal: ".$tyre->balance: ""}} {{$tyre->product->unit_of_measure ? $tyre->product->unit_of_measure : ""}}
+                                                                {{$tyre->tyre_number}} {{$tyre->serial_number ? "SN#: ".$tyre->serial_number : ""}} {{$tyre->product->unit_of_measure ? $tyre->product->unit_of_measure : ""}}
                                                                 @if ($tyre->total)
                                                                     {{$tyre->currency ? $tyre->currency->name : ""}} {{$tyre->currency ? $tyre->currency->symbol : ""}}{{number_format($tyre->total,2)}}  
                                                                 @endif
@@ -823,7 +823,7 @@
                                                                     disabled 
                                                                 @endif
                                                                 >
-                                                                {{$tyre->tyre_number}} {{$tyre->serial_number ? "SN#: ".$tyre->serial_number : ""}} {{$tyre->balance ? "Bal: ".$tyre->balance: ""}} {{$tyre->product->unit_of_measure ? $tyre->product->unit_of_measure : ""}}
+                                                                {{$tyre->tyre_number}} {{$tyre->serial_number ? "SN#: ".$tyre->serial_number : ""}}  {{$tyre->product->unit_of_measure ? $tyre->product->unit_of_measure : ""}}
                                                                 @if ($tyre->total)
                                                                     {{$tyre->currency ? $tyre->currency->name : ""}} {{$tyre->currency ? $tyre->currency->symbol : ""}}{{number_format($tyre->total,2)}}  
                                                                 @endif

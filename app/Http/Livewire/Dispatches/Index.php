@@ -73,7 +73,7 @@ class Index extends Component
     {
         if (filled($value)) {
             if ($this->department == "tyre") {
-                $this->products = Product::with('brand:id,name','tyres:id,product_id,tyre_number,serial_number,balance,weight,total,currency_id')
+                $this->products = Product::with('brand:id,name','tyres:id,product_id,tyre_number,serial_number,total,currency_id')
                                     ->where(function ($query) use ($value) {
                                         $query
                                         ->where('department', $this->department)

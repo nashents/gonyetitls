@@ -480,13 +480,13 @@
                                                             <tr>
                                                                 <th scope="row">Fuel Consumption Mileage</th>
                                                                 <td>
-                                                                    {{$trip->fuel_consumption_mileage ? number_format($trip->fuel_consumption_mileage, 2)." l/Km" : ""}}
+                                                                    {{$trip->fuel_consumption_mileage ? number_format($trip->fuel_consumption_mileage, 2)." Km/l" : ""}}
                                                                 </td>
                                                             </tr>
                                                             <tr>
                                                                 <th scope="row">Fuel Consumption Hours</th>
                                                                 <td>
-                                                                   {{$trip->fuel_consumption_hours ? number_format($trip->fuel_consumption_hours,2)." l/H" : ""}}
+                                                                   {{$trip->fuel_consumption_hours ? number_format($trip->fuel_consumption_hours,2)." H/l" : ""}}
                                                                 </td>
                                                             </tr>
                                                  
