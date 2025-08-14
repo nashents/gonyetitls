@@ -25,13 +25,13 @@
                                   <span class="input-group-addon">Filter By</span>
                                   <select wire:model.debounce.300ms="filter" class="form-control" aria-label="..." >
                                     <option value="">Select Filter</option>
-                                    <option value="created_at">Trip Created At</option>
-                                    <option value="start_date">Trip Start Date</option>
+                                    <option value="created_at">Created At</option>
+                                    <option value="start_date">Start Date</option>
                                   </select>
                                 </div>
                                     <!-- /input-group -->
                                 </div>
-                                @if ($filter == "created_at")
+                              
                                 <div class="col-lg-2" style="margin-right: 7px">
                                     <div class="input-group">
                                         <span class="input-group-addon">
@@ -50,33 +50,14 @@
                                     </div>
                                     <!-- /input-group -->
                                 </div>
-                                @elseif ($filter == "start_date")
-                                <div class="col-lg-2" style="margin-right: 42px">
-                                    <div class="input-group">
-                                        <span class="input-group-addon">
-                                  From
-                                  </span>
-                                  <input type="datetime-local" wire:model.debounce.300ms="from"  class="form-control" aria-label="...">
-                                    </div>
-                                    <!-- /input-group -->
-                                </div>
-                                <div class="col-lg-2" style="margin-left: 42px">
-                                    <div class="input-group">
-                                        <span class="input-group-addon">
-                                  To
-                                  </span>
-                                  <input type="datetime-local" wire:model.debounce.300ms="to"  class="form-control" aria-label="...">
-                                    </div>
-                                    <!-- /input-group -->
-                                </div>
-                                @endif
+                             
                                
                                 <!-- /input-group -->
                             
                             </div>
                                 <small style="color: green">Dist(Km) = Total distance travelled in kilometers, Fuel(l) = Total fuel used in litres,
-                                    F/C(l/Km) = Fuel Consumption using mileage/distance: Litre per Kilometer,
-                                    F/C(l/H) = Fuel Consumption using engine hours: Litre per Engine Hour,
+                                    F/C(Km/l) = Fuel Consumption using mileage/distance: Litre per Kilometer,
+                                    F/C(H/l) = Fuel Consumption using engine hours: Litre per Engine Hour,
                                     Vol(l) = Total volume/litreage moved in litres, V/Loss(l) Total volume/litreage losses in litres,
                                     V/Loss(%) Total volume/litreage losses in percentage,
                                     W/Loss(t) = Total weight/tonnage losses in tons, W/Loss(%) = Total weight/tonnage losses in percentage.
@@ -88,7 +69,7 @@
 
                                         <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
-                                  <tr>
+                               <tr>
                                     <th class="th-sm">Transporter
                                     </th>
                                     <th class="th-sm">Horse
@@ -97,14 +78,17 @@
                                     </th>
                                     <th class="th-sm">Revenue({{$currency->name}})
                                     </th>
-                                    <th class="th-sm">Dist(Km) 
+                                    <th class="th-sm">
+                                        Dist(Km) 
+                                         <hr style="margin-top:2px; margin-bottom:2px">
+                                        Hours(H)
                                     </th>
                                     <th class="th-sm">Fuel(l) 
                                     </th>
                                     <th class="th-sm">
-                                        F/C(l/Km)
+                                        F/C(Km/l)
                                         <hr style="margin-top:2px; margin-bottom:2px">
-                                        F/C(l/H)
+                                        F/C(H/l)
                                     </th>
                                     <th class="th-sm">Vol(l)
                                     </th>
@@ -143,12 +127,34 @@
                                     <td>
                                         {{$this->calculateTotalRevenue($selected_horse->horse_id)}}
                                     </td>
-                                    <td>{{$selected_horse->total_kilometers ? $selected_horse->total_kilometers."Kms" : ""}}</td>
-                                    <td>{{$selected_horse->total_fuel_quantity ? $selected_horse->total_fuel_quantity."l" : ""}}</td>
+                                     <td>
+                                        @if ($selected_horse->total_kilometers)
+                                          {{$selected_horse->total_kilometers ? $selected_horse->total_kilometers."Kms" : ""}}
+                                          <hr style="margin-top:5px; margin-bottom:5px">
+                                           {{$selected_horse->total_hours ? $selected_horse->total_hours."H" : ""}}  
+                                        @else
+                                              {{$this->calculateShiftsDistance($selected_horse->horse_id)}}  
+                                               <hr style="margin-top:5px; margin-bottom:5px">
+                                            {{$this->calculateShiftsHours($selected_horse->horse_id)}}  
+                                        @endif
+                                    </td>
                                     <td>
-                                        {{$selected_horse->avg_fuel_consumption_mileage ? $selected_horse->avg_fuel_consumption_mileage." L/Km" : ""}} 
-                                            <hr style="margin-top:5px; margin-bottom:5px">  
-                                        {{$selected_horse->avg_fuel_consumption_hours ? $selected_horse->avg_fuel_consumption_hours." L/H"  : ""}}
+                                        @if ($selected_horse->total_fuel_quantity)
+                                            {{$selected_horse->total_fuel_quantity ? $selected_horse->total_fuel_quantity."l" : ""}}
+                                        @else
+                                            {{$this->calculateShiftsFuel($selected_horse->horse_id)}}     
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if ($selected_horse->avg_fuel_consumption_mileage || $selected_horse->avg_fuel_consumption_hours)
+                                            {{$selected_horse->avg_fuel_consumption_mileage ? $selected_horse->avg_fuel_consumption_mileage." L/Km" : ""}} 
+                                                <hr style="margin-top:5px; margin-bottom:5px">  
+                                            {{$selected_horse->avg_fuel_consumption_hours ? $selected_horse->avg_fuel_consumption_hours." L/H"  : ""}}
+                                        @else
+                                            {{$this->calculateFuelConsumptionMileage($selected_horse->horse_id)}}
+                                                <hr style="margin-top:5px; margin-bottom:5px">  
+                                            {{$this->calculateFuelConsumptionHours($selected_horse->horse_id)}}
+                                        @endif
                                     </td>
                                     <td>
                                         {{$selected_horse->total_volume ? $selected_horse->total_volume."l" : ""}}

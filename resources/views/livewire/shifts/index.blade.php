@@ -68,17 +68,17 @@
                                     </th>
                                    
                                     <th class="th-sm" style="width:120px;">
-                                        Hours
-                                        <hr style="margin-top:2px; margin-bottom:2px">
                                         Distance
+                                        <hr style="margin-top:2px; margin-bottom:2px">
+                                        Hours
                                     </th>
                                     <th class="th-sm" style="width: 5%;">
                                         Fuel
                                     </th>
                                     <th class="th-sm" style="width:120px;">
-                                        F/C (H)
+                                        F/C Mileage(Km/l)
                                         <hr style="margin-top:2px; margin-bottom:2px">
-                                        F/C (M)
+                                        F/C Hours(H/l)
                                     </th>
                                    
                                     <th class="th-sm">Status
@@ -130,17 +130,17 @@
                                     </td>
                                   
                                      <td>
-                                        {{$shift->hours ? $shift->hours." Hrs" : ""}}
+                                        {{$shift->actual_mileage ? $shift->actual_mileage : ""}}
                                             <hr style="margin-top:5px; margin-bottom:5px"> 
-                                         {{$shift->actual_mileage ? $shift->actual_mileage." Kms" : ""}}
+                                         {{$shift->hours ? $shift->hours : ""}}
                                     </td>
                                     <td>
                                         {{$shift->total_fuel ? $shift->total_fuel. " l" : ""}}
                                     </td>
                                    <td>
-                                        {{$shift->fuel_consumption_hours ? number_format($shift->fuel_consumption_hours,2)." l/H" : ""}}
+                                        {{$shift->fuel_consumption_mileage ? number_format($shift->fuel_consumption_mileage,2) : ""}}
                                             <hr style="margin-top:5px; margin-bottom:5px"> 
-                                        {{$shift->fuel_consumption_mileage ? number_format($shift->fuel_consumption_mileage,2)." l/Km" : ""}}
+                                        {{$shift->fuel_consumption_hours ? number_format($shift->fuel_consumption_hours,2) : ""}}
                                     </td>
                                     <td><span class="badge bg-{{$shift->status == 1 ? "warning" : "success"}}">{{$shift->status == 1 ? "Open" : "Closed"}}</span></td>
                                   

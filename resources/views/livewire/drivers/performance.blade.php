@@ -55,14 +55,19 @@
                           
                             <br>
                             <small style="color: green">Dist(Km) = Total distance travelled in kilometers, Fuel(l) = Total fuel used in litres,
-                                F/C(l/Km) = Fuel Consumption using mileage/distance: Litre per Kilometer,
-                                F/C(l/H) = Fuel Consumption using engine hours: Litre per Engine Hour,
+                                F/C(Km/l) = Fuel Consumption using mileage/distance: Kilometer / Litre,
+                                F/C(H/l) = Fuel Consumption using engine hours: Engine Hour / Litre,
                                 Vol(l) = Total volume/litreage moved in litres, V/Loss(l) Total volume/litreage losses in litres,
                                 V/Loss(%) Total volume/litreage losses in percentage,
                                 W/Loss(t) = Total weight/tonnage losses in tons, W/Loss(%) = Total weight/tonnage losses in percentage.
                             </small>
                             <br>
-                            <br>
+                            <div class="mt-15 mb-15">
+                                <a href="#" wire:click="exportDriversPerfomanceExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
+                                <a href="#" wire:click="exportDriversPerfomanceCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
+                                <a href="#" wire:click="exportDriversPerfomancePDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
+                            </div>
+                                
                             </div>
 
                             <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
@@ -84,9 +89,9 @@
                                     <th class="th-sm">Fuel(l) 
                                     </th>
                                     <th class="th-sm">
-                                        F/C(l/Km)
+                                        F/C(Km/l)
                                         <hr style="margin-top:2px; margin-bottom:2px">
-                                        F/C(l/H)
+                                        F/C(Km/l)
                                     </th>
                                     <th class="th-sm">Vol(l)
                                     </th>
@@ -126,7 +131,7 @@
                                         {{$this->calculateTotalRevenue($selected_driver->driver_id)}}
                                     </td>
                                     <td>
-                                        @if ($selected_driver->total_kilometers)
+                                        @if ($selected_driver->total_kilometers || $selected_driver->total_hours)
                                           {{$selected_driver->total_kilometers ? $selected_driver->total_kilometers."Kms" : ""}}
                                           <hr style="margin-top:5px; margin-bottom:5px">
                                            {{$selected_driver->total_hours ? $selected_driver->total_hours."H" : ""}}  

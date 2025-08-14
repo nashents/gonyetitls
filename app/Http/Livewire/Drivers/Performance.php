@@ -33,11 +33,9 @@ class Performance extends Component
     }
 
     public function exportDriversPerformanceCSV(Excel $excel){
-
         return $excel->download(new DriversPerformanceExport($this->from, $this->to, $this->filter), 'drivers.csv', Excel::CSV);
     }
     public function exportDriversPerformancePDF(Excel $excel){
-
         return $excel->download(new DriversPerformanceExport($this->from, $this->to, $this->filter), 'drivers.pdf', Excel::DOMPDF);
     }
     public function exportDriversPerformanceExcel(Excel $excel){
@@ -151,16 +149,16 @@ class Performance extends Component
     // Existing public display functions
     public function calculateShiftsFuel($id)
     {
-        return number_format($this->getTotalFuel($id)) . " l";
+        return number_format($this->getTotalFuel($id));
     }
 
     public function calculateShiftsDistance($id)
     {
-        return number_format($this->getTotalDistance($id)) . " Km(s)";
+        return number_format($this->getTotalDistance($id));
     }
     public function calculateShiftsHours($id)
     {
-        return number_format($this->getTotalHours($id)) . " H";
+        return number_format($this->getTotalHours($id));
     }
 
     // NEW: Fuel consumption function (Km per L)
@@ -173,8 +171,8 @@ class Performance extends Component
             return ;
         }
 
-        $ltrsPerKil = $fuel / $distance; // or $fuel / $distance * 100 for L/100km
-        return number_format($ltrsPerKil, 2) . " l/Km";
+        $KPerL = $distance / $fuel; // or $fuel / $distance * 100 for L/100km
+        return number_format($KPerL, 2);
     }
     public function calculateFuelConsumptionHours($id)
     {
@@ -185,8 +183,8 @@ class Performance extends Component
             return ;
         }
 
-        $LPerH = $fuel/ $hours; // or $fuel / $hours * 100 for L/100H
-        return number_format($LPerH, 2) . " l/H";
+        $HPerL =  $hours / $fuel; // or $fuel / $hours * 100 for L/100H
+        return number_format($HPerL, 2);
     }
 
     public function render()
@@ -212,7 +210,7 @@ class Performance extends Component
                                 CASE 
                                     WHEN trips.starting_hours IS NOT NULL AND trips.ending_hours IS NOT NULL 
                                     THEN trips.ending_hours - trips.starting_hours
-                                   
+                                    ELSE trips.hours 
                                 END
                             ) as total_hours
                         "),
@@ -264,6 +262,7 @@ class Performance extends Component
                                 CASE 
                                     WHEN trips.starting_hours IS NOT NULL AND trips.ending_hours IS NOT NULL 
                                     THEN trips.ending_hours - trips.starting_hours 
+                                    ELSE trips.hours 
                                 END
                             ) as total_hours
                         "),
