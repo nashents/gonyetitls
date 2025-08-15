@@ -27,6 +27,10 @@
                                 <th class="w-10 text-center line-height-35">Type</th>
                                 <td class="w-20 line-height-35">{{$gate_pass->type}}</td>
                             </tr>
+                            <tr>
+                                <th class="w-10 text-center line-height-35">For</th>
+                                <td class="w-20 line-height-35">{{$gate_pass->for}}</td>
+                            </tr>
                             @if ($gate_pass->group)
                                 <tr>
                                     <th class="w-10 text-center line-height-35">Group</th>
@@ -45,19 +49,21 @@
                                     </td>
                                 </tr>
                             @endif
-                            @if ($gate_pass->invited_by_id)
+                          
                             @php
                                  $invited_by = App\Models\Employee::find($gate_pass->invited_by_id);
                             @endphp
                                 <tr>
                                     <th class="w-10 text-center line-height-35">Invited By</th>
                                     <td class="w-20 line-height-35">
-                                        @if ($invited_by)
+                                       @if ($invited_by)
                                             {{$invited_by->name}} {{$invited_by->surname}}
+                                        @elseif($gate_pass->employee)
+                                            {{$gate_pass->employee ? $gate_pass->employee->name : ""}} {{$gate_pass->employee ? $gate_pass->employee->surname : ""}} 
                                         @endif
                                     </td>
                                 </tr>
-                            @endif
+                          
                             @if ($gate_pass->trip)
                                 <tr>
                                     <th class="w-10 text-center line-height-35">Trip</th>
