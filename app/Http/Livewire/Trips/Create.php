@@ -79,6 +79,7 @@ class Create extends Component
     public $trip_ref;
     public $trip_groups;
     public $trip_group_id;
+
     //searching existing trips
     public $searchTrip;
     public $trips;
@@ -275,7 +276,6 @@ class Create extends Component
     public $transporter_agreement = False;
     public $with_transporter_rates;
     public $selectedDefinedTransporterRate;
-    public $payment_status;
     public $comments;
 
     //trip expenses
@@ -289,6 +289,13 @@ class Create extends Component
     public $expense_exchange_amount;
     public $fuel_order = False;
     public $exchange_rates;
+
+    //trip timelines
+    public $arrive_lp;
+    public $depart_lp;
+    public $arrive_op;
+    public $depart_op;
+    public $timelines = False;
 
     //fuel vars
     public $selectedContainer;
@@ -1227,7 +1234,16 @@ class Create extends Component
         }
     }
    
-
+  private function calculateTimeDifference($start, $end)
+    {
+        if ($start && $end) {
+            $start = $start instanceof Carbon ? $start : Carbon::parse($start);
+            $end = $end instanceof Carbon ? $end : Carbon::parse($end);
+            $diff = $end->diffInMinutes($start);
+            return sprintf('%02d:%02d', floor($diff / 60), $diff % 60);
+        }
+        return null;
+    }
 
     public function store(){
 
@@ -1263,6 +1279,12 @@ class Create extends Component
                 $trip->shift_id = $this->selectedShift;
                 $trip->shift = $this->shift;
                 $trip->notes = $this->notes;
+                $trip->arrive_loading_point = $this->arrive_lp;
+                $trip->depart_loading_point = $this->depart_lp;
+                $trip->loading_time = $this->calculateTimeDifference($this->arrive_lp, $this->depart_lp);
+                $trip->arrive_offloading_point = $this->arrive_op;
+                $trip->depart_offloading_point = $this->depart_op;
+                $trip->offloading_time = $this->calculateTimeDifference($this->arrive_op, $this->depart_op);
                 $trip->cd1_number = $this->cd1_number;
                 $trip->manifest_number = $this->manifest_number;
                 $trip->cargo_id = $this->selectedCargo;
@@ -1296,7 +1318,7 @@ class Create extends Component
                 $trip->exchange_transporter_freight = $this->exchange_transporter_freight;
                 $trip->turnover = $this->freight;
                 $this->turnover = $this->freight;
-                $trip->payment_status = $this->payment_status;
+               
                 $trip->trip_status = $this->selectedStatus;
                 $trip->trip_status_date = $this->start_date;
                 $trip->route_id = $this->selectedRoute;

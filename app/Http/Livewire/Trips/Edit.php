@@ -219,7 +219,6 @@ class Edit extends Component
 
     public $distance;
     public $duration;
-    public $payment_status;
     public $selectedStatus;
     public $return_trip;
 
@@ -266,6 +265,14 @@ class Edit extends Component
     public $file;
     public $fuel_comments;
     public $selected_container;
+
+     //trip timelines
+    public $arrive_lp;
+    public $depart_lp;
+    public $arrive_op;
+    public $depart_op;
+    public $timelines;
+
  
     public $selectedContainer;
     public $selectedCategory;
@@ -974,6 +981,11 @@ class Edit extends Component
          $this->selectedBroker = $this->trip->broker_id;
          $this->consignee_id = $this->trip->consignee_id;
          $this->customer_id = $this->trip->customer_id;
+         $this->timelines = $this->trip->timelines;
+         $this->arrive_lp = $this->trip->arrive_loading_point;
+         $this->depart_lp = $this->trip->depart_loading_point;
+         $this->arrive_op = $this->trip->arrive_offloading_point;
+         $this->depart_of = $this->trip->depart_offloading_point;
          $this->selectedHorse = $this->trip->horse_id;
          $this->selectedVehicle = $this->trip->vehicle_id;
          $this->horse_selected = Horse::find($this->selectedHorse);
@@ -1041,7 +1053,6 @@ class Edit extends Component
          $this->turnover = $this->trip->turnover;
          $this->profit = $this->trip->profit;
          $this->distance = $this->trip->distance;
-         $this->payment_status = $this->trip->payment_status;
          $this->selectedStatus = $this->trip->trip_status;
          $this->comments = $this->trip->comments;
 
@@ -1450,6 +1461,16 @@ class Edit extends Component
     }
 
 
+     private function calculateTimeDifference($start, $end)
+    {
+        if ($start && $end) {
+            $start = $start instanceof Carbon ? $start : Carbon::parse($start);
+            $end = $end instanceof Carbon ? $end : Carbon::parse($end);
+            $diff = $end->diffInMinutes($start);
+            return sprintf('%02d:%02d', floor($diff / 60), $diff % 60);
+        }
+        return null;
+    }
 
       public function update(){
  
@@ -1477,6 +1498,12 @@ class Edit extends Component
           $trip->consignee_id = $this->consignee_id ?: null;
           $trip->shift_id = $this->selectedShift;
           $trip->shift = $this->shift;
+          $trip->arrive_loading_point = $this->arrive_lp;
+          $trip->depart_loading_point = $this->depart_lp;
+          $trip->loading_time = $this->calculateTimeDifference($this->arrive_lp, $this->depart_lp);
+          $trip->arrive_offloading_point = $this->arrive_op;
+          $trip->depart_offloading_point = $this->depart_op;
+          $trip->offloading_time = $this->calculateTimeDifference($this->arrive_op, $this->depart_op);
           $trip->freight_calculation = $this->freight_calculation;
           $trip->calculation_measurement = $this->calculation_measurement;
           $trip->currency_id = $this->selectedCurrency;
@@ -1515,7 +1542,6 @@ class Edit extends Component
           $trip->exchange_transporter_freight = $this->exchange_transporter_freight;
           $trip->turnover = $this->freight;
           $this->turnover = $this->freight;
-          $trip->payment_status = $this->payment_status;
           $trip->trip_status = $this->selectedStatus;
           $trip->trip_status_date = $this->start_date;
           $trip->stops = $this->stops;

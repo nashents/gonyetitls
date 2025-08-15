@@ -432,6 +432,17 @@
                                                                 </td>
                                                             </tr>
                                                             @endif
+                                                            @if ($trip->timelines == True)
+                                                                <tr>
+                                                                    <th scope="row">Timelines</th>
+                                                                    <td>
+                                                                       Arrive @ LP: {{$trip->arrive_loading_point}} Depart LP: {{$trip->depart_loading_point}} Loading Time: {{$trip->loading_time}} 
+                                                                       <br>
+                                                                       Arrive @ OP: {{$trip->arrive_offloading_point}} Depart OP: {{$trip->depart_offloading_point}} Offloading Time: {{$trip->offloading_time}} 
+                                                                    </td>
+                                                                </tr>
+                                                            @endif
+                                                            
                                                             <tr>
                                                                 <th scope="row"> Starting Mileage</th>
                                                                 <td>
