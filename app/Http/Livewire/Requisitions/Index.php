@@ -283,7 +283,7 @@ class Index extends Component
                 return ;
             }
 
-             $this->selected_currency[$key] = Currency::find($id);
+            $this->selected_currency[$key] = Currency::find($id);
             if($id != $this->company->currency_id){
                 $predefined_exchange_rate = ExchangeRate::where('currency_id', $id)
                     ->where('status', 1)

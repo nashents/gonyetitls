@@ -31,6 +31,7 @@ class Index extends Component
     public $from;
     public $to;
 
+    public $for;
     public $gate_pass_filter;
     private $individual_gate_passes;
     private $trip_gate_passes;
@@ -165,6 +166,7 @@ class Index extends Component
         $this->entry = '';
         $this->acknowledgement = '';
         $this->signature = '';
+        $this->for = '';
     }
     private function resetVisitorInputFields(){
         $this->name = '';
@@ -306,12 +308,9 @@ class Index extends Component
     
     public function store(){
 
-     
-
          $this->validate([
            'entry' => 'required',
-           'reason' => 'required',
-           'visitor_id' => 'required',
+        //    'visitor_id' => 'required',
            'employee_id' => 'required',
            'acknowledgement' => 'required',
         //    'signature' => 'required',
@@ -321,6 +320,7 @@ class Index extends Component
         $gate_pass->user_id = Auth::user()->id;
         $gate_pass->gate_pass_number = $this->gate_passNumber();
         $gate_pass->type = "Individual";
+        $gate_pass->for = $this->for;
         $gate_pass->entry = $this->entry;
         $gate_pass->exit = $this->exit;
         $gate_pass->reason = $this->reason;
@@ -388,6 +388,7 @@ class Index extends Component
         }
         $this->selectedBranch = $gate_pass->branch_id;
         $this->gate_id = $gate_pass->gate_id;
+        $this->for = $gate_pass->for;
         $this->reason = $gate_pass->reason;
         $this->authorization = $gate_pass->authorization;
         $this->visitor_id = $gate_pass->visitor_id;
@@ -410,6 +411,7 @@ class Index extends Component
         $gate_pass->type = $this->type;
         $gate_pass->entry = $this->entry;
         $gate_pass->exit = $this->exit;
+        $gate_pass->for = $this->for;
         $gate_pass->reason = $this->reason;
         $gate_pass->employee_id = $this->employee_id;
         $gate_pass->gate_id = $this->gate_id;

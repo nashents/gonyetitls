@@ -71,11 +71,13 @@
                                 <caption>Individual Gatepass</caption>
                                 <thead>
                                   <tr>
+                                    <th class="th-sm">For
+                                    </th>
                                     <th class="th-sm">Branch
                                     </th>
                                     <th class="th-sm">Visitor
                                     </th>
-                                    <th class="th-sm">WishToSee
+                                    <th class="th-sm">Employee
                                     </th>
                                     <th class="th-sm">Purpose
                                     </th>
@@ -101,6 +103,9 @@
                                         $invited_by = App\Models\Employee::find($gate_pass->invited_by_id);
                                         $authorized_by = App\Models\Employee::find($gate_pass->authorized_by_id);
                                     @endphp
+                                    <td>
+                                        {{$gate_pass->for}}
+                                    </td>
                                     <td>
                                         @if ($gate_pass->branch)
                                         {{$gate_pass->branch ? $gate_pass->branch->name : ""}} <br> 
@@ -306,7 +311,7 @@
 
 
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="gate_passModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog mw-100 w-50" role="document">
+        <div class="modal-dialog mw-100 w-70" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fas fa-plus"></i> Create Gate Pass <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -314,7 +319,18 @@
                 <form wire:submit.prevent="store()" >
                 <div class="modal-body">
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="name">For<span class="required" style="color: red">*</span></label>
+                                <select class="form-control" wire:model.debounce.300ms="for" required>
+                                    <option value="">Select Option</option>
+                                    <option value="Internal">Internal</option>
+                                    <option value="External">External</option>
+                                </select>
+                                @error('for') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label for="name">Branches<span class="required" style="color: red">*</span></label>
                                 <select class="form-control" wire:model.debounce.300ms="selectedBranch" required>
@@ -326,7 +342,7 @@
                                 @error('selectedBranch') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label for="name">Gate<span class="required" style="color: red">*</span></label>
                                 <select class="form-control" wire:model.debounce.300ms="gate_id" required>
@@ -341,36 +357,49 @@
                         </div>
                     </div>
                  
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="name">Companies / Groups</label>
-                                <select class="form-control" wire:model.debounce.300ms="group_id">
-                                    <option value="">Select Company / Group</option>
-                                    @foreach ($groups as $group)
-                                        <option value="{{ $group->id }}">{{ $group->name }}</option>
-                                    @endforeach
-                                </select>
-                                <small>  <a href="#" data-toggle="modal" data-target="#groupModal" ><i class="fa fa-plus-square-o"></i> New Company / Group</a></small> 
-                                @error('group_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    @if (isset($for) && $for == "External")
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="name">Companies / Groups</label>
+                                    <select class="form-control" wire:model.debounce.300ms="group_id">
+                                        <option value="">Select Company / Group</option>
+                                        @foreach ($groups as $group)
+                                            <option value="{{ $group->id }}">{{ $group->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    <small>  <a href="#" data-toggle="modal" data-target="#groupModal" ><i class="fa fa-plus-square-o"></i> New Company / Group</a></small> 
+                                    @error('group_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="name">Visitors<span class="required" style="color: red">*</span></label>
-                                <select class="form-control" wire:model.debounce.300ms="visitor_id" required>
-                                    <option value="">Select Visitor</option>
-                                    @foreach ($visitors as $visitor)
-                                        <option value="{{ $visitor->id }}">{{ $visitor->name }} {{ $visitor->surname }}</option>
-                                    @endforeach
-                                </select>
-                                 <small><a href="#" data-toggle="modal" data-target="#visitorModal" ><i class="fa fa-plus-square-o"></i> New Visitor</a></small>
-                                @error('visitor_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                               
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="name">Visitors<span class="required" style="color: red">*</span></label>
+                                    <select class="form-control" wire:model.debounce.300ms="visitor_id" required>
+                                        <option value="">Select Visitor</option>
+                                        @foreach ($visitors as $visitor)
+                                            <option value="{{ $visitor->id }}">{{ $visitor->name }} {{ $visitor->surname }}</option>
+                                        @endforeach
+                                    </select>
+                                    <small><a href="#" data-toggle="modal" data-target="#visitorModal" ><i class="fa fa-plus-square-o"></i> New Visitor</a></small>
+                                    @error('visitor_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                
+                                </div>
                             </div>
+                        </div> 
+                    @endif
+                      @if (isset($for) && $for == "Internal")
+                       <div class="form-group">
+                            <label for="name">Employees<span class="required" style="color: red">*</span></label>
+                            <select class="form-control" wire:model.debounce.300ms="employee_id" required>
+                                <option value="">Select Employee</option>
+                                @foreach ($employees as $employee)
+                                    <option value="{{ $employee->id }}">{{ $employee->name }} {{ $employee->surname }}</option>
+                                @endforeach
+                            </select>
+                            @error('employee_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                         </div>
-                       
-                    </div>
+                        @endif
                     <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
@@ -387,17 +416,18 @@
                                 </div>
                             </div>
                     </div>
-
-                    <div class="form-group">
-                        <label for="name">Wish To See?<span class="required" style="color: red">*</span></label>
-                        <select class="form-control" wire:model.debounce.300ms="employee_id" required>
-                            <option value="">Select Employee</option>
-                            @foreach ($employees as $employee)
-                                <option value="{{ $employee->id }}">{{ $employee->name }} {{ $employee->surname }}</option>
-                            @endforeach
-                        </select>
-                        @error('employee_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                    </div>
+                    @if (isset($for) && $for == "External")
+                        <div class="form-group">
+                            <label for="name">Wish To See?<span class="required" style="color: red">*</span></label>
+                            <select class="form-control" wire:model.debounce.300ms="employee_id" required>
+                                <option value="">Select Employee</option>
+                                @foreach ($employees as $employee)
+                                    <option value="{{ $employee->id }}">{{ $employee->name }} {{ $employee->surname }}</option>
+                                @endforeach
+                            </select>
+                            @error('employee_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        </div>
+                    @endif
                    
                     <div class="row">
                         <div class="col-md-6">
@@ -456,7 +486,18 @@
                 <form wire:submit.prevent="update()" >
                     <div class="modal-body">
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="name">For<span class="required" style="color: red">*</span></label>
+                                <select class="form-control" wire:model.debounce.300ms="for" required>
+                                    <option value="">Select Option</option>
+                                    <option value="Internal">Internal</option>
+                                    <option value="External">External</option>
+                                </select>
+                                @error('for') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="name">Branches<span class="required" style="color: red">*</span></label>
                                     <select class="form-control" wire:model.debounce.300ms="selectedBranch" required>
@@ -468,7 +509,7 @@
                                     @error('selectedBranch') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="name">Gate<span class="required" style="color: red">*</span></label>
                                     <select class="form-control" wire:model.debounce.300ms="gate_id" required>
@@ -483,7 +524,20 @@
                             </div>
                         </div>
                         @if ($type == "Individual")
-                          <div class="row">
+                          @if (isset($for) && $for == "Internal")
+                         <div class="form-group">
+                        <label for="name">Employees<span class="required" style="color: red">*</span></label>
+                        <select class="form-control" wire:model.debounce.300ms="employee_id" required>
+                            <option value="">Select Employee</option>
+                            @foreach ($employees as $employee)
+                                <option value="{{ $employee->id }}">{{ $employee->name }} {{ $employee->surname }}</option>
+                            @endforeach
+                        </select>
+                        @error('employee_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    </div>
+                    @endif
+                        @if (isset($for) && $for == "External")
+                        <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="name">Companies / Groups</label>
@@ -513,6 +567,7 @@
                         </div>
                        
                     </div>
+                      @endif
                        
                       <div class="row">
                             <div class="col-md-6">
@@ -530,7 +585,7 @@
                                 </div>
                             </div>
                     </div>
-
+                     @if (isset($for) && $for == "External")
                     <div class="form-group">
                         <label for="name">Wish To See?<span class="required" style="color: red">*</span></label>
                         <select class="form-control" wire:model.debounce.300ms="employee_id" required>
@@ -541,6 +596,7 @@
                         </select>
                         @error('employee_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
+                    @endif
                         @elseif ($type == "Trip")
                         <div class="row">
                             <div class="col-md-6">
