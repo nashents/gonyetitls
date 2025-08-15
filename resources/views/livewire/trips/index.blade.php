@@ -249,7 +249,7 @@
                                             <hr style="margin-top:5px; margin-bottom:5px">
                                             @php
                                             $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
-                                            $offloaded_date = $trip->delivery_note->offloaded_date;
+                                            $offloaded_date = $trip->delivery_note ? $trip->delivery_note->offloaded_date : null;
                                             @endphp
                                             @if ($offloaded_date)
                                                  @if ((preg_match($pattern, $offloaded_date)) )
@@ -455,7 +455,7 @@
                                             <hr style="margin-top:5px; margin-bottom:5px">
                                             @php
                                             $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
-                                            $offloaded_date = $trip->delivery_note->offloaded_date;
+                                             $offloaded_date = $trip->delivery_note ? $trip->delivery_note->offloaded_date : null;
                                             @endphp
                                             @if ($offloaded_date)
                                                  @if ((preg_match($pattern, $offloaded_date)) )
@@ -655,7 +655,7 @@
                                             <hr style="margin-top:5px; margin-bottom:5px">
                                             @php
                                             $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
-                                            $offloaded_date = $trip->delivery_note->offloaded_date;
+                                             $offloaded_date = $trip->delivery_note ? $trip->delivery_note->offloaded_date : null;
                                             @endphp
                                             @if ($offloaded_date)
                                                  @if ((preg_match($pattern, $offloaded_date)) )
@@ -854,7 +854,7 @@
                                         <hr style="margin-top:5px; margin-bottom:5px">
                                         @php
                                         $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
-                                        $offloaded_date = $trip->delivery_note->offloaded_date;
+                                         $offloaded_date = $trip->delivery_note ? $trip->delivery_note->offloaded_date : null;
                                         @endphp
                                         @if ($offloaded_date)
                                                 @if ((preg_match($pattern, $offloaded_date)) )
@@ -1053,7 +1053,7 @@
                                             <hr style="margin-top:5px; margin-bottom:5px">
                                             @php
                                             $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
-                                            $offloaded_date = $trip->delivery_note->offloaded_date;
+                                              $offloaded_date = $trip->delivery_note ? $trip->delivery_note->offloaded_date : null;
                                             @endphp
                                             @if ($offloaded_date)
                                                  @if ((preg_match($pattern, $offloaded_date)) )
@@ -1252,7 +1252,7 @@
                                             <hr style="margin-top:5px; margin-bottom:5px">
                                             @php
                                                 $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
-                                                $offloaded_date = $trip->delivery_note->offloaded_date;
+                                                  $offloaded_date = $trip->delivery_note ? $trip->delivery_note->offloaded_date : null;
                                             @endphp
                                             @if ($offloaded_date)
                                                  @if ((preg_match($pattern, $offloaded_date)) )
@@ -1449,7 +1449,7 @@
                                             <hr style="margin-top:5px; margin-bottom:5px">
                                             @php
                                             $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
-                                            $offloaded_date = $trip->delivery_note->offloaded_date;
+                                              $offloaded_date = $trip->delivery_note ? $trip->delivery_note->offloaded_date : null;
                                             @endphp
                                             @if ($offloaded_date)
                                                  @if ((preg_match($pattern, $offloaded_date)) )
@@ -1646,7 +1646,7 @@
                                             <hr style="margin-top:5px; margin-bottom:5px">
                                             @php
                                             $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
-                                            $offloaded_date = $trip->delivery_note->offloaded_date;
+                                             $offloaded_date = $trip->delivery_note ? $trip->delivery_note->offloaded_date : null;
                                             @endphp
                                             @if ($offloaded_date)
                                                  @if ((preg_match($pattern, $offloaded_date)) )
@@ -1846,7 +1846,7 @@
                                             <hr style="margin-top:5px; margin-bottom:5px">
                                             @php
                                             $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
-                                            $offloaded_date = $trip->delivery_note->offloaded_date;
+                                             $offloaded_date = $trip->delivery_note ? $trip->delivery_note->offloaded_date : null;
                                             @endphp
                                             @if ($offloaded_date)
                                                  @if ((preg_match($pattern, $offloaded_date)) )

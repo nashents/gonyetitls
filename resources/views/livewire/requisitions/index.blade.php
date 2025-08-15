@@ -487,6 +487,7 @@
                                         </select>
                                             @error('selectedCurrency.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
+
                                         @if (!empty($selectedCurrency) && isset($selectedCurrency[0]) && isset($selected_currency[0]))
                                             @if ($company && $selectedCurrency[0] != $company->currency_id)
                                                 <div class="form-group">
@@ -494,13 +495,13 @@
                                                     <input type="number" step="any" min="0" class="form-control"
                                                         wire:model.debounce.300ms="exchange_rate.0"
                                                         placeholder="Exchange Rate 
-                                                            {{ isset($selected_currency[0]) ? 'From '.$selected_currency[0]->name : '' }}
+                                                           {{ isset($selected_currency[0]) && $selected_currency[0] ? 'From '.$selected_currency[0]->name : '' }}
                                                             {{ $company->currency ? 'To '.$company->currency->name : '' }}"
                                                         required>
                                                         @error('exchange_rate.0') <span class="text-danger error">{{ $message }}</span>@enderror
 
                                                     <small style="color: green">
-                                                        {{ isset($selected_currency[0]) ? '1 '.$selected_currency[0]->name.' is how much in' : '' }}
+                                                        {{ isset($selected_currency[0]) && $selected_currency[0] ? '1 '.$selected_currency[0]->name.' is how much in' : '' }}
                                                         {{ $company->currency ? $company->currency->name.'?' : '' }}
                                                     </small>
                                                     <small>
@@ -595,13 +596,13 @@
                                                     <input type="number" step="any" min="0" class="form-control"
                                                         wire:model.debounce.300ms="exchange_rate.{{$value}}"
                                                         placeholder="Exchange Rate 
-                                                            {{ isset($selected_currency[$value]) ? 'From '.$selected_currency[$value]->name : '' }}
+                                                            {{ isset($selected_currency[$value]) && $selected_currency[$value] ? 'From '.$selected_currency[$value]->name : '' }}
                                                             {{ $company->currency ? 'To '.$company->currency->name : '' }}"
                                                         required {{in_array($this->requisition_for, ['Trip', 'Purchase']) ? "disabled" : ""}}>
                                                         @error('exchange_rate.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
 
                                                     <small style="color: green">
-                                                        {{ isset($selected_currency[$value]) ? '1 '.$selected_currency[$value]->name.' is how much in' : '' }}
+                                                        {{ isset($selected_currency[$value]) && $selected_currency[$value] ? '1 '.$selected_currency[$value]->name.' is how much in' : '' }}
                                                         {{ $company->currency ? $company->currency->name.'?' : '' }}
                                                     </small>
                                                     <small>
@@ -884,13 +885,13 @@
                                                         <input type="number" step="any" min="0" class="form-control"
                                                             wire:model.debounce.300ms="current_exchange_rate.{{$key}}"
                                                             placeholder="Exchange Rate 
-                                                                {{ isset($current_selected_currency[0]) ? 'From '.$current_selected_currency[0]->name : '' }}
+                                                                {{ isset($current_selected_currency[0]) && $current_selected_currency[0] ? 'From '.$current_selected_currency[0]->name : '' }}
                                                                 {{ $company->currency ? 'To '.$company->currency->name : '' }}"
                                                             required {{in_array($this->requisition_for, ['Trip', 'Purchase']) ? "disabled" : ""}}>
                                                             @error('current_exchange_rate.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
 
                                                         <small style="color: green">
-                                                            {{ isset($current_selected_currency[0]) ? '1 '.$current_selected_currency[0]->name.' is how much in' : '' }}
+                                                            {{ isset($current_selected_currency[0]) && $current_selected_currency[0] ? '1 '.$current_selected_currency[0]->name.' is how much in' : '' }}
                                                             {{ $company->currency ? $company->currency->name.'?' : '' }}
                                                         </small>
                                                         <small>
@@ -993,13 +994,13 @@
                                                     <input type="number" step="any" min="0" class="form-control"
                                                         wire:model.debounce.300ms="exchange_rate.{{$value}}"
                                                         placeholder="Exchange Rate 
-                                                            {{ isset($selected_currency[$value]) ? 'From '.$selected_currency[$value]->name : '' }}
+                                                            {{ isset($selected_currency[$value]) && $selected_currency[$value] ? 'From '.$selected_currency[$value]->name : '' }}
                                                             {{ $company->currency ? 'To '.$company->currency->name : '' }}"
                                                         required {{in_array($this->requisition_for, ['Trip', 'Purchase']) ? "disabled" : ""}}>
                                                         @error('exchange_rate.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
 
                                                     <small style="color: green">
-                                                        {{ isset($selected_currency[$value]) ? '1 '.$selected_currency[$value]->name.' is how much in' : '' }}
+                                                        {{ isset($selected_currency[$value]) && $selected_currency[$value] ? '1 '.$selected_currency[$value]->name.' is how much in' : '' }}
                                                         {{ $company->currency ? $company->currency->name.'?' : '' }}
                                                     </small>
                                                     <small>
