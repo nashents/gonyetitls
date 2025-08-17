@@ -1072,29 +1072,50 @@ class Index extends Component
 
         // Common search logic
         $applySearch = function ($query) {
-            $search = $this->search;
-            $query->where('trip_number', 'like', "%$search%")
-                ->orWhere('trip_status', 'like', "%$search%")
-                ->orWhere('authorization', 'like', "%$search%")
-                ->orWhereHas('horse', fn($q) => $q->where('registration_number', 'like', "%$search%")
-                                                ->orWhere('fleet_number', 'like', "%$search%"))
-                ->orWhereHas('customer', fn($q) => $q->where('name', 'like', "%$search%"))
-                ->orWhereHas('cargo', fn($q) => $q->where('name', 'like', "%$search%"))
-                ->orWhereRaw("DATE_FORMAT(start_date, '%Y-%m-%d') LIKE ?", ["%$search%"])
-                ->orWhereRaw("DATE_FORMAT(end_date, '%Y-%m-%d') LIKE ?", ["%$search%"])
-                ->orWhereHas('delivery_note', fn($q) => $q->whereRaw("DATE_FORMAT(offloaded_date, '%Y-%m-%d') LIKE ?", ["%$search%"]))
-                ->orWhereHas('user.employee', fn($q) => $q->where(DB::raw("concat(name, ' ', surname)"), 'like', "%$search%"))
-                ->orWhereHas('driver.employee', fn($q) => $q->where(DB::raw("concat(name, ' ', surname)"), 'like', "%$search%"))
-                ->orWhereHas('transporter', fn($q) => $q->where('name', 'like', "%$search%"))
-                ->orWhereHas('vehicle', fn($q) => $q->where('registration_number', 'like', "%$search%")
-                                                    ->orWhere('fleet_number', 'like', "%$search%"))
-                ->orWhereHas('loading_point', fn($q) => $q->where('name', 'like', "%$search%"))
-                ->orWhereHas('trip_documents', fn($q) => $q->where('document_number', 'like', "%$search%"))
-                ->orWhereHas('offloading_point', fn($q) => $q->where('name', 'like', "%$search%"));
+        $search = $this->search;
+
+        $query->where(function ($q) use ($search) {
+            $q->where('trip_number', 'like', "%$search%")
+            ->orWhere('trip_status', 'like', "%$search%")
+            ->orWhere('trip_ref', 'like', "%$search%")
+            ->orWhere('authorization', 'like', "%$search%")
+            ->orWhereHas('horse', function ($q2) use ($search) {
+                $q2->where('registration_number', 'like', "%$search%")
+                    ->orWhere('fleet_number', 'like', "%$search%");
+            })
+            ->orWhereHas('trip_type', fn($q2) => $q2->where('name', 'like', "%$search%"))
+            ->orWhereHas('customer', fn($q2) => $q2->where('name', 'like', "%$search%"))
+            ->orWhereHas('cargo', fn($q2) => $q2->where('name', 'like', "%$search%"))
+            ->orWhereRaw("DATE_FORMAT(start_date, '%Y-%m-%d') LIKE ?", ["%$search%"])
+            ->orWhereRaw("DATE_FORMAT(end_date, '%Y-%m-%d') LIKE ?", ["%$search%"])
+            ->orWhereHas('delivery_note', fn($q2) => 
+                $q2->whereRaw("DATE_FORMAT(offloaded_date, '%Y-%m-%d') LIKE ?", ["%$search%"])
+            )
+            ->orWhereHas('user.employee', fn($q2) => 
+                $q2->where(DB::raw("concat(name, ' ', surname)"), 'like', "%$search%")
+            )
+            ->orWhereHas('driver.employee', fn($q2) => 
+                $q2->where(DB::raw("concat(name, ' ', surname)"), 'like', "%$search%")
+            )
+            ->orWhereHas('transporter', fn($q2) => $q2->where('name', 'like', "%$search%"))
+            ->orWhereHas('vehicle', function ($q2) use ($search) {
+                $q2->where('registration_number', 'like', "%$search%")
+                    ->orWhere('fleet_number', 'like', "%$search%");
+            })
+            ->orWhereHas('trailers', function ($q2) use ($search) {
+                $q2->where('registration_number', 'like', "%$search%")
+                    ->orWhere('fleet_number', 'like', "%$search%");
+            })
+            ->orWhereHas('loading_point', fn($q2) => $q2->where('name', 'like', "%$search%"))
+            ->orWhereHas('trip_documents', fn($q2) => $q2->where('document_number', 'like', "%$search%"))
+            ->orWhereHas('offloading_point', fn($q2) => $q2->where('name', 'like', "%$search%"))
+            ->orWhereHas('loading_point', fn($q2) => $q2->where('name', 'like', "%$search%"));
+            });
         };
 
         // Handle offloaded_date case
         if ($this->trip_filter === "offloaded_date") {
+            
             $trips->whereHas('delivery_note', function ($q) {
                 if (filled($this->from) && filled($this->to)) {
                     $q->whereBetween('offloaded_date', [$this->from, $this->to]);
