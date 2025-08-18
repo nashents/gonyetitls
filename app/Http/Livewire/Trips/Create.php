@@ -609,10 +609,11 @@ class Create extends Component
                 $this->fuel_consumption_loaded_standard = $horse->fuel_consumption_loaded_standard;
                 $this->fuel_consumption_empty_standard = $horse->fuel_consumption_empty_standard;
                 $this->fuel_balance = $horse->fuel_balance;
-                if (isset( $assignment)) {
+                
+                if ($assignment instanceof Assignment) {
                     $driver = $assignment->driver;
-                    $this->driver_id = $driver->id;
-                }      
+                    $this->driver_id = $driver?->id;
+                } 
                                 
                 if (isset( $trailer_assignments) && $trailer_assignments->count()> 0) {
                     $this->with_trailer = True;
@@ -646,9 +647,11 @@ class Create extends Component
                 $this->fuel_consumption_loaded_standard = $vehicle->fuel_consumption_loaded_standard;
                 $this->fuel_consumption_empty_standard = $vehicle->fuel_consumption_empty_standard;
                 $this->fuel_balance = $vehicle->fuel_balance;
-                if (isset( $assignment)) {
-                    $driver = $assignment->employee;
-                    $this->driver_id = $driver->id;
+                
+                if ($assignment instanceof Assignment) {
+                    $employee = $assignment->employee;
+                    $driver = $employee?->driver;
+                    $this->driver_id = $driver?->id;
                 } 
             }                       
            

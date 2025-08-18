@@ -50,7 +50,11 @@
                                            {{$assignment->horse->horse_make ? $assignment->horse->horse_make->name : ""}} {{$assignment->horse->horse_model ? $assignment->horse->horse_model->name : ""}} ({{$assignment->horse->registration_number}})
                                         @endif
                                     </td>
-                                    <td>{{ucfirst($assignment->driver->employee->name)}} {{ucfirst($assignment->driver->employee->surname)}}</td>
+                                    <td>
+                                        @if ($assignment->driver)
+                                            {{$assignment->driver->employee ? $assignment->driver->employee->name : ""}} {{$assignment->driver->employee ? $assignment->driver->employee->surname : ""}}
+                                        @endif
+                                    </td>
                                     <td>{{$assignment->starting_odometer ? $assignment->starting_odometer."Kms" : ""}}</td>
 
                                     <td>{{$assignment->status == 0 ? $assignment->ending_odometer."Kms" : ""}}</td>
