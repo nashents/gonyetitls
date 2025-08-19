@@ -2,16 +2,18 @@
 
 namespace App\Http\Livewire\Tickets;
 
+use Carbon\Carbon;
 use App\Models\Ticket;
 use Livewire\Component;
-use App\Models\TicketImage;
 use App\Models\Inventory;
 use App\Models\Inspection;
-use App\Models\TicketInventory;
+use App\Models\TicketImage;
 use Livewire\WithFileUploads;
 use App\Models\InspectionType;
 use App\Models\InspectionGroup;
+use App\Models\TicketInventory;
 use App\Models\InspectionResult;
+use Illuminate\Support\Facades\Auth;
 
 class Show extends Component
 {
@@ -29,10 +31,15 @@ class Show extends Component
     public $out_date;
     public $out_time;
     public $next_service;
+    public $equipment;
+    public $service_history;
 
     public $inspection_type;
     public $inspection_results;
     public $inspection_type_id;
+
+    public $employees;
+    public $employee_ids = [];
 
     public $green = 'green';
     public $red = 'red';
@@ -42,6 +49,7 @@ class Show extends Component
     public $cost;
     public $status;
     public $notes;
+    public $acknowledgement = False;
 
     private function resetInputFields(){
         $this->timeframe = '';
@@ -52,6 +60,7 @@ class Show extends Component
 
 
     public function store($id){
+        
         $this->inspection = Inspection::find($id);
         if (isset($this->status)) {
 
@@ -90,11 +99,21 @@ class Show extends Component
         }
     }
     public function updateTicketCard(){
+
+        $this->validate([
+            'out_time' => 'required',
+            'out_date' => 'required',
+            'notes' => 'required',
+            'acknowledgement' => 'required',
+        ]);
      
         $ticket = $this->ticket;
         $ticket->report = $this->notes;
+        $ticket->reported_by_id = Auth::id();
+        $ticket->reported_on = Carbon::now();
         $ticket->out_time = $this->out_time;
         $ticket->out_date = $this->out_date;
+        $ticket->acknowledgement = $this->acknowledgement;
         $ticket->next_service = $this->next_service;
         $ticket->update();
 
@@ -164,6 +183,36 @@ class Show extends Component
     }
     public function mount($id){
         $this->ticket = Ticket::find($id);
+        $this->employees = $this->ticket->employees;
+                    foreach ($this->employees as $employee) {
+                        $this->employee_ids[] = $employee->id;
+                    }
+
+        $equipment = null;
+        $this->equipment = "";
+
+        if ($this->ticket->horse) {
+            $equipment = $this->ticket->horse;
+            $this->equipment = $this->ticket->horse->registration_number . 
+                ($this->ticket->horse->fleet_number ? " (" . $this->ticket->horse->fleet_number . ")" : "");
+        } elseif ($this->ticket->trailer) {
+            $equipment = $this->ticket->trailer;
+            $this->equipment = $this->ticket->trailer->registration_number . 
+                ($this->ticket->trailer->fleet_number ? " (" . $this->ticket->trailer->fleet_number . ")" : "");
+        } elseif ($this->ticket->vehicle) {
+            $equipment = $this->ticket->vehicle;
+            $this->equipment = $this->ticket->vehicle->registration_number . 
+                ($this->ticket->vehicle->fleet_number ? " (" . $this->ticket->vehicle->fleet_number . ")" : "");
+        } elseif ($this->ticket->asset) {
+            $equipment = $this->ticket->asset;
+            $product_name = $this->ticket->asset->product?->name ?? "";
+            $identification_number = $this->ticket->asset->product?->identification_number ?? "";
+            $this->equipment = $product_name . " " . $identification_number;
+        }
+
+        // Only try service history if $equipment is an Eloquent model with tickets relation
+        $this->service_history = $equipment?->tickets()->where('id', '!=', $id)->latest()->take(10)->get() ?? collect();
+
         $this->status = $this->ticket->status;
         $this->inspection_groups = InspectionGroup::latest()->get();
         $this->after_attachments = TicketImage::where('ticket_id',$this->ticket->id)

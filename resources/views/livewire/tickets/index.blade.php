@@ -96,7 +96,7 @@
                                             <th class="th-sm">
                                                 <input type="checkbox" wire:model.debounce.300ms="selectPageRows" >
                                             </th>
-                                        <th class="th-sm">Booking#
+                                        <th class="th-sm">Ticket#
                                         </th>
                                         <th class="th-sm">Inspection#
                                         </th>
@@ -129,9 +129,7 @@
                                       <tr>
                                         <td><input type="checkbox" wire:model.debounce.300ms="selectedRows" id="{{ $ticket->id }}" value="{{ $ticket->id }}"></td>
                                         <td>
-                                            @if (isset($ticket->booking))
-                                                <a href="{{route('bookings.show',$ticket->booking->id)}}" style="color: blue">{{$ticket->booking->booking_number}}</a>
-                                            @endif
+                                           {{$ticket->ticket_number}}
                                         </td>
                                         <td>
                                             @if (isset($ticket->inspection))

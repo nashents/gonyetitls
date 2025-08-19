@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Bookings;
 
+use Carbon\Carbon;
 use App\Models\Booking;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -94,6 +95,7 @@ class Index extends Component
                     $ticket = $booking->ticket;
                     if (isset($ticket)) {
                         $ticket->closed_by_id = Auth::user()->id;
+                         $ticket->closed_on = Carbon::now();
                         $ticket->status = $this->status;
                         $ticket->closed_comments = $this->comments;
                         $ticket->update();
@@ -148,18 +150,19 @@ class Index extends Component
         $ticket = $booking->ticket;
         if (isset($ticket)) {
             $ticket->closed_by_id = Auth::user()->id;
+             $ticket->closed_on = Carbon::now();
             $ticket->status = $this->status;
             $ticket->closed_comments = $this->comments;
             $ticket->update();
         }
         
-        $inspection = $booking->inspection;
-        if (isset($inspection)) {
-            $inspection->closed_by_id = Auth::user()->id;
-            $inspection->status = $this->status;
-            $inspection->closed_comments = $this->comments;
-            $inspection->update();
-        }
+        // $inspection = $booking->inspection;
+        // if (isset($inspection)) {
+        //     $inspection->closed_by_id = Auth::user()->id;
+        //     $inspection->status = $this->status;
+        //     $inspection->closed_comments = $this->comments;
+        //     $inspection->update();
+        // }
       
 
         $horse = $booking->horse;

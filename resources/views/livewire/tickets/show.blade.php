@@ -1,6 +1,6 @@
 <div>
     <div class="row mt-30">
-
+    <x-loading/>
         <div>
             @include('includes.messages')
         </div>
@@ -18,20 +18,20 @@
                     <table class="table table-striped">
                         <tbody class="text-center line-height-35 ">
                             <tr>
-                                <th class="w-10 text-center line-height-35">Booking#</th>
-                                <td class="w-20 line-height-35">{{$ticket->booking ? $ticket->booking->booking_number : ""}} </td>
+                                <th class="w-10 text-center line-height-35">Ticket#</th>
+                                <td class="w-20 line-height-35">{{$ticket->ticket_number}} </td>
                             </tr>
                             <tr>
-                                <th class="w-10 text-center line-height-35">BookedBy</th>
+                                <th class="w-10 text-center line-height-35">CreatedBy</th>
                                 <td class="w-20 line-height-35">
                                     @if ($ticket->booking)
-                                    {{$ticket->booking->user ? $ticket->booking->user->name : ""}} {{$ticket->booking->user ? $ticket->booking->user->surname : ""}}
+                                        {{$ticket->booking->user ? $ticket->booking->user->name : ""}} {{$ticket->booking->user ? $ticket->booking->user->surname : ""}}
                                     @endif
                                 </td>
                             </tr>
                             <tr>
-                                <th class="w-10 text-center line-height-35">Booked On</th>
-                                <td class="w-20 line-height-35">{{$ticket->booking ? $ticket->booking->created_at : ""}}</td>
+                                <th class="w-10 text-center line-height-35">CreatedOn</th>
+                                <td class="w-20 line-height-35">{{$ticket->created_at}}</td>
                             </tr>
                             <tr>
                                 <th class="w-10 text-center line-height-35">Ticket For</th>
@@ -62,11 +62,15 @@
                             </tr>
                        
                             <tr>
-                                <th class="w-10 text-center line-height-35">Ticket Opened</th>
+                                <th class="w-10 text-center line-height-35">In Date & Time</th>
                                 <td class="w-20 line-height-35">{{$ticket->in_date}} @ {{$ticket->in_time}}</td>
                             </tr>
                             <tr>
-                                <th class="w-10 text-center line-height-35">Ticket Closed</th>
+                                <th class="w-10 text-center line-height-35">Out Date & Time</th>
+                                <td class="w-20 line-height-35">{{$ticket->out_date}} @ {{$ticket->out_time}}</td>
+                            </tr>
+                            <tr>
+                                <th class="w-10 text-center line-height-35">Ticket Closed On</th>
                                 <td class="w-20 line-height-35">{{$ticket->out_date}} @ {{$ticket->out_time}}</td>
                             </tr>
                             <tr>
@@ -112,159 +116,118 @@
                                 </tr>
                             @endif
                             @if ($ticket->closed_comments)
-                            <tr>
-                                <th class="w-10 text-center line-height-35">Closing Comments</th>
-                                <td class="w-20 line-height-35">{{$ticket->closed_comments }} </td>
-                            </tr>
-                        @endif
-                           
-                            
+                                <tr>
+                                    <th class="w-10 text-center line-height-35">Closing Comments</th>
+                                    <td class="w-20 line-height-35">{{$ticket->closed_comments }} </td>
+                                </tr>
+                            @endif
                         </tbody>
                     </table>
                     <hr>
                     <br>
-         
+                    <form wire:submit.prevent="updateTicketCard()">
+                    <div class="card mt-30 mb-30">
+                        <h5 class="underline mt-30">{{$this->equipment}} Service History</h5>
+                        <div class="card-body mt-30 mb-30" style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px; height: 150px; overflow: auto" >
+                            @if ($service_history)
+                                @foreach ($service_history as $equipment_ticket)
+                                    @php
+                                        $mechanic = App\Models\Employee::find($equipment_ticket->reported_by_id);
+                                    @endphp
+                                    <a href="{{route('tickets.show', $equipment_ticket->id)}}" target="_blank" style="color: blue"> <strong>Ticket#</strong> {{$equipment_ticket->ticket_number}} <strong>In:</strong> {{$equipment_ticket->in_date}} <strong>@</strong> {{$equipment_ticket->in_time}} {{$mechanic?->name}} {{$mechanic?->surname}} <strong>Comments:</strong> {{$equipment_ticket->report}}</a>
+                                    <br>
+                                    <br>
+                                @endforeach
+                            @endif
+                        </div>
+                    
+                        <div class="mb-10">
+                            <input type="checkbox" wire:model.debounce.300ms="acknowledgement"   class="line-style blue-style" required/>
+                            <label for="one" class="radio-label">
+                                <strong><span class="required" style="color: red">*</span> I acknowledge that i have reviewed the service history of {{$this->equipment}}
+                                </strong>
+                            </label>
+                            @error('acknowledgement') <span class="text-danger error">{{ $message }}</span>@enderror
+                        </div>
+                    </div>
 
-            <div class="card">
-                <h5 class="card-header">
-                    @php
-                    $employees = $ticket->employees;
-                    foreach ($employees as $employee) {
-                        $employee_ids[] = $employee->id;
-                    }
-                @endphp
-                @if (isset($employee_ids))
-                    @if (in_array(Auth::user()->employee->id, $employee_ids))
-                        <a href="" data-toggle="modal" data-target="#attachmentModal" class="btn btn-default"><i class="fa fa-paperclip"></i>Attach Images</a>    
-                    @endif
-                @elseif ($ticket->booking->vendor)
-                    @if (Auth::user()->id == $ticket->booking->user_id)
-                        <a href="" data-toggle="modal" data-target="#attachmentModal" class="btn btn-default"><i class="fa fa-paperclip"></i>Attach Images</a>    
-                    @endif
-                @endif
-              
-                </h5>
-                @if ($before_attachments->count()>0)
-                <div class="card-body">
-                  
-                    <small>Before Images</small>
-                    <br>
-                        @foreach ($before_attachments as $attachment)
-                          <a href="{{asset('images/uploads/'.$attachment->filename)}}"><img src="{{asset('images/uploads/'.$attachment->filename)}}" alt="" style="width: 25%; height:25%"></a>
-                        @endforeach
-                   
-                </div>
-                @endif
-                @if ($after_attachments->count()>0)
-                <div class="card-body">
-                   
-                    <small>After Images</small>
-                    <br>
-                        @foreach ($after_attachments as $attachment)
-                          <a href="{{asset('images/uploads/'.$attachment->filename)}}"><img src="{{asset('images/uploads/'.$attachment->filename)}}" alt="" style="width: 25%; height:25%"></a>
-                        @endforeach
-                   
-                </div>
-                @endif
-            </div>
-            <hr>
-            <br>
-            @php
-            $employees = $ticket->employees;
-            foreach ($employees as $employee) {
-                $employee_ids[] = $employee->id;
-            }
-        @endphp
-        @if (isset($employee_ids))
-        @if (in_array(Auth::user()->employee->id, $employee_ids))
-        <form wire:submit.prevent="updateTicketCard()">
-            <div class="row">
-                <div class="col-md-4">
-                    <div class="form-group">
-                        <label for="">Date Completed<span class="required" style="color: red">*</span></label>
-                        <input type="date" wire:model.debounce.300ms="out_date" class="form-control" required>
-                        @error('out_date') <span class="text-danger error">{{ $message }}</span>@enderror
+                    <div class="card mt-30 mb-30">
+                        <h5 class="underline mt-30">Upload Evidence </h5>
+                        <div class="card-header">
+                            @if (isset($employee_ids))
+                                @if (in_array(Auth::user()->employee->id, $employee_ids))
+                                    <a href="" data-toggle="modal" data-target="#attachmentModal" class="btn btn-default"><i class="fa fa-paperclip"></i>Attach Images</a>    
+                                @endif
+                            @elseif ($ticket->booking->vendor)
+                                @if (Auth::user()->id == $ticket->booking->user_id)
+                                    <a href="" data-toggle="modal" data-target="#attachmentModal" class="btn btn-default"><i class="fa fa-paperclip"></i>Attach Images</a>    
+                                @endif
+                            @endif
+                        </div>
+                        @if ($before_attachments->count()>0)
+                            <div class="card-body">
+                                <small>Before Images</small>
+                                <br>
+                                @foreach ($before_attachments as $attachment)
+                                    <a href="{{asset('images/uploads/'.$attachment->filename)}}"><img src="{{asset('images/uploads/'.$attachment->filename)}}" alt="" style="width: 25%; height:25%"></a>
+                                @endforeach
+                            </div>
+                        @endif
+                        @if ($after_attachments->count()>0)
+                            <div class="card-body">
+                                <small>After Images</small>
+                                <br>
+                                @foreach ($after_attachments as $attachment)
+                                    <a href="{{asset('images/uploads/'.$attachment->filename)}}"><img src="{{asset('images/uploads/'.$attachment->filename)}}" alt="" style="width: 25%; height:25%"></a>
+                                @endforeach
+                            </div>
+                        @endif
                     </div>
-                </div>
-                <div class="col-md-4">
-                    <label for="">Time Completed<span class="required" style="color: red">*</span></label>
-                    <input type="time" wire:model.debounce.300ms="out_time" class="form-control" required>
-                    @error('out_time') <span class="text-danger error">{{ $message }}</span>@enderror
-                </div>
-                <div class="col-md-4">
-                    <label for="">Next Service Due</label>
-                    <input type="number" step="any" min="{{ $ticket->odometer }}" wire:model.debounce.300ms="next_service" class="form-control" placeholder="When is the next service due (mileage)" >
-                    @error('next_service') <span class="text-danger error">{{ $message }}</span>@enderror
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="form-group">
-                        <label for="">Job Card Comments<span class="required" style="color: red">*</span></label>
-                        <textarea wire:model.debounce.300ms="notes" cols="30" rows="7" class="form-control" placeholder="Write job observations" required></textarea>
-                    </div>
-                </div>
-            </div>
-         
-        @if ($ticket->status == 1)
-        <div class="row">
-            <div class="col-md-12">
-                <div class="btn-group pull-right mt-10" >
-                    <button type="submit"  class="btn bg-success btn-wide btn-rounded" > <i class="fa fa-save"></i>Update Ticket</button>
-                </div>
-            </div>
-        </div>
-        @endif
           
-         
-        </form>
-        @endif
-        @endif
-        @if ($ticket->booking->vendor)
-        <form wire:submit.prevent="updateTicketCard()">
-            <div class="row">
-                <div class="col-md-4">
-                    <div class="form-group">
-                        <label for="">Date Completed<span class="required" style="color: red">*</span></label>
-                        <input type="date" wire:model.debounce.300ms="out_date" class="form-control" required>
-                        @error('out_date') <span class="text-danger error">{{ $message }}</span>@enderror
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <label for="">Time Completed<span class="required" style="color: red">*</span></label>
-                    <input type="time" wire:model.debounce.300ms="out_time" class="form-control" required>
-                    @error('out_time') <span class="text-danger error">{{ $message }}</span>@enderror
-                </div>
-                <div class="col-md-4">
-                    <label for="">Next Service Due</label>
-                    <input type="number" step="any" min="{{ $ticket->odometer }}" wire:model.debounce.300ms="next_service" class="form-control" placeholder="When is the next service due (mileage)">
-                    @error('next_service') <span class="text-danger error">{{ $message }}</span>@enderror
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="form-group">
-                        <label for="">Job Card Comments<span class="required" style="color: red">*</span></label>
-                        <textarea wire:model.debounce.300ms="notes" cols="30" rows="7" class="form-control" placeholder="Write job observations" required></textarea>
-                    </div>
-                </div>
-            </div>
-         
-        @if ($ticket->status == 1)
-        <div class="row">
-            <div class="col-md-12">
-                <div class="btn-group pull-right mt-10" >
-                    <button type="submit"  class="btn bg-success btn-wide btn-rounded" > <i class="fa fa-save"></i>Update Ticket</button>
-                </div>
-            </div>
-        </div>
-        @endif
-          
-         
-        </form>
-        @endif
-     
-
+                    @if (isset($employee_ids) || $ticket->booking->vendor)
+                        @if ((in_array(Auth::user()->employee->id, $employee_ids)) || Auth::user()->id == $ticket->booking->user_id)
+                         
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="">Date Completed<span class="required" style="color: red">*</span></label>
+                                            <input type="date" wire:model.debounce.300ms="out_date" class="form-control" required>
+                                            @error('out_date') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="">Time Completed<span class="required" style="color: red">*</span></label>
+                                        <input type="time" wire:model.debounce.300ms="out_time" class="form-control" required>
+                                        @error('out_time') <span class="text-danger error">{{ $message }}</span>@enderror
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="">Next Service Due</label>
+                                        <input type="number" step="any" min="{{ $ticket->odometer }}" wire:model.debounce.300ms="next_service" class="form-control" placeholder="When is the next service due (mileage)" >
+                                        @error('next_service') <span class="text-danger error">{{ $message }}</span>@enderror
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label for="">Mechanic Ticket Comments<span class="required" style="color: red">*</span></label>
+                                            <textarea wire:model.debounce.300ms="notes" cols="30" rows="7" class="form-control" placeholder="Write job observations" required></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                               
+                               @if ((int) $ticket->status === 1)
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <div class="btn-group pull-right mt-10" >
+                                                <button type="submit" class="btn bg-success btn-wide btn-rounded" > <i class="fa fa-save"></i>Update Ticket</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
+                           
+                        @endif
+                    @endif
+                    </form>
                 </div>
                 <div role="tabpanel" class="tab-pane " id="inspection">
                     <table class="table table-striped">
@@ -292,8 +255,6 @@
                             <hr>
                         </tbody>
                     </table>
-
-
                     <table id="inspection_resultsTable" class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                         <thead >
                          <tr>
@@ -323,29 +284,25 @@
                             @endforeach
                         </tbody>
                       </table>
-
-
-                    </div>
+                </div>
 
                 <div role="tabpanel" class="tab-pane " id="parts">
-                    <x-loading/>
-                        @livewire('ticket-inventories.index', ['ticket' => $ticket])
-                    </div>
-                    <div role="tabpanel" class="tab-pane " id="expenses">
-                    <x-loading/>
-                        @livewire('ticket-expenses.index', ['ticket' => $ticket])
-                    </div>
-                    <br>
-                    <br>
+                    @livewire('ticket-inventories.index', ['ticket' => $ticket])
+                </div>
+                <div role="tabpanel" class="tab-pane " id="expenses">
+                    @livewire('ticket-expenses.index', ['ticket' => $ticket])
+                </div>
+                <br>
+                <br>
 
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="btn-group pull-right mt-10" >
-                               <a onclick="goBack()" class="btn bg-gray btn-wide btn-rounded"><i class="fa fa-arrow-left"></i>Back</a>
-                                {{-- <button type="submit" wire:click="store({{$inspection->id}})" class="btn bg-success btn-wide btn-rounded" > <i class="fa fa-save"></i>Save</button> --}}
-                            </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="btn-group pull-right mt-10" >
+                            <a onclick="goBack()" class="btn bg-gray btn-wide btn-rounded"><i class="fa fa-arrow-left"></i>Back</a>
+                            {{-- <button type="submit" wire:click="store({{$inspection->id}})" class="btn bg-success btn-wide btn-rounded" > <i class="fa fa-save"></i>Save</button> --}}
                         </div>
-                        </div>
+                    </div>
+                </div>
                 <!-- /.section-title -->
             </div>
         </div>
@@ -365,8 +322,8 @@
 
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="qty">Timeframe</label>
-                            <select class="form-control" wire:model.debounce.300ms="timeframe">
+                            <label for="qty">Timeframe<span class="required" style="color: red">*</span></label>
+                            <select class="form-control" wire:model.debounce.300ms="timeframe" required>
                                 <option value="">Select Time Frame</option>
                                 <option value="Before">Before</option>
                                 <option value="After">After</option>
@@ -376,8 +333,8 @@
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="qty">Attach Image(s)</label>
-                            <input type="file" class="form-control"  wire:model.debounce.300ms="image" placeholder="Upload Images" multiple >
+                            <label for="qty">Attach Image(s)<span class="required" style="color: red">*</span></label>
+                            <input type="file" class="form-control"  wire:model.debounce.300ms="image" placeholder="Upload Images" multiple required>
                             @error('image') <span class="error" style="color:red">{{ $message }}</span> @enderror
                         </div>
                     </div>

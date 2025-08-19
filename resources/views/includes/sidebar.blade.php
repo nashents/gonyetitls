@@ -1477,7 +1477,7 @@
                                 <li><a href="{{route('tickets.index')}}" ><i class="fas fa-list "></i> <span>Manage Tickets</span></a></li>
                                 @endif
                                 @if (in_array('Workshop', $department_names))
-                                <li><a href="{{route('tickets.cards', $employee->id)}}" ><i class="fas fa-newspaper-o "></i> <span>My Tickets</span>
+                                <li><a href="{{route('tickets.cards', $employee->id)}}" ><i class="fas fa-file-invoice "></i> <span>My Tickets</span>
                                     @if ($jobCardsCount>0)
                                    <span class="label label-success ml-5">{{$jobCardsCount}}</span>
                                    @endif
