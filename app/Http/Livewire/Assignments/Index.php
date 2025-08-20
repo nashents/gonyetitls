@@ -9,6 +9,7 @@ use Livewire\Component;
 use App\Models\Assignment;
 use App\Models\Transporter;
 use Livewire\WithPagination;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
@@ -18,6 +19,9 @@ class Index extends Component
     use WithPagination;
 
     protected $paginationTheme = 'bootstrap';
+
+    public $search;
+    protected $queryString = ['search'];
 
     public $transporters;
     public $selectedTransporter;
@@ -218,10 +222,32 @@ class Index extends Component
 
     public function render()
     {
-        
-        return view('livewire.assignments.index',[
-            'assignments' => Assignment::latest()->paginate(10),
-            'starting_odometer' =>  $this->starting_odometer
-        ]);
+        if (filled($this->search)) {
+            return view('livewire.assignments.index',[
+                'assignments' => Assignment::where('start_date','like', '%'.$this->search.'%')
+                ->orWhere('end_date','like', '%'.$this->search.'%')
+                ->orWhere('starting_odometer','like', '%'.$this->search.'%')
+                ->orWhere('ending_odometer','like', '%'.$this->search.'%')
+                ->orWhereHas('transporter', function ($query) {
+                        return $query->where('name', 'like', '%'.$this->search.'%');
+                })
+                ->orWhereHas('horse', function ($query) {
+                        return $query->where('registration_number', 'like', '%'.$this->search.'%')
+                                     ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
+                })
+                ->orWhereHas('driver', function ($query) {
+                        $query->whereHas('employee', function ($subQuery) {
+                            $subQuery->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
+                        });
+                })->paginate(10),
+                'starting_odometer' =>  $this->starting_odometer
+            ]);
+        }else{
+             return view('livewire.assignments.index',[
+                'assignments' => Assignment::latest()->paginate(10),
+                'starting_odometer' =>  $this->starting_odometer
+            ]);
+        }
+       
     }
 }

@@ -82,9 +82,9 @@
     
                                     <div class="col-md-6">
                                         <div class="form-group">
-                                            <label for="vat">Type<span class="required" style="color: red">*</span></label>
+                                            <label for="vat">Movement<span class="required" style="color: red">*</span></label>
                                            <select class="form-control" wire:model.debounce.300ms="type" required>
-                                            <option value="">Select Type</option>
+                                            <option value="">Select Option</option>
                                             <option value="Gain">Gain</option>
                                             <option value="Loss">Loss</option>
                                            </select>
@@ -138,7 +138,7 @@
                                            <select class="form-control" wire:model.debounce.300ms="currency_id" required>
                                             <option value="">Select Currency</option>
                                             @foreach ($currencies as $currency)
-                                                    <option value="{{ $currency->id }}">{{ $currency->name }} </option>                                        
+                                                     <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>                                              
                                             @endforeach
                                            </select>
                                             @error('currency_id') <span class="error" style="color:red">{{ $message }}</span> @enderror

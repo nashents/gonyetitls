@@ -66,33 +66,55 @@
 
                             </div>
                             <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="vat">Deductions<span class="required" style="color: red">*</span></label>
-                                       <select class="form-control" wire:model.debounce.300ms="deduction_id" required>
-                                        <option value="">Select Deduction</option>
-                                        @foreach ($deductions as $deduction)
-                                                <option value="{{ $deduction->id }}">{{ $deduction->name }} </option>                                        
-                                        @endforeach
-                                       </select>
-                                       <small>  <a href="{{ route('deductions.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Deduction</a></small> 
-                                        @error('deduction_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="vat">Deductions<span class="required" style="color: red">*</span></label>
+                                            <select class="form-control" wire:model.debounce.300ms="deduction_id" required>
+                                                <option value="">Select Deduction</option>
+                                                @foreach ($deductions as $deduction)
+                                                        <option value="{{ $deduction->id }}">{{ $deduction->name }} </option>                                        
+                                                @endforeach
+                                            </select>
+                                        <small>  <a href="{{ route('deductions.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Deduction</a></small> 
+                                            @error('deduction_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
                                     </div>
 
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="vat">Type<span class="required" style="color: red">*</span></label>
-                                       <select class="form-control" wire:model.debounce.300ms="type" required>
-                                        <option value="">Select Type</option>
-                                        <option value="Gain">Gain</option>
-                                        <option value="Loss">Loss</option>
-                                       </select>
-                                        @error('type') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="vat">Movement<span class="required" style="color: red">*</span></label>
+                                            <select class="form-control" wire:model.debounce.300ms="type" required>
+                                                <option value="">Select Option</option>
+                                                <option value="Gain">Gain</option>
+                                                <option value="Loss">Loss</option>
+                                            </select>
+                                            @error('type') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
                                     </div>
                                    
-                               
+                                    <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label for="vat">Currencies<span class="required" style="color: red">*</span></label>
+                                            <select class="form-control" wire:model.debounce.300ms="currency_id" required>
+                                                <option value="">Select Currency</option>
+                                                @foreach ($currencies as $currency)
+                                                        <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>                                             
+                                                @endforeach
+                                            </select>
+                                                @error('currency_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            </div>
+                                            @if (!is_null($currency_id))
+                                                @if (Auth::user()->employee->company)
+                                                    @if ($currency_id != Auth::user()->employee->company->currency_id)
+                                                        <div class="form-group">
+                                                            <label for="customer">Exchange Rate</label>
+                                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="exchange_rate" placeholder="The exchange rate @ trip date">
+                                                            @error('exchange_rate') <span class="text-danger error">{{ $message }}</span>@enderror
+                                                        </div> 
+                                                    @endif
+                                                @endif
+                                            @endif  
+                                    </div>
                            
                             </div>
                             <div class="row">
@@ -132,43 +154,28 @@
                                 </div>
                             </div>
                             <div class="row">
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label for="vat">Currencies<span class="required" style="color: red">*</span></label>
-                                       <select class="form-control" wire:model.debounce.300ms="currency_id" required>
-                                        <option value="">Select Currency</option>
-                                        @foreach ($currencies as $currency)
-                                                <option value="{{ $currency->id }}">{{ $currency->name }} </option>                                        
-                                        @endforeach
-                                       </select>
-                                        @error('currency_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                    </div>
-                                    @if (!is_null($currency_id))
-                                    @if (Auth::user()->employee->company)
-                                        @if ($currency_id != Auth::user()->employee->company->currency_id)
-                                            <div class="form-group">
-                                                <label for="customer">Exchange Rate</label>
-                                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="exchange_rate" placeholder="The exchange rate @ trip date">
-                                                @error('exchange_rate') <span class="text-danger error">{{ $message }}</span>@enderror
-                                            </div> 
-                                        @endif
-                                    @endif
-                                @endif  
-                                    </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label for="footer">Rate</label>
-                                        <input type="number" step="any"  min="0" class="form-control" wire:model.debounce.300ms="rate" placeholder="Enter Deduction Unit Price">
-                                        @error('rate') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                    </div>
-                                    </div>
+                                
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="footer">Amount<span class="required" style="color: red">*</span></label>
                                         <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="amount" required placeholder="Enter Recovery Total Amount">
                                         @error('amount') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
+                                </div>
+                                 <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="footer">Recovery Period<span class="required" style="color: red">*</span></label>
+                                        <input type="number"  min="1" class="form-control" wire:model.debounce.300ms="period" placeholder="Enter Period in Months eg 1 for 1 Month" required>
+                                        @error('period') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
+                                </div>
+                                 <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="footer">Monthly Payment<span class="required" style="color: red">*</span></label>
+                                        <input type="number" step="any"  min="0" class="form-control" wire:model.debounce.300ms="payment_per_month" placeholder="$" disabled required>
+                                        @error('payment_per_month') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
                              
                             </div>
                             <div class="form-group">

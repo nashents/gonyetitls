@@ -23,6 +23,8 @@ class Create extends Component
     public $employees;
     public $currencies;
     public $loans;
+    public $earning_recoveries;
+    public $deduction_recoveries;
     public $loan_amount;
     public $deductions;
     public $allowances;
@@ -45,6 +47,7 @@ class Create extends Component
     public $selectedDeduction = [];
     public $deduction_amount = [];
     public $selectedLoan = [];
+    public $selectedRecovery = [];
     public $paye = false;
     public $aids_levy = false;
     public $total_allowances = 0;
@@ -99,6 +102,22 @@ class Create extends Component
     public function loansRemove($j)
     {
         unset($this->loans_inputs[$j]);
+    }
+
+    public $recoveries_inputs = [];
+    public $r = 1;
+    public $s = 1;
+    
+    public function recoveriesAdd($r)
+    {
+        $r = $r + 1;
+        $this->r = $r;
+        array_push($this->recoveries_inputs ,$r);
+    }
+    
+    public function recoveriesRemove($r)
+    {
+        unset($this->recoveries_inputs[$r]);
     }
     
 
@@ -163,8 +182,15 @@ class Create extends Component
 
     public function updatedSelectedEmployee($id){
         if (!is_null($id)) {
-
             $this->loans =   Loan::where('employee_id',$id)->where('balance','>','0')->where('authorization','approved')->get();
+            
+            $employee = Employee::find($id);
+            $driver = $employee?->driver;
+            if ($driver) {
+                $this->earning_recoveries =   Recovery::where('driver_id',$driver->id)->where('balance','>','0')->where('authorization','approved')->get();
+                $this->deduction_recoveries =   Recovery::where('driver_id',$driver->id)->where('balance','>','0')->where('authorization','approved')->get();
+            }
+           
         }
     }
 

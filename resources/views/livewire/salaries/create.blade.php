@@ -209,6 +209,43 @@
                                         </div>
                                     </div>
 
+                                    <label for="">Recoveries</label>
+                                    <div class="row">  
+                                        <div class="col-md-12">
+                                        <div class="form-group">
+                                            <select wire:model.debounce.300ms="selectedRecovery.0" class="form-control">
+                                                <option value="">Select Recovery</option>
+                                                @foreach ($deduction_recoveries as $recovery)
+                                                    <option value="{{ $recovery->id }}"> {{ $recovery->recovery_number }} </option>
+                                                @endforeach
+                                            </select>
+                                            @error('selectedRecovery.0') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                        </div>
+                                    </div>
+                                
+                                    <div class="row">
+                                        @foreach ($recoveries_inputs as $key => $value)
+                                            <div class="col-md-10">
+                                                <div class="form-group">
+                                                    <select wire:model.debounce.300ms="selectedRecovery.{{ $value }}" class="form-control">
+                                                        <option value="">Select Recovery </option>
+                                                        @foreach ($deduction_recoveries as $recovery)
+                                                            <option value="{{ $recovery->id }}"> {{ $recovery->recovery_number }} </option>
+                                                        @endforeach
+                                                    </select>
+                                                    @error('selectedRecovery.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                </div>
+                                            </div>     
+                                            <div class="col-md-1">
+                                                <div class="form-group">
+                                                    <label for=""></label>
+                                                    <button class="btn btn-danger btn-rounded xs"   wire:click.prevent="recoveriesRemove({{$key}})"> <i class="fa fa-times"></i></button>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+
                                     <label for="">Loan</label>
                                     <div class="row">  
                                         <div class="col-md-12">
@@ -234,6 +271,7 @@
                                                         <option value="{{ $loan->id }}"> {{ $loan->loan_number }} {{ $loan->loan_type ? $loan->loan_type->name : "" }} Monthly Installments: {{$loan->currency ? $loan->currency->name : ""}} {{$loan->currency ? $loan->currency->symbol : ""}}{{number_format($loan->payment_per_month ? $loan->payment_per_month : 0,2)}}</option>
                                                         @endforeach
                                                     </select>
+                                                     @error('selectedLoan.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
                                                 </div>
                                             </div>     
                                             <div class="col-md-1">

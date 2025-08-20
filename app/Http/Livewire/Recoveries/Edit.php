@@ -27,7 +27,7 @@ class Edit extends Component
     public $drivers;
     public $trips;
     public $trip_id;
-    public $rate;
+  
     public $weight;
     public $quantity;
     public $balance;
@@ -82,7 +82,6 @@ class Edit extends Component
         $this->date = $recovery->date;
         $this->trip_id = $recovery->trip_id;
         $this->type = $recovery->type;
-        $this->rate = $recovery->rate;
         $this->weight = $recovery->weight;
         $this->measurement = $recovery->measurement;
         $this->quantity = $recovery->quantity;
@@ -106,7 +105,6 @@ class Edit extends Component
         $recovery->weight = $this->weight;
         $recovery->measurement = $this->measurement;
         $recovery->quantity = $this->quantity;
-        $recovery->rate = $this->rate;
         $recovery->litreage = $this->litreage;
         $recovery->destination_id = $this->destination_id;
         $recovery->amount = $this->amount;

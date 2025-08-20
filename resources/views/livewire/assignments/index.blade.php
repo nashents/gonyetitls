@@ -28,13 +28,13 @@
                                     </th>
                                     <th class="th-sm">Driver
                                     </th>
-                                    <th class="th-sm">Starting Odometer
+                                    <th class="th-sm">StartMileage
                                     </th>
-                                    <th class="th-sm">Ending Odometer
+                                    <th class="th-sm">EndMileage
                                     </th>
-                                    <th class="th-sm">Start Date
+                                    <th class="th-sm">StartDate
                                     </th>
-                                    <th class="th-sm">End Date
+                                    <th class="th-sm">EndDate
                                     </th>
                                     <th class="th-sm">Comments
                                     </th>
@@ -51,7 +51,7 @@
                                     <td>{{$assignment->transporter ? $assignment->transporter->name : ""}}</td>
                                     <td>
                                         @if ($assignment->horse)
-                                           {{$assignment->horse->horse_make ? $assignment->horse->horse_make->name : ""}} {{$assignment->horse->horse_model ? $assignment->horse->horse_model->name : ""}} ({{$assignment->horse->registration_number}})
+                                             {{$assignment->horse->registration_number}}  {{$assignment->horse->fleet_number ? "(".$assignment->horse->fleet_number.")" : ""}}
                                         @endif
                                     </td>
                                     <td>
@@ -59,9 +59,9 @@
                                             {{$assignment->driver->employee ? $assignment->driver->employee->name : ""}} {{$assignment->driver->employee ? $assignment->driver->employee->surname : ""}}
                                         @endif
                                     </td>
-                                    <td>{{$assignment->starting_odometer ? $assignment->starting_odometer."Kms" : ""}}</td>
+                                    <td>{{$assignment->starting_odometer ? $assignment->starting_odometer." Kms" : ""}}</td>
 
-                                    <td>{{$assignment->status == 0 ? $assignment->ending_odometer."Kms" : ""}}</td>
+                                    <td>{{$assignment->status == 0 ? $assignment->ending_odometer." Kms" : ""}}</td>
 
                                     <td>{{$assignment->start_date}}</td>
 
@@ -187,7 +187,7 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="start_odometer">Starting Odometer<span class="required" style="color: red">*</span></label>
+                                <label for="start_odometer">Starting Mileage<span class="required" style="color: red">*</span></label>
                                 <input type="number" class="form-control" wire:model.debounce.300ms="starting_odometer" required>
                                 @error('starting_odometer') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
@@ -269,7 +269,7 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="start_odometer">Starting Odometer<span class="required" style="color: red">*</span></label>
+                                <label for="start_odometer">Starting Mileage<span class="required" style="color: red">*</span></label>
                                 <input type="number" class="form-control" wire:model.debounce.300ms="starting_odometer" required>
                                 @error('starting_odometer') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
@@ -312,8 +312,8 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="ending_odometer">Ending Odometer<span class="required" style="color: red">*</span></label>
-                                <input type="text" min="{{ $starting_odometer }}" wire:model.debounce.300ms="ending_odometer"  class="form-control" placeholder="Enter Ending Odometer" required>
+                                <label for="ending_odometer">Ending Mileage<span class="required" style="color: red">*</span></label>
+                                <input type="text" min="{{ $starting_odometer }}" wire:model.debounce.300ms="ending_odometer"  class="form-control" placeholder="Enter Ending Mileage" required>
                                 @error('ending_odometer') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>

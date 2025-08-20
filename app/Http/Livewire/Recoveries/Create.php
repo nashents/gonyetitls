@@ -28,8 +28,10 @@ class Create extends Component
     public $trips;
     public $trip_id;
     public $amount;
+    public $balance;
+    public $payment_per_month;
+    public $period;
     public $date;
-    public $rate;
     public $weight;
     public $quantity;
     public $litreage;
@@ -104,6 +106,7 @@ class Create extends Component
         'currency_id' => 'required',
         'type' => 'required',
         'amount' => 'required',
+        'period' => 'required',
         'date' => 'required',
         'destination_id' => 'required',
 
@@ -119,18 +122,16 @@ class Create extends Component
         $recovery->currency_id = $this->currency_id;
         $recovery->destination_id = $this->destination_id;
         $recovery->weight = $this->weight;
-        $recovery->rate = $this->rate;
         $recovery->litreage = $this->litreage;
         $recovery->quantity = $this->quantity;
         $recovery->measurement = $this->measurement;
         $recovery->type = $this->type;
         $recovery->amount = $this->amount;
         $recovery->balance = $this->amount;
+        $recovery->period = $this->period;
+        $recovery->payment_per_month = $this->payment_per_month;
         $recovery->exchange_rate = $this->exchange_rate;
-        if (isset($this->exchange_rate) && isset($this->amount)) {
-           $exchange_amount = $this->exchange_rate * $this->amount;
-           $recovery->exchange_amount = $exchange_amount;
-        }
+        $recovery->exchange_amount = $this->exchange_amount;
         $recovery->date = $this->date;
         $recovery->description = $this->description;
         $recovery->status = "Unpaid";
@@ -145,6 +146,12 @@ class Create extends Component
 
     public function render()
     {
+        if (($this->amount && is_numeric($this->amount)) && ($this->period && is_numeric($this->period))) {
+           $this->payment_per_month = $this->amount / $this->period;
+        }
+        if (($this->exchange_rate  && is_numeric($this->exchange_rate)) &&  ($this->amount && is_numeric($this->amount))) {
+           $this->exchange_amount = $this->exchange_rate * $this->amount;
+        }
         $this->measurements = Measurement::orderBy('name','asc')->get();
         $this->deductions = Deduction::orderBy('name','asc')->get();
         $this->destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');

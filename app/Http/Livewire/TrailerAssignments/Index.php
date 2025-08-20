@@ -15,8 +15,10 @@ class Index extends Component
 {
 
     use WithPagination;
-
     protected $paginationTheme = 'bootstrap';
+
+    public $search;
+    protected $queryString = ['search'];
 
     public $transporters;
     public $selectedTransporter;
@@ -217,9 +219,32 @@ class Index extends Component
     public function render()
     {
        
-        return view('livewire.trailer-assignments.index',[
+        if (filled($this->search)) {
+            return view('livewire.trailer-assignments.index',[
+                'assignments' => TrailerAssignment::where('start_date','like', '%'.$this->search.'%')
+                ->orWhere('end_date','like', '%'.$this->search.'%')
+                ->orWhere('starting_odometer','like', '%'.$this->search.'%')
+                ->orWhere('ending_odometer','like', '%'.$this->search.'%')
+                ->orWhereHas('transporter', function ($query) {
+                        return $query->where('name', 'like', '%'.$this->search.'%');
+                })
+                ->orWhereHas('horse', function ($query) {
+                        return $query->where('registration_number', 'like', '%'.$this->search.'%')
+                                     ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
+                })
+                ->orWhereHas('trailer', function ($query) {
+                        return $query->where('registration_number', 'like', '%'.$this->search.'%')
+                                     ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
+                })->paginate(10),
+                'starting_odometer' =>  $this->starting_odometer
+            ]);
+        }else{
+              return view('livewire.trailer-assignments.index',[
             'assignments' => TrailerAssignment::latest()->paginate(10),
             'starting_odometer' =>  $this->starting_odometer
-        ]);
+            ]);
+        }
+
+       
     }
 }
