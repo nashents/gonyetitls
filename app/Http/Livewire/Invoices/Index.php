@@ -810,6 +810,9 @@ class Index extends Component
                         ->orWhere('date','like', '%'.$this->search.'%')
                         ->orWhere('expiry','like', '%'.$this->search.'%')
                         ->orWhere('authorization','like', '%'.$this->search.'%')
+                         ->orWhere('purchase_order_number','like', '%'.$this->search.'%')
+                        ->orWhere('sales_order_number','like', '%'.$this->search.'%')
+                        ->orWhere('pat_number','like', '%'.$this->search.'%')
                         ->orWhereHas('customer', function ($query) {
                             return $query->where('name', 'like', '%'.$this->search.'%');
                         })
@@ -867,6 +870,9 @@ class Index extends Component
                         ->orWhere('date','like', '%'.$this->search.'%')
                         ->orWhere('expiry','like', '%'.$this->search.'%')
                         ->orWhere('authorization','like', '%'.$this->search.'%')
+                        ->orWhere('purchase_order_number','like', '%'.$this->search.'%')
+                        ->orWhere('sales_order_number','like', '%'.$this->search.'%')
+                        ->orWhere('pat_number','like', '%'.$this->search.'%')
                         ->orWhereHas('customer', function ($query) {
                             return $query->where('name', 'like', '%'.$this->search.'%');
                         })

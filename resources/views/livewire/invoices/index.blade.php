@@ -121,7 +121,24 @@
                                         $expiry_date = new DateTime($expiry);
                                     @endphp
                                   <tr>
-                                    <td>{{$invoice->invoice_number}}</td>
+                                    <td>
+                                        {{$invoice->invoice_number}}
+                                        <small>
+                                            @if ($invoice->sales_order_number)
+                                                <br>
+                                                <strong>S.O.#:</strong> {{$invoice->sales_order_number}}
+                                                <br>
+                                            @endif
+                                            @if ($invoice->pat_number)
+                                                <strong>PAT#:</strong>{{$invoice->pat_number}}
+                                                <br>
+                                            @endif
+                                            @if($invoice->purchase_order_number)
+                                                <strong>P.O.#</strong>{{$invoice->purchase_order_number}}
+                                                <br>
+                                            @endif
+                                        </small>
+                                    </td>
                                     <td>
                                         {{$invoice->customer ? $invoice->customer->name : ""}}
                                     </td>
