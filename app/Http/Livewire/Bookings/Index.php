@@ -45,16 +45,14 @@ class Index extends Component
       
       }
 
-      public function exportBookingsCSV(Excel $excel){
-
-        return $excel->download(new BookingsExport($this->booking_status, $this->search, $this->from, $this->to), 'garage_bookings.csv', Excel::CSV);
+    public function exportBookingsCSV(Excel $excel){
+        return $excel->download(new BookingsExport($this->booking_status, $this->search, $this->from, $this->to), 'bookings_'.time().'.csv', Excel::CSV);
     }
     public function exportBookingsPDF(Excel $excel){
-
-        return $excel->download(new BookingsExport($this->booking_status, $this->search, $this->from, $this->to), 'garage_bookings.pdf', Excel::DOMPDF);
+        return $excel->download(new BookingsExport($this->booking_status, $this->search, $this->from, $this->to), 'bookings_'.time().'.pdf', Excel::DOMPDF);
     }
     public function exportBookingsExcel(Excel $excel){
-        return $excel->download(new BookingsExport($this->booking_status, $this->search, $this->from, $this->to), 'garage_bookings.xlsx');
+        return $excel->download(new BookingsExport($this->booking_status, $this->search, $this->from, $this->to), 'bookings_'.time().'.xlsx');
     }
 
 

@@ -3,9 +3,16 @@
 namespace App\Http\Livewire\Tickets;
 
 use Carbon\Carbon;
+use App\Models\Asset;
+use App\Models\Horse;
 use App\Models\Ticket;
+use App\Models\Trailer;
+use App\Models\Vehicle;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Maatwebsite\Excel\Excel;
+use App\Exports\TicketsExport;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
 class Index extends Component
@@ -21,6 +28,15 @@ class Index extends Component
     public $to;
 
     // private $tickets;
+    public $filter;
+    public $horses;
+    public $selectedHorse;
+    public $vehicles;
+    public $selectedVehicle;
+    public $trailers;
+    public $selectedTrailer;
+    public $assets;
+    public $selectedAsset;
     public $ticket;
     public $ticket_id;
     public $status;
@@ -30,6 +46,23 @@ class Index extends Component
     public function mount(){
         $this->resetPage();
 
+        $this->horses = Horse::where('status',1)->orderby('registration_number')->get();
+        $this->assets = Asset::where('status',1)->get();
+        $this->trailers = Trailer::where('status',1)->orderby('registration_number')->get();
+        $this->vehicles = Vehicle::where('status',1)->orderby('registration_number')->get();
+
+    }
+
+    public function exportTicketsCSV(Excel $excel){
+
+        return $excel->download(new TicketsExport($this->ticket_status, $this->filter, $this->search, $this->from, $this->to), 'tickets_'.time().'.csv', Excel::CSV);
+    }
+    public function exportTicketsPDF(Excel $excel){
+
+        return $excel->download(new TicketsExport($this->ticket_status, $this->filter, $this->search, $this->from, $this->to), 'tickets_'.time().'.pdf', Excel::DOMPDF);
+    }
+    public function exportTicketsExcel(Excel $excel){
+        return $excel->download(new TicketsExport($this->ticket_status, $this->filter, $this->search, $this->from, $this->to), 'tickets_'.time().'.xlsx');
     }
 
     private function resetInputFields(){
@@ -108,157 +141,75 @@ class Index extends Component
            }
 
       }
-    public function getTicketsProperty(){
 
- 
-        if ($this->ticket_status == "all") {
-            if (isset($this->from) && isset($this->to)) {
-                if (isset($this->search)) {
-                    return Ticket::query()->with('booking','inspection','horse','trailer','vehicle')->whereBetween('created_at',[$this->from, $this->to] )
-                    ->where('ticket_number','like', '%'.$this->search.'%')
-                    ->orWhereHas('horse', function ($query) {
-                        return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('horse', function ($query) {
-                        return $query->where('fleet_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('ticket', function ($query) {
-                        return $query->where('ticket_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('inspection', function ($query) {
-                        return $query->where('inspection_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('vehicle', function ($query) {
-                        return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('vehicle', function ($query) {
-                        return $query->where('fleet_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('trailer', function ($query) {
-                        return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('trailer', function ($query) {
-                        return $query->where('fleet_number', 'like', '%'.$this->search.'%');
-                    })->orderBy('ticket_number','desc')->paginate(10);
-                }else {
-                    return Ticket::query()->with('booking','inspection','horse','trailer','vehicle')->whereBetween('created_at',[$this->from, $this->to] )->orderBy('ticket_number','desc')->paginate(10);
-                }
-               
-            }
-            elseif (isset($this->search)) {
-               
-                return Ticket::query()->with('booking','inspection','horse','trailer','vehicle')->whereMonth('created_at', date('m'))
-                ->whereYear('created_at', date('Y'))
-                ->where('ticket_number','like', '%'.$this->search.'%')
-                ->orWhereHas('horse', function ($query) {
-                    return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('horse', function ($query) {
-                    return $query->where('fleet_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('ticket', function ($query) {
-                    return $query->where('ticket_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('inspection', function ($query) {
-                    return $query->where('inspection_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('vehicle', function ($query) {
-                    return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('vehicle', function ($query) {
-                    return $query->where('fleet_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('trailer', function ($query) {
-                    return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('trailer', function ($query) {
-                    return $query->where('fleet_number', 'like', '%'.$this->search.'%');
-                })->orderBy('ticket_number','desc')->paginate(10);
-            }
-            else {
-               
-                return Ticket::query()->with('booking','inspection','horse','trailer','vehicle')->whereMonth('created_at', date('m'))
-                ->whereYear('created_at', date('Y'))->orderBy('ticket_number','desc')->paginate(10);
-              
-            }
-        }else{
-          
-            if (isset($this->from) && isset($this->to)) {
-                if (isset($this->search)) {
-                    return Ticket::query()->with('booking','inspection','horse','trailer','vehicle')->whereBetween('created_at',[$this->from, $this->to] )
-                    ->where('status',$this->ticket_status)
-                    ->where('ticket_number','like', '%'.$this->search.'%')
-                    ->orWhereHas('horse', function ($query) {
-                        return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('horse', function ($query) {
-                        return $query->where('fleet_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('ticket', function ($query) {
-                        return $query->where('ticket_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('inspection', function ($query) {
-                        return $query->where('inspection_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('vehicle', function ($query) {
-                        return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('vehicle', function ($query) {
-                        return $query->where('fleet_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('trailer', function ($query) {
-                        return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('trailer', function ($query) {
-                        return $query->where('fleet_number', 'like', '%'.$this->search.'%');
-                    })->orderBy('ticket_number','desc')->paginate(10);
-                }else {
-                    return Ticket::query()->with('booking','inspection','horse','trailer','vehicle')
-                    ->where('status',$this->ticket_status)
-                    ->whereBetween('created_at',[$this->from, $this->to] )->orderBy('ticket_number','desc')->paginate(10);
-                }
-               
-            }
-            elseif (isset($this->search)) {
-               
-                return Ticket::query()->with('booking','inspection','horse','trailer','vehicle')->whereMonth('created_at', date('m'))
-                ->where('status',$this->ticket_status)
-                ->whereYear('created_at', date('Y'))
-                ->where('ticket_number','like', '%'.$this->search.'%')
-                ->orWhereHas('horse', function ($query) {
-                    return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('horse', function ($query) {
-                    return $query->where('fleet_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('ticket', function ($query) {
-                    return $query->where('ticket_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('inspection', function ($query) {
-                    return $query->where('inspection_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('vehicle', function ($query) {
-                    return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('vehicle', function ($query) {
-                    return $query->where('fleet_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('trailer', function ($query) {
-                    return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('trailer', function ($query) {
-                    return $query->where('fleet_number', 'like', '%'.$this->search.'%');
-                })->orderBy('ticket_number','desc')->paginate(10);
-            }
-            else {
-               
-                return Ticket::query()->with('booking','inspection','horse','trailer','vehicle')->whereMonth('created_at', date('m'))
-                ->where('status',$this->ticket_status)
-                ->whereYear('created_at', date('Y'))->orderBy('ticket_number','desc')->paginate(10);
-              
-            }
-         
+
+    public function getTicketsProperty()
+    {
+        $query = Ticket::query()
+            ->with(['booking', 'inspection', 'horse', 'trailer', 'vehicle','service_type']);
+
+        // ✅ Status filter
+        if ($this->ticket_status !== 'all') {
+            $query->where('status', $this->ticket_status);
         }
+
+        // ✅ Extra filters
+        if (!empty($this->filter)) {
+
+            switch ($this->filter) {
+                case "horse":
+                    $query->where('horse_id', $this->selectedHorse);
+                    break;
+                case "trailer":
+                    $query->where('trailer_id', $this->selectedTrailer);
+                    break;
+                case "asset":
+                    $query->where('asset_id', $this->selectedAsset);
+                    break;
+                case "vehicle":
+                    $query->where('vehicle_id', $this->selectedVehicle);
+                    break;
+            }
+
+        }
+
+        // ✅ Date filter
+        if (!empty($this->from) && !empty($this->to)) {
+            $query->whereBetween('created_at', [$this->from, $this->to]);
+        } else {
+            $query->whereMonth('created_at', date('m'))
+                ->whereYear('created_at', date('Y'));
+        }
+
+        // ✅ Search filter
+       if (($search = trim((string) $this->search)) !== '') {
+
+        $query->where(function ($q) use ($search) {
+            $q->where('ticket_number', 'like', "%{$search}%")
+            ->orWhere('in_date', 'like', "%{$search}%")
+            ->orWhere('in_time', 'like', "%{$search}%")
+            ->orWhere('out_date', 'like', "%{$search}%")
+            ->orWhere('out_time', 'like', "%{$search}%")
+            ->orWhere('description', 'like', "%{$search}%")
+            ->orWhere('station', 'like', "%{$search}%")
+            ->orWhereHas('inspection', function ($q2) use ($search) {
+                $q2->where('inspection_number', 'like', "%{$search}%");
+            })
+            ->orWhereHas('service_type', function ($q2) use ($search) {
+                $q2->where('name', 'like', "%{$search}%");
+            })
+            ->orWhereHas('booking', function ($q2) use ($search) {
+                $q2->where('booking_number', 'like', "%{$search}%")
+                    ->orWhereHas('employee', function ($q3) use ($search) {
+                        $q3->where(DB::raw("concat(name, ' ', surname)"), 'like', "%{$search}%");
+                    });
+            });
+        });
+
+    }
+
+        // ✅ Order + paginate
+        return $query->orderBy('ticket_number', 'desc')->paginate(10);
     }
 
     public function showTicket($id){

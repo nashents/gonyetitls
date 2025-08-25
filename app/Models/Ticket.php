@@ -68,5 +68,8 @@ class Ticket extends Model implements Auditable
     public function service_type(){
         return $this->belongsTo('App\Models\ServiceType');
     }
+    public function user(){
+        return $this->belongsTo('App\Models\User');
+    }
   
 }
