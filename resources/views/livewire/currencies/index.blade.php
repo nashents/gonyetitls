@@ -90,8 +90,8 @@
                         @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
                     <div class="form-group">
-                        <label for="name">Symbol<span class="required" style="color: red">*</span></label>
-                        <input type="text" class="form-control" wire:model.debounce.300ms="symbol" placeholder="Enter Currency Symbol" required>
+                        <label for="name">Symbol</label>
+                        <input type="text" class="form-control" wire:model.debounce.300ms="symbol" placeholder="Enter Currency Symbol">
                         @error('symbol') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
                 </div>
@@ -127,7 +127,7 @@
                     </div>
                     <div class="form-group">
                         <label for="name">Symbol</label>
-                        <input type="text" class="form-control" wire:model.debounce.300ms="symbol" placeholder="Enter Currency Symbol" required>
+                        <input type="text" class="form-control" wire:model.debounce.300ms="symbol" placeholder="Enter Currency Symbol">
                         @error('symbol') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
                 </div>
