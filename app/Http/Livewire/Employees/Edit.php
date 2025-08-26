@@ -220,31 +220,66 @@ class Edit extends Component
 
       public function rules()
       {
-          return [
-              'name' => 'required|alpha|min:2',
-              'middle_name' => 'nullable|alpha|min:2',
-              'surname' => 'required|alpha|min:2',
-              'dob' => 'nullable|date',
-              'email' => [
-                  'nullable',
-                  'email',
-                  Rule::unique('employees', 'email')->ignore($this->employee->id)->whereNull('deleted_at'),
-              ],
-              'personal_email' => [
-                  'nullable',
-                  'email',
-                  Rule::unique('employees', 'personal_email')->ignore($this->employee->id)->whereNull('deleted_at'),
-              ],
-              'phonenumber' => [
-                  'nullable',
-                  Rule::unique('employees', 'phonenumber')->ignore($this->employee->id)->whereNull('deleted_at'),
-                  'max:13',
-              ],
-              'company_id' => 'required',
-              'selectedDepartment' => 'required',
-              'file.0' => 'nullable|file|mimes:docx,doc,pdf,xls,xlsx,pptx|max:10000',
-              'file.*' => 'required|file|mimes:docx,doc,pdf,xls,xlsx,pptx|max:10000',
-          ];
+        return [
+            'name' => [
+                'required',
+                'alpha',
+                'min:2',
+            ],
+            'middle_name' => [
+                'nullable',
+                'alpha',
+                'min:2',
+            ],
+            'surname' => [
+                'required',
+                'alpha',
+                'min:2',
+            ],
+            'dob' => [
+                'nullable',
+                'date',
+            ],
+            'email' => [
+                'nullable',
+                'email',
+                Rule::unique('employees', 'email')
+                    ->ignore(optional($this->employee)->id)
+                    ->withoutTrashed(),
+            ],
+            'personal_email' => [
+                'nullable',
+                'email',
+                Rule::unique('employees', 'personal_email')
+                    ->ignore(optional($this->employee)->id)
+                    ->whereNull('deleted_at'),
+            ],
+            'phonenumber' => [
+                'nullable',
+                'max:13',
+                Rule::unique('employees', 'phonenumber')
+                    ->ignore(optional($this->employee)->id)
+                    ->whereNull('deleted_at'),
+            ],
+            'company_id' => [
+                'required',
+            ],
+            'selectedDepartment' => [
+                'required',
+            ],
+            'file.0' => [
+                'nullable',
+                'file',
+                'mimes:docx,doc,pdf,xls,xlsx,pptx',
+                'max:10000',
+            ],
+            'file.*' => [
+                'required',
+                'file',
+                'mimes:docx,doc,pdf,xls,xlsx,pptx',
+                'max:10000',
+            ],
+        ];
       }
 
     public function generatePIN($digits = 4){
