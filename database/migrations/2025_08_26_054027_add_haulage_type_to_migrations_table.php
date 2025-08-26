@@ -14,7 +14,7 @@ class AddHaulageTypeToMigrationsTable extends Migration
     public function up()
     {
         Schema::table('migrations', function (Blueprint $table) {
-              $table->string('haulage_type', 20)->nullable();
+              $table->text('haulage_type')->nullable();
         });
     }
 
