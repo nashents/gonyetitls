@@ -228,7 +228,7 @@ class Edit extends Component
               'email' => [
                   'nullable',
                   'email',
-                  Rule::unique('users', 'email')->ignore($this->user->id)->whereNull('deleted_at'),
+                  Rule::unique('employees', 'email')->ignore($this->employee->id)->whereNull('deleted_at'),
               ],
               'personal_email' => [
                   'nullable',

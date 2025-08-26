@@ -8,6 +8,7 @@ use Livewire\Component;
 use App\Models\Inventory;
 use App\Models\Rehandling;
 use Livewire\WithPagination;
+use Illuminate\Support\Facades\Auth;
 
 class Show extends Component
 {
