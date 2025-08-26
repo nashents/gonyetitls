@@ -71,6 +71,7 @@ class Create extends Component
     protected $queryString = ['searchTrip','searchVehicle','searchHorse','searchTrailer','searchDriver'];
     public $trip_id;
     public $trip_types;
+    public $haulage_type;
     public $selectedTripType;
     public $shifts;
     public $shift = False;
@@ -952,8 +953,8 @@ class Create extends Component
         $this->company = Company::with('currency')->find( $this->employee->company_id);
         $this->exchange_rates = ExchangeRate::all();
         $this->shifts = Shift::where('for','Trips')->where('status','1')->latest()->get();
-        $this->liquid_measurements = Measurement::where('cargo_type','Liquid')->get();
-        $this->solid_measurements = Measurement::where('cargo_type','Solid')->get(); 
+        $this->liquid_measurements = Measurement::where('cargo_type','Liquid')->orderBy('name','asc')->get();
+        $this->solid_measurements = Measurement::where('cargo_type','Solid')->orderBy('name','asc')->get();  
         $this->emptyrun_destination = False;
         $this->emptyrun_origin = False;
         $this->transporters = Transporter::with('vehicles:id,registration_number','vehicles.vehicle_make:id,name','vehicles.vehicle_model:id,name','horses:id,registration_number','horses.horse_make:id,name','horses.horse_model:id,name','cargos:id,name','trailers:id,registration_number,make,model','drivers:id','drivers.employee:id,name,surname')->where('authorization','approved')->orderBy('name','asc')->get();
@@ -1292,6 +1293,7 @@ class Create extends Component
                 $trip->manifest_number = $this->manifest_number;
                 $trip->cargo_id = $this->selectedCargo;
                 $trip->trip_type_id = $this->selectedTripType;
+                $trip->haulage_type = $this->haulage_type;
                 $trip->starting_mileage = $this->starting_mileage;
                 $trip->starting_hours = $this->starting_hours;
                 $trip->ending_mileage = $this->ending_mileage;
@@ -2381,6 +2383,8 @@ class Create extends Component
         }
         elseif($category == 'measurements'){
             $this->measurements = Measurement::orderBy('name','asc')->get();
+            $this->liquid_measurements = Measurement::where('cargo_type','Liquid')->get();
+            $this->solid_measurements = Measurement::where('cargo_type','Solid')->get(); 
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Measurements Refreshed Successfully!!."

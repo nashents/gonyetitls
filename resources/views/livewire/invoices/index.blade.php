@@ -164,11 +164,16 @@
                                         @endif
                                     </td>
                                     <td>
-                                        @if (isset($invoice->payments))
-                                             {{$invoice->currency ? $invoice->currency->symbol : ""}}{{number_format($invoice->payments->sum('amount'),2)}}
-                                        @else
-                                             {{$invoice->currency ? $invoice->currency->symbol : ""}}{{number_format($invoice->invoice_payments->sum('amount'),2)}}
-                                        @endif
+                                        @php
+                                            $total_paid = null;
+                                            $amount_paid = $invoice->payments->sum('amount');
+                                            $amount_paid_bulk = $invoice->invoice_payments->sum('amount');
+                                            if (is_numeric($amount_paid) && is_numeric($amount_paid_bulk)) {
+                                                $total_paid = $amount_paid + $amount_paid_bulk;
+                                            }
+                                            
+                                        @endphp
+                                        {{$invoice->currency ? $invoice->currency->symbol : ""}}{{number_format($total_paid,2)}}
                                     </td>
                                     <td>
                                        

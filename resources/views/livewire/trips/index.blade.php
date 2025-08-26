@@ -235,6 +235,9 @@
                                             @endif
                                             <hr style="margin-top:5px; margin-bottom:5px"> 
                                             {{$trip->trip_type ? $trip->trip_type->name : ""}}
+                                            @if ($trip->haulage_type)
+                                                <small><strong>{{$trip->haulage_type}}</strong></small>
+                                            @endif
                                         </td>
                                         <td>  {{ $trip->user->employee ? $trip->user->employee->name : "" }} {{ $trip->user->employee ? $trip->user->employee->surname : "" }}</td>
                                         <td>
@@ -441,6 +444,9 @@
                                             @endif
                                             <hr style="margin-top:5px; margin-bottom:5px"> 
                                             {{$trip->trip_type ? $trip->trip_type->name : ""}}
+                                             @if ($trip->haulage_type)
+                                                <small><strong>{{$trip->haulage_type}}</strong></small>
+                                            @endif
                                         </td>
                                         <td>  {{ $trip->user->employee ? $trip->user->employee->name : "" }} {{ $trip->user->employee ? $trip->user->employee->surname : "" }}</td>
                                         <td>
@@ -641,6 +647,9 @@
                                             @endif
                                             <hr style="margin-top:5px; margin-bottom:5px"> 
                                             {{$trip->trip_type ? $trip->trip_type->name : ""}}
+                                            @if ($trip->haulage_type)
+                                                <small><strong>{{$trip->haulage_type}}</strong></small>
+                                            @endif
                                         </td>
                                         <td>  {{ $trip->user->employee ? $trip->user->employee->name : "" }} {{ $trip->user->employee ? $trip->user->employee->surname : "" }}</td>
                                         <td>
@@ -840,6 +849,9 @@
                                             @endif
                                             <hr style="margin-top:5px; margin-bottom:5px"> 
                                             {{$trip->trip_type ? $trip->trip_type->name : ""}}
+                                             @if ($trip->haulage_type)
+                                                <small><strong>{{$trip->haulage_type}}</strong></small>
+                                            @endif
                                         </td>
                                     <td>  {{ $trip->user->employee ? $trip->user->employee->name : "" }} {{ $trip->user->employee ? $trip->user->employee->surname : "" }}</td>
                                     <td>
@@ -1039,6 +1051,9 @@
                                             @endif
                                             <hr style="margin-top:5px; margin-bottom:5px"> 
                                             {{$trip->trip_type ? $trip->trip_type->name : ""}}
+                                             @if ($trip->haulage_type)
+                                                <small><strong>{{$trip->haulage_type}}</strong></small>
+                                            @endif
                                         </td>
                                         <td>  {{ $trip->user->employee ? $trip->user->employee->name : "" }} {{ $trip->user->employee ? $trip->user->employee->surname : "" }}</td>
                                         <td>
@@ -1238,6 +1253,9 @@
                                             @endif
                                             <hr style="margin-top:5px; margin-bottom:5px"> 
                                             {{$trip->trip_type ? $trip->trip_type->name : ""}}
+                                             @if ($trip->haulage_type)
+                                                <small><strong>{{$trip->haulage_type}}</strong></small>
+                                            @endif
                                         </td>
                                         <td>  {{ $trip->user->employee ? $trip->user->employee->name : "" }} {{ $trip->user->employee ? $trip->user->employee->surname : "" }}</td>
                                         <td>
@@ -1435,6 +1453,9 @@
                                             @endif
                                             <hr style="margin-top:5px; margin-bottom:5px"> 
                                             {{$trip->trip_type ? $trip->trip_type->name : ""}}
+                                             @if ($trip->haulage_type)
+                                                <small><strong>{{$trip->haulage_type}}</strong></small>
+                                            @endif
                                         </td>
                                         <td>  {{ $trip->user->employee ? $trip->user->employee->name : "" }} {{ $trip->user->employee ? $trip->user->employee->surname : "" }}</td>
                                         <td>
@@ -1632,6 +1653,9 @@
                                             @endif
                                             <hr style="margin-top:5px; margin-bottom:5px"> 
                                             {{$trip->trip_type ? $trip->trip_type->name : ""}}
+                                             @if ($trip->haulage_type)
+                                                <small><strong>{{$trip->haulage_type}}</strong></small>
+                                            @endif
                                         </td>
                                         <td>  {{ $trip->user->employee ? $trip->user->employee->name : "" }} {{ $trip->user->employee ? $trip->user->employee->surname : "" }}</td>
                                         <td>
@@ -1832,6 +1856,9 @@
                                             @endif
                                             <hr style="margin-top:5px; margin-bottom:5px"> 
                                             {{$trip->trip_type ? $trip->trip_type->name : ""}}
+                                             @if ($trip->haulage_type)
+                                                <small><strong>{{$trip->haulage_type}}</strong></small>
+                                            @endif
                                         </td>
                                         <td>  {{ $trip->user->employee ? $trip->user->employee->name : "" }} {{ $trip->user->employee ? $trip->user->employee->surname : "" }}</td>
                                         <td>

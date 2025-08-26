@@ -42,9 +42,16 @@
                                     </a>
                                 </div>
                             @endif
-                                <div class="row">
+                                   <div class="row">
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label for="trip_ref">Custom Reference</label>
+                                            <input type="text" class="form-control" wire:model.debounce.300ms="trip_ref" placeholder="Trip Reference #" {{ $trip_type_name == 'Return' ? 'disabled' : '' }} />
+                                            @error('trip_ref') <span class="text-danger error">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
                                     <!-- Trip Type -->
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <div class="form-group">
                                             <label for="trip_type">
                                                 <a href="{{ route('trip_types.index') }}" target="_blank" style="color: blue">Trip Types</a>
@@ -61,14 +68,19 @@
                                     </div>
                                 
                                     <!-- Trip Reference -->
-                                    <div class="col-md-4">
+                                   
+                                    <div class="col-md-3">
                                         <div class="form-group">
-                                            <label for="trip_ref">Reference#</label>
-                                            <input type="text" class="form-control" wire:model.debounce.300ms="trip_ref" placeholder="Trip Reference#" {{ $trip_type_name == 'Return' ? 'disabled' : '' }} />
-                                            @error('trip_ref') <span class="text-danger error">{{ $message }}</span> @enderror
+                                            <label for="trip_type">Trip Haulage</a>
+                                            </label>
+                                            <select class="form-control" wire:model.debounce.300ms="haulage_type" {{$trip_type_name != "Local" ? "disabled" : ""}}>
+                                                <option value="">Select Option</option>
+                                                <option value="short_haul">Short Haul</option>
+                                                <option value="long_haul">Long Haul</option>
+                                            </select>
+                                            @error('haulage_type') <span class="text-danger error">{{ $message }}</span> @enderror
                                         </div>
                                     </div>
-                                
                                     <!-- Trip Group -->
                                     <div class="col-md-4">
                                         <div class="form-group">
@@ -92,6 +104,8 @@
                                             </a>
                                         </div>
                                     </div>
+                                   
+                                   
                                 </div>
                                 
                                 @if ($trip_type_name == "Return")

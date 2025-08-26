@@ -95,6 +95,7 @@ class Edit extends Component
     public $calculation_measurement;
     public $selectedFuelCurrency;
     public $selectedTripType;
+    public $haulage_type;
     public $customer_updates = 0;
     public $clearing_agents;
     public $clearing_agent_id;
@@ -819,8 +820,8 @@ class Edit extends Component
         $this->routes = Route::with('truck_stops:id,name')->orderBy('name','asc')->get();
         $this->agents = Agent::orderBy('name','asc')->get();
         $this->truck_stops = TruckStop::orderBy('name','asc')->get();
-        $this->liquid_measurements = Measurement::where('cargo_type','Liquid')->get();
-        $this->solid_measurements = Measurement::where('cargo_type','Solid')->get(); 
+        $this->liquid_measurements = Measurement::where('cargo_type','Liquid')->orderBy('name','asc')->get();
+        $this->solid_measurements = Measurement::where('cargo_type','Solid')->orderBy('name','asc')->get(); 
         $trip_truck_stops = $this->trip->truck_stops;
         foreach ($trip_truck_stops as $trip_truck_stop) {
             $this->trip_truck_stop_ids[] = $trip_truck_stop->id;
@@ -975,6 +976,7 @@ class Edit extends Component
         
        
          $this->selectedTripType = $this->trip->trip_type_id;
+         $this->haulage_type = $this->trip->haulage_type;
          $this->trip_type_name = TripType::find($this->trip->trip_type_id) ? TripType::find($this->trip->trip_type_id)->name : "";
         
           $this->trip_group_id = $this->trip->trip_group_id;
@@ -1513,6 +1515,7 @@ class Edit extends Component
           $trip->manifest_number = $this->manifest_number;
           $trip->cargo_id = $this->selectedCargo;
           $trip->trip_type_id = $this->selectedTripType;
+          $trip->haulage_type = $this->haulage_type;
           $trip->starting_mileage = $this->starting_mileage;
           $trip->ending_mileage = $this->ending_mileage;
           $trip->starting_hours = $this->starting_hours;
@@ -2812,6 +2815,8 @@ class Edit extends Component
             }
             elseif($category == 'measurements'){
                 $this->measurements = Measurement::orderBy('name','asc')->get();
+                $this->liquid_measurements = Measurement::where('cargo_type','Liquid')->orderBy('name','asc')->get();
+                $this->solid_measurements = Measurement::where('cargo_type','Solid')->orderBy('name','asc')->get(); 
                 $this->dispatchBrowserEvent('alert',[
                     'type'=>'success',
                     'message'=>"Measurements Refreshed Successfully!!."

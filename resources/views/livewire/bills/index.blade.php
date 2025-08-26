@@ -231,10 +231,17 @@
                                              {{$bill->currency ? $bill->currency->symbol : ""}}{{number_format($bill->total,2)}}
                                         @endif
                                     </td>
-                                    <td>
-                                        @if ($bill->payments)
-                                             {{$bill->currency ? $bill->currency->symbol : ""}}{{number_format($bill->payments->sum('amount'),2)}}
-                                        @endif
+                                   <td>
+                                        @php
+                                            $total_paid = null;
+                                            $amount_paid = $bill->payments->sum('amount');
+                                            $amount_paid_bulk = $bill->bill_payments->sum('amount');
+                                            if (is_numeric($amount_paid) && is_numeric($amount_paid_bulk)) {
+                                                $total_paid = $amount_paid + $amount_paid_bulk;
+                                            }
+                                            
+                                        @endphp
+                                        {{$bill->currency ? $bill->currency->symbol : ""}}{{number_format($total_paid,2)}}
                                     </td>
                                     <td>
                                         @if ($bill->balance)
