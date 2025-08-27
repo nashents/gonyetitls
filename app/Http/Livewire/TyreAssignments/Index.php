@@ -303,15 +303,29 @@ class Index extends Component
     {
 
          if (filled($this->searchTyres)) {
-            $this->tyres = Tyre::query()->where('status',1)->whereDoesntHave('tyre_assignments', function ($query) {
-                            $query->where('status', 1);
-                        })->where('serial_number', 'like', '%'.$this->searchTyres.'%')
-                         ->whereHas('product', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->searchTyres.'%');
-                        })
-                        ->get();
+         
+           $this->tyres = Tyre::query()
+                    ->where('disposed', 0)
+                    ->where('retread', 0)
+                    ->whereDoesntHave('tyre_assignments', fn ($q) => $q->where('status', 1))
+                    ->when(filled($this->searchTyres), function ($q) {
+                        $term = '%'.$this->searchTyres.'%';
+                        $q->where('serial_number', 'like', $term)
+                       ->whereHas('product', function ($q) use ($term) {
+                            $q->where('name', 'like', $term)
+                            ->orWhere('identification_number', 'like', $term)
+                            ->orWhereHas('brand', function ($brandQuery) use ($term) {
+                                $brandQuery->where('name', 'like', $term);
+                            });
+                        });
+                    })
+                    ->with('product:id,name,identification_number')
+                    ->get();
         }else{
-             $this->tyres = Tyre::where('status',1)->whereDoesntHave('tyre_assignments', function ($query) {
+             $this->tyres = Tyre::query()
+                    ->where('disposed', 0)
+                    ->where('retread', 0)
+                    ->whereDoesntHave('tyre_assignments', function ($query) {
                             $query->where('status', 1);
                         })->get();
         }

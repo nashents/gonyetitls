@@ -267,18 +267,6 @@ class Edit extends Component
             'selectedDepartment' => [
                 'required',
             ],
-            'file.0' => [
-                'nullable',
-                'file',
-                'mimes:docx,doc,pdf,xls,xlsx,pptx',
-                'max:10000',
-            ],
-            'file.*' => [
-                'required',
-                'file',
-                'mimes:docx,doc,pdf,xls,xlsx,pptx',
-                'max:10000',
-            ],
         ];
       }
 

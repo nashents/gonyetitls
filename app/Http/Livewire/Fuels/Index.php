@@ -339,7 +339,8 @@ class Index extends Component
 
 
     public function store(){
-    // try{
+
+    DB::transaction(function () {
 
         $fuel = new Fuel;
         $fuel->user_id = Auth::user()->id;
@@ -490,10 +491,10 @@ class Index extends Component
         if ($notifications->isNotEmpty()) {
             foreach ($notifications as $notification) {
                 if($notification && isset($notification->category)){
-                   $email = $notification->email ?? $notification->employee->email ?? null;
-                if($email){
-                    Mail::to($email)->send(new PendingNotificationEmails($this->company, $notification, $fuel));
-                }
+                     $email = $notification->email ?? $notification->employee->email ?? null;
+                    if($email){
+                        Mail::to($email)->send(new PendingNotificationEmails($this->company, $notification, $fuel));
+                    }
                 }
             }
         }
@@ -508,21 +509,7 @@ class Index extends Component
         
         return redirect(request()->header('Referer'));
 
-     
-
-        
-    //  }   
-  
-    //     catch(\Exception $e){
-    //     // Set Flash Message
-    //     $this->dispatchBrowserEvent('hide-fuelModal');
-    //     $this->dispatchBrowserEvent('alert',[
-
-    //         'type'=>'error',
-    //         'message'=>"Something went wrong while creating fuel order!!"
-    //     ]);
-    // }
-
+        });
 
     }
 

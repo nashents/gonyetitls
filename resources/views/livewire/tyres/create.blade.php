@@ -95,7 +95,8 @@
                                     </div>
                                 </div>
                             </div>
-
+                            @if (is_null($selectedPurchase))
+                                 <small style="color: green">Please note you can only assign old tyres which are not instore from here.</small>
                             <h5 class="underline mt-30">Tyre Assignment</h5>
                             <div class="mb-10">
                                <input type="checkbox" wire:model.debounce.300ms="tyre_assignment"   class="line-style" />
@@ -197,6 +198,8 @@
                                         </div>
                                     </div>
                             @endif
+                            @endif
+                           
                            
                            
                            <div class="mt-30" style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">

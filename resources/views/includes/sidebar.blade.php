@@ -1771,6 +1771,7 @@
                         <ul class="child-nav">
                             <li><a href="{{route('tyres.create')}}" ><i class="fas fa-plus "></i> <span>Create Tyre</span></a></li>
                             <li ><a href="{{route('tyres.index')}}"><i class="fas fa-list "></i> <span>Manage Tyres</span></a></li>
+                            <li ><a href="{{route('tyre_assignments.index')}}"><i class="fas fa-list "></i> <span>Tyre Assignments</span></a></li>
                             <li ><a href="{{route('disposes.index')}}"><i class="fas fa-list "></i> <span>Disposed Items</span></a></li>
                         </ul>
                     </li>

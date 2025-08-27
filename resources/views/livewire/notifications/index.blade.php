@@ -25,7 +25,7 @@
                                     </th>
                                     <th class="th-sm">Category
                                     </th>
-                                    <th class="th-sm">Employee
+                                    <th class="th-sm">Notification To
                                     </th>
                                     <th class="th-sm">Status
                                     </th>
@@ -40,7 +40,13 @@
                                     <td>{{$notification->user ? $notification->user->name : ""}} {{$notification->user ? $notification->user->surname : ""}}</td>
                                     <td>{{$notification->when}}</td>
                                     <td>{{$notification->category}}</td>
-                                    <td>{{$notification->employee ? $notification->employee->name : ""}} {{$notification->employee ? $notification->employee->surname : ""}}</td>
+                                    <td>
+                                        @if ($notification->employee)
+                                            {{$notification->employee ? $notification->employee->name : ""}} {{$notification->employee ? $notification->employee->surname : ""}} {{$notification->employee ? $notification->employee->email : ""}}
+                                        @else
+                                            {{$notification->email}}
+                                        @endif
+                                    </td>
                                     <td><span class="badge bg-{{$notification->status == 1 ? "success" : "danger"}}">{{$notification->status == 1 ? "Active" : "Inactive"}}</span></td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
