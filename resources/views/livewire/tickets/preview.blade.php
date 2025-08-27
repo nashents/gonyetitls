@@ -1,4 +1,12 @@
 <div>
+    @section('extra-css')
+        <style>
+            .table-bordered th,
+.table-bordered td {
+  border: 2px solid #000; /* black, thicker border */
+}
+        </style>
+    @endsection
     <div id="invoice">
         <div class="toolbar hidden-print">
             <div class="text-end">
@@ -34,24 +42,37 @@
                     <div class="row contacts">
                         <div class="col invoice-to">
                             <div class="text-gray-light">JOB CARD FOR</div>
-                            <h5 class="to"> 
-                                 @if (isset($ticket->booking->horse))
-                                Horse | {{ucfirst($ticket->booking->horse->horse_make ? $ticket->booking->horse->horse_make->name : "")}} {{ucfirst($ticket->booking->horse->horse_model ? $ticket->booking->horse->horse_model->name : "" )}} {{ucfirst($ticket->booking->horse->registration_number)}}
-                                @elseif(isset($ticket->booking->vehicle))
-                                Vehicle | {{ucfirst($ticket->booking->vehicle->vehicle_make->name)}} {{ucfirst($ticket->booking->vehicle->vehicle_model->name)}} {{ucfirst($ticket->booking->vehicle->registration_number)}}
-                                @elseif(isset($ticket->booking->asset))
-                                Asset | {{ucfirst($ticket->booking->asset->product->brand ? $ticket->booking->asset->product->brand->name : "")}} {{ucfirst($ticket->booking->asset->product ? $ticket->booking->asset->product->name : "")}}  {{$ticket->booking->asset->serial_number}}
-                                @elseif(isset($ticket->booking->trailer))
-                                Trailer | {{ucfirst($ticket->booking->trailer->make)}} {{ucfirst($ticket->booking->trailer->model)}} {{ucfirst($ticket->booking->trailer->registration_number)}}
-                            @endif</h5>
+                            <div class="date"><strong>Category: </strong> 
+                                @if (isset($ticket->horse))
+                                   Horse
+                                @elseif(isset($ticket->vehicle))
+                                    Vehicle
+                                @elseif(isset($ticket->asset))
+                                    Asset
+                                @elseif(isset($ticket->trailer))
+                                    Trailer
+                                @endif
+                            </div>
+                            <div class="date"><strong>Equipment: </strong> 
+                                 @if (isset($ticket->horse))
+                                    {{ucfirst($ticket->horse->horse_make ? $ticket->horse->horse_make->name : "")}} {{ucfirst($ticket->horse->horse_model ? $ticket->horse->horse_model->name : "" )}} {{$ticket->horse->registration_number}} {{$ticket->horse->fleet_number ? "(".$ticket->horse->fleet_number.")"  : ""}}
+                                @elseif(isset($ticket->vehicle))
+                                    {{ucfirst($ticket->vehicle->vehicle_make->name)}} {{ucfirst($ticket->vehicle->vehicle_model->name)}} {{$ticket->vehicle->registration_number}} {{$ticket->vehicle->registration_number}} {{$ticket->vehicle->fleet_number ? "(".$ticket->vehicle->fleet_number.")"  : ""}}
+                                @elseif(isset($ticket->asset))
+                                    {{ucfirst($ticket->asset->product->brand ? $ticket->asset->product->brand->name : "")}} {{ucfirst($ticket->asset->product ? $ticket->asset->product->name : "")}}  {{$ticket->asset->serial_number}}
+                                @elseif(isset($ticket->trailer))
+                                    {{ucfirst($ticket->trailer->make)}} {{ucfirst($ticket->trailer->model)}} {{$ticket->trailer->registration_number}} {{$ticket->vehicle->fleet_number ? "(".$ticket->vehicle->fleet_number.")"  : ""}}
+                                @endif
+                            </div>
                         </div>
                         <div class="col invoice-details">
                             <div class="date"> <strong>Booking Number:</strong> {{$ticket->booking ? $ticket->booking->booking_number : ""}}</div>
                             <div class="date"><strong>Job Card Number:</strong> {{$ticket->ticket_number}}</div>
                             <div class="date"><strong>Date:</strong> {{$ticket->in_date}}</div>
+                            <div class="date"><strong>Status:</strong> {{$ticket->status == 1 ? "Open" : "Closed"}}</div>
                         </div>
                     </div>
-                    <table class="table table-striped">
+                    <table class="table table-striped table-bordered">
 
                         <tbody>
                             <tr>
@@ -61,7 +82,7 @@
                                 </td>
                             </tr>
                             <tr>
-                                <th class="text-center"><strong>BookedBy</strong></th>
+                                <th class="text-center"><strong>Booked By</strong></th>
                                 <td class="text-center">
                                     @if ($ticket->booking)
                                     {{$ticket->booking->user ? $ticket->booking->user->name : ""}} {{$ticket->booking->user ? $ticket->booking->user->surname : ""}}
@@ -74,20 +95,7 @@
                                     {{$ticket->booking ? $ticket->booking->created_at : ""}}
                                 </td>
                             </tr>
-                            <tr>
-                                <th class="text-center"> <strong>Booked For</strong></th>
-                                <td class="text-center">
-                                    @if (isset($ticket->booking->horse))
-                                    Horse | {{ucfirst($ticket->booking->horse->horse_make ? $ticket->booking->horse->horse_make->name : "")}} {{ucfirst($ticket->booking->horse->horse_model ? $ticket->booking->horse->horse_model->name : "" )}} {{ucfirst($ticket->booking->horse->registration_number)}}
-                                    @elseif(isset($ticket->booking->vehicle))
-                                    Vehicle | {{ucfirst($ticket->booking->vehicle->vehicle_make->name)}} {{ucfirst($ticket->booking->vehicle->vehicle_model->name)}} {{ucfirst($ticket->booking->vehicle->registration_number)}}
-                                    @elseif(isset($ticket->booking->asset))
-                                    Asset | {{ucfirst($ticket->booking->asset->product->brand ? $ticket->booking->asset->product->brand->name : "")}} {{ucfirst($ticket->booking->asset->product ? $ticket->booking->asset->product->name : "")}}  {{$ticket->booking->asset->serial_number}}
-                                    @elseif(isset($ticket->booking->trailer))
-                                    Trailer | {{ucfirst($ticket->booking->trailer->make)}} {{ucfirst($ticket->booking->trailer->model)}} {{ucfirst($ticket->booking->trailer->registration_number)}}
-                                @endif
-                                </td>
-                            </tr>
+                           
                             <tr>
                                 <th class="text-center"><strong>Assigned To</strong></th>
                                 <td class="text-center">
@@ -116,15 +124,31 @@
                             <tr>
                                 <th class="text-center"><strong>Mileage</strong></th>
                                 <td class="text-center"> 
-                                   {{ $ticket->odometer }} Kms
+                                   {{ $ticket->odometer ? $ticket->odometer." Kms" : "" }}
                                 </td>
                             </tr>
                             @endif
                             @if ($ticket->next_service)
                             <tr>
-                                <th class="text-center"><strong>Next Service</strong></th>
+                                <th class="text-center"><strong>Next Service Mileage</strong></th>
                                 <td class="text-center"> 
-                                   {{ $ticket->next_service }} Kms
+                                   {{ $ticket->next_service ? $ticket->next_service." Kms" : "" }}
+                                </td>
+                            </tr>
+                            @endif
+                            @if ($ticket->hours)
+                            <tr>
+                                <th class="text-center"><strong>Hours</strong></th>
+                                <td class="text-center"> 
+                                   {{ $ticket->hours ? $ticket->hours." Hrs" : "" }}
+                                </td>
+                            </tr>
+                            @endif
+                            @if ($ticket->next_service_hours)
+                            <tr>
+                                <th class="text-center"><strong>Next Service Hours</strong></th>
+                                <td class="text-center"> 
+                                   {{ $ticket->next_service_hours ? $ticket->next_service_hours." Hrs" : "" }}
                                 </td>
                             </tr>
                             @endif
@@ -140,10 +164,33 @@
                                 <th class="text-center"><strong>Mechanic Report</strong></th>
                                 <td class="text-center"> {{$ticket->report}}</td>
                             </tr>
+                            <tr>
+                                <th class="text-center"><strong>Authorized By</strong></th>
+                                <td class="text-center"> {{$authorizer->name}} {{$authorizer->surname}}</td>
+                            </tr>
                   
                         </tbody>
-
                     </table>
+                    <table class="table table-striped table-bordered">
+                        <tbody>
+                            <tr>
+                                <th>
+                                    <strong>Foreman: </strong>
+                                </th>
+                                <td><strong>Signature: </strong></td>
+                                <td><strong>Date: </strong></td>
+                            </tr>
+                            <tr>
+                                <th>
+                                    <strong>Production: </strong>
+                                </th>
+                                <td><strong>Signature: </strong></td>
+                                <td><strong>Date: </strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    
                 </main>
               <center><footer>{{ucfirst($company->name)}} Job Card</footer></center>  
             </div>

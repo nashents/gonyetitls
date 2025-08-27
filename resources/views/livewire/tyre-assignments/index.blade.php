@@ -22,13 +22,11 @@
                             <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
-                                    <th class="th-sm">Tyre#
-                                    </th>
                                     <th class="th-sm">Tyre
                                     </th>
                                     <th class="th-sm">Specifications
                                     </th>
-                                    <th class="th-sm">Assigned On
+                                    <th class="th-sm">Location
                                     </th>
                                     <th class="th-sm">Fitting Mileage
                                     </th>
@@ -44,7 +42,6 @@
                                 <tbody>
                                     @forelse ($tyre_assignments as $tyre_assignment)
                                   <tr>
-                                    <td>{{$tyre_assignment->tyre ? $tyre_assignment->tyre->tyre_number : ""}}</td>
                                     <td>
                                         @if ($tyre_assignment->tyre)
                                             @if ($tyre_assignment->tyre->product)
@@ -57,12 +54,14 @@
                                     <td>{{$tyre_assignment->tyre ? $tyre_assignment->tyre->width : ""}}/ {{$tyre_assignment->tyre ? $tyre_assignment->tyre->aspect_ratio : ""}} R {{$tyre_assignment->tyre ? $tyre_assignment->tyre->diameter : ""}}</td>
                                     <td>
                                         @if ($tyre_assignment->horse)
-                                        Horse | {{$tyre_assignment->horse->horse_make ? $tyre_assignment->horse->horse_make->name : ""}} {{$tyre_assignment->horse->horse_model ? $tyre_assignment->horse->horse_model->name : ""}} [ {{$tyre_assignment->horse ? $tyre_assignment->horse->registration_number : ""}} ]
+                                        Horse | {{$tyre_assignment->horse->registration_number}} {{$tyre_assignment->horse->fleet_number ? "(".$tyre_assignment->horse->fleet_number.")" : ""}}
                                         @elseif ($tyre_assignment->trailer)
-                                        Trailer | {{$tyre_assignment->trailer ? $tyre_assignment->trailer->make : ""}} {{$tyre_assignment->trailer ? $tyre_assignment->trailer->model : ""}} [{{$tyre_assignment->trailer ? $tyre_assignment->trailer->registration_number : ""}}]
+                                        Trailer | {{$tyre_assignment->trailer->registration_number}} {{$tyre_assignment->trailer->fleet_number ? "(".$tyre_assignment->trailer->fleet_number.")" : ""}}
                                         @elseif ($tyre_assignment->vehicle)
-                                        Vehicle | {{$tyre_assignment->vehicle->vehicle_make ? $tyre_assignment->vehicle->vehicle_make->name : ""}} {{$tyre_assignment->vehicle->vehicle_model ? $tyre_assignment->vehicle->vehicle_model->name : ""}} [{{$tyre_assignment->vehicle ? $tyre_assignment->vehicle->registration_number : ""}}]
+                                        Vehicle | {{$tyre_assignment->vehicle->registration_number}} {{$tyre_assignment->vehicle->fleet_number ? "(".$tyre_assignment->vehicle->fleet_number.")" : ""}}
                                         @endif
+                                        <br>
+                                        <small><strong>{{$tyre_assignment->axle}} {{$tyre_assignment->position}}</strong></small>
                                     </td>
                                     <td>{{$tyre_assignment->starting_odometer ? $tyre_assignment->starting_odometer."Kms" : ""}}</td>
                                     <td>
@@ -153,7 +152,7 @@
                         <select class="form-control" wire:model.debounce.300ms="tyre_id" required  size="4" >
                             <option value="">Select Tyre</option>
                             @foreach ($tyres as $tyre)
-                                <option value="{{$tyre->id}}">{{$tyre->tyre_number}} {{$tyre->product->brand ? $tyre->product->brand->name : ""}} {{$tyre->product ? $tyre->product->name : ""}} SN#: {{$tyre->serial_number}} |  {{$tyre->width}} / {{$tyre->aspect_ratio}} R {{$tyre->diameter}} </option>
+                                <option value="{{$tyre->id}}"> {{$tyre->product->brand ? $tyre->product->brand->name : ""}} {{$tyre->product ? $tyre->product->name : ""}} {{$tyre->serial_number ? "SN#: ".$tyre->serial_number : ""}} - {{$tyre->width}} / {{$tyre->aspect_ratio}} R {{$tyre->diameter}} </option>
                             @endforeach
                         </select>
                         @error('tyre_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -167,7 +166,7 @@
                                     <select class="form-control" wire:model.debounce.300ms="horse_id" required>
                                         <option value="">Select Horse</option>
                                         @foreach ($horses as $horse)
-                                            <option value="{{$horse->id}}">{{$horse->registration_number}} {{$horse->horse_make ? $horse->horse_make->name : ""}} {{$horse->horse_model ? $horse->horse_model->name : ""}}</option>
+                                            <option value="{{$horse->id}}">{{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}} </option>
                                         @endforeach
                                     </select>
                                     @error('horse_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -178,7 +177,7 @@
                                     <select class="form-control" wire:model.debounce.300ms="trailer_id" required>
                                         <option value="">Select Trailer</option>
                                         @foreach ($trailers as $trailer)
-                                            <option value="{{$trailer->id}}">{{$trailer->registration_number}} {{$trailer->make}} {{$trailer->model}} </option>
+                                            <option value="{{$trailer->id}}">{{$trailer->registration_number}} {{$trailer->fleet_number ? "(".$trailer->fleet_number.")" : ""}}  </option>
                                         @endforeach
                                     </select>
                                     @error('trailer_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -189,7 +188,7 @@
                                     <select class="form-control" wire:model.debounce.300ms="vehicle_id" required>
                                         <option value="">Select vehicle</option>
                                         @foreach ($vehicles as $vehicle)
-                                            <option value="{{$vehicle->id}}">{{$vehicle->registration_number}} {{$vehicle->vehicle_make ? $vehicle->vehicle_make->name : ""}} {{$vehicle->vehicle_model ? $vehicle->vehicle_model->name : ""}}</option>
+                                            <option value="{{$vehicle->id}}">{{$vehicle->registration_number}} {{$vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : ""}} </option>
                                         @endforeach
                                     </select>
                                     @error('vehicle_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -284,7 +283,7 @@
                         <select class="form-control" wire:model.debounce.300ms="tyre_id" required  size="4" >
                             <option value="">Select Tyre</option>
                             @foreach ($tyres as $tyre)
-                                <option value="{{$tyre->id}}">{{$tyre->tyre_number}} {{$tyre->product->brand ? $tyre->product->brand->name : ""}} {{$tyre->product ? $tyre->product->name : ""}} SN#: {{$tyre->serial_number}} |  {{$tyre->width}} / {{$tyre->aspect_ratio}} R {{$tyre->diameter}} </option>
+                                <option value="{{$tyre->id}}"> {{$tyre->product->brand ? $tyre->product->brand->name : ""}} {{$tyre->product ? $tyre->product->name : ""}} {{$tyre->serial_number ? "SN#: ".$tyre->serial_number : ""}} - {{$tyre->width}} / {{$tyre->aspect_ratio}} R {{$tyre->diameter}} </option>
                             @endforeach
                         </select>
                         @error('tyre_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -298,7 +297,7 @@
                                     <select class="form-control" wire:model.debounce.300ms="horse_id" required>
                                         <option value="">Select Horse</option>
                                         @foreach ($horses as $horse)
-                                            <option value="{{$horse->id}}">{{$horse->registration_number}} {{$horse->horse_make ? $horse->horse_make->name : ""}} {{$horse->horse_model ? $horse->horse_model->name : ""}}</option>
+                                           <option value="{{$horse->id}}">{{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}} </option>
                                         @endforeach
                                     </select>
                                     @error('horse_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -309,7 +308,7 @@
                                     <select class="form-control" wire:model.debounce.300ms="trailer_id" required>
                                         <option value="">Select Trailer</option>
                                         @foreach ($trailers as $trailer)
-                                            <option value="{{$trailer->id}}">{{$trailer->registration_number}} {{$trailer->make}} {{$trailer->model}} </option>
+                                            <option value="{{$trailer->id}}">{{$trailer->registration_number}} {{$trailer->fleet_number ? "(".$trailer->fleet_number.")" : ""}} </option>
                                         @endforeach
                                     </select>
                                     @error('trailer_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -320,7 +319,7 @@
                                     <select class="form-control" wire:model.debounce.300ms="vehicle_id" required>
                                         <option value="">Select vehicle</option>
                                         @foreach ($vehicles as $vehicle)
-                                            <option value="{{$vehicle->id}}">{{$vehicle->registration_number}} {{$vehicle->vehicle_make ? $vehicle->vehicle_make->name : ""}} {{$vehicle->vehicle_model ? $vehicle->vehicle_model->name : ""}}</option>
+                                            <option value="{{$vehicle->id}}">{{$vehicle->registration_number}} {{$vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : ""}}</option>
                                         @endforeach
                                     </select>
                                     @error('vehicle_id') <span class="error" style="color:red">{{ $message }}</span> @enderror

@@ -119,6 +119,7 @@ class Rejected extends Component
         $booking = Booking::find($this->booking_id);
         $booking->authorized_by_id = Auth::user()->id;
         $booking->authorization = $this->authorize;
+        $booking->authorization_date = date('Y-m-d');
         $booking->comments = $this->comments;
         $booking->update();
 

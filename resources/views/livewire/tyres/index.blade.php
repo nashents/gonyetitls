@@ -68,19 +68,14 @@
                                             <a href="{{route('tyre_assignments.show',$assignment->id)}}" style="color: blue">
                                             @if ($assignment->horse)
                                                 Horse: {{$assignment->horse->registration_number}} {{$assignment->horse->fleet_number ? "(".$assignment->horse->fleet_number.")" : ""}}
-                                                <br>
-                                                {{$assignment->axle}} {{$assignment->position}}
                                             @elseif($assignment->trailer)
                                                 Trailer: {{$assignment->trailer->registration_number}} {{$assignment->trailer->fleet_number ? "(".$assignment->trailer->fleet_number.")" : ""}}
-                                                <br>
-                                                {{$assignment->axle}} {{$assignment->position}}
                                             @elseif($assignment->vehicle)
                                                 Vehicle: {{$assignment->horse->registration_number}} {{$assignment->vehicle->fleet_number ? "(".$assignment->vehicle->fleet_number.")" : ""}}
-                                                <br>
-                                                {{$assignment->axle}} {{$assignment->position}}
                                             @endif
                                             </a>
-                                          
+                                            <br>
+                                            <small><strong>{{$assignment->axle}} {{$assignment->position}}</strong></small>
                                         @else
                                             @if ($tyre->retread == 0)
                                                 <span class="badge bg-success">Instore</span>

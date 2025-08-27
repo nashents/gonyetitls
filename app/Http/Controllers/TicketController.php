@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Models\Ticket;
 use App\Models\Employee;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 
 class TicketController extends Controller
@@ -36,22 +37,27 @@ class TicketController extends Controller
           ]);
     }
     public function print(Ticket $ticket){
-
+        $booking = $ticket->booking;
+        $authorizer = User::find($booking->authorized_by_id);
          $company = Auth::user()->employee->company;
 
         return view('tickets.print')->with([
             'ticket' => $ticket,
             'company' => $company,
+            'authorizer' => $authorizer,
           ]);
     }
 
     public function generatePDF(Ticket $ticket){
-
+    
+        $booking = $ticket->booking;
+        $authorizer = User::find($booking->authorized_by_id);
         $company = Auth::user()->employee->company;
 
         $data = [
             'ticket' => $ticket,
             'company' => $company,
+            'authorizer' => $authorizer,
         ];
         $pdf = PDF::loadView('tickets.ticket', $data);
 

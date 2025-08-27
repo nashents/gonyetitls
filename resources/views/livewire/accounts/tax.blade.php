@@ -18,9 +18,9 @@
                             <table id="accountsTable" class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
-                                    <th class="th-sm">#
+                                    <th class="th-sm">Acc Group
                                     </th>
-                                    <th class="th-sm">Account Group & Type
+                                    <th class="th-sm">Acc Type
                                     </th>
                                     <th class="th-sm">Name
                                     </th>
@@ -40,10 +40,14 @@
                                 <tbody>
                                     @foreach ($accounts as $account)
                                   <tr>
-                                    <td>{{$account->id}}</td>
+                                    <td>
+                                         @if ($account->account_type)
+                                             {{$account->account_type->account_type_group ? $account->account_type->account_type_group->name : ""}}       
+                                        @endif
+                                    </td>
                                     <td>
                                         @if ($account->account_type)
-                                             {{$account->account_type->account_type_group ? $account->account_type->account_type_group->name : ""}} {{$account->account_type ? $account->account_type->name : ""}}        
+                                              {{$account->account_type ? $account->account_type->name : ""}}        
                                         @endif
                                     </td>
                                     <td>{{$account->name}}</td>

@@ -303,34 +303,34 @@ class Index extends Component
     {
 
          if (filled($this->searchTyres)) {
-         
-           $this->tyres = Tyre::query()
-                    ->where('disposed', 0)
-                    ->where('retread', 0)
-                    ->whereDoesntHave('tyre_assignments', fn ($q) => $q->where('status', 1))
-                    ->when(filled($this->searchTyres), function ($q) {
-                        $term = '%'.$this->searchTyres.'%';
-                        $q->where('serial_number', 'like', $term)
-                       ->whereHas('product', function ($q) use ($term) {
-                            $q->where('name', 'like', $term)
-                            ->orWhere('identification_number', 'like', $term)
-                            ->orWhereHas('brand', function ($brandQuery) use ($term) {
-                                $brandQuery->where('name', 'like', $term);
-                            });
+            $term = $this->searchTyres;
+            $this->tyres = Tyre::query()
+                ->with([
+                    'product:id,name,identification_number,brand_id',
+                    'product.brand:id,name',   // if you need the brand in the view
+                ])
+                ->where('disposed', 0)
+                ->where('retread', 0)
+                ->whereDoesntHave('tyre_assignments', fn ($q) => $q->where('status', 1))
+                ->when($term !== '', function ($q) use ($term) {
+                    $like = "%{$term}%";
+                    $q->where(function ($q) use ($like) {
+                        $q->where('serial_number', 'like', $like)
+                        ->orWhereHas('product', function ($q) use ($like) {
+                            $q->where('name', 'like', $like)
+                                ->orWhere('identification_number', 'like', $like)
+                                ->orWhereHas('brand', fn ($b) => $b->where('name', 'like', $like));
                         });
-                    })
-                    ->with('product:id,name,identification_number')
-                    ->get();
+                    });
+                })
+                ->get();
         }else{
              $this->tyres = Tyre::query()
                     ->where('disposed', 0)
-                    ->where('retread', 0)
-                    ->whereDoesntHave('tyre_assignments', function ($query) {
-                            $query->where('status', 1);
-                        })->get();
+                    ->where('retread', 0)->get();
         }
 
-        if (isset($this->search)) {
+        if (filled($this->search)) {
             return view('livewire.tyre-assignments.index',[
                 'tyre_assignments' => TyreAssignment::query()->with('horse','vehicle','trailer','tyre','tyre.product','tyre.product.brand')
                 ->where('status',1)

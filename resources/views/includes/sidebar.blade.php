@@ -715,7 +715,7 @@
                         {{-- <li><a href="{{route('account_types.index')}}" ><i class="fas fa-list "></i> <span>Account Types</span></a></li> --}}
                         <li><a href="{{route('accounts.index')}}"><i class="fas fa-list "></i> <span> Manage Accounts</span></a></li>
                         @if (Auth::user()->is_admin())
-                             <li><a href="{{route('accounts.tax')}}"><i class="fas fa-list "></i> <span> Manage Sales Taxs</span></a></li>
+                             <li><a href="{{route('accounts.tax')}}"><i class="fas fa-list "></i> <span> Manage Sales Taxes</span></a></li>
                         @endif
                     </ul>
                 </li>
@@ -1396,14 +1396,6 @@
                 <li class="has-children">
                     <a href="#"><i class="fas fa-cog"></i> <span>Master</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
-                        <li class="has-children">
-                            <a href="#"><i class="fas fa-circle"></i> <span>Fleet Inspections</span> <i class="fas fa-angle-right arrow"></i></a>
-                            <ul class="child-nav">
-                                <li class="{{ request()->routeIs('checklist_categories.index') ? 'active' : '' }}" style="padding-left: 10px"><a href="{{route('checklist_categories.index')}}" ><i class="fas fa-list "></i> <span>Checklists</span></a></li>
-                                <li class="{{ request()->routeIs('checklist_sub_categories.index') ? 'active' : '' }}" style="padding-left: 10px"><a href="{{route('checklist_sub_categories.index')}}"><i class="fas fa-list "></i> <span>Inspection Groups</span></a></li>
-                                <li class="{{ request()->routeIs('checklist_items.index') ? 'active' : '' }}" style="padding-left: 10px"><a href="{{route('checklist_items.index')}}"><i class="fas fa-list "></i> <span>Inspection Items</span></a></li>
-                            </ul>
-                        </li>
                         <li class="{{ request()->routeIs('service_types.index') ? 'active' : '' }}">
                             <a href="{{route('service_types.index')}}"><i class="fas fa-list"></i> <span>Service Types</span> </a>
                         </li>
@@ -1498,13 +1490,6 @@
                                     @if ($inspectionsCount>0)
                                     <span class="label label-success ml-5">{{$inspectionsCount}}</span>
                                     @endif</a></li>
-                            </ul>
-                        </li>
-
-                        <li class="has-children {{ request()->routeIs('checklists.index') ? 'active' : '' }}" >
-                            <a href="#"><i class="fas fa-search"></i> <span>Fleet Inspections</span> <i class="fas fa-angle-right arrow"></i></a>
-                            <ul class="child-nav">
-                                <li><a href="{{route('checklists.index')}}"><i class="fas fa-tasks "></i> <span>Manage Inspections</span></a></li>
                             </ul>
                         </li>
 

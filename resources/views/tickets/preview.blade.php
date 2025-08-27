@@ -5,6 +5,7 @@
 @elseif (Auth::user()->company)
 <link rel="shortcut icon" type = "image/png" href="{!! asset('images/uploads/'.Auth::user()->company->logo)!!}">
 @endif
+
 @endsection
 @section('title')
     Job Card | @if (isset(Auth::user()->employee->company))

@@ -16,6 +16,17 @@
     <link rel="shortcut icon" type = "image/png" href="{!! asset('images/uploads/'.Auth::user()->company->logo)!!}">
     @endif
     {{-- <link rel="stylesheet" href="{{asset('css/layout.css')}}"> --}}
+    <style>
+        .table-bordered {
+        border: 1px solid #000;   /* border around the table itself */
+         border-collapse: collapse;    
+        }
+
+        .table-bordered th,
+        .table-bordered td {
+        border: 1px solid #000;   /* borders for each cell */
+        }
+</style>
     @yield('extra-css')
     @include('includes.css')
     @livewireStyles

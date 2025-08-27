@@ -240,30 +240,7 @@ class Edit extends Component
                 'nullable',
                 'date',
             ],
-            'email' => [
-                'nullable',
-                'email',
-                Rule::unique('employees', 'email')
-                    ->ignore(optional($this->employee)->id)
-                    ->withoutTrashed(),
-            ],
-            'personal_email' => [
-                'nullable',
-                'email',
-                Rule::unique('employees', 'personal_email')
-                    ->ignore(optional($this->employee)->id)
-                    ->whereNull('deleted_at'),
-            ],
-            'phonenumber' => [
-                'nullable',
-                'max:13',
-                Rule::unique('employees', 'phonenumber')
-                    ->ignore(optional($this->employee)->id)
-                    ->whereNull('deleted_at'),
-            ],
-            'company_id' => [
-                'required',
-            ],
+           
             'selectedDepartment' => [
                 'required',
             ],

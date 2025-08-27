@@ -12,6 +12,9 @@ class Ticket extends Model implements Auditable
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 
+    public function asset(){
+        return $this->belongsTo('App\Models\Asset');
+    }
     public function vehicle(){
         return $this->belongsTo('App\Models\Vehicle');
     }

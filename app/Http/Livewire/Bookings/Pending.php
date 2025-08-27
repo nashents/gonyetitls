@@ -127,6 +127,7 @@ class Pending extends Component
             }else {
         $booking->authorized_by_id = Auth::user()->id;
         $booking->authorization = $this->authorize;
+        $booking->authorization_date = date('Y-m-d');
         $booking->comments = $this->comments;
         $booking->update();
 
