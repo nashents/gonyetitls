@@ -171,6 +171,8 @@ class Edit extends Component
 
     public function update(){
 
+        DB::transaction(function () {
+
         $booking = Booking::find($this->booking_id);
         
         $booking->vendor_id = $this->assigned_to === "Vendor" ? ($this->vendor_id ?: null) : null;
@@ -205,16 +207,19 @@ class Edit extends Component
         }
 
         $booking->employee_id = $this->employee_id ? $this->employee_id : Null;
+
         $booking->in_date = $this->in_date;
         $booking->in_time = $this->in_time;
         $booking->station = $this->station;
         $booking->description = $this->description;
         $booking->estimated_out_date = $this->estimated_out_date;
         $booking->type = $this->type;
+
         $booking->assigned_to = $this->assigned_to;
         $booking->estimated_out_time = $this->estimated_out_time;
         $booking->service_type_id = $this->service_type_id;
         $booking->status = 1;
+
         $booking->update();
 
         if ($this->assigned_to == "Mechanic") {
@@ -224,8 +229,10 @@ class Edit extends Component
             $booking->employees()->detach();
         }
       
-        $mileage =  Mileage::where('booking_id',$booking->id);
-        if (isset($mileage)) {
+     
+        $mileage =  Mileage::where('booking_id', $booking->id)->first();
+
+        if ($mileage) {
             $mileage->booking_id = $booking->id;
             $mileage->horse_id = $this->selectedHorse ? $this->selectedHorse : Null;
             $mileage->vehicle_id = $this->selectedVehicle ? $this->selectedVehicle : Null;
@@ -236,8 +243,9 @@ class Edit extends Component
             $mileage->update();
         }
 
-        $hours =  Hour::where('booking_id',$booking->id);
-        if (isset($hours)) {
+        $hours =  Hour::where('booking_id',$booking->id)->first();
+
+        if ($hours) {
             $hours->booking_id = $booking->id;
             $hours->horse_id = $this->selectedHorse ? $this->selectedHorse : Null;
             $hours->vehicle_id = $this->selectedVehicle ? $this->selectedVehicle : Null;
@@ -251,6 +259,8 @@ class Edit extends Component
 
         Session::flash('success','Booking Updated Successfully');
         return redirect()->route('bookings.index');
+
+    });
 
     }
 

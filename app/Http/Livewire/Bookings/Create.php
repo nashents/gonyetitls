@@ -177,6 +177,9 @@ class Create extends Component
     }
 
     public function store(){
+
+        DB::transaction(function () {
+
         $booking = new Booking;
         $booking->booking_number = $this->bookingNumber();
         $booking->user_id = Auth::user()->id;
@@ -227,9 +230,6 @@ class Create extends Component
         $booking->status = 1;
         $booking->save();
 
-        
-
-
         if ($this->assigned_to == "Mechanic") {
             $booking->employees()->attach($this->mechanic_id);
         }else {
@@ -253,6 +253,9 @@ class Create extends Component
 
         Session::flash('success','Booking Successfully Created');
         return redirect()->route('bookings.index');
+
+        });
+
     }
     public function render()
     {
