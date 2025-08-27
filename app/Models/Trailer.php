@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Cluster;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Contracts\Auditable;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -14,6 +15,9 @@ class Trailer extends Model implements Auditable
 
     public function trailer_documents(){
         return $this->hasMany('App\Models\TrailerDocument');
+    }
+    public function clusters(){
+         return $this->belongsToMany(Cluster::class)->withPivot(['position','attached_at'])->withTimestamps();
     }
     public function movements(){
         return $this->hasMany('App\Models\Movement');

@@ -874,11 +874,9 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="odometer">Hours
-                                            @if ($for == "Rehandling")
-                                                <span class="required" style="color: red">*</span>
-                                            @endif
+                                            <span class="required" style="color: red">*</span>
                                         </label>
-                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="hours"  placeholder="Enter Engine Hours" {{$for == "Rehandling" ? "required" : ""}}/>
+                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="hours"  placeholder="Enter Engine Hours" required/>
                                         @error('hours') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>

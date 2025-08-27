@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Cluster;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Contracts\Auditable;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -11,6 +12,8 @@ class Horse extends Model implements Auditable
 {
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
+
+    public function clusters()   { return $this->hasOne(Cluster::class); } // if one horse can be in many clusters
 
     public function horse_documents(){
         return $this->hasMany('App\Models\HorseDocument');

@@ -40,36 +40,39 @@
                                       </tr>
                                     </thead>
                                     <tbody> 
-                                        @foreach ($department_heads as $employee)
-                                            <tr>
-                                                <td class="line-height-35"><img src="{{asset('images/uploads/'.$employee->user->profile)}}" alt="" class="border-radius-50 img-circle profile-img " style="width: 50px; height:50px"></td>
-                                                <td>{{ucfirst($employee->name)}} {{ucfirst($employee->surname)}}</td>
-                                                <td>{{$employee->gender}}</td>
-                                                <td>{{$employee->email}}</td>
-                                                <td>
-                                                    @foreach ($employee->departments as $department)
-                                                        @if (in_array($department->id, $employee_department_ids))
-                                                            <li>{{ $department->name }}</li>
-                                                        @endif
-                                                    @endforeach
-                                                </td>
-                                                <td>{{$employee->post}}</td> 
-                                                <td>
-                                                    @php
-                                                        $today = Carbon::today();
-                                                        $onLeave = $employee->leaves->contains(function ($leave) use ($today) {
-                                                            return $today->between($leave->start_date, $leave->end_date);
-                                                        });
-                                                    @endphp
+                                        @if (isset($department_heads))
+                                            @foreach ($department_heads as $employee)
+                                                <tr>
+                                                    <td class="line-height-35"><img src="{{asset('images/uploads/'.$employee->user->profile)}}" alt="" class="border-radius-50 img-circle profile-img " style="width: 50px; height:50px"></td>
+                                                    <td>{{ucfirst($employee->name)}} {{ucfirst($employee->surname)}}</td>
+                                                    <td>{{$employee->gender}}</td>
+                                                    <td>{{$employee->email}}</td>
+                                                    <td>
+                                                        @foreach ($employee->departments as $department)
+                                                            @if (in_array($department->id, $employee_department_ids))
+                                                                <li>{{ $department->name }}</li>
+                                                            @endif
+                                                        @endforeach
+                                                    </td>
+                                                    <td>{{$employee->post}}</td> 
+                                                    <td>
+                                                        @php
+                                                            $today = Carbon::today();
+                                                            $onLeave = $employee->leaves->contains(function ($leave) use ($today) {
+                                                                return $today->between($leave->start_date, $leave->end_date);
+                                                            });
+                                                        @endphp
 
-                                                    @if ($onLeave)
-                                                        <span class="badge bg-primary">On Leave</span>
-                                                    @else
-                                                        <span class="badge bg-success">Available</span>
-                                                    @endif
-                                                </td>
-                                            </tr>
-                                        @endforeach
+                                                        @if ($onLeave)
+                                                            <span class="badge bg-primary">On Leave</span>
+                                                        @else
+                                                            <span class="badge bg-success">Available</span>
+                                                        @endif
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        @endif
+                                        
                                     </tbody>
                                   </table>
 
