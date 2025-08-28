@@ -130,6 +130,59 @@
 @stack('scripts')
     
     <script type="text/javascript">
+            window.addEventListener('show-closeShiftModal', event => {
+                $('#closeShiftModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-closeShiftModal', event => {
+                $('#closeShiftModal').modal('hide');
+            })
+    </script>
+
+    <script type="text/javascript">
+            window.addEventListener('show-clusterModal', event => {
+                $('#clusterModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-clusterModal', event => {
+                $('#clusterModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-clusterEditModal', event => {
+                $('#clusterEditModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-clusterEditModal', event => {
+                $('#clusterEditModal').modal('hide');
+            })
+    </script>
+
+<script type="text/javascript">
+            window.addEventListener('show-teamModal', event => {
+                $('#teamModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-teamModal', event => {
+                $('#teamModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-teamEditModal', event => {
+                $('#teamEditModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-teamEditModal', event => {
+                $('#teamEditModal').modal('hide');
+            })
+    </script>
+
+    <script type="text/javascript">
             window.addEventListener('show-importModal', event => {
                 $('#importModal').modal('show');
             })

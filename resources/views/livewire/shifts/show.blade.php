@@ -145,7 +145,7 @@
                                 <th class="w-10 text-center line-height-35">Status</th>
                                 <td class="w-20 line-height-35"><span class="badge bg-{{$shift->status == 1 ? "warning" : "success"}}">{{$shift->status == 1 ? "Open" : "Closed"}}</span></td>
                             </tr>
-                            <tr>
+                            {{-- <tr>
                                 <th class="w-10 text-center line-height-35">Authorization</th>
                                 <td class="w-20 line-height-35"> <span class="badge bg-{{($shift->authorization == 'approved') ? 'success' : (($shift->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($shift->authorization == 'approved') ? 'approved' : (($shift->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
                             </tr>
@@ -164,7 +164,7 @@
                                     <th class="w-10 text-center line-height-35">Authorization Comments</th>
                                     <td class="w-20 line-height-35">{{$shift->reason}}</td>
                                 </tr>
-                            @endif
+                            @endif --}}
                                
                     
                            

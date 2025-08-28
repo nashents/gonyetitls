@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cluster;
+use Illuminate\Support\Facades\Session;
 use App\Http\Requests\StoreClusterRequest;
 use App\Http\Requests\UpdateClusterRequest;
 
@@ -15,7 +16,7 @@ class ClusterController extends Controller
      */
     public function index()
     {
-        //
+         return view('clusters.index');
     }
 
     /**
@@ -81,6 +82,8 @@ class ClusterController extends Controller
      */
     public function destroy(Cluster $cluster)
     {
-        //
+        $cluster->delete();
+        Session::flash('success','Cluster Deleted Successfully!! ');
+        return redirect()->back();
     }
 }

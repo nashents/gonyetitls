@@ -19,9 +19,7 @@ class Tax extends Component
     public $description;
 
     public function mount(){
-         $account_type = AccountType::where('name','Sales Taxes')->first();
-         $this->accounts = $account_type->accounts;
-         $this->account_type_id = $account_type->id;
+       
     }
 
 
@@ -133,6 +131,12 @@ class Tax extends Component
 
     public function render()
     {
-        return view('livewire.accounts.tax');
+        $account_type = AccountType::where('name','Sales Taxes')->first();
+        $this->accounts = $account_type->accounts;
+        $this->account_type_id = $account_type->id;
+
+        return view('livewire.accounts.tax',[
+            'accounts' => $this->accounts
+        ]);
     }
 }

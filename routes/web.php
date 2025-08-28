@@ -447,6 +447,8 @@ Route::get('goods-received/assets/','GoodsReceivedController@assets')->name('goo
 
 
 Route::get('horses/{horse}/edit','HorseController@edit')->name('horses.edit')->withTrashed();
+Route::resource('clusters','ClusterController');
+Route::resource('teams','TeamController');
 Route::resource('bins','BinController');
 Route::resource('claims','ClaimController');
 Route::resource('goods_receiveds','GoodsReceivedController');

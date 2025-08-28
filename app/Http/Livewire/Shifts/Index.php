@@ -4,6 +4,7 @@ namespace App\Http\Livewire\Shifts;
 
 use Carbon\Carbon;
 use App\Models\Fuel;
+use App\Models\Team;
 use App\Models\Work;
 use App\Models\Cargo;
 use App\Models\Horse;
@@ -88,6 +89,8 @@ class Index extends Component
     public $driver_id;
     public $equipment;
 
+    public $teams;
+    public $team_id;
     public $cargos;
     public $cargo_id;
     public $loading_points;
@@ -145,6 +148,7 @@ class Index extends Component
         $this->shift_start_time = '';
         $this->shift_end_time = '';
         $this->type = '';
+        $this->team_id = '';
         $this->date = '';
         $this->location = '';
         $this->start_time = [];
@@ -176,14 +180,34 @@ class Index extends Component
         $this->resetPage();
     }
 
+    public function openClose($id){
+        $this->shift_id = $id;
+        $this->dispatchBrowserEvent('show-closeShiftModal');
+    }
+
+    public function closeShift(){
+
+        $shift = Shift::find($this->shift_id);
+        $shift->status = $this->status;
+        $this->dispatchBrowserEvent('hide-closeShiftModal');
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Shift Closed Successfully!!"
+        ]);
+        
+    }
+
     public function mount(){
         $this->resetPage();
         $this->user = Auth::user();
         $this->equipment = "Horse";
         $this->shift_filter = "created_at";
         $this->employee =  $this->user->employee;
+        $this->team = $this->employee->teams->first();
+        $this->team_id =  $this->team?->id;
         $this->company = Company::with('currency')->find( $this->employee->company_id);
         $this->customers = Customer::orderBy('name','asc')->get();
+        $this->selectedCurrency = 1;
         $this->drivers = Driver::all();
         $this->horses = Horse::orderBy('registration_number','asc')->get();
         $this->cargos = Cargo::orderBy('name','asc')->get();
@@ -195,8 +219,12 @@ class Index extends Component
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->works = Work::orderBy('description','asc')->get();
         $this->locations = Location::orderBy('name','asc')->get();
+        $this->teams = Team::orderBy('name','asc')->get();
     }
 
+    public function updatingCloseMileage(){
+        $this->odometer = $this->close_mileage;
+    }
 
     public function updatedSelectedCurrency($id){
         if(!is_null($id)){
@@ -240,11 +268,19 @@ class Index extends Component
                 'type'=>'success',
                 'message'=>"Work Descriptions Refreshed Successfully!!."
             ]);
-        }elseif($category == "locations"){
+        }
+        elseif($category == "locations"){
             $this->locations = Location::orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Locations Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "teams"){
+            $this->teams = Team::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Teams Refreshed Successfully!!."
             ]);
         }
     }
@@ -564,6 +600,7 @@ class Index extends Component
         $shift->shift_start_time = $this->shift_start_time;
         $shift->shift_end_time = $this->shift_end_time;
         $shift->customer_id = $this->customer_id;
+        $shift->team_id = $this->team_id;
         $shift->driver_id = $this->driver_id;
         $shift->currency_id = $this->selectedCurrency;
         $shift->cargo_id = $this->cargo_id;
@@ -709,6 +746,7 @@ class Index extends Component
     $this->selectedTransporter = $shift->transporter_id;
     $this->selectedHorse = $shift->horse_id;
     $this->cargo_id = $shift->cargo_id;
+    $this->team_id = $shift->team_id;
     $this->driver_id = $shift->driver_id;
     $this->selectedVehicle = $shift->vehicle_id;
     $this->customer_id = $shift->customer_id;
@@ -771,6 +809,7 @@ class Index extends Component
             $shift->customer_id = $this->customer_id;
             $shift->driver_id = $this->driver_id;
             $shift->cargo_id = $this->cargo_id;
+            $shift->team_id = $this->team_id;
             $shift->transporter_id = $this->selectedTransporter;
             $shift->horse_id = $this->equipment === "Horse" ? $this->selectedHorse : null;
             $shift->vehicle_id = $this->equipment === "Vehicle" ? $this->selectedVehicle : null;
@@ -910,6 +949,9 @@ class Index extends Component
                                     ->orWhereHas('customer', function ($q) {
                                         $q->where('name', 'like', '%'.$this->search.'%');
                                     })
+                                    ->orWhereHas('team', function ($q) {
+                                        $q->where('name', 'like', '%'.$this->search.'%');
+                                    })
                                     ->orWhereHas('horse', function ($q) {
                                         $q->where('registration_number', 'like', '%'.$this->search.'%')
                                         ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
@@ -956,6 +998,9 @@ class Index extends Component
                             ->orWhereHas('customer', function ($q) {
                                 $q->where('name', 'like', '%'.$this->search.'%');
                             })
+                            ->orWhereHas('team', function ($q) {
+                                    $q->where('name', 'like', '%'.$this->search.'%');
+                                })
                             ->orWhereHas('horse', function ($q) {
                                 $q->where('registration_number', 'like', '%'.$this->search.'%')
                                 ->orWhere('fleet_number', 'like', '%'.$this->search.'%');

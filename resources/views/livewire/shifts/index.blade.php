@@ -95,7 +95,12 @@
                                     <td>
                                          <strong>{{ucfirst($shift->type)}}  {{ucfirst($shift->for)}}</strong>
                                         <br>
-                                         <small><strong>CreatedBy:</strong> {{$shift->user ? $shift->user->name : ""}} {{$shift->user ? $shift->user->surname : ""}}</small>
+                                         <small><strong>CreatedBy: </strong> {{$shift->user ? $shift->user->name : ""}} {{$shift->user ? $shift->user->surname : ""}}</small>
+                                         @if ($shift->team)
+                                         <br>
+                                             <small><strong>Team: </strong> {{$shift->team ? $shift->team->name : ""}}</small>
+                                         @endif
+                                        
                                     </td>
                                       <td>
                                         <strong>Date:</strong> {{$shift->date}} <br>
@@ -152,8 +157,12 @@
                                             </button>
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{ route('shifts.show', $shift->id) }}"   ><i class="fa fa-eye color-default"></i> View</a></li>
-                                                <li><a href="#"  wire:click="edit({{$shift->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
-                                                <li><a href="#" data-toggle="modal" data-target="#shiftDeleteModal{{ $shift->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                                                @if ($shift->status == 1)
+                                                    <li><a href="#" wire:click="openClose({{$shift->id}})"  ><i class="fa fa-close color-primary"></i> Close</a></li>
+                                                    <li><a href="#"  wire:click="edit({{$shift->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                                    <li><a href="#" data-toggle="modal" data-target="#shiftDeleteModal{{ $shift->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                                                @endif
+                                               
                                             </ul>
                                         </div>
                                         @include('shifts.delete')
@@ -238,6 +247,36 @@
         </div>
     </div>
    
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="closeShiftModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modal4Label"><i class="fa fa-close"></i>Close Shift<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                </div>
+                <form wire:submit.prevent="closeShift()" method="POST" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="name">Shift Status<span class="required" style="color: red">*</span></label>
+                        <select class="form-control" wire:model.debounce.300ms="status">
+                            <option value="">Select Option</option>
+                            <option value="1">Open</option>
+                            <option value="0">Close</option>
+                        </select>
+                        @error('status') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                        <button  type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-upload"></i>Upload</button>
+                    </div>
+                    <!-- /.btn-group -->
+                </div>
+            </form>
+            </div>
+        </div>
+    </div>
+
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="shiftTripsImportModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -273,7 +312,19 @@
                 <form wire:submit.prevent="store()" >
                 <div class="modal-body">
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
+                             <div class="form-group">
+                                <label for="name">Teams<span class="required" style="color: red">*</span></label>
+                                <select class="form-control" wire:model.debounce.300ms="team_id" disabled>
+                                    <option value="">Select Team</option>
+                                    @foreach ($teams as $team)
+                                        <option value="{{$team->id}}">{{$team->name}}</option>
+                                    @endforeach
+                                </select>
+                                @error('team_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
                              <div class="form-group">
                                 <label for="name">Type<span class="required" style="color: red">*</span></label>
                                 <select class="form-control" wire:model.debounce.300ms="type">
@@ -284,7 +335,7 @@
                                 @error('type') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label for="name">For<span class="required" style="color: red">*</span></label>
                                 <select class="form-control" wire:model.debounce.300ms="for">
@@ -399,29 +450,16 @@
                     </div>
                         <div class="row">
                          <div class="col-md-3">
-                            <div class="form-group">
-                                <label for="name">Currencies</label>
-                                <select class="form-control" wire:model.debounce.300ms="selectedCurrency">
-                                    <option value="">Select Currency</option>
-                                    @foreach ($currencies as $currency)
-                                        <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
+                             <div class="form-group">
+                                <label for="name">Cargos<span class="required" style="color: red">*</span></label>
+                                <select class="form-control" wire:model.debounce.300ms="cargo_id">
+                                    <option value="">Select Cargo</option>
+                                    @foreach ($cargos as $cargo)
+                                        <option value="{{$cargo->id}}">{{$cargo->name}}</option>
                                     @endforeach
                                 </select>
-                                @error('selectedCurrency') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                @error('cargo_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
-                              @if (!is_null($selectedCurrency))
-                                @if ($company)
-                                    @if ($selectedCurrency != $company->currency_id)
-                                    <div class="form-group">
-                                        <label for="customer">Conversion Rate<span class="required" style="color: red">*</span></label>
-                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="exchange_rate"  placeholder="Exchange Rate {{$selected_currency ? "From ".$selected_currency->name : ""}} {{$company->currency ? "To ".$company->currency->name : ""}}" required>
-                                        @error('exchange_rate') <span class="text-danger error">{{ $message }}</span>@enderror
-                                        <small style="color: green">{{$selected_currency ? " 1 ".$selected_currency->name." is how much in" : ""}} {{$company->currency ? $company->currency->name." ?" : ""}}</small>
-                                        <small>{{$exchange_amount ? "The converted amount is: ".$exchange_amount : ""}}</small> <br>
-                                    </div> 
-                                    @endif
-                                @endif
-                            @endif
                         </div>
                          <div class="col-md-3">
                             <div class="form-group">
@@ -446,7 +484,7 @@
                         </div>
                     </div>
                     @if ($for == "Trips")
-                        <div class="row">
+                        {{-- <div class="row">
                             <div class="col-md-5">
                                 <div class="form-group">
                                     <label for="name">Loading Points<span class="required" style="color: red">*</span></label>
@@ -478,37 +516,25 @@
                                 @error('total_loads') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
-                        </div>
+                        </div> --}}
                         
             
                         <div class="row">
-                             <div class="col-md-3">
-                             <div class="form-group">
-                                <label for="name">Cargos<span class="required" style="color: red">*</span></label>
-                                <select class="form-control" wire:model.debounce.300ms="cargo_id">
-                                    <option value="">Select Cargo</option>
-                                    @foreach ($cargos as $cargo)
-                                        <option value="{{$cargo->id}}">{{$cargo->name}}</option>
-                                    @endforeach
-                                </select>
-                                @error('cargo_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
-                        </div>
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="name">Calculated Distance</label>
                                     <input type="number" step="any" class="form-control" wire:model.debounce.300ms="calculated_mileage" placeholder="Enter Calculated Distance"/>
                                     @error('calculated_mileage') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="name">Opening Mileage</label>
                                     <input type="number" step="any" class="form-control" wire:model.debounce.300ms="open_mileage" placeholder="Enter Opening Mileage"/>
                                     @error('open_mileage') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="name">Ending Mileage</label>
                                     <input type="number" step="any" class="form-control" wire:model.debounce.300ms="close_mileage" placeholder="Enter Closing Mileage"/>
@@ -861,7 +887,7 @@
                                 
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label for="odometer">Mileage
+                                        <label for="mileage">Mileage
                                             @if ($for == "Trips")
                                                 <span class="required" style="color: red">*</span>
                                             @endif
@@ -873,7 +899,7 @@
                             
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label for="odometer">Hours
+                                        <label for="hours">Hours
                                             <span class="required" style="color: red">*</span>
                                         </label>
                                         <input type="number" step="any" class="form-control" wire:model.debounce.300ms="hours"  placeholder="Enter Engine Hours" required/>
@@ -914,7 +940,19 @@
 
                 <div class="modal-body">
                 <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
+                             <div class="form-group">
+                                <label for="name">Teams<span class="required" style="color: red">*</span></label>
+                                <select class="form-control" wire:model.debounce.300ms="team_id" disabled>
+                                    <option value="">Select Team</option>
+                                    @foreach ($teams as $team)
+                                        <option value="{{$team->id}}">{{$team->name}}</option>
+                                    @endforeach
+                                </select>
+                                @error('team_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
                              <div class="form-group">
                                 <label for="name">Type<span class="required" style="color: red">*</span></label>
                                 <select class="form-control" wire:model.debounce.300ms="type">
@@ -925,7 +963,7 @@
                                 @error('type') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label for="name">For<span class="required" style="color: red">*</span></label>
                                 <select class="form-control" wire:model.debounce.300ms="for">
@@ -1040,21 +1078,33 @@
                     </div>
             
                     <div class="row">
-                         <div class="col-md-4">
+                         <div class="col-md-3">
+                             <div class="form-group">
+                                <label for="name">Cargos<span class="required" style="color: red">*</span></label>
+                                <select class="form-control" wire:model.debounce.300ms="cargo_id">
+                                    <option value="">Select Cargo</option>
+                                    @foreach ($cargos as $cargo)
+                                        <option value="{{$cargo->id}}">{{$cargo->name}}</option>
+                                    @endforeach
+                                </select>
+                                @error('cargo_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="name">Date<span class="required" style="color: red">*</span></label>
                                 <input type="date" class="form-control" wire:model.debounce.300ms="date" placeholder="Enter Shift Date" required/>
                                 @error('date') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
-                         <div class="col-md-4">
+                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="name">Duty Start Time</label>
                                 <input type="time" class="form-control" wire:model.debounce.300ms="shift_start_time" placeholder="Enter Shift Start Time"/>
                                 @error('shift_start_time') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
-                         <div class="col-md-4">
+                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="name">Duty Close Time</label>
                                 <input type="time" class="form-control" wire:model.debounce.300ms="shift_end_time" placeholder="Enter Shift End Time" />
@@ -1064,7 +1114,7 @@
                     </div>
 
                        @if ($for == "Trips")
-                        <div class="row">
+                        {{-- <div class="row">
                             <div class="col-md-5">
                                 <div class="form-group">
                                     <label for="name">Loading Points<span class="required" style="color: red">*</span></label>
@@ -1096,36 +1146,25 @@
                                 @error('total_loads') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                             </div>
-                        </div>
+                        </div> --}}
                 
                         <div class="row">
-                             <div class="col-md-3">
-                             <div class="form-group">
-                                <label for="name">Cargos<span class="required" style="color: red">*</span></label>
-                                <select class="form-control" wire:model.debounce.300ms="cargo_id">
-                                    <option value="">Select Cargo</option>
-                                    @foreach ($cargos as $cargo)
-                                        <option value="{{$cargo->id}}">{{$cargo->name}}</option>
-                                    @endforeach
-                                </select>
-                                @error('cargo_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
-                        </div>
-                            <div class="col-md-3">
+                            
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="name">Calculated Distance</label>
                                     <input type="number" step="any" class="form-control" wire:model.debounce.300ms="calculated_mileage" placeholder="Enter Calculated Distance"/>
                                     @error('calculated_mileage') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="name">Opening Mileage</label>
                                     <input type="number" step="any" class="form-control" wire:model.debounce.300ms="open_mileage" placeholder="Enter Opening Mileage"/>
                                     @error('open_mileage') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="name">Ending Mileage</label>
                                     <input type="number" step="any" class="form-control" wire:model.debounce.300ms="close_mileage" placeholder="Enter Closing Mileage"/>
@@ -1394,7 +1433,7 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="currencies">Currencies</label>
-                                        <select class="form-control" wire:model.debounce.300ms="selectedFuelCurrency" {{ !isset($company->currency_id) ? "disabled" : ""  }}>
+                                        <select class="form-control" wire:model.debounce.300ms="selectedFuelCurrency" disabled>
                                             <option value="">Select Currency </option>
                                             @foreach ($currencies as $currency)
                                             <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
@@ -1481,15 +1520,6 @@
                            
                             @endif
 
-                             <div class="form-group">
-                                <label for="name">Shift Status<span class="required" style="color: red">*</span></label>
-                                <select class="form-control" wire:model.debounce.300ms="status">
-                                    <option value="">Select Option</option>
-                                    <option value="1">Open</option>
-                                    <option value="0">Close</option>
-                                </select>
-                                @error('status') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">

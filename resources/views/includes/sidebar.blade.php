@@ -565,6 +565,26 @@
                         @endif
                     </ul>
                 </li>
+
+                @if (in_array('Finance', $department_names) || in_array('Super Admin', $role_names))
+                <li class="nav-header">
+                    <span class="">Accounting</span>
+                </li>
+                <li class="{{ request()->routeIs('transactions.index') ? 'active' : '' }}"><a href="{{route('transactions.index')}}"><i class="fas fa-money-check"></i> <span>Transactions</span></a></li>
+                <li class="has-children {{ request()->routeIs('accounts.index') ? 'active' : '' }}" >
+                    <a href="#"><i class="fas fa-balance-scale"></i> <span>Charts of Accounts</span> <i class="fas fa-angle-right arrow"></i></a>
+                    <ul class="child-nav">
+                        {{-- <li><a href="{{route('account_types.index')}}" ><i class="fas fa-list "></i> <span>Account Types</span></a></li> --}}
+                        <li><a href="{{route('accounts.index')}}"><i class="fas fa-list "></i> <span> Manage Accounts</span></a></li>
+                        @if (Auth::user()->is_admin())
+                             <li><a href="{{route('accounts.tax')}}"><i class="fas fa-list "></i> <span> Manage Sales Taxes</span></a></li>
+                        @endif
+                    </ul>
+                </li>
+                <li  class="{{ request()->routeIs('bank_accounts.index') ? 'active' : '' }}" ><a href="{{route('bank_accounts.index')}}"><i class="fas fa-bank"></i> <span>Bank Accounts</span></a></li>
+                <li  class="{{ request()->routeIs('exchange_rates.index') ? 'active' : '' }}" ><a href="{{route('exchange_rates.index')}}"><i class="fas fa-exchange"></i> <span>Currency Exchange Rates</span></a></li>
+                @endif
+
                 
                       @if (in_array('Super Admin', $role_names)  || (in_array('Finance', $department_names)))
                 <li class="nav-header">
@@ -704,29 +724,8 @@
                 </li>
                 @endif
 
-                @if (in_array('Finance', $department_names) || in_array('Super Admin', $role_names))
-                <li class="nav-header">
-                    <span class="">Accounting</span>
-                </li>
-                <li class="{{ request()->routeIs('transactions.index') ? 'active' : '' }}"><a href="{{route('transactions.index')}}"><i class="fas fa-money-check"></i> <span>Transactions</span></a></li>
-                <li class="has-children {{ request()->routeIs('accounts.index') ? 'active' : '' }}" >
-                    <a href="#"><i class="fas fa-balance-scale"></i> <span>Charts of Accounts</span> <i class="fas fa-angle-right arrow"></i></a>
-                    <ul class="child-nav">
-                        {{-- <li><a href="{{route('account_types.index')}}" ><i class="fas fa-list "></i> <span>Account Types</span></a></li> --}}
-                        <li><a href="{{route('accounts.index')}}"><i class="fas fa-list "></i> <span> Manage Accounts</span></a></li>
-                        @if (Auth::user()->is_admin())
-                             <li><a href="{{route('accounts.tax')}}"><i class="fas fa-list "></i> <span> Manage Sales Taxes</span></a></li>
-                        @endif
-                    </ul>
-                </li>
-                <li  class="{{ request()->routeIs('bank_accounts.index') ? 'active' : '' }}" ><a href="{{route('bank_accounts.index')}}"><i class="fas fa-bank"></i> <span>Bank Accounts</span></a></li>
-                <li  class="{{ request()->routeIs('exchange_rates.index') ? 'active' : '' }}" ><a href="{{route('exchange_rates.index')}}"><i class="fas fa-exchange"></i> <span>Currency Exchange Rates</span></a></li>
-                @endif
-
-
-
-              
-                  @if (in_array('HSEQ', $department_names) || in_array('Super Admin', $role_names))
+        
+                @if (in_array('HSEQ', $department_names) || in_array('Super Admin', $role_names))
                 
                 <li class="nav-header">
                     <span class="">SHEQ</span>
@@ -873,6 +872,7 @@
                     <li class="has-children">
                         <a href="#"><i class="fas fa-cog"></i> <span>Master</span> <i class="fas fa-angle-right arrow"></i></a>
                         <ul class="child-nav">
+                            <li class="{{ request()->routeIs('clusters.index') ? 'active' : '' }}" style="padding-left:10px"><a href="{{route('clusters.index')}}"><i class="fas fa-list"></i> <span>Fleet Clusters</span></a></li>
                             <li class="{{ request()->routeIs('horse_groups.index') ? 'active' : '' }}" style="padding-left:10px"><a href="{{route('horse_groups.index')}}"><i class="fas fa-list"></i> <span>Horse Groups</span></a></li>
                             <li class="{{ request()->routeIs('horse_makes.index') ? 'active' : '' }}" style="padding-left:10px"><a href="{{route('horse_makes.index')}}"><i class="fas fa-list"></i> <span>Horse Makes</span></a></li>
                             <li class="{{ request()->routeIs('horse_types.index') ? 'active' : '' }}" style="padding-left:10px"><a href="{{route('horse_types.index')}}"><i class="fas fa-list"></i> <span>Horse Types</span></a></li>
@@ -1147,6 +1147,7 @@
                             <li class="{{ request()->routeIs('clearing_agents.index') ? 'active' : '' }}"><a href="{{route('clearing_agents.index')}}" ><i class="fas fa-building"></i> <span>Clearing Agents</span></a></li>
                             <li class="{{ request()->routeIs('countries.index') ? 'active' : '' }}"><a href="{{route('countries.index')}}"><i class="fas fa-globe-africa"></i> <span>Countries</span> </a></li>
                             <li class="{{ request()->routeIs('consignees.index') ? 'active' : '' }}"><a href="{{route('consignees.index')}}" ><i class="fas fa-users"></i> <span>Consignees</span></a></li>
+                              <li class="{{ request()->routeIs('corridors.index') ? 'active' : '' }}"><a href="{{route('corridors.index')}}" ><i class="fas fa-road"></i> <span>Corridors</span></a></li>
                             <li class="{{ request()->routeIs('deductions.index') ? 'active' : '' }}"><a href="{{route('deductions.index')}}" ><i class="fas fa-list "></i> <span>Deductions</span></a></li>
                             <li class="{{ request()->routeIs('destinations.index') ? 'active' : '' }}"><a href="{{route('destinations.index')}}"><i class="fas fa-map-pin"></i> <span>Destinations</span> </a></li>
                             <li class="{{ request()->routeIs('expenses.index') ? 'active' : '' }}"><a href="{{ route('expenses.index') }}"><i class="fas fa-list"></i> <span>Expenses</span> </a></li>
@@ -1155,7 +1156,9 @@
                             <li class="{{ request()->routeIs('provinces.index') ? 'active' : '' }}"><a href="{{route('provinces.index')}}"><i class="fas fa-globe-africa"></i> <span>Provinces</span> </a></li>
                             <li class="{{ request()->routeIs('works.index') ? 'active' : '' }}"><a href="{{route('works.index')}}" ><i class="fas fa-list"></i> <span>Rehandling Jobs</span></a></li>
                             <li class="{{ request()->routeIs('routes.index') ? 'active' : '' }}"><a href="{{route('routes.index')}}" ><i class="fas fa-road"></i> <span>Road Routes</span></a></li>
-                            <li class="{{ request()->routeIs('corridors.index') ? 'active' : '' }}"><a href="{{route('corridors.index')}}" ><i class="fas fa-road"></i> <span>Transport Corridors</span></a></li>
+                            @if (in_array('Super Admin', $role_names))
+                                <li class="{{ request()->routeIs('teams.index') ? 'active' : '' }}"><a href="{{route('teams.index')}}" ><i class="fas fa-users"></i> <span>Teams</span></a></li>
+                            @endif
                             @if (in_array('Finance', $department_names) || in_array('Super Admin', $role_names))
                             <li class="{{ request()->routeIs('rates.index') ? 'active' : '' }}"><a href="{{route('rates.index')}}"><i class="fas fa-money"></i> <span>Trip Rates</span></a></li>  
                             @endif

@@ -14,6 +14,9 @@ class Shift extends Model implements Auditable
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 
+    public function team(){
+        return $this->belongsTo('App\Models\Team');
+    }
     public function user(){
         return $this->belongsTo('App\Models\User');
     }

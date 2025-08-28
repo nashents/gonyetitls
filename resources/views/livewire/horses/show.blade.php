@@ -1005,24 +1005,24 @@
                 <form wire:submit.prevent="updateNextService()" >
                 <div class="modal-body">
                     <div class="row">
-                        <div class="col md-6">
-                              <div class="form-group">
+                        <div class="col-md-6">
+                             <div class="form-group">
                                 <label for="name">Next Service Mileage<span class="required" style="color: red">*</span></label>
-                                <input type="number" step="any"  min="{{ $horse->mileage }}" class="form-control" wire:model.debounce.300ms="next_service" {{ $horse->mileage ? "" : "disabled" }} placeholder="Enter Horse Next Service Mileage" required />
-                                <small style="color: red">{{ !isset($horse->mileage) ? "Please set horse mileage first before setting horse next mileage" : ""  }}</small>
+                               <input type="number" step="any"  min="{{ $horse->mileage }}" class="form-control" wire:model.debounce.300ms="next_service" {{ $horse->mileage ? "" : "disabled" }} placeholder="Enter Horse Next Service Mileage" required />
+                                 <small style="color: red">{{ !isset($horse->mileage) ? "Please set horse mileage first before setting horse next mileage" : ""  }}</small>
                                 @error('next_service') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                              </div>
+                            </div>
                         </div>
-                        <div class="col md-6">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label for="name">Next Service Hours</label>
                                 <input type="number" step="any"  min="{{ $horse->hours }}" class="form-control" wire:model.debounce.300ms="next_service_hours" {{ $horse->hours ? "" : "disabled" }} placeholder="Enter Horse Next Service Engine Hours" />
+                                <small style="color: red">{{ !isset($horse->hours) ? "Please set horse hours first before setting horse next hours" : ""  }}</small>
                                 <small style="color: red">{{ !isset($horse->hours) ? "Please set horse hours first before setting horse next hours" : ""  }}</small>
                                 @error('next_service_hours') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
                     </div>
-                  
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">

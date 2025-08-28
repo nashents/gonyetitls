@@ -740,13 +740,22 @@ class Create extends Component
 
                 $transporter = Transporter::find($shift->transporter_id);
                 $this->cargos = $transporter->cargos->sortBy('name');
-                $this->selectedStatus = "Scheduled";
+                $this->selectedStatus = "Offloaded";
                 $trip_type = TripType::where('name','Local')->first();
                 $this->selectedTripType = $trip_type ? $trip_type->id : Null;
+                $this->trip_type_name =  $trip_type->name;
                 $this->with_trailer = True;
+                $this->timelines = True;
 
                 $this->selectedTransporter = $shift->transporter_id;
                 if($shift->horse_id){
+                    $horse = $shift->horse;
+                    $cluster = $horse->cluster;
+                    if($cluster){
+                        foreach($cluster->trailers as $trailer){
+                            $this->trailer_id[] = $trailer->id;
+                        }
+                    }
                     $this->selectedHorse = $shift->horse_id;
                     $this->mode_of_transport = "Horse";
                 }elseif($shift->vehicle_id){
@@ -756,6 +765,11 @@ class Create extends Component
                 $this->driver_id = $shift->driver_id;
               
                 $this->selectedCurrency = $shift->currency_id;
+                $this->start_date = Carbon::parse($shift->date . ' ' . $shift->shift_start_time)
+                    ->format('Y-m-d\TH:i');
+
+                $this->end_date = Carbon::parse($shift->date . ' ' . $shift->shift_end_time)
+                    ->format('Y-m-d\TH:i');
                 $this->customer_id = $shift->customer_id;
                 $this->selectedCargo = $shift->cargo_id;
             }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Team;
 use App\Http\Requests\StoreTeamRequest;
+use Illuminate\Support\Facades\Session;
 use App\Http\Requests\UpdateTeamRequest;
 
 class TeamController extends Controller
@@ -15,7 +16,7 @@ class TeamController extends Controller
      */
     public function index()
     {
-        //
+         return view('teams.index');
     }
 
     /**
@@ -81,6 +82,8 @@ class TeamController extends Controller
      */
     public function destroy(Team $team)
     {
-        //
+        $team->delete();
+        Session::flash('success','Team Deleted Successfully!! ');
+        return redirect()->back();
     }
 }
