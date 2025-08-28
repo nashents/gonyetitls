@@ -100,7 +100,7 @@ class Edit extends Component
             return $query->where('name','Expenses');
         })->orderBy('name','asc')->get();
     
-        $this->tyres = Tyre::with('product.brand')->get()->sortBy('product.brand.name');
+        $this->tyres = Tyre::with('product.brand')->where('disposed',0)->get()->sortBy('product.brand.name');
         $this->vendors = Vendor::orderBy('name','asc')->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
        

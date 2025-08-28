@@ -48,9 +48,9 @@ class Index extends Component
 
     public function mount(){
         $this->resetPage();
-        $this->vehicles = Vehicle::where('status',1)->orderBy('registration_number','asc')->get();
-        $this->trailers = Trailer::where('status', 1)->orderBy('registration_number','asc')->get();
-        $this->horses = Horse::where('status',1)->orderBy('registration_number','asc')->get();
+        $this->vehicles = Vehicle::where('archive', 0)->where('status',1)->orderBy('registration_number','asc')->get();
+        $this->trailers = Trailer::where('archive', 0)->where('status', 1)->orderBy('registration_number','asc')->get();
+        $this->horses = Horse::where('archive', 0)->where('status',1)->orderBy('registration_number','asc')->get();
     }
 
     private function resetInputFields(){
@@ -142,20 +142,6 @@ class Index extends Component
         $mileage->save();
 
         $tyre = Tyre::find($this->tyre_id);
-        $dispatch = new TyreDispatch;
-        $dispatch->tyre_assignment_id = $assignment->id;
-        $dispatch->tyre_id = $this->tyre_id;
-        $dispatch->tyre_number = $tyre->tyre_number;
-        $dispatch->serial_number = $tyre->serial_number;
-        $dispatch->width = $tyre->width;
-        $dispatch->aspect_ratio = $tyre->aspect_ratio;
-        $dispatch->diameter =  $tyre->diameter;
-        $dispatch->horse_id = $this->horse_id;
-        $dispatch->vehicle_id = $this->vehicle_id;
-        $dispatch->trailer_id = $this->trailer_id;
-        $dispatch->save();
-
-        $tyre = Tyre::find($this->tyre_id);
         $tyre->status = 0;
         $tyre->update();
 
@@ -171,7 +157,6 @@ class Index extends Component
     }
 
     public function edit($id){
-
         $assignment = TyreAssignment::find($id);
         $this->user_id = $assignment->user_id;
         $this->horse_id = $assignment->horse_id;
