@@ -250,11 +250,25 @@
                                         @endif
                                     <tr>
                                         <th class="text-center"> <strong>From</strong></th>
-                                        <td class="text-center">{{App\Models\Destination::find($trip->from)->country ? App\Models\Destination::find($trip->from)->country->name : ""}} {{App\Models\Destination::find($trip->from) ? App\Models\Destination::find($trip->from)->city : ""}}  </td>
+                                        <td class="text-center">
+                                            @php
+                                                $from_destination = App\Models\Destination::find($trip->from);
+                                            @endphp
+                                            @if ($from_destination)
+                                                {{$from_destination->country ? $from_destination->country : ""}} {{$from_destination->city}}
+                                            @endif    
+                                        </td>
                                     </tr>
                                     <tr>
                                         <th class="text-center"> <strong>To</strong></th>
-                                        <td class="text-center">{{App\Models\Destination::find($trip->from)->country ? App\Models\Destination::find($trip->to)->country->name : ""}} {{App\Models\Destination::find($trip->from) ? App\Models\Destination::find($trip->to)->city : ""}}</td>
+                                        <td class="text-center">
+                                            @php
+                                                $to_destination = App\Models\Destination::find($trip->to);
+                                            @endphp
+                                             @if ($to_destination)
+                                                {{$to_destination->country ? $to_destination->country : ""}} {{$to_destination->city}}
+                                            @endif    
+                                        </td>
                                     </tr>
                                     @if ($trip->loading_point)
                                     <tr>

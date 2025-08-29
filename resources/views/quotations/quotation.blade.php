@@ -23,8 +23,8 @@
     								<img src="{{asset('images/uploads/'.$company->logo)}}" width="150" >
                                 </div>
                                 <div class="col company-details" style="margin-top:-100px;">
-                                    <h4 class="name" style="color:  {{Auth::user()->employee->company ? Auth::user()->employee->company->color : Auth::user()->company->color }}">
-									{{$company->name}}
+                                     <h4 class="name" style="color:  {{$company->color ? $company->color : "#000000" }}" >
+                                        {{$company->name}}
                                     </h4>
                                     <div>{{$company->street_address}}, {{$company->suburb}}, {{$company->city}} {{$company->country}}</div>
                                     <div>{{$company->phonenumber}}
@@ -49,7 +49,7 @@
                                  
                                     @if (isset($quotation->customer->email))
                                     <div class="email">
-                                        <strong>Customer Email: </strong><a href="mailto:{{$quotation->customer->email}}">{{$quotation->customer->email}}</a>
+                                        <strong>Customer Email: </strong> {{$quotation->customer->email}}
                                     </div>
                                     @endif
                                     @if (isset($quotation->customer->email))

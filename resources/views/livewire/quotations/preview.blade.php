@@ -18,10 +18,8 @@
                         </div>
                         <div class="col company-details">
                           
-                            <h4 class="name" >
-                                <a target="_blank" href="javascript:;" style="color:  {{Auth::user()->employee->company ? Auth::user()->employee->company->color : Auth::user()->company->color }}">
-                                    {{$company->name}}
-                                </a>
+                            <h4 class="name" style="color:  {{$company->color ? $company->color : "#000000" }}" >
+                                {{$company->name}}
                             </h4>
                             <div>{{$company->street_address}}, {{$company->suburb}}, {{$company->city}} {{$company->country}}</div>
                             <div>
@@ -76,7 +74,7 @@
                          
                             @if (isset($quotation->customer->email))
                             <div class="email">
-                                <strong>Customer Email: </strong><a href="mailto:{{$quotation->customer->email}}">{{$quotation->customer->email}}</a>
+                                <strong>Customer Email: </strong> {{$quotation->customer->email}}
                             </div>
                             @endif
                             @if (isset($quotation->customer->email))

@@ -2351,7 +2351,7 @@ class Edit extends Component
     public function calculateFreight()
     {
         if ($this->freight_calculation == "rate_weight") {
-            if ((isset($this->rate) && is_numeric($this->rate))  && ((isset($this->weight) && is_numeric($this->weight)) || (isset($this->litreage_at_20) && is_numeric($this->litreage_at_20)) || (isset($this->litreage) && is_numeric($this->litreage)))) {
+            if (($this->rate && is_numeric($this->rate))  && (($this->weight && is_numeric($this->weight)) || ($this->litreage_at_20 && is_numeric($this->litreage_at_20)) || ($this->litreage && is_numeric($this->litreage)))) {
                 if ($this->cargo_type == "Solid") {
                     $this->freight = $this->rate * $this->weight;
                 }elseif($this->cargo_type == "Liquid"){
@@ -2364,13 +2364,13 @@ class Edit extends Component
             }
         }
         elseif ($this->freight_calculation == "rate_distance") {
-            if ((isset($this->rate)  && is_numeric($this->rate))  && ((isset($this->distance) && is_numeric($this->distance)) )) {
+            if (($this->rate  && is_numeric($this->rate))  && (($this->distance && is_numeric($this->distance)) )) {
                 $this->freight = $this->rate * $this->distance;
             }
         }
         elseif ($this->freight_calculation == "rate_weight_distance") {
           
-            if ((isset($this->rate) && is_numeric($this->rate)) && ((isset($this->weight) && is_numeric($this->weight)) || (isset($this->litreage_at_20) && is_numeric($this->litreage_at_20)) || (isset($this->litreage) && is_numeric($this->litreage))) && (isset($this->distance) && is_numeric($this->distance))) {
+            if (($this->rate && is_numeric($this->rate)) && ($this->weight && is_numeric($this->weight)) || ($this->litreage_at_20 && is_numeric($this->litreage_at_20)) || ($this->litreage && is_numeric($this->litreage)) && ($this->distance && is_numeric($this->distance))) {
                 if ($this->cargo_type == "Solid") {
                     $this->freight = $this->rate * $this->weight * $this->distance;
                 }elseif($this->cargo_type == "Liquid"){
@@ -2385,7 +2385,7 @@ class Edit extends Component
             
         }
         elseif ($this->freight_calculation == "flat_rate") {
-            if ((isset($this->rate)  && is_numeric($this->rate))) {
+            if (($this->rate  && is_numeric($this->rate))) {
                 if ($this->cargo_type == "Solid") {
                     $this->freight = $this->rate;
                 }elseif($this->cargo_type == "Liquid"){
@@ -2396,7 +2396,7 @@ class Edit extends Component
         }
 
         if ($this->freight_calculation == "rate_weight") {
-            if ((isset($this->transporter_rate) && is_numeric($this->transporter_rate)) && ((isset($this->weight) && is_numeric($this->weight)) || (isset($this->litreage_at_20)  && is_numeric($this->litreage_at_20)) || (isset($this->litreage)  && is_numeric($this->litreage)))) {
+            if (($this->transporter_rate && is_numeric($this->transporter_rate)) && (($this->weight && is_numeric($this->weight)) || ($this->litreage_at_20  && is_numeric($this->litreage_at_20)) || ($this->litreage  && is_numeric($this->litreage)))) {
                 if ($this->cargo_type == "Solid") {
                     $this->transporter_freight = $this->transporter_rate * $this->weight;
                 }elseif($this->cargo_type == "Liquid"){
@@ -2410,12 +2410,12 @@ class Edit extends Component
             }
         }
         elseif ($this->freight_calculation == "rate_distance") {
-            if ((isset($this->transporter_rate) && is_numeric($this->transporter_rate))  && ((isset($this->distance) && is_numeric($this->distance)) )) {
+            if (($this->transporter_rate && is_numeric($this->transporter_rate))  && (($this->distance && is_numeric($this->distance)) )) {
                 $this->transporter_freight = $this->transporter_rate * $this->distance;
             }
         }
         elseif ($this->freight_calculation == "rate_weight_distance") {
-            if ((isset($this->transporter_rate) && is_numeric($this->transporter_rate)) && ((isset($this->weight) && is_numeric($this->weight)) || (isset($this->litreage_at_20) && is_numeric($this->litreage_at_20)) || (isset($this->litreage) && is_numeric($this->litreage))) && (isset($this->distance) && is_numeric($this->distance))) {
+            if (($this->transporter_rate && is_numeric($this->transporter_rate)) && (($this->weight && is_numeric($this->weight)) || ($this->litreage_at_20 && is_numeric($this->litreage_at_20)) || ($this->litreage && is_numeric($this->litreage))) && ($this->distance && is_numeric($this->distance))) {
                 if ($this->cargo_type == "Solid") {
                     $this->transporter_freight = $this->transporter_rate * $this->weight * $this->distance;
                 }elseif($this->cargo_type == "Liquid"){
@@ -2430,7 +2430,7 @@ class Edit extends Component
             
         }
         elseif ($this->freight_calculation == "flat_rate") {
-            if ((isset($this->transporter_rate) && is_numeric($this->transporter_rate))) {
+            if (($this->transporter_rate && is_numeric($this->transporter_rate))) {
                 if ($this->cargo_type == "Solid") {
                     $this->transporter_freight = $this->transporter_rate ;
                 }elseif($this->cargo_type == "Liquid"){

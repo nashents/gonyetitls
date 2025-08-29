@@ -20,10 +20,8 @@
                                         <a href="#"><img src="{{asset('images/uploads/'.$company->logo)}}" width="200" alt=""></a>
                                     </div>
                                     <div class="col company-details" style="margin-top:-120px;">
-                                        <h4 class="name" >
-                                            <a target="_blank" href="#" style="color:  {{$company->color ? $company->color : "#000000" }}">
-                                        {{$company->name}}
-                                        </a>
+                                         <h4 class="name" style="color:  {{$company->color ? $company->color : "#000000" }}" >
+                                            {{$company->name}}
                                         </h4>
                                         <div>{{$company->street_address}} {{$company->suburb}} <br>
                                             {{$company->city}}, {{$company->country}}</div>
@@ -78,7 +76,7 @@
                                      
                                         @if (isset($invoice->customer->email))
                                         <div class="email">
-                                            <strong>Customer Email: </strong><a href="mailto:{{$invoice->customer->email}}">{{$invoice->customer->email}}</a>
+                                            <strong>Customer Email: </strong> {{$invoice->customer->email}}
                                         </div>
                                         @endif
                                         @if (isset($invoice->customer->email))
