@@ -142,7 +142,6 @@
                                 <td class="unit text-center">
                                     {{ $quotation->currency ? $quotation->currency->symbol : "" }}{{number_format($item->tax_amount,2)}}
                                 </td>
-                              
                                  <td class="unit text-center">
                                     @if (isset($item->subtotal_incl))
                                         {{ $quotation->currency ? $item->quotation->currency->symbol : "" }}{{number_format($item->subtotal_incl,2)}} 
