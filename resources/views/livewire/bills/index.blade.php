@@ -350,10 +350,10 @@
                                <select wire:model.debounce.300ms="account_id" class="form-control" required>
                                    <option value="">Select Payment Account</option>
                                    @foreach ($accounts as $account)
-                                   @if ($bill_currency)
-                                   @if ($account->currency->id == $bill_currency->id)
-                                   <option value="{{ $account->id }}">{{ $account->name }} {{ $account->currency ? $account->currency->name : ""}}</option>
-                                   @endif     
+                                   @if ($bill_currency && $account->currency)
+                                        @if ($account->currency->id == $bill_currency->id)
+                                        <option value="{{ $account->id }}">{{ $account->name }} {{ $account->currency ? $account->currency->name : ""}}</option>
+                                        @endif     
                                    @else  
                                    select currency for bill
                                    @endif
