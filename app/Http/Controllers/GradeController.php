@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Grade;
+use Illuminate\Support\Facades\Session;
 use App\Http\Requests\StoreGradeRequest;
 use App\Http\Requests\UpdateGradeRequest;
 
@@ -15,7 +16,7 @@ class GradeController extends Controller
      */
     public function index()
     {
-        //
+        return view('grades.index');
     }
 
     /**
@@ -81,6 +82,8 @@ class GradeController extends Controller
      */
     public function destroy(Grade $grade)
     {
-        //
+        $grade->delete();
+        Session::flash('success','Grade Deleted Successfully');
+        return redirect()->back();
     }
 }

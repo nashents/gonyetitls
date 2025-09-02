@@ -22,6 +22,9 @@ class Currency extends Model implements Auditable
     public function exchange_rate(){
         return $this->hasOne('App\Models\ExchangeRate');
     }
+    public function grades(){
+        return $this->hasMany('App\Models\Grade');
+    }
     public function requisition_items(){
         return $this->hasMany('App\Models\RequisitionItem');
     }

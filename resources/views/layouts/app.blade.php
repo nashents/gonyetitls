@@ -130,6 +130,27 @@
 @stack('scripts')
     
     <script type="text/javascript">
+            window.addEventListener('show-gradeModal', event => {
+                $('#gradeModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-gradeModal', event => {
+                $('#gradeModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-gradeEditModal', event => {
+                $('#gradeEditModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-gradeEditModal', event => {
+                $('#gradeEditModal').modal('hide');
+            })
+    </script>
+
+    <script type="text/javascript">
             window.addEventListener('show-closeShiftModal', event => {
                 $('#closeShiftModal').modal('show');
             })

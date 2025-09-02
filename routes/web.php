@@ -195,6 +195,7 @@ Route::get('debtors/report','CustomerController@debtorsReports')->name('debtors.
 
 Route::get('trips/deleted','TripController@deleted')->name('trips.deleted');
 Route::get('trips/{trip}/trip-sheet','TripController@preview')->name('trips.trip_sheet');
+Route::get('trips/{trip}/manifest','TripController@manifest')->name('trips.manifest');
 Route::get('trips/{trip}/print','TripController@print')->name('trips.print');
 
 Route::get('trips/{from?}/{to?}/{trip_filter?}/summary','TripController@rangeSummary')->name('trips.summary.range');
@@ -447,6 +448,7 @@ Route::get('goods-received/assets/','GoodsReceivedController@assets')->name('goo
 
 
 Route::get('horses/{horse}/edit','HorseController@edit')->name('horses.edit')->withTrashed();
+Route::resource('grades','GradeController');
 Route::resource('clusters','ClusterController');
 Route::resource('teams','TeamController');
 Route::resource('bins','BinController');

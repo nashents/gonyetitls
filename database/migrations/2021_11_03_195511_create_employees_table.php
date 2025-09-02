@@ -38,7 +38,6 @@ class CreateEmployeesTable extends Migration
             $table->string('city')->nullable();
             $table->string('suburb')->nullable();
             $table->string('street_address')->nullable();
-            $table->string('grade')->nullable();
             $table->string('start_date')->nullable();
             $table->string('end_date')->nullable();
             $table->string('duration')->nullable();

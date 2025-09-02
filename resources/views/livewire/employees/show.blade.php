@@ -168,6 +168,10 @@
                                     <td class="w-20 line-height-35">{{$employee->post}}</td>
                                 </tr>
                                 <tr>
+                                    <th class="w-10 text-center line-height-35">Grade</th>
+                                    <td class="w-20 line-height-35">{{$employee->grade ? $employee->grade->grade_name : ""}}</td>
+                                </tr>
+                                <tr>
                                     <th class="w-10 text-center line-height-35">Department(s)</th>
                                     <td class="w-20 line-height-35">@foreach ($employee->departments as $department)
                                         {{$department->name ? $department->name." " : ""}} 

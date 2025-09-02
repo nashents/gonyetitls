@@ -164,6 +164,14 @@ class TripController extends Controller
     }
   
 
+    public function manifest(Trip $trip){
+        $company = Auth::user()->employee->company;
+        return view('trips.manifest')->with([
+            'trip' => $trip,
+            'company' => $company,
+          ]);
+    }
+    
     public function preview(Trip $trip){
         if (isset(Auth::user()->employee->company)) {
             $company = Auth::user()->employee->company;
@@ -179,6 +187,8 @@ class TripController extends Controller
             'customer' => $customer,
           ]);
     }
+
+
     public function print(Trip $trip){
 
         if (isset(Auth::user()->employee->company)) {

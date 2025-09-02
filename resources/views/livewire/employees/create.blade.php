@@ -173,10 +173,15 @@
                                         </div>
                                     </div>
                                     <div class="col-md-4">
-                                        <div class="form-group">
-                                            <label for="start_date">Grade</label>
-                                            <input type="text" class="form-control" wire:model.debounce.300ms="grade" placeholder="Enter Employee Grade" />
-                                            @error('grade') <span class="text-danger error">{{ $message }}</span>@enderror
+                                       <div class="form-group">
+                                            <label for="title">Grades</label>
+                                            <select class="form-control" wire:model.debounce.300ms="grade_id" >
+                                                <option value="">Select Grade</option>
+                                                @foreach ($grades as $grade)
+                                                    <option value="{{ $grade->id }}">{{ $grade->name }}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('grade_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
                                     </div>
                                     <!-- /.col-md-6 -->

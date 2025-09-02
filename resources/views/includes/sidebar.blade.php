@@ -115,6 +115,7 @@
                 <li class="has-children">
                     <a href="#"><i class="fas fa-cog"></i> <span>Master</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav"> 
+                      
                         <li class="{{ request()->routeIs('branches.index') ? 'active' : '' }}">
                             <a href="{{route('branches.index')}}"><i class="fas fa-list"></i> <span>Branches</span> </a>
                         </li>
@@ -123,7 +124,9 @@
                                 <a href="{{route('departments.index')}}"><i class="fas fa-list"></i> <span>Departments</span> </a>
                             </li>
                         @endif
-                      
+                        <li class="{{ request()->routeIs('grades.index') ? 'active' : '' }}">
+                            <a href="{{route('grades.index')}}"><i class="fas fa-list"></i> <span>Grades</span> </a>
+                        </li>
                         <li>
                         <li class="{{ request()->routeIs('job_titles.index') ? 'active' : '' }}">
                             <a href="{{route('job_titles.index')}}"><i class="fas fa-list"></i> <span>Job Titles</span> </a>

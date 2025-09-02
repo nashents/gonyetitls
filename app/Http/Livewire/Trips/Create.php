@@ -576,6 +576,7 @@ class Create extends Component
     {
             if (!is_null($id)) {
                 $this->trip_type_name = TripType::find($id)->name;
+               
                 if(isset($this->trip_type_name) && $this->trip_type_name === "Return"){
 
                     $this->trips = Trip::select('id', 'trip_number', 'trip_ref', 'customer_id', 'horse_id', 'from', 'to', 'loading_point_id', 'offloading_point_id')
@@ -895,6 +896,21 @@ class Create extends Component
 
     }
 
+    public function manifestNumber(){
+
+        $trip = Trip::orderBy('id','desc')->first();
+
+        if (!$trip) {
+            $manifest_number =  'MAN-'. str_pad(1, 5, "0", STR_PAD_LEFT). Carbon::now()->format('dmY');
+        }else {
+            $number = $trip->id + 1;
+            $manifest_number =  'MAN-'. str_pad($number, 5, "0", STR_PAD_LEFT).  Carbon::now()->format('dmY');
+        }
+
+        return  $manifest_number;
+
+    }
+
     private function resetInputFields(){
         $this->allowance_title = '';
         $this->allowance_currency_id = '';
@@ -964,6 +980,7 @@ class Create extends Component
         $this->freight_calculation = 'flat_rate';
         $this->user = Auth::user();
         $this->employee =  $this->user->employee;
+        $this->manifest_number =  $this->manifestNumber();
         $this->company = Company::with('currency')->find( $this->employee->company_id);
         $this->exchange_rates = ExchangeRate::all();
         $this->shifts = Shift::where('for','Trips')->where('status','1')->latest()->get();

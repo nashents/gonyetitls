@@ -16,6 +16,10 @@ class JobTitle extends Model implements Auditable
         return $this->belongsTo('App\Models\Department');
     }
 
+    public function grades(){
+        return $this->belongsToMany('App\Models\Grades');
+    }
+
     protected $fillable =[
         'user_id',
         'department_id',
