@@ -1001,11 +1001,10 @@ class Edit extends Component
          $this->cargo_details = $this->trip->cargo_details;
          $this->selectedTransporter = $this->trip->transporter_id;
          $this->stops = $this->trip->stops;
-         $this->manifest_comments =  $trip->manifest_comments;
-         $this->volume =  $trip->volume;
-         $this->temparature =  $trip->temparature;
-         $this->net_weight =  $trip->net_weight;
-         $this->seal_number =  $trip->seal_number;
+         $this->volume =  $this->trip->volume;
+         $this->temparature =  $this->trip->temparature;
+         $this->net_weight =  $this->trip->net_weight;
+         $this->seal_number =  $this->trip->seal_number;
          $this->agent_id = $this->trip->agent_id;
          $this->selectedTrip = $this->trip->initial_trip_id;
          $this->driver_id = $this->trip->driver_id;

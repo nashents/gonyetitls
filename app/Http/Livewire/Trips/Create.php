@@ -80,7 +80,6 @@ class Create extends Component
     public $trip_ref;
     public $trip_groups;
     public $trip_group_id;
-    public $manifest_comments;
     public $volume;
     public $temparature;
     public $net_weight;
@@ -1290,6 +1289,7 @@ class Create extends Component
         // $this->validate();
         //start trip creation logic
         // try{
+        
         DB::transaction(function () {
 
                 $trip = new Trip;
@@ -1304,7 +1304,6 @@ class Create extends Component
                 $trip->agent_id = $this->agent_id ?: null;
                 $trip->customer_updates = $this->customer_updates;
                 $trip->transporter_agreement = $this->transporter_agreement;
-                $trip->manifest_comments = $this->manifest_comments;
                 $trip->volume = $this->volume;
                 $trip->temparature = $this->temparature;
                 $trip->net_weight = $this->net_weight;
