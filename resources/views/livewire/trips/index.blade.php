@@ -421,8 +421,12 @@
                                                         <li><a href="{{route('audits.index', ['id' =>$trip->id, 'category' => 'trip'])}}"><i class="fas fa-list color-default"></i> Audits</a></li>
                                                     @endif
                                                     @if ($employee)
-                                                    <li><a href="{{route('transport_orders.preview',$trip->id)}}"   ><i class="fas fa-file-invoice color-warning"></i> Transport Order</a></li>
-                                                    <li><a href="{{route('trips.trip_sheet', $trip->id)}}"><i class="fas fa-file color-warning"></i> Trip Sheet</a></li>
+                                                    @if ($trip->authorization == "approved")
+                                                        <li><a href="{{route('transport_orders.preview',$trip->id)}}"   ><i class="fas fa-file color-warning"></i> Transport Order</a></li>
+                                                        <li><a href="{{route('trips.trip_sheet', $trip->id)}}"><i class="fas fa-file color-warning"></i> Trip Sheet</a></li>
+                                                        <li><a href="{{route('trips.manifest', $trip->id)}}"><i class="fas fa-file color-warning"></i> Manifest</a></li>
+                                                    @endif
+                                                   
                                                     <li><a href="{{route('trips.edit', $trip->id)}}"><i class="fas fa-edit color-success"></i> Edit</a></li>
                                                     <li><a href="#" data-toggle="modal" data-target="#tripDeleteModal{{$trip->id}}"><i class="fa fa-trash color-danger"></i> Delete</a></li>
                                                     @endif
@@ -625,8 +629,11 @@
                                                         <li><a href="{{route('audits.index', ['id' =>$trip->id, 'category' => 'trip'])}}"><i class="fas fa-list color-default"></i> Audits</a></li>
                                                     @endif
                                                     @if ($employee)
-                                                     <li><a href="{{route('transport_orders.preview',$trip->id)}}"   ><i class="fas fa-file-invoice color-warning"></i> Transport Order</a></li>
-                                                   <li><a href="{{route('trips.trip_sheet', $trip->id)}}"><i class="fas fa-file color-warning"></i> Trip Sheet</a></li>
+                                                     @if ($trip->authorization == "approved")
+                                                        <li><a href="{{route('transport_orders.preview',$trip->id)}}"   ><i class="fas fa-file color-warning"></i> Transport Order</a></li>
+                                                        <li><a href="{{route('trips.trip_sheet', $trip->id)}}"><i class="fas fa-file color-warning"></i> Trip Sheet</a></li>
+                                                        <li><a href="{{route('trips.manifest', $trip->id)}}"><i class="fas fa-file color-warning"></i> Manifest</a></li>
+                                                    @endif
                                                    <li><a href="{{route('trips.edit', $trip->id)}}"><i class="fas fa-edit color-success"></i> Edit</a></li>
                                                    <li><a href="#" data-toggle="modal" data-target="#tripDeleteModal{{$trip->id}}"><i class="fa fa-trash color-danger"></i> Delete</a></li>
                                                    @endif
@@ -827,8 +834,11 @@
                                                     <li><a href="{{route('audits.index', ['id' =>$trip->id, 'category' => 'trip'])}}"><i class="fas fa-list color-default"></i> Audits</a></li>
                                                 @endif
                                                    @if ($employee)
-                                                    <li><a href="{{route('transport_orders.preview',$trip->id)}}"   ><i class="fas fa-file-invoice color-warning"></i> Transport Order</a></li>
-                                                   <li><a href="{{route('trips.trip_sheet', $trip->id)}}"><i class="fas fa-file color-warning"></i> Trip Sheet</a></li>
+                                                   @if ($trip->authorization == "approved")
+                                                        <li><a href="{{route('transport_orders.preview',$trip->id)}}"   ><i class="fas fa-file color-warning"></i> Transport Order</a></li>
+                                                        <li><a href="{{route('trips.trip_sheet', $trip->id)}}"><i class="fas fa-file color-warning"></i> Trip Sheet</a></li>
+                                                        <li><a href="{{route('trips.manifest', $trip->id)}}"><i class="fas fa-file color-secondary"></i> Manifest</a></li>
+                                                    @endif
                                                    <li><a href="{{route('trips.edit', $trip->id)}}"><i class="fas fa-edit color-success"></i> Edit</a></li>
                                                    <li><a href="#" data-toggle="modal" data-target="#tripDeleteModal{{$trip->id}}"><i class="fa fa-trash color-danger"></i> Delete</a></li>
                                                    @endif
@@ -1028,8 +1038,11 @@
                                                     <li><a href="{{route('audits.index', ['id' =>$trip->id, 'category' => 'trip'])}}"><i class="fas fa-list color-default"></i> Audits</a></li>
                                                 @endif
                                                 @if ($employee)
-                                                 <li><a href="{{route('transport_orders.preview',$trip->id)}}"   ><i class="fas fa-file-invoice color-warning"></i> Transport Order</a></li>
-                                                <li><a href="{{route('trips.trip_sheet', $trip->id)}}"><i class="fas fa-file color-warning"></i> Trip Sheet</a></li>
+                                                  @if ($trip->authorization == "approved")
+                                                        <li><a href="{{route('transport_orders.preview',$trip->id)}}"   ><i class="fas fa-file color-warning"></i> Transport Order</a></li>
+                                                        <li><a href="{{route('trips.trip_sheet', $trip->id)}}"><i class="fas fa-file color-warning"></i> Trip Sheet</a></li>
+                                                        <li><a href="{{route('trips.manifest', $trip->id)}}"><i class="fas fa-file color-warning"></i> Manifest</a></li>
+                                                    @endif
                                                 <li><a href="{{route('trips.edit', $trip->id)}}"><i class="fas fa-edit color-success"></i> Edit</a></li>
                                                 <li><a href="#" data-toggle="modal" data-target="#tripDeleteModal{{$trip->id}}"><i class="fa fa-trash color-danger"></i> Delete</a></li>
                                                 @endif
@@ -1230,8 +1243,11 @@
                                                     <li><a href="{{route('audits.index', ['id' =>$trip->id, 'category' => 'trip'])}}"><i class="fas fa-list color-default"></i> Audits</a></li>
                                                 @endif
                                                     @if ($employee)
-                                                     <li><a href="{{route('transport_orders.preview',$trip->id)}}"   ><i class="fas fa-file-invoice color-warning"></i> Transport Order</a></li>
-                                                    <li><a href="{{route('trips.trip_sheet', $trip->id)}}"><i class="fas fa-file color-warning"></i> Trip Sheet</a></li>
+                                                     @if ($trip->authorization == "approved")
+                                                        <li><a href="{{route('transport_orders.preview',$trip->id)}}"   ><i class="fas fa-file color-warning"></i> Transport Order</a></li>
+                                                        <li><a href="{{route('trips.trip_sheet', $trip->id)}}"><i class="fas fa-file color-warning"></i> Trip Sheet</a></li>
+                                                        <li><a href="{{route('trips.manifest', $trip->id)}}"><i class="fas fa-file color-warning"></i> Manifest</a></li>
+                                                    @endif
                                                     <li><a href="{{route('trips.edit', $trip->id)}}"><i class="fas fa-edit color-success"></i> Edit</a></li>
                                                     <li><a href="#" data-toggle="modal" data-target="#tripDeleteModal{{$trip->id}}"><i class="fa fa-trash color-danger"></i> Delete</a></li>
                                                     @endif
@@ -1432,8 +1448,11 @@
                                                         <li><a href="{{route('audits.index', ['id' =>$trip->id, 'category' => 'trip'])}}"><i class="fas fa-list color-default"></i> Audits</a></li>
                                                     @endif
                                                     @if ($employee)
-                                                     <li><a href="{{route('transport_orders.preview',$trip->id)}}"   ><i class="fas fa-file-invoice color-warning"></i> Transport Order</a></li>
-                                                    <li><a href="{{route('trips.trip_sheet', $trip->id)}}"><i class="fas fa-file color-warning"></i> Trip Sheet</a></li>
+                                                     @if ($trip->authorization == "approved")
+                                                        <li><a href="{{route('transport_orders.preview',$trip->id)}}"   ><i class="fas fa-file color-warning"></i> Transport Order</a></li>
+                                                        <li><a href="{{route('trips.trip_sheet', $trip->id)}}"><i class="fas fa-file color-warning"></i> Trip Sheet</a></li>
+                                                        <li><a href="{{route('trips.manifest', $trip->id)}}"><i class="fas fa-file color-warning"></i> Manifest</a></li>
+                                                    @endif
                                                     <li><a href="{{route('trips.edit', $trip->id)}}"><i class="fas fa-edit color-success"></i> Edit</a></li>
                                                     <li><a href="#" data-toggle="modal" data-target="#tripDeleteModal{{$trip->id}}"><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                                     @endif
@@ -1632,8 +1651,11 @@
                                                     <li><a href="{{route('audits.index', ['id' =>$trip->id, 'category' => 'trip'])}}"><i class="fas fa-list color-default"></i> Audits</a></li>
                                                 @endif
                                                     @if ($employee)
-                                                     <li><a href="{{route('transport_orders.preview',$trip->id)}}"   ><i class="fas fa-file-invoice color-warning"></i> Transport Order</a></li>
-                                                    <li><a href="{{route('trips.trip_sheet', $trip->id)}}"><i class="fas fa-file color-warning"></i> Trip Sheet</a></li>
+                                                      @if ($trip->authorization == "approved")
+                                                        <li><a href="{{route('transport_orders.preview',$trip->id)}}"   ><i class="fas fa-file color-warning"></i> Transport Order</a></li>
+                                                        <li><a href="{{route('trips.trip_sheet', $trip->id)}}"><i class="fas fa-file color-warning"></i> Trip Sheet</a></li>
+                                                        <li><a href="{{route('trips.manifest', $trip->id)}}"><i class="fas fa-file color-warning"></i> Manifest</a></li>
+                                                    @endif
                                                     <li><a href="{{route('trips.edit', $trip->id)}}"><i class="fas fa-edit color-success"></i> Edit</a></li>
                                                     <li><a href="#" data-toggle="modal" data-target="#tripDeleteModal{{$trip->id}}"><i class="fa fa-trash color-danger"></i> Delete</a></li>
                                                     @endif
@@ -1833,8 +1855,11 @@
                                                         <li><a href="{{route('audits.index', ['id' =>$trip->id, 'category' => 'trip'])}}"><i class="fas fa-list color-default"></i> Audits</a></li>
                                                     @endif
                                                    @if ($employee)
-                                                    <li><a href="{{route('transport_orders.preview',$trip->id)}}"   ><i class="fas fa-file-invoice color-warning"></i> Transport Order</a></li>
-                                                   <li><a href="{{route('trips.trip_sheet', $trip->id)}}"><i class="fas fa-file color-warning"></i> Trip Sheet</a></li>
+                                                    @if ($trip->authorization == "approved")
+                                                        <li><a href="{{route('transport_orders.preview',$trip->id)}}"   ><i class="fas fa-file color-warning"></i> Transport Order</a></li>
+                                                        <li><a href="{{route('trips.trip_sheet', $trip->id)}}"><i class="fas fa-file color-warning"></i> Trip Sheet</a></li>
+                                                        <li><a href="{{route('trips.manifest', $trip->id)}}"><i class="fas fa-file color-warning"></i> Manifest</a></li>
+                                                    @endif
                                                    <li><a href="{{route('trips.edit', $trip->id)}}"><i class="fas fa-edit color-success"></i> Edit</a></li>
                                                    <li><a href="#" data-toggle="modal" data-target="#tripDeleteModal{{$trip->id}}"><i class="fa fa-trash color-danger"></i> Delete</a></li>
                                                    @endif
@@ -2036,9 +2061,11 @@
                                                         <li><a href="{{route('audits.index', ['id' =>$trip->id, 'category' => 'trip'])}}"><i class="fas fa-list color-default"></i> Audits</a></li>
                                                     @endif
                                                     @if ($employee)
-                                                        <li><a href="{{route('transport_orders.preview',$trip->id)}}"   ><i class="fas fa-file-invoice color-warning"></i> Transport Order</a></li>    
+                                                    @if ($trip->authorization == "approved")
+                                                        <li><a href="{{route('transport_orders.preview',$trip->id)}}"   ><i class="fas fa-file color-warning"></i> Transport Order</a></li>
                                                         <li><a href="{{route('trips.trip_sheet', $trip->id)}}"><i class="fas fa-file color-warning"></i> Trip Sheet</a></li>
-                                                        <li><a href="{{route('trips.manifest', $trip->id)}}"><i class="fas fa-file color-secondary"></i> Manifest</a></li>
+                                                        <li><a href="{{route('trips.manifest', $trip->id)}}"><i class="fas fa-file color-warning"></i> Manifest</a></li>
+                                                    @endif
                                                         <li><a href="{{route('trips.edit', $trip->id)}}"><i class="fas fa-edit color-success"></i> Edit</a></li>
                                                         <li><a href="#" data-toggle="modal" data-target="#tripDeleteModal{{$trip->id}}"><i class="fa fa-trash color-danger"></i> Delete</a></li>
                                                     @endif

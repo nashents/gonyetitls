@@ -201,6 +201,12 @@ class Edit extends Component
     public $transporter_freight;
     public $profit;
     public $notes;
+
+    public $manifest_comments;
+    public $volume;
+    public $temparature;
+    public $net_weight;
+    public $seal_number;
   
     public $net_profit;
     public $truck_stops;
@@ -995,6 +1001,11 @@ class Edit extends Component
          $this->cargo_details = $this->trip->cargo_details;
          $this->selectedTransporter = $this->trip->transporter_id;
          $this->stops = $this->trip->stops;
+         $this->manifest_comments =  $trip->manifest_comments;
+         $this->volume =  $trip->volume;
+         $this->temparature =  $trip->temparature;
+         $this->net_weight =  $trip->net_weight;
+         $this->seal_number =  $trip->seal_number;
          $this->agent_id = $this->trip->agent_id;
          $this->selectedTrip = $this->trip->initial_trip_id;
          $this->driver_id = $this->trip->driver_id;
@@ -1528,6 +1539,11 @@ class Edit extends Component
           $trip->notes = $this->notes;
           $trip->cd1_number = $this->cd1_number;
           $trip->manifest_number = $this->manifest_number;
+          $trip->manifest_comments = $this->manifest_comments;
+          $trip->volume = $this->volume;
+          $trip->temparature = $this->temparature;
+          $trip->net_weight = $this->net_weight;
+          $trip->seal_number = $this->seal_number;
           $trip->cargo_id = $this->selectedCargo;
           $trip->trip_type_id = $this->selectedTripType;
           $trip->haulage_type = $this->haulage_type;

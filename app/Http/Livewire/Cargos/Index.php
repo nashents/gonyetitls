@@ -4,22 +4,32 @@ namespace App\Http\Livewire\Cargos;
 
 use App\Models\Cargo;
 use Livewire\Component;
+use App\Models\Measurement;
 use App\Models\Transporter;
+use Livewire\WithPagination;
 use Maatwebsite\Excel\Excel;
 use App\Exports\CargosExport;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
 class Index extends Component
 {
 
+    
+    use WithPagination;
+    protected $paginationTheme = 'bootstrap';
+    public $search;
+    protected $queryString = ['search'];
 
-    public $cargos;
+    private $cargos;
     public $type;
     public $group;
     public $risk;
     public $name;
+    public $sku;
     public $measurement;
+    public $measurements;
  
 
     public $cargo_id;
@@ -51,8 +61,8 @@ class Index extends Component
     }
 
     public function mount(){
-        $this->cargos = Cargo::all();
         $this->transporters = Transporter::orderBy('name','asc')->get();
+        $this->measurements = Measurement::orderBy('name','asc')->get();
     }
 
     public function updated($value){
@@ -60,8 +70,6 @@ class Index extends Component
     }
     protected $rules = [
         'type' => 'required',
-        'group' => 'required',
-        'risk' => 'required',
         'measurement' => 'required',
         'name' => 'required|unique:cargos,name,NULL,id,deleted_at,NULL|string|min:2',
     ];
@@ -70,6 +78,7 @@ class Index extends Component
         $this->type = '';
         $this->group = '';
         $this->name = '';
+        $this->sku = '';
         $this->risk = '';
         $this->chargeable_loss = '';
         $this->measurement = '';
@@ -89,10 +98,12 @@ class Index extends Component
     }
 
     public function store(){
-        // try{
+    
+        DB::transaction(function () {
         $cargo = new Cargo;
         $cargo->user_id = Auth::user()->id;
         $cargo->name = $this->name;
+        $cargo->sku = $this->sku;
         $cargo->measurement = $this->measurement;
         $cargo->group = $this->group;
         $cargo->type = $this->type;
@@ -109,25 +120,19 @@ class Index extends Component
             'type'=>'success',
             'message'=>"Cargo Created Successfully!!"
         ]);
+    });
 
-        // return redirect()->route('cargos.index');
-
-    //     }
-    //     catch(\Exception $e){
-    //     // Set Flash Message
-    //     $this->dispatchBrowserEvent('alert',[
-    //         'type'=>'error',
-    //         'message'=>"Something goes wrong while creating cargo!!"
-    //     ]);
-    // }
+       
     }
 
     public function edit($id){
+
     $cargo = Cargo::find($id);
 
     $this->user_id = $cargo->user_id;
     $this->name = $cargo->name;
     $this->type = $cargo->type;
+    $this->sku = $cargo->sku;
     $this->measurement = $cargo->measurement;
     $this->group = $cargo->group;
     $this->risk = $cargo->risk;
@@ -139,12 +144,15 @@ class Index extends Component
 
     public function update()
     {
+          DB::transaction(function () {
+
         if ($this->cargo_id) {
-            try{
+         
             $cargo = Cargo::find($this->cargo_id);
             $cargo->name = $this->name;
             $cargo->measurement = $this->measurement;
             $cargo->group = $this->group;
+            $cargo->sku = $this->sku;
             $cargo->type = $this->type;
             $cargo->risk = $this->risk;
             $cargo->update();
@@ -156,25 +164,15 @@ class Index extends Component
                 'message'=>"Cargo Updated Successfully!!"
             ]);
 
-
-            // return redirect()->route('cargos.index');
-            }
-            catch(\Exception $e){
-            $this->dispatchBrowserEvent('hide-cargoEditModal');
-            $this->dispatchBrowserEvent('alert',[
-                'type'=>'error',
-                'message'=>"Something goes wrong while creating cargo!!"
-            ]);
-          }
         }
+    });
     }
 
 
     public function render()
     {
-        $this->cargos = Cargo::latest()->get();
         return view('livewire.cargos.index',[
-            'cargos'=>   $this->cargos
+            'cargos'=> Cargo::orderBy('name','asc')->paginate(10)
         ]);
     }
 }

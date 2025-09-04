@@ -90,6 +90,9 @@ class Trip extends Model implements Auditable
     public function trailers(){
         return $this->belongsToMany('App\Models\Trailer');
     }
+    public function company(){
+        return $this->belongsTo('App\Models\Company');
+    }
     public function driver(){
         return $this->belongsTo('App\Models\Driver');
     }

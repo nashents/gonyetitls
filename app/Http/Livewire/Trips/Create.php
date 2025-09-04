@@ -80,6 +80,11 @@ class Create extends Component
     public $trip_ref;
     public $trip_groups;
     public $trip_group_id;
+    public $manifest_comments;
+    public $volume;
+    public $temparature;
+    public $net_weight;
+    public $seal_number;
 
     //searching existing trips
     public $searchTrip;
@@ -901,10 +906,10 @@ class Create extends Component
         $trip = Trip::orderBy('id','desc')->first();
 
         if (!$trip) {
-            $manifest_number =  'MAN-'. str_pad(1, 5, "0", STR_PAD_LEFT). Carbon::now()->format('dmY');
+            $manifest_number =  'MAN'. str_pad(1, 5, "0", STR_PAD_LEFT)."/".Carbon::now()->format('dmY');
         }else {
             $number = $trip->id + 1;
-            $manifest_number =  'MAN-'. str_pad($number, 5, "0", STR_PAD_LEFT).  Carbon::now()->format('dmY');
+            $manifest_number =  'MAN'. str_pad($number, 5, "0", STR_PAD_LEFT)."/".Carbon::now()->format('dmY');
         }
 
         return  $manifest_number;
@@ -981,7 +986,7 @@ class Create extends Component
         $this->user = Auth::user();
         $this->employee =  $this->user->employee;
         $this->manifest_number =  $this->manifestNumber();
-        $this->company = Company::with('currency')->find( $this->employee->company_id);
+        $this->company = Company::with('currency')->find($this->employee->company_id);
         $this->exchange_rates = ExchangeRate::all();
         $this->shifts = Shift::where('for','Trips')->where('status','1')->latest()->get();
         $this->liquid_measurements = Measurement::where('cargo_type','Liquid')->orderBy('name','asc')->get();
@@ -1299,6 +1304,11 @@ class Create extends Component
                 $trip->agent_id = $this->agent_id ?: null;
                 $trip->customer_updates = $this->customer_updates;
                 $trip->transporter_agreement = $this->transporter_agreement;
+                $trip->manifest_comments = $this->manifest_comments;
+                $trip->volume = $this->volume;
+                $trip->temparature = $this->temparature;
+                $trip->net_weight = $this->net_weight;
+                $trip->seal_number = $this->seal_number;
                 $trip->fuel_order = $this->fuel_order;
                 $trip->driver_id = $this->driver_id ?: null;
                 $trip->with_customer_rates = $this->with_customer_rates;

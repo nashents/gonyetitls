@@ -57,6 +57,9 @@ class Company extends Model  implements Auditable
     public function brokers(){
         return $this->hasMany('App\Models\Broker');
     }
+    public function trips(){
+        return $this->hasMany('App\Models\Trip');
+    }
 
     protected $fillable = [
         'user_id',

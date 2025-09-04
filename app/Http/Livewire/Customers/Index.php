@@ -15,6 +15,7 @@ use Maatwebsite\Excel\Excel;
 use Livewire\WithFileUploads;
 use App\Exports\CustomersExport;
 use App\Mail\AccountCreationMail;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
@@ -191,7 +192,9 @@ class Index extends Component
 
 
     public function store(){
-        // try{
+
+       DB::transaction(function () {
+
         $pin = $this->generatePIN();
 
         $user = new User;
@@ -306,16 +309,9 @@ class Index extends Component
             'message'=>"Customer Created Successfully!!"
         ]);
 
-        return redirect(request()->header('Referer'));
+     
 
-        // }
-        //     catch(\Exception $e){
-        //     // Set Flash Message
-        //     $this->dispatchBrowserEvent('alert',[
-        //         'type'=>'error',
-        //         'message'=>"Something went wrong while creating customer!!"
-        //     ]);
-        // }
+      });
     }
 
     public function edit($id){
@@ -341,8 +337,9 @@ class Index extends Component
 
     public function update()
     {
+         DB::transaction(function () {
         if ($this->customer_id) {
-            try{
+       
             $customer = Customer::find($this->customer_id);
             $customer->name = $this->name;
             $customer->initials = $this->initials;
@@ -365,17 +362,10 @@ class Index extends Component
                 'type'=>'success',
                 'message'=>"Customer Updated Successfully!!"
             ]);
-            return redirect(request()->header('Referer'));
-            }
-                catch(\Exception $e){
-                // Set Flash Message
-                $this->dispatchBrowserEvent('alert',[
-                    'type'=>'error',
-                    'message'=>"Something went wrong while updating customer!!"
-                ]);
-            }
-
+          
         }
+
+    });
     }
 
     public function updatingSearch()
@@ -388,21 +378,7 @@ class Index extends Component
         
              // sleep(1);
 
-             $departments = Auth::user()->employee->departments;
-             foreach($departments as $department){
-                 $department_names[] = $department->name;
-             }
-             $roles = Auth::user()->roles;
-             foreach($roles as $role){
-                 $role_names[] = $role->name;
-             }
-             $ranks = Auth::user()->employee->ranks;
-             foreach($ranks as $rank){
-                 $rank_names[] = $rank->name;
-             }
-             if (in_array('Finance', $department_names) || in_array('Super Admin', $role_names)) {
-                 
-                 if (isset($this->search)) {
+               if (filled($this->search)) {
                     
                      return view('livewire.customers.index',[
                          'customers' => Customer::query()->with(['invoices'])
@@ -411,43 +387,17 @@ class Index extends Component
                          ->orWhere('email','like', '%'.$this->search.'%')
                          ->orWhere('vat_number','like', '%'.$this->search.'%')
                          ->orWhere('tin_number','like', '%'.$this->search.'%')
-                         ->orderBy('customer_number','desc')->paginate(10),
+                        ->orderBy('name','asc')->paginate(10),
                      ]);
                  }
                  else {
                     
                      return view('livewire.customers.index',[
-                        'customers' => Customer::query()->with(['invoices'])->orderBy('customer_number','desc')->paginate(10),
+                        'customers' => Customer::query()->with(['invoices'])->orderBy('name','asc')->paginate(10),
                         
                      ]);
                    
                  }
-             }else {
               
-       
-                 if (isset($this->search)) {
-                     return view('livewire.customers.index',[
-                        'customers' => Customer::query()->with(['invoices'])
-                        ->where('user_id',Auth::user()->id)
-                        ->where('customer_number','like', '%'.$this->search.'%')
-                        ->orWhere('name','like', '%'.$this->search.'%')
-                        ->orWhere('email','like', '%'.$this->search.'%')
-                        ->orWhere('vat_number','like', '%'.$this->search.'%')
-                        ->orWhere('tin_number','like', '%'.$this->search.'%')
-                        ->orderBy('customer_number','desc')->paginate(10),
-                     ]);
-                 }
-                 else {
-                     
-                     return view('livewire.customers.index',[
-                        'customers' => Customer::query()->with(['invoices'])->where('user_id',Auth::user()->id)->orderBy('customer_number','desc')->paginate(10),
-                     ]);
- 
-                 }
-     
-             }
-        
- 
-       
     }
 }

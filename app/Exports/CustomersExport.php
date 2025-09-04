@@ -35,11 +35,11 @@ WithCustomStartCell
     }
     public function map($customer): array{
             return   [
-                $customer->customer_number,
                 $customer->name,
                 $customer->phonenumber,
                 $customer->worknumber,
                 $customer->email,
+                $customer->tin_number." / ".$customer->tin_number,
                 $customer->country,
                 $customer->city,
                 $customer->suburb,
@@ -50,11 +50,11 @@ WithCustomStartCell
     }
     public function headings(): array{
             return[
-                'Customer#',
                 'Name ',
                 'Phonenumber',
                 'Worknumber',
                 'Email',
+                'VAT/TIN#',
                 'Country',
                 'City',
                 'Suburb',

@@ -30,9 +30,11 @@
                                     <th class="w-10 text-center line-height-35">Phonenumber</th>
                                     <td class="w-20 line-height-35">{{$consignee->phonenumber}}</td>
                                 </tr>
-                               
-                              
-                         
+                                <tr>
+                                    <th class="w-10 text-center line-height-35">Tel</th>
+                                    <td class="w-20 line-height-35">{{$consignee->worknumber}}</td>
+                                </tr>
+                            
                                 <tr>
                                     <th class="w-10 text-center line-height-35">Country</th>
                                     <td class="w-20 line-height-35">{{$consignee->country}}</td>
@@ -48,6 +50,14 @@
                                 <tr>
                                     <th class="w-10 text-center line-height-35">Address</th>
                                     <td class="w-20 line-height-35">{{$consignee->street_address}}</td>
+                                </tr>
+                                <tr>
+                                    <th class="w-10 text-center line-height-35">TIN</th>
+                                    <td class="w-20 line-height-35">{{$consignee->tin_number}}</td>
+                                </tr>
+                                <tr>
+                                    <th class="w-10 text-center line-height-35">VAT#</th>
+                                    <td class="w-20 line-height-35">{{$consignee->vat_number}}</td>
                                 </tr>
                                 <tr>
                                     <th class="w-10 text-center line-height-35">Status</th>

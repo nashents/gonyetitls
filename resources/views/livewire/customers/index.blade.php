@@ -26,16 +26,15 @@
                             <table class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
-
-                                    <th class="th-sm">Customer#
-                                    </th>
                                     <th class="th-sm">Name
                                     </th>
                                     <th class="th-sm">Email
                                     </th>
-                                    <th class="th-sm">Vat#
+                                    <th class="th-sm">Phonenumber
                                     </th>
-                                    <th class="th-sm">Tin#
+                                    <th class="th-sm">VAT/TIN#
+                                    </th>
+                                    <th class="th-sm">Address
                                     </th>
                                     <th class="th-sm">Invoice(s) Bal
                                     </th>
@@ -49,11 +48,11 @@
                                 <tbody>
                                     @forelse ($customers as $customer)
                                   <tr>
-                                    <td>{{$customer->customer_number}}</td>
-                                    <td>{{ucfirst($customer->name)}}</td>
+                                    <td>{{$customer->name}}</td>
                                     <td>{{$customer->email}}</td>
-                                    <td>{{$customer->vat_number}}</td>
-                                    <td>{{$customer->tin_number}}</td>
+                                    <td>{{$customer->phonenumber}}</td>
+                                    <td>{{$customer->vat_number}}{{$customer->tin_number ? " / ".$customer->tin_number : ""}}</td>
+                                    <td>{{$customer->street_address}} {{$customer->suburb}} {{$customer->city}} {{$customer->country}}</td>
                                     <td>
                                         @foreach ($currencies as $currency)
                                             @php
@@ -116,7 +115,7 @@
         <!-- /.container-fluid -->
     </section>
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="customersImportModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fa fa-upload"></i>Import Customers <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -142,7 +141,7 @@
         </div>
     </div>
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="customerModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fa fa-plus"></i> Add Customer <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -435,7 +434,7 @@
         </div>
     </div>
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="customerEditModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fa fa-edit"></i> Edit Customer <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>

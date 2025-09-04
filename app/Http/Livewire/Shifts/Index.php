@@ -599,12 +599,12 @@ class Index extends Component
         $shift->type = $this->type;
         $shift->shift_start_time = $this->shift_start_time;
         $shift->shift_end_time = $this->shift_end_time;
-        $shift->customer_id = $this->customer_id;
-        $shift->team_id = $this->team_id;
-        $shift->driver_id = $this->driver_id;
-        $shift->currency_id = $this->selectedCurrency;
-        $shift->cargo_id = $this->cargo_id;
-        $shift->transporter_id = $this->selectedTransporter;
+        $shift->customer_id = $this->customer_id ?? null;
+        $shift->team_id = $this->team_id ?? null;
+        $shift->driver_id = $this->driver_id ?? null;
+        $shift->currency_id = $this->selectedCurrency ?? null;
+        $shift->cargo_id = $this->cargo_id ?? null;
+        $shift->transporter_id = $this->selectedTransporter ?? null;
         $shift->horse_id = $this->equipment === "Horse" ? $this->selectedHorse : null;
         $shift->vehicle_id = $this->equipment === "Vehicle" ? $this->selectedVehicle : null;
         $shift->equipment = $this->equipment;

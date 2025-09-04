@@ -165,10 +165,8 @@ class TripController extends Controller
   
 
     public function manifest(Trip $trip){
-        $company = Auth::user()->employee->company;
         return view('trips.manifest')->with([
             'trip' => $trip,
-            'company' => $company,
           ]);
     }
     

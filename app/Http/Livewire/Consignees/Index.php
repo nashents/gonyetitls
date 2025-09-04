@@ -9,11 +9,12 @@ use App\Models\Document;
 use App\Models\Consignee;
 use Livewire\WithPagination;
 use Livewire\WithFileUploads;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
 class Index extends Component
 {
-       use WithFileUploads;
+    use WithFileUploads;
     use WithPagination;
 
     protected $paginationTheme = 'bootstrap';
@@ -29,9 +30,11 @@ class Index extends Component
     public $worknumber;
     public $email;
     public $country;
-    public $town;
+    public $city;
     public $suburb;
     public $street_address;
+    public $vat_number;
+    public $tin_number;
 
     public $search;
     protected $queryString = ['search'];
@@ -129,12 +132,14 @@ class Index extends Component
         $this->name = "";
         $this->phonenumber = "";
         $this->worknumber = "";
+        $this->vat_number = "";
+        $this->tin_number = "";
         $this->email = "";
         $this->title = "";
         $this->file = "";
         $this->expires_at = "";
         $this->country = "";
-        $this->town = "";
+        $this->city = "";
         $this->suburb = "";
         $this->street_address = "";
     }
@@ -151,8 +156,8 @@ class Index extends Component
 
 
     public function store(){
-        // try{
-  
+    
+        DB::transaction(function () {
 
         $consignee = new Consignee;
         $consignee->company_id = Auth::user()->employee->company->id;
@@ -163,7 +168,9 @@ class Index extends Component
         $consignee->phonenumber = $this->phonenumber;
         $consignee->worknumber = $this->worknumber;
         $consignee->country = $this->country;
-        $consignee->city = $this->town;
+        $consignee->vat_number = $this->vat_number;
+        $consignee->tin_number = $this->tin_number;
+        $consignee->city = $this->city;
         $consignee->suburb = $this->suburb;
         $consignee->street_address = $this->street_address;
         $consignee->status = 1;
@@ -244,16 +251,9 @@ class Index extends Component
             'message'=>"Consignee Created Successfully!!"
         ]);
 
-        return redirect(request()->header('Referer'));
+    
+    });
 
-        // }
-        //     catch(\Exception $e){
-        //     // Set Flash Message
-        //     $this->dispatchBrowserEvent('alert',[
-        //         'type'=>'error',
-        //         'message'=>"Something went wrong while creating consignee!!"
-        //     ]);
-        // }
     }
 
     public function edit($id){
@@ -264,6 +264,8 @@ class Index extends Component
     $this->phonenumber = $consignee->phonenumber;
     $this->worknumber = $consignee->worknumber;
     $this->country = $consignee->country;
+    $this->tin_number = $consignee->tin_number;
+    $this->vat_number = $consignee->vat_number;
     $this->city = $consignee->city;
     $this->suburb = $consignee->suburb;
     $this->street_address = $consignee->street_address;
@@ -274,16 +276,19 @@ class Index extends Component
 
     public function update()
     {
+         DB::transaction(function () {
         if ($this->consignee_id) {
-            try{
+            
             $consignee = Consignee::find($this->consignee_id);
             $consignee->user_id = Auth::user()->id;
             $consignee->name = $this->name;
             $consignee->phonenumber = $this->phonenumber;
             $consignee->worknumber = $this->worknumber;
             $consignee->email = $this->email;
+            $consignee->vat_number = $this->vat_number;
+            $consignee->tin_number = $this->tin_number;
             $consignee->country = $this->country;
-            $consignee->city = $this->town;
+            $consignee->city = $this->city;
             $consignee->suburb = $this->suburb;
             $consignee->street_address = $this->street_address;
             $consignee->update();
@@ -294,17 +299,10 @@ class Index extends Component
                 'type'=>'success',
                 'message'=>"Consignee Updated Successfully!!"
             ]);
-            return redirect(request()->header('Referer'));
-            }
-                catch(\Exception $e){
-                // Set Flash Message
-                $this->dispatchBrowserEvent('alert',[
-                    'type'=>'error',
-                    'message'=>"Something went wrong while updating consignee!!"
-                ]);
-            }
-
+          
         }
+
+    });
     }
 
     public function updatingSearch()
@@ -315,63 +313,27 @@ class Index extends Component
     public function render()
     {
         
-             // sleep(1);
-
-             $departments = Auth::user()->employee->departments;
-             foreach($departments as $department){
-                 $department_names[] = $department->name;
-             }
-             $roles = Auth::user()->roles;
-             foreach($roles as $role){
-                 $role_names[] = $role->name;
-             }
-             $ranks = Auth::user()->employee->ranks;
-             foreach($ranks as $rank){
-                 $rank_names[] = $rank->name;
-             }
-             if (in_array('Admin', $role_names) || in_array('Super Admin', $role_names)) {
+        
                  
-                 if (isset($this->search)) {
+                 if (filled($this->search)) {
                     
                      return view('livewire.consignees.index',[
                          'consignees' => Consignee::query()
                          ->where('consignee_number','like', '%'.$this->search.'%')
                          ->orWhere('name','like', '%'.$this->search.'%')
                          ->orWhere('email','like', '%'.$this->search.'%')
-                         ->orderBy('consignee_number','desc')->paginate(10),
+                         ->orderBy('name','asc')->paginate(10),
                      ]);
                  }
                  else {
                     
                      return view('livewire.consignees.index',[
-                        'consignees' => Consignee::query()->orderBy('consignee_number','desc')->paginate(10),
+                        'consignees' => Consignee::query()->orderBy('name','asc')->paginate(10),
                         
                      ]);
                    
                  }
-             }else {
-              
-       
-                 if (isset($this->search)) {
-                     return view('livewire.consignees.index',[
-                        'consignees' => Consignee::query()
-                        ->where('user_id',Auth::user()->id)
-                        ->where('consignee_number','like', '%'.$this->search.'%')
-                        ->orWhere('name','like', '%'.$this->search.'%')
-                        ->orWhere('email','like', '%'.$this->search.'%')
-                        ->orderBy('consignee_number','desc')->paginate(10),
-                     ]);
-                 }
-                 else {
-                     
-                     return view('livewire.consignees.index',[
-                        'consignees' => Consignee::query()->where('user_id',Auth::user()->id)->orderBy('consignee_number','desc')->paginate(10),
-                     ]);
- 
-                 }
-     
-             }
-        
+   
  
        
     }

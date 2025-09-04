@@ -26,14 +26,13 @@
                             <table class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
-
-                                    <th class="th-sm">Consignee#
-                                    </th>
                                     <th class="th-sm">Name
                                     </th>
                                     <th class="th-sm">Email
                                     </th>
                                     <th class="th-sm">Phonenumber
+                                    </th>
+                                    <th class="th-sm">VAT/TIN#
                                     </th>
                                     <th class="th-sm">Address
                                     </th>
@@ -47,10 +46,10 @@
                                 <tbody>
                                     @forelse ($consignees as $consignee)
                                   <tr>
-                                    <td>{{$consignee->consignee_number}}</td>
-                                    <td>{{ucfirst($consignee->name)}}</td>
+                                    <td>{{$consignee->name}}</td>
                                     <td>{{$consignee->email}}</td>
                                     <td>{{$consignee->phonenumber}}</td>
+                                    <td>{{$consignee->vat_number}} {{$consignee->tin_number ? " / ".$consignee->tin_number : ""}}</td>
                                     <td>{{$consignee->street_address}} {{$consignee->suburb}} {{$consignee->city}} {{$consignee->country}}</td>
                                     <td><span class="badge bg-{{$consignee->status == 1 ? "success" : "danger"}}">{{$consignee->status == 1 ? "Active" : "Inactive"}}</span></td>
                                     <td class="w-10 line-height-35 table-dropdown">
@@ -103,7 +102,7 @@
         <!-- /.container-fluid -->
     </section>
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="consigneesImportModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog  mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fa fa-upload"></i>Import Consignees <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -129,7 +128,7 @@
         </div>
     </div>
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="consigneeModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fa fa-plus"></i> Add Consignee <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -280,7 +279,7 @@
                             </div>
                         </div>
                     </div>
-                   
+                     <h5 class="underline mt-30">Location Details</h5>
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
@@ -292,8 +291,8 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="city">City<span class="required" style="color: red">*</span></label>
-                                <input type="text" class="form-control" wire:model.debounce.300ms="town" placeholder="Enter City/Town" required />
-                                @error('town') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                <input type="text" class="form-control" wire:model.debounce.300ms="city" placeholder="Enter City/Town" required />
+                                @error('city') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
                     </div>
@@ -392,7 +391,7 @@
         </div>
     </div>
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="consigneeEditModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fa fa-edit"></i> Edit Consignee <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -433,7 +432,23 @@
                             </div>
                         </div>
                     </div>
-                    
+                     <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="vat_number">VAT Number</label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="vat_number" placeholder="Enter Vat Number" >
+                                @error('vat_number') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="tin_number">TIN Number</label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="tin_number" placeholder="Enter Tin Number" >
+                                @error('tin_number') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                    </div>
+                      <h5 class="underline mt-30">Location Details</h5>
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">

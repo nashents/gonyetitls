@@ -37,6 +37,7 @@ WithCustomStartCell
                 $cargo->type,
                 $cargo->group,
                 $cargo->name,
+                $cargo->sku,
                 $cargo->measurement,
                 $cargo->risk,
                  ];
@@ -48,6 +49,7 @@ WithCustomStartCell
                 'Type',
                 'Group',
                 'Name ',
+                'SKU/Ref ',
                 'Measurement ',
                 'Risk',
             ];
