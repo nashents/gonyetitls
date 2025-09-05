@@ -9,7 +9,7 @@
     @endif
 @endsection
 @section('title')
-    Department|@if (isset(Auth::user()->employee->company))
+    Job Titles | @if (isset(Auth::user()->employee->company))
     {{Auth::user()->employee->company->name}}
     @elseif (Auth::user()->company)
     {{Auth::user()->company->name}}
@@ -19,9 +19,6 @@
 @section('body-class')
 <body class="top-navbar-fixed">
 @endsection
-
-
-
                     <div class="main-page">
                         <div class="container-fluid">
                             <div class="row page-title-div">
