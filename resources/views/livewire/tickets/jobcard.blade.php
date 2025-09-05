@@ -370,7 +370,6 @@
     <!-- ===== Footer ===== -->
     <footer class="footer" style="display:flex; justify-content: space-between; align-items:center; margin-top: 14px; font-size: 12px; color: var(--muted);">
       <div>Generated: <span id="printTimestamp" data-field="generated.at"></span></div>
-      <div class="upper">Page <span class="mono">1</span></div>
     </footer>
   </section>
 </div>

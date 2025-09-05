@@ -511,7 +511,8 @@
                              
                                 @endif
 
-                                 <div class="row">
+                                @if ($cargo_type == "Solid")
+                                <div class="row">
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="weight">Volume(m<sup>3</sup>)</label>
@@ -521,7 +522,7 @@
                                     </div>
                                     <div class="col-md-4">
                                         <div class="form-group">
-                                            <label for="weight">Temparature(<span>25&deg;C</span>)</label>
+                                            <label for="weight">Temparature(<span>&deg;C</span>)</label>
                                             <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="temparature" placeholder="Cargo Temparature" >
                                             @error('temparature') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
@@ -534,6 +535,7 @@
                                         </div>
                                     </div>
                                </div>
+                               @endif
 
                                 @endif
                                 <h5 class="underline mt-30">Empty Runs /  Dead Head </h5>
