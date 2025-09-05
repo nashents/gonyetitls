@@ -6,6 +6,7 @@ use App\Models\Rank;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\Count;
+use App\Models\Grade;
 use App\Models\Branch;
 use App\Models\Driver;
 use App\Models\Country;
@@ -81,6 +82,8 @@ class Edit extends Component
     public $relationship;
     public $contact;
     public $status;
+    public $grade_id;
+    public $grades;
 
     
     //bank vars
@@ -128,9 +131,10 @@ class Edit extends Component
     public function mount($id){
         $this->departments = Department::all();
         $this->transporters = Transporter::orderBy('name','asc')->get();
-        $this->branches = Branch::all();
-        $this->roles = Role::all();
-        $this->ranks = Rank::all();
+        $this->branches = Branch::orderBy('name','asc')->get();
+         $this->grades = Grade::orderBy('grade_code','asc')->get();
+        $this->roles = Role::orderBy('name','asc')->get();
+        $this->ranks = Rank::orderBy('name','asc')->get();
         $this->countries = Country::orderBy('name','asc')->get();
         $this->provinces = Province::orderBy('name','asc')->get();
         $driver = Driver::find($id);
@@ -177,6 +181,7 @@ class Edit extends Component
         $this->reference_phonenumber = $driver->reference_phonenumber;
         $this->reference = $driver->reference;
         $this->employee_number = $employee->employee_number;
+        $this->grade_id = $employee->grade_id;
         $this->name = $employee->name ;
         $this->middle_name = $employee->middle_name ;
         $this->surname = $employee->surname;
@@ -290,6 +295,7 @@ class Edit extends Component
           $employee->middle_name = $this->middle_name;
           $employee->surname = $this->surname;
           $employee->phonenumber = $this->phonenumber;
+          $employee->grade_id = $this->grade_id;
           $employee->email = $this->email;
           $employee->gender = $this->gender;
           $employee->dob = $this->dob;

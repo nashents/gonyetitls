@@ -7,6 +7,7 @@ use App\Models\Rank;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\Count;
+use App\Models\Grade;
 use App\Models\Branch;
 use App\Models\Driver;
 use App\Models\Country;
@@ -99,6 +100,8 @@ class Create extends Component
     public $job_title;
     public $job_titles;
     public $employee_id;
+     public $grade_id;
+    public $grades;
 
     public $title;
     public $file;
@@ -121,6 +124,8 @@ class Create extends Component
     }
 
     public function mount(){
+
+        $this->grades = Grade::orderBy('grade_code','asc')->get();
         $this->departments = Department::orderBy('name','asc')->get();
         $this->transporters = Transporter::orderBy('name','asc')->get();
         $this->branches = Branch::orderBy('name','asc')->get();
@@ -131,6 +136,7 @@ class Create extends Component
         $this->use_email_as_username = 1;
         $this->countries = Country::orderBy('name','asc')->get();
         $this->provinces = collect();
+        
       }
 
 
@@ -311,6 +317,7 @@ class Create extends Component
       $employee->currency_id = $this->currency_id;
       $employee->street_address = $this->street_address;
       $employee->idnumber = $this->idnumber;
+      $employee->grade_id = $this->grade_id;
       $employee->post = $this->job_title;
       $employee->duration = $this->duration;
       $employee->expiration = $this->expiration;
