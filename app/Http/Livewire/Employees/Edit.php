@@ -7,6 +7,7 @@ use App\Models\Rank;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\Count;
+use App\Models\Grade;
 use App\Models\Branch;
 use App\Models\Company;
 use App\Models\Country;
@@ -79,7 +80,8 @@ class Edit extends Component
     public $relationship;
     public $contact;
     public $use_email_as_username;
-    public $grade;
+    public $grades;
+    public $grade_id;
     
     //bank vars
     public $bank_name;
@@ -143,14 +145,14 @@ class Edit extends Component
         $this->branches = Branch::orderBy('name','asc')->get();
         $this->job_titles = JobTitle::latest()->get();
         $this->countries = Country::orderBy('name','asc')->get();
-        $this->roles = Role::all();
+        $this->grades = Grade::orderBy('grade_code','asc')->get();
+        $this->roles = Role::orderBy('name','asc')->get();
         $this->companies = Company::where('type','!=','admin')->orderBy('name','asc')->get();
         $this->provinces = Province::orderBy('name','asc')->get();
         $this->job_title = $employee->post;
         $this->user_id = $employee->user_id;
         $this->employee_number = $employee->employee_number;
         $this->name = $employee->name ;
-        $this->grade = $employee->grade ;
 
         if($employee->bank_account){
           $this->bank_name = $employee->bank_account->name;
@@ -171,6 +173,7 @@ class Edit extends Component
         $this->phonenumber = $employee->phonenumber ;
         $this->email =   $employee->email ;
         $this->personal_email =   $employee->personal_email ;
+        $this->grade_id =   $employee->grade_id ;
         $this->old_email =   $employee->email ;
         $this->pin = $employee->pin;
         $this->gender = ucfirst($employee->gender);
@@ -299,6 +302,7 @@ class Edit extends Component
           $employee->personal_email = $this->personal_email;
           $employee->gender = $this->gender;
           $employee->dob = $this->dob;
+          $employee->grade_id = $this->grade_id;
 
           $country = Country::find($this->selectedCountry);
           if (isset($country)) {
@@ -315,7 +319,6 @@ class Edit extends Component
           $employee->idnumber = $this->idnumber;
           $employee->post = $this->job_title;
           $employee->duration = $this->duration;
-          $employee->grade = $this->grade;
           $employee->salary = $this->salary;
           $employee->frequency = $this->frequency;
           $employee->currency_id = $this->currency_id;

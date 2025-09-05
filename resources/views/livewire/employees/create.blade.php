@@ -178,7 +178,7 @@
                                             <select class="form-control" wire:model.debounce.300ms="grade_id" >
                                                 <option value="">Select Grade</option>
                                                 @foreach ($grades as $grade)
-                                                    <option value="{{ $grade->id }}">{{ $grade->name }}</option>
+                                                    <option value="{{ $grade->id }}">{{ $grade->grade_code }} {{ $grade->grade_name }}</option>
                                                 @endforeach
                                             </select>
                                             @error('grade_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -186,6 +186,108 @@
                                     </div>
                                     <!-- /.col-md-6 -->
                                 </div>
+                                  <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="exampleInputEmail1">Rank<span class="required" style="color: red">*</span></label>
+                                            <select wire:model.debounce.300ms="rank_id" class="form-control" required>
+                                                <option value="" selected>Select Rank</option>
+                                                @foreach ($ranks as $rank)
+                                                @if ($rank->name == "HOD")
+                                                @else
+                                                <option value="{{$rank->id}}">{{$rank->name}}</option> 
+                                                @endif
+                                                   
+                                                @endforeach
+                                            </select>
+                                            @error('rank_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="exampleInputEmail1">Role<span class="required" style="color: red">*</span></label>
+                                            <select wire:model.debounce.300ms="role_id" class="form-control" multiple="multiple" required>
+                                                <option value="" selected>Select Role</option>
+                                                @foreach ($roles as $role)
+                                                    <option value="{{$role->id}}">{{$role->name}}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('role_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="start_date">Employment Start Date</label>
+                                            <input type="date" class="form-control" wire:model.debounce.300ms="start_date" placeholder="Enter Employee Start Date" />
+                                            @error('start_date') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="start_date">Employement End Date</label>
+                                            <input type="date" class="form-control" wire:model.debounce.300ms="end_date" placeholder="Enter Employee End Date" />
+                                            @error('end_date') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="start_date">Leave Accrual Rate / Month</label>
+                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="accrual_rate" placeholder="Enter Leave Accrual Rate" />
+                                            @error('accrual_rate') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="leave_days">Available Leave Days</label>
+                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="leave_days" placeholder="Available Leave Days " />
+                                            @error('leave_days') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                    </div>
+                                    <!-- /.col-md-6 -->
+                                </div>
+
+                                          <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="start_date">Next Of Kin</label>
+                                            <input type="text" class="form-control" wire:model.debounce.300ms="next_of_kin" placeholder="Enter Next Of Kin" >
+                                            @error('next_of_kin') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="relationship">Relationship</label>
+                                            <select wire:model.debounce.300ms="relationship" class="form-control">
+                                                <option value="">Selected Relationship</option>
+                                                <option value="Husband">Husband</option>
+                                                <option value="Wife">Wife</option>
+                                                <option value="Father">Father</option>
+                                                <option value="Mother">Mother</option>
+                                                <option value="Daughter">Daughter</option>
+                                                <option value="Son">Son</option>
+                                                <option value="Brother">Brother</option>
+                                                <option value="Sister">Sister</option>
+                                                <option value="Nephew">Nephew</option>
+                                                <option value="Niece">Niece</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                            @error('relationship') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="contact">Contact</label>
+                                            <input type="text" class="form-control" wire:model.debounce.300ms="contact" placeholder="Enter Contact"/>
+                                            @error('contact') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                    </div>
+                                    <!-- /.col-md-6 -->
+                                </div>
+
                                 <h5 class="underline mt-10">Employee Bank Details</h5>
                                 <div class="row">
                                     <div class="col-md-3">
@@ -247,105 +349,7 @@
                                         </div>
                                     </div>
                                     <br>
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="exampleInputEmail1">Rank<span class="required" style="color: red">*</span></label>
-                                            <select wire:model.debounce.300ms="rank_id" class="form-control" required>
-                                                <option value="" selected>Select Rank</option>
-                                                @foreach ($ranks as $rank)
-                                                @if ($rank->name == "HOD")
-                                                @else
-                                                <option value="{{$rank->id}}">{{$rank->name}}</option> 
-                                                @endif
-                                                   
-                                                @endforeach
-                                            </select>
-                                            @error('rank_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="exampleInputEmail1">Role<span class="required" style="color: red">*</span></label>
-                                            <select wire:model.debounce.300ms="role_id" class="form-control" multiple="multiple" required>
-                                                <option value="" selected>Select Role</option>
-                                                @foreach ($roles as $role)
-                                                    <option value="{{$role->id}}">{{$role->name}}</option>
-                                                @endforeach
-                                            </select>
-                                            @error('role_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-3">
-                                        <div class="form-group">
-                                            <label for="start_date">Employment Start Date</label>
-                                            <input type="date" class="form-control" wire:model.debounce.300ms="start_date" placeholder="Enter Employee Start Date" />
-                                            @error('start_date') <span class="text-danger error">{{ $message }}</span>@enderror
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="form-group">
-                                            <label for="start_date">Employement End Date</label>
-                                            <input type="date" class="form-control" wire:model.debounce.300ms="end_date" placeholder="Enter Employee End Date" />
-                                            @error('end_date') <span class="text-danger error">{{ $message }}</span>@enderror
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="form-group">
-                                            <label for="start_date">Leave Accrual Rate / Month</label>
-                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="accrual_rate" placeholder="Enter Leave Accrual Rate" />
-                                            @error('accrual_rate') <span class="text-danger error">{{ $message }}</span>@enderror
-                                        </div>
-                                    </div>
 
-                                    <div class="col-md-3">
-                                        <div class="form-group">
-                                            <label for="leave_days">Available Leave Days</label>
-                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="leave_days" placeholder="Available Leave Days " />
-                                            @error('leave_days') <span class="text-danger error">{{ $message }}</span>@enderror
-                                        </div>
-                                    </div>
-                                    <!-- /.col-md-6 -->
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-4">
-                                        <div class="form-group">
-                                            <label for="start_date">Next Of Kin</label>
-                                            <input type="text" class="form-control" wire:model.debounce.300ms="next_of_kin" placeholder="Enter Next Of Kin" >
-                                            @error('next_of_kin') <span class="text-danger error">{{ $message }}</span>@enderror
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="form-group">
-                                            <label for="relationship">Relationship</label>
-                                            <select wire:model.debounce.300ms="relationship" class="form-control">
-                                                <option value="">Selected Relationship</option>
-                                                <option value="Husband">Husband</option>
-                                                <option value="Wife">Wife</option>
-                                                <option value="Father">Father</option>
-                                                <option value="Mother">Mother</option>
-                                                <option value="Daughter">Daughter</option>
-                                                <option value="Son">Son</option>
-                                                <option value="Brother">Brother</option>
-                                                <option value="Sister">Sister</option>
-                                                <option value="Nephew">Nephew</option>
-                                                <option value="Niece">Niece</option>
-                                                <option value="Other">Other</option>
-                                            </select>
-                                            @error('relationship') <span class="text-danger error">{{ $message }}</span>@enderror
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="form-group">
-                                            <label for="contact">Contact</label>
-                                            <input type="text" class="form-control" wire:model.debounce.300ms="contact" placeholder="Enter Contact"/>
-                                            @error('contact') <span class="text-danger error">{{ $message }}</span>@enderror
-                                        </div>
-                                    </div>
-                                    <!-- /.col-md-6 -->
-                                </div>
                                 <h5 class="underline mt-30">Address Details</h5>
                                 <div class="row">
                                     <div class="col-md-4">

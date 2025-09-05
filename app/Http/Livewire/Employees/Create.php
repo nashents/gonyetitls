@@ -7,6 +7,7 @@ use App\Models\Rank;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\Count;
+use App\Models\Grade;
 use App\Models\Branch;
 use App\Models\Company;
 use App\Models\Country;
@@ -55,7 +56,8 @@ class Create extends Component
     public $next_of_kin;
     public $relationship;
     public $contact;
-    public $grade;
+    public $grade_id;
+    public $grades;
     
     //bank vars
     public $bank_name;
@@ -114,6 +116,7 @@ class Create extends Component
     public function mount(){
         $this->departments = Department::orderBy('name','asc')->get();
         $this->branches = Branch::orderBy('name','asc')->get();
+        $this->grades = Grade::orderBy('grade_code','asc')->get();
         $this->job_titles = JobTitle::latest()->get();
         $this->countries = Country::orderBy('name','asc')->get();
         $this->roles = Role::latest()->get();
@@ -248,6 +251,7 @@ class Create extends Component
           $employee->surname = $this->surname;
           $employee->phonenumber = $this->phonenumber;
           $employee->email = $this->email;
+          $employee->grade_id = $this->grade_id;
           $employee->personal_email = $this->personal_email;
           $employee->pin = $pin;
           $employee->gender = $this->gender;
