@@ -4,6 +4,7 @@ namespace App\Http\Livewire\ServiceTypes;
 
 use Livewire\Component;
 use App\Models\ServiceType;
+use Livewire\WithPagination;
 use App\Models\InspectionType;
 use App\Models\InspectionGroup;
 use App\Models\InspectionService;
@@ -12,11 +13,16 @@ use Illuminate\Support\Facades\Auth;
 class Show extends Component
 {
    
+    use WithPagination;
+    protected $paginationTheme = 'bootstrap';
+    public $search;
+    protected $queryString = ['search'];
+
     public $inspection_types;
     public $inspection_type_id;
     public $inspection_groups;
     public $inspection_group_id;
-    public $inspection_services;
+    private $inspection_services;
     public $inspection_service_id;
     public $service_type;
     public $service_type_id;
@@ -49,7 +55,7 @@ class Show extends Component
     public function mount($id){
         $this->service_type_id = $id;
         $this->service_type = ServiceType::find($id);
-        $this->inspection_services = InspectionService::where('service_type_id', $this->service_type_id)->get();
+      
         $this->inspection_groups = InspectionGroup::orderBy('name','asc')->get();
         $this->inspection_types = InspectionType::orderBy('name','asc')->get();
     }
@@ -112,9 +118,9 @@ class Show extends Component
 
     public function render()
     {
-        $this->inspection_services = InspectionService::where('service_type_id', $this->service_type_id)->get();
+       
         return view('livewire.service-types.show',[
-            'inspection_services' => $this->inspection_services
+            'inspection_services' => InspectionService::where('service_type_id', $this->service_type_id)->paginate(10)
         ]);
     }
 }

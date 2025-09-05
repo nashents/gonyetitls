@@ -9,7 +9,7 @@
     @endif
 @endsection
 @section('title')
-    Inspection Types|@if (isset(Auth::user()->employee->company))
+    Inspection Items | @if (isset(Auth::user()->employee->company))
     {{Auth::user()->employee->company->name}}
     @elseif (Auth::user()->company)
     {{Auth::user()->company->name}}

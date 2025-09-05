@@ -2,7 +2,7 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content bg-danger">
             <div class="modal-body">
-               <center> <strong>Are you sure you want to delete this Inspection Item from Checklist?</strong> </center>
+               <center> <strong>Are you sure you want to remove this Inspection Item from {{ $inspection_service->service_type ? $inspection_service->service_type->name : ""}} Checklist ?</strong> </center>
             </div>
             <form action="{{route('inspection_services.destroy', $inspection_service->id)}}" method="POST" >
                 {{ csrf_field() }}

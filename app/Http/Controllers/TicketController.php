@@ -27,6 +27,12 @@ class TicketController extends Controller
         return view('tickets.cards')->with('employee', $employee);
     }
 
+    public function jobcard(Ticket $ticket){
+        return view('tickets.jobcard')->with([
+            'ticket' => $ticket,
+          ]);
+    }
+
     public function preview(Ticket $ticket){
       
         $company = Auth::user()->employee->company;

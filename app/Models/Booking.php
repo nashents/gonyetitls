@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Contracts\Auditable;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -60,5 +61,41 @@ class Booking extends Model implements Auditable
     }
     public function service_type(){
         return $this->belongsTo('App\Models\ServiceType');
+    }
+
+    public function getBookedHoursAttribute()
+    {
+        if (!$this->in_date || !$this->in_time || !$this->estimated_out_date || !$this->estimated_out_time) {
+            return null;
+        }
+
+        $in  = Carbon::parse($this->in_date . ' ' . $this->in_time);
+        $out = Carbon::parse($this->estimated_out_date . ' ' . $this->estimated_out_time);
+
+        return round($in->diffInMinutes($out) / 60, 2);
+    }
+   
+    public function getActualHoursAttribute()
+    {
+        if (!$this->in_date || !$this->in_time || !$this->out_date || !$this->out_time) {
+            return null;
+        }
+
+        $in  = Carbon::parse($this->in_date . ' ' . $this->in_time);
+        $out = Carbon::parse($this->out_date . ' ' . $this->out_time);
+
+        return round($in->diffInMinutes($out) / 60, 2);
+    }
+   
+    public function getDowntimeHoursAttribute()
+    {
+        if (!$this->in_date || !$this->in_time || !$this->out_of_workshop_date || !$this->out_of_workshop_time) {
+            return null;
+        }
+
+        $in  = Carbon::parse($this->in_date . ' ' . $this->in_time);
+        $out = Carbon::parse($this->out_of_workshop_date . ' ' . $this->out_of_workshop_time);
+
+        return round($in->diffInMinutes($out) / 60, 2);
     }
 }

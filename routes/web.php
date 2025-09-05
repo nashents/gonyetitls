@@ -214,6 +214,7 @@ Route::get('/bookings/export/csv','ExportsController@exportBookingsCSV')->name('
 Route::get('/bookings/export/pdf','ExportsController@exportBookingsPDF')->name('bookings.export.pdf');
 
 
+
 Route::get('/customers/export/excel','ExportsController@exportCustomersExcel')->name('customers.export.excel');
 Route::get('/customers/export/csv','ExportsController@exportCustomersCSV')->name('customers.export.csv');
 Route::get('/customers/export/pdf','ExportsController@exportCustomersPDF')->name('customers.export.pdf');
@@ -439,6 +440,7 @@ Route::get('bills/{selectedVendor?}/{selectedType?}/{from?}/{to?}/vendor-stateme
 Route::get('bills/{selectedVendor?}/{selectedType?}/{from?}/{to?}/vendor-statements/','BillController@vendorStatementsPreview')->name('vendor_statements.preview.account');
 
 
+Route::get('tickets/{ticket}/job-card','TicketController@jobcard')->name('tickets.jobcard');
 Route::get('tickets/{ticket}/preview','TicketController@preview')->name('tickets.preview');
 Route::get('tickets/{ticket}/print','TicketController@print')->name('tickets.print');
 Route::get('tickets/{ticket}//export-to-pdf','TicketController@generatePDF')->name('tickets.pdf');

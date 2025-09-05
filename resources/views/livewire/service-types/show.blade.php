@@ -16,15 +16,15 @@
                     <a href="" data-toggle="modal" data-target="#inspection_serviceModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Inspection Item</a>
                     <br>
                     <br>
-                    <table id="inspection_servicesTable" class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
+                    <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                         <caption>{{ $service_type->name }}  Checklist</caption>
                         <thead>
                           <tr>
                             <th class="th-sm">Category
                             </th>
-                            <th class="th-sm">Inspection Group
+                            <th class="th-sm">Group
                             </th>
-                            <th class="th-sm">Inspection Item
+                            <th class="th-sm">Item
                             </th>
                             <th class="th-sm">Action
                             </th>
@@ -51,12 +51,29 @@
                                 @include('inspection_services.delete')
                         </td>
                           </tr>
-                          @endforeach
+                           @empty
+                                  <tr>
+                                    <td colspan="4">
+                                        <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
+                                            No Inspection Items Found ....
+                                        </div>
+                                       
+                                    </td>
+                                  </tr>  
+                                    @endforelse
                         </tbody>
                         @else
                             <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
-                         @endif
+                        @endif
                       </table>
+                       <nav class="text-center" style="float: right">
+                                <ul class="pagination rounded-corners">
+                                    @if (isset($bills))
+                                        {{ $bills->links() }} 
+                                    @endif 
+                                </ul>
+                            </nav>    
+                            
                       
                 </div>
               

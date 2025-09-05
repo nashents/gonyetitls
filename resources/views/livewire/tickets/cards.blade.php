@@ -150,7 +150,8 @@
                                                 </button>
                                                 <ul class="dropdown-menu">
                                                     <li><a href="{{route('tickets.show', $ticket->id)}}"><i class="fa fa-eye color-default"></i>View</a></li>
-                                                    <li><a href="{{route('tickets.preview',$ticket->id)}}"   ><i class="fas fa-file-invoice color-primary"></i> Preview</a></li>
+                                                    {{-- <li><a href="{{route('tickets.preview',$ticket->id)}}"   ><i class="fas fa-file-invoice color-primary"></i> Preview</a></li> --}}
+                                                    <li><a href="{{route('tickets.jobcard',$ticket->id)}}"   ><i class="fas fa-file color-warning"></i> JobCard</a></li>
                                                     @if ($ticket->inspection->status == 1)
                                                     <li><a href="{{route('inspections.show', $ticket->inspection->id)}}"><i class="fa fa-search color-default"></i>Inspection</a></li>
                                                     @endif

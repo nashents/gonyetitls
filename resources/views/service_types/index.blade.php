@@ -9,7 +9,7 @@
     @endif
 @endsection
 @section('title')
-    Service Type|@if (Auth::user()->employee->company)
+    Service Types | @if (Auth::user()->employee->company)
     {{Auth::user()->employee->company->name}}
     @elseif (Auth::user()->company)
     {{Auth::user()->company->name}}

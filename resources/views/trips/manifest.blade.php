@@ -1,7 +1,7 @@
 @extends('layouts.manifest')
 
-@section('yield')
-    Title
+@section('title')
+    Road Manifest
 @endsection
 
 @section('content')

@@ -12,14 +12,18 @@
                             <div class="panel-title">
                                 <a href="" data-toggle="modal" data-target="#service_typeModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Service Type</a>
                             </div>
-
+                            
                         </div>
+                       
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
-
+                             <small style="color: green">To add inspection checklist items to any service type click view under actions.</small>
+                                 <br>
                             <table id="service_typesTable" class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
                                     <th class="th-sm">Name
+                                    </th>
+                                    <th class="th-sm">Inspection Item(s)
                                     </th>
                                     <th class="th-sm">Action
                                     </th>
@@ -30,6 +34,11 @@
                                     @foreach ($service_types as $service_type)
                                   <tr>
                                     <td>{{$service_type->name}}</td>
+                                    <td>
+                                        @foreach ($service_type->inspection_services as $inspection_service)
+                                            {{ $inspection_service->inspection_type ? $inspection_service->inspection_type->name : ""}} @if(!$loop->last), @endif 
+                                        @endforeach
+                                    </td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
