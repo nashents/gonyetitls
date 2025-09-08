@@ -170,7 +170,7 @@ class Edit extends Component
             $this->rank_id[] = $rank->id;
         }
      
-        $this->job_titles = JobTitle::all();
+        $this->job_titles = JobTitle::orderBy('title','asc')->get();
         $this->job_title = $employee->post;
         $this->user_id = $driver->user->id;
         $this->user_id = $employee->user_id;
@@ -440,7 +440,7 @@ class Edit extends Component
     {
         $this->departments = Department::orderBy('name','asc')->get();
         $this->branches = Branch::orderBy('name','asc')->get();
-        $this->job_titles = JobTitle::latest()->get();
+        $this->job_titles = JobTitle::orderBy('title','asc')->get();
         $this->countries = Country::orderBy('name','asc')->get();
         $this->provinces = Province::orderBy('name','asc')->get();
 

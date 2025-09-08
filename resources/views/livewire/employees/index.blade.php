@@ -29,9 +29,12 @@
 
                             </div>
                             <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
-                                
-    
-                                <table id="employeesTable" class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
+                                <div class="col-md-3" style="float: right; padding-right:0px">
+                                    <div class="form-group">
+                                        <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search employees...">
+                                    </div>
+                                </div>
+                                <table class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                     <thead >
                                         <th class="th-sm">
                                             Profile
@@ -60,9 +63,9 @@
 
                                       </tr>
                                     </thead>
-                                    @if ($employees->count()>0)
+                                    @if (isset($employees))
                                     <tbody>
-                                        @foreach ($employees as $employee)
+                                        @forelse ($employees as $employee)
                                         @if (!$employee->driver)
                                         <tr>
                                             <td class="line-height-35"><img src="{{asset('images/uploads/'.$employee->user->profile)}}" alt="" class="border-radius-50 img-circle profile-img " style="width: 50px; height:50px"></td>
@@ -93,8 +96,6 @@
                                                 @endif
                                             </td>
                                             @endif
-                                           
-    
                                             <td class="w-10 line-height-35 table-dropdown">
                                                 <div class="dropdown">
                                                     <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -104,6 +105,7 @@
                                                     <ul class="dropdown-menu">
                                                         <li><a href="{{route('employees.show', $employee->id)}}"><i class="fa fa-eye color-default"></i>View</a></li>
                                                         <li><a href="{{route('employees.edit', $employee->id)}}"><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                                        <li><a href="#" wire:click.prevent="changePosition({{$employee->id}})"><i class="fa fa-edit color-success"></i> Change Position</a></li>
                                                         <li><a href="#" data-toggle="modal" data-target="#employeeDeleteModal{{$employee->id}}"><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                                        @if ($employee->user)
                                                        @if ($employee->user->active == 1)
@@ -122,13 +124,29 @@
                                           </tr>
                                         @endif
                             
-                                      @endforeach
+                                     @empty
+                                  <tr>
+                                    <td colspan="10">
+                                        <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
+                                            No Employees Found ....
+                                        </div>
+                                       
+                                    </td>
+                                  </tr>  
+                                    @endforelse
                                     </tbody>
                                     @else
                                     <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
                                     @endif
 
                                   </table>
+                                   <nav class="text-center" style="float: right">
+                                        <ul class="pagination rounded-corners">
+                                            @if (isset($employees))
+                                                {{ $employees->links() }} 
+                                            @endif 
+                                        </ul>
+                                    </nav>  
 
                                 <!-- /.col-md-12 -->
                             </div>
@@ -171,6 +189,132 @@
         </div>
 
           <!-- Modal -->
+
+        <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="changePositionModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-edit"></i> Change {{$employee ? $employee->name : ""}} {{$employee ? $employee->surname : ""}} Position <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                </div>
+                <form wire:submit.prevent="changeUpdate()" >
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="exampleInputEmail13">Job Titles<span class="required" style="color: red">*</span></label>
+                                <select wire:model.debounce.300ms="job_title_id" class="form-control" required>
+                                    <option value="" selected > Select Job Title</option>
+                                    @foreach ($job_titles as $job_title)
+                                        <option value="{{$job_title->id}}">{{$job_title->title}}</option>
+                                    @endforeach
+                                </select>
+                                {{-- <small><a href="{{ route('job_titles.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Job Title</a></small>  --}}
+                                @error('job_title_id') <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="title">Grades</label>
+                                <select class="form-control" wire:model.debounce.300ms="grade_id" >
+                                    <option value="">Select Grade</option>
+                                    @foreach ($grades as $grade)
+                                        <option value="{{ $grade->id }}">{{ $grade->grade_code }} {{ $grade->grade_name }}</option>
+                                    @endforeach
+                                </select>
+                                {{-- <small><a href="{{ route('grades.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Grade</a></small>  --}}
+                                @error('grade_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                  
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="title">Ranks</label>
+                                <select class="form-control" wire:model.debounce.300ms="rank_id" >
+                                    <option value="">Select Rank</option>
+                                    @foreach ($ranks as $rank)
+                                        <option value="{{ $rank->id }}">{{ $rank->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('rank_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="title">Departments</label>
+                                <select class="form-control" wire:model.debounce.300ms="department_id" >
+                                    <option value="">Select Department</option>
+                                    @foreach ($departments as $department)
+                                        <option value="{{ $department->id }}"> {{$department->name }} </option>
+                                    @endforeach
+                                </select>
+                                @error('department_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="title">Branches</label>
+                                <select class="form-control" wire:model.debounce.300ms="branch_id" >
+                                    <option value="">Select Branch</option>
+                                    @foreach ($branches as $branch)
+                                        <option value="{{ $branch->id }}"> {{$branch->name }} </option>
+                                    @endforeach
+                                </select>
+                                @error('branch_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                         <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="start_date">End Date<span class="required" style="color: red">*</span></label>
+                                <input type="date" class="form-control" wire:model.debounce.300ms="end_date" placeholder="Previous position end date" required/>
+                                @error('end_date') <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="start_date">Start Date<span class="required" style="color: red">*</span></label>
+                                <input type="date" class="form-control" wire:model.debounce.300ms="start_date" placeholder="New position start date" required/>
+                                @error('start_date') <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="country">Change Reason<span class="required" style="color: red">*</span></label>
+                                <select wire:model.debounce.300ms="change_reason" class="form-control" required>
+                                    <option value="">Select Option</option>
+                                    <option value="Promotion">Promotion</option>
+                                    <option value="Demotion">Demotion</option>
+                                    <option value="Transfer">Transfer</option>
+                                    <option value="Appointment">Appointment</option>
+                                    <option value="Acting">Acting</option>
+                                </select>
+                                @error('change_reason') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="country">Remarks</label>
+                                <textarea wire:model.debounce.300ms="remarks" class="form-control" cols="30" rows="3"></textarea>
+                                @error('remarks') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                    </div>
+                <div class="modal-footer">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                        <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-refresh"></i>Update</button>
+                    </div>
+                    <!-- /.btn-group -->
+                </div>
+            </form>
+            </div>
+        </div>
+    </div>
 
 
     </div>

@@ -117,7 +117,7 @@ class Create extends Component
         $this->departments = Department::orderBy('name','asc')->get();
         $this->branches = Branch::orderBy('name','asc')->get();
         $this->grades = Grade::orderBy('grade_code','asc')->get();
-        $this->job_titles = JobTitle::latest()->get();
+        $this->job_titles = JobTitle::orderBy('title','asc')->get();
         $this->countries = Country::orderBy('name','asc')->get();
         $this->roles = Role::latest()->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
@@ -360,7 +360,7 @@ class Create extends Component
     {      
       $this->departments = Department::orderBy('name','asc')->get();
       $this->branches = Branch::orderBy('name','asc')->get();
-      $this->job_titles = JobTitle::latest()->get();
+      $this->job_titles = JobTitle::orderBy('title','asc')->get();
       $this->countries = Country::orderBy('name','asc')->get();
         return view('livewire.employees.create',[
           'departments' => $this->departments,

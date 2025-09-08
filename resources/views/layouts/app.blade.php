@@ -130,6 +130,17 @@
 @stack('scripts')
     
     <script type="text/javascript">
+            window.addEventListener('show-changePositionModal', event => {
+                $('#changePositionModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-changePositionModal', event => {
+                $('#changePositionModal').modal('hide');
+            })
+    </script>
+
+    <script type="text/javascript">
             window.addEventListener('show-gradeModal', event => {
                 $('#gradeModal').modal('show');
             })

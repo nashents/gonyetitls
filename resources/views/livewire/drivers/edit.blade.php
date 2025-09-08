@@ -191,7 +191,7 @@
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="exampleInputEmail13">Job Title</label>
-                                           <select wire:model.debounce.300ms="job_title" class="form-control" >
+                                           <select wire:model.debounce.300ms="job_title" class="form-control" disabled>
                                                <option value="" selected > Select Job Title</option>
                                                @if (!is_null($selectedDepartment))
                                                @foreach ($job_titles as $job_title)
@@ -206,7 +206,7 @@
                                      <div class="col-md-4">
                                        <div class="form-group">
                                             <label for="title">Grades</label>
-                                            <select class="form-control" wire:model.debounce.300ms="grade_id" >
+                                            <select class="form-control" wire:model.debounce.300ms="grade_id" disabled>
                                                 <option value="">Select Grade</option>
                                                 @foreach ($grades as $grade)
                                                     <option value="{{ $grade->id }}">{{ $grade->grade_code }} {{ $grade->grade_name }}</option>

@@ -2,21 +2,50 @@
 
 namespace App\Http\Livewire\Employees;
 
+use App\Models\Rank;
 use App\Models\User;
 use App\Models\Count;
+use App\Models\Grade;
 use App\Models\Branch;
 use Livewire\Component;
 use App\Models\Employee;
+use App\Models\JobTitle;
+use App\Models\Department;
+use Livewire\WithPagination;
 use Maatwebsite\Excel\Excel;
 use App\Exports\EmployeesExport;
+use App\Models\EmployeePosition;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
 class Index extends Component
 {
 
 
-    public $employees;
+    
+    use WithPagination;
+    protected $paginationTheme = 'bootstrap';
+    public $search;
+    protected $queryString = ['search'];
+    
+    private $employees;
     public $employee_id;
+    public $departments;
+    public $department_id;
+    public $ranks;
+    public $rank_id;
+    public $branches;
+    public $branch_id;
+    public $grades;
+    public $grade_id;
+    public $job_titles;
+    public $job_title;
+    public $job_title_id;
+    public $start_date;
+    public $end_date;
+    public $change_reason;
+    public $remarks;
 
     public function exportEmployeesCSV(Excel $excel){
 
@@ -30,9 +59,79 @@ class Index extends Component
         return $excel->download(new EmployeesExport, 'employees.xlsx');
     }
   
+    public function resetInputFields(){
+        $this->start_date = Null;
+        $this->end_date = Null;
+        $this->grade_id = Null;
+        $this->branch_id = Null;
+        $this->department_id = Null;
+        $this->rank_id = Null;
+        $this->job_title_id = Null;
+        $this->change_reason = Null;
+        $this->remarks = Null;
+    }
+
     public function mount(){
-        $this->employees = Employee::doesntHave('driver')->where('archive','0')
-                                    ->orderBy('employee_number', 'desc')->get();
+        $this->resetPage();
+        $this->departments = Department::orderBy('name','asc')->get();
+        $this->job_titles = JobTitle::orderBy('title','asc')->get();
+        $this->grades = Grade::orderBy('grade_code','asc')->get();
+        $this->branches = Branch::orderBy('name','asc')->get();
+        $this->ranks = Rank::orderBy('name','asc')->get();
+      }
+
+    public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+
+
+      public function changePosition($id){
+        $this->employee_id = $id;
+        $employee = Employee::find($id);
+        $employee_position = EmployeePosition::where('employee_id',$id)->latest()->first();
+        if( $employee_position){
+            $this->grade_id = $employee_position->grade_id;
+            $this->department_id = $employee_position->department_id;
+            $this->branch_id = $employee_position->branch_id;
+            $this->job_title_id = $employee_position->job_title_id;
+            $this->rank_id = $employee_position->rank_id;
+        }else{
+            $this->grade_id = $employee->grade_id;
+            $this->department_id = $employee->departments->first()?->id;
+            $this->branch_id = $employee->branch_id;
+            $this->job_title_id = JobTitle::where('title',$employee->post)->first()?->id;
+            $this->rank_id = $employee->ranks->first()?->id;
+        }
+        
+        $this->dispatchBrowserEvent('show-changePositionModal');
+       
+
+      }
+      
+      public function changeUpdate(){
+        
+        $employee_position  = new EmployeePosition;
+        $employee_position->employee_id = $this->employee_id ?? Null;
+        $employee_position->job_title_id = $this->job_title_id ?? Null;
+        $employee_position->rank_id = $this->rank_id ?? Null;
+        $employee_position->branch_id = $this->branch_id ?? Null;
+        $employee_position->department_id = $this->department_id ?? Null;
+        $employee_position->grade_id = $this->grade_id ?? Null;
+        $employee_position->start_date = $this->start_date ?? Null;
+        $employee_position->end_date = $this->end_date ?? Null;
+        $employee_position->changed_by = Auth::user()->id ?? Null;
+        $employee_position->change_reason = $this->change_reason ?? Null;
+        $employee_position->remarks = $this->remarks ?? Null;
+        $employee_position->save();
+
+        $this->dispatchBrowserEvent('hide-changePositionModal');
+        $this->resetInputFields();
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Employee Position Changed Successfully!!"
+        ]);
+
       }
 
       public function setUsernames(){
@@ -67,6 +166,32 @@ class Index extends Component
     
     public function render()
     {
-        return view('livewire.employees.index');
+        $search = trim((string) $this->search);
+
+        $query = Employee::query()
+            ->doesntHave('driver')
+            ->where('archive', '0');
+
+        if (filled($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('employee_number', 'like', "%{$search}%")
+                ->orWhere('gender', 'like', "%{$search}%")
+                ->orWhere('email', 'like', "%{$search}%")
+                ->orWhere('phonenumber', 'like', "%{$search}%")
+                ->orWhere('post', 'like', "%{$search}%")
+                ->orWhereRaw("CONCAT_WS(' ', name, surname) LIKE ?", ["%{$search}%"])
+                ->orWhereHas('rank', fn ($r) => $r->where('name', 'like', "%{$search}%"))
+                ->orWhereHas('grade', fn ($g) => $g->where('name', 'like', "%{$search}%"))
+                ->orWhereHas('branch', fn ($b) => $b->where('name', 'like', "%{$search}%"))
+                ->orWhereHas('departments', fn ($d) => $d->where('name', 'like', "%{$search}%"));
+            });
+        }
+
+        $employees = $query->orderBy('name', 'asc')
+                        ->orderBy('surname', 'asc')
+                        ->paginate(10);
+
+        return view('livewire.employees.index', compact('employees'));
+        
     }
 }

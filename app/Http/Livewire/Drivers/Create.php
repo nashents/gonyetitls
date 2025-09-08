@@ -132,7 +132,7 @@ class Create extends Component
         $this->roles = Role::orderBy('name','asc')->get();
         $this->currencies = Currency::latest()->get();
         $this->ranks = Rank::orderBy('name','asc')->get();
-        $this->job_titles = JobTitle::latest()->get();
+        $this->job_titles = JobTitle::orderBy('title','asc')->get();
         $this->use_email_as_username = 1;
         $this->countries = Country::orderBy('name','asc')->get();
         $this->provinces = collect();
@@ -419,7 +419,7 @@ class Create extends Component
 
         $this->departments = Department::orderBy('name','asc')->get();
         $this->branches = Branch::orderBy('name','asc')->get();
-        $this->job_titles = JobTitle::latest()->get();
+        $this->job_titles = JobTitle::orderBy('title','asc')->get();
         $this->countries = Country::orderBy('name','asc')->get();
 
         return view('livewire.drivers.create',[

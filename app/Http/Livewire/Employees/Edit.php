@@ -143,7 +143,7 @@ class Edit extends Component
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->departments = Department::orderBy('name','asc')->get();
         $this->branches = Branch::orderBy('name','asc')->get();
-        $this->job_titles = JobTitle::latest()->get();
+        $this->job_titles = JobTitle::orderBy('title','asc')->get();
         $this->countries = Country::orderBy('name','asc')->get();
         $this->grades = Grade::orderBy('grade_code','asc')->get();
         $this->roles = Role::orderBy('name','asc')->get();
@@ -417,7 +417,7 @@ class Edit extends Component
     {
         $this->departments = Department::orderBy('name','asc')->get();
         $this->branches = Branch::orderBy('name','asc')->get();
-        $this->job_titles = JobTitle::latest()->get();
+        $this->job_titles = JobTitle::orderBy('title','asc')->get();
         $this->countries = Country::orderBy('name','asc')->get();
         $this->provinces = Province::orderBy('name','asc')->get();
         

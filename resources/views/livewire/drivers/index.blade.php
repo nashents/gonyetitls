@@ -27,8 +27,12 @@
 
                             </div>
                             <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
-
-                                <table id="driversTable" class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
+                                 <div class="col-md-3" style="float: right; padding-right:0px">
+                                    <div class="form-group">
+                                        <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search drivers...">
+                                    </div>
+                                </div>
+                                <table  class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                     <thead >
                                         <th class="th-sm">Profile
                                         </th>
@@ -58,9 +62,9 @@
 
                                       </tr>
                                     </thead>
-                                    @if ($drivers->count()>0)
+                                    @if (isset($drivers))
                                     <tbody>
-                                        @foreach ($drivers as $driver)
+                                        @forelse ($drivers as $driver)
                                         @if (isset($driver->employee))
                                       <tr>
                                         @php
@@ -128,13 +132,29 @@
                                         </td>
                                       </tr>
                                       @endif
-                                      @endforeach
+                                      @empty
+                                    <tr>
+                                        <td colspan="11">
+                                            <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
+                                                No Drivers Found ....
+                                            </div>
+                                        
+                                        </td>
+                                    </tr>  
+                                    @endforelse
                                     </tbody>
                                     @else
                                     <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
                                     @endif
 
                                   </table>
+                                  <nav class="text-center" style="float: right">
+                                        <ul class="pagination rounded-corners">
+                                            @if (isset($drivers))
+                                                {{ $drivers->links() }} 
+                                            @endif 
+                                        </ul>
+                                    </nav>  
 
                                 <!-- /.col-md-12 -->
                             </div>
