@@ -247,7 +247,7 @@ class Index extends Component
                 ->orWhere('phonenumber', 'like', "%{$search}%")
                 ->orWhere('post', 'like', "%{$search}%")
                 ->orWhereRaw("CONCAT_WS(' ', name, surname) LIKE ?", ["%{$search}%"])
-                ->orWhereHas('rank', fn ($r) => $r->where('name', 'like', "%{$search}%"))
+                ->orWhereHas('ranks', fn ($r) => $r->where('name', 'like', "%{$search}%"))
                 ->orWhereHas('grade', fn ($g) => $g->where('name', 'like', "%{$search}%"))
                 ->orWhereHas('branch', fn ($b) => $b->where('name', 'like', "%{$search}%"))
                 ->orWhereHas('departments', fn ($d) => $d->where('name', 'like', "%{$search}%"));

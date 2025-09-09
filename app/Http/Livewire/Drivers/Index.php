@@ -147,7 +147,8 @@ if (filled($this->search)) {
     // related lookups that aren’t on employees (keep these as relationship scopes)
     $query->orWhereHas('employee.grade', fn ($g) => $g->where('name','like', "%{$search}%"))
           ->orWhereHas('employee.branch', fn ($b) => $b->where('name','like', "%{$search}%"))
-          ->orWhereHas('employee.departments', fn ($d) => $d->where('name','like', "%{$search}%"));
+          ->orWhereHas('employee.departments', fn ($d) => $d->where('name','like', "%{$search}%"))
+          ->orWhereHas('employee.ranks', fn ($d) => $d->where('name','like', "%{$search}%"));
 }
 
 // 🧭 Order by employee name, surname (from the join)
