@@ -296,11 +296,16 @@
                             <td>{{$employee_position->department ? $employee_position->department->name : ""}} </td>
                             <td>{{$employee_position->branch ? $employee_position->branch->name : ""}} </td>
                             <td>{{$employee_position->change_reason}} </td>
-                            <td>{{$employee_position->changed_by ? $employee_position->changed_by->name : ""}} </td>
+                            <td>
+                                @php
+                                    $user = App\Models\User::find($employee_position->changed_by);
+                                @endphp
+                                {{$user ? $user->name : ""}} {{$user ? $user->name : ""}} 
+                            </td>
                           </tr>
                           @empty
                           <tr>
-                            <td colspan="6">
+                            <td colspan="7">
                                 <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                     No Employeement History Found ....
                                 </div>
