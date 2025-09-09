@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Branch;
+use App\Models\Department;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Contracts\Auditable;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -17,6 +19,9 @@ class EmployeePosition extends Model implements Auditable
         'employee_id',
         'job_title_id',
         'grade_id',
+        'rank_id',
+        'branch_id',
+        'department_id',
         'start_date',
         'end_date',
         'change_reason',
@@ -38,6 +43,14 @@ class EmployeePosition extends Model implements Auditable
     {
         return $this->belongsTo(Grade::class);
     }
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
+    }
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
 
     public function changedBy()
     {
@@ -49,4 +62,6 @@ class EmployeePosition extends Model implements Auditable
     {
         return $query->whereNull('end_date');
     }
+
+   
 }

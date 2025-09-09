@@ -88,6 +88,7 @@
 
             <ul class="nav nav-tabs nav-justified" role="tablist">
                 <li role="presentation" class="active"><a href="#basic" aria-controls="basic" role="tab" data-toggle="tab">Basic Info</a></li>
+                <li role="presentation"><a href="#history" aria-controls="history" role="tab" data-toggle="tab">History</a></li>
                 @if (isset($employee->driver))
                 <li role="presentation"><a href="#driver" aria-controls="driver" role="tab" data-toggle="tab">Driver Info</a></li>
                 <li role="presentation"><a href="#trips" aria-controls="trips" role="tab" data-toggle="tab">Trip(s)</a></li>
@@ -264,6 +265,54 @@
                                 </tr>
                         </tbody>
                     </table>
+                </div>
+                <div role="tabpanel" class="tab-pane active" id="history">
+                       <table   class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
+                        <thead>
+                          <tr>
+                            <th class="th-sm">Post
+                            </th>
+                            <th class="th-sm">Grade
+                            </th>
+                            <th class="th-sm">Dpt
+                            </th>
+                            <th class="th-sm">Branch
+                            </th>
+                            <th class="th-sm">Reason
+                            </th>
+                            <th class="th-sm">ChangedBy
+                            </th>
+                            <th class="th-sm">Remarks
+                            </th>
+                           
+                          </tr>
+                        </thead>
+                        @if ($employee->employee_positions)
+                        <tbody>
+                            @forelse ($employee->employee_positions as $employee_position)
+                          <tr>
+                            <td>{{$employee_position->job_title ? $employee_position->job_title->title : ""}} </td>
+                            <td>{{$employee_position->grade ? $employee_position->grade->grade_code : ""}} </td>
+                            <td>{{$employee_position->department ? $employee_position->department->name : ""}} </td>
+                            <td>{{$employee_position->branch ? $employee_position->branch->name : ""}} </td>
+                            <td>{{$employee_position->change_reason}} </td>
+                            <td>{{$employee_position->changed_by ? $employee_position->changed_by->name : ""}} </td>
+                          </tr>
+                          @empty
+                          <tr>
+                            <td colspan="6">
+                                <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
+                                    No Employeement History Found ....
+                                </div>
+                               
+                            </td>
+                          </tr>  
+                            @endforelse
+                        </tbody>
+                        @else
+                            <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
+                         @endif
+                      </table>
                 </div>
                 @if (isset($employee->driver))
                 <div role="tabpanel" class="tab-pane" id="driver">

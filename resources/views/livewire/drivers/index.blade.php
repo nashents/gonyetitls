@@ -52,11 +52,7 @@
                                         </th>
                                         <th class="th-sm">Account
                                         </th>
-                                        @if (Auth::user()->is_admin())
-                                        <th class="th-sm">Username
-                                        </th> 
-                                        @endif
-                                       
+                                      
                                         <th class="th-sm">Actions
                                         </th>
 
@@ -87,21 +83,7 @@
                                             <span class="badge bg-danger">Deleted</span>
                                             @endif
                                         </td>
-                                        @if (Auth::user()->is_admin())
-                                        <td>
-                                            @php
-                                                $user = App\Models\User::find($driver->user_id)
-                                            @endphp
-                                            @if ($user)
-                                                @if (!is_null($user->username))
-                                                <span class="badge bg-success">Username set</span>
-                                                @else
-                                                <span class="badge bg-warning">Username not set</span>
-                                                @endif
-                                            @endif
-                                           
-                                        </td>
-                                        @endif
+                                       
                                         <td class="w-10 line-height-35 table-dropdown">
                                             <div class="dropdown">
                                                 <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

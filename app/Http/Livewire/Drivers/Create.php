@@ -22,6 +22,7 @@ use App\Models\BankAccount;
 use App\Models\Transporter;
 use Livewire\WithFileUploads;
 use App\Models\DepartmentHead;
+use App\Models\EmployeePosition;
 use App\Mail\AccountCreationMail;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -332,6 +333,19 @@ class Create extends Component
       $employee->save();
       $employee->departments()->sync($this->selectedDepartment);
       $employee->ranks()->sync($this->rank_id);
+
+        $employee_position  = new EmployeePosition;
+        $employee_position->employee_id = $employee->id;
+        $employee_position->job_title_id = JobTitle::where('title',$employee->post)->first()?->id ?? Null;
+        $employee_position->rank_id = $employee->ranks->first()?->id ?? Null;
+        $employee_position->branch_id = $employee->branch_id ?? Null;
+        $employee_position->department_id = $employee->departments->first()?->id ?? Null;
+        $employee_position->grade_id = $employee->grade_id ?? Null;
+        $employee_position->start_date = $employee->start_date ?? Null;
+        $employee_position->changed_by = $employee->user_id ?? Null;
+        $employee_position->change_reason = "Appointment";
+        $employee_position->remarks = "Initial Appointment";
+        $employee_position->save();
 
        if ($this->account_number && $this->bank_name) {
               $bank_account = new BankAccount;

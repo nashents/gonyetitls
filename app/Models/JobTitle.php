@@ -12,6 +12,9 @@ class JobTitle extends Model implements Auditable
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 
+    public function employee_positions(){
+        return $this->hasMany('App\Models\EmployeePosition');
+    }
     public function department(){
         return $this->belongsTo('App\Models\Department');
     }

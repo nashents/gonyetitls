@@ -6,7 +6,9 @@ use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Count;
 use App\Models\Employee;
+use App\Models\JobTitle;
 use App\Imports\EmployeesImport;
+use App\Models\EmployeePosition;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -180,6 +182,19 @@ WithBatchInserts
             $employee->contact    = $row['contact'];
             $employee->update();
             $employee->ranks()->attach([4]);
+
+            $employee_position  = new EmployeePosition;
+            $employee_position->employee_id = $employee->id;
+            $employee_position->job_title_id = JobTitle::where('title',$employee->post)->first()?->id ?? Null;
+            $employee_position->rank_id = $employee->ranks->first()?->id ?? Null;
+            $employee_position->branch_id = $employee->branch_id ?? Null;
+            $employee_position->department_id = $employee->departments->first()?->id ?? Null;
+            $employee_position->grade_id = $employee->grade_id ?? Null;
+            $employee_position->start_date = $employee->start_date ?? Null;
+            $employee_position->changed_by = $employee->user_id ?? Null;
+            $employee_position->change_reason = "Appointment";
+            $employee_position->remarks = "Initial Appointment";
+            $employee_position->save();
             
  
         } else {

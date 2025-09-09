@@ -46,6 +46,7 @@ class Index extends Component
     public $end_date;
     public $change_reason;
     public $remarks;
+    public $company;
 
     public function exportEmployeesCSV(Excel $excel){
 
@@ -71,6 +72,51 @@ class Index extends Component
         $this->remarks = Null;
     }
 
+    public function bulkUpdateEmployeePositions(){
+
+        $created = 0;
+
+        Employee::query()
+        ->with('departments','ranks')
+        ->where('archive', '0')
+        ->doesntHave('employee_positions')
+        ->select('id', 'post', 'branch_id', 'grade_id','start_date','created_at') // adjust to your columns
+        ->orderBy('id')
+        ->chunkById(500, function ($batch) use (&$created) {
+           
+            $rows = [];
+
+            foreach ($batch as $e) {
+                $rows[] = [
+                    'employee_id'    => $e->id,
+                    'department_id'  => $e->departments->first()?->id ?? null,
+                    'job_title_id'   => JobTitle::where('title',$e->post)->first()?->id ?? null,
+                    'branch_id'      => $e->branch_id ?? null,
+                    'rank_id'        => $e->ranks->first()?->id ?? null,
+                    'grade_id'       => $e->grade_id ?? null,
+                    // include only if your table has this column:
+                    'changed_by' => $e->user_id,
+                    'start_date' => $e->start_date,
+                    'created_at'     => $e->created_at,
+                    'updated_at'     => $e->created_at,
+                    'change_reason'     => "Appointment",
+                    'remarks'     => "Initial Appointment",
+                ];
+            }
+
+            if ($rows) {
+                // Per-batch transaction keeps locks short
+                DB::transaction(fn () => EmployeePosition::insert($rows));
+                $created += count($rows);
+            }
+        });
+
+        $company = $this->company;
+        $company->positions = True;
+        $company->save();
+
+    }
+
     public function mount(){
         $this->resetPage();
         $this->departments = Department::orderBy('name','asc')->get();
@@ -78,6 +124,14 @@ class Index extends Component
         $this->grades = Grade::orderBy('grade_code','asc')->get();
         $this->branches = Branch::orderBy('name','asc')->get();
         $this->ranks = Rank::orderBy('name','asc')->get();
+
+        $this->company = Auth::user()->employee->company;
+       
+        if($this->company->positions == False){
+             $this->bulkUpdateEmployeePositions();
+        }
+       
+
       }
 
     public function updatingSearch()
@@ -97,6 +151,8 @@ class Index extends Component
             $this->job_title_id = $employee_position->job_title_id;
             $this->rank_id = $employee_position->rank_id;
         }else{
+           
+
             $this->grade_id = $employee->grade_id;
             $this->department_id = $employee->departments->first()?->id;
             $this->branch_id = $employee->branch_id;
@@ -124,6 +180,17 @@ class Index extends Component
         $employee_position->change_reason = $this->change_reason ?? Null;
         $employee_position->remarks = $this->remarks ?? Null;
         $employee_position->save();
+
+        $post = JobTitle::find($this->job_title_id);
+        $employee = Employee::find($this->employee_id);
+        $employee->post = $post ?? null;
+        $employee->branch_id = $this->branch_id ?? null;
+        $employee->grade_id = $this->grade_id ?? null;
+        $employee->update();
+        $employee->ranks()->detach();
+        $employee->ranks()->sync($this->rank_id);
+        $employee->departments()->detach();
+        $employee->departments()->sync($this->department_id);
 
         $this->dispatchBrowserEvent('hide-changePositionModal');
         $this->resetInputFields();

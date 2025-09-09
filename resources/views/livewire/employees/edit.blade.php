@@ -129,7 +129,7 @@
                                    <div class="col-md-6">
                                        <div class="form-group">
                                            <label for="exampleInputEmail13">Branch</label>
-                                          <select wire:model.debounce.300ms="branch_id" class="form-control" >
+                                          <select wire:model.debounce.300ms="branch_id" class="form-control" disabled>
                                               <option value="" selected> Select Branch</option>
                                               @foreach ($branches as $branch)
                                                   <option value="{{$branch->id}}">{{$branch->name}}</option>
@@ -146,7 +146,7 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="exampleInputEmail13">Department(s)<span class="required" style="color: red">*</span></label>
-                                       <select wire:model.debounce.300ms="selectedDepartment" class="form-control" multiple required>
+                                       <select wire:model.debounce.300ms="selectedDepartment" class="form-control" required disabled>
                                            <option value="" selected > Select Department</option>
                                            @foreach ($departments as $department)
                                                <option value="{{$department->id}}">{{$department->name}}</option>
@@ -189,8 +189,8 @@
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
-                                            <label for="exampleInputEmail1">Rank<span class="required" style="color: red">*</span></label>
-                                            <select wire:model.debounce.300ms="rank_id" class="form-control"  required>
+                                            <label for="exampleInputEmail1">Rank</label>
+                                            <select wire:model.debounce.300ms="rank_id" class="form-control" disabled>
                                                 <option value="" selected>Select Rank</option>
                                                 @foreach ($ranks as $rank)
                                                 @if ($rank->name == "HOD")

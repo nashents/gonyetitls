@@ -21,4 +21,7 @@ class Grade extends Model implements Auditable
     public function currency(){
         return $this->belongsTo('App\Models\Currency');
     }
+    public function employee_positions(){
+        return $this->hasMany('App\Models\EmployeePosition');
+    }
 }

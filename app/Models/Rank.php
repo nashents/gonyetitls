@@ -15,4 +15,8 @@ class Rank extends Model implements Auditable
         return $this->belongsToMany('App\Models\Employee');
     }
 
+    public function employee_positions(){
+        return $this->hasMany('App\Models\EmployeePosition');
+    }
+
 }

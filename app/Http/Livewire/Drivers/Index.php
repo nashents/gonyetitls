@@ -65,6 +65,8 @@ class Index extends Component
         $this->change_reason = "";
         $this->remarks = "";
     }
+
+   
     
     public function mount(){
         $this->resetPage();
@@ -118,37 +120,41 @@ class Index extends Component
 
     public function render()
     {
-        $query = Driver::query()
-        ->with(['user:id,active','transporter:id,name','employee:id,name,surname'])
-        ->withAggregate('employee', 'name as employee_name')
-        ->withAggregate('employee', 'surname as employee_surname')
-        ->where('archive', '0');
+       $query = Driver::query()
+    ->with(['user:id,active','transporter:id,name','employee:id,name,surname'])
+    ->leftJoin('employees', 'employees.id', '=', 'drivers.employee_id')
+    ->select('drivers.*')                  // avoid ambiguous columns
+    ->where('drivers.archive', 0)          // ✅ disambiguate
+    ->whereNull('drivers.deleted_at');     // ✅ disambiguate
 
-        // 🔎 Search
-        if (filled($this->search)) {
-            $search = $this->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('driver_number', 'like', "%{$search}%")
-                ->orWhere('license_number', 'like', "%{$search}%")
-                ->orWhere('passport_number', 'like', "%{$search}%")
-                ->orWhere('experience', 'like', "%{$search}%")
-                ->orWhereHas('employee', function ($e) use ($search) {
-                    $e->where(DB::raw("concat(name, ' ', surname)"), 'like', "%{$search}%")
-                        ->orWhere('post','like', "%{$search}%")
-                        ->orWhere('email','like', "%{$search}%")
-                        ->orWhere('phonenumber','like', "%{$search}%")
-                        ->orWhereHas('grade', fn ($g) => $g->where('name','like', "%{$search}%"))
-                        ->orWhereHas('branch', fn ($b) => $b->where('name','like', "%{$search}%"))
-                        ->orWhereHas('departments', fn ($d) => $d->where('name','like', "%{$search}%"));
-                });
-            });
-        }
+// 🔎 Search
+if (filled($this->search)) {
+    $search = $this->search;
 
-        // 🧭 Order by related employee name, surname
-        $drivers = $query->orderBy('employee_name', 'asc')
-                        ->orderBy('employee_surname', 'asc')
-                        ->paginate(10);
+    $query->where(function ($q) use ($search) {
+        $q->where('drivers.driver_number', 'like', "%{$search}%")
+          ->orWhere('drivers.license_number', 'like', "%{$search}%")
+          ->orWhere('drivers.passport_number', 'like', "%{$search}%")
+          ->orWhere('drivers.experience', 'like', "%{$search}%")
 
-        return view('livewire.drivers.index', compact('drivers'));
+          // employee columns via the join
+          ->orWhereRaw("concat(employees.name, ' ', employees.surname) like ?", ["%{$search}%"])
+          ->orWhere('employees.post','like', "%{$search}%")
+          ->orWhere('employees.email','like', "%{$search}%")
+          ->orWhere('employees.phonenumber','like', "%{$search}%");
+    });
+
+    // related lookups that aren’t on employees (keep these as relationship scopes)
+    $query->orWhereHas('employee.grade', fn ($g) => $g->where('name','like', "%{$search}%"))
+          ->orWhereHas('employee.branch', fn ($b) => $b->where('name','like', "%{$search}%"))
+          ->orWhereHas('employee.departments', fn ($d) => $d->where('name','like', "%{$search}%"));
+}
+
+// 🧭 Order by employee name, surname (from the join)
+$drivers = $query->orderBy('employees.name')
+                 ->orderBy('employees.surname')
+                 ->paginate(10);
+
+return view('livewire.drivers.index', compact('drivers'));
     }
 }
