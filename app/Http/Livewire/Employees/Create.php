@@ -302,7 +302,7 @@ class Create extends Component
           $employee_position->department_id = $employee->departments->first()?->id ?? Null;
           $employee_position->grade_id = $employee->grade_id ?? Null;
           $employee_position->start_date = $employee->start_date ?? Null;
-          $employee_position->changed_by = $employee->user_id ?? Null;
+          $employee_position->changed_by = Auth::user()->id;
           $employee_position->change_reason = "Appointment";
           $employee_position->remarks = "Initial Appointment";
           $employee_position->save();
