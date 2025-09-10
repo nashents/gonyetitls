@@ -17,7 +17,7 @@
                                 <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search drivers...">
                             </div>
                         </div> --}}
-   <table id="checklistsTable" class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
+                        <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
                                     <th class="th-sm">Inspection#
@@ -79,6 +79,14 @@
                                     <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
                                  @endif
                               </table>
+
+                               <nav class="text-center" style="float: right">
+                                <ul class="pagination rounded-corners">
+                                    @if (isset($recoveries))
+                                        {{ $recoveries->links() }} 
+                                    @endif 
+                                </ul>
+                            </nav> 
     
 
         <!-- /.col-md-12 -->

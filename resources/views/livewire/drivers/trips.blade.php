@@ -17,7 +17,7 @@
                                 <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search drivers...">
                             </div>
                         </div> --}}
-                            <table id="tripsTable" class="table  table-striped table-bordered table-sm table-responsive sortable" cellspacing="0" width="100%" style=" width:100%; height:100%;">
+                            <table  class="table  table-striped table-bordered table-sm table-responsive sortable" cellspacing="0" width="100%" style=" width:100%; height:100%;">
                                 <thead>
                                     <th class="th-sm">Trip#
                                     </th>
@@ -818,6 +818,13 @@
                                 @endif
 
                                 </table>
+                                 <nav class="text-center" style="float: right">
+                                <ul class="pagination rounded-corners">
+                                    @if (isset($recoveries))
+                                        {{ $recoveries->links() }} 
+                                    @endif 
+                                </ul>
+                            </nav> 
     
 
         <!-- /.col-md-12 -->

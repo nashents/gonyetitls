@@ -24,8 +24,7 @@ class Recoveries extends Component
     public function render()
     {
         return view('livewire.drivers.recoveries',[
-            'recoveries' => Recovery::whereMonth('date',date('m'))
-            ->whereYear('date',date('Y'))
+            'recoveries' => Recovery::whereYear('date',date('Y'))
             ->where('driver_id',$this->driver->id)->paginate(10)
         ]);
     }

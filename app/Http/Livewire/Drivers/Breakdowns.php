@@ -23,8 +23,7 @@ class Breakdowns extends Component
     public function render()
     {
         return view('livewire.drivers.breakdowns',[
-            'breakdowns' => Breakdown::whereMonth('date',date('m'))
-            ->whereYear('date',date('Y'))
+            'breakdowns' => Breakdown::whereYear('date',date('Y'))
             ->where('driver_id',$this->driver->id)->paginate(10)
         ]);
     }
