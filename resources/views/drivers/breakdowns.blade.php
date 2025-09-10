@@ -1,5 +1,4 @@
 @extends('layouts.app')
-@section('content')
 
 @section('extra-css')
     @if (isset(Auth::user()->employee->company))
@@ -9,17 +8,21 @@
     @endif
 @endsection
 @section('title')
-    Inspection | @if (isset(Auth::user()->employee->company))
+    Driver Breakdowns | @if (isset(Auth::user()->employee->company))
     {{Auth::user()->employee->company->name}}
     @elseif (Auth::user()->company)
     {{Auth::user()->company->name}}
     @endif
 @endsection
+
 @section('body-id')
 <body class="top-navbar-fixed">
 @endsection
 
-      
+@section('content')
+
+
+
                     <div class="main-page">
                         <div class="container-fluid">
                             <div class="row page-title-div">
@@ -30,18 +33,25 @@
                                 <div class="col-md-6">
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
-            							<li><a href="#" onclick="goBack()"><i class="fa fa-list"></i> Inspections</a></li>
-            							<li class="active"> <i class="fas fa-eye"></i> Inspection</li>
+            							<li class="active"> <i class="fa fa-breakdowns"></i> Driver Breakdowns</li>
             						</ul>
                                 </div>
+                                <!-- /.col-md-6 -->
+
                             </div>
                             <!-- /.row -->
                         </div>
+                        <!-- /.container-fluid -->
 
-                        @livewire('checklists.show',['id' => $checklist->id])
-
+                        @livewire('drivers.breakdowns',['driver' => $driver])
+                        <!-- /.section -->
 
                     </div>
+                    <!-- /.main-page -->
+
+            
+
+        <!-- ========== PAGE JS FILES ========== -->
 
 
 @endsection
@@ -49,28 +59,7 @@
 @section('extra-js')
     <script>
     $(document).ready( function () {
-        $('#checklistsTable').DataTable();
-    } );
-    </script>
-    <script>
-    $(document).ready( function () {
-        $('#documentsTable').DataTable();
-    } );
-    </script>
-    <script>
-    $(document).ready( function () {
-        $('#contactsTable').DataTable();
-    } );
-    </script>
-    <script>
-    $(document).ready( function () {
-        $('#tripsTable').DataTable();
-    } );
-    </script>
-    <script>
-    $(document).ready( function () {
-        $('#checklist_transportersTable').DataTable();
+        $('#breakdownsTable').DataTable();
     } );
     </script>
 @endsection
-

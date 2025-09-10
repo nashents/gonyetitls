@@ -87,12 +87,16 @@
                                     </div>
                                     <!-- /.col-md-6 -->
                                 </div>
-                                <h5 class="underline mt-30">Username</h5>
-                                <div class="mb-10">
-                                   <input type="checkbox" wire:model.debounce.300ms="use_email_as_username"   class="line-style" />
-                                   <label for="one" class="radio-label">Use email as username</label>
-                                   @error('use_email_as_username') <span class="text-danger error">{{ $message }}</span>@enderror
-                               </div>
+                                  <h5 class="underline mt-30">Select what to use as username</h5>
+                                 <div class="mb-10">
+                                    <label class="radio-inline">
+                                        <input type="radio" wire:model.debounce.300ms="use_email_as_username" value="1" name="optradio" >Work Email
+                                     </label>
+                                    <label class="radio-inline">
+                                        <input type="radio" wire:model.debounce.300ms="use_email_as_username" value="0" name="optradio">Phonenumber
+                                    </label>
+                                    @error('use_email_as_username') <span class="text-danger error">{{ $message }}</span>@enderror
+                                </div>
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
@@ -111,23 +115,30 @@
                                 </div>
 
                                 <div class="row">
-                                    <div class="col-md-6">
+                                    <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="exampleInputEmail13">ID Number</label>
                                             <input type="text" class="form-control" wire:model.debounce.300ms="idnumber" placeholder="Enter ID Number"  />
                                             @error('idnumber') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="exampleInputEmail13">Passport Number</label>
                                             <input type="text" class="form-control" wire:model.debounce.300ms="passport_number" placeholder="Enter Passport Number" />
                                             @error('passport_number') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
+                                     <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="middlename">License Number</label>
+                                            <input type="text" class="form-control" wire:model.debounce.300ms="license_number" placeholder="Enter License Number" />
+                                            @error('license_number') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="row">
-                                    <div class="col-md-3">
+                                    <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="middlename">Experience</label>
                                             <input type="text" class="form-control" wire:model.debounce.300ms="experience" placeholder="Enter Driver Experience" />
@@ -136,14 +147,8 @@
                                     </div>
                                     <!-- /.col-md-6 -->
 
-                                    <div class="col-md-3">
-                                        <div class="form-group">
-                                            <label for="middlename">License Number</label>
-                                            <input type="text" class="form-control" wire:model.debounce.300ms="license_number" placeholder="Enter License Number" />
-                                            @error('license_number') <span class="text-danger error">{{ $message }}</span>@enderror
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
+                                   
+                                    <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="class">License Class</label>
                                             <select name="" wire:model.debounce.300ms="class" class="form-control" >
@@ -157,7 +162,7 @@
                                             @error('class') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
-                                     <div class="col-md-3">
+                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="exampleInputEmail13">Branch</label>
                                            <select wire:model.debounce.300ms="branch_id" class="form-control"  >
@@ -192,7 +197,7 @@
                                            <select wire:model.debounce.300ms="job_title" class="form-control" >
                                                <option value="" selected > Select Job Title</option>
                                                @if (!is_null($selectedDepartment))
-                                               @foreach ($job_titles as $job_title)
+                                                @foreach ($job_titles as $job_title)
                                                     <option value="{{$job_title->title}}">{{$job_title->title}}</option>
                                                 @endforeach
                                                @endif
@@ -213,7 +218,6 @@
                                             @error('grade_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
                                     </div>
-
                                     <!-- /.col-md-6 -->
                                 </div>
                                 

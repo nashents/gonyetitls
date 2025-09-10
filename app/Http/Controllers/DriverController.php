@@ -18,6 +18,30 @@ class DriverController extends Controller
     {
         return view('drivers.index');
     }
+    public function trips(Driver $driver)
+    {
+        return view('drivers.trips',[
+            'driver' => $driver
+        ]);
+    }
+    public function recoveries(Driver $driver)
+    {
+        return view('drivers.recoveries',[
+            'driver' => $driver
+        ]);
+    }
+    public function inspections(Driver $driver)
+    {
+        return view('drivers.inspections',[
+            'driver' => $driver
+        ]);
+    }
+    public function breakdowns(Driver $driver)
+    {
+        return view('drivers.breakdowns',[
+            'driver' => $driver
+        ]);
+    }
 
     public function age()
     {

@@ -27,11 +27,15 @@ use App\Models\CashFlow;
 use App\Models\Currency;
 use App\Models\Customer;
 use App\Models\Employee;
+use App\Models\Recovery;
+use App\Models\Breakdown;
+use App\Models\Checklist;
 use App\Models\Container;
 use App\Models\Inventory;
 use App\Models\Allocation;
 use App\Models\Assignment;
 use App\Models\Department;
+use App\Models\Inspection;
 use App\Models\Destination;
 use App\Models\FuelRequest;
 use App\Models\Transporter;
@@ -64,8 +68,16 @@ class Index extends Component
     public $invoice_count ;
     public $requisition_count;
     public $destination_count;
-    public $employee_count ;
+    public $employee_count;
+    public $employee;
+    public $driver;
+    public $user;
+    public $company ;
     public $driver_count ;
+    public $driver_inspections ;
+    public $driver_recoveries ;
+    public $driver_trips ;
+    public $driver_breakdowns ;
     public $leave_count ;
     public $tyre_count ;
     public $service_count ;
@@ -103,10 +115,14 @@ class Index extends Component
         // $currentMonth = Carbon::now();
         // $this->current_month = $currentMonth->month;
         // $this->monthName = Carbon::createFromFormat('m', 6)->format('M');
+        $this->user = Auth::user();
+        $this->employee = $this->user->employee;
+        $this->driver = $this->employee->driver;
+        $this->company = $this->employee->company;
 
-        if (isset(Auth::user()->employee->company->currency)) {
-            $this->selectedCurrency = Auth::user()->employee->company->currency->id;
-            $this->currency_name = Auth::user()->employee->company->currency->name;
+        if (isset($this->company->currency)) {
+            $this->selectedCurrency = $this->company->currency->id;
+            $this->currency_name = $this->company->currency->name;
         }else{
             $this->selectedCurrency = 1;
             $this->currency_name = "USD";
@@ -672,6 +688,12 @@ class Index extends Component
         $this->rank = Rank::where('name','HOD')->first();
         $this->hods = DepartmentHead::all();
         $this->trip_count = Trip::whereYear('start_date',date('Y'))->where('deleted_at', Null)->get()->count();
+        if($this->driver){
+             $this->driver_inspections = Checklist::whereYear('date',date('Y'))->where('deleted_at', Null)->where('driver_id',$this->driver->id)->get()->count();
+             $this->driver_breakdowns = Breakdown::whereYear('date',date('Y'))->where('deleted_at', Null)->where('driver_id',$this->driver->id)->get()->count();
+             $this->driver_trips = Trip::whereYear('start_date',date('Y'))->where('deleted_at', Null)->where('driver_id',$this->driver->id)->get()->count();
+             $this->driver_recoveries = Recovery::whereYear('date',date('Y'))->where('deleted_at', Null)->where('driver_id',$this->driver->id)->get()->count();
+        }
         $this->horse_count = Horse::where('archive',false)->get()->count();
         $this->destinations_count = Destination::all()->count();
         $this->trailer_count = Trailer::where('archive',false)->get()->count();
@@ -681,6 +703,7 @@ class Index extends Component
         $this->branch_count = Branch::all()->count();
         $this->customer_count = Customer::where('status',true)->get()->count();
         $this->bill_count = Bill::whereYear('bill_date',date('Y'))->get()->count();
+        $this->invoice_count = Invoice::whereYear('date',date('Y'))->get()->count();
         $this->invoice_count = Invoice::whereYear('date',date('Y'))->get()->count();
         $this->employee_count = Employee::doesntHave('driver')->where('archive',false)->get()->count();
         $this->driver_count = Driver::where('archive',false)->get()->count();

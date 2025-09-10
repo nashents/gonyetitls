@@ -270,13 +270,11 @@
                        <table   class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                         <thead>
                           <tr>
-                            <th class="th-sm">Post
+                            <th class="th-sm" style="width: 20%;">Position
                             </th>
-                            <th class="th-sm">Grade
+                            <th class="th-sm">Prev Pos EndDate
                             </th>
-                            <th class="th-sm">Dpt
-                            </th>
-                            <th class="th-sm">Branch
+                            <th class="th-sm">New Pos StartDate
                             </th>
                             <th class="th-sm">Reason
                             </th>
@@ -284,24 +282,32 @@
                             </th>
                             <th class="th-sm">Remarks
                             </th>
-                           
+                            <th class="th-sm">ChangedOn
+                            </th>
                           </tr>
                         </thead>
                         @if ($employee->employee_positions)
                         <tbody>
                             @forelse ($employee->employee_positions as $employee_position)
                           <tr>
-                            <td>{{$employee_position->job_title ? $employee_position->job_title->title : ""}} </td>
-                            <td>{{$employee_position->grade ? $employee_position->grade->grade_code : ""}} </td>
-                            <td>{{$employee_position->department ? $employee_position->department->name : ""}} </td>
-                            <td>{{$employee_position->branch ? $employee_position->branch->name : ""}} </td>
-                            <td>{{$employee_position->change_reason}} </td>
+                            <td>
+                                <strong>Job Title:</strong> {{$employee_position->job_title ? $employee_position->job_title->title : ""}} <br>
+                                <strong>Grade:</strong> {{$employee_position->grade ? $employee_position->grade->grade_code : ""}} <br>
+                                <strong>Dpt:</strong> {{$employee_position->department ? $employee_position->department->name : ""}} <br>
+                                <strong>Rank</strong> {{$employee_position->rank ? $employee_position->rank->name : ""}} <br>
+                                <strong>Branch</strong> {{$employee_position->branch ? $employee_position->branch->name : ""}} <br>
+                            </td>
+                            <td>{{$employee_position->start_date}}</td>
+                            <td>{{$employee_position->end_date}}</td>
+                            <td>{{$employee_position->change_reason}}</td>
                             <td>
                                 @php
                                     $user = App\Models\User::find($employee_position->changed_by);
                                 @endphp
-                                {{$user ? $user->name : ""}} {{$user ? $user->name : ""}} 
+                                {{$user ? $user->name : ""}} {{$user ? $user->surname : ""}} 
                             </td>
+                            <td>{{$employee_position->remarks}}</td>
+                            <td>{{$employee_position->created_at}}</td>
                           </tr>
                           @empty
                           <tr>
@@ -362,7 +368,7 @@
                 </div>
                 <div role="tabpanel" class="tab-pane" id="trips">
                     @if ($employee->driver)
-                    @livewire('drivers.trips', ['id' => $employee->driver->id])
+                        @livewire('drivers.show.trips', ['id' => $employee->driver->id])
                     @endif
                 </div>
                 <div  role="tabpanel" class="tab-pane" id="allowances">

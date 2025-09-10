@@ -175,11 +175,15 @@
           <!-- Modal -->
 
         <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="changePositionModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-edit"></i> Change {{$employee ? $employee->name : ""}} {{$employee ? $employee->surname : ""}} Position <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-edit"></i> Change {{$employee ? $employee->name : ""}} {{$employee ? $employee->surname."` " : ""}} Position <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                 </div>
+                <div style="padding-left: 20px; padding-right:10px;">
+                    <small style="color:green"> PS: if the user has access to modules in different departments after this change you have to add more departments to the user`s account via employees -> employee view -> departments tab -> add department</small>
+                </div>
+                
                 <form wire:submit.prevent="changeUpdate()" >
                 <div class="modal-body">
                     <div class="row">
@@ -227,7 +231,7 @@
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label for="title">Departments</label>
-                                <select class="form-control" wire:model.debounce.300ms="department_id" >
+                                <select class="form-control" wire:model.debounce.300ms="department_id">
                                     <option value="">Select Department</option>
                                     @foreach ($departments as $department)
                                         <option value="{{ $department->id }}"> {{$department->name }} </option>

@@ -2,22 +2,20 @@
 
 namespace App\Http\Livewire\Drivers;
 
-use App\Models\Driver;
 use Livewire\Component;
 
-class Trips extends Component
+class Inspections extends Component
 {
-
-    public $trips;
+    public $checklists;
     public $driver;
 
     public function mount($driver){
         $this->driver = $driver;
-        $this->trips = $this->driver->trips;
+        $this->checklists = $this->driver->checklists;
     }
 
     public function render()
     {
-        return view('livewire.drivers.trips');
+        return view('livewire.drivers.inspections');
     }
 }

@@ -41,6 +41,7 @@ class Index extends Component
     public $start_date;
     public $end_date;
     public $change_reason;
+    public $remarks;
 
     public function exportDriversCSV(Excel $excel){
 
@@ -83,37 +84,62 @@ class Index extends Component
     }
 
      public function changePosition($id){
-        $this->driver_id = $id;
-        $this->driver = Driver::find($id);
-        $this->employee = $this->driver->employee;
-        $this->employee_id = $this->driver->employee ?->id;
+        $this->employee_id = $id;
+        $employee = Employee::find($id);
+        $employee_position = EmployeePosition::where('employee_id',$id)->latest()->first();
+        if( $employee_position){
+            $this->grade_id = $employee_position->grade_id;
+            $this->department_id = $employee_position->department_id;
+            $this->branch_id = $employee_position->branch_id;
+            $this->job_title_id = $employee_position->job_title_id;
+            $this->rank_id = $employee_position->rank_id;
+        }else{
+           
 
+            $this->grade_id = $employee->grade_id;
+            $this->department_id = $employee->departments->first()?->id;
+            $this->branch_id = $employee->branch_id;
+            $this->job_title_id = JobTitle::where('title',$employee->post)->first()?->id;
+            $this->rank_id = $employee->ranks->first()?->id;
+        }
+        
         $this->dispatchBrowserEvent('show-changePositionModal');
        
 
       }
       
-      public function updatePosition(){
-        $this->employee_id = $id;
+      public function changeUpdate(){
+        
         $employee_position  = new EmployeePosition;
-        $employee_position->employee_id = $this->employee_id;
-        $employee_position->job_title_id = $this->job_title_id;
-        $employee_position->grade_id = $this->grade_id;
-        $employee_position->rank_id = $this->rank_id;
-        $employee_position->branch_id = $this->branch_id;
-        $employee_position->department_id = $this->department_id;
-        $employee_position->start_date = $this->start_date;
-        $employee_position->end_date = $this->end_date;
-        $employee_position->changed_by = Auth::user()->id;
-        $employee_position->change_reason = $this->change_reason;
-        $employee_position->remarks = $this->remarks;
+        $employee_position->employee_id = $this->employee_id ?? Null;
+        $employee_position->job_title_id = $this->job_title_id ?? Null;
+        $employee_position->rank_id = $this->rank_id ?? Null;
+        $employee_position->branch_id = $this->branch_id ?? Null;
+        $employee_position->department_id = $this->department_id ?? Null;
+        $employee_position->grade_id = $this->grade_id ?? Null;
+        $employee_position->start_date = $this->start_date ?? Null;
+        $employee_position->end_date = $this->end_date ?? Null;
+        $employee_position->changed_by = Auth::user()->id ?? Null;
+        $employee_position->change_reason = $this->change_reason ?? Null;
+        $employee_position->remarks = $this->remarks ?? Null;
         $employee_position->save();
-    
+
+        $post = JobTitle::find($this->job_title_id)?->title;
+        $employee = Employee::find($this->employee_id);
+        $employee->post = $post ?? null;
+        $employee->branch_id = $this->branch_id ?? null;
+        $employee->grade_id = $this->grade_id ?? null;
+        $employee->update();
+        $employee->ranks()->detach();
+        $employee->ranks()->sync($this->rank_id);
+        $employee->departments()->detach();
+        $employee->departments()->sync($this->department_id);
+
         $this->dispatchBrowserEvent('hide-changePositionModal');
         $this->resetInputFields();
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
-            'message'=>"Driver Position Changed Successfully!!"
+            'message'=>"Employee Position Changed Successfully!!"
         ]);
 
       }

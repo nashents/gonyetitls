@@ -445,6 +445,11 @@ Route::get('tickets/{ticket}/preview','TicketController@preview')->name('tickets
 Route::get('tickets/{ticket}/print','TicketController@print')->name('tickets.print');
 Route::get('tickets/{ticket}//export-to-pdf','TicketController@generatePDF')->name('tickets.pdf');
 
+Route::get('trips/{driver}/driver/','DriverController@trips')->name('driver.trips');
+Route::get('recoveries/{driver}/driver/','DriverController@recoveries')->name('driver.recoveries');
+Route::get('inspections/{driver}/driver/','DriverController@inspections')->name('driver.inspections');
+Route::get('breakdowns/{driver}/driver/','DriverController@breakdowns')->name('driver.breakdowns');
+
 Route::get('goods-received/tyres/','GoodsReceivedController@tyres')->name('goods_receiveds.tyres');
 Route::get('goods-received/assets/','GoodsReceivedController@assets')->name('goods_receiveds.assets');
 

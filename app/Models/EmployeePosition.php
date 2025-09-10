@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Rank;
 use App\Models\Branch;
 use App\Models\Department;
 use Illuminate\Database\Eloquent\Model;
@@ -34,7 +35,7 @@ class EmployeePosition extends Model implements Auditable
         return $this->belongsTo(Employee::class);
     }
 
-    public function jobTitle()
+    public function job_title()
     {
         return $this->belongsTo(JobTitle::class);
     }
@@ -42,6 +43,10 @@ class EmployeePosition extends Model implements Auditable
     public function grade()
     {
         return $this->belongsTo(Grade::class);
+    }
+    public function rank()
+    {
+        return $this->belongsTo(Rank::class);
     }
     public function branch()
     {

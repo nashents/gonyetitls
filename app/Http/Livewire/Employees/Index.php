@@ -181,7 +181,7 @@ class Index extends Component
         $employee_position->remarks = $this->remarks ?? Null;
         $employee_position->save();
 
-        $post = JobTitle::find($this->job_title_id);
+        $post = JobTitle::find($this->job_title_id)?->title;
         $employee = Employee::find($this->employee_id);
         $employee->post = $post ?? null;
         $employee->branch_id = $this->branch_id ?? null;

@@ -15,6 +15,52 @@
                 $rank_names[] = $rank->name;
             }
             @endphp
+
+        @if ($driver)
+               <div class="row">
+                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
+                    <a class="dashboard-stat bg-primary" href="{{route('driver.trips',$driver->id)}}">
+                        <span class="number counter">{{$driver_trips}}</span>
+                        <span class="name">Trips</span>
+                        <span class="bg-icon"><i class="fa fa-road"></i></span>
+                    </a>
+                </div>
+                <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
+
+                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
+                    <a class="dashboard-stat bg-danger" href="{{route('driver.inspections',$driver->id)}}">
+                        <span class="number counter">{{$driver_inspections}}</span>
+                        <span class="name">Inspections</span>
+                        <span class="bg-icon"><i class="fa fa-search"></i></span>
+                    </a>
+                </div>
+                <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
+
+                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
+                    <a class="dashboard-stat bg-warning" href="{{route('driver.breakdowns',$driver->id)}}">
+                        <span class="number counter">{{$driver_breakdowns}}</span>
+                        <span class="name">Breakdown Reports</span>
+                        <span class="bg-icon"><i class="fa fa-wrench"></i></span>
+                    </a>
+                    <!-- /.dashboard-stat -->
+                    <!-- /.src-code -->
+                </div>
+                <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
+
+                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
+                    <a class="dashboard-stat bg-success" href="{{route('driver.recoveries',$driver->id)}}">
+                        <span class="number counter">{{$driver_recoveries}}</span>
+                        <span class="name">Recoveries</span>
+                        <span class="bg-icon"><i class="fas fa-list"></i></span>
+                    </a>
+                    <!-- /.dashboard-stat -->
+                    <!-- /.src-code -->
+                </div>
+                <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
+
+            </div>
+            <br>
+        @endif
             
         @if ((in_array('Human Resources', $department_names) || in_array('Super Admin', $role_names)))
             <div class="row">

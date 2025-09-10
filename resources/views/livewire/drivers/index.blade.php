@@ -93,6 +93,7 @@
                                                 <ul class="dropdown-menu">
                                                     <li><a href="{{route('employees.show', $driver->employee->id)}}"><i class="fa fa-eye color-default"></i>View</a></li>
                                                     <li><a href="{{route('drivers.edit', $driver->id)}}"><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                                     <li><a href="#" wire:click.prevent="changePosition({{$driver->employee->id}})"><i class="fa fa-edit color-success"></i> Change Position</a></li>
                                                     <li><a href="#" data-toggle="modal" data-target="#driverDeleteModal{{$driver->id}}"><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                                     @if ($driver->status == 1)
                                                     <li><a href="{{route('drivers.deactivate',$driver->id)}}"  ><i class="fa fa-toggle-on color-danger"></i>Deactivate</a></li>
@@ -177,6 +178,136 @@
             </div>
         </div>
           <!-- Modal -->
+
+                  <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="changePositionModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+        <div class="modal-dialog mw-100 w-50" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-edit"></i> Change {{$employee ? $employee->name : ""}} {{$employee ? $employee->surname."` " : ""}} Position <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                </div>
+                <div style="padding-left: 20px; padding-right:10px;">
+                    <small style="color:green"> PS: if the user has access to modules in different departments after this change you have to add more departments to the user`s account via employees -> employee view -> departments tab -> add department</small>
+                </div>
+                
+                <form wire:submit.prevent="changeUpdate()" >
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="exampleInputEmail13">Job Titles<span class="required" style="color: red">*</span></label>
+                                <select wire:model.debounce.300ms="job_title_id" class="form-control" required>
+                                    <option value="" selected > Select Job Title</option>
+                                    @foreach ($job_titles as $job_title)
+                                        <option value="{{$job_title->id}}">{{$job_title->title}}</option>
+                                    @endforeach
+                                </select>
+                                {{-- <small><a href="{{ route('job_titles.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Job Title</a></small>  --}}
+                                @error('job_title_id') <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="title">Grades</label>
+                                <select class="form-control" wire:model.debounce.300ms="grade_id" >
+                                    <option value="">Select Grade</option>
+                                    @foreach ($grades as $grade)
+                                        <option value="{{ $grade->id }}">{{ $grade->grade_code }} {{ $grade->grade_name }}</option>
+                                    @endforeach
+                                </select>
+                                {{-- <small><a href="{{ route('grades.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Grade</a></small>  --}}
+                                @error('grade_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                  
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="title">Ranks</label>
+                                <select class="form-control" wire:model.debounce.300ms="rank_id" >
+                                    <option value="">Select Rank</option>
+                                    @foreach ($ranks as $rank)
+                                        <option value="{{ $rank->id }}">{{ $rank->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('rank_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="title">Departments</label>
+                                <select class="form-control" wire:model.debounce.300ms="department_id">
+                                    <option value="">Select Department</option>
+                                    @foreach ($departments as $department)
+                                        <option value="{{ $department->id }}"> {{$department->name }} </option>
+                                    @endforeach
+                                </select>
+                                @error('department_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="title">Branches</label>
+                                <select class="form-control" wire:model.debounce.300ms="branch_id" >
+                                    <option value="">Select Branch</option>
+                                    @foreach ($branches as $branch)
+                                        <option value="{{ $branch->id }}"> {{$branch->name }} </option>
+                                    @endforeach
+                                </select>
+                                @error('branch_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                         <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="start_date">End Date<span class="required" style="color: red">*</span></label>
+                                <input type="date" class="form-control" wire:model.debounce.300ms="end_date" placeholder="Previous position end date" required/>
+                                @error('end_date') <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="start_date">Start Date<span class="required" style="color: red">*</span></label>
+                                <input type="date" class="form-control" wire:model.debounce.300ms="start_date" placeholder="New position start date" required/>
+                                @error('start_date') <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="country">Change Reason<span class="required" style="color: red">*</span></label>
+                                <select wire:model.debounce.300ms="change_reason" class="form-control" required>
+                                    <option value="">Select Option</option>
+                                    <option value="Promotion">Promotion</option>
+                                    <option value="Demotion">Demotion</option>
+                                    <option value="Transfer">Transfer</option>
+                                    <option value="Appointment">Appointment</option>
+                                    <option value="Acting">Acting</option>
+                                </select>
+                                @error('change_reason') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="country">Remarks</label>
+                                <textarea wire:model.debounce.300ms="remarks" class="form-control" cols="30" rows="3"></textarea>
+                                @error('remarks') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                    </div>
+                <div class="modal-footer">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                        <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-refresh"></i>Update</button>
+                    </div>
+                    <!-- /.btn-group -->
+                </div>
+            </form>
+            </div>
+        </div>
+    </div>
 
 
     </div>
