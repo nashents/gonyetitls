@@ -20,8 +20,8 @@
                         <caption>{{ $service_type->name }}  Checklist</caption>
                         <thead>
                           <tr>
-                            <th class="th-sm">Category
-                            </th>
+                            {{-- <th class="th-sm">Category
+                            </th> --}}
                             <th class="th-sm">Group
                             </th>
                             <th class="th-sm">Item
@@ -30,11 +30,11 @@
                             </th>
                           </tr>
                         </thead>
-                        @if ($inspection_services->count()>0)
+                        @if (isset($inspection_services))
                         <tbody>
-                            @foreach ($inspection_services as $inspection_service)
+                            @forelse ($inspection_services as $inspection_service)
                           <tr>
-                            <td>{{$inspection_service->category}}</td>
+                            {{-- <td>{{$inspection_service->category}}</td> --}}
                             <td>{{$inspection_service->inspection_group ? $inspection_service->inspection_group->name : ""}}</td>
                             <td>{{$inspection_service->inspection_type ? $inspection_service->inspection_type->name : ""}}</td>
                             <td class="w-10 line-height-35 table-dropdown">
@@ -57,7 +57,6 @@
                                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                             No Inspection Items Found ....
                                         </div>
-                                       
                                     </td>
                                   </tr>  
                                     @endforelse
@@ -68,13 +67,11 @@
                       </table>
                        <nav class="text-center" style="float: right">
                                 <ul class="pagination rounded-corners">
-                                    @if (isset($bills))
-                                        {{ $bills->links() }} 
+                                    @if (isset($inspection_services))
+                                        {{ $inspection_services->links() }} 
                                     @endif 
                                 </ul>
                             </nav>    
-                            
-                      
                 </div>
               
                 <div class="row">
@@ -100,18 +97,7 @@
                 <form wire:submit.prevent="store()" >
                 <div class="modal-body">
                     <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="title">Category<span class="required" style="color: red">*</span></label>
-                                <select class="form-control" wire:model.debounce.300ms="category.0" required>
-                                    <option value="">Select Category</option>
-                                    <option value="Horse">Horse</option>
-                                    <option value="Trailer">Trailer</option>
-                                    <option value="Vehicle">Vehicle</option>
-                                </select>
-                                @error('category.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
-                        </div>
+                       
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="title">Inspection Item Groups</label>
@@ -125,35 +111,26 @@
                                 @error('inspection_group_id.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
+
+                         <div class="col-md-6">
+                             <div class="form-group">
+                                <label for="title">Inspection Item(s)<span class="required" style="color: red">*</span></label>
+                                <select class="form-control" wire:model.debounce.300ms="inspection_type_id.0" required>
+                                    <option value="">Select Inspection Item</option>
+                                    @foreach ($inspection_types as $inspection_type)
+                                        <option value="{{ $inspection_type->id }}">{{ $inspection_type->name }}</option>
+                                    @endforeach
+                                </select>
+                                <small>  <a href="{{ route('inspection_types.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Inspection Item</a></small> <br> 
+                                @error('inspection_type_id.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
                        
                     </div>
-                    <div class="form-group">
-                        <label for="title">Inspection Item(s)<span class="required" style="color: red">*</span></label>
-                        <select class="form-control" wire:model.debounce.300ms="inspection_type_id.0" required>
-                            <option value="">Select Inspection Item</option>
-                            @foreach ($inspection_types as $inspection_type)
-                                <option value="{{ $inspection_type->id }}">{{ $inspection_type->name }}</option>
-                            @endforeach
-                        </select>
-                        <small>  <a href="{{ route('inspection_types.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Inspection Item</a></small> <br> 
-                        @error('inspection_type_id.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                    </div>
-                    
                         @foreach ($inputs as $key => $value)
                         <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="title">Category<span class="required" style="color: red">*</span></label>
-                                    <select class="form-control" wire:model.debounce.300ms="category.{{ $value }}" required>
-                                        <option value="">Select Category</option>
-                                        <option value="Horse">Horse</option>
-                                        <option value="Trailer">Trailer</option>
-                                        <option value="Vehicle">Vehicle</option>
-                                    </select>
-                                    @error('category.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                </div>
-                            </div>
-                            <div class="col-md-6">
+                           
+                            <div class="col-md-5">
                                 <div class="form-group">
                                     <label for="title">Inspection Item Groups</label>
                                     <select class="form-control" wire:model.debounce.300ms="inspection_group_id.{{ $value }}">
@@ -165,11 +142,8 @@
                                     @error('inspection_group_id.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
-                            
-                        </div>
-                        <div class="row">
-                            <div class="col-md-10">
-                                <div class="form-group">
+                             <div class="col-md-5">
+                                 <div class="form-group">
                                     <label for="title">Inspection Items<span class="required" style="color: red">*</span></label>
                                     <select class="form-control" wire:model.debounce.300ms="inspection_type_id.{{ $value }}" required>
                                         <option value="">Select Inspection Item</option>
@@ -180,12 +154,15 @@
                                     @error('inspection_type_id.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
-                            <div class="col-md-1">
+
+                             <div class="col-md-1">
                                 <div class="form-group">
                                     <button class="btn btn-danger btn-rounded xs" style="margin-top:23px"  wire:click.prevent="remove({{$key}})"> <i class="fa fa-times"></i></button>
                                 </div>
                             </div>
+                            
                         </div>
+                        
                         @endforeach
                         <div class="row">
                             <div class="col-md-12">

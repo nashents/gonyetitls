@@ -55,20 +55,20 @@ class Show extends Component
     public function mount($id){
         $this->service_type_id = $id;
         $this->service_type = ServiceType::find($id);
-      
         $this->inspection_groups = InspectionGroup::orderBy('name','asc')->get();
         $this->inspection_types = InspectionType::orderBy('name','asc')->get();
     }
 
+
     public function store(){
+
         if (isset($this->inspection_type_id)) {
             foreach ($this->inspection_type_id as $key => $value) {
+
                 $inspection_service = new InspectionService;
                 $inspection_service->user_id = Auth::user()->id;
                 $inspection_service->service_type_id = $this->service_type_id;
-                if (isset($this->category[$key])) {
-                    $inspection_service->category = $this->category[$key];
-                }
+               
                 if (isset($this->inspection_group_id[$key])) {
                     $inspection_service->inspection_group_id = $this->inspection_group_id[$key];
                 }
@@ -93,18 +93,17 @@ class Show extends Component
         $this->service_type_id = $inspection_service->service_type_id;
         $this->inspection_group_id = $inspection_service->inspection_group_id;
         $this->inspection_type_id = $inspection_service->inspection_type_id;
-        $this->category = $inspection_service->category;
         $this->inspection_service_id = $inspection_service->id;
         $this->dispatchBrowserEvent('show-inspection_serviceEditModal');
     }
 
     public function update(){
+
         if (isset($this->inspection_service_id)) {
             $inspection_service = InspectionService::find($this->inspection_service_id);
             $inspection_service->service_type_id = $this->service_type_id;
             $inspection_service->inspection_group_id = $this->inspection_group_id;
             $inspection_service->inspection_type_id = $this->inspection_type_id;
-            $inspection_service->category = $this->category;
             $inspection_service->update();
 
             $this->dispatchBrowserEvent('hide-inspection_serviceEditModal');
