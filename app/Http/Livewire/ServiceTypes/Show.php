@@ -7,6 +7,7 @@ use App\Models\ServiceType;
 use Livewire\WithPagination;
 use App\Models\InspectionType;
 use App\Models\InspectionGroup;
+use Illuminate\Validation\Rule;
 use App\Models\InspectionService;
 use Illuminate\Support\Facades\Auth;
 
@@ -61,6 +62,45 @@ class Show extends Component
 
 
     public function store(){
+
+        $typeName = optional(\App\Models\ServiceType::find($this->service_type_id))->name ?? 'this service type';
+        
+        $this->validate([
+            // the array itself
+            'inspection_type_id' => ['required', 'array'],
+            // prevent duplicates within the submitted array too
+            'inspection_type_id.*' => [
+                'required',
+                'distinct',
+                Rule::unique('inspection_services', 'inspection_type_id') // 👈 explicit column
+                    ->where(fn ($q) => $q->where('service_type_id', $this->service_type_id)
+                                        // ->whereNull('deleted_at') // add if the table is soft-deleting
+                                        // ->where('company_id', $this->company_id) // add if multi-tenant
+                    ),
+            ],
+
+            'inspection_group_id'   => ['required', 'array'],
+            'inspection_group_id.*' => ['required'],
+        ],
+    
+            // Custom messages
+        [
+            'inspection_type_id.required'     => 'Add at least one inspection type.',
+            'inspection_type_id.*.required'   => 'Select an inspection type.',
+            'inspection_type_id.*.distinct'   => 'You have duplicate inspection types in the list.',
+            'inspection_type_id.*.unique'     => "This inspection type is already linked to {$typeName}.",
+
+            'inspection_group_id.required'    => 'Add at least one inspection group.',
+            'inspection_group_id.*.required'  => 'Select an inspection group.',
+        ],
+
+        // (Optional) Nicely formatted attribute names
+        [
+            'inspection_type_id.*'  => 'inspection type',
+            'inspection_group_id.*' => 'inspection group',
+        ]
+
+    );
 
         if (isset($this->inspection_type_id)) {
             foreach ($this->inspection_type_id as $key => $value) {
