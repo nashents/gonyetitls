@@ -10,19 +10,21 @@
                         <div>
                             @include('includes.messages')
                         </div>
+                        <div class="panel-title">
+                            <a href="" data-toggle="modal" data-target="#breakdownModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Incident</a>
+                        </div>
+                        
                     </div>
-                    <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
-                        {{-- <div class="col-md-3" style="float: right; padding-right:0px">
-                            <div class="form-group">
-                                <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search drivers...">
-                            </div>
-                        </div> --}}
+            <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
+                <div class="col-md-3" style="float: right; padding-right:0px">
+                    <div class="form-group">
+                        <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search incidents reports...">
+                    </div>
+            </div>
             <table  class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
-            <caption>Breakdown Reports</caption>
+            <caption>Incident Reports</caption>
             <thead >
                 <th class="th-sm">Breakdown#
-                </th>
-                <th class="th-sm">Transporter
                 </th>
                 <th class="th-sm">Equipment
                 </th>
@@ -104,4 +106,215 @@
     </div>
     <!-- /.container-fluid -->
 </section>
+
+       <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="breakdownModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+        <div class="modal-dialog mw-100 w-50" role="breakdown">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-plus"></i> Add Incident <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                </div>
+                <form wire:submit.prevent="store()" >
+                <div class="modal-body">
+
+                    <label for="title">Incident For?<span class="required" style="color: red">*</span></label>
+                    <div class="mb-10">
+                        <input type="radio" wire:model.debounce.300ms="equipment" value="Horse"  class="line-style"  />
+                        <label for="one" class="radio-label">Horse</label>
+                        <input type="radio" wire:model.debounce.300ms="equipment" value="Trailer"  class="line-style"  />
+                        <label for="one" class="radio-label">Trailer</label>
+                        <input type="radio" wire:model.debounce.300ms="equipment" value="Vehicle"  class="line-style" />
+                        <label for="one" class="radio-label">Vehicle</label>
+                    </div> 
+                   
+                        <div class="form-group">
+                            @if ($equipment && $equipment == "Horse")
+                                <label for="title">Horses<span class="required" style="color: red">*</span></label>
+                                <select class="form-control" wire:model.debounce.300ms="selectedHorse" required>
+                                    <option value="">Select Horse</option>
+                                        @foreach ($horses as $horse)
+                                            <option value="{{ $horse->id }}">{{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}}</option>
+                                        @endforeach
+                                </select>
+                                @error('selectedHorse') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            @elseif($equipment && $equipment == "Trailers")
+                                <label for="title">Trailers<span class="required" style="color: red">*</span></label>
+                                <select class="form-control" wire:model.debounce.300ms="selectedTrailer" required >
+                                    <option value="">Select Trailer</option>
+                                        @foreach ($trailers as $trailer)
+                                            <option value="{{ $trailer->id }}">{{$trailer->registration_number}} {{$trailer->fleet_number ? "(".$trailer->fleet_number.")" : ""}}</option>
+                                        @endforeach
+                                </select>
+                                @error('selectedTrailer') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            @elseif($equipment && $equipment == "Vehicle")
+                                <label for="title">Vehicles<span class="required" style="color: red">*</span></label>
+                                <select class="form-control" wire:model.debounce.300ms="selectedVehicle" required >
+                                    <option value="">Select Vehicle</option>
+                                        @foreach ($vehicles as $vehicle)
+                                            <option value="{{ $vehicle->id }}">{{$vehicle->registration_number}} {{$vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : ""}}</option>
+                                        @endforeach
+                                </select>
+                                @error('selectedVehicle') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            
+                            @endif
+                            
+                        </div>
+                  
+
+                    <div class="form-group">
+                        <label for="title">Trips</label>
+                            <select class="form-control" wire:model.debounce.300ms="trip_id" size="6">
+                                <option value="">Select Trip</option>
+                                    @foreach ($trips as $trip)
+                                        @php
+                                            $from = App\Models\Destination::find($trip->from);
+                                            $to = App\Models\Destination::find($trip->to);
+                                        @endphp
+                                        @if (isset($from) && isset($to))
+                                            <option value="{{ $trip->id }}">{{$trip->trip_number}}{{$trip->trip_ref ? "/".$trip->trip_ref : ""}} {{$trip->start_date}} {{$trip->customer ? $trip->customer->name : ""}} | From: {{$from->country ? $from->country->name : ""}} {{$from->city}} {{$trip->loading_point ? $trip->loading_point->name : ""}} To: {{$to->country ? $to->country->name : ""}} {{$to->city}} {{$trip->offloading_point ? $trip->offloading_point->name : ""}} </option>
+                                        @endif
+                                    @endforeach
+                            </select>
+                        @error('trip_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="">Incident Date & Time<span class="required" style="color: red">*</span></label>
+                                <input type="datetime-local" class="form-control" wire:model.debounce.300ms="date" placeholder="Enter incident date" required>
+                                @error('date') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="">Location<span class="required" style="color: red">*</span></label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="location" placeholder="Enter incident location" required>
+                                @error('location') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="">Incident Details<span class="required" style="color: red">*</span></label>
+                            <textarea wire:model.debounce.300ms="description" cols="30" rows="5" class="form-control" placeholder="Write incident details... " required></textarea>
+                        @error('description') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    </div>
+                    
+                </div>
+                <div class="modal-footer">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                        <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Save</button>
+                    </div>
+                    <!-- /.btn-group -->
+                </div>
+            </form>
+            </div>
+        </div>
+    </div>
+
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="breakdownEditModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+        <div class="modal-dialog mw-100 w-50" role="breakdown">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-plus"></i> Edit Incident <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                </div>
+                <form wire:submit.prevent="update()" >
+                <div class="modal-body">
+
+                    <label for="title">Incident For?<span class="required" style="color: red">*</span></label>
+                    <div class="mb-10">
+                        <input type="radio" wire:model.debounce.300ms="equipment" value="Horse"  class="line-style"  />
+                        <label for="one" class="radio-label">Horse</label>
+                        <input type="radio" wire:model.debounce.300ms="equipment" value="Trailer"  class="line-style"  />
+                        <label for="one" class="radio-label">Trailer</label>
+                        <input type="radio" wire:model.debounce.300ms="equipment" value="Vehicle"  class="line-style" />
+                        <label for="one" class="radio-label">Vehicle</label>
+                    </div> 
+                   
+                        <div class="form-group">
+                            @if ($equipment && $equipment == "Horse")
+                                <label for="title">Horses<span class="required" style="color: red">*</span></label>
+                                <select class="form-control" wire:model.debounce.300ms="selectedHorse" required>
+                                    <option value="">Select Horse</option>
+                                        @foreach ($horses as $horse)
+                                            <option value="{{ $horse->id }}">{{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}}</option>
+                                        @endforeach
+                                </select>
+                                @error('selectedHorse') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            @elseif($equipment && $equipment == "Trailers")
+                                <label for="title">Trailers<span class="required" style="color: red">*</span></label>
+                                <select class="form-control" wire:model.debounce.300ms="selectedTrailer" required >
+                                    <option value="">Select Trailer</option>
+                                        @foreach ($trailers as $trailer)
+                                            <option value="{{ $trailer->id }}">{{$trailer->registration_number}} {{$trailer->fleet_number ? "(".$trailer->fleet_number.")" : ""}}</option>
+                                        @endforeach
+                                </select>
+                                @error('selectedTrailer') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            @elseif($equipment && $equipment == "Vehicle")
+                                <label for="title">Vehicles<span class="required" style="color: red">*</span></label>
+                                <select class="form-control" wire:model.debounce.300ms="selectedVehicle" required >
+                                    <option value="">Select Vehicle</option>
+                                        @foreach ($vehicles as $vehicle)
+                                            <option value="{{ $vehicle->id }}">{{$vehicle->registration_number}} {{$vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : ""}}</option>
+                                        @endforeach
+                                </select>
+                                @error('selectedVehicle') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            
+                            @endif
+                            
+                        </div>
+                  
+
+                    <div class="form-group">
+                        <label for="title">Trips</label>
+                            <select class="form-control" wire:model.debounce.300ms="trip_id" size="6">
+                                <option value="">Select Trip</option>
+                                    @foreach ($trips as $trip)
+                                        @php
+                                            $from = App\Models\Destination::find($trip->from);
+                                            $to = App\Models\Destination::find($trip->to);
+                                        @endphp
+                                        @if (isset($from) && isset($to))
+                                            <option value="{{ $trip->id }}">{{$trip->trip_number}}{{$trip->trip_ref ? "/".$trip->trip_ref : ""}} {{$trip->start_date}} {{$trip->customer ? $trip->customer->name : ""}} | From: {{$from->country ? $from->country->name : ""}} {{$from->city}} {{$trip->loading_point ? $trip->loading_point->name : ""}} To: {{$to->country ? $to->country->name : ""}} {{$to->city}} {{$trip->offloading_point ? $trip->offloading_point->name : ""}} </option>
+                                        @endif
+                                    @endforeach
+                            </select>
+                        @error('trip_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="">Incident Date & Time<span class="required" style="color: red">*</span></label>
+                                <input type="datetime-local" class="form-control" wire:model.debounce.300ms="date" placeholder="Enter incident date" required>
+                                @error('date') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="">Location<span class="required" style="color: red">*</span></label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="location" placeholder="Enter incident location" required>
+                                @error('location') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="">Incident Details<span class="required" style="color: red">*</span></label>
+                            <textarea wire:model.debounce.300ms="description" cols="30" rows="5" class="form-control" placeholder="Write incident details... " required></textarea>
+                        @error('description') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    </div>
+                    
+                </div>
+                <div class="modal-footer">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                        <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Save</button>
+                    </div>
+                    <!-- /.btn-group -->
+                </div>
+            </form>
+            </div>
+        </div>
+    </div>
+
 </div>

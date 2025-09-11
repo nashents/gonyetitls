@@ -22,6 +22,9 @@ class Trailer extends Model implements Auditable
     public function movements(){
         return $this->hasMany('App\Models\Movement');
     }
+    public function breakdowns(){
+        return $this->hasMany('App\Models\Breakdown');
+    }
     public function mileages(){
         return $this->hasMany('App\Models\Mileage');
     }
@@ -46,9 +49,7 @@ class Trailer extends Model implements Auditable
     public function trailer_assignments(){
         return $this->hasMany('App\Models\TrailerAssignment');
     }
-    public function breakdowns(){
-        return $this->belongsToMany('App\Models\Breakdown');
-    }
+  
     public function checklists(){
         return $this->hasMany('App\Models\Checklist');
     }

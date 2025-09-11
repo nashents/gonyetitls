@@ -24,8 +24,17 @@ class Breakdown extends Model implements Auditable
     public function driver(){
         return $this->belongsTo('App\Models\Driver');
     }
+    public function booking(){
+        return $this->hasOne('App\Models\Booking');
+    }
     public function horse(){
         return $this->belongsTo('App\Models\Horse');
+    }
+    public function trailer(){
+        return $this->belongsTo('App\Models\Trailer');
+    }
+    public function vehicle(){
+        return $this->belongsTo('App\Models\Vehicle');
     }
     public function trailers(){
         return $this->belongsToMany('App\Models\Trailer');

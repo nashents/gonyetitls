@@ -55,6 +55,9 @@ class Booking extends Model implements Auditable
     public function user(){
         return $this->belongsTo('App\Models\User');
     }
+    public function breakdown(){
+        return $this->belongsTo('App\Models\Breakdown');
+    }
    
     public function job_type(){
         return $this->belongsTo('App\Models\JobType');

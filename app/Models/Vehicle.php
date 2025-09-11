@@ -18,6 +18,9 @@ class Vehicle extends Model implements Auditable
     public function movements(){
         return $this->hasMany('App\Models\Movement');
     }
+     public function breakdowns(){
+        return $this->hasMany('App\Models\Breakdown');
+    }
       public function dispatches(){
         return $this->hasMany('App\Models\Dispatch');
     }

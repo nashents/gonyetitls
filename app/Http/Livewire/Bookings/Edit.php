@@ -14,6 +14,7 @@ use App\Models\Trailer;
 use App\Models\Vehicle;
 use Livewire\Component;
 use App\Models\Employee;
+use App\Models\Breakdown;
 use App\Models\Assignment;
 use App\Models\Department;
 use App\Models\ServiceType;
@@ -49,6 +50,9 @@ class Edit extends Component
     public $searchMechanic;
     public $searchVendor;
     public $searchAsset;
+
+    public $breakdowns;
+    public $breakdown_id;
     
     protected $queryString = ['searchVendor','searchAsset','searchVehicle','searchHorse','searchTrailer','searchEmployee','searchMechanic'];
 
@@ -69,6 +73,7 @@ class Edit extends Component
     public $service_type_id;
     public $booking_number;
     public $description;
+   
 
     public $inputs = [];
     public $i = 1;
@@ -101,6 +106,7 @@ class Edit extends Component
         $this->service_type_id = $booking->service_type_id;
         $this->station = $booking->station;
         $this->mileage = $booking->odometer;
+        $this->breakdown_id = $booking->breakdown_id;
         $this->hours = $booking->hours;
         $this->description = $booking->description;
 
@@ -118,6 +124,7 @@ class Edit extends Component
         $this->type = $booking->type;
         $this->assigned_to = $booking->assigned_to;
         $this->service_types = ServiceType::orderBy('name','asc')->get();
+        $this->breakdowns = Breakdown::whereYear('date',date('Y'))->orderBy('created_at','desc')->get();
     }
 
     public function updatedSelectedHorse($horse){
@@ -167,6 +174,30 @@ class Edit extends Component
     ];
 
 
+    public function updatedEmployeeId($id){
+        if(!is_null($id)){
+            $employee = Employee::find($id);
+            $driver = $employee->driver;
+             if($driver){
+                if($this->type == "Horse" && $this->selectedHorse){
+                    $this->breakdowns = Breakdown::where('driver_id',$driver->id)->where('horse_id', $this->selectedHorse)->whereYear('date',date('Y'))->where('status',True)->orderBy('created_at','desc')->get();
+                }elseif($this->type == "Vehicle" && $this->selectedVehicle){
+                    $this->breakdowns = Breakdown::where('driver_id',$driver->id)->where('vehicle_id', $this->selectedVehicle)->whereYear('date',date('Y'))->where('status',True)->orderBy('created_at','desc')->get();
+                }elseif($this->type == "Trailer" && $this->selectedTrailer){
+                    $this->breakdowns = Breakdown::where('driver_id',$driver->id)->where('trailer_id', $this->selectedTrailer)->whereYear('date',date('Y'))->where('status',True)->orderBy('created_at','desc')->get();
+                }
+                
+            }
+        }
+        
+    }
+
+    public function updatedBreakdownId($id){
+        if(!is_null($id)){
+            $breakdown = Breakdown::find($id);
+            $this->description = $breakdown->description;
+        }
+    }
 
 
     public function update(){
@@ -176,7 +207,7 @@ class Edit extends Component
         $booking = Booking::find($this->booking_id);
         
         $booking->vendor_id = $this->assigned_to === "Vendor" ? ($this->vendor_id ?: null) : null;
-
+        $booking->breakdown_id = $this->breakdown_id;
     // Reset all IDs
         $booking->horse_id = null;
         $booking->vehicle_id = null;

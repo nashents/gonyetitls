@@ -25,6 +25,7 @@ class Breakdowns extends Component
     public $trips;
     public $transporters;
     public $selectedTransporter;
+    public $driver;
     public $drivers;
     public $driver_id;
     public $trailers;
@@ -54,6 +55,7 @@ class Breakdowns extends Component
 
     public function mount($trip){
         $this->trip = $trip;
+        $this->driver = $trip->driver;
         $this->trip_id = $trip->id;
         $this->trips = Trip::select('id', 'trip_number', 'trip_ref', 'customer_id', 'from', 'to', 'loading_point_id', 'offloading_point_id')
                     ->with([
@@ -61,6 +63,8 @@ class Breakdowns extends Component
                         'loading_point:id,name',
                         'offloading_point:id,name'
                     ])
+                    ->whereYear('start_date',date('Y'))
+                    ->where('driver_id',$this->driver->id)
                     ->orderBy('start_date', 'desc')
                     ->get();
                     

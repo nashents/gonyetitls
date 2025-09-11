@@ -13,6 +13,7 @@ use App\Models\Trailer;
 use App\Models\Vehicle;
 use Livewire\Component;
 use App\Models\Employee;
+use App\Models\Breakdown;
 use App\Models\Assignment;
 use App\Models\Department;
 use App\Models\ServiceType;
@@ -46,6 +47,9 @@ class Create extends Component
     public $mechanic_id;
     public $employees;
     public $employee_id;
+    
+    public $breakdowns;
+    public $breakdown_id;
 
 
     public $searchAsset;
@@ -97,6 +101,7 @@ class Create extends Component
     public function mount(){
         $this->company = Auth::user()->employee->company;
         $this->service_types = ServiceType::orderBy('name','asc')->get();
+        $this->breakdowns = collect();
     
     }
 
@@ -121,6 +126,31 @@ class Create extends Component
            $vehicle = Vehicle::find($id);
            $this->mileage = $vehicle ? $vehicle->mileage : "";
            $this->hours = $vehicle ? $vehicle->hours : "";
+        }
+    }
+
+    public function updatedEmployeeId($id){
+        if(!is_null($id)){
+            $employee = Employee::find($id);
+            $driver = $employee->driver;
+            if($driver){
+                if($this->type == "Horse" && $this->selectedHorse){
+                    $this->breakdowns = Breakdown::where('driver_id',$driver->id)->where('horse_id', $this->selectedHorse)->whereYear('date',date('Y'))->where('status',True)->orderBy('created_at','desc')->get();
+                }elseif($this->type == "Vehicle" && $this->selectedVehicle){
+                    $this->breakdowns = Breakdown::where('driver_id',$driver->id)->where('vehicle_id', $this->selectedVehicle)->whereYear('date',date('Y'))->where('status',True)->orderBy('created_at','desc')->get();
+                }elseif($this->type == "Trailer" && $this->selectedTrailer){
+                    $this->breakdowns = Breakdown::where('driver_id',$driver->id)->where('trailer_id', $this->selectedTrailer)->whereYear('date',date('Y'))->where('status',True)->orderBy('created_at','desc')->get();
+                }
+                
+            }
+        }
+        
+    }
+
+    public function updatedBreakdownId($id){
+        if(!is_null($id)){
+            $breakdown = Breakdown::find($id);
+            $this->description = $breakdown->description;
         }
     }
 
@@ -184,6 +214,7 @@ class Create extends Component
         $booking->booking_number = $this->bookingNumber();
         $booking->user_id = Auth::user()->id;
         $booking->assigned_to = $this->assigned_to;
+        $booking->breakdown_id = $this->breakdown_id;
 
         $booking->vendor_id = $this->assigned_to === "Vendor" ? ($this->vendor_id ?: null) : null;
 

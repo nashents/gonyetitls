@@ -159,6 +159,27 @@
 
                                     <!-- /.col-md-6 -->
                                 </div>
+                                
+                                <div class="form-group">
+                                    <label for="stops">Incident Report(s)</label>
+                                        <select class="form-control" wire:model.debounce.300ms="breakdown_id"  size="4">
+                                            <option value="">Select Incident </option>
+                                            @foreach ($breakdowns as $breakdown)
+                                                <option value="{{$breakdown->id}}">{{$breakdown->location}} {{$breakdown->date}}
+                                                    @if ($breakdown->horse)
+                                                        {{$breakdown->horse->registration_number}} {{$breakdown->horse->fleet_number ? "(".$breakdown->horse->fleet_number.")" : ""}}                                                        
+                                                    @elseif($breakdown->vehicle)    
+                                                        {{$breakdown->vehicle->registration_number}} {{$breakdown->vehicle->fleet_number ? "(".$breakdown->vehicle->fleet_number.")" : ""}}                                                        
+                                                    @elseif($breakdown->trailer)
+                                                        {{$breakdown->trailer->registration_number}} {{$breakdown->trailer->fleet_number ? "(".$breakdown->trailer->fleet_number.")" : ""}}                                                        
+                                                    @endif
+                                                    {{$breakdown->description}}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        @error('breakdown_id') <span class="text-danger error">{{ $message }}</span>@enderror
+                                </div> 
+                                
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
