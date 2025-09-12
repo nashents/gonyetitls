@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Qualification;
+use Illuminate\Support\Facades\Session;
 use App\Http\Requests\StoreQualificationRequest;
 use App\Http\Requests\UpdateQualificationRequest;
 
@@ -15,7 +16,7 @@ class QualificationController extends Controller
      */
     public function index()
     {
-        //
+        return view('qualifications.index');
     }
 
     /**
@@ -81,6 +82,8 @@ class QualificationController extends Controller
      */
     public function destroy(Qualification $qualification)
     {
-        //
+        $qualification->delete();
+        Session::flash('success','Qualification Deleted Successfully!');
+        return redirect()->back();
     }
 }

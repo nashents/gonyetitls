@@ -99,6 +99,10 @@
                                 <td class="w-20 line-height-35">{{$ticket->booking ? $ticket->booking->description : ""}}</td>
                             </tr>
                             <tr>
+                                <th class="w-10 text-center line-height-35">Initial Diagnosis</th>
+                                <td class="w-20 line-height-35">{{$ticket->initial_diagnosis}} <a href="#" data-toggle="modal" data-target="#initialDiagnosisModal"><i class="fas fa-edit"></i></a> </td>
+                            </tr>
+                            <tr>
                                 <th class="w-10 text-center line-height-35">Mechanic Comments</th>
                                 <td class="w-20 line-height-35">{{$ticket->report}}</td>
                             </tr>
@@ -339,6 +343,32 @@
                         </div>
                     </div>
                         </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                        <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Save</button>
+                    </div>
+                    <!-- /.btn-group -->
+                </div>
+            </form>
+            </div>
+        </div>
+    </div>
+ 
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="initialDiagnosisModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modal4Label"><i class="fa fa-plus"></i> Add Initial Diagnosis <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                </div>
+                <form wire:submit.prevent="updateDiagnosis()" >
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="qty">Initial Diagnosis<span class="required" style="color: red">*</span></label>
+                        <textarea class="form-control"  wire:model.debounce.300ms="initial_diagnosis" cols="30" rows="3" required></textarea>
+                        @error('initial_diagnosis') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">

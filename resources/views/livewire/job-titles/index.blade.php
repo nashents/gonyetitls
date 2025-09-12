@@ -19,10 +19,13 @@
                             <table id="job_titlesTable" class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
-
-                                    <th class="th-sm">Department
-                                    </th>
                                     <th class="th-sm">Title
+                                    </th>
+                                    <th class="th-sm">Dpt
+                                    </th>
+                                    <th class="th-sm">Description
+                                    </th>
+                                    <th class="th-sm">Qualifications
                                     </th>
                                     <th class="th-sm">Action
                                     </th>
@@ -32,9 +35,14 @@
                                 <tbody>
                                     @foreach ($job_titles as $job_title)
                                   <tr>
-
-                                    <td>{{ucfirst($job_title->department ? $job_title->department->name : "undefined")}}</td>
-                                    <td>{{ucfirst($job_title->title)}}</td>
+                                    <td>{{$job_title->title}}</td>
+                                    <td>{{$job_title->department ? $job_title->department->name : ""}}</td>
+                                    <td>{{$job_title->description}}</td>
+                                    <td>
+                                        @foreach ($job_title->job_title_qualifications as $job_title_qualification)
+                                            {{$job_title_qualification->qualification ? $job_title_qualification->qualification->name : ""}} {{ $job_title_qualification->qualification ? $job_title_qualification->qualification->code : ""}} @if(!$loop->last), @endif 
+                                        @endforeach
+                                    </td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

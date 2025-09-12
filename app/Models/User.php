@@ -57,6 +57,9 @@ class User extends Authenticatable implements Auditable
         }
 
     }
+    public function qualifications(){
+        return $this->hasMany('App\Models\Qualification');
+    }
     public function teams(){
         return $this->hasMany('App\Models\Team');
     }

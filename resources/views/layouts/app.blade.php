@@ -130,10 +130,44 @@
 @stack('scripts')
     
     <script type="text/javascript">
+            window.addEventListener('show-initialDiagnosisModal', event => {
+                $('#initialDiagnosisModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-initialDiagnosisModal', event => {
+                $('#initialDiagnosisModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-qualificationModal', event => {
+                $('#qualificationModal').modal('show');
+            })
+    </script>
+    
+    <script type="text/javascript">
+            window.addEventListener('hide-qualificationModal', event => {
+                $('#qualificationModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-qualificationEditModal', event => {
+                $('#qualificationEditModal').modal('show');
+            })
+    </script>
+
+    <script type="text/javascript">
+            window.addEventListener('hide-qualificationEditModal', event => {
+                $('#qualificationEditModal').modal('hide');
+            })
+    </script>
+   
+   <script type="text/javascript">
             window.addEventListener('show-changePositionModal', event => {
                 $('#changePositionModal').modal('show');
             })
     </script>
+
     <script type="text/javascript">
             window.addEventListener('hide-changePositionModal', event => {
                 $('#changePositionModal').modal('hide');

@@ -131,6 +131,9 @@
                         <li class="{{ request()->routeIs('job_titles.index') ? 'active' : '' }}">
                             <a href="{{route('job_titles.index')}}"><i class="fas fa-list"></i> <span>Job Titles</span> </a>
                         </li>
+                        <li class="{{ request()->routeIs('qualifications.index') ? 'active' : '' }}">
+                            <a href="{{route('qualifications.index')}}"><i class="fas fa-list"></i> <span>Qualifications</span> </a>
+                        </li>
                         <li class="{{ request()->routeIs('leave_types.index') ? 'active' : '' }}">
                             <a href="{{route('leave_types.index')}}"><i class="fas fa-list"></i> <span>Leave Types</span> </a>
                         </li>
@@ -138,6 +141,7 @@
                     </ul>
                 </li>
                 @endif
+              
                 <li class="has-children {{ request()->routeIs('employees.*') ? 'active' : '' }}">
                     <a href="#"><i class="fas fa-users"></i> <span>Employees</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
@@ -146,9 +150,9 @@
                         <li><a href="{{route('employees.leaves.index')}}"><i class="fas fa-list "></i> <span>Manage Leave Days</span></a></li>
                         <li><a href="{{route('employees.archived')}}" ><i class="fas fa-archive "></i> <span>Archived Employees</span></a></li>
                         <li><a href="{{route('employees.deleted')}}" ><i class="fas fa-trash "></i> <span>Deleted Employees</span></a></li>
-                     
                     </ul>
                 </li>
+               
                 <li class="{{ request()->routeIs('department_heads.index') ? 'active' : '' }}">
                     <a href="{{route('department_heads.index')}}"><i class="fas fa-user-plus"></i> <span>Head of Departments</span> </a>
                 </li>

@@ -2,10 +2,20 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Contracts\Auditable;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class JobTitleQualification extends Model
+class JobTitleQualification extends Model implements Auditable
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
+    use \OwenIt\Auditing\Auditable;
+
+    public function job_title(){
+        return $this->belongsTo('App\Models\JobTitle');
+    } 
+    public function qualification(){
+        return $this->belongsTo('App\Models\Qualification');
+    } 
 }

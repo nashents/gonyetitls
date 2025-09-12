@@ -49,6 +49,7 @@ class Show extends Component
     public $cost;
     public $status;
     public $notes;
+    public $initial_diagnosis;
     public $acknowledgement = False;
 
     private function resetInputFields(){
@@ -57,11 +58,10 @@ class Show extends Component
     }
 
 
-
-
     public function store($id){
         
         $this->inspection = Inspection::find($id);
+
         if (isset($this->status)) {
 
         foreach ($this->status as $key => $value) {
@@ -145,13 +145,26 @@ class Show extends Component
             }
         }
 
-       
-
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
             'message'=>"Ticket Updated Successfully!!"
         ]);
     }
+   
+    public function updateDiagnosis(){
+       
+        $ticket = Ticket::find($this->ticket_id);
+        $ticket->initial_diagnosis = $this->initial_diagnosis;
+        $ticket->update();
+
+        $this->dispatchBrowserEvent('hide-initialDiagnosisModal');
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Initial Diagnosis Updated Successfully!!"
+        ]);
+
+    }
+
     public function addAttachments(){
 
         if ($this->image) {
@@ -181,7 +194,10 @@ class Show extends Component
         ]);
         // return redirect(request()->header('Referer'));
     }
+
     public function mount($id){
+
+        $this->ticket_id = $id;
         $this->ticket = Ticket::find($id);
         $this->employees = $this->ticket->employees;
                     foreach ($this->employees as $employee) {
