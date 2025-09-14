@@ -234,6 +234,7 @@
                     <ul class="child-nav">
                         <li class="{{ request()->routeIs('allowances.index') ? 'active' : '' }}"><a href="{{route('allowances.index')}}"><i class="fas fa-list"></i> <span>Allowances</span></a></li>
                         <li class="{{ request()->routeIs('deductions.index') ? 'active' : '' }}"><a href="{{route('deductions.index')}}"><i class="fas fa-list"></i> <span>Deductions</span></a></li>
+                        <li class="{{ request()->routeIs('earnings.index') ? 'active' : '' }}"><a href="{{route('earnings.index')}}"><i class="fas fa-list"></i> <span>Earnings</span></a></li>
                         <li class="{{ request()->routeIs('loan_types.index') ? 'active' : '' }}"><a href="{{route('loan_types.index')}}"><i class="fas fa-list"></i> <span>Loan Type</span></a></li>
                         @if (Auth::user()->is_admin())
                             <li class="{{ request()->routeIs('tax_brackets.index') ? 'active' : '' }}"><a href="{{route('tax_brackets.index')}}"><i class="fas fa-list"></i> <span>Tax Table</span></a></li>

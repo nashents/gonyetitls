@@ -4,9 +4,11 @@ namespace App\Http\Livewire\Salaries;
 
 use App\Models\Loan;
 use App\Models\Salary;
+use App\Models\Earning;
 use Livewire\Component;
 use App\Models\Currency;
 use App\Models\Employee;
+use App\Models\Recovery;
 use App\Models\Allowance;
 use App\Models\Deduction;
 use App\Models\SalaryItem;
@@ -28,6 +30,7 @@ class Create extends Component
     public $loan_amount;
     public $deductions;
     public $allowances;
+    public $earnings;
     public $salary_items;
     public $salary_item_id;
     public $net;
@@ -40,11 +43,16 @@ class Create extends Component
     public $salary_id;
     public $salary_number;
     public $selectedEmployee;
+    public $selectedEarningCurrency;
+    public $selectedAllowanceCurrency;
+    public $selectedDeductionCurrency;
     public $selectedCurrency;
     public $selected_currency;
     public $basic;
+    public $selectedEarning = [];
     public $selectedAllowance = [];
     public $allowance_amount = [];
+    public $earning_amount = [];
     public $selectedDeduction = [];
     public $deduction_amount = [];
     public $selectedLoan = [];
@@ -57,6 +65,22 @@ class Create extends Component
     public $exchange_amount;
     public $exchange_rate;
 
+    public $earnings_inputs = [];
+    public $e = 1;
+    public $f = 1;
+    
+    public function earningsAdd($e)
+    {
+        $e = $e + 1;
+        $this->e = $e;
+        array_push($this->earnings_inputs ,$e);
+    }
+    
+    public function earningsRemove($e)
+    {
+        unset($this->earnings_inputs[$e]);
+    }
+ 
     public $inputs = [];
     public $i = 1;
     public $n = 1;
@@ -125,7 +149,7 @@ class Create extends Component
     public $er = 1;
     public $es = 1;
     
-    public function earningsRecoveriesAdd($r)
+    public function earningsRecoveriesAdd($er)
     {
         $er = $er + 1;
         $this->er = $er;
@@ -191,6 +215,7 @@ class Create extends Component
         $this->employees = Employee::orderBy('name','asc')->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->allowances = Allowance::where('status','1')->orderBy('name','asc')->get();
+        $this->earnings = Earning::where('status','1')->orderBy('name','asc')->get();
         $this->deductions = Deduction::where('status','1')->where('name','!=','PAYE')->where('name','!=','AIDS Levy')->orderBy('name','asc')->get();
         $this->loans = collect();
        
@@ -203,9 +228,10 @@ class Create extends Component
             
             $employee = Employee::find($id);
             $this->driver = $employee?->driver;
+
             if ($this->driver) {
-                $this->earning_recoveries =   Recovery::where('driver_id',$driver->id)->where('type','Gain')->where('balance','>','0')->where('authorization','approved')->get();
-                $this->deduction_recoveries =   Recovery::where('driver_id',$driver->id)->where('type','Loss')->where('balance','>','0')->where('authorization','approved')->get();
+                $this->earning_recoveries =   Recovery::where('driver_id',$this->driver->id)->where('type','Gain')->where('balance','>','0')->where('authorization','approved')->get();
+                $this->deduction_recoveries =   Recovery::where('driver_id',$this->driver->id)->where('type','Loss')->where('balance','>','0')->where('authorization','approved')->get();
             }
            
         }

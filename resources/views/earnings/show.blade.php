@@ -9,7 +9,7 @@
     @endif
 @endsection
 @section('title')
-    Allowance | @if (isset(Auth::user()->employee->company))
+    Earnings | @if (isset(Auth::user()->employee->company))
     {{Auth::user()->employee->company->name}}
     @elseif (Auth::user()->company)
     {{Auth::user()->company->name}}
@@ -30,15 +30,15 @@
                                 <div class="col-md-6">
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
-            							<li><a href="{{route('allowances.index')}}"><i class="fa fa-list"></i> Allowances</a></li>
-            							<li class="active"> <i class="fas fa-eye"></i> Allowance</li>
+            							<li><a href="{{route('earnings.index')}}"><i class="fa fa-list"></i> Earnings</a></li>
+            							<li class="active"> <i class="fas fa-eye"></i> Earning</li>
             						</ul>
                                 </div>
                             </div>
                             <!-- /.row -->
                         </div>
 
-                        @livewire('allowances.show',['id' => $allowance->id])
+                        @livewire('earnings.show',['id' => $earning->id])
 
 
                     </div>
@@ -49,7 +49,7 @@
 @section('extra-js')
     <script>
     $(document).ready( function () {
-        $('#allowancesTable').DataTable();
+        $('#earningsTable').DataTable();
     } );
     </script>
     <script>
@@ -69,7 +69,7 @@
     </script>
     <script>
     $(document).ready( function () {
-        $('#allowance_transportersTable').DataTable();
+        $('#earning_transportersTable').DataTable();
     } );
     </script>
 @endsection

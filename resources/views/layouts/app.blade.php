@@ -135,10 +135,34 @@
             })
     </script>
     <script type="text/javascript">
-            window.addEventListener('show-initialDiagnosisModal', event => {
-                $('#initialDiagnosisModal').modal('show');
+            window.addEventListener('hide-initialDiagnosisModal', event => {
+                $('#initialDiagnosisModal').modal('hide');
             })
     </script>
+
+    <script type="text/javascript">
+            window.addEventListener('show-earningModal', event => {
+                $('#earningModal').modal('show');
+            })
+    </script>
+    
+    <script type="text/javascript">
+            window.addEventListener('hide-earningModal', event => {
+                $('#earningModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-earningEditModal', event => {
+                $('#earningEditModal').modal('show');
+            })
+    </script>
+
+    <script type="text/javascript">
+            window.addEventListener('hide-earningEditModal', event => {
+                $('#earningEditModal').modal('hide');
+            })
+    </script>
+
     <script type="text/javascript">
             window.addEventListener('show-qualificationModal', event => {
                 $('#qualificationModal').modal('show');

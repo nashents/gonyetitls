@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class AddCategoryToAllowancesTable extends Migration
+class AddExpiryDateToTaxBracketsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,8 +13,8 @@ class AddCategoryToAllowancesTable extends Migration
      */
     public function up()
     {
-        Schema::table('allowances', function (Blueprint $table) {
-            $table->string('category')->nullable();
+        Schema::table('tax_brackets', function (Blueprint $table) {
+              $table->bigInteger('tax_table_id')->nullable()->default(1);
         });
     }
 
@@ -25,8 +25,8 @@ class AddCategoryToAllowancesTable extends Migration
      */
     public function down()
     {
-        Schema::table('allowances', function (Blueprint $table) {
-            $table->dropColumn('category');
+        Schema::table('tax_brackets', function (Blueprint $table) {
+             $table->dropColumn('tax_table_id');
         });
     }
 }

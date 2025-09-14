@@ -20,4 +20,6 @@ class AllowanceSeeder extends Seeder
             ];
             Allowance::insert($allowances);
     }
+
+    
 }

@@ -150,6 +150,11 @@ class Show extends Component
             'message'=>"Ticket Updated Successfully!!"
         ]);
     }
+
+    public function showInitialDiagnosis($id){
+        $this->ticket_id = $id;
+        $this->dispatchBrowserEvent('show-initialDiagnosisModal');
+    }
    
     public function updateDiagnosis(){
        
@@ -247,6 +252,7 @@ class Show extends Component
 
     public function render()
     {
+        $this->ticket;
         $this->after_attachments = TicketImage::where('ticket_id',$this->ticket->id)
         ->where('timeframe','After')->latest()->get();
         $this->before_attachments = TicketImage::where('ticket_id',$this->ticket->id)
@@ -255,6 +261,7 @@ class Show extends Component
             'after_attachments' => $this->after_attachments,
             'before_attachments' => $this->before_attachments,
             'notes' => $this->notes,
+            'ticket' => $this->ticket,
         ]);
     }
 }

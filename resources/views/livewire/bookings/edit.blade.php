@@ -101,7 +101,69 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row">
+                                 <label for="exampleInputEmail13">Assigned To<span class="required" style="color: red">*</span></label>
+                                    <div class="mb-10">
+                                        <input type="radio" wire:model.debounce.300ms="assigned_to" value="Mechanic"  class="line-style"  />
+                                        <label for="one" class="radio-label">Mechanic</label>
+                                        <input type="radio" wire:model.debounce.300ms="assigned_to" value="Vendor"  class="line-style"  />
+                                        <label for="one" class="radio-label">Vendor</label>
+                                    </div>    
+                                            <div class="row">
+
+                                    <div class="col-md-6">
+                                            @if ($assigned_to == "Mechanic")   
+                                                @foreach ($inputs as $key => $value)
+                                                <div class="row">
+                                                    <div class="col-md-10">
+                                                        <div class="form-group">
+                                                            <label for="stops">AssignedTo<span class="required" style="color: red">*</span></label>
+                                                                <select class="form-control" wire:model.debounce.300ms="mechanic_id.{{ $value }}" required size="4">
+                                                                  <option value="" disabled>Select Mechanic </option>
+                                                                    @foreach ($mechanics as $mechanic)
+                                                                        <option value="{{$mechanic->id}}"
+                                                                        @if(in_array($mechanic->id, $mechanic_id ?? []) && ($mechanic_id[$value] ?? null) != $mechanic->id) 
+                                                                            disabled 
+                                                                        @endif
+                                                                            >{{$mechanic->name}} {{$mechanic->surname}}</option>
+                                                                    @endforeach
+                                                                </select>
+                                                                @error('mechanic_id.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                        </div> 
+                                                    </div>
+                                                   
+                                                    <div class="col-md-1">
+                                                        <div class="form-group" style="padding-top:60px;">
+                                                            <label for=""></label>
+                                                            <button class="btn btn-danger btn-rounded btn-xs"   wire:click.prevent="remove({{$key}})" > <i class="fa fa-times"></i></button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <br>
+                                                @endforeach
+                                                <div class="row">
+                                                    <div class="col-md-12">
+                                                        <div class="form-group">
+                                                            <button class="btn btn-success btn-rounded btn-xs" style="float: right" wire:click.prevent="add({{$i}})"> <i class="fa fa-plus"></i>Mechanic</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                @else
+                                                <div class="form-group">
+                                                    <label for="stops">Vendor(s)</label>
+                                                    <input type="text" wire:model.debounce.300ms="searchVendor" placeholder="Search vendor..." class="form-control" >
+                                                        <select class="form-control" wire:model.debounce.300ms="vendor_id"  size="4">
+                                                          <option value="">Select Vendor </option>
+                                                            @foreach ($vendors as $vendor)
+                                                                <option value="{{$vendor->id}}">{{$vendor->name}} {{$vendor->surname}}</option>
+                                                            @endforeach
+                                                        </select>
+                                                        <small>  <a href="{{ route('vendors.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Vendor</a></small> 
+                                                        @error('vendor_id') <span class="text-danger error">{{ $message }}</span>@enderror
+                                                </div> 
+                                            @endif
+                                      
+                                    </div>
+
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="exampleInputEmail13">RequestedBy<span class="required" style="color: red">*</span></label>
@@ -115,48 +177,6 @@
                                             @error('employee_id') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
-                                    <!-- /.col-md-6 -->
-
-                                    <div class="col-md-6">
-                                        @if (!isset($assigned_to))
-                                        <label for="exampleInputEmail13">Assigned To<span class="required" style="color: red">*</span></label>
-                                        <div class="mb-10">
-                                            <input type="radio" wire:model.debounce.300ms="assigned_to" value="Mechanic"  class="line-style"  />
-                                            <label for="one" class="radio-label">Mechanic</label>
-                                            <input type="radio" wire:model.debounce.300ms="assigned_to" value="Vendor"  class="line-style"  />
-                                            <label for="one" class="radio-label">Vendor</label>
-                                        </div>    
-                                        @endif
-                                        @if (isset($assigned_to))
-                                        @if ($assigned_to == "Mechanic")
-                                        <div class="form-group">
-                                            <label for="stops">AssignedTo<span class="required" style="color: red">*</span></label>
-                                            <input type="text" wire:model.debounce.300ms="searchMechanic" placeholder="Search mechanic..." class="form-control" >
-                                                <select class="form-control" wire:model.debounce.300ms="mechanic_id" multiple required>
-                                                  <option value="">Select Mechanic </option>
-                                                    @foreach ($mechanics as $mechanic)
-                                                        <option value="{{$mechanic->id}}">{{$mechanic->name}} {{$mechanic->surname}}</option>
-                                                    @endforeach
-                                                </select>
-                                                @error('mechanic_id') <span class="text-danger error">{{ $message }}</span>@enderror
-                                        </div>   
-                                        @elseif ($assigned_to == "Vendor")  
-                                        <div class="form-group">
-                                            <label for="stops">Vendor(s)</label>
-                                            <input type="text" wire:model.debounce.300ms="searchVendor" placeholder="Search vendor..." class="form-control" >
-                                                <select class="form-control" wire:model.debounce.300ms="vendor_id"  size="4">
-                                                  <option value="">Select Vendor </option>
-                                                    @foreach ($vendors as $vendor)
-                                                        <option value="{{$vendor->id}}">{{$vendor->name}} {{$vendor->surname}}</option>
-                                                    @endforeach
-                                                </select>
-                                                <small>  <a href="{{ route('vendors.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Vendor</a></small> 
-                                                @error('vendor_id') <span class="text-danger error">{{ $message }}</span>@enderror
-                                        </div> 
-                                        @endif
-                                        @endif
-                                    </div>
-
                                     <!-- /.col-md-6 -->
                                 </div>
                                 

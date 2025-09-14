@@ -497,6 +497,7 @@ Route::resource('recoveries','RecoveryController');
 Route::resource('trip_destinations','TripDestinationController');
 Route::resource('deductions','DeductionController');
 Route::resource('allowances','AllowanceController');
+Route::resource('earnings','EarningController');
 Route::resource('reminders','ReminderController');
 Route::resource('logs','LogController');
 Route::resource('drivers','DriverController');

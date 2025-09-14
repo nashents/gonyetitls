@@ -19,6 +19,9 @@ class Currency extends Model implements Auditable
         'symbol',
     ];
    
+    public function earnings(){
+        return $this->hasMany('App\Models\Earning');
+    }
     public function exchange_rate(){
         return $this->hasOne('App\Models\ExchangeRate');
     }

@@ -34,7 +34,7 @@ class Create extends Component
     public $trailers;
     public $selectedTrailer;
     public $type = "Horse";
-    public $assigned_to = NULL;
+    public $assigned_to = "Mechanic";
     public $horses;
     public $selectedAsset;
     public $assets;

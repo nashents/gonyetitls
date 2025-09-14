@@ -101,42 +101,27 @@
                                         </div>
                                     </div>
                                 </div>
-                               
+                                 <label for="exampleInputEmail13">Assigned To<span class="required" style="color: red">*</span></label>
+                                    <div class="mb-10">
+                                        <input type="radio" wire:model.debounce.300ms="assigned_to" value="Mechanic"  class="line-style"  />
+                                        <label for="one" class="radio-label">Mechanic</label>
+                                        <input type="radio" wire:model.debounce.300ms="assigned_to" value="Vendor"  class="line-style"  />
+                                        <label for="one" class="radio-label">Vendor</label>
+                                    </div>    
                                  <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="exampleInputEmail13">RequestedBy<span class="required" style="color: red">*</span></label>
-                                            <input type="text" wire:model.debounce.300ms="searchEmployee" placeholder="Search employee..." class="form-control" >
-                                       <select wire:model.debounce.300ms="employee_id" class="form-control"  required size="4">
-                                           <option value="">Select Employee</option>
-                                           @foreach ($employees as $employee)
-                                               <option value="{{$employee->id}}">{{ucfirst($employee->name)}} {{ucfirst($employee->surname)}}</option>
-                                           @endforeach
-                                       </select>
-                                            @error('employee_id') <span class="text-danger error">{{ $message }}</span>@enderror
-                                        </div>
-                                    </div>
-                                    <!-- /.col-md-6 -->
 
                                     <div class="col-md-6">
-                                        @if (!isset($assigned_to))
-                                            <label for="exampleInputEmail13">Assigned To<span class="required" style="color: red">*</span></label>
-                                            <div class="mb-10">
-                                                <input type="radio" wire:model.debounce.300ms="assigned_to" value="Mechanic"  class="line-style"  />
-                                                <label for="one" class="radio-label">Mechanic</label>
-                                                <input type="radio" wire:model.debounce.300ms="assigned_to" value="Vendor"  class="line-style"  />
-                                                <label for="one" class="radio-label">Vendor</label>
-                                            </div>    
-                                        @endif
-                                
-                                        @if (isset($assigned_to))
                                             @if ($assigned_to == "Mechanic")
                                                 <div class="form-group">
                                                      <label for="stops">AssignedTo<span class="required" style="color: red">*</span></label>
                                                     <select class="form-control" wire:model.debounce.300ms="mechanic_id.0" required size="4">
                                                       <option value="">Select Mechanic </option>
                                                         @foreach ($mechanics as $mechanic)
-                                                            <option value="{{$mechanic->id}}">{{$mechanic->name}} {{$mechanic->surname}}</option>
+                                                            <option value="{{$mechanic->id}}"
+                                                                @if(in_array($mechanic->id, $mechanic_id ?? []) && ($mechanic_id[0] ?? null) != $mechanic->id) 
+                                                                    disabled 
+                                                                @endif
+                                                                >{{$mechanic->name}} {{$mechanic->surname}}</option>
                                                         @endforeach
                                                     </select>
                                                     @error('mechanic_id.0') <span class="text-danger error">{{ $message }}</span>@enderror
@@ -147,19 +132,23 @@
                                                         <div class="form-group">
                                                             <label for="stops">AssignedTo<span class="required" style="color: red">*</span></label>
                                                                 <select class="form-control" wire:model.debounce.300ms="mechanic_id.{{ $value }}" required size="4">
-                                                                  <option value="">Select Mechanic </option>
+                                                                  <option value="" disabled>Select Mechanic </option>
                                                                     @foreach ($mechanics as $mechanic)
-                                                                        <option value="{{$mechanic->id}}">{{$mechanic->name}} {{$mechanic->surname}}</option>
+                                                                        <option value="{{$mechanic->id}}"
+                                                                        @if(in_array($mechanic->id, $mechanic_id ?? []) && ($mechanic_id[$value] ?? null) != $mechanic->id) 
+                                                                            disabled 
+                                                                        @endif
+                                                                            >{{$mechanic->name}} {{$mechanic->surname}}</option>
                                                                     @endforeach
                                                                 </select>
                                                                 @error('mechanic_id.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
                                                         </div> 
                                                     </div>
                                                    
-                                                    <div class="col-md-1">
-                                                        <div class="form-group">
+                                                    <div class="col-md-1" style="padding-top:60px;">
+                                                        <div class="form-group" >
                                                             <label for=""></label>
-                                                            <button class="btn btn-danger btn-rounded xs"   wire:click.prevent="remove({{$key}})"> <i class="fa fa-times"></i></button>
+                                                            <button class="btn btn-danger btn-rounded btn-xs"   wire:click.prevent="remove({{$key}})" > <i class="fa fa-times"></i></button>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -168,7 +157,7 @@
                                                 <div class="row">
                                                     <div class="col-md-12">
                                                         <div class="form-group">
-                                                            <button class="btn btn-success btn-rounded btn-sm" style="float: right" wire:click.prevent="add({{$i}})"> <i class="fa fa-plus"></i>Mechanic</button>
+                                                            <button class="btn btn-success btn-rounded btn-xs" style="float: right" wire:click.prevent="add({{$i}})"> <i class="fa fa-plus"></i>Mechanic</button>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -186,11 +175,24 @@
                                                         @error('vendor_id') <span class="text-danger error">{{ $message }}</span>@enderror
                                                 </div> 
                                             @endif
-                                        @endif
+                                      
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="exampleInputEmail13">RequestedBy<span class="required" style="color: red">*</span></label>
+                                            <input type="text" wire:model.debounce.300ms="searchEmployee" placeholder="Search employee..." class="form-control" >
+                                       <select wire:model.debounce.300ms="employee_id" class="form-control"  required size="4">
+                                           <option value="">Select Employee</option>
+                                           @foreach ($employees as $employee)
+                                               <option value="{{$employee->id}}">{{ucfirst($employee->name)}} {{ucfirst($employee->surname)}}</option>
+                                           @endforeach
+                                       </select>
+                                            @error('employee_id') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
                                     </div>
                                     <!-- /.col-md-6 -->
                                 </div>
-
                                 <div class="form-group">
                                     <label for="stops">Incident Report(s)</label>
                                         <select class="form-control" wire:model.debounce.300ms="breakdown_id"  size="4">

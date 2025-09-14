@@ -110,8 +110,10 @@ class Edit extends Component
         $this->hours = $booking->hours;
         $this->description = $booking->description;
 
-        foreach ($booking->employees as $mechanic) {
+        foreach ($booking->employees as $key => $mechanic) {
             $this->mechanic_id[] = $mechanic->id;
+            $this->i = $key;
+            array_push($this->inputs ,$key);
         }
        
         $this->in_time = $booking->in_time;
@@ -124,7 +126,19 @@ class Edit extends Component
         $this->type = $booking->type;
         $this->assigned_to = $booking->assigned_to;
         $this->service_types = ServiceType::orderBy('name','asc')->get();
-        $this->breakdowns = Breakdown::whereYear('date',date('Y'))->orderBy('created_at','desc')->get();
+       
+         $employee = Employee::find($this->employee_id );
+            $driver = $employee->driver;
+             if($driver){
+                if($this->type == "Horse" && $this->selectedHorse){
+                    $this->breakdowns = Breakdown::where('driver_id',$driver->id)->where('horse_id', $this->selectedHorse)->whereYear('date',date('Y'))->where('status',True)->orderBy('created_at','desc')->get();
+                }elseif($this->type == "Vehicle" && $this->selectedVehicle){
+                    $this->breakdowns = Breakdown::where('driver_id',$driver->id)->where('vehicle_id', $this->selectedVehicle)->whereYear('date',date('Y'))->where('status',True)->orderBy('created_at','desc')->get();
+                }elseif($this->type == "Trailer" && $this->selectedTrailer){
+                    $this->breakdowns = Breakdown::where('driver_id',$driver->id)->where('trailer_id', $this->selectedTrailer)->whereYear('date',date('Y'))->where('status',True)->orderBy('created_at','desc')->get();
+                }
+                
+            }
     }
 
     public function updatedSelectedHorse($horse){

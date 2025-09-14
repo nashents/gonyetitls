@@ -9,7 +9,7 @@
     @endif
 @endsection
 @section('title')
-    Allowance | @if (isset(Auth::user()->employee->company))
+    Earnings | @if (isset(Auth::user()->employee->company))
     {{Auth::user()->employee->company->name}}
     @elseif (Auth::user()->company)
     {{Auth::user()->company->name}}
@@ -19,7 +19,7 @@
 <body class="top-navbar-fixed">
 @endsection
 
-   
+       
                     <div class="main-page">
                         <div class="container-fluid">
                             <div class="row page-title-div">
@@ -30,46 +30,24 @@
                                 <div class="col-md-6">
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
-            							<li><a href="{{route('allowances.index')}}"><i class="fa fa-list"></i> Allowances</a></li>
-            							<li class="active"> <i class="fas fa-eye"></i> Allowance</li>
+            							<li class="active"> <i class="fas fa-list"></i> Earnings</li>
             						</ul>
                                 </div>
                             </div>
                             <!-- /.row -->
                         </div>
 
-                        @livewire('allowances.show',['id' => $allowance->id])
+                        @livewire('earnings.index')
 
 
                     </div>
-
 
 @endsection
 
 @section('extra-js')
     <script>
     $(document).ready( function () {
-        $('#allowancesTable').DataTable();
-    } );
-    </script>
-    <script>
-    $(document).ready( function () {
-        $('#documentsTable').DataTable();
-    } );
-    </script>
-    <script>
-    $(document).ready( function () {
-        $('#contactsTable').DataTable();
-    } );
-    </script>
-    <script>
-    $(document).ready( function () {
-        $('#tripsTable').DataTable();
-    } );
-    </script>
-    <script>
-    $(document).ready( function () {
-        $('#allowance_transportersTable').DataTable();
+        $('#earningsTable').DataTable();
     } );
     </script>
 @endsection

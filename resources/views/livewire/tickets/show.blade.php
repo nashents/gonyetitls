@@ -100,7 +100,7 @@
                             </tr>
                             <tr>
                                 <th class="w-10 text-center line-height-35">Initial Diagnosis</th>
-                                <td class="w-20 line-height-35">{{$ticket->initial_diagnosis}} <a href="#" data-toggle="modal" data-target="#initialDiagnosisModal"><i class="fas fa-edit"></i></a> </td>
+                                <td class="w-20 line-height-35">{{$ticket->initial_diagnosis}} <a href="#" wire:click.prevent="showInitialDiagnosis({{$ticket->id}})"><i class="fas fa-edit"></i></a> </td>
                             </tr>
                             <tr>
                                 <th class="w-10 text-center line-height-35">Mechanic Comments</th>
