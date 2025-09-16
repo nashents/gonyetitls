@@ -141,6 +141,29 @@
     </script>
 
     <script type="text/javascript">
+            window.addEventListener('show-stationModal', event => {
+                $('#stationModal').modal('show');
+            })
+    </script>
+    
+    <script type="text/javascript">
+            window.addEventListener('hide-stationModal', event => {
+                $('#stationModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-stationEditModal', event => {
+                $('#stationEditModal').modal('show');
+            })
+    </script>
+
+    <script type="text/javascript">
+            window.addEventListener('hide-stationEditModal', event => {
+                $('#stationEditModal').modal('hide');
+            })
+    </script>
+
+    <script type="text/javascript">
             window.addEventListener('show-earningModal', event => {
                 $('#earningModal').modal('show');
             })

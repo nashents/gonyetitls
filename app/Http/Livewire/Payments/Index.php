@@ -274,6 +274,7 @@ class Index extends Component
             $payment->customer_id = Null;
         }
        
+
         $payment->user_id = Auth::user()->id;
         $payment->currency_id = $this->selectedCurrency;
         $payment->payment_number = $this->paymentNumber();   
@@ -295,6 +296,7 @@ class Index extends Component
         }
         
         if(isset($this->selectedvendor) && isset($this->selectedCurrency) &&  $this->transaction_category == "Vendor Payments"){
+            dd(123);
             if (isset($this->last_payment) && $this->last_payment->drawdown_balance > 0) {
                 $payment->drawdown_balance = $this->last_payment->drawdown_balance + $this->amount;
             }else{
@@ -418,8 +420,8 @@ class Index extends Component
         }elseif ($this->source_destination == "Vendor") {
             $this->transaction_type_id = TransactionType::where('name','Withdrawal')->first();
             $this->transaction_category = "Vendor Payments";
-            if (isset($this->selectedCustomer) && isset($this->selectedCurrency)) { 
-            $this->last_payment = Payment::where('vendor_id',$this->selectedVendor)->where('currency_id',$this->selectedCurrency)->where('transaction_category',  $this->transaction_category)->orderBy('created_at','desc')->first();
+            if (isset($this->selectedVendor) && isset($this->selectedCurrency)) { 
+            $this->last_paylment = Payment::where('vendor_id',$this->selectedVendor)->where('currency_id',$this->selectedCurrency)->where('transaction_category',  $this->transaction_category)->orderBy('created_at','desc')->first();
         }
 
         }

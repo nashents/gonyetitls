@@ -9,6 +9,7 @@ use App\Models\Ticket;
 use App\Models\Trailer;
 use App\Models\Vehicle;
 use Livewire\Component;
+use App\Models\TripExpense;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Excel;
 use App\Exports\TicketsExport;
@@ -41,11 +42,20 @@ class Index extends Component
     public $ticket_id;
     public $status;
     public $comments;
+    public $user;
+    public $employee;
+    public $company;
+    public $default_currency;
+    public $out_of_workshop_time;
+    public $out_of_workshop_date;
     public $ticket_status = "all";
 
     public function mount(){
         $this->resetPage();
-
+        $this->user = Auth::user();
+        $this->employee = $this->user->employee;
+        $this->company = $this->employee->company;
+        $this->default_currency = $this->company->currency;
         $this->horses = Horse::where('status',1)->orderby('registration_number')->get();
         $this->assets = Asset::where('status',1)->get();
         $this->trailers = Trailer::where('status',1)->orderby('registration_number')->get();
@@ -86,8 +96,78 @@ class Index extends Component
      
       }
 
+      public function calTotals($relation, $ticket, $defaultColumn, $defaultCurrencyId){
+
+            $default = $ticket->$relation()
+                ->where('currency_id', $defaultCurrencyId)
+                ->sum($defaultColumn);
+
+            $exchange = $ticket->$relation()
+                ->where('currency_id', '!=', $defaultCurrencyId)
+                ->sum('exchange_amount');
+
+            return (float) $default + (float) $exchange;
+
+      }
+
+      public function attachBreakdownExpenseIfAny($booking, float $total): ?\App\Models\TripExpense
+        {
+            // Eager load safely; ensures we have what we need in one go
+            $booking->loadMissing('breakdown.trip');
+
+            $breakdown = $booking->breakdown;
+            $trip      = $breakdown?->trip;
+
+            if (!$trip) {
+                return null; // No trip linked to this booking’s breakdown—nothing to do
+            }
+
+            return $this->addTripExpense($trip, $booking, $breakdown, $total);
+        }
+
+        public function addTripExpense(
+            \App\Models\Trip $trip,
+            \App\Models\Booking $booking,
+            ?\App\Models\Breakdown $breakdown,
+            float $total
+        ): \App\Models\TripExpense {
+            if ($total <= 0) {
+                // Don’t record junk. Adjust this rule if you deliberately allow zero amounts.
+                throw new \InvalidArgumentException('Trip expense total must be greater than zero.');
+            }
+
+            $currencyId = $this->default_currency->id ?? null;
+            if (!$currencyId) {
+                throw new \RuntimeException('Default currency is not configured.');
+            }
+
+            return DB::transaction(function () use ($trip, $booking, $breakdown, $total, $currencyId) {
+                // Idempotency: prevent duplicates for the same trip+booking+breakdown+currency
+                // Add a DB unique index to enforce this (see note below).
+                return $trip->trip_expenses()->updateOrCreate(
+                    [
+                        'booking_id'   => $booking->id,
+                        'breakdown_id' => $breakdown?->id, // can be null
+                        'currency_id'  => $currencyId,
+                    ],
+                    [
+                        'user_id'      => Auth::id(),
+                        'amount'       => round($total, 2),
+                        // Optional: tag this as a breakdown-related expense
+                        // 'type'      => 'breakdown',
+                        // 'note'      => 'Auto-added from booking breakdown',
+                    ]
+                );
+            });
+        }
+
+     
+
 
       public function authorizeSelectedRows(){
+
+         DB::transaction(function () {
+
 
            $selected_tickets = Ticket::WhereIn('id',$this->selectedRows)->get();
            
@@ -99,10 +179,22 @@ class Index extends Component
                     $ticket->closed_comments = $this->comments;
                     $ticket->closed_on = Carbon::now();
                     $ticket->update();
+                   
+                    $total_spares = $this->calTotals('ticket_inventories',$ticket,'subtotal', $this->default_currency->id);
+                    $total_other = $this->calTotals('ticket_expenses',$ticket,'subtotal_incl', $this->default_currency->id);
+                    $total = $total_spares + $total_other;
 
                     $booking = $ticket->booking;
                     $booking->status = $this->status;
+                    $booking->currency_id = $this->default_currency->id;
+                    $booking->total_spares = $total_spares;
+                    $booking->total_other = $total_other;
+                    $booking->out_of_workshop_date = $this->out_of_workshop_date;
+                    $booking->out_of_workshop_time = $this->out_of_workshop_time;
                     $booking->update();
+
+                    $this->attachBreakdownExpenseIfAny($booking, $total);
+                   
 
                     $horse = $booking->horse;
                     if (isset($horse)) {
@@ -139,6 +231,7 @@ class Index extends Component
                 
             
            }
+        });
 
       }
 
@@ -221,6 +314,8 @@ class Index extends Component
 
     public function closeTicket(){
 
+        DB::transaction(function () {
+
         $ticket = Ticket::find($this->ticket_id);
         $ticket->closed_by_id = Auth::user()->id;
         $ticket->closed_on = Carbon::now();
@@ -228,17 +323,20 @@ class Index extends Component
         $ticket->closed_comments = $this->comments;
         $ticket->update();
 
-        // $inspection = $ticket->inspection;
-        // if (isset($inspection)) {
-        //     $inspection->closed_by_id = Auth::user()->id;
-        //     $inspection->status = $this->status;
-        //     $inspection->closed_comments = $this->comments;
-        //     $inspection->update();
-        // }
+        $total_spares = $this->calTotals('ticket_inventories',$ticket,'subtotal', $this->default_currency->id);
+        $total_other = $this->calTotals('ticket_expenses',$ticket,'subtotal_incl', $this->default_currency->id);
+        $total = $total_spares + $total_other;
 
         $booking = $ticket->booking;
         $booking->status = $this->status;
+        $booking->currency_id = $this->default_currency->id;
+        $booking->total_spares = $total_spares;
+        $booking->total_other = $total_other;
+        $booking->out_of_workshop_date = $this->out_of_workshop_date;
+        $booking->out_of_workshop_time = $this->out_of_workshop_time;
         $booking->update();
+
+        $this->attachBreakdownExpenseIfAny($booking, $total);
 
         $horse = $booking->horse;
         if (isset($horse)) {
@@ -264,6 +362,7 @@ class Index extends Component
             'type'=>'success',
             'message'=>"Ticket Status Updated Successfully!!"
         ]);
+    });
     }
 
     public function updatingSearch()

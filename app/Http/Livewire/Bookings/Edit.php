@@ -209,7 +209,7 @@ class Edit extends Component
     public function updatedBreakdownId($id){
         if(!is_null($id)){
             $breakdown = Breakdown::find($id);
-            $this->description = $breakdown->description;
+            $this->description = $breakdown?->description;
         }
     }
 

@@ -44,6 +44,83 @@
                                 </div>
                               
                                 </div>
+                                <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="input-group">
+                                                <span class="input-group-addon">Ticket Status</span>
+                                                <select wire:model.debounce.300ms="booking_status" class="form-control" aria-label="..." >
+                                                    <option value="all">All</option>
+                                                    <option value="0">Closed</option>
+                                                    <option value="1">Open</option>
+                                                </select>
+                                            </div>
+                                            <!-- /input-group -->
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="input-group">
+                                                <span class="input-group-addon">Filter By</span>
+                                                <select wire:model.debounce.300ms="filter" class="form-control" aria-label="..." >
+                                                    <option value="">Select Option</option>
+                                                    <option value="asset">Assets</option>
+                                                    <option value="horse">Horses</option>
+                                                    <option value="trailer">Trailer</option>
+                                                    <option value="vehicle">Vehicles</option>
+                                                </select>
+                                            </div>
+                                            <!-- /input-group -->
+                                        </div>
+                                        @if ($filter)
+                                             <div class="col-md-3">
+                                                <div class="input-group">
+                                                    @if ($filter == "horse")
+                                                         <span class="input-group-addon">
+                                                            Horses
+                                                        </span>
+                                                        <select wire:model.debounce.300ms="selectedHorse" class="form-control" aria-label="..." >
+                                                            <option value="">Select Horse</option>
+                                                            @foreach ($horses as $horse)
+                                                                <option value="{{ $horse->id }}">{{ $horse->registration_number }} {{ $horse->fleet_number ? "(".$horse->fleet_number.")" : "" }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    @elseif($filter == "vehicle")
+                                                         <span class="input-group-addon">
+                                                            Horses
+                                                        </span>
+                                                        <select wire:model.debounce.300ms="selectedVehicle" class="form-control" aria-label="..." >
+                                                            <option value="">Select Vehicle</option>
+                                                            @foreach ($vehicles as $vehicle)
+                                                                <option value="{{ $vehicle->id }}">{{ $vehicle->registration_number }} {{ $vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : "" }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    @elseif($filter == "asset")
+                                                         <span class="input-group-addon">
+                                                            Assets
+                                                        </span>
+                                                        <select wire:model.debounce.300ms="selectedAsset" class="form-control" aria-label="..." >
+                                                            <option value="">Select Asset</option>
+                                                            @foreach ($assets as $asset)
+                                                                @if ($asset->product)
+                                                                    <option value="{{ $asset->id }}">{{ $asset->product ? $asset->product->name : "" }} {{ $asset->product->identification_number ? "(".$asset->product->identification_number.")" : "" }} </option>
+                                                                @endif
+                                                            @endforeach
+                                                        </select>
+                                                    @elseif($filter == "trailer")
+                                                         <span class="input-group-addon">
+                                                            Trailers
+                                                        </span>
+                                                        <select wire:model.debounce.300ms="selectedTrailer" class="form-control" aria-label="..." >
+                                                            <option value="">Select Trailer</option>
+                                                            @foreach ($trailers as $trailer)
+                                                                <option value="{{ $trailer->id }}">{{ $trailer->registration_number }} {{ $trailer->fleet_number ? "(".$trailer->fleet_number.")" : "" }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    @endif
+                                                   
+                                                </div>
+                                            <!-- /input-group -->
+                                            </div>
+                                        @endif
+                                </div>
                                 <div class="panel-title">
                                     <a href="{{route('bookings.create')}}"  class="btn btn-default"><i class="fa fa-plus-square-o"></i>Booking</a>
                                     <a href="#" wire:click="exportBookingsExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
@@ -51,20 +128,10 @@
                                     <a href="#" wire:click="exportBookingsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a> 
                                     <br>
                                     <br>
-                                    <div class="col-lg-3" style="margin-left:-15px">
-                                        <div class="input-group">
-                                          <span class="input-group-addon">Booking Status</span>
-                                          <select wire:model.debounce.300ms="booking_status" class="form-control" aria-label="..." >
-                                            <option value="all">All</option>
-                                            <option value="0">Closed</option>
-                                            <option value="1">Open</option>
-                                          </select>
-                                        </div>
-                                            <!-- /input-group -->
-                                        </div>
+                                   
                                 </div>
 
-                          
+                       
 
                                 <div class="col-md-5" style="float: right; padding-right:2px">
                                     <div class="form-group">
@@ -175,7 +242,7 @@
                                                     <li><a href="{{route('bookings.show', $booking->id)}}"><i class="fa fa-eye color-default"></i>View</a></li>
                                                     <li><a href="{{route('bookings.edit', $booking->id)}}"><i class="fa fa-edit color-success"></i> Edit</a></li>
                                                     @if ($booking->status == 1)
-                                                    <li><a href="#"  wire:click="showBooking({{$booking->id}})"><i class="fa fa-window-close color-success"></i> Close Booking</a></li>
+                                                    {{-- <li><a href="#"  wire:click="showBooking({{$booking->id}})"><i class="fa fa-window-close color-success"></i> Close Booking</a></li> --}}
                                                     @endif
                                                     @if ($booking->authorization == "pending" || $booking->authorization == "rejected")
                                                     <li><a href="#" data-toggle="modal" data-target="#bookingDeleteModal{{$booking->id}}"><i class="fa fa-trash color-danger"></i>Delete</a></li>

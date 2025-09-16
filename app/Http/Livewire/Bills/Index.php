@@ -312,6 +312,7 @@ class Index extends Component
     public function showBillUpdate(){
         $this->dispatchBrowserEvent('show-updateBillsModal');
     }
+
     public function updateAllBills(){
 
         $bills = Bill::whereNotNull('accrual_balance')->orderBy('id','asc')->orderBy($this->bill_filter,'asc')->get();
@@ -529,7 +530,8 @@ class Index extends Component
 
         if (isset($this->selectedVendor) && isset($this->selectedCurrency)) {
         
-            $this->last_payment = Payment::where('vendor_id',$this->selectedVendor)->where('currency_id',$this->selectedCurrency)->where('transaction_category', "Vendor Deposits")->orderBy('created_at','desc')->first();
+            $this->last_payment = Payment::where('vendor_id',$this->selectedVendor)->where('currency_id',$this->selectedCurrency)->where('transaction_category', "Vendor Payments")->orderBy('created_at','desc')->first();
+            
             if(isset($this->last_payment)){
                 $this->drawdown_amount = $this->last_payment->drawdown_balance;
                 $this->payment_drawdown_balance = $this->last_payment->drawdown_balance;

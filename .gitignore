@@ -15,3 +15,5 @@ yarn-error.log
 /.vscode
 /public/myfiles/documents/*
 !/public/myfiles/documents/.gitkeep
+app.zip
+*.zip*.zip

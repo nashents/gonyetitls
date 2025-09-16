@@ -1416,6 +1416,9 @@
                         <li class="{{ request()->routeIs('inspection_types.index') ? 'active' : '' }}">
                             <a href="{{route('inspection_types.index')}}"><i class="fas fa-list"></i> <span>Inspection Items</span> </a>
                         </li>
+                        <li class="{{ request()->routeIs('stations.index') ? 'active' : '' }}">
+                            <a href="{{route('stations.index')}}"><i class="fas fa-list"></i> <span>Stations</span> </a>
+                        </li>
                     </ul>
                 </li>
 

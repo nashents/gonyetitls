@@ -9,7 +9,7 @@
     @endif
 @endsection
 @section('title')
-    Stores | @if (Auth::user()->employee->company)
+    Station | @if (Auth::user()->employee->company)
     {{Auth::user()->employee->company->name}}
     @elseif (Auth::user()->company)
     {{Auth::user()->company->name}}
@@ -31,14 +31,14 @@
                                 <div class="col-md-6">
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
-            							<li class="active"> <i class="fas fa-list"></i> Stores</li>
+            							<li class="active"> <i class="fas fa-list"></i> Stations</li>
             						</ul>
                                 </div>
                             </div>
                             <!-- /.row -->
                         </div>
 
-                        @livewire('stores.index')
+                        @livewire('stations.index')
 
 
                     </div>
@@ -52,7 +52,7 @@
 @section('extra-js')
     <script>
     $(document).ready( function () {
-        $('#storesTable').DataTable();
+        $('#stationsTable').DataTable();
     } );
     </script>
 @endsection

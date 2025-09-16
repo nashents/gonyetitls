@@ -480,6 +480,7 @@ Route::resource('loss_categories','LossCategoryController');
 Route::resource('loss_groups','LossGroupController');
 Route::resource('notifications','NotificationController');
 Route::resource('trainings','TrainingController');
+Route::resource('stations','StationController');
 Route::resource('training_items','TrainingItemController');
 Route::resource('training_departments','TrainingDepartmentController');
 Route::resource('training_requirements','TrainingRequirementController');

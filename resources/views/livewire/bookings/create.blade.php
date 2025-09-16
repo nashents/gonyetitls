@@ -196,7 +196,7 @@
                                 <div class="form-group">
                                     <label for="stops">Incident Report(s)</label>
                                         <select class="form-control" wire:model.debounce.300ms="breakdown_id"  size="4">
-                                            <option value="">Select Incident </option>
+                                            <option value="" disabled>Select Incident </option>
                                             @foreach ($breakdowns as $breakdown)
                                                 <option value="{{$breakdown->id}}">{{$breakdown->location}} {{$breakdown->date}}
                                                     @if ($breakdown->horse)

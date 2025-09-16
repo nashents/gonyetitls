@@ -69,6 +69,7 @@
                                <a href="#" wire:click="exportBillsExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
                                 <a href="#" wire:click="exportBillsCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
                                 <a href="#" wire:click="exportBillsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
+
                             </div>
                             <div class="panel-title" style="margin-top:10px; margin-left:-1px">
                                 <a href="{{route('bills.create')}}"  class="btn btn-default"><i class="fa fa-plus-square-o"></i>Bill</a>
@@ -588,18 +589,18 @@
                        
                     </div>
                   
-                        @if (isset($selected_vendor) && isset($selected_currency) && isset($last_payment) && $last_payment->drawdown_balance > 0 )
-                            <blockquote>
-                                {{$selected_vendor->name}} has {{$selected_currency->name}} {{$selected_currency->symbol}}{{number_format($last_payment->drawdown_balance ? $last_payment->drawdown_balance : 0,2)}}
-                            </blockquote>
-                        @endif
+                    @if (isset($selected_vendor) && isset($selected_currency) && isset($last_payment) && $last_payment->drawdown_balance > 0 )
+                        <blockquote>
+                            {{$selected_vendor->name}} has {{$selected_currency->name}} {{$selected_currency->symbol}}{{number_format($last_payment->drawdown_balance ? $last_payment->drawdown_balance : 0,2)}}
+                        </blockquote>
+                    @endif
                     <div class="form-group">
                         <label for="country">Bills<span class="required" style="color: red">*</span> </label>
                         <select wire:model.debounce.300ms="selectedBill" class="form-control" required>
                             <option value="">Select Bill</option>
                             @if (!is_null($selectedVendor) && !is_null($selectedCurrency) )
                                 @foreach ($unpaid_bills as $bill)
-                                    <option value="{{ $bill->id }}">{{$bill->bill_number}} | {{$bill->vendor ? $bill->vendor->name : ""}} | Balance: {{$bill->currency ? $bill->currency->name : ""}} {{$bill->currency ? $bill->currency->symbol : ""}}{{number_format($bill->balance ? $bill->balance : 0,2)}} | {{ $bill->status }}</option>
+                                    <option value="{{ $bill->id }}">Bill#: {{$bill->bill_number}} Date: {{$bill->bill_date}} Vendor: {{$bill->vendor ? $bill->vendor->name : ""}} Bal: {{$bill->currency ? $bill->currency->name : ""}} {{$bill->currency ? $bill->currency->symbol : ""}}{{number_format($bill->balance ? $bill->balance : 0,2)}} Status: {{ $bill->status }}</option>
                                 @endforeach
                             @endif 
                         </select>

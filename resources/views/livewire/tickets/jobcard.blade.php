@@ -300,8 +300,6 @@
                 <th style="width:38px" class="center">#</th>
                 <th>Item</th>
                 <th style="width:150px">Comments</th>
-                <th style="width:120px" class="right">Cost</th>
-                <th style="width:120px" class="right">Hours</th>
                 <th style="width:80px" class="center">Safe</th>
                 <th style="width:80px" class="center">Warning</th>
                 <th style="width:80px" class="center">Danger</th>
@@ -313,8 +311,6 @@
                   <td class="center">{{ $loop->iteration }}</td>
                   <td>{{ optional($inspection_service->inspection_type)->name }}</td>
                   <td></td>
-                  <td class="right"></td>
-                  <td class="right"></td>
                   <td class="center"></td>
                   <td class="center"></td>
                   <td class="center"></td>
