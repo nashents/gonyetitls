@@ -790,7 +790,8 @@ class Edit extends Component
     public function update()
     {
 
-          DB::transaction(function () {
+        DB::transaction(function () {
+            
         if ($this->invoice_id) {
             
             $invoice = Invoice::find($this->invoice_id);

@@ -9,6 +9,7 @@ use App\Models\Vendor;
 use App\Models\Booking;
 use App\Models\JobType;
 use App\Models\Mileage;
+use App\Models\Station;
 use App\Models\Trailer;
 use App\Models\Vehicle;
 use Livewire\Component;
@@ -50,6 +51,8 @@ class Create extends Component
     
     public $breakdowns;
     public $breakdown_id;
+    public $stations;
+    public $station_id;
 
 
     public $searchAsset;
@@ -71,7 +74,6 @@ class Create extends Component
     public $estimated_out_date;
     public $estimated_out_time;
     public $odometer;
-    public $station;
     public $mileage;
     public $hours;
     public $service_types;
@@ -100,9 +102,27 @@ class Create extends Component
 
     public function mount(){
         $this->company = Auth::user()->employee->company;
-        $this->service_types = ServiceType::orderBy('name','asc')->get();
+        $this->service_types = ServiceType::where('status',1)->orderBy('name','asc')->get();
+        $this->stations = Station::where('status',1)->orderBy('name','asc')->get();
         $this->breakdowns = collect();
     
+    }
+
+    public function refresh($category){
+
+        if($category == "stations"){
+            $this->stations = Station::where('status',1)->orderBy('name','asc')->get();
+                $this->dispatchBrowserEvent('alert',[
+                    'type'=>'success',
+                    'message'=>"Work Stations Refreshed Successfully!!."
+                ]);
+        }elseif($category == "service_types"){
+                $this->service_types = ServiceType::where('status',1)->orderBy('name','asc')->get();
+                $this->dispatchBrowserEvent('alert',[
+                    'type'=>'success',
+                    'message'=>"Service Types Refreshed Successfully!!."
+                ]);
+        }
     }
 
     public function updatedSelectedHorse($id){
@@ -165,7 +185,7 @@ class Create extends Component
         'booking_number' => 'required',
         'in_time' => 'required',
         'in_date' => 'required',
-        'station' => 'required',
+        'station_id' => 'required',
         'mileage' => 'required',
         'description' => 'required',
         'service_type_id' => 'required',
@@ -253,7 +273,7 @@ class Create extends Component
         $booking->in_time = $this->in_time;
         $booking->estimated_out_date = $this->estimated_out_date;
         $booking->estimated_out_time = $this->estimated_out_time;
-        $booking->station = $this->station;
+        $booking->station_id = $this->station_id;
         $booking->type = $this->type;
         
         $booking->description = $this->description;

@@ -273,6 +273,9 @@ class Index extends Component
                 ->orWhereHas('ticket', function ($qq) use ($term) {
                     $qq->where('ticket_number', 'like', $term);
                 })
+                ->orWhereHas('station', function ($qq) use ($term) {
+                    $qq->where('name', 'like', $term);
+                })
                 ->orWhereHas('inspection', function ($qq) use ($term) {
                     $qq->where('inspection_number', 'like', $term);
                 });

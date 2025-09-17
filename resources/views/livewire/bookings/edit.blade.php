@@ -98,6 +98,7 @@
                                          @endforeach
                                        </select>
                                             @error('service_type_id') <span class="text-danger error">{{ $message }}</span>@enderror
+                                            <small><a href="{{ route('service_types.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Service Type</a></small> <a href="#" wire:click.prevent="refresh('service_types')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         </div>
                                     </div>
                                 </div>
@@ -235,9 +236,16 @@
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
-                                            <label for="number">Work Station<span class="required" style="color: red">*</span></label>
-                                            <input type="text" class="form-control" wire:model.debounce.300ms="station" placeholder="Enter Work Station" required>
-                                            @error('station') <span class="text-danger error">{{ $message }}</span>@enderror
+                                            <label for="number">Work Stations</label>
+                                            <select class="form-control" wire:model.debounce.300ms="station_id">
+                                                 <option value="">Select Work Station</option>
+                                                 @foreach ($stations as $station)
+                                                     <option value="{{$station->id}}">{{$station->name}}</option>
+                                                 @endforeach
+                                            </select>
+                                            
+                                            @error('station_id') <span class="text-danger error">{{ $message }}</span>@enderror
+                                            <small><a href="{{ route('stations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Work Station</a></small> <a href="#" wire:click.prevent="refresh('stations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         </div>
                                     </div>
                                     <div class="col-md-6">

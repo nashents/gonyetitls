@@ -43,11 +43,11 @@
                                 <tbody>
                                     @forelse ($stores as $store)
                                   <tr>
-                                    <td>{{ucfirst($store->name)}}</td>
-                                    <td>{{ucfirst($store->country)}}</td>
-                                    <td>{{ucfirst($store->city)}}</td>
-                                    <td>{{ucfirst($store->suburb)}}</td>
-                                    <td>{{ucfirst($store->street_address)}}</td>
+                                    <td>{{$store->name}}</td>
+                                    <td>{{$store->country}}</td>
+                                    <td>{{$store->city}}</td>
+                                    <td>{{$store->suburb}}</td>
+                                    <td>{{$store->street_address}}</td>
                                     <td><span class="badge bg-{{$store->status == 1 ? "success" : "danger"}}">{{$store->status == 1 ? "Active" : "Inactive"}}</span></td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">

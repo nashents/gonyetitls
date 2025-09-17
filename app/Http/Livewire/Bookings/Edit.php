@@ -10,6 +10,7 @@ use App\Models\Vendor;
 use App\Models\Booking;
 use App\Models\JobType;
 use App\Models\Mileage;
+use App\Models\Station;
 use App\Models\Trailer;
 use App\Models\Vehicle;
 use Livewire\Component;
@@ -66,7 +67,8 @@ class Edit extends Component
     public $out_date;
     public $odometer;
     public $out_time;
-    public $station;
+    public $stations;
+    public $station_id;
     public $mileage;
     public $hours;
     public $service_types;
@@ -92,9 +94,26 @@ class Edit extends Component
     }
 
 
+     public function refresh($category){
+
+        if($category == "stations"){
+            $this->stations = Station::where('status',1)->orderBy('name','asc')->get();
+                $this->dispatchBrowserEvent('alert',[
+                    'type'=>'success',
+                    'message'=>"Work Stations Refreshed Successfully!!."
+                ]);
+        }elseif($category == "service_types"){
+                $this->service_types = ServiceType::where('status',1)->orderBy('name','asc')->get();
+                $this->dispatchBrowserEvent('alert',[
+                    'type'=>'success',
+                    'message'=>"Service Types Refreshed Successfully!!."
+                ]);
+        }
+    }
 
     public function mount($id){
         $booking = Booking::find($id);
+        $this->stations = Station::where('status',1)->orderBy('name','asc')->get();
         $this->company = Auth::user()->employee->company;
         $this->booking_number = $booking->booking_number;
         $this->selectedHorse = $booking->horse_id;
@@ -104,7 +123,7 @@ class Edit extends Component
         $this->selectedAsset = $booking->asset_id;
         $this->employee_id = $booking->employee_id;
         $this->service_type_id = $booking->service_type_id;
-        $this->station = $booking->station;
+        $this->station_id = $booking->station_id;
         $this->mileage = $booking->odometer;
         $this->breakdown_id = $booking->breakdown_id;
         $this->hours = $booking->hours;
@@ -125,7 +144,7 @@ class Edit extends Component
         $this->booking_id = $booking->id;
         $this->type = $booking->type;
         $this->assigned_to = $booking->assigned_to;
-        $this->service_types = ServiceType::orderBy('name','asc')->get();
+        $this->service_types = ServiceType::where('status',1)->orderBy('name','asc')->get();
        
          $employee = Employee::find($this->employee_id );
             $driver = $employee->driver;
@@ -180,7 +199,7 @@ class Edit extends Component
         'booking_number' => 'required',
         'in_time' => 'required',
         'in_date' => 'required',
-        'station' => 'required',
+        'station_id' => 'required',
         'mileage' => 'required',
         'description' => 'required',
         'service_type_id' => 'required',
@@ -255,7 +274,7 @@ class Edit extends Component
 
         $booking->in_date = $this->in_date;
         $booking->in_time = $this->in_time;
-        $booking->station = $this->station;
+        $booking->station_id = $this->station_id;
         $booking->description = $this->description;
         $booking->estimated_out_date = $this->estimated_out_date;
         $booking->type = $this->type;

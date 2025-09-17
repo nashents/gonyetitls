@@ -25,6 +25,9 @@ class Booking extends Model implements Auditable
     public function employees(){
         return $this->belongsToMany('App\Models\Employee');
     }
+    public function station(){
+        return $this->belongsTo('App\Models\Station');
+    }
     public function employee(){
         return $this->belongsTo('App\Models\Employee');
     }
