@@ -87,7 +87,7 @@
 
                             <tr>
                                 <th class="w-10 text-center line-height-35">Work Station</th>
-                                <td class="w-20 line-height-35">{{$booking->station ? $booking->station->name : ""}}</td>
+                                <td class="w-20 line-height-35">{{$work_station ? $work_station->name : ""}}</td>
                             </tr>
                             @if ($booking->odometer)
                             <tr>
