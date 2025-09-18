@@ -92,14 +92,9 @@
                             @if ($booking->odometer)
                             <tr>
                                 <th class="w-10 text-center line-height-35">Odometer</th>
-                               
                                     <td class="w-20 line-height-35">
-                                       
                                         {{$booking->odometer}}Kms
-                                       
                                     </td>
-                              
-                               
                             </tr>
                             @endif
                             <tr>

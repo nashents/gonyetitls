@@ -24,4 +24,7 @@ class Grade extends Model implements Auditable
     public function employee_positions(){
         return $this->hasMany('App\Models\EmployeePosition');
     }
+    public function employees(){
+        return $this->hasMany('App\Models\Employee');
+    }
 }

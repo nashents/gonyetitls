@@ -13,6 +13,9 @@ class Employee extends Model implements Auditable
 
     use \OwenIt\Auditing\Auditable;
 
+    public function grade(){
+        return $this->belongsTo('App\Models\Grade');
+    }
     public function goods_receiveds(){
         return $this->hasMany('App\Models\GoodsReceived');
     }

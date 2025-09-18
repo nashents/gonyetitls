@@ -110,10 +110,12 @@ class Index extends Component
         $cargo->risk = $this->risk;
         $cargo->save();
 
-        if (isset($this->transporter_id)) {
-            $cargo->transporters()->attach($this->transporter_id);
+        if (!empty($this->transporter_id) && is_numeric($this->transporter_id)) {
+            // Check if it's not already attached
+            if (!$cargo->transporters->contains($this->transporter_id)) {
+                $cargo->transporters()->sync($this->transporter_id);
             }
-
+        }
         $this->dispatchBrowserEvent('hide-cargoModal');
         $this->resetInputFields();
         $this->dispatchBrowserEvent('alert',[
