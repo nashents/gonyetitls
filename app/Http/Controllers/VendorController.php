@@ -24,6 +24,9 @@ class VendorController extends Controller
     public function reports(){
         return view('vendors.reports');
     }
+     public function creditorsReports(){
+        return view('vendors.creditors');
+    }
 
     /**
      * Show the form for creating a new resource.

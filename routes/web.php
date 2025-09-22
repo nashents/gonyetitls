@@ -192,6 +192,7 @@ Route::get('vehicles/reports','VehicleController@reports')->name('vehicles.repor
 Route::get('assignments/reports','AssignmentController@reports')->name('assignments.reports');
 Route::get('trips/reports','TripController@reports')->name('trips.reports');
 Route::get('debtors/report','CustomerController@debtorsReports')->name('debtors.reports');
+Route::get('creditors/report','VendorController@creditorsReports')->name('creditors.reports');
 
 Route::get('trips/deleted','TripController@deleted')->name('trips.deleted');
 Route::get('trips/{trip}/trip-sheet','TripController@preview')->name('trips.trip_sheet');

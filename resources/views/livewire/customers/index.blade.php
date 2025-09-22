@@ -22,6 +22,7 @@
                                 <div class="form-group">
                                     <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search customers...">
                                 </div>
+                              
                             </div>
                             <table class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>

@@ -131,6 +131,7 @@
                     <ul class="dropdown-menu" style="overflow-x:auto; width:50px; height:400px;" >
                         @if ((in_array('Finance', $department_names) && in_array('Admin', $role_names)) || in_array('Super Admin', $role_names))
                         <li><a href="{{route('reports.index')}}"><i class="fa fa-plus-square-o"></i>Financial Statements</a></li>
+                        <li><a href="{{route('creditors.reports')}}"><i class="fa fa-plus-square-o"></i>Creditors</a></li>
                         <li><a href="{{route('debtors.reports')}}"><i class="fa fa-plus-square-o"></i>Debtors</a></li>
                         @endif
                         @if ((in_array('Transport & Logistics', $department_names) && in_array('Admin', $role_names)) || in_array('Super Admin', $role_names))

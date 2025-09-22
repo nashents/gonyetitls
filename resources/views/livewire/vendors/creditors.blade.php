@@ -10,21 +10,18 @@
                                 @include('includes.messages')
                             </div>
                             <div class="panel-title">
-                                <a href="#" wire:click="exportDebtorsExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
-                                <a href="#" wire:click="exportDebtorsCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
-                                <a href="#" wire:click="exportDebtorsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
-                                
+                                <a href="#" wire:click="exportCreditorsExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
+                                <a href="#" wire:click="exportCreditorsCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
+                                <a href="#" wire:click="exportCreditorsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
                             </div>
-                              
                         </div>
                         <div class="panel-body p-20" style="overflow-x:auto; width:100%; height:100%;">
-                           
-                            <small style="color: green">Ps: This debtors information is collected from approved customer invoices with balances > 0. </small>
+                            <small style="color: green">Ps: This creditors information is collected from approved vendor bills with balances > 0. </small>
                             <br> 
                             <table class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
-                                    <th class="th-sm">Customer
+                                    <th class="th-sm">Vendor
                                     </th>
                                     <th class="th-sm">Total
                                     </th>
@@ -39,7 +36,7 @@
                                    
                                   </tr>
                                 </thead>
-                                @if (isset($debtors))
+                                @if (isset($creditors))
                                 <tbody>
                                     @php
                                         $thirtyDaysAgo = \Carbon\Carbon::now()->subDays(30);
@@ -48,13 +45,13 @@
                                         $sixtyOneDaysAgo = \Carbon\Carbon::now()->subDays(61);
                                         $ninetyDaysAgo = \Carbon\Carbon::now()->subDays(90);
                                     @endphp
-                                    @forelse ($debtors as $debtor)
+                                    @forelse ($creditors as $creditor)
                                         <tr>
-                                        <td>{{$debtor->name}}</td>
+                                        <td>{{$creditor->name}}</td>
                                         <td>
                                               @foreach ($currencies as $currency)
                                                 @php
-                                                    $balance = $debtor->invoices->where('authorization','approved')->where('currency_id',$currency->id)->where('balance','!=','')->where('balance','!=', Null)->sum('balance');
+                                                    $balance = $creditor->bills->where('authorization','approved')->where('currency_id',$currency->id)->where('balance','!=','')->where('balance','!=', Null)->sum('balance');
                                                 @endphp
                                                 @if (isset($balance) && $balance > 0)
                                                 {{ $currency->name }} {{ $currency->symbol }}{{number_format($balance,2)}} <br>
@@ -64,7 +61,7 @@
                                         <td>
                                               @foreach ($currencies as $currency)
                                                 @php
-                                                    $balance = $debtor->invoices->where('authorization','approved')->where('currency_id',$currency->id)->where('balance','!=','')->where('balance','!=', Null)->where('date', '>=', $thirtyDaysAgo)->sum('balance');
+                                                    $balance = $creditor->bills->where('authorization','approved')->where('currency_id',$currency->id)->where('balance','!=','')->where('balance','!=', Null)->where('bill_date', '>=', $thirtyDaysAgo)->sum('balance');
                                                 @endphp
                                                 @if (isset($balance) && $balance > 0)
                                                 {{ $currency->name }} {{ $currency->symbol }}{{number_format($balance,2)}} <br>
@@ -75,7 +72,7 @@
                                         <td>
                                             @foreach ($currencies as $currency)
                                                 @php
-                                                    $balance = $debtor->invoices->where('authorization','approved')->where('currency_id',$currency->id)->where('balance','!=','')->where('balance','!=', Null)->whereBetween('date', [$sixtyDaysAgo, $thirtyOneDaysAgo])->sum('balance');
+                                                    $balance = $creditor->bills->where('authorization','approved')->where('currency_id',$currency->id)->where('balance','!=','')->where('balance','!=', Null)->whereBetween('bill_date', [$sixtyDaysAgo, $thirtyOneDaysAgo])->sum('balance');
                                                 @endphp
                                                 @if (isset($balance) && $balance > 0)
                                                 {{ $currency->name }} {{ $currency->symbol }}{{number_format($balance,2)}} <br>
@@ -86,7 +83,7 @@
                                             <td>
                                                 @foreach ($currencies as $currency)
                                                   @php
-                                                      $balance = $debtor->invoices->where('authorization','approved')->where('currency_id',$currency->id)->where('balance','!=','')->where('balance','!=', Null)->whereBetween('date', [$ninetyDaysAgo, $sixtyOneDaysAgo])->sum('balance');
+                                                      $balance = $creditor->bills->where('authorization','approved')->where('currency_id',$currency->id)->where('balance','!=','')->where('balance','!=', Null)->whereBetween('bill_date', [$ninetyDaysAgo, $sixtyOneDaysAgo])->sum('balance');
                                                   @endphp
                                                   @if (isset($balance) && $balance > 0)
                                                   {{ $currency->name }} {{ $currency->symbol }}{{number_format($balance,2)}} <br>
@@ -97,7 +94,7 @@
                                             <td>
                                                 @foreach ($currencies as $currency)
                                                   @php
-                                                      $balance = $debtor->invoices->where('authorization','approved')->where('currency_id',$currency->id)->where('balance','!=','')->where('balance','!=', Null)->where('date', '<', $ninetyDaysAgo)->sum('balance');
+                                                      $balance = $creditor->bills->where('authorization','approved')->where('currency_id',$currency->id)->where('balance','!=','')->where('balance','!=', Null)->where('bill_date', '<', $ninetyDaysAgo)->sum('balance');
                                                   @endphp
                                                   @if (isset($balance) && $balance > 0)
                                                   {{ $currency->name }} {{ $currency->symbol }}{{number_format($balance,2)}} <br>
@@ -110,7 +107,7 @@
                                   <tr>
                                     <td colspan="8">
                                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
-                                            No Debtors Information Found ....
+                                            No Creditors Information Found ....
                                         </div>
                                        
                                     </td>
@@ -121,7 +118,7 @@
                                 <tr>
                                     <td colspan="8">
                                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
-                                            No Debtors Debtors Found ....
+                                            No Creditors Information Found ....
                                         </div>
                                        
                                     </td>
@@ -130,8 +127,8 @@
                               </table>
                               <nav class="text-center" style="float: right">
                                 <ul class="pagination rounded-corners">
-                                    @if (isset($debtors))
-                                        {{ $debtors->links() }} 
+                                    @if (isset($creditors))
+                                        {{ $creditors->links() }} 
                                     @endif 
                                 </ul>
                             </nav>    

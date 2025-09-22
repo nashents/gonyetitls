@@ -19,7 +19,8 @@
                            
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
-
+                            <small style="color: green">Ps: This creditors information is collected from approved vendor bills with balances > 0. </small>
+                            <br> 
                             <table id="vendorsTable" class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>

@@ -40,7 +40,7 @@ class Debtors extends Component
     {
         return view('livewire.customers.debtors',[
             'debtors' => Customer::whereHas('invoices', function ($query) {
-                $query->where('balance', '>', 0);
+                $query->where('authorization','approved')->where('balance', '>', 0);
             })->orderBy('name','asc')->paginate(10),
         ]);
     }

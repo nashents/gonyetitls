@@ -30,6 +30,7 @@ class Index extends Component
     public $sku;
     public $measurement;
     public $measurements;
+    public $chargeable_loss;
  
 
     public $cargo_id;

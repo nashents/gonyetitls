@@ -4,7 +4,7 @@ namespace App\Exports;
 
 use Carbon\Carbon;
 use App\Models\Currency;
-use App\Models\Customer;
+use App\Models\Vendor;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Events\AfterSheet;
 use Maatwebsite\Excel\Concerns\FromQuery;
@@ -18,7 +18,7 @@ use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
 use Maatwebsite\Excel\Concerns\WithCustomStartCell;
 
-class DebtorsExport implements  FromQuery,
+class CreditorsExport implements  FromQuery,
 ShouldAutoSize,
 WithMapping,
 WithHeadings,
@@ -32,11 +32,11 @@ WithCustomStartCell
     */
     public function query()
     {
-        return Customer::query()->whereHas('invoices', function ($query) {
+        return Vendor::query()->whereHas('bills', function ($query) {
             $query->where('authorization','approved')->where('balance', '>', 0);
         })->orderBy('name','asc');
     }
-    public function map($customer): array{
+    public function map($vendor): array{
 
         $thirtyDaysAgo = Carbon::now()->subDays(30);
         $thirtyOneDaysAgo = Carbon::now()->subDays(31);
@@ -46,7 +46,7 @@ WithCustomStartCell
         $currencies = Currency::all();
 
         foreach ($currencies as $currency){
-            $total_balance = $customer->invoices->where('authorization','approved')->where('currency_id',$currency->id)->where('balance','!=','')->where('balance','!=', Null)->sum('balance');
+            $total_balance = $vendor->bills->where('authorization','approved')->where('currency_id',$currency->id)->where('balance','!=','')->where('balance','!=', Null)->sum('balance');
             if (isset($total_balance) && $total_balance > 0) {
                 $total_balances[] = $currency->name .' '.$currency->symbol.number_format($total_balance,2);
             }
@@ -58,7 +58,7 @@ WithCustomStartCell
             }
 
         foreach ($currencies as $currency){
-            $thirty_days_balance = $customer->invoices->where('authorization','approved')->where('currency_id',$currency->id)->where('balance','!=','')->where('balance','!=', Null)->where('date', '>=', $thirtyDaysAgo)->sum('balance');
+            $thirty_days_balance = $vendor->bills->where('authorization','approved')->where('currency_id',$currency->id)->where('balance','!=','')->where('balance','!=', Null)->where('bill_date', '>=', $thirtyDaysAgo)->sum('balance');
             if (isset($thirty_days_balance) && $thirty_days_balance > 0) {
                 $thirty_days_balances[] = $currency->name .' '.$currency->symbol.number_format($thirty_days_balance,2);
             }
@@ -70,7 +70,7 @@ WithCustomStartCell
             }
 
         foreach ($currencies as $currency){
-            $thirty_sixty_balance = $customer->invoices->where('authorization','approved')->where('currency_id',$currency->id)->where('balance','!=','')->where('balance','!=', Null)->whereBetween('date', [$sixtyDaysAgo, $thirtyOneDaysAgo])->sum('balance');
+            $thirty_sixty_balance = $vendor->bills->where('authorization','approved')->where('currency_id',$currency->id)->where('balance','!=','')->where('balance','!=', Null)->whereBetween('bill_date', [$sixtyDaysAgo, $thirtyOneDaysAgo])->sum('balance');
             if (isset($thirty_sixty_balance) && $thirty_sixty_balance > 0) {
                 $thirty_sixty_balances[] = $currency->name .' '.$currency->symbol.number_format($thirty_sixty_balance,2);
             }
@@ -83,7 +83,7 @@ WithCustomStartCell
             }
 
         foreach ($currencies as $currency){
-            $sixty_ninety_balance = $customer->invoices->where('authorization','approved')->where('currency_id',$currency->id)->where('balance','!=','')->where('balance','!=', Null)->whereBetween('date', [$ninetyDaysAgo, $sixtyOneDaysAgo])->sum('balance');
+            $sixty_ninety_balance = $vendor->bills->where('authorization','approved')->where('currency_id',$currency->id)->where('balance','!=','')->where('balance','!=', Null)->whereBetween('bill_date', [$ninetyDaysAgo, $sixtyOneDaysAgo])->sum('balance');
             if (isset($sixty_ninety_balance) && $sixty_ninety_balance > 0) {
                 $sixty_ninety_balances[] = $currency->name .' '.$currency->symbol.number_format($sixty_ninety_balance,2);
             }
@@ -95,7 +95,7 @@ WithCustomStartCell
             }
 
         foreach ($currencies as $currency){
-            $ninety_balance = $customer->invoices->where('authorization','approved')->where('currency_id',$currency->id)->where('balance','!=','')->where('balance','!=', Null)->where('date', '<', $ninetyDaysAgo)->sum('balance');
+            $ninety_balance = $vendor->bills->where('authorization','approved')->where('currency_id',$currency->id)->where('balance','!=','')->where('balance','!=', Null)->where('bill_date', '<', $ninetyDaysAgo)->sum('balance');
             if (isset($ninety_balance) && $ninety_balance > 0) {
                 $ninety_balances[] = $currency->name .' '.$currency->symbol.number_format($ninety_balance,2);
          }
@@ -108,7 +108,7 @@ WithCustomStartCell
             }
 
             return   [
-                $customer->name,
+                $vendor->name,
                 $total_balances_list,
                 $thirty_days_balances_list,
                 $thirty_sixty_balances_list,
@@ -120,7 +120,7 @@ WithCustomStartCell
     }
     public function headings(): array{
             return[
-                'Customer',
+                'Vendor',
                 'Total',
                 '0-30 Days',
                 '31-60 Days',
