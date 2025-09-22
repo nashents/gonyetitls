@@ -18,7 +18,7 @@
                         <tr>
                             <th class="w-10 text-center line-height-35">Ticket#</th>
                             <td class="w-20 line-height-35">
-                                <a href="{{ route('tickets.show',$booking->ticket_id) }}" style="color: blue"> {{ucfirst($booking->ticket->ticket_number)}}</a>
+                                <a href="{{ route('tickets.show',$booking->ticket->id)}}" style="color: blue"> {{ucfirst($booking->ticket->ticket_number)}}</a>
                             </td>
                         </tr>
                         @endif
@@ -26,7 +26,7 @@
                         <tr>
                             <th class="w-10 text-center line-height-35">Incident#</th>
                             <td class="w-20 line-height-35">
-                                <a href="{{ route('breakdowns.show',$booking->breakdown_id) }}" style="color: blue"> {{ucfirst($booking->breakdown->breakdown_number)}}</a>
+                                <a href="{{ route('breakdowns.show',$booking->breakdown->id) }}" style="color: blue"> {{ucfirst($booking->breakdown->breakdown_number)}}</a>
                             </td>
                         </tr>
                         @endif
