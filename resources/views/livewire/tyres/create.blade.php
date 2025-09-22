@@ -303,12 +303,20 @@
                                     </div>
                                     </div>
                                     <div class="col-md-2">
-                                        <div class="form-group">
-                                            <label for="name">Qty<span class="required" style="color: red">*</span></label>
-                                            <input type="number" min="1" class="form-control" wire:model.debounce.300ms="qty.0"  disabled required/>
-                                            @error('qty.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            @if (filled($serial_number))
+                                            <div class="form-group">
+                                                <label for="name">Qty<span class="required" style="color: red">*</span></label>
+                                                <input type="number" step="any" min="1" class="form-control" wire:model.debounce.300ms="qty.0"  disabled required/>
+                                                @error('qty.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            </div>
+                                            @else
+                                            <div class="form-group">
+                                                <label for="name">Qty <span class="required" style="color: red">*</span></label>
+                                                <input type="number" step="any" min="1" class="form-control" wire:model.debounce.300ms="qty.0"  required/>
+                                                @error('qty.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            </div>
+                                            @endif
                                         </div>
-                                    </div>
                                    
                                     <div class="col-md-2">
                                         <div class="form-group">
@@ -444,14 +452,21 @@
                                         @error('serial_number.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
-                                <div class="col-md-1">
-                                  
+                               <div class="col-md-1">
+                                    @if (filled($serial_number))
                                     <div class="form-group">
                                         <label for="name">Qty<span class="required" style="color: red">*</span></label>
                                         <input type="number" min="1" class="form-control" wire:model.debounce.300ms="qty.{{$value}}"  disabled required/>
                                         @error('qty.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
-                                   
+                                    @else
+                                    <div class="form-group">
+                                        <label for="name">Qty<span class="required" style="color: red">*</span></label>
+                                        <input type="number" min="1" class="form-control" wire:model.debounce.300ms="qty.{{$value}}"  required/>
+                                        @error('qty.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                    @endif
+                                    
                                 </div>
                                 <div class="col-md-2">
                                     <div class="form-group">
