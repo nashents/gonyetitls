@@ -70,8 +70,8 @@
                 <form wire:submit.prevent="store()" >
                 <div class="modal-body">
                     <div class="form-group">
-                        <label for="name">Inspection Group</label>
-                        <input type="text" class="form-control" wire:model.debounce.300ms="name"  >
+                        <label for="name">Inspection Group<span class="required" style="color: red">*</span></label>
+                        <input type="text" class="form-control" wire:model.debounce.300ms="name"  required>
                         @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
   
@@ -97,8 +97,8 @@
                 <form wire:submit.prevent="update()" >
                 <div class="modal-body">
                     <div class="form-group">
-                        <label for="name">Inspection Group</label>
-                        <input type="text" class="form-control" wire:model.debounce.300ms="name"  >
+                        <label for="name">Inspection Group<span class="required" style="color: red">*</span></label>
+                        <input type="text" class="form-control" wire:model.debounce.300ms="name" required >
                         @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
                 </div>

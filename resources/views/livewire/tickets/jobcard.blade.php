@@ -295,35 +295,55 @@
         {{-- Fallback: show the full checklist template if there are no saved results --}}
         @elseif(isset($inspection_services) && $inspection_services->isNotEmpty())
           <table class="tbl" role="table" aria-label="Inspection Checklist Template">
-            <caption style="margin-top: 10px; margin-bottom:10px;">
-               <strong>Use ✓ where appropriate — S = Safe, W = Warning, D = Danger</strong>
+              <caption style="margin-top:10px;margin-bottom:10px;">
+                <strong>Use ✓ where appropriate — S = Safe, W = Warning, D = Danger</strong>
               </caption>
-            <thead>
-              <tr>
-                <th style="width:38px" class="center">#</th>
-                <th>Item</th>
-                <th style="width:150px">Comments</th>
-                <th style="width:38px" class="center">S</th>
-                <th style="width:38px" class="center">W</th>
-                <th style="width:38px" class="center">D</th>
-              </tr>
-            </thead>
-            <tbody>
-              @foreach ($inspection_services as $inspection_service)
+              <thead>
                 <tr>
-                  <td class="center">{{ $loop->iteration }}</td>
-                  <td>{{ optional($inspection_service->inspection_type)->name }}</td>
-                  <td></td>
-                  <td class="center"></td>
-                  <td class="center"></td>
-                  <td class="center"></td>
+                  <th style="width:38px" class="center">#</th>
+                  <th>Item</th>
+                  <th style="width:150px">Comments</th>
+                  <th style="width:38px" class="center">S</th>
+                  <th style="width:38px" class="center">W</th>
+                  <th style="width:38px" class="center">D</th>
                 </tr>
-              @endforeach
-            </tbody>
+              </thead>
+              <tbody>
+                @php
+                  $currentGroup = null;
+                  $i = 1;
+                @endphp
+
+                @foreach ($inspection_services as $row)
+                  @php
+                    $group = optional($row->inspection_group)->name ?? 'Ungrouped';
+                  @endphp
+
+                  @if ($group !== $currentGroup)
+                    {{-- @if (!is_null($currentGroup))
+                      spacer between groups (optional)
+                      <tr class="group-spacer"><td colspan="6"></td></tr>
+                    @endif --}}
+                    <tr class="group-row">
+                      <td colspan="6"><strong>{{ $group }}</strong></td>
+                    </tr>
+                    @php $currentGroup = $group; @endphp
+                  @endif
+
+                  <tr>
+                    <td class="center">{{ $i++ }}</td>
+                    <td>{{ optional($row->inspection_type)->name }}</td>
+                    <td></td>
+                    <td class="center"></td>
+                    <td class="center"></td>
+                    <td class="center"></td>
+                  </tr>
+                @endforeach
+              </tbody>
           </table>
 
         @else
-          <div class="muted">No inspection items configured.</div>
+          <div class="muted">No Inspection items configured.</div>
         @endif
     </section>
 

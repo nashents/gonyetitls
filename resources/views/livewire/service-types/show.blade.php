@@ -89,7 +89,7 @@
     </div>
 
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="inspection_serviceModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="transporter">
+        <div class="modal-dialog mw-100 w-50" role="transporter">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fa fa-plus"></i> Add Inspection Item(s) <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -97,7 +97,20 @@
                 <form wire:submit.prevent="store()" >
                 <div class="modal-body">
                     <div class="row">
-                       
+                        <div class="col-md-6">
+                             <div class="form-group">
+                                <label for="title">Inspection Item(s)<span class="required" style="color: red">*</span></label>
+                                <select class="form-control" wire:model.debounce.300ms="inspection_type_id.0" required>
+                                    <option value="">Select Inspection Item</option>
+                                    @foreach ($inspection_types as $inspection_type)
+                                        <option value="{{ $inspection_type->id }}">{{ $inspection_type->name }}</option>
+                                    @endforeach
+                                </select>
+                                <small>  <a href="{{ route('inspection_types.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Inspection Item</a></small> <br> 
+                                @error('inspection_type_id.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="title">Inspection Item Groups</label>
@@ -111,25 +124,21 @@
                                 @error('inspection_group_id.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
-
-                         <div class="col-md-6">
-                             <div class="form-group">
-                                <label for="title">Inspection Item(s)<span class="required" style="color: red">*</span></label>
-                                <select class="form-control" wire:model.debounce.300ms="inspection_type_id.0" required>
-                                    <option value="">Select Inspection Item</option>
-                                    @foreach ($inspection_types as $inspection_type)
-                                        <option value="{{ $inspection_type->id }}">{{ $inspection_type->name }}</option>
-                                    @endforeach
-                                </select>
-                                <small>  <a href="{{ route('inspection_types.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Inspection Item</a></small> <br> 
-                                @error('inspection_type_id.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
-                        </div>
-                       
                     </div>
                         @foreach ($inputs as $key => $value)
                         <div class="row">
-                           
+                           <div class="col-md-5">
+                                 <div class="form-group">
+                                    <label for="title">Inspection Items<span class="required" style="color: red">*</span></label>
+                                    <select class="form-control" wire:model.debounce.300ms="inspection_type_id.{{ $value }}" required>
+                                        <option value="">Select Inspection Item</option>
+                                        @foreach ($inspection_types as $inspection_type)
+                                            <option value="{{ $inspection_type->id }}">{{ $inspection_type->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('inspection_type_id.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
                             <div class="col-md-5">
                                 <div class="form-group">
                                     <label for="title">Inspection Item Groups</label>
@@ -142,19 +151,6 @@
                                     @error('inspection_group_id.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
-                             <div class="col-md-5">
-                                 <div class="form-group">
-                                    <label for="title">Inspection Items<span class="required" style="color: red">*</span></label>
-                                    <select class="form-control" wire:model.debounce.300ms="inspection_type_id.{{ $value }}" required>
-                                        <option value="">Select Inspection Item</option>
-                                        @foreach ($inspection_types as $inspection_type)
-                                            <option value="{{ $inspection_type->id }}">{{ $inspection_type->name }}</option>
-                                        @endforeach
-                                    </select>
-                                    @error('inspection_type_id.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                </div>
-                            </div>
-
                              <div class="col-md-1">
                                 <div class="form-group">
                                     <button class="btn btn-danger btn-rounded xs" style="margin-top:23px"  wire:click.prevent="remove({{$key}})"> <i class="fa fa-times"></i></button>

@@ -44,7 +44,18 @@ class Jobcard extends Component
         $this->inspection = $this->booking->inspection;
         $this->inspection_results = InspectionResult::with('inspection_type')->where('inspection_id',$this->inspection->id)->get();
         $this->service_type = $this->booking->service_type;
-        $this->inspection_services = InspectionService::with('inspection_type')->where("service_type_id", $this->service_type->id)->get();
+        $this->inspection_services = InspectionService::query()
+            ->select('inspection_services.*')
+            ->join('inspection_types', 'inspection_types.id', '=', 'inspection_services.inspection_type_id')
+            ->leftJoin('inspection_groups', 'inspection_groups.id', '=', 'inspection_types.inspection_group_id')
+            ->where('inspection_services.service_type_id', $this->service_type->id)   // 👈 added filter
+            ->orderBy('inspection_groups.name')   // group first
+            ->orderBy('inspection_types.name')    // then type
+            ->with([
+                'inspection_type:id,name,inspection_group_id',
+                'inspection_type.inspection_group:id,name'
+            ])
+            ->get();
         $this->company = $this->booking->company ? $this->booking->company : Auth::user()->employee->company;
         $this->closed_by = User::find($ticket->closed_by_id);
     }
