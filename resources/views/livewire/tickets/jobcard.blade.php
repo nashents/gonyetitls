@@ -252,7 +252,7 @@
       </div>
     </section>
 
-    <section class="card" style="margin-top:12px;">
+    <section class="card card--inspection" style="margin-top:12px;">
         <h3>Inspection Checklist</h3>
 
         {{-- First preference: show saved results if there are any --}}
@@ -295,14 +295,17 @@
         {{-- Fallback: show the full checklist template if there are no saved results --}}
         @elseif(isset($inspection_services) && $inspection_services->isNotEmpty())
           <table class="tbl" role="table" aria-label="Inspection Checklist Template">
+            <caption style="margin-top: 10px; margin-bottom:10px;">
+               <strong>Use ✓ where appropriate — S = Safe, W = Warning, D = Danger</strong>
+              </caption>
             <thead>
               <tr>
                 <th style="width:38px" class="center">#</th>
                 <th>Item</th>
                 <th style="width:150px">Comments</th>
-                <th style="width:80px" class="center">Safe</th>
-                <th style="width:80px" class="center">Warning</th>
-                <th style="width:80px" class="center">Danger</th>
+                <th style="width:38px" class="center">S</th>
+                <th style="width:38px" class="center">W</th>
+                <th style="width:38px" class="center">D</th>
               </tr>
             </thead>
             <tbody>

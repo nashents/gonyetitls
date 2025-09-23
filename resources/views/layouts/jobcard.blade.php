@@ -89,7 +89,40 @@ body { margin: 0; }
 
 .card, .meta, .tbl { break-inside: avoid; page-break-inside: avoid; }
 .tbl tr { break-inside: avoid; page-break-inside: avoid; }
+
+.card--inspection { break-inside: auto; page-break-inside: auto; }
+  .card--inspection .tbl { break-inside: auto; page-break-inside: auto; }
+  .card--inspection > h3 { break-after: avoid-page; }
+
 }
+
+@media print {
+  /* Keep separate borders & zero spacing (you already have this) */
+  .tbl {
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+
+    /* Paint a guaranteed right edge on every printed fragment */
+    box-shadow: inset -1pt 0 0 #9ca3af !important;
+    border-right: 1pt solid #9ca3af !important; /* belt & braces */
+    table-layout: fixed !important;             /* more stable pagination */
+  }
+
+  /* Make sure header repeats and rows don't split */
+  .tbl thead { display: table-header-group; }
+  .tbl tr    { break-inside: avoid; page-break-inside: avoid; }
+
+  /* Last column keeps its own right border too */
+  .tbl th:last-child,
+  .tbl td:last-child {
+    border-right: 1pt solid #9ca3af !important;
+  }
+
+  /* Avoid clipping */
+  .card { overflow: visible !important; }
+}
+
+
 
 
 @media (max-width: 800px){

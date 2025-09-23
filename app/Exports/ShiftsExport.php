@@ -35,6 +35,7 @@ WithCustomStartCell
     public $to;
     public $shift_filter;
     public $search;
+    public $totals;
    
 
     public function __construct($from, $to, $shift_filter, $search)
@@ -230,6 +231,7 @@ WithCustomStartCell
                 'F/C (Mileage) (l/Km)',
             ];
     }
+    
     public function registerEvents(): array
     {
         return [

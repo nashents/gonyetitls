@@ -43,7 +43,9 @@ class BookingsExport implements
     protected int $closedCount = 0;
     protected array $assetCounts = ['horse' => 0, 'vehicle' => 0, 'trailer' => 0];
     protected array $serviceBreakdown = []; // [['name' => 'Tyres', 'total' => 12], ...]
-    protected ?int $avgTatMinutes = null;
+    protected ?int $avgEstimatedTatMinutes = null;
+    protected ?int $avgWorkshopTatMinutes = null;
+    protected ?int $avgDowntimeTatMinutes = null;
 
     // Layout
     protected int $tableStartRow = 10; // computed dynamically
@@ -81,22 +83,37 @@ class BookingsExport implements
             ])
             ->toArray();
 
-        // avg TAT (qualify columns inside TIMESTAMPDIFF)
-        $this->avgTatMinutes = (int) ((clone $base)
-            ->where('bookings.status', 0) // 0 = Closed
+                // Average Estimated TAT
+        $this->avgEstimatedTatMinutes = (int) ( (clone $base)
+            ->where('bookings.status', 0)
+            ->whereNotNull('bookings.in_date')->whereNotNull('bookings.in_time')
+            ->whereNotNull('bookings.estimated_out_date')->whereNotNull('bookings.estimated_out_time')
+            ->whereRaw('TIMESTAMP(bookings.estimated_out_date, bookings.estimated_out_time) >= TIMESTAMP(bookings.in_date, bookings.in_time)')
+            ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, TIMESTAMP(bookings.in_date, bookings.in_time), TIMESTAMP(bookings.estimated_out_date, bookings.estimated_out_time))) AS avg_minutes')
+            ->value('avg_minutes')
+        );
+
+        // Average Workshop TAT (mechanic completion)
+        $this->avgWorkshopTatMinutes = (int) ( (clone $base)
+            ->where('bookings.status', 0)
             ->whereNotNull('bookings.in_date')->whereNotNull('bookings.in_time')
             ->whereNotNull('bookings.out_date')->whereNotNull('bookings.out_time')
-            ->value(DB::raw(
-                'AVG(TIMESTAMPDIFF(MINUTE, CONCAT(bookings.in_date," ",bookings.in_time), CONCAT(bookings.out_date," ",bookings.out_time)))'
-            )));
+            ->whereRaw('TIMESTAMP(bookings.out_date, bookings.out_time) >= TIMESTAMP(bookings.in_date, bookings.in_time)')
+            ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, TIMESTAMP(bookings.in_date, bookings.in_time), TIMESTAMP(bookings.out_date, bookings.out_time))) AS avg_minutes')
+            ->value('avg_minutes')
+        );
 
-        // Compute dynamic start row:
-        // Rows used:
-        // 6: Title, 7-9: totals, 10: asset line, 11..(10 + svcCount - 1): service lines, then one row for Avg TAT
-        $svcRows = max(1, count($this->serviceBreakdown)); // at least one row reserved
-        $lastSummaryRow = 10 + $svcRows; // 6 title + 3 totals + 1 asset + svcRows
-        $lastSummaryRow += 1; // +1 for Avg TAT line
-        $this->tableStartRow = $lastSummaryRow + 2; // spacer row
+        // Average Total Downtime TAT (until release)
+        $this->avgDowntimeTatMinutes = (int) ( (clone $base)
+            ->where('bookings.status', 0)
+            ->whereNotNull('bookings.in_date')->whereNotNull('bookings.in_time')
+            ->whereNotNull('bookings.out_of_workshop_date')->whereNotNull('bookings.out_of_workshop_time')
+            ->whereRaw('TIMESTAMP(bookings.out_of_workshop_date, bookings.out_of_workshop_time) >= TIMESTAMP(bookings.in_date, bookings.in_time)')
+            ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, TIMESTAMP(bookings.in_date, bookings.in_time), TIMESTAMP(bookings.out_of_workshop_date, bookings.out_of_workshop_time))) AS avg_minutes')
+            ->value('avg_minutes')
+        );
+
+      
     }
 
     /**
@@ -195,6 +212,9 @@ class BookingsExport implements
         $authorized_by = $user ? $user->name ." ". $user->surname : "";
 
         $date = $booking->in_date ." @ ". $booking->in_time;
+        $completion = $booking->out_date ." @ ". $booking->out_time;
+        $estimated = $booking->estimated_out_date ." @ ". $booking->estimated_out_time;
+        $out_of_workshop = $booking->out_of_workshop_date ." @ ". $booking->out_of_workshop_time;
 
         return   [
             $booking->booking_number,
@@ -205,6 +225,9 @@ class BookingsExport implements
             $booking->service_type ? $booking->service_type->name : "",
             $booking->description,
             $date,
+            $estimated,
+            $completion,
+            $out_of_workshop,
             $booking->authorization,
             $authorized_by,
             $booking->status == 1 ? "Open" : "Closed",
@@ -222,7 +245,10 @@ class BookingsExport implements
             'BookingFor',
             'Service Type',
             'Narration',
-            'Date',
+            'In Date',
+            'Estimated Completion',
+            'Task Completion',
+            'Out of Workshop',
             'Authorization',
             'AuthorizedBy',
             'Status',
@@ -230,74 +256,105 @@ class BookingsExport implements
     }
 
     public function registerEvents(): array
-    {
-        $total   = $this->totalCount;
-        $open    = $this->openCount;
-        $closed  = $this->closedCount;
-        $assets  = $this->assetCounts;
-        $services = $this->serviceBreakdown;
-        $avgMin  = $this->avgTatMinutes;
-        $tableRow = $this->tableStartRow;
+{
+    // Precomputed metrics from __construct()
+    $total     = $this->totalCount;
+    $open      = $this->openCount;
+    $closed    = $this->closedCount;
+    $assets    = $this->assetCounts;        // ['horse'=>.., 'vehicle'=>.., 'trailer'=>..]
+    $services  = $this->serviceBreakdown;   // [['name'=>'Tyres','total'=>12], ...]
+    $avgEstimatedTat = $this->avgEstimatedTatMinutes ? $this->formatMinutes($this->avgEstimatedTatMinutes) : 'N/A';
+    $avgWorkshopTat  = $this->avgWorkshopTatMinutes  ? $this->formatMinutes($this->avgWorkshopTatMinutes)  : 'N/A';
+    $avgDowntimeTat  = $this->avgDowntimeTatMinutes  ? $this->formatMinutes($this->avgDowntimeTatMinutes)  : 'N/A';
+    
 
-        return [
-            AfterSheet::class => function (AfterSheet $event) use ($total, $open, $closed, $assets, $services, $avgMin, $tableRow) {
-                $sheet = $event->sheet->getDelegate();
-
-                // ---- Summary header (Row 6) ----
-                $sheet->mergeCells('A6:K6');
-                $sheet->setCellValue('A6', 'Bookings Summary');
-                $sheet->getStyle('A6')->getFont()->setBold(true)->setSize(14);
-                $sheet->getStyle('A6')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-
-                // ---- Totals (Rows 7-9) ----
-                $sheet->setCellValue('A7', 'Total Bookings:');  $sheet->setCellValue('B7', $total);
-                $sheet->setCellValue('A8', 'Open Bookings:');   $sheet->setCellValue('B8', $open);
-                $sheet->setCellValue('A9', 'Closed Bookings:'); $sheet->setCellValue('B9', $closed);
-                $sheet->getStyle('A7:A9')->getFont()->setBold(true);
-
-                // ---- By Asset Type (Row 10) ----
-                $assetLine = sprintf(
-                    'By Asset Type: Horse %d, Vehicle %d, Trailer %d',
-                    $assets['horse'] ?? 0, $assets['vehicle'] ?? 0, $assets['trailer'] ?? 0
-                );
-                $sheet->setCellValue('A10', $assetLine);
-                $sheet->mergeCells('A10:K10');
-
-                // ---- Service Type Breakdown (Rows 11..)
-                $svcRow = 11;
-                if (!empty($services)) {
-                    $sheet->setCellValue("A{$svcRow}", 'By Service Type:');
-                    $sheet->getStyle("A{$svcRow}")->getFont()->setBold(true);
-                    $svcRow++;
-
-                    foreach ($services as $svc) {
-                        $sheet->setCellValue("A{$svcRow}", $svc['name'] ?? 'Unknown');
-                        $sheet->setCellValue("B{$svcRow}", $svc['total'] ?? 0);
-                        $svcRow++;
-                    }
-                } else {
-                    $sheet->setCellValue("A{$svcRow}", 'By Service Type: None');
-                    $svcRow++;
-                }
-
-                // ---- Average TAT (next row)
-                $tatText = 'Average TAT: ' . ($avgMin ? $this->formatMinutes($avgMin) : 'N/A');
-                $sheet->setCellValue("A{$svcRow}", $tatText);
-                $sheet->mergeCells("A{$svcRow}:K{$svcRow}");
-
-                // ---- Table Headings styling at dynamic start row
-                $sheet->getStyle("A{$tableRow}:K{$tableRow}")->applyFromArray([
-                    'font' => ['bold' => true],
-                    'borders' => [
-                        'outline' => [
-                            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THICK,
-                            'color' => ['argb' => 'FFFF0000'],
-                        ],
-                    ],
-                ]);
-            },
-        ];
+    // Build a single-line "name count" summary for services (like Asset Type)
+    $serviceLine = 'None';
+    if (!empty($services)) {
+        // e.g. "Tyres 12, Routine 9, Brakes 5"
+        $pairs = array_map(
+            fn($s) => ($s['name'] ?? 'Unknown').' '.($s['total'] ?? 0),
+            $services
+        );
+        $serviceLine = implode(', ', $pairs);
     }
+
+    return [
+        AfterSheet::class => function (AfterSheet $event) use ($total, $open, $closed, $assets, $avgEstimatedTat, $avgWorkshopTat, $avgDowntimeTat,  $serviceLine) {
+            $sheet = $event->sheet->getDelegate();
+
+            // 1) Style table headings at row 15 (A..K = 11 cols)
+            $sheet->getStyle('A17:N17')->applyFromArray([
+                'font' => ['bold' => true],
+                'borders' => [
+                    'outline' => [
+                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THICK,
+                        'color' => ['argb' => 'FFFF0000'],
+                    ],
+                ],
+            ]);
+
+            // 2) Summary block under the logo, starting row 7
+            $row = 7;
+
+            // Title (merge across full width)
+            $sheet->setCellValue("C{$row}", 'Bookings Summary');
+            $sheet->mergeCells("C{$row}:D{$row}");
+            $sheet->getStyle("C{$row}")->applyFromArray([
+                'font' => ['bold' => true, 'size' => 14],
+            ]);
+            $row++;
+
+            // Metrics in C (label) / D (value)
+            $sheet->setCellValue("C{$row}", 'Total Bookings');
+            $sheet->setCellValue("D{$row}", $total);  $row++;
+
+            $sheet->setCellValue("C{$row}", 'Open Bookings');
+            $sheet->setCellValue("D{$row}", $open);   $row++;
+
+            $sheet->setCellValue("C{$row}", 'Closed Bookings');
+            $sheet->setCellValue("D{$row}", $closed); $row++;
+
+            $sheet->setCellValue("C{$row}", 'Estimated Avg TAT');
+            $sheet->setCellValue("D{$row}", $avgEstimatedTat); $row++;
+
+            $sheet->setCellValue("C{$row}", 'Workshop Avg TAT');
+            $sheet->setCellValue("D{$row}", $avgWorkshopTat);  $row++;
+
+            $sheet->setCellValue("C{$row}", 'Downtime Avg TAT');
+            $sheet->setCellValue("D{$row}", $avgDowntimeTat);  $row++;
+
+            // By Asset Type (inline)
+            $sheet->setCellValue("C{$row}", 'By Asset Type');
+            $sheet->setCellValue(
+                "D{$row}",
+                sprintf(
+                    'Horse %d, Vehicle %d, Trailer %d',
+                    $assets['horse'] ?? 0,
+                    $assets['vehicle'] ?? 0,
+                    $assets['trailer'] ?? 0
+                )
+            );
+            $row++;
+
+            // By Service Type (inline, like Asset Type)
+            $sheet->setCellValue("C{$row}", 'By Service Type');
+            $sheet->setCellValue("D{$row}", $serviceLine);
+
+            // Style: bold + light fill for C/D block, left-align values in D
+            $sheet->getStyle("C8:D{$row}")->applyFromArray([
+                'font' => ['bold' => true],
+                'fill' => [
+                    'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                    'startColor' => ['rgb' => 'FCE4D6'],
+                ],
+            ]);
+            $sheet->getStyle("D8:D{$row}")
+                  ->getAlignment()
+                  ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+        },
+    ];
+}
 
     // Helper for human-readable duration (e.g., "1d 3h 20m")
     protected function formatMinutes(int $minutes): string
@@ -335,6 +392,6 @@ class BookingsExport implements
     public function startCell(): string
     {
         // Table starts after dynamic summary block
-        return 'A' . $this->tableStartRow;
+        return 'A17';
     }
 }
