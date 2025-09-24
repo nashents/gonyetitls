@@ -364,9 +364,9 @@
                                <select wire:model.debounce.300ms="account_id" class="form-control" required  {{$mode_of_payment == "Loan" ? "disabled" : ""}}>
                                    <option value="">Select Receiving Account</option>
                                  @foreach ($accounts as $account)
-                                    @if ($invoice_currency)
+                                    @if ($invoice_currency && $account->currency)
                                         @if ($account->currency->id == $invoice_currency->id)
-                                        <option value="{{ $account->id }}">{{ $account->name }} {{ $account->currency ? $account->currency->name : ""}}</option>
+                                            <option value="{{ $account->id }}">{{ $account->name }} {{ $account->currency ? $account->currency->name : ""}}</option>
                                         @endif     
                                     @else  
                                         select currency for invoice
