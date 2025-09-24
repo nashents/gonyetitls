@@ -3,6 +3,7 @@
 namespace App\Http\Livewire\Bills;
 
 
+use Carbon\Carbon;
 use App\Models\Bill;
 use App\Models\Brand;
 use App\Models\Vendor;
@@ -49,6 +50,7 @@ class Index extends Component
     public $trip;
     public $trip_id;
     public $drawdown_bill_balance;
+    public $amount_paid;
     public $drawdown_amount;
     public $bill_drawdown_current_balance;
     public $bill_drawdown_balance;
@@ -117,7 +119,7 @@ class Index extends Component
 
     private function resetInputFields(){
         $this->payment_type = '';
-        $this->method_of_payment = '';
+         
     }
 
     private function recalculateBills(){
@@ -266,6 +268,8 @@ class Index extends Component
 
         public function drawdownPayments(){
 
+             DB::transaction(function () {
+
         if (isset($this->drawdown_amount) && isset($this->bill_drawdown_balance) && ($this->drawdown_amount >= $this->bill_drawdown_balance)) {
             $this->payment_drawdown_balance = $this->drawdown_amount - $this->bill_drawdown_balance;
             $this->bill_drawdown_balance = 0;
@@ -306,6 +310,8 @@ class Index extends Component
             'type'=>'success',
             'message'=>"Payment Drawdown Effected Successfully!!"
         ]);
+
+        });
        
     }
 
@@ -314,6 +320,8 @@ class Index extends Component
     }
 
     public function updateAllBills(){
+
+         DB::transaction(function () {
 
         $bills = Bill::whereNotNull('accrual_balance')->orderBy('id','asc')->orderBy($this->bill_filter,'asc')->get();
         if($bills){
@@ -359,6 +367,13 @@ class Index extends Component
         }
 
         $this->dispatchBrowserEvent('hide-updateBillsModal');
+
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"All Bills Updated Successfully!!"
+        ]);
+
+    });
     }
     
     public function showPayment($id){
@@ -374,6 +389,8 @@ class Index extends Component
     }
 
     public function recordPayment(){
+
+         DB::transaction(function () {
 
         $account = Account::find($this->account_id);
         $current_balance = $account->balance;
@@ -411,16 +428,62 @@ class Index extends Component
         }
         $payment->balance = $this->current_balance;
 
-        $last_bill = Bill::where('authorization','approved')->where('vendor_id',$this->bill->vendor_id)->where('currency_id', $this->bill->currency_id)->whereRaw('accrual_balance REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->where('accrual_balance','>',0)->orderBy('accrual_balance','desc')->first();
-        if(isset($last_bill)){
-            if((isset($last_bill->accrual_balance) && is_numeric($last_bill->accrual_balance)) && is_numeric($this->amount)){
-                $payment->accrual_balance = $last_bill->accrual_balance - $this->amount;
-            }
-        }else{
-            $accrual_balance = Bill::where('authorization','approved')->where('vendor_id',$this->bill->vendor_id)->where('accrual_balance', Null)->where('currency_id', $this->bill->currency_id)->whereRaw('balance REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->get()->sum('balance');
-            if(isset($accrual_balance)){
-                $payment->accrual_balance = $accrual_balance - $this->amount;
-            }
+        // $last_bill = Bill::where('authorization','approved')->where('vendor_id',$this->bill->vendor_id)->where('currency_id', $this->bill->currency_id)->whereRaw('accrual_balance REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->where('accrual_balance','>',0)->orderBy('accrual_balance','desc')->first();
+        // if(isset($last_bill)){
+        //     if((isset($last_bill->accrual_balance) && is_numeric($last_bill->accrual_balance)) && is_numeric($this->amount)){
+        //         $payment->accrual_balance = $last_bill->accrual_balance - $this->amount;
+        //     }
+        // }else{
+        //     $accrual_balance = Bill::where('authorization','approved')->where('vendor_id',$this->bill->vendor_id)->where('accrual_balance', Null)->where('currency_id', $this->bill->currency_id)->whereRaw('balance REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->get()->sum('balance');
+        //     if(isset($accrual_balance)){
+        //         $payment->accrual_balance = $accrual_balance - $this->amount;
+        //     }
+        // }
+
+        $payments = DB::table('payments')
+            ->select([
+                'vendor_id',
+                'currency_id',
+                DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
+                'payments.date',
+                'payments.created_at',
+                DB::raw("'payment' AS source"),
+                'id',
+            ])
+            ->where('vendor_id', $this->bill->vendor_id)
+            ->where('currency_id', $this->bill->currency_id)
+            ->whereNotNull('bill_id') // Ensure the payment is linked to an bill
+        ;
+
+        // 2) Build bills subquery
+        $bills = DB::table('bills')
+            ->select([
+                'vendor_id',
+                'currency_id',
+                DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
+                DB::raw('bills.bill_date AS date'), // ✅ alias to "date"
+                'bills.created_at',
+                DB::raw("'bill' AS source"),
+                'id',
+            ])
+            ->where('vendor_id', $this->bill->vendor_id)
+            ->where('currency_id', $this->bill->currency_id);
+
+        // 3) Union and pick the most recent row
+        $latest = DB::query()
+            ->fromSub($payments->unionAll($bills), 'u')
+            ->orderByDesc('date')        // ✅ business date first
+            ->orderByDesc('created_at')  // ✅ system timestamp next
+            ->orderByRaw("CASE WHEN source = 'payment' THEN 1 ELSE 0 END DESC") // ✅ prefer payments over bills
+            ->first();
+
+        if ($latest && is_numeric($latest->accrual_balance) && is_numeric($this->amount)) {
+            // Use bc math if you care about money precision
+            $payment->accrual_balance = (float) bcsub(
+                (string) $latest->accrual_balance,
+                (string) $this->amount,
+                2
+            );
         }
 
         $payment->date = $this->date;
@@ -449,9 +512,9 @@ class Index extends Component
              $document->filename = $fileNameToStore;
         }
         if(isset($this->expires_at)){
-            $document->expires_at = Carbon::create($this->expires_at[$key])->toDateTimeString();
+            $document->expires_at = Carbon::create($this->expires_at)->toDateTimeString();
             $today = now()->toDateTimeString();
-            $expire = Carbon::create($this->expires_at[$key])->toDateTimeString();
+            $expire = Carbon::create($this->expires_at)->toDateTimeString();
             if ($today <=  $expire) {
                 $document->status = 1;
             }else{
@@ -509,6 +572,8 @@ class Index extends Component
                 # code...
             }
         }
+
+    });
     }
 
     

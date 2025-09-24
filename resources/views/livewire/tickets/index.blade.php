@@ -84,13 +84,11 @@
                                         </th>
                                         <th class="th-sm">ServiceType
                                         </th>
-                                        <th class="th-sm">InDate
+                                        <th class="th-sm">Timelines
                                         </th>
-                                        <th class="th-sm">InTime
+                                        <th class="th-sm">Completion
                                         </th>
-                                        <th class="th-sm">OutDate
-                                        </th>
-                                        <th class="th-sm">OutTime
+                                        <th class="th-sm">Out
                                         </th>
                                         <th class="th-sm">Station
                                         </th>
@@ -136,10 +134,16 @@
                                             @endif
                                         </td>
                                         <td>{{$ticket->service_type ? $ticket->service_type->name : ""}}</td>
-                                        <td>{{$ticket->in_date}}</td>
-                                        <td>{{$ticket->in_time}}</td>
-                                        <td>{{$ticket->out_date}}</td>
-                                        <td>{{$ticket->out_time}}</td>
+                                        <td>
+                                            <strong>In Date: </strong> {{$ticket->in_date}} {{$ticket->in_time}} <br>
+                                            <strong>Estimate: </strong> {{$ticket->estimated_out_date}} {{$ticket->estimated_out_time}} <br>
+                                            <strong>Task Completed: </strong> {{$ticket->out_date}} {{$ticket->out_time}} <br>
+                                            <strong>Out of Workshop: </strong> {{$ticket->booking ? $ticket->booking->workshop_out_date : ""}} {{$ticket->booking ? $ticket->booking->workshop_out_time : ""}} <br>
+
+                                        </td>
+                                        <td></td>
+                                        <td></td>
+                                       
                                         <td>{{$ticket->station}}</td>
                                         <td><span class="badge bg-{{$ticket->status == 1 ? "warning" : "success"}}">{{$ticket->status == 1 ? "Open" : "Closed"}}</span></td>
                                         <td class="w-10 line-height-35 table-dropdown">

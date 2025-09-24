@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Payments;
 
+use Carbon\Carbon;
 use App\Models\Vendor;
 use App\Models\Account;
 use App\Models\Payment;
@@ -17,6 +18,7 @@ use App\Models\Denomination;
 use Livewire\WithPagination;
 use Livewire\WithFileUploads;
 use App\Models\TransactionType;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
 class Index extends Component
@@ -47,6 +49,7 @@ class Index extends Component
     public $receipt_number;
     public $invoice_number;
     public $account_type;
+    public $selected_account;
     public $date;
     public $amount;
     public $receipt;
@@ -176,7 +179,7 @@ class Index extends Component
 
     private function resetInputFields(){
         $this->selectedCustomer = '';
-        $this->selectedvendor = '';
+        $this->selectedVendor = '';
         $this->selectedCurrency = '';
         $this->name = '';
         $this->surname = '';
@@ -248,6 +251,8 @@ class Index extends Component
 
     public function recordPayment(){
 
+          DB::transaction(function () {
+
         if ($this->source_destination === "Vendor" && $this->selected_account && isset($this->selected_account->balance)) {
             if ($this->selected_account->balance < $this->amount) {
                 $this->dispatchBrowserEvent('hide-paymentModal');
@@ -296,7 +301,7 @@ class Index extends Component
         }
         
         if(isset($this->selectedvendor) && isset($this->selectedCurrency) &&  $this->transaction_category == "Vendor Payments"){
-            dd(123);
+           
             if (isset($this->last_payment) && $this->last_payment->drawdown_balance > 0) {
                 $payment->drawdown_balance = $this->last_payment->drawdown_balance + $this->amount;
             }else{
@@ -332,9 +337,9 @@ class Index extends Component
                 $document->filename = $fileNameToStore;
             }
             if(isset($this->expires_at)){
-                $document->expires_at = Carbon::create($this->expires_at[$key])->toDateTimeString();
+                $document->expires_at = Carbon::create($this->expires_at)->toDateTimeString();
                 $today = now()->toDateTimeString();
-                $expire = Carbon::create($this->expires_at[$key])->toDateTimeString();
+                $expire = Carbon::create($this->expires_at)->toDateTimeString();
                 if ($today <=  $expire) {
                     $document->status = 1;
                 }else{
@@ -399,7 +404,7 @@ class Index extends Component
             'message'=>"Payment Recorded Successfully!!"
         ]);
     
-       
+            });
     }
 
     public function updatingSearch()
@@ -421,7 +426,7 @@ class Index extends Component
             $this->transaction_type_id = TransactionType::where('name','Withdrawal')->first();
             $this->transaction_category = "Vendor Payments";
             if (isset($this->selectedVendor) && isset($this->selectedCurrency)) { 
-            $this->last_paylment = Payment::where('vendor_id',$this->selectedVendor)->where('currency_id',$this->selectedCurrency)->where('transaction_category',  $this->transaction_category)->orderBy('created_at','desc')->first();
+            $this->last_payment = Payment::where('vendor_id',$this->selectedVendor)->where('currency_id',$this->selectedCurrency)->where('transaction_category',  $this->transaction_category)->orderBy('created_at','desc')->first();
         }
 
         }

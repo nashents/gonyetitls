@@ -45,6 +45,7 @@ class Preview extends Component
             ->get();
     
         }elseif ( isset($this->selectedCustomer) && $this->selectedType == "Account Activity") {
+
             if (isset($this->from) && isset($this->to)) {
                 $this->invoices = DB::table('invoices')
                 ->select(
@@ -54,7 +55,7 @@ class Preview extends Component
                     'created_at',
                     'date as transaction_date',
                     'total as amount',
-                    'balance',
+                    'total as balance',
                     'accrual_balance',
                     'created_at')
                 ->where('authorization', 'approved')

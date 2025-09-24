@@ -70,7 +70,7 @@ class InvoiceController extends Controller
                     'created_at',
                     'date as transaction_date',
                     'total as amount',
-                    'balance',
+                    'total as balance',
                     'accrual_balance',
                     'created_at')
                 ->where('authorization','approved')
@@ -145,7 +145,7 @@ class InvoiceController extends Controller
                     'created_at',
                     'date as transaction_date',
                     'total as amount',
-                    'balance',
+                     'total as balance',
                     'accrual_balance',
                     'created_at')
                 ->where('authorization','approved')
@@ -237,7 +237,7 @@ class InvoiceController extends Controller
                     'created_at',
                     'date as transaction_date',
                     'total as amount',
-                    'balance',
+                      'total as balance',
                     'accrual_balance',
                     'created_at')
                 ->where('authorization','approved')

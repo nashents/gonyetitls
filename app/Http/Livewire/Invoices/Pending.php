@@ -141,6 +141,7 @@ class Pending extends Component
         if ($this->authorize == "approved") {
 
             if((isset($invoice->customer_id) && isset($invoice->currency_id))){
+
                 if ($invoice->accrual_balance === Null) {
 
                  $last_payment = Payment::where('customer_id', $invoice->customer_id)
@@ -154,7 +155,9 @@ class Pending extends Component
 
                                     // If no valid payment exists, retrieve the last invoice with the highest accrual balance
                 $last_invoice = null;
+
                 if (!$last_payment) {
+                    
                     $last_invoice = Invoice::where('authorization', 'approved')
                         ->where('customer_id', $invoice->customer_id)
                         ->where('currency_id', $invoice->currency_id)

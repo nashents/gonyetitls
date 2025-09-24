@@ -79,6 +79,7 @@ class Index extends Component
     public $name;
     public $denomination;
     public $denomination_qty;
+    public $income_account_id;
     public $surname;
     public $transaction_types;
     public $transaction_type_id;
@@ -278,6 +279,8 @@ class Index extends Component
 
     public function drawdownPayments(){
 
+         DB::transaction(function () {
+
         if (isset($this->drawdown_amount) && isset($this->invoice_drawdown_balance) && ($this->drawdown_amount >= $this->invoice_drawdown_balance)) {
             $this->payment_drawdown_balance = $this->drawdown_amount - $this->invoice_drawdown_balance;
             $this->invoice_drawdown_balance = 0;
@@ -318,6 +321,8 @@ class Index extends Component
             'type'=>'success',
             'message'=>"Payment Drawdown Effected Successfully!!"
         ]);
+
+    });
        
     }
 
@@ -326,17 +331,17 @@ class Index extends Component
             $str = Auth::user()->employee->company->name;
             $words = explode(' ', $str);
             if (isset($words[1][0])) {
-                $this->initials = $words[0][0].$words[1][0];
+                $initials = $words[0][0].$words[1][0];
             }else {
-                $this->initials = $words[0][0];
+                $initials = $words[0][0];
             }
             $invoice = Invoice::orderBy('id','desc')->first();
             if (!$invoice) {
-                $this->number = 1;
-                $invoice_number =  $this->initials .'I'. str_pad(1, 5, "0", STR_PAD_LEFT);
+                $number = 1;
+                $invoice_number =  $initials .'I'. str_pad(1, 5, "0", STR_PAD_LEFT);
             }else {
-                $this->number = $invoice->id + 1;
-                $invoice_number =  $this->initials .'I'. str_pad($this->number, 5, "0", STR_PAD_LEFT);
+                $number = $invoice->id + 1;
+                $invoice_number =  $initials .'I'. str_pad($number, 5, "0", STR_PAD_LEFT);
             }
         
             return  $invoice_number;
@@ -463,6 +468,8 @@ class Index extends Component
 
     public function createInvoices(){
 
+         DB::transaction(function () {
+
         $this->income_account_id = Account::where('name','Sales')->first()->id;
 
         if (isset($this->uninvoiced_trips)) {
@@ -511,12 +518,16 @@ class Index extends Component
           return redirect(request()->header('Referer'));
       
         }
+
+    });
     }
 
     public function showInvoiceUpdate(){
         $this->dispatchBrowserEvent('show-updateInvoicesModal');
     }
     public function updateAllInvoices(){
+
+         DB::transaction(function () {
 
         $invoices = Invoice::whereNotNull('accrual_balance')->orderBy('id','asc')->orderBy($this->invoice_filter,'asc')->get();
         if($invoices){
@@ -562,6 +573,13 @@ class Index extends Component
         }
 
         $this->dispatchBrowserEvent('hide-updateInvoicesModal');
+
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Invoices Updated Successfully!!"
+        ]);
+
+    });
     }
     
     public function showPayment($id){
@@ -578,6 +596,8 @@ class Index extends Component
 
     public function recordPayment(){
 
+        DB::transaction(function () {
+
         $payment = new Payment;
         $payment->company_id = Auth::user()->employee->company ? Auth::user()->employee->company->id : "";
         $payment->customer_id = $this->invoice->customer_id;
@@ -588,7 +608,6 @@ class Index extends Component
         $payment->transaction_category = $this->transaction_category;
         $payment->movement = "Crt";
         $payment->notes = $this->notes;
-        $payment->movement = "Crt";
         $payment->mode_of_payment = $this->mode_of_payment;
         $payment->category = "invoice";
         $payment->reference_code = $this->reference_code;
@@ -619,33 +638,82 @@ class Index extends Component
         
         $payment->balance = $this->current_balance;
 
-        $payments = DB::table('payments')->select('customer_id','currency_id',
-                DB::raw('CAST(accrual_balance AS DECIMAL(10,2)) as accrual_balance')
-            )
+        // $payments = DB::table('payments')->select('customer_id','currency_id',
+        //         DB::raw('CAST(accrual_balance AS DECIMAL(10,2)) as accrual_balance')
+        //     )
+        //     ->where('customer_id', $this->invoice->customer_id)
+        //     ->where('currency_id', $this->invoice->currency_id)
+        //     ->whereNotNull('invoice_id'); // Ensure the payment is linked to an invoice
+
+        // $invoices = DB::table('invoices')
+        //     ->select(
+        //         'customer_id',
+        //         'customer_id',
+        //         DB::raw('CAST(accrual_balance AS DECIMAL(10,2)) as accrual_balance')
+        //     )
+        //     ->where('customer_id', $this->invoice->customer_id)
+        //     ->where('currency_id', $this->invoice->currency_id);
+
+        // $highestBalance = DB::table(DB::raw("({$payments->toSql()} UNION ALL {$invoices->toSql()}) as combined_data"))
+        //     ->mergeBindings($payments)
+        //     ->mergeBindings($invoices)
+        //     ->select(DB::raw('MAX(accrual_balance) as highest_accrual_balance'))
+        //     ->first();
+
+
+
+        //     if((isset($highestBalance) && is_numeric($highestBalance->highest_accrual_balance)) && is_numeric($this->amount)){
+        //         $payment->accrual_balance = $highestBalance->highest_accrual_balance - $this->amount;
+        //     }
+
+        // 1) Build payments subquery
+        $payments = DB::table('payments')
+            ->select([
+                'customer_id',
+                'currency_id',
+                DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
+                'payments.date',
+                'payments.created_at',
+                DB::raw("'payment' AS source"),
+                'id',
+            ])
             ->where('customer_id', $this->invoice->customer_id)
             ->where('currency_id', $this->invoice->currency_id)
-            ->whereNotNull('invoice_id'); // Ensure the payment is linked to an invoice
+            ->whereNotNull('invoice_id') // Ensure the payment is linked to an invoice
+        ;
 
+        // 2) Build invoices subquery
         $invoices = DB::table('invoices')
-            ->select(
+            ->select([
                 'customer_id',
-                'customer_id',
-                DB::raw('CAST(accrual_balance AS DECIMAL(10,2)) as accrual_balance')
-            )
+                'currency_id',
+                DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
+                'invoices.date',
+                'invoices.created_at',
+                DB::raw("'invoice' AS source"),
+                'id',
+            ])
+            ->where('authorization','approved')
             ->where('customer_id', $this->invoice->customer_id)
             ->where('currency_id', $this->invoice->currency_id);
 
-        $highestBalance = DB::table(DB::raw("({$payments->toSql()} UNION ALL {$invoices->toSql()}) as combined_data"))
-            ->mergeBindings($payments)
-            ->mergeBindings($invoices)
-            ->select(DB::raw('MAX(accrual_balance) as highest_accrual_balance'))
+        // 3) Union and pick the most recent row
+        $latest = DB::query()
+            ->fromSub($payments->unionAll($invoices), 'u')
+            ->orderByDesc('date')        // ✅ business date first
+            ->orderByDesc('created_at')  // ✅ system timestamp next
+            ->orderByRaw("CASE WHEN source = 'payment' THEN 1 ELSE 0 END DESC") // ✅ prefer payments over bills
             ->first();
+          
 
-
-
-            if((isset($highestBalance) && is_numeric($highestBalance->highest_accrual_balance)) && is_numeric($this->amount)){
-                $payment->accrual_balance = $highestBalance->highest_accrual_balance - $this->amount;
-            }
+        if ($latest && is_numeric($latest->accrual_balance) && is_numeric($this->amount)) {
+            // Use bc math if you care about money precision
+            $payment->accrual_balance = (float) bcsub(
+                (string) $latest->accrual_balance,
+                (string) $this->amount,
+                2
+            );
+        }
         
         $payment->date = $this->date;
         $payment->save();
@@ -671,26 +739,26 @@ class Index extends Component
             $fileNameToStore = $filename.'_'.time().'.'.$extention;
             $file->storeAs('/documents', $fileNameToStore, 'my_files');
 
-                    $document = new Document;
-        $document->payment_id = $payment->id;
-        $document->category = 'payment';
-        $document->title = "Proof Of Payment";
-        if (isset( $fileNameToStore)) {
-             $document->filename = $fileNameToStore;
-        }
-        if(isset($this->expires_at)){
-            $document->expires_at = Carbon::create($this->expires_at[$key])->toDateTimeString();
-            $today = now()->toDateTimeString();
-            $expire = Carbon::create($this->expires_at[$key])->toDateTimeString();
-            if ($today <=  $expire) {
-                $document->status = 1;
-            }else{
-                $document->status = 0;
+            $document = new Document;
+            $document->payment_id = $payment->id;
+            $document->category = 'payment';
+            $document->title = "Proof Of Payment";
+            if (isset( $fileNameToStore)) {
+                $document->filename = $fileNameToStore;
             }
-        }else {
-        $document->status = 1;
-        }
-        $document->save();
+            if(isset($this->expires_at)){
+                $document->expires_at = Carbon::create($this->expires_at)->toDateTimeString();
+                $today = now()->toDateTimeString();
+                $expire = Carbon::create($this->expires_at)->toDateTimeString();
+                if ($today <=  $expire) {
+                    $document->status = 1;
+                }else{
+                    $document->status = 0;
+                }
+            }else {
+            $document->status = 1;
+            }
+            $document->save();
   
         }
 
@@ -748,6 +816,8 @@ class Index extends Component
             'message'=>"Payment Recorded Successfully!!"
         ]);
         return redirect()->route('payments.index');
+
+    });
        
     }
 

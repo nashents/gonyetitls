@@ -13,6 +13,7 @@ class Preview extends Component
     public $invoice;
     public $invoice_items;
     public $company;
+    public $email;
 
     public function mount($invoice, $invoice_items, $company){
         $this->invoice = $invoice;

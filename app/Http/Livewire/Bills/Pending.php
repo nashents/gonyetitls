@@ -6,6 +6,7 @@ use id;
 use App\Models\Bill;
 use App\Models\User;
 use App\Models\Expense;
+use App\Models\Payment;
 use Livewire\Component;
 use App\Models\CashFlow;
 use App\Models\Container;
@@ -78,18 +79,63 @@ class Pending extends Component
                 $bill->update();
 
                 if ($this->authorize == "approved") {
-                    if((isset($bill->vendor_id) && isset($bill->currency_id))){
-                        if ($bill->accrual_balance == Null) {
-                            $accrual_balance = Bill::where('authorization','approved')->where('vendor_id',$bill->vendor_id)->where('id','!=',$bill->id)->where('currency_id', $bill->currency_id)->whereRaw('balance REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->get()->sum('balance');
-                            if (is_numeric($accrual_balance) && is_numeric($bill->total)) {
-                                $accrual_balance = $accrual_balance + $bill->total;
-                                $bill->accrual_balance =   $accrual_balance;
-                                $bill->update();
-                            }
+
+                    // if((isset($bill->vendor_id) && isset($bill->currency_id))){
+
+                    //     if ($bill->accrual_balance == Null) {
+
+                    //         $accrual_balance = Bill::where('authorization','approved')->where('vendor_id',$bill->vendor_id)->where('id','!=',$bill->id)->where('currency_id', $bill->currency_id)->whereRaw('balance REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->get()->sum('balance');
+                    //         if (is_numeric($accrual_balance) && is_numeric($bill->total)) {
+                    //             $accrual_balance = $accrual_balance + $bill->total;
+                    //             $bill->accrual_balance =   $accrual_balance;
+                    //             $bill->update();
+                    //         }
                            
-                        }
-                    }
-                    $accrual_balance = Null;
+                    //     }
+                    // }
+                    // $accrual_balance = Null;
+
+                if((isset($bill->vendor_id) && isset($bill->currency_id))){
+
+                if ($bill->accrual_balance === Null) {
+
+                 $last_payment = Payment::where('vendor_id', $bill->vendor_id)
+                                        ->where('currency_id', $bill->currency_id)
+                                        ->whereNotNull('bill_id') // Ensure payment is linked to an bill
+                                        ->whereNotNull('accrual_balance') // Ensure accrual balance exists
+                                        ->orderByDesc('date') // Prioritize latest transaction date
+                                        ->orderByDesc('created_at') // If same date, get most recently recorded
+                                        ->orderByDesc('id') // If same creation time, get latest ID
+                                        ->first();
+
+                                    // If no valid payment exists, retrieve the last bill with the highest accrual balance
+                $last_bill = null;
+
+                if (!$last_payment) {
+                    
+                    $last_bill = Bill::where('authorization', 'approved')
+                        ->where('vendor_id', $bill->vendor_id)
+                        ->where('currency_id', $bill->currency_id)
+                        ->whereNotNull('accrual_balance') // Ensure accrual balance exists
+                        ->orderByDesc('accrual_balance') // Prioritize highest balance
+                        ->orderByDesc('bill_date') // If tie, use latest bill date
+                        ->orderByDesc('id') // If tie, use latest ID
+                        ->first();
+                }
+
+              
+                // Determine the last accrual balance, prioritizing payments over bills
+                $previous_balance = $last_payment && is_numeric($last_payment->accrual_balance) 
+                    ? $last_payment->accrual_balance 
+                    : ($last_bill && is_numeric($last_bill->accrual_balance) ? $last_bill->accrual_balance : 0);
+
+                // Compute and set the new accrual balance
+                $bill->accrual_balance = $previous_balance + $bill->total;
+                $bill->update(); // Save the updated bill
+                   
+                }
+                }
+
                 }
     
     
@@ -236,18 +282,46 @@ class Pending extends Component
 
         if ($this->authorize == "approved") {
 
-            if((isset($bill->vendor_id) && isset($bill->currency_id))){
-                if ($bill->accrual_balance == Null) {
-                    $accrual_balance = Bill::where('authorization','approved')->where('vendor_id',$bill->vendor_id)->where('id','!=',$bill->id)->where('currency_id', $bill->currency_id)->whereRaw('balance REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->get()->sum('balance');
-                    if (is_numeric($accrual_balance) && is_numeric($bill->total)) {
-                        $accrual_balance = $accrual_balance + $bill->total;
-                        $bill->accrual_balance =   $accrual_balance;
-                        $bill->update();
-                    }
+                if((isset($bill->vendor_id) && isset($bill->currency_id))){
+
+                if ($bill->accrual_balance === Null) {
+
+                 $last_payment = Payment::where('vendor_id', $bill->vendor_id)
+                                        ->where('currency_id', $bill->currency_id)
+                                        ->whereNotNull('bill_id') // Ensure payment is linked to an bill
+                                        ->whereNotNull('accrual_balance') // Ensure accrual balance exists
+                                        ->orderByDesc('date') // Prioritize latest transaction date
+                                        ->orderByDesc('created_at') // If same date, get most recently recorded
+                                        ->orderByDesc('id') // If same creation time, get latest ID
+                                        ->first();
+
+                                    // If no valid payment exists, retrieve the last bill with the highest accrual balance
+                $last_bill = null;
+
+                if (!$last_payment) {
+                    
+                    $last_bill = Bill::where('authorization', 'approved')
+                        ->where('vendor_id', $bill->vendor_id)
+                        ->where('currency_id', $bill->currency_id)
+                        ->whereNotNull('accrual_balance') // Ensure accrual balance exists
+                        ->orderByDesc('accrual_balance') // Prioritize highest balance
+                        ->orderByDesc('date') // If tie, use latest bill date
+                        ->orderByDesc('id') // If tie, use latest ID
+                        ->first();
+                }
+
+              
+                // Determine the last accrual balance, prioritizing payments over bills
+                $previous_balance = $last_payment && is_numeric($last_payment->accrual_balance) 
+                    ? $last_payment->accrual_balance 
+                    : ($last_bill && is_numeric($last_bill->accrual_balance) ? $last_bill->accrual_balance : 0);
+
+                // Compute and set the new accrual balance
+                $bill->accrual_balance = $previous_balance + $bill->total;
+                $bill->update(); // Save the updated bill
                    
                 }
-            }
-            $accrual_balance = Null;
+                }
             
             $this->dispatchBrowserEvent('hide-authorizationModal');
             $this->dispatchBrowserEvent('alert',[

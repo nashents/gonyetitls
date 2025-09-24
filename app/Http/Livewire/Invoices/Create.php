@@ -360,8 +360,8 @@ class Create extends Component
 
     public function updatedSelectedCustomer($id){
 
-        $this->customer = Customer::find($id);
-        $this->initials = $this->customer->initials;
+        $customer = Customer::find($id);
+        $this->initials = $customer?->initials;
         $this->invoice_number = $this->invoiceNumber();
      
     
@@ -979,11 +979,6 @@ class Create extends Component
             $invoice->exchange_amount = $this->exchange_amount;
             $invoice->balance = $this->total;
             $invoice->update();
-        
-
-     
-       
-
     }elseif ($this->from_trips == false) {
 
         if (isset($this->from_inventory) && $this->from_inventory == false) {

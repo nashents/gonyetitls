@@ -184,6 +184,7 @@
                    
                 </main>
                 @elseif ($selectedType == "Account Activity")
+
                 <main>
                     <div class="row contacts">
                         <div class="col invoice-to" >
@@ -228,7 +229,7 @@
                                        $paid = App\Models\Payment::where('customer_id',$customer->id)->where('currency_id',$currency->id)->whereBetween('date',[$from, $to])->whereRaw('amount REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->get()->sum('amount');
                                     @endphp
                                     
-                                        <div class="date" style="padding-bottom: 3px" ><strong>Opening Balance({{$currency->name}}) on {{ date('F j, Y', strtotime($from)) }}</strong> {{$currency->symbol}}{{ number_format($opening_balance ? $opening_balance->accrual : 0,2) }}</div>
+                                    <div class="date" style="padding-bottom: 3px" ><strong>Opening Balance({{$currency->name}}) on {{ date('F j, Y', strtotime($from)) }}</strong> {{$currency->symbol}}{{ number_format($opening_balance ? $opening_balance->accrual : 0,2) }}</div>
                                    
                                     @if (isset($invoiced))
                                     <div class="date" style="padding-bottom: 3px" ><strong>Invoiced({{$currency->name}})</strong> {{$currency->symbol}}{{ number_format($invoiced,2) }}</div>
@@ -267,7 +268,7 @@
                                         <td class="text-center">{{ date('F j, Y', strtotime($result->transaction_date)) }}</td>
                                         <td class="text-center">
                                                 @php
-                                                      if ($result->transaction_type === 'invoice') {
+                                                    if ($result->transaction_type === 'invoice') {
                                                         $invoice = \App\Models\Invoice::where('invoice_number', $result->number)
                                                                     ->where('authorization', 'approved')
                                                                     ->first();
@@ -279,6 +280,7 @@
                                                     }
                                                     
                                                     $accrual_balance = App\Models\Invoice::where('authorization','approved')->where('customer_id',$customer->id)->where('currency_id', $currency->id)->whereRaw('balance REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->get()->sum('balance');
+
                                                 @endphp
                                                 @if ($result->transaction_type === 'invoice')
                                                     <a href="{{ route('invoices.show',$invoice->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Invoice# {{ $result->number }} </a><br>
@@ -294,7 +296,7 @@
                                                     <br>
                                                     {{ $payment->notes }} 
                                                 @endif
-                                            </td>
+                                        </td>
                                         <td class="text-center">{{ $currency->name}}</td>
                                         <td class="text-center">{{ $currency->symbol}}{{ number_format($result->amount,2) }}</td>
                                         <td class="text-center">{{ $currency->symbol}}{{ number_format($result->balance,2) }}</td>
