@@ -69,7 +69,6 @@ class Create extends Component
     public $invoice_id;
     public $initials;
     public $customers;
-    public $trips;
     public $from_trips = false;
     public $exchange_rate;
     public $from_inventory = false;
@@ -971,6 +970,7 @@ class Create extends Component
                 }
             }
 
+
             $invoice = Invoice::find($invoice->id);
             $invoice->tax_amount =  $this->tax_amount;
             $invoice->subtotal = $this->subtotal;
@@ -1230,6 +1230,57 @@ class Create extends Component
         }
     }
 
+    public function getTripsProperty(){
+            $query = Trip::query()
+            ->with('customer:id,name','loading_point:id,name','offloading_point:id,name','currency')
+            ->where('authorization','approved')
+            ->where('trip_status','!=', 'Cancelled')
+            ->where('currency_id', $this->selectedCurrency);
+
+                 // Date window
+            if ($this->from && $this->to ) {
+                $from = Carbon::parse($this->from)->startOfDay();
+                $to   = Carbon::parse($this->to)->endOfDay();
+                $query->whereBetween($this->trip_filter, [$from, $to]);
+            } else {
+                $query->whereBetween($this->trip_filter, [
+                    now()->startOfMonth(),
+                    now()->endOfMonth(),
+                ]);
+            }
+
+            if($this->selectedCustomer){
+                $query->where('customer_id', $this->selectedCustomer);
+            }
+
+            if (filled($this->search)) {
+            $term = '%'.$this->search.'%';
+
+            $query->where(function ($q) use ($term) {
+                $q->where('trip_number', 'like', $term)
+                ->orWhere('start_date', 'like', $term)
+                ->orWhere('turnover', 'like', $term)
+                ->orWhere('freight', 'like', $term)
+                ->orWhereHas('horse', function ($qq) use ($term) {
+                return $qq->where('registration_number', 'like', $term)
+                        ->where('fleet_number', 'like', $term);
+                })
+                ->orWhereHas('vehicle', function ($qq) use ($term)  {
+                return $qq->where('registration_number', 'like', $term)
+                            ->where('fleet_number', 'like', $term);
+                })
+                ->orWhereHas('trip_documents', function ($qq) use ($term) {
+                return $qq->where('document_number', 'like', $term);
+                });
+            });
+        }
+
+         return $query
+            ->orderByDesc($this->trip_filter)
+            ->paginate(10);
+
+    }
+
 
     public function render()
     {
@@ -1255,69 +1306,9 @@ class Create extends Component
         $this->inventories = Inventory::with('product.brand')->where('status',1)->get()->sortBy('product.brand.name');
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->customers = Customer::orderBy('name','asc')->get();
-       $this->bank_accounts = BankAccount::where('company_id',$this->company->id)->orderBy('name','asc')->get();
+        $this->bank_accounts = BankAccount::where('company_id',$this->company->id)->orderBy('name','asc')->get();
         $this->products = Product::where('sell',True)->orderBy('name','asc')->get();
-
-        if (isset($this->from) && isset($this->to)) {
-            if (isset($this->search)) {
-                $this->trips = Trip::query()->with('customer:id,name','loading_point:id,name','offloading_point:id,name','currency')->where('authorization','approved')->whereBetween($this->trip_filter,[$this->from, $this->to] )
-                            ->where('authorization', 'approved')
-                            ->where('trip_status','!=', 'Cancelled')
-                            ->where('trip_number', 'like', '%'.$this->search.'%')
-                            ->orWhere('start_date', 'like', '%'.$this->search.'%')
-                            ->orWhere('turnover', 'like', '%'.$this->search.'%')
-                            ->orWhere('freight', 'like', '%'.$this->search.'%')
-                            ->orWhereHas('customer', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                            })
-                            ->orWhereHas('horse', function ($query) {
-                            return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                            })
-                            ->orWhereHas('vehicle', function ($query) {
-                            return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                            })
-                            ->orWhereHas('trip_documents', function ($query) {
-                            return $query->where('document_number', 'like', '%'.$this->search.'%');
-                            })
-                            ->orWhereHas('currency', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                            })->orderby($this->trip_filter,'desc')->get();
-            }else {
-                $this->trips = Trip::query()->with('customer:id,name','loading_point:id,name','offloading_point:id,name','currency')->where('trip_status','!=', 'Cancelled')->where('authorization','approved')->whereBetween($this->trip_filter,[$this->from, $this->to] )->orderBy($this->trip_filter,'desc')->get();
-               
-            }
-           
-        }
-        elseif (isset($this->search)) {
-         
-            $this->trips = Trip::query()->with('customer','loading_point','offloading_point','currency')
-                ->where('authorization', 'approved')
-                ->where('trip_status','!=', 'Cancelled')
-                ->where('trip_number', 'like', '%'.$this->search.'%')
-                ->orWhere('start_date', 'like', '%'.$this->search.'%')
-                ->orWhere('turnover', 'like', '%'.$this->search.'%')
-                ->orWhere('freight', 'like', '%'.$this->search.'%')
-                ->orWhereHas('customer', function ($query) {
-                return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('trip_documents', function ($query) {
-                    return $query->where('document_number', 'like', '%'.$this->search.'%');
-                    })
-                ->orWhereHas('horse', function ($query) {
-                return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('vehicle', function ($query) {
-                    return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                    })
-                ->orWhereHas('currency', function ($query) {
-                return $query->where('name', 'like', '%'.$this->search.'%');
-                })->orderby($this->trip_filter,'desc')->get();
-        }
-        else{
-            $this->trips = Trip::query()->with('customer:id,name','loading_point:id,name','offloading_point:id,name','currency')->whereYear($this->trip_filter,date('Y'))->where('trip_status','!=', 'Cancelled')->where('authorization','approved')->orderBy($this->trip_filter,'desc')->get();
-        }
        
-           
         return view('livewire.invoices.create',[
             'trips' => $this->trips,
             'trip_id' => $this->trip_id,
@@ -1327,7 +1318,7 @@ class Create extends Component
             'bank_accounts' => $this->bank_accounts,
             'products' => $this->products,
             'inventories' => $this->inventories,
-            'trips' => $this->trips,
+           
         ]);
 
 

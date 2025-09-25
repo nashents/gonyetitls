@@ -36,6 +36,9 @@ class BookingsExport implements
     public $booking_status;
     public $filter;
     public $search_id;
+    public $service_type_id;
+    public $station_id;
+    public $employee_id;
 
     // Summary
     protected int $totalCount = 0;
@@ -50,7 +53,7 @@ class BookingsExport implements
     // Layout
     protected int $tableStartRow = 10; // computed dynamically
 
-    public function __construct($booking_status = null, $search = null, $from = null, $to = null, $filter = null, $search_id = null)
+    public function __construct($booking_status = null, $search = null, $from = null, $to = null, $filter = null, $search_id = null, $station_id = null, $service_type_id = null, $employee_id = null)
     {
         $this->booking_status = $booking_status;
         $this->search         = $search;
@@ -58,6 +61,9 @@ class BookingsExport implements
         $this->to             = $to;
         $this->filter         = $filter;
         $this->search_id      = $search_id;
+        $this->station_id      = $station_id;
+        $this->service_type_id      = $service_type_id;
+        $this->employee_id      = $employee_id;
 
         // Pre-compute metrics on the base (status-agnostic) query
         $base = $this->commonQuery(); // date + filter + search, no status
@@ -132,6 +138,20 @@ class BookingsExport implements
         } else {
             $query->whereBetween('bookings.created_at', [now()->startOfMonth(), now()->endOfMonth()]);
         }
+
+        if (!empty($this->station_id)) {
+           $query->where('station_id', $this->station_id);
+        }
+       
+        if (!empty($this->service_type_id)) {
+            $query->where('service_type_id', $this->service_type_id);
+        }
+        if (!empty($this->employee_id)) {
+            $query->whereHas('employees', function ($q) {
+                $q->where('employees.id', $this->employee_id);
+            });
+        }
+
 
         // Specific subject filter
         if (!empty($this->filter) && !empty($this->search_id)) {
@@ -249,8 +269,8 @@ class BookingsExport implements
             'Estimated Completion',
             'Task Completion',
             'Out of Workshop',
-            'Authorization',
-            'AuthorizedBy',
+            'Auth',
+            'AuthBy',
             'Status',
         ];
     }

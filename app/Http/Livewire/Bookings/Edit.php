@@ -29,6 +29,7 @@ class Edit extends Component
 {
     use WithFileUploads;
 
+    public $booking_id;
     public $trailers;
     public $selectedTrailer;
     public $type;
@@ -144,6 +145,7 @@ class Edit extends Component
         $this->booking_id = $booking->id;
         $this->type = $booking->type;
         $this->assigned_to = $booking->assigned_to;
+        $this->breakdowns = collect();
         $this->service_types = ServiceType::where('status',1)->orderBy('name','asc')->get();
        
          $employee = Employee::find($this->employee_id );

@@ -78,17 +78,13 @@
                                         </th>
                                         <th class="th-sm">Inspection#
                                         </th>
-                                        <th class="th-sm">Ticket For
+                                        <th class="th-sm">TicketFor
                                         </th>
                                         <th class="th-sm">AssignedTo
                                         </th>
-                                        <th class="th-sm">ServiceType
+                                        <th class="th-sm" style="width: 20%">Timelines
                                         </th>
-                                        <th class="th-sm">Timelines
-                                        </th>
-                                        <th class="th-sm">Completion
-                                        </th>
-                                        <th class="th-sm">Out
+                                        <th class="th-sm">Narration
                                         </th>
                                         <th class="th-sm">Station
                                         </th>
@@ -120,7 +116,7 @@
                                                 @elseif(isset($ticket->booking->asset))
                                                 Asset | {{$ticket->booking->asset->product->brand ? $ticket->booking->asset->product->brand->name : ""}} {{ucfirst($ticket->booking->asset->product ? $ticket->booking->asset->product->name : "")}}  {{$ticket->booking->asset->serial_number}}
                                                 @elseif(isset($ticket->booking->trailer))
-                                                Trailer | {{$ticket->booking->trailer->registration_number}} {{$ticket->booking->trailer->registration_number ? "(".$ticket->booking->trailer->registration_number.")" : ""}} 
+                                                Trailer | {{$ticket->booking->trailer->registration_number}} {{$ticket->booking->trailer->fleet_number ? "(".$ticket->booking->trailer->fleet_number.")" : ""}} 
                                             @endif
                                            </td>
                                            <td>
@@ -133,18 +129,17 @@
                                                 {{ucfirst($ticket->booking->vendor->name)}}  
                                             @endif
                                         </td>
-                                        <td>{{$ticket->service_type ? $ticket->service_type->name : ""}}</td>
                                         <td>
-                                            <strong>In Date: </strong> {{$ticket->in_date}} {{$ticket->in_time}} <br>
-                                            <strong>Estimate: </strong> {{$ticket->estimated_out_date}} {{$ticket->estimated_out_time}} <br>
-                                            <strong>Task Completed: </strong> {{$ticket->out_date}} {{$ticket->out_time}} <br>
-                                            <strong>Out of Workshop: </strong> {{$ticket->booking ? $ticket->booking->workshop_out_date : ""}} {{$ticket->booking ? $ticket->booking->workshop_out_time : ""}} <br>
-
+                                            <strong>In: </strong> {{$ticket->booking->in_date}} {{$ticket->booking->in_time}} <br>
+                                            <strong>Estimate: </strong> {{$ticket->booking->estimated_out_date}} {{$ticket->booking->estimated_out_time}} <br>
+                                            <strong>Completed: </strong> {{$ticket->booking->out_date}} {{$ticket->booking->out_time}} <br>
+                                            <strong>Out: </strong> {{$ticket->booking ? $ticket->booking->workshop_out_date : ""}} {{$ticket->booking ? $ticket->booking->workshop_out_time : ""}} <br>
                                         </td>
-                                        <td></td>
-                                        <td></td>
-                                       
-                                        <td>{{$ticket->station}}</td>
+                                        <td>
+                                            <strong>Service Type: </strong> {{$ticket->service_type ? $ticket->service_type->name : ""}}  <br>
+                                            {{$ticket->booking ? $ticket->booking->description : ""}}
+                                        </td>
+                                        <td>{{ optional(\App\Models\Station::find($ticket->booking->station_id))->name ?? $ticket->booking->station }}</td>
                                         <td><span class="badge bg-{{$ticket->status == 1 ? "warning" : "success"}}">{{$ticket->status == 1 ? "Open" : "Closed"}}</span></td>
                                         <td class="w-10 line-height-35 table-dropdown">
                                             <div class="dropdown">

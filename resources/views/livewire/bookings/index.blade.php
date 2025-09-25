@@ -58,13 +58,52 @@
                                         </div>
                                         <div class="col-md-3">
                                             <div class="input-group">
-                                                <span class="input-group-addon">Filter By</span>
+                                                <span class="input-group-addon">Service Types</span>
+                                                <select wire:model.debounce.300ms="service_type_id" class="form-control" aria-label="..." >
+                                                    <option value="all">Select Type</option>
+                                                    @foreach ($service_types as $service_type)
+                                                        <option value="{{ $service_type->id }}">{{ $service_type->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <!-- /input-group -->
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="input-group">
+                                                <span class="input-group-addon">Stations</span>
+                                                <select wire:model.debounce.300ms="station_id" class="form-control" aria-label="..." >
+                                                    <option value="all">Select Station</option>
+                                                    @foreach ($stations as $station)
+                                                        <option value="{{ $station->id }}">{{ $station->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <!-- /input-group -->
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="input-group">
+                                                <span class="input-group-addon">Mechanics</span>
+                                                <select wire:model.debounce.300ms="employee_id" class="form-control" aria-label="..." >
+                                                    <option value="all">Select Mechanic</option>
+                                                    @foreach ($employees as $employee)
+                                                        <option value="{{ $employee->id }}">{{ $employee->name }} {{ $employee->surname }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <!-- /input-group -->
+                                        </div>
+                                      
+                                </div>
+                                <div class="row">
+                                      <div class="col-md-3">
+                                            <div class="input-group">
+                                                <span class="input-group-addon">Equipment</span>
                                                 <select wire:model.debounce.300ms="filter" class="form-control" aria-label="..." >
                                                     <option value="">Select Option</option>
-                                                    <option value="asset">Assets</option>
-                                                    <option value="horse">Horses</option>
+                                                    <option value="asset">Asset</option>
+                                                    <option value="horse">Horse</option>
                                                     <option value="trailer">Trailer</option>
-                                                    <option value="vehicle">Vehicles</option>
+                                                    <option value="vehicle">Vehicle</option>
                                                 </select>
                                             </div>
                                             <!-- /input-group -->
@@ -169,19 +208,17 @@
                                         </th>
                                         <th class="th-sm">Booking#
                                         </th>
-                                        <th class="th-sm">CreatedBy
-                                        </th>
                                         <th class="th-sm">RequestedBy
                                         </th>
                                         <th class="th-sm">AssignedTo
                                         </th>
                                         <th class="th-sm">BookingFor
                                         </th>
-                                        <th class="th-sm">ServiceType
+                                        <th class="th-sm" style="width: 20%">Timelines
                                         </th>
-                                        <th class="th-sm">Narration
+                                        <th class="th-sm" style="width: 15%">Narration
                                         </th>
-                                        <th class="th-sm">Date
+                                        <th class="th-sm">Station
                                         </th>
                                         <th class="th-sm">Auth
                                         </th>
@@ -197,8 +234,11 @@
                                         
                                       <tr>
                                         <td><input type="checkbox" wire:model.debounce.300ms="selectedRows" id="{{ $booking->id }}" value="{{ $booking->id }}"></td>
-                                        <td>{{ucfirst($booking->booking_number)}}</td>
-                                        <td>{{ucfirst($booking->user ? $booking->user->name : "")}} {{ucfirst($booking->user ? $booking->user->surname : "")}}</td>
+                                        <td>
+                                            {{$booking->booking_number}}
+                                            <br>
+                                            <small><strong>CreatedBy: </strong> {{ucfirst($booking->user ? $booking->user->name : "")}} {{ucfirst($booking->user ? $booking->user->surname : "")}}</small>
+                                        </td>
                                         <td>{{ucfirst($booking->employee ? $booking->employee->name : "")}} {{ucfirst($booking->employee ? $booking->employee->surname : "")}}</td>
                                         <td>
                                             @if (isset($booking->employees) && $booking->employees->count()>0)
@@ -218,12 +258,21 @@
                                                 @elseif(isset($booking->asset))
                                                 Asset | {{$booking->asset->product->brand ? $booking->asset->product->brand->name : ""}} {{ucfirst($booking->asset->product ? $booking->asset->product->name : "")}}  {{$booking->asset->serial_number}}
                                                 @elseif(isset($booking->trailer))
-                                                Trailer | {{$booking->trailer->registration_number}} {{$booking->trailer->registration_number ? "(".$booking->trailer->registration_number.")" : ""}} 
+                                                Trailer | {{$booking->trailer->registration_number}} {{$booking->trailer->fleet_number ? "(".$booking->trailer->fleet_number.")" : ""}} 
                                             @endif
                                         </td>
-                                        <td>{{ucfirst($booking->service_type ? $booking->service_type->name : "")}}</td>
-                                        <td>{{$booking->description}}</td>
-                                        <td>{{$booking->in_date}} @ {{$booking->in_time}}</td>
+                                         <td>
+                                            <strong>In: </strong> {{$booking->in_date}} {{$booking->in_time}} <br>
+                                            <strong>Estimate: </strong> {{$booking->estimated_out_date}} {{$booking->estimated_out_time}} <br>
+                                            <strong>Completed: </strong> {{$booking->out_date}} {{$booking->out_time}} <br>
+                                            <strong>Out: </strong> {{$booking ? $booking->workshop_out_date : ""}} {{$booking ? $booking->workshop_out_time : ""}} <br>
+                                        </td>
+                                        <td>
+                                            <strong>
+                                                Service Type: 
+                                            </strong>{{ucfirst($booking->service_type ? $booking->service_type->name : "")}} <br>
+                                            {{$booking->description}}</td>
+                                        <td>{{ optional(\App\Models\Station::find($booking->station_id))->name ?? $booking->station }}</td>
                                         <td><span class="badge bg-{{($booking->authorization == 'approved') ? 'success' : (($booking->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($booking->authorization == 'approved') ? 'approved' : (($booking->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
                                         <td><span class="badge bg-{{$booking->status == 1 ? "warning" : "success"}}">{{$booking->status == 1 ? "Open" : "Closed"}}</span></td>
                                         <td class="w-10 line-height-35 table-dropdown">

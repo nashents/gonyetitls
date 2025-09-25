@@ -6,12 +6,16 @@ use Carbon\Carbon;
 use App\Models\Asset;
 use App\Models\Horse;
 use App\Models\Booking;
+use App\Models\Station;
 use App\Models\Trailer;
 use App\Models\Vehicle;
 use Livewire\Component;
+use App\Models\Employee;
+use App\Models\ServiceType;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Excel;
 use App\Exports\BookingsExport;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
@@ -44,6 +48,12 @@ class Index extends Component
     // private $bookings;
     public $booking;
     public $booking_id;
+    public $service_types;
+    public $service_type_id;
+    public $stations;
+    public $station_id;
+    public $employees;
+    public $employee_id;
     public $status;
     public $comments;
     public $booking_status = "all";
@@ -61,16 +71,23 @@ class Index extends Component
         $this->assets = Asset::where('status',1)->get();
         $this->trailers = Trailer::where('status',1)->orderby('registration_number')->get();
         $this->vehicles = Vehicle::where('status',1)->orderby('registration_number')->get();
+        $this->stations = Station::where('status',1)->orderby('name')->get();
+        $this->service_types = ServiceType::where('status',1)->orderby('name')->get();
+        $this->employees = Employee::query()
+        ->whereHas('departments', fn ($q) => $q->where('departments.name', 'Workshop'))
+        ->with('departments:id,name')
+        ->distinct()
+        ->get();
       }
 
     public function exportBookingsCSV(Excel $excel){
-        return $excel->download(new BookingsExport($this->booking_status, $this->search, $this->from, $this->to, $this->filter, $this->search_id), 'bookings_'.time().'.csv', Excel::CSV);
+        return $excel->download(new BookingsExport($this->booking_status, $this->search, $this->from, $this->to, $this->filter, $this->search_id, $this->station_id, $this->service_type_id, $this->employee_id), 'bookings_'.time().'.csv', Excel::CSV);
     }
     public function exportBookingsPDF(Excel $excel){
-        return $excel->download(new BookingsExport($this->booking_status, $this->search, $this->from, $this->to, $this->filter, $this->search_id), 'bookings_'.time().'.pdf', Excel::DOMPDF);
+        return $excel->download(new BookingsExport($this->booking_status, $this->search, $this->from, $this->to, $this->filter, $this->search_id, $this->station_id, $this->service_type_id, $this->employee_id), 'bookings_'.time().'.pdf', Excel::DOMPDF);
     }
     public function exportBookingsExcel(Excel $excel){
-        return $excel->download(new BookingsExport($this->booking_status, $this->search, $this->from, $this->to, $this->filter, $this->search_id), 'bookings_'.time().'.xlsx');
+        return $excel->download(new BookingsExport($this->booking_status, $this->search, $this->from, $this->to, $this->filter, $this->search_id, $this->station_id, $this->service_type_id, $this->employee_id), 'bookings_'.time().'.xlsx');
     }
 
 
@@ -235,6 +252,19 @@ class Index extends Component
         // Status (skip when "all")
         if ($this->booking_status !== 'all') {
             $query->where('status', $this->booking_status);
+        }
+
+        if ($this->station_id) {
+           $query->where('station_id', $this->station_id);
+        }
+       
+        if ($this->service_type_id) {
+            $query->where('service_type_id', $this->service_type_id);
+        }
+        if ($this->employee_id) {
+            $query->whereHas('employees', function ($q) {
+                $q->where('employees.id', $this->employee_id);
+            });
         }
 
        if ($this->filter) {

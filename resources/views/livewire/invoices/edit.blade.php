@@ -200,19 +200,31 @@
                                                 <label for="subheading">Trips<span class="required" style="color: red">*</span></label>
                                                 <select wire:model.debounce.300ms="selectedCurrentTrip.{{$key}}"  class="form-control" required size="4">
                                                     <option value="">Select Trip</option>
-                                                        @if (isset($selectedCurrency))
+                                                        
                                                             @foreach ($trips->where('currency_id', $selectedCurrency) as $trip)
                                                                 @if (isset($trip_ids))
                                                                     @if (in_array($trip->id,$trip_ids))
-                                                                    <option value="{{$trip->id}}" style="color: orange">{{$trip->trip_number ? $trip->trip_number." |" : ""}} {{ $trip->trip_ref ? $trip->trip_ref." |" : "" }} {{ isset($pod) ? $pod->document_number." | " : "" }} {{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}}{{$trip->turnover ? number_format($trip->turnover,2)." |" : ""}} {{$trip->horse ? $trip->horse->registration_number : ""}} | {{$trip->customer ? $trip->customer->name : ""}} </option> 
+                                                                    <option value="{{$trip->id}}" style="color: orange"
+                                                                         @if(in_array($trip->id, $selectedTrip ?? []) && ($selectedTrip[$key] ?? null) != $trip->id) 
+                                                                            disabled 
+                                                                        @endif
+                                                                        >{{$trip->trip_number ? $trip->trip_number." |" : ""}} {{ $trip->trip_ref ? $trip->trip_ref." |" : "" }} {{ isset($pod) ? $pod->document_number." | " : "" }} {{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}}{{$trip->turnover ? number_format($trip->turnover,2)." |" : ""}} {{$trip->horse ? $trip->horse->registration_number : ""}} | {{$trip->customer ? $trip->customer->name : ""}} </option> 
                                                                     @else
-                                                                        <option value="{{$trip->id}}">{{$trip->trip_number ? $trip->trip_number." |" : ""}} {{ $trip->trip_ref ? $trip->trip_ref." |" : "" }} {{ isset($pod) ? $pod->document_number." | " : "" }} {{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}}{{$trip->turnover ? number_format($trip->turnover,2)." |" : ""}} {{$trip->horse ? $trip->horse->registration_number : ""}} | {{$trip->customer ? $trip->customer->name : ""}}</option>
+                                                                        <option value="{{$trip->id}}"
+                                                                             @if(in_array($trip->id, $selectedTrip ?? []) && ($selectedTrip[$key] ?? null) != $trip->id) 
+                                                                            disabled 
+                                                                        @endif
+                                                                            >{{$trip->trip_number ? $trip->trip_number." |" : ""}} {{ $trip->trip_ref ? $trip->trip_ref." |" : "" }} {{ isset($pod) ? $pod->document_number." | " : "" }} {{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}}{{$trip->turnover ? number_format($trip->turnover,2)." |" : ""}} {{$trip->horse ? $trip->horse->registration_number : ""}} | {{$trip->customer ? $trip->customer->name : ""}}</option>
                                                                     @endif
                                                                 @else
-                                                                    <option value="{{$trip->id}}">{{$trip->trip_number ? $trip->trip_number." |" : ""}} {{ $trip->trip_ref ? $trip->trip_ref." |" : "" }} {{ isset($pod) ? $pod->document_number." | " : "" }} {{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}}{{$trip->turnover ? number_format($trip->turnover,2)." |" : ""}} {{$trip->horse ? $trip->horse->registration_number : ""}} | {{$trip->customer ? $trip->customer->name : ""}}</option>
+                                                                    <option value="{{$trip->id}}"
+                                                                         @if(in_array($trip->id, $selectedTrip ?? []) && ($selectedTrip[$key] ?? null) != $trip->id) 
+                                                                            disabled 
+                                                                        @endif
+                                                                        >{{$trip->trip_number ? $trip->trip_number." |" : ""}} {{ $trip->trip_ref ? $trip->trip_ref." |" : "" }} {{ isset($pod) ? $pod->document_number." | " : "" }} {{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}}{{$trip->turnover ? number_format($trip->turnover,2)." |" : ""}} {{$trip->horse ? $trip->horse->registration_number : ""}} | {{$trip->customer ? $trip->customer->name : ""}}</option>
                                                                 @endif
                                                             @endforeach  
-                                                        @endif 
+                                                      
                                                     </select>
                                                     <small style="color: green">NB: All invoiced trips will appear in orange</small>
                                                 @error('selectedCurrentTrip.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -268,19 +280,31 @@
                                                     <label for="subheading">Trips<span class="required" style="color: red">*</span></label>
                                                     <select wire:model.debounce.300ms="selectedTrip.{{$value}}"  class="form-control" required size="4">
                                                         <option value="">Select Trip</option>
-                                                        @if (isset($selectedCurrency))
+                                                       
                                                                 @foreach ($trips->where('currency_id', $selectedCurrency) as $trip)
                                                                     @if (isset($trip_ids))
                                                                         @if (in_array($trip->id,$trip_ids))
-                                                                        <option value="{{$trip->id}}" style="color: orange">{{$trip->trip_number ? $trip->trip_number." |" : ""}} {{ $trip->trip_ref ? $trip->trip_ref." |" : "" }} {{ isset($pod) ? $pod->document_number." | " : "" }} {{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}}{{$trip->turnover ? number_format($trip->turnover,2)." |" : ""}} {{$trip->horse ? $trip->horse->registration_number : ""}} | {{$trip->customer ? $trip->customer->name : ""}} </option> 
+                                                                        <option value="{{$trip->id}}" style="color: orange"
+                                                                             @if(in_array($trip->id, $selectedTrip ?? []) && ($selectedTrip[$value] ?? null) != $trip->id) 
+                                                                            disabled 
+                                                                        @endif
+                                                                            >{{$trip->trip_number ? $trip->trip_number." |" : ""}} {{ $trip->trip_ref ? $trip->trip_ref." |" : "" }} {{ isset($pod) ? $pod->document_number." | " : "" }} {{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}}{{$trip->turnover ? number_format($trip->turnover,2)." |" : ""}} {{$trip->horse ? $trip->horse->registration_number : ""}} | {{$trip->customer ? $trip->customer->name : ""}} </option> 
                                                                         @else
-                                                                            <option value="{{$trip->id}}">{{$trip->trip_number ? $trip->trip_number." |" : ""}} {{ $trip->trip_ref ? $trip->trip_ref." |" : "" }} {{ isset($pod) ? $pod->document_number." | " : "" }} {{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}}{{$trip->turnover ? number_format($trip->turnover,2)." |" : ""}} {{$trip->horse ? $trip->horse->registration_number : ""}} | {{$trip->customer ? $trip->customer->name : ""}}</option>
+                                                                            <option value="{{$trip->id}}"
+                                                                                 @if(in_array($trip->id, $selectedTrip ?? []) && ($selectedTrip[$value] ?? null) != $trip->id) 
+                                                                            disabled 
+                                                                        @endif
+                                                                                >{{$trip->trip_number ? $trip->trip_number." |" : ""}} {{ $trip->trip_ref ? $trip->trip_ref." |" : "" }} {{ isset($pod) ? $pod->document_number." | " : "" }} {{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}}{{$trip->turnover ? number_format($trip->turnover,2)." |" : ""}} {{$trip->horse ? $trip->horse->registration_number : ""}} | {{$trip->customer ? $trip->customer->name : ""}}</option>
                                                                         @endif
                                                                     @else
-                                                                        <option value="{{$trip->id}}">{{$trip->trip_number ? $trip->trip_number." |" : ""}} {{ $trip->trip_ref ? $trip->trip_ref." |" : "" }} {{ isset($pod) ? $pod->document_number." | " : "" }} {{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}}{{$trip->turnover ? number_format($trip->turnover,2)." |" : ""}} {{$trip->horse ? $trip->horse->registration_number : ""}} | {{$trip->customer ? $trip->customer->name : ""}}</option>
+                                                                        <option value="{{$trip->id}}"
+                                                                             @if(in_array($trip->id, $selectedTrip ?? []) && ($selectedTrip[$value] ?? null) != $trip->id) 
+                                                                            disabled 
+                                                                        @endif
+                                                                            >{{$trip->trip_number ? $trip->trip_number." |" : ""}} {{ $trip->trip_ref ? $trip->trip_ref." |" : "" }} {{ isset($pod) ? $pod->document_number." | " : "" }} {{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}}{{$trip->turnover ? number_format($trip->turnover,2)." |" : ""}} {{$trip->horse ? $trip->horse->registration_number : ""}} | {{$trip->customer ? $trip->customer->name : ""}}</option>
                                                                     @endif
                                                                 @endforeach  
-                                                            @endif 
+                                                         
                                                         </select>
                                                         <small style="color: green">NB: All invoiced trips will appear in orange</small>
                                                     @error('selectedTrip.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -358,7 +382,11 @@
                                                             <select wire:model.debounce.300ms="selectedCurrentProduct.{{$key}}" class="form-control" required>
                                                             <option value="">Select Item</option>
                                                                 @foreach ($products as $product)
-                                                                <option value="{{$product->id}}">{{$product->brand ? $product->brand->name : ""}} {{$product->name}} {{$product->identification_number ? "ID#:".$product->identification_number : ""}}</option> 
+                                                                <option value="{{$product->id}}"
+                                                                     @if(in_array($product->id, $selectedProduct ?? []) && ($selectedProduct[$key] ?? null) != $product->id) 
+                                                                            disabled 
+                                                                        @endif
+                                                                    >{{$product->brand ? $product->brand->name : ""}} {{$product->name}} {{$product->identification_number ? "ID#:".$product->identification_number : ""}}</option> 
                                                                 @endforeach
                                                             </select>
                                                             <small><a href="#" wire:click="showItem({{$value}})"><i class="fa fa-plus-square-o"></i> New Product / Service</a></small> 
@@ -416,7 +444,11 @@
                                                                 <select wire:model.debounce.300ms="selectedProduct.{{ $value }}" class="form-control" required>
                                                                     <option value="">Select Item</option>
                                                                     @foreach ($products as $product)
-                                                                    <option value="{{$product->id}}">{{$product->brand ? $product->brand->name : ""}} {{$product->name}} {{$product->identification_number ? "ID#:".$product->identification_number : ""}}</option> 
+                                                                    <option value="{{$product->id}}"
+                                                                         @if(in_array($product->id, $selectedProduct ?? []) && ($selectedProduct[$value] ?? null) != $product->id) 
+                                                                            disabled 
+                                                                        @endif
+                                                                        >{{$product->brand ? $product->brand->name : ""}} {{$product->name}} {{$product->identification_number ? "ID#:".$product->identification_number : ""}}</option> 
                                                                     @endforeach
                                                                 </select>
                                                                 <small>  <a href="#" wire:click="showItem({{$value}})"><i class="fa fa-plus-square-o"></i> New Product / Service</a></small> 
@@ -487,7 +519,11 @@
                                                                     @php
                                                                         $product = $inventory->product;
                                                                     @endphp 
-                                                                <option value="{{$inventory->id}}">{{$product->product_number}} {{$product->brand ? $product->brand->name : ""}} {{$product->name}} {{$product->identification_number}} | {{$inventory->serial_number ? "SN#: ".$inventory->serial_number : ""}}  </option>
+                                                                <option value="{{$inventory->id}}"
+                                                                     @if(in_array($inventory->id, $selectedInventory ?? []) && ($selectedInventory[$key] ?? null) != $inventory->id) 
+                                                                            disabled 
+                                                                        @endif
+                                                                    >{{$product->product_number}} {{$product->brand ? $product->brand->name : ""}} {{$product->name}} {{$product->identification_number}} | {{$inventory->serial_number ? "SN#: ".$inventory->serial_number : ""}}  </option>
                                                                 @endif 
                                                             @endforeach
                                                     </select>
@@ -570,7 +606,11 @@
                                                                     @php
                                                                         $product = $inventory->product;
                                                                     @endphp 
-                                                                        <option value="{{$inventory->id}}">{{$product->product_number}} {{$product->brand ? $product->brand->name : ""}} {{$product->name}} {{$product->identification_number}} | {{$inventory->serial_number ? "SN#: ".$inventory->serial_number : ""}}  </option>
+                                                                        <option value="{{$inventory->id}}"
+                                                                             @if(in_array($inventory->id, $selectedInventory ?? []) && ($selectedInventory[$value] ?? null) != $inventory->id) 
+                                                                            disabled 
+                                                                        @endif
+                                                                            >{{$product->product_number}} {{$product->brand ? $product->brand->name : ""}} {{$product->name}} {{$product->identification_number}} | {{$inventory->serial_number ? "SN#: ".$inventory->serial_number : ""}}  </option>
                                                                     @endif 
                                                                 @endforeach
                                                         </select>
