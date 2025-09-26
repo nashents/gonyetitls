@@ -1231,6 +1231,7 @@ class Create extends Component
     }
 
     public function getTripsProperty(){
+
             $query = Trip::query()
             ->with('customer:id,name','loading_point:id,name','offloading_point:id,name','currency')
             ->where('authorization','approved')
@@ -1275,9 +1276,7 @@ class Create extends Component
             });
         }
 
-         return $query
-            ->orderByDesc($this->trip_filter)
-            ->paginate(10);
+         return $query->orderByDesc($this->trip_filter)->get();
 
     }
 

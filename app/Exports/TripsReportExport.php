@@ -41,6 +41,19 @@ WithCustomStartCell
     public $to;
     public $trip_filter;
     public $search;
+    protected int $totalTrips = 0;
+    protected array $statusBreakdown = [];     // ['Loaded'=>10, 'Offloaded'=>15, ...]
+    protected array $assetCounts = ['horse'=>0,'vehicle'=>0,'trailer'=>0];
+    protected array $tripTypeBreakdown = [];   // [['name'=>'Local', 'total'=>12], ...]
+    protected ?int $avgTripMinutes = null;     // Start -> Offloaded (minutes)
+    protected float $sumTurnover = 0.0;
+    protected float $sumCogs = 0.0;
+    protected float $sumNet = 0.0;
+    public $department_names;
+    public $role_names;
+    public $user;
+    public $employee;
+    public $company;
    
 
     public function __construct($from, $to, $trip_filter, $search)
@@ -50,220 +63,176 @@ WithCustomStartCell
             $this->to = $to;
             $this->trip_filter = $trip_filter;
             $this->search = $search;
+            $this->user = Auth::user();
+            $this->employee = $this->user->employee;
+            $this->company = $this->employee->company;
+            $departments = $this->employee->departments;
+            foreach($departments as $department){
+                $this->department_names[] = $department->name;
+            }
+            $roles = $this->user->roles;
+            foreach($roles as $role){
+                $this->role_names[] = $role->name;
+            }
+
+            $base = $this->query();
+
+            // Totals
+            $this->totalTrips = (clone $base)->count();
+
+            // By Status
+            $this->statusBreakdown = (clone $base)
+                ->select('trips.trip_status', DB::raw('COUNT(*) as total'))
+                ->groupBy('trips.trip_status')
+                ->pluck('total', 'trips.trip_status')
+                ->toArray();
+
+            // By Asset Type
+            $this->assetCounts['horse']   = (clone $base)->whereNotNull('trips.horse_id')->count();
+            $this->assetCounts['vehicle'] = (clone $base)->whereNotNull('trips.vehicle_id')->count();
+        
+
+            // By Trip Type (top 6)
+            $this->tripTypeBreakdown = (clone $base)
+                ->join('trip_types', 'trip_types.id', '=', 'trips.trip_type_id')
+                ->groupBy('trip_types.name')
+                ->orderByDesc(DB::raw('COUNT(*)'))
+                ->limit(6)
+                ->get(['trip_types.name as name', DB::raw('COUNT(*) as total')])
+                ->toArray();
+
+            // Average Trip Duration (Start -> Offloaded)
+            $this->avgTripMinutes = (int) ((clone $base)
+                ->whereNotNull('trips.start_date')
+                ->whereHas('delivery_note', function ($dq) {
+                    $dq->whereNotNull('offloaded_date');
+                })
+                ->join('delivery_notes', 'delivery_notes.trip_id', '=', 'trips.id')
+                ->whereRaw('TIMESTAMP(delivery_notes.offloaded_date) >= TIMESTAMP(trips.start_date)')
+                ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, TIMESTAMP(trips.start_date), TIMESTAMP(delivery_notes.offloaded_date))) AS avg_minutes')
+                ->value('avg_minutes')
+            );
+
+            // Financial totals
+            $tot = (clone $base)->selectRaw(
+               'SUM(COALESCE(trips.turnover,0)) as sum_turnover,
+                SUM(COALESCE(trips.cost_of_sales,0)) as sum_cogs,
+                SUM(COALESCE(trips.turnover,0) - COALESCE(trips.cost_of_sales,0)) as sum_net'
+            )->first();
+
+            $this->sumTurnover = (float) ($tot->sum_turnover ?? 0);
+            $this->sumCogs     = (float) ($tot->sum_cogs ?? 0);
+            $this->sumNet      = (float) ($tot->sum_net ?? 0);
            
     }
+
     public function query()
     { 
-        if ($this->trip_filter == "offloaded_date") {
-            if (isset($this->from) && isset($this->to)) {
-                if (isset($this->search)) {
-                return Trip::query()->with(['customer:id,name','transporter:id,name', 'trip_type:id,name','currency:id,name,symbol', 'agent:id,name,surname', 'border:id,name','clearing_agent:id,name','driver.employee:id,name,surname','trailers:id,make,model,registration_number','truck_stops:id,name','transporter:id,name','horse:id,registration_number',
-                'horse.horse_make:id,name','horse.horse_model:id,name','loading_point:id,name','offloading_point:id,name','invoice_items','trip_documents'])
-                ->whereHas('delivery_note', function ($query) {
-                    return $query->whereBetween($this->trip_filter,[$this->from, $this->to] );
-                })
-                ->where('trip_number','like', '%'.$this->search.'%')
-                ->orWhere('trip_status','like', '%'.$this->search.'%')
-                ->orWhere('authorization','like', '%'.$this->search.'%')
-                ->orWhereHas('horse', function ($query) {
-                    return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('customer', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('delivery_note', function ($query) {
-                    return $query->where('offloaded_date', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('horse', function ($query) {
-                    return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('horse', function ($query) {
-                    return $query->where('fleet_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('user.employee', function ($query) {
-                    return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('driver.employee', function ($query) {
-                    return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('transporter', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('loading_point', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('offloading_point', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('trip_documents', function ($query) {
-                    return $query->where('document_number', 'like', '%'.$this->search.'%');
-                })
-                ->join('delivery_notes', 'delivery_notes.trip_id', '=', 'trips.id')
-                ->orderBy('delivery_notes.offloaded_date','desc');
-                }else{
-                    return Trip::query()->with(['customer:id,name','transporter:id,name', 'trip_type:id,name','currency:id,name,symbol', 'agent:id,name,surname', 'border:id,name','clearing_agent:id,name','driver.employee:id,name,surname','trailers:id,make,model,registration_number','truck_stops:id,name','transporter:id,name','horse:id,registration_number',
-                    'horse.horse_make:id,name','horse.horse_model:id,name','loading_point:id,name','offloading_point:id,name','invoice_items','trip_documents'])
-                    ->whereHas('delivery_note', function ($query) {
-                        return $query->whereBetween($this->trip_filter,[$this->from, $this->to] );
-                    })
-                    ->join('delivery_notes', 'delivery_notes.trip_id', '=', 'trips.id')
-                    ->orderBy('delivery_notes.offloaded_date','desc');
+
+        $withRelations = [
+        'breakdowns','breakdown_assignments','trip_destinations','trip_expenses','trip_locations','delivery_note',
+        'fuel:id,order_number','transporter:id,name','trip_type:id,name','border:id,name','clearing_agent:id,name',
+        'trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model',
+        'vehicle','vehicle.vehicle_make','vehicle.vehicle_model','trailers:id,make,model,registration_number',
+        'driver.employee:id,name,surname','loading_point:id,name','offloading_point:id,name','route:id,name,rank',
+        'truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name',
+        'commission:id,commission,amount'
+        ];
+        // Base query
+        $trips = Trip::query()->with($withRelations);
+
+        // Common search logic
+        $applySearch = function ($query) {
+        $search = $this->search;
+
+        $query->where(function ($q) use ($search) {
+            $q->where('trip_number', 'like', "%$search%")
+            ->orWhere('trip_status', 'like', "%$search%")
+            ->orWhere('trip_ref', 'like', "%$search%")
+            ->orWhere('authorization', 'like', "%$search%")
+            ->orWhereHas('horse', function ($q2) use ($search) {
+                $q2->where('registration_number', 'like', "%$search%")
+                    ->orWhere('fleet_number', 'like', "%$search%");
+            })
+            ->orWhereHas('trip_type', fn($q2) => $q2->where('name', 'like', "%$search%"))
+            ->orWhereHas('customer', fn($q2) => $q2->where('name', 'like', "%$search%"))
+            ->orWhereHas('cargo', fn($q2) => $q2->where('name', 'like', "%$search%"))
+            ->orWhereRaw("DATE_FORMAT(start_date, '%Y-%m-%d') LIKE ?", ["%$search%"])
+            ->orWhereRaw("DATE_FORMAT(end_date, '%Y-%m-%d') LIKE ?", ["%$search%"])
+            ->orWhereHas('delivery_note', fn($q2) => 
+                $q2->whereRaw("DATE_FORMAT(offloaded_date, '%Y-%m-%d') LIKE ?", ["%$search%"])
+            )
+            ->orWhereHas('user.employee', fn($q2) => 
+                $q2->where(DB::raw("concat(name, ' ', surname)"), 'like', "%$search%")
+            )
+            ->orWhereHas('driver.employee', fn($q2) => 
+                $q2->where(DB::raw("concat(name, ' ', surname)"), 'like', "%$search%")
+            )
+            ->orWhereHas('transporter', fn($q2) => $q2->where('name', 'like', "%$search%"))
+            ->orWhereHas('vehicle', function ($q2) use ($search) {
+                $q2->where('registration_number', 'like', "%$search%")
+                    ->orWhere('fleet_number', 'like', "%$search%");
+            })
+            ->orWhereHas('trailers', function ($q2) use ($search) {
+                $q2->where('registration_number', 'like', "%$search%")
+                    ->orWhere('fleet_number', 'like', "%$search%");
+            })
+            ->orWhereHas('loading_point', fn($q2) => $q2->where('name', 'like', "%$search%"))
+            ->orWhereHas('trip_documents', fn($q2) => $q2->where('document_number', 'like', "%$search%"))
+            ->orWhereHas('offloading_point', fn($q2) => $q2->where('name', 'like', "%$search%"))
+            ->orWhereHas('loading_point', fn($q2) => $q2->where('name', 'like', "%$search%"));
+            });
+        };
+
+        // Handle offloaded_date case
+        if ($this->trip_filter === "offloaded_date") {
+            
+            $trips->whereHas('delivery_note', function ($q) {
+                if (filled($this->from) && filled($this->to)) {
+                    $q->whereBetween('offloaded_date', [$this->from, $this->to]);
+                } else {
+                    $q->whereMonth('offloaded_date', date('m'))
+                    ->whereYear('offloaded_date', date('Y'));
                 }
-               
-            }elseif ($this->search) {
-                return Trip::query()->with(['customer:id,name','transporter:id,name', 'trip_type:id,name','currency:id,name,symbol', 'agent:id,name,surname', 'border:id,name','clearing_agent:id,name','driver.employee:id,name,surname','trailers:id,make,model,registration_number','truck_stops:id,name','transporter:id,name','horse:id,registration_number',
-                'horse.horse_make:id,name','horse.horse_model:id,name','loading_point:id,name','offloading_point:id,name','invoice_items','trip_documents'])
-                ->whereHas('delivery_note', function ($query) {
-                    return $query->whereMonth($this->trip_filter, date('m'))->whereYear($this->trip_filter, date('Y'));
-                })
-                ->where('trip_number','like', '%'.$this->search.'%')
-                ->orWhere('trip_status','like', '%'.$this->search.'%')
-                ->orWhere('authorization','like', '%'.$this->search.'%')
-                ->orWhereHas('horse', function ($query) {
-                    return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('customer', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('delivery_note', function ($query) {
-                    return $query->where('offloaded_date', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('horse', function ($query) {
-                    return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('horse', function ($query) {
-                    return $query->where('fleet_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('user.employee', function ($query) {
-                    return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('driver.employee', function ($query) {
-                    return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('transporter', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('loading_point', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('offloading_point', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('trip_documents', function ($query) {
-                    return $query->where('document_number', 'like', '%'.$this->search.'%');
-                })
-                ->join('delivery_notes', 'delivery_notes.trip_id', '=', 'trips.id')
-                ->orderBy('delivery_notes.offloaded_date','desc');
+            });
+
+            if (filled($this->search)) {
+                $trips->where(function ($q) use ($applySearch) {
+                    $applySearch($q);
+                });
             }
-            else {
-                return Trip::query()->with(['customer:id,name','transporter:id,name', 'trip_type:id,name','currency:id,name,symbol', 'agent:id,name,surname', 'border:id,name','clearing_agent:id,name','driver.employee:id,name,surname','trailers:id,make,model,registration_number','truck_stops:id,name','transporter:id,name','horse:id,registration_number',
-                'horse.horse_make:id,name','horse.horse_model:id,name','loading_point:id,name','offloading_point:id,name','invoice_items','trip_documents'])
-                ->whereHas('delivery_note', function ($query) {
-                    return $query->whereMonth($this->trip_filter, date('m'))->whereYear($this->trip_filter, date('Y'));
-                })
-                ->join('delivery_notes', 'delivery_notes.trip_id', '=', 'trips.id')
-                ->orderBy('delivery_notes.offloaded_date','desc');
+
+            // Join only for sorting
+            $trips->join('delivery_notes', 'delivery_notes.trip_id', '=', 'trips.id')
+                ->orderBy('delivery_notes.offloaded_date', 'desc');
+
+        } else {
+            // Other trip_filter cases
+            if (filled($this->from) && filled($this->to)) {
+                $trips->whereBetween("trips.{$this->trip_filter}", [$this->from, $this->to]);
+            } else {
+                $trips->whereMonth("trips.{$this->trip_filter}", date('m'))
+                    ->whereYear("trips.{$this->trip_filter}", date('Y'));
             }
-        }else{
+
+            if (filled($this->search)) {
+                $trips->where(function ($q) use ($applySearch) {
+                    $applySearch($q);
+                });
+            }
+
+            $trips->orderBy("trips.{$this->trip_filter}", 'desc');
+        }
 
 
-            // normal starts here 
+        return $trips;
 
-            if (isset($this->from) && isset($this->to)) {
-                if (isset($this->search)) {
-                return Trip::query()->with(['customer:id,name','transporter:id,name', 'trip_type:id,name','currency:id,name,symbol', 'agent:id,name,surname', 'border:id,name','clearing_agent:id,name','driver.employee:id,name,surname','trailers:id,make,model,registration_number','truck_stops:id,name','transporter:id,name','horse:id,registration_number',
-                'horse.horse_make:id,name','horse.horse_model:id,name','loading_point:id,name','offloading_point:id,name','invoice_items','trip_documents'])->whereBetween($this->trip_filter,[$this->from, $this->to] )->where('trip_number','like', '%'.$this->search.'%')
-                ->orWhere('trip_status','like', '%'.$this->search.'%')
-                ->orWhere('authorization','like', '%'.$this->search.'%')
-                ->orWhereHas('horse', function ($query) {
-                    return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('customer', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('delivery_note', function ($query) {
-                    return $query->where('offloaded_date', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('horse', function ($query) {
-                    return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('horse', function ($query) {
-                    return $query->where('fleet_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('user.employee', function ($query) {
-                    return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('driver.employee', function ($query) {
-                    return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('transporter', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('loading_point', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('offloading_point', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('trip_documents', function ($query) {
-                    return $query->where('document_number', 'like', '%'.$this->search.'%');
-                })
-                ->orderBy($this->trip_filter,'desc');
-                }else{
-                    return Trip::query()->with(['customer:id,name','transporter:id,name', 'trip_type:id,name','currency:id,name,symbol', 'agent:id,name,surname', 'border:id,name','clearing_agent:id,name','driver.employee:id,name,surname','trailers:id,make,model,registration_number','truck_stops:id,name','transporter:id,name','horse:id,registration_number',
-                    'horse.horse_make:id,name','horse.horse_model:id,name','loading_point:id,name','offloading_point:id,name','invoice_items','trip_documents'])->whereBetween($this->trip_filter,[$this->from, $this->to] )->orderBy($this->trip_filter,'desc');
-                }
-               
-            }elseif ($this->search) {
-                return Trip::query()->with(['customer:id,name','transporter:id,name', 'trip_type:id,name','currency:id,name,symbol', 'agent:id,name,surname', 'border:id,name','clearing_agent:id,name','driver.employee:id,name,surname','trailers:id,make,model,registration_number','truck_stops:id,name','transporter:id,name','horse:id,registration_number',
-                'horse.horse_make:id,name','horse.horse_model:id,name','loading_point:id,name','offloading_point:id,name','invoice_items','trip_documents'])->where('trip_number','like', '%'.$this->search.'%')
-                ->orWhere('trip_status','like', '%'.$this->search.'%')
-                ->orWhere('authorization','like', '%'.$this->search.'%')
-                ->orWhereHas('horse', function ($query) {
-                    return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('customer', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('delivery_note', function ($query) {
-                    return $query->where('offloaded_date', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('horse', function ($query) {
-                    return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('horse', function ($query) {
-                    return $query->where('fleet_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('user.employee', function ($query) {
-                    return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('driver.employee', function ($query) {
-                    return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('transporter', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('loading_point', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('offloading_point', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('trip_documents', function ($query) {
-                    return $query->where('document_number', 'like', '%'.$this->search.'%');
-                })
-                ->orderBy($this->trip_filter,'desc');
-            }
-            else {
-                return Trip::query()->with(['customer:id,name','transporter:id,name', 'trip_type:id,name','currency:id,name,symbol', 'agent:id,name,surname', 'border:id,name','clearing_agent:id,name','driver.employee:id,name,surname','trailers:id,make,model,registration_number','truck_stops:id,name','transporter:id,name','horse:id,registration_number',
-                'horse.horse_make:id,name','horse.horse_model:id,name','loading_point:id,name','offloading_point:id,name','invoice_items','trip_documents'])->whereMonth('created_at', date('m'))
-                ->whereYear('created_at', date('Y'))->orderBy($this->trip_filter,'desc');
-            }
+
         }
 
        
        
-    }
+    
 
 
     public function map($trip): array{
@@ -798,23 +767,101 @@ WithCustomStartCell
                 'Comments',
             ];
     }
-    public function registerEvents(): array{
-        return[
-            AfterSheet::class    => function(AfterSheet $event) {
-                $event->sheet->getStyle('A7:BX7')->applyFromArray([
-                    'font' => [
-                        'bold' => true
-                    ],
+    public function registerEvents(): array
+    {
+        // Build inline text for status & trip types
+        $statusLine = 'None';
+        if (!empty($this->statusBreakdown)) {
+            $pairs = [];
+            foreach ($this->statusBreakdown as $status => $count) {
+                $pairs[] = ($status ?? 'Unknown') . ' ' . (int)$count;
+            }
+            $statusLine = implode(', ', $pairs);
+        }
+
+        $tripTypeLine = 'None';
+        if (!empty($this->tripTypeBreakdown)) {
+            $pairs = array_map(fn($t) => ($t['name'] ?? 'Unknown') . ' ' . ($t['total'] ?? 0), $this->tripTypeBreakdown);
+            $tripTypeLine = implode(', ', $pairs);
+        }
+
+        $avgTrip = $this->avgTripMinutes ? $this->formatMinutes($this->avgTripMinutes) : 'N/A';
+
+        return [
+            AfterSheet::class => function (AfterSheet $event) use ($statusLine, $tripTypeLine, $avgTrip) {
+                $sheet = $event->sheet->getDelegate();
+
+                // 1) Headings at row 15 (A..BX based on your headers)
+                $sheet->getStyle('A18:BX18')->applyFromArray([
+                    'font' => ['bold' => true],
                     'borders' => [
                         'outline' => [
                             'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THICK,
                             'color' => ['argb' => 'FFFF0000'],
                         ],
-                    ]
+                    ],
                 ]);
+
+                // 2) Summary under the logo starting at row 7
+                $row = 7;
+                $sheet->setCellValue("A{$row}", 'Trips Summary');
+                $sheet->mergeCells("A{$row}:BX{$row}");
+                $sheet->getStyle("A{$row}")->applyFromArray(['font' => ['bold' => true, 'size' => 14]]);
+                $row++;
+
+                // C:D block (labels/values)
+                $sheet->setCellValue("C{$row}", 'Total Trips');        $sheet->setCellValue("D{$row}", $this->totalTrips); $row++;
+                $sheet->setCellValue("C{$row}", 'By Status');          $sheet->setCellValue("D{$row}", $statusLine);       $row++;
+                $sheet->setCellValue("C{$row}", 'Avg Trip Duration');  $sheet->setCellValue("D{$row}", $avgTrip);          $row++;
+                $sheet->setCellValue("C{$row}", 'By Asset Type');      
+                $sheet->setCellValue(
+                    "D{$row}",
+                    sprintf('Horse %d, Vehicle %d, Trailer %d',
+                        $this->assetCounts['horse'] ?? 0,
+                        $this->assetCounts['vehicle'] ?? 0,
+                        $this->assetCounts['trailer'] ?? 0
+                    )
+                );                                                                                            $row++;
+                $sheet->setCellValue("C{$row}", 'By Trip Type');       $sheet->setCellValue("D{$row}", $tripTypeLine);     $row++;
+                
+                if(Auth::user()->employee->company->rates_managed_by_finance == True){
+                     if (in_array('Finance', $this->department_names) ){
+                        $sheet->setCellValue("C{$row}", 'Total Turnover');     $sheet->setCellValue("D{$row}", number_format($this->sumTurnover, 2)); $row++;
+                        $sheet->setCellValue("C{$row}", 'Cost of Sales');      $sheet->setCellValue("D{$row}", number_format($this->sumCogs, 2));     $row++;
+                        $sheet->setCellValue("C{$row}", 'Net Profit');         $sheet->setCellValue("D{$row}", number_format($this->sumNet, 2));      $row++;
+                     }
+                }
+               
+                // Style the C:D summary block + left align D
+                $sheet->getStyle("C8:D{$row}")->applyFromArray([
+                    'font' => ['bold' => true],
+                    'fill' => [
+                        'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                        'startColor' => ['rgb' => 'FCE4D6'],
+                    ],
+                ]);
+                $sheet->getStyle("D8:D{$row}")
+                    ->getAlignment()
+                    ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
             },
         ];
+    }
 
+
+    // helper from Bookings export — reuse here too
+    protected function formatMinutes(int $minutes): string
+    {
+        if ($minutes <= 0) return '0m';
+        $days = intdiv($minutes, 1440);
+        $minutes -= $days * 1440;
+        $hours = intdiv($minutes, 60);
+        $minutes -= $hours * 60;
+
+        $parts = [];
+        if ($days)  $parts[] = "{$days}d";
+        if ($hours) $parts[] = "{$hours}h";
+        if ($minutes) $parts[] = "{$minutes}m";
+        return implode(' ', $parts);
     }
 
     public function drawings()
@@ -835,6 +882,6 @@ WithCustomStartCell
     }
 
     public function startCell(): string{
-        return 'A7';
+        return 'A18';
     }
 }

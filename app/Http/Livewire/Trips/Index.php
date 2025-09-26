@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Trips;
 
+use App\Models\Bill;
 use App\Models\Trip;
 use App\Models\Horse;
 use App\Models\Driver;

@@ -18,6 +18,7 @@ use App\Models\InvoiceItem;
 use App\Models\Measurement;
 use App\Models\ExchangeRate;
 use App\Models\TripDocument;
+use App\Models\InventoryDispatch;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
@@ -33,7 +34,7 @@ class Edit extends Component
 
     public $inventories;
     public $selectedInventory = [];
-    public $trips;
+    // public $trips;
     public $selectedTrip = [];
 
     public $fiscalize_invoice;
@@ -58,6 +59,7 @@ class Edit extends Component
     public $customers;
     public $item_key;
     public $item_status;
+    public $invoice_items;
 
         //discount vars
         public $discount_name;
@@ -82,6 +84,7 @@ class Edit extends Component
     public $current_tax_rate;
     public $current_hs_code;
     public $current_tax_id;
+    public $current_subtotal;
   
     public $recorded_payments;
     public $exchange_rate;
@@ -127,6 +130,8 @@ class Edit extends Component
     public $expense_accounts;
     public $income_account_id;
     public $expense_account_id;
+    public $invoice;
+    public $discount;
     public $sell = True;
     public $buy = False;
 
@@ -160,6 +165,7 @@ class Edit extends Component
     public $city;
     public $suburb;
     public $street_address;
+    public $invoice_item;
 
     // bank acc vars
 
@@ -1422,6 +1428,56 @@ class Edit extends Component
             }
         }
     }
+
+        public function getTripsProperty(){
+
+            $query = Trip::query()
+            ->with('customer:id,name','loading_point:id,name','offloading_point:id,name','currency')
+            ->where('authorization','approved')
+            ->where('trip_status','!=', 'Cancelled')
+            ->where('currency_id', $this->selectedCurrency);
+
+                 // Date window
+            if ($this->from && $this->to ) {
+                $from = Carbon::parse($this->from)->startOfDay();
+                $to   = Carbon::parse($this->to)->endOfDay();
+                $query->whereBetween($this->trip_filter, [$from, $to]);
+            } else {
+                $query->whereBetween($this->trip_filter, [
+                    now()->startOfMonth(),
+                    now()->endOfMonth(),
+                ]);
+            }
+
+            if($this->selectedCustomer){
+                $query->where('customer_id', $this->selectedCustomer);
+            }
+
+            if (filled($this->search)) {
+            $term = '%'.$this->search.'%';
+
+            $query->where(function ($q) use ($term) {
+                $q->where('trip_number', 'like', $term)
+                ->orWhere('start_date', 'like', $term)
+                ->orWhere('turnover', 'like', $term)
+                ->orWhere('freight', 'like', $term)
+                ->orWhereHas('horse', function ($qq) use ($term) {
+                return $qq->where('registration_number', 'like', $term)
+                        ->where('fleet_number', 'like', $term);
+                })
+                ->orWhereHas('vehicle', function ($qq) use ($term)  {
+                return $qq->where('registration_number', 'like', $term)
+                            ->where('fleet_number', 'like', $term);
+                })
+                ->orWhereHas('trip_documents', function ($qq) use ($term) {
+                return $qq->where('document_number', 'like', $term);
+                });
+            });
+        }
+
+         return $query->orderByDesc($this->trip_filter)->get();
+
+    }
     
     public function render()
     {
@@ -1448,64 +1504,7 @@ class Edit extends Component
         $this->bank_accounts = BankAccount::where('company_id',$this->company->id)->orderBy('name','asc')->get();
         $this->products = Product::where('sell',True)->orderBy('name','asc')->get();
 
-        if (isset($this->from) && isset($this->to)) {
-            if (isset($this->search)) {
-                $this->trips = Trip::query()->with('customer:id,name','loading_point:id,name','offloading_point:id,name','currency')->where('authorization','approved')->whereBetween($this->trip_filter,[$this->from, $this->to] )
-                            ->where('authorization', 'approved')
-                            ->where('trip_status','!=', 'Cancelled')
-                            ->where('trip_number', 'like', '%'.$this->search.'%')
-                            ->orWhere('start_date', 'like', '%'.$this->search.'%')
-                            ->orWhere('turnover', 'like', '%'.$this->search.'%')
-                            ->orWhere('freight', 'like', '%'.$this->search.'%')
-                            ->orWhereHas('customer', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                            })
-                            ->orWhereHas('horse', function ($query) {
-                            return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                            })
-                            ->orWhereHas('vehicle', function ($query) {
-                            return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                            })
-                            ->orWhereHas('trip_documents', function ($query) {
-                            return $query->where('document_number', 'like', '%'.$this->search.'%');
-                            })
-                            ->orWhereHas('currency', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                            })->orderby($this->trip_filter,'desc')->get();
-            }else {
-                $this->trips = Trip::query()->with('customer:id,name','loading_point:id,name','offloading_point:id,name','currency')->where('trip_status','!=', 'Cancelled')->where('authorization','approved')->whereBetween($this->trip_filter,[$this->from, $this->to] )->orderBy($this->trip_filter,'desc')->get();
-               
-            }
-           
-        }
-        elseif (isset($this->search)) {
-         
-            $this->trips = Trip::query()->with('customer','loading_point','offloading_point','currency')
-                ->where('authorization', 'approved')
-                ->where('trip_status','!=', 'Cancelled')
-                ->where('trip_number', 'like', '%'.$this->search.'%')
-                ->orWhere('start_date', 'like', '%'.$this->search.'%')
-                ->orWhere('turnover', 'like', '%'.$this->search.'%')
-                ->orWhere('freight', 'like', '%'.$this->search.'%')
-                ->orWhereHas('customer', function ($query) {
-                return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('trip_documents', function ($query) {
-                    return $query->where('document_number', 'like', '%'.$this->search.'%');
-                    })
-                ->orWhereHas('horse', function ($query) {
-                return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('vehicle', function ($query) {
-                    return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                    })
-                ->orWhereHas('currency', function ($query) {
-                return $query->where('name', 'like', '%'.$this->search.'%');
-                })->orderby($this->trip_filter,'desc')->get();
-        }
-        else{
-            $this->trips = Trip::query()->with('customer:id,name','loading_point:id,name','offloading_point:id,name','currency')->whereYear($this->trip_filter,date('Y'))->where('trip_status','!=', 'Cancelled')->where('authorization','approved')->orderBy($this->trip_filter,'desc')->get();
-        }
+    
         $this->invoice_items = InvoiceItem::where('invoice_id',$this->invoice_id)->get();
 
         
