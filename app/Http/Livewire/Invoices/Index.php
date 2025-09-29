@@ -650,7 +650,7 @@ class Index extends Component
         $this->dispatchBrowserEvent('show-accrualModal');
     }
 
-    public function updateAccrualBal(){
+    public function updateAccrualBalance(){
         $invoice = Invoice::find($this->invoice_id);
         $invoice->accrual_balance = $this->accrual_balance;
         $invoice->update();

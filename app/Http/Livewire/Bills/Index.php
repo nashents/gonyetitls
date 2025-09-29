@@ -626,6 +626,25 @@ class Index extends Component
     });
     }
 
+    public function showAccrual($id){
+        $bill = Bill::find($id);
+        $this->bill_id = $id ; 
+        $this->accrual_balance = $bill->accrual_balance;
+        $this->dispatchBrowserEvent('show-accrualModal');
+    }
+
+    public function updateAccrualBalance(){
+        $bill = Bill::find($this->bill_id);
+        $bill->accrual_balance = $this->accrual_balance;
+        $bill->update();
+
+        $this->dispatchBrowserEvent('hide-accrualModal');
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Accrual Balance Updated Successfully!!"
+        ]);
+    }
+
     
    
     public function updatingSearch()
