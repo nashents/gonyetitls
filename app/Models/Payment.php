@@ -42,8 +42,8 @@ class Payment extends Model implements Auditable
     public function invoice(){
         return $this->belongsTo('App\Models\Invoice');
     }
-    public function invoice_payment(){
-        return $this->hasOne('App\Models\InvoicePayment');
+    public function invoice_payments(){
+        return $this->hasMany('App\Models\InvoicePayment');
     }
     public function bill(){
         return $this->belongsTo('App\Models\Bill');

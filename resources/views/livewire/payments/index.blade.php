@@ -100,8 +100,8 @@
                                         </th>
                                         <th class="th-sm">Amt
                                         </th>
-                                        {{-- <th class="th-sm">Accrual Bal
-                                        </th> --}}
+                                        <th class="th-sm">Accrual Bal
+                                        </th>
                                         <th class="th-sm">Actions
                                         </th>
 
@@ -173,11 +173,11 @@
                                                 <small style="color: green">{{ Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->name : "" }} {{ Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->symbol : "" }}{{ number_format($payment->exchange_amount,2)}} @ {{$payment->exchange_rate}}</small>
                                             @endif
                                         </td>
-                                        {{-- <td>
+                                        <td>
                                             @if ($payment->accrual_balance)
-                                            {{$payment->currency ? $payment->currency->symbol : ""}}{{number_format($payment->accrual_balance,2)}}
+                                            {{$payment->currency ? $payment->currency->symbol : ""}} {{number_format($payment->accrual_balance,2)}}
                                             @endif
-                                        </td> --}}
+                                        </td>
                                          <td class="w-10 line-height-35 table-dropdown">
                                             <div class="dropdown">
                                                 <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

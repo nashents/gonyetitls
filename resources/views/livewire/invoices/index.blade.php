@@ -179,14 +179,16 @@
                                        
                                         {{-- @if ($invoice->balance) --}}
                                         {{$invoice->currency ? $invoice->currency->symbol : ""}}{{number_format($invoice->balance,2)}}
+                                        
+                                        @if ($invoice->accrual_balance)
+                                            <br>
+                                            <small>
+                                                <strong>Accrual Bal: </strong>  {{number_format($invoice->accrual_balance,2)}}
+                                            </small>
+                                        @endif
+                                       
                                         {{-- @endif --}}
                                     </td>
-                                    {{-- <td>
-                                       
-                                        @if ($invoice->accrual_balance)
-                                        {{$invoice->currency ? $invoice->currency->symbol : ""}}{{number_format($invoice->accrual_balance,2)}}
-                                        @endif
-                                    </td> --}}
                                     <td><span class="badge bg-{{($invoice->authorization == 'approved') ? 'success' : (($invoice->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($invoice->authorization == 'approved') ? 'approved' : (($invoice->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
                                    
                                     <td class="w-10 line-height-35 table-dropdown">
@@ -251,7 +253,7 @@
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fas fa-copy"></i> Update all invoices<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                 </div>
-                <form wire:submit.prevent="createInvoices()" >
+                <form wire:submit.prevent="bulkUpdateInvoices()" >
                 <div class="modal-body">
                     <p>Update all invoices to the current and accurate balances</p>
                 </div>
@@ -607,7 +609,6 @@
                         </div>
                        
                     </div>
-                  
                         @if (isset($selected_customer) && isset($selected_currency) && isset($last_payment) && $last_payment->drawdown_balance > 0 )
                             <blockquote>
                                 {{$selected_customer->name}} has {{$selected_currency->name}} {{$selected_currency->symbol}}{{number_format($last_payment->drawdown_balance ? $last_payment->drawdown_balance : 0,2)}}

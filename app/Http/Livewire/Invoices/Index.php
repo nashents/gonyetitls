@@ -281,14 +281,23 @@ class Index extends Component
 
          DB::transaction(function () {
 
+        $this->amount_paid = 0;
+        $this->payment_drawdown_balance = 0;
+
         if (isset($this->drawdown_amount) && isset($this->invoice_drawdown_balance) && ($this->drawdown_amount >= $this->invoice_drawdown_balance)) {
             $this->payment_drawdown_balance = $this->drawdown_amount - $this->invoice_drawdown_balance;
             $this->invoice_drawdown_balance = 0;
             $this->amount_paid = $this->invoice_drawdown_balance;
-        }else{
+        }elseif(isset($this->drawdown_amount) && isset($this->invoice_drawdown_balance) && ($this->drawdown_amount <= $this->invoice_drawdown_balance)){
             $this->invoice_drawdown_balance = $this->invoice_drawdown_balance - $this->drawdown_amount;
             $this->payment_drawdown_balance = 0;
             $this->amount_paid = $this->drawdown_amount;
+        }else{
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'error',
+                'message'=>"Invalid Drawdown Amount!!"
+            ]);
+            return;
         }
 
         $payment = Payment::find($this->last_payment->id);
@@ -302,12 +311,10 @@ class Index extends Component
         $invoice_payment->customer_id = $invoice->customer_id;
         $invoice_payment->payment_id =$this->last_payment->id;
         $invoice_payment->currency_id = $invoice->currency_id;
-        $invoice_payment->amount = $this->amount_paid;
+        $invoice_payment->amount = $this->amount_paid;        
         $invoice_payment->save();
       
     
-
-        $invoice = Invoice::find($this->selectedInvoice);
         $invoice->balance = $this->invoice_drawdown_balance;
         if ($this->invoice_drawdown_balance <= 0) {
             $invoice->status = "Paid";
@@ -322,7 +329,7 @@ class Index extends Component
             'message'=>"Payment Drawdown Effected Successfully!!"
         ]);
 
-    });
+        });
        
     }
 
@@ -830,6 +837,7 @@ class Index extends Component
 
     public function render()
     {
+
         if (isset($this->selectedCustomer) && isset($this->selectedCurrency)) {
         
             $this->last_payment = Payment::where('customer_id',$this->selectedCustomer)->where('currency_id',$this->selectedCurrency)->where('transaction_category', "Customer Deposits")->orderBy('created_at','desc')->first();
@@ -842,6 +850,7 @@ class Index extends Component
             $this->unpaid_invoices = Invoice::where('customer_id',$this->selectedCustomer)
                                         ->where('currency_id',$this->selectedCurrency)
                                         ->where('authorization','approved')
+                                        ->doesntHave('creditNotes')
                                         ->where('status','!=','Paid')
                                         ->orderBy($this->invoice_filter,'desc')->get();
         }

@@ -226,7 +226,9 @@
                                                                 ->get()->sum('balance');
 
                                        $invoiced = App\Models\Invoice::where('customer_id',$customer->id)->where('authorization','approved')->where('currency_id',$currency->id)->where('date','>=',$from)->where('date','<=',$to)->whereRaw('total REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->get()->sum('total');
+                                       
                                        $paid = App\Models\Payment::where('customer_id',$customer->id)->where('currency_id',$currency->id)->whereBetween('date',[$from, $to])->whereRaw('amount REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->get()->sum('amount');
+                                    
                                     @endphp
                                     
                                     <div class="date" style="padding-bottom: 3px" ><strong>Opening Balance({{$currency->name}}) on {{ date('F j, Y', strtotime($from)) }}</strong> {{$currency->symbol}}{{ number_format($opening_balance ? $opening_balance->accrual : 0,2) }}</div>
@@ -288,9 +290,15 @@
                                                 @elseif ($result->transaction_type === 'payment')
                                                 <a href="{{ route('payments.show',$payment->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">{{ $result->number }}</a> Payment  made for 
                                                 @if (isset($payment->invoice))
-                                                <a href="{{ route('invoices.show',$payment->invoice->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Invoice# {{ $payment->invoice ? $payment->invoice->invoice_number : "" }} </a> 
-                                                @elseif (isset($payment->invoice_payment))
-                                                <a href="{{ route('invoices.show',$payment->invoice_payment->invoice->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Invoice# {{ $payment->invoice_payment->invoice ? $payment->invoice_payment->invoice->invoice_number : "" }} </a> 
+                                                    <a href="{{ route('invoices.show',$payment->invoice->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Invoice# {{ $payment->invoice ? $payment->invoice->invoice_number : "" }} </a> 
+                                                @else
+                                                    @foreach ($payment->invoice_payments as $invoice_payment)
+                                                        <a href="{{ route('invoices.show',$invoice_payment->invoice->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Invoice# {{ $invoice_payment->invoice ? $invoice_payment->invoice->invoice_number : "" }} </a> 
+                                                        @if (!$loop->last)
+                                                            ,
+                                                        @endif
+                                                        
+                                                    @endforeach
                                                 @endif
                                               
                                                     <br>
@@ -308,7 +316,7 @@
                             
                               
                                 <tr>
-                                    <td colspan="2"  class="text-center"><strong>{{ date('F j, Y', strtotime($from)) }}</strong></td>
+                                    <td colspan="2"  class="text-center"><strong>{{ date('F j, Y', strtotime($to)) }}</strong></td>
                                     <td colspan="3" class="text-center"><strong>Closing Balance {{ $currency->name }}</strong></td>
                                     <td  class="text-center"><strong>{{ $currency->symbol }}{{  number_format($closing_balance ? $closing_balance : 0,2) }}</strong></td>
                                 </tr>
