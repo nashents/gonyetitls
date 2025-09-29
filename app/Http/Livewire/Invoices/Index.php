@@ -300,21 +300,63 @@ class Index extends Component
             return;
         }
 
-        $payment = Payment::find($this->last_payment->id);
-        $payment->drawdown_balance = $this->payment_drawdown_balance;
-        $payment->update();
-        
+       
+
         $invoice = Invoice::find($this->selectedInvoice); 
 
-        $invoice_payment = new InvoicePayment;
-        $invoice_payment->invoice_id = $this->selectedInvoice;
-        $invoice_payment->customer_id = $invoice->customer_id;
-        $invoice_payment->payment_id =$this->last_payment->id;
-        $invoice_payment->currency_id = $invoice->currency_id;
-        $invoice_payment->amount = $this->amount_paid;        
-        $invoice_payment->save();
-      
-    
+        $payments = DB::table('payments')
+            ->select([
+                'customer_id',
+                'currency_id',
+                DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
+                'payments.date',
+                'payments.created_at',
+                DB::raw("'payment' AS source"),
+                'id',
+            ])
+            ->where('customer_id', $invoice->customer_id)
+            ->where('currency_id', $invoice->currency_id)
+            // ->whereNotNull('invoice_id') // Ensure the payment is linked to an invoice
+        ;
+
+        // 2) Build invoices subquery
+        $invoices = DB::table('invoices')
+            ->select([
+                'customer_id',
+                'currency_id',
+                DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
+                'invoices.date',
+                'invoices.created_at',
+                DB::raw("'invoice' AS source"),
+                'id',
+            ])
+            ->where('authorization','approved')
+            ->where('customer_id', $invoice->customer_id)
+            ->where('currency_id', $invoice->currency_id);
+
+        // 3) Union and pick the most recent row
+        $latest = DB::query()
+            ->fromSub($payments->unionAll($invoices), 'u')
+            ->orderByDesc('date')        // ✅ business date first
+            ->orderByDesc('created_at')  // ✅ system timestamp next
+            ->orderByRaw("CASE WHEN source = 'payment' THEN 1 ELSE 0 END DESC") // ✅ prefer payments over bills
+            ->first();
+        
+        $payment = Payment::find($this->last_payment->id);
+        $payment->drawdown_balance = $this->payment_drawdown_balance;
+        
+
+        if ($latest && is_numeric($latest->accrual_balance) && is_numeric($this->amount_paid)) {
+            // Use bc math if you care about money precision
+            $payment->accrual_balance = (float) bcsub(
+                (string) $latest->accrual_balance,
+                (string) $this->amount_paid,
+                2
+            );
+        }
+
+        $payment->update();
+        
         $invoice->balance = $this->invoice_drawdown_balance;
         if ($this->invoice_drawdown_balance <= 0) {
             $invoice->status = "Paid";
@@ -601,6 +643,25 @@ class Index extends Component
         $this->dispatchBrowserEvent('show-paymentModal');
     }
 
+    public function showAccrual($id){
+        $invoice = Invoice::find($id);
+        $this->invoice_id = $id ; 
+        $this->accrual_balance = $invoice->accrual_balance;
+        $this->dispatchBrowserEvent('show-accrualModal');
+    }
+
+    public function updateAccrualBal(){
+        $invoice = Invoice::find($this->invoice_id);
+        $invoice->accrual_balance = $this->accrual_balance;
+        $invoice->update();
+
+        $this->dispatchBrowserEvent('hide-accrualModal');
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Accrual Balance Updated Successfully!!"
+        ]);
+    }
+
     public function recordPayment(){
 
         DB::transaction(function () {
@@ -686,7 +747,7 @@ class Index extends Component
             ])
             ->where('customer_id', $this->invoice->customer_id)
             ->where('currency_id', $this->invoice->currency_id)
-            ->whereNotNull('invoice_id') // Ensure the payment is linked to an invoice
+            // ->whereNotNull('invoice_id') // Ensure the payment is linked to an invoice
         ;
 
         // 2) Build invoices subquery

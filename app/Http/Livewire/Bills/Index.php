@@ -280,11 +280,61 @@ class Index extends Component
             $this->amount_paid = $this->drawdown_amount;
         }
 
-        $payment = Payment::find($this->last_payment->id);
-        $payment->drawdown_balance = $this->payment_drawdown_balance;
-        $payment->update();
+      
         
         $bill = Bill::find($this->selectedBill); 
+
+          $payments = DB::table('payments')
+            ->select([
+                'vendor_id',
+                'currency_id',
+                DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
+                'payments.date',
+                'payments.created_at',
+                DB::raw("'payment' AS source"),
+                'id',
+            ])
+            ->where('vendor_id', $this->bill->vendor_id)
+            ->where('currency_id', $this->bill->currency_id)
+            // ->whereNotNull('bill_id') // Ensure the payment is linked to an bill
+        ;
+
+        // 2) Build bills subquery
+        $bills = DB::table('bills')
+            ->select([
+                'vendor_id',
+                'currency_id',
+                DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
+                DB::raw('bills.bill_date AS date'), // ✅ alias to "date"
+                'bills.created_at',
+                DB::raw("'bill' AS source"),
+                'id',
+            ])
+            ->where('vendor_id', $this->bill->vendor_id)
+            ->where('currency_id', $this->bill->currency_id);
+
+        // 3) Union and pick the most recent row
+        $latest = DB::query()
+            ->fromSub($payments->unionAll($bills), 'u')
+            ->orderByDesc('date')        // ✅ business date first
+            ->orderByDesc('created_at')  // ✅ system timestamp next
+            ->orderByRaw("CASE WHEN source = 'payment' THEN 1 ELSE 0 END DESC") // ✅ prefer payments over bills
+            ->first();
+
+        $payment = Payment::find($this->last_payment->id);
+        $payment->drawdown_balance = $this->payment_drawdown_balance;
+      
+
+        if ($latest && is_numeric($latest->accrual_balance) && is_numeric($this->amount)) {
+            // Use bc math if you care about money precision
+            $payment->accrual_balance = (float) bcsub(
+                (string) $latest->accrual_balance,
+                (string) $this->amount,
+                2
+            );
+        }
+
+        $payment->update();
 
         $bill_payment = new BillPayment;
         $bill_payment->bill_id = $this->selectedBill;
@@ -452,7 +502,7 @@ class Index extends Component
             ])
             ->where('vendor_id', $this->bill->vendor_id)
             ->where('currency_id', $this->bill->currency_id)
-            ->whereNotNull('bill_id') // Ensure the payment is linked to an bill
+            // ->whereNotNull('bill_id') // Ensure the payment is linked to an bill
         ;
 
         // 2) Build bills subquery

@@ -130,6 +130,18 @@
 @stack('scripts')
     
     <script type="text/javascript">
+            window.addEventListener('show-accrualModal', event => {
+                $('#accrualModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-accrualModal', event => {
+                $('#accrualModal').modal('hide');
+            })
+    </script>
+
+
+    <script type="text/javascript">
             window.addEventListener('show-initialDiagnosisModal', event => {
                 $('#initialDiagnosisModal').modal('show');
             })

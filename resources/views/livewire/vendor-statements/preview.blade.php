@@ -287,8 +287,17 @@
                                                 <a href="{{ route('payments.show',$payment->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">{{ $result->number }}</a> Payment  made for 
                                                 @if (isset($payment->bill))
                                                 <a href="{{ route('bills.show',$payment->bill->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Bill# {{ $payment->bill ? $payment->bill->bill_number : "" }} </a> 
-                                                @elseif (isset($payment->bill_payment))
-                                                <a href="{{ route('bills.show',$payment->bill_payment->bill->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Bill# {{ $payment->bill_payment->bill ? $payment->bill_payment->bill->bill_number : "" }} </a> 
+                                                @else
+                                                    @foreach ($payment->bill_payments as $bill_payment)
+                                                        <a href="{{ route('bills.show',$bill_payment->bill->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Bill# {{ $bill_payment->bill ? $bill_payment->bill->bill_number : "" }} </a> 
+                                                        @if (!$loop->last)
+                                                            ,
+                                                        @endif
+                                                        
+                                                    @endforeach
+                                                @endif
+                                                    <br>
+                                                    {{ $payment->notes }} 
                                                 @endif
                                               
                                                     <br>
