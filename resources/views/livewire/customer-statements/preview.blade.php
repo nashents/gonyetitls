@@ -224,7 +224,10 @@
                                                 ])
                                                 ->where('authorization', 'approved')
                                                 ->where('customer_id', $customerId)
-                                                ->where('currency_id', $currencyId);
+                                                ->where('currency_id', $currencyId)
+                                                ->whereDoesntHave('credit_notes', function ($q) {
+                                                    $q->where('authorization', 'approved'); // drop this where() if you want to exclude ANY credit note
+                                                });
 
                                             $paymentLedger =  App\Models\Payment::query()
                                                 ->select([
@@ -234,7 +237,6 @@
                                                     Illuminate\Support\Facades\DB::raw('0 as pay_first'),
                                                     Illuminate\Support\Facades\DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
                                                 ])
-                                                ->where('status', 'approved')
                                                 ->where('customer_id', $customerId)
                                                 ->where('currency_id', $currencyId);
 
