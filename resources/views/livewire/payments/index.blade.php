@@ -84,6 +84,8 @@
                                 </div>
                                 <table  class="table  table-spaymented table-bordered table-sm table-responsive" cellspacing="0" width="100%" style=" width:100%; height:100%;">
                                     <thead >
+                                        <th class="th-sm">Payment#
+                                        </th>
                                         <th class="th-sm">Date
                                         </th>
                                         <th class="th-sm">Description
@@ -112,7 +114,7 @@
                                     <tbody>
                                         @forelse ($payments as $payment)
                                       <tr>
-                                        
+                                        <td>{{$payment->payment_number}}</td>
                                         <td>{{Carbon\Carbon::parse($payment->date)->format('d M Y')}}</td>
                                         <td>
                                             @if ($payment->invoice)
@@ -139,11 +141,11 @@
                                         <td>{{$payment->account ? $payment->account->name : ""}}</td>
                                         <td>
                                             @if ($payment->transaction_category)
-                                            {{$payment->transaction_category}}
+                                                {{$payment->transaction_category}}
                                             @elseif($payment->invoice)
-                                            Invoice# <a href="{{route('invoices.show',$payment->invoice->id)}}" style="color: blue">{{$payment->invoice ? $payment->invoice->invoice_number : ""}}</a> | Payment from {{$payment->customer ? $payment->customer->name : ""}}<br>
+                                                Invoice# <a href="{{route('invoices.show',$payment->invoice->id)}}" style="color: blue">{{$payment->invoice ? $payment->invoice->invoice_number : ""}}</a> | Payment from {{$payment->customer ? $payment->customer->name : ""}}<br>
                                             @elseif($payment->bill)
-                                            Bill# <a href="{{route('bills.show',$payment->bill->id)}}" style="color: blue">{{$payment->bill ? $payment->bill->bill_number : ""}}</a> Payment to {{$payment->vendor ? $payment->vendor->name : ""}} <br>
+                                                Bill# <a href="{{route('bills.show',$payment->bill->id)}}" style="color: blue">{{$payment->bill ? $payment->bill->bill_number : ""}}</a> Payment to {{$payment->vendor ? $payment->vendor->name : ""}} <br>
                                             @endif
                                         </td>
                                         <td>
