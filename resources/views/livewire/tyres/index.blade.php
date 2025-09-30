@@ -90,7 +90,16 @@
                                     <td>{{$tyre->currency ? $tyre->currency->name : ""}}</td>
                                     <td>{{$tyre->currency ? $tyre->currency->symbol : ""}}{{number_format($tyre->amount,2)}}</td>
                                     <td>{{$tyre->currency ? $tyre->currency->symbol : ""}}{{number_format($tyre->tax_amount ? $tyre->tax_amount : 0,2)}}</td>
-                                    <td>{{$tyre->currency ? $tyre->currency->symbol : ""}}{{number_format($tyre->subtotal_incl,2)}}</td>
+                                    <td>
+                                        {{$tyre->currency ? $tyre->currency->symbol : ""}}{{number_format($tyre->subtotal_incl,2)}}
+                                        @if (Auth::user()->employee->company->currency_id != $tyre->currency_id && $tyre->currency_id && $tyre->exchange_rate)
+                                            <br>
+                                            <small>
+                                                <strong>Exc Rate:</strong> {{number_format($tyre->exchange_rate,2)}} <br>
+                                                <strong>Exc Total:</strong> {{Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->name : ""}} {{Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->symbol : ""}}{{number_format($tyre->exchange_amount,2)}}
+                                            </small>
+                                        @endif
+                                    </td>
                                     <td><span class="badge bg-{{$tyre->retread == 0 ? "success" : "warning"}}">{{$tyre->retread == 0 ? "Fit for use" : "Retread"}}</span></td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">

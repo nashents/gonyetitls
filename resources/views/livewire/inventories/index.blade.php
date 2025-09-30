@@ -59,7 +59,12 @@
                                             {{$inventory->product->brand ? $inventory->product->brand->name : ""}} {{$inventory->product ? $inventory->product->name : ""}}
                                         @endif
                                     </td>    
-                                    <td>{{$inventory->serial_number ? "SN#: ".$inventory->serial_number : ""}} {{$inventory->product->identification_number ? "PN#: ".$inventory->product->identification_number : ""}}</td>
+                                    <td>
+                                        {{$inventory->serial_number ? "SN#: ".$inventory->serial_number : ""}}
+                                            @if ($inventory->product)
+                                                 {{$inventory->product->identification_number ? "PN#: ".$inventory->product->identification_number : ""}}
+                                            @endif
+                                       </td>
                                     <td>
                                         @if ($inventory->store)
                                              <strong>Store:</strong>  {{$inventory->store ? $inventory->store->name : ""}}
@@ -101,6 +106,13 @@
                                     <td>
                                         @if ($inventory->subtotal_incl)
                                             {{$inventory->currency ? $inventory->currency->symbol : ""}}{{number_format($inventory->subtotal_incl,2)}}  
+                                        @endif
+                                        @if (Auth::user()->employee->company->currency_id != $inventory->currency_id && $inventory->currency_id && $inventory->exchange_rate)
+                                            <br>
+                                            <small>
+                                                <strong>Exc Rate:</strong> {{number_format($inventory->exchange_rate,2)}} <br>
+                                                <strong>Exc Total:</strong> {{Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->name : ""}} {{Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->symbol : ""}}{{number_format($inventory->exchange_amount,2)}}
+                                            </small>
                                         @endif
                                     </td>
                                     <td><span class="badge bg-{{$inventory->status == 1 ? "success" : "danger"}}">{{$inventory->status == 1 ? "Instore" : "Out Of stock"}}</span></td>

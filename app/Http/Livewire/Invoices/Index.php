@@ -316,8 +316,9 @@ class Index extends Component
             ])
             ->where('customer_id', $invoice->customer_id)
             ->where('currency_id', $invoice->currency_id)
+             ->whereNotNull('accrual_balance'); // Ensure accrual balance exists
             // ->whereNotNull('invoice_id') // Ensure the payment is linked to an invoice
-        ;
+        
 
         // 2) Build invoices subquery
         $invoices = DB::table('invoices')
@@ -332,7 +333,8 @@ class Index extends Component
             ])
             ->where('authorization','approved')
             ->where('customer_id', $invoice->customer_id)
-            ->where('currency_id', $invoice->currency_id);
+            ->where('currency_id', $invoice->currency_id)
+            ->whereNotNull('accrual_balance'); // Ensure accrual balance exists
 
         // 3) Union and pick the most recent row
         $latest = DB::query()
@@ -345,7 +347,6 @@ class Index extends Component
         $payment = Payment::find($this->last_payment->id);
         $payment->drawdown_balance = $this->payment_drawdown_balance;
         
-
         if ($latest && is_numeric($latest->accrual_balance) && is_numeric($this->amount_paid)) {
             // Use bc math if you care about money precision
             $payment->accrual_balance = (float) bcsub(
@@ -353,6 +354,8 @@ class Index extends Component
                 (string) $this->amount_paid,
                 2
             );
+        }else{
+
         }
 
         $payment->update();
