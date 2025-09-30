@@ -921,7 +921,7 @@ class Index extends Component
             $this->unpaid_invoices = Invoice::where('customer_id',$this->selectedCustomer)
                                         ->where('currency_id',$this->selectedCurrency)
                                         ->where('authorization','approved')
-                                        ->doesntHave('creditNotes')
+                                        ->doesntHave('credit_notes')
                                         ->where('status','!=','Paid')
                                         ->orderBy($this->invoice_filter,'desc')->get();
         }
