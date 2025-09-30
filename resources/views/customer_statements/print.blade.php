@@ -211,25 +211,59 @@ Customer Statement Preview |@if (Auth::user()->employee->company)
                                                @php
                                                 // $from = new DateTime($from);
                                                 // $to = new DateTime($to);
-                                                $opening_balance = App\Models\Invoice::where('date','<=',$from)
-                                                                        ->where('authorization','approved')
-                                                                        ->where('customer_id',$selectedCustomer)
-                                                                        ->where('currency_id', $currency->id)
-                                                                        ->whereRaw('accrual_balance REGEXP "^-?[0-9]+(\.[0-9]+)?$"')
-                                                                        ->where('accrual_balance', function ($query) {
-                                                                            $query->selectRaw('MAX(CAST(accrual_balance AS DECIMAL(10,2)))')->from('invoices');
-                                                                        })
-                                                                        ->first();
-                                                                    
-                                               $closing_balance = App\Models\Invoice::where('date','<=',$to)
-                                                                        ->where('authorization','approved')
-                                                                        ->where('customer_id',$customer->id)
-                                                                        ->where('currency_id', $currency->id)
-                                                                        ->whereRaw('balance REGEXP "^-?[0-9]+(\.[0-9]+)?$"')
-                                                                        ->get()->sum('balance');
+                                                                            $customerId = $customer->id;
+                                        $currencyId = $currency->id;
+
+                                        // Helper to build a fresh union each time
+                                        $makeLedger = function () use ($customerId, $currencyId) {
+                                            $invoiceLedger = App\Models\Invoice::query()
+                                                ->select([
+                                                    'date',
+                                                    'created_at',
+                                                    // invoices lose the tie-break to payments
+                                                    Illuminate\Support\Facades\DB::raw('1 as pay_first'),
+                                                    // drop CAST(...) if accrual_balance is DECIMAL already
+                                                    Illuminate\Support\Facades\DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
+                                                ])
+                                                ->where('authorization', 'approved')
+                                                ->where('customer_id', $customerId)
+                                                ->where('currency_id', $currencyId);
+
+                                            $paymentLedger =  App\Models\Payment::query()
+                                                ->select([
+                                                    'date',
+                                                    'created_at',
+                                                    // payments win ties
+                                                    Illuminate\Support\Facades\DB::raw('0 as pay_first'),
+                                                    Illuminate\Support\Facades\DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
+                                                ])
+                                                ->where('status', 'approved')
+                                                ->where('customer_id', $customerId)
+                                                ->where('currency_id', $currencyId);
+
+                                            return $invoiceLedger->unionAll($paymentLedger);
+                                        };
+
+                                        // OPENING: last txn strictly before $from  (payments win ties)
+                                        $opening_balance = Illuminate\Support\Facades\DB::query()
+                                            ->fromSub($makeLedger(), 'ledger')
+                                            ->where('date', '<', $from)
+                                            ->orderBy('date', 'desc')
+                                            ->orderBy('created_at', 'desc')
+                                            ->orderBy('pay_first', 'asc')  // 0 (payments) before 1 (invoices)
+                                            ->value('accrual_balance') ?? 0.00;
+
+                                        // CLOSING: last txn on/before $to  (payments win ties)
+                                        $closing_balance = Illuminate\Support\Facades\DB::query()
+                                            ->fromSub($makeLedger(), 'ledger')
+                                            ->where('date', '<=', $to)
+                                            ->orderBy('date', 'desc')
+                                            ->orderBy('created_at', 'desc')
+                                            ->orderBy('pay_first', 'asc')
+                                            ->value('accrual_balance') ?? 0.00;
         
-                                               $invoiced = App\Models\Invoice::where('customer_id',$customer->id)->where('authorization','approved')->where('currency_id',$currency->id)->where('date','>=',$from)->where('date','<=',$to)->whereRaw('total REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->get()->sum('total');
-                                               $paid = App\Models\Payment::where('customer_id',$customer->id)->where('currency_id',$currency->id)->whereBetween('date',[$from, $to])->whereRaw('amount REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->get()->sum('amount');
+                                              $invoiced = App\Models\Invoice::where('customer_id',$customer->id)->where('authorization','approved')->where('currency_id',$currency->id)->where('date','>=',$from)->where('date','<=',$to)->whereRaw('total REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->sum('total');
+                                               $paid = App\Models\Payment::where('customer_id',$customer->id)->where('currency_id',$currency->id)->whereBetween('date',[$from, $to])->whereRaw('amount REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->sum('amount');
                                             @endphp
                                             
                                                 <div class="date" style="padding-bottom: 3px" ><strong>Opening Balance({{$currency->name}}) on {{ date('F j, Y', strtotime($from)) }}</strong> {{$currency->symbol}}{{ number_format($opening_balance ? $opening_balance->accrual : 0,2) }}</div>
