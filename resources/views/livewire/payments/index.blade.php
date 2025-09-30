@@ -177,8 +177,9 @@
                                         </td>
                                         <td>
                                             @if ($payment->accrual_balance)
-                                            {{$payment->currency ? $payment->currency->symbol : ""}} {{number_format($payment->accrual_balance,2)}} <a href="#" wire:click.prevent="showAccrual({{$payment->id}})"><i class="fas fa-edit"></i></a>
+                                            {{$payment->currency ? $payment->currency->symbol : ""}} {{number_format($payment->accrual_balance,2)}} 
                                             @endif
+                                            <a href="#" wire:click.prevent="showAccrual({{$payment->id}})"><i class="fas fa-edit"></i></a>
                                         </td>
                                          <td class="w-10 line-height-35 table-dropdown">
                                             <div class="dropdown">
