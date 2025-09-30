@@ -165,13 +165,12 @@
                                     </td>
                                     <td>
                                         @php
-                                            $total_paid = null;
                                             $amount_paid = $invoice->payments->sum('amount');
-                                            $amount_paid_bulk = $invoice->invoice_payments->sum('amount');
-                                            if (is_numeric($amount_paid) && is_numeric($amount_paid_bulk)) {
-                                                $total_paid = $amount_paid + $amount_paid_bulk;
-                                            }
-                                            
+                                            $amount_paid_bulk = App\Models\InvoicePayment::where('invoice_id', $invoice->id)
+                                                ->whereHas('payment', fn($query) => $query->where('transaction_category', 'Customer Deposits'))
+                                                ->sum('amount'); // no need for get()
+
+                                            $total_paid = $amount_paid + $amount_paid_bulk;  
                                         @endphp
                                         {{$invoice->currency ? $invoice->currency->symbol : ""}}{{number_format($total_paid,2)}}
                                     </td>

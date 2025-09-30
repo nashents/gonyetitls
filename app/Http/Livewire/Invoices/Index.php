@@ -356,6 +356,8 @@ class Index extends Component
         }
 
         $payment->update();
+
+    
         
         $invoice->balance = $this->invoice_drawdown_balance;
         if ($this->invoice_drawdown_balance <= 0) {
@@ -364,6 +366,14 @@ class Index extends Component
             $invoice->status = "Partial";
         }
         $invoice->update();
+
+        $invoice_payment = new InvoicePayment;
+        $invoice_payment->customer_id = $invoice->customer_id;
+        $invoice_payment->invoice_id = $invoice->id;
+        $invoice_payment->payment_id = $payment->id;
+        $invoice_payment->currency_id = $invoice->currency_id;
+        $invoice_payment->amount = $this->amount_paid;
+        $invoice_payment->save();  
  
         $this->dispatchBrowserEvent('hide-paymentDrawdownModal');
         $this->dispatchBrowserEvent('alert',[
@@ -786,13 +796,13 @@ class Index extends Component
         $payment->date = $this->date;
         $payment->save();
 
-        $invoice_payment = new InvoicePayment;
-        $invoice_payment->customer_id = $this->invoice->customer_id;
-        $invoice_payment->invoice_id = $this->invoice->id;
-        $invoice_payment->payment_id = $payment->id;
-        $invoice_payment->currency_id = $this->invoice->currency_id;
-        $invoice_payment->amount = $this->amount;
-        $invoice_payment->save();  
+        // $invoice_payment = new InvoicePayment;
+        // $invoice_payment->customer_id = $this->invoice->customer_id;
+        // $invoice_payment->invoice_id = $this->invoice->id;
+        // $invoice_payment->payment_id = $payment->id;
+        // $invoice_payment->currency_id = $this->invoice->currency_id;
+        // $invoice_payment->amount = $this->amount;
+        // $invoice_payment->save();  
         
 
         if(isset($this->pop)){
