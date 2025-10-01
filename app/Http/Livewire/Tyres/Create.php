@@ -121,6 +121,8 @@ class Create extends Component
     public $p = 1;
     public $o = 1;
 
+    public $racks;
+    public $bins;
     public $tyre_assignments;
     public $tyre_assignment_id;
     public $tyres;
@@ -221,15 +223,20 @@ class Create extends Component
 
       ];
 
-      public function updatedSelectedPurchase($id)
-      {
-          if (!is_null($id) ) {
-          $this->selectedCurrency = Purchase::find($id)->currency_id;
-          $this->vendor_id = Purchase::find($id)->vendor->id;
-          $this->selectedAccount = Purchase::find($id)->account_id;
-          $this->purchase_products = Purchase::find($id)->purchase_products;
-          }
-      }
+          public function updatedSelectedPurchase($id)
+    {
+        if (!is_null($id) ) {
+            $purchase_order = Purchase::find($id);
+            if(isset($purchase_order)){
+                $this->selectedCurrency = $purchase_order->currency_id;
+                $this->exchange_rate = $purchase_order->exchange_rate;
+                $this->selected_currency = Currency::find($this->selectedCurrency);
+                $this->vendor_id = $purchase_order->vendor_id;
+                $this->selectedAccount = $purchase_order->account_id;
+                $this->purchase_products = $purchase_order->purchase_products;
+            }
+        }
+    }
 
      public function updatedSelectedCurrency($id){
         if(!is_null($id)){
@@ -414,6 +421,13 @@ class Create extends Component
 
     }
 
+    public function calculateExchangeAmount(){
+        if (($this->total && is_numeric($this->total)) && ($this->exchange_rate && is_numeric($this->exchange_rate)) ) {
+            $this->exchange_amount = $this->exchange_rate * $this->total;
+        }
+    }
+
+
       public function store(){
 
             DB::transaction(function () {
@@ -501,6 +515,8 @@ class Create extends Component
                         }
                        
                     }
+
+                  $this->calculateExchangeAmount();
 
                 $tyre->exchange_rate = $this->exchange_rate;
                 $tyre->exchange_amount = $this->exchange_amount;
@@ -709,11 +725,7 @@ class Create extends Component
     public function render()
     {
 
-        if ((isset($this->exchange_rate) && $this->exchange_rate > 0)  &&  ( isset($this->total) && $this->total > 0 )) {
-
-            $this->exchange_amount = $this->exchange_rate * $this->total;
-
-        }
+        
         $this->goods_receiveds = GoodsReceived::where('status',1)->where('department','tyre')->where('created_at', '>=', Carbon::now()->subMonth())->orderBy('created_at','desc')->get();
         $this->products = Product::with('brand')->orderBy('name','asc')->where('department','tyre')->where('status',True)->where('buy',True)->get()->sortBy('brand.name');
         $this->purchases = Purchase::where('department','tyre')->where('status',1)->where('created_at', '>=', Carbon::now()->subMonth())->where('authorization','approved')->orderBy('created_at','desc')->get();

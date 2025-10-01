@@ -92,7 +92,7 @@
                                     <td>{{$tyre->currency ? $tyre->currency->symbol : ""}}{{number_format($tyre->tax_amount ? $tyre->tax_amount : 0,2)}}</td>
                                     <td>
                                         {{$tyre->currency ? $tyre->currency->symbol : ""}}{{number_format($tyre->subtotal_incl,2)}}
-                                        @if (Auth::user()->employee->company->currency_id != $tyre->currency_id && $tyre->currency_id && $tyre->exchange_rate)
+                                        @if (Auth::user()->employee->company->currency_id != $tyre->currency_id)
                                             <br>
                                             <small>
                                                 <strong>Exc Rate:</strong> {{number_format($tyre->exchange_rate,2)}} <br>

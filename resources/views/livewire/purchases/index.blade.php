@@ -134,7 +134,16 @@
                                             @endif
                                         </td>
                                         <td>{{$purchase->currency ? $purchase->currency->name : ""}}</td>
-                                        <td>{{$purchase->currency ? $purchase->currency->symbol : ""}}{{number_format($purchase->total ? $purchase->total : 0,2)}}</td>
+                                        <td>
+                                            {{$purchase->currency ? $purchase->currency->symbol : ""}}{{number_format($purchase->total ? $purchase->total : 0,2)}}
+                                            @if (Auth::user()->employee->company->currency_id != $purchase->currency_id)
+                                            <br>
+                                            <small>
+                                                <strong>Exc Rate:</strong> {{$purchase->exchange_rate}} <br>
+                                                <strong>Exc Total:</strong> {{Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->name : ""}} {{Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->symbol : ""}}{{number_format($purchase->exchange_amount,2)}}
+                                            </small>
+                                        @endif
+                                        </td>
                                         <td>
                                             @if ($purchase->bill)
                                                  {{$purchase->bill->currency ? $purchase->bill->currency->symbol : ""}}{{number_format($purchase->bill->payments->sum('amount'),2)}}

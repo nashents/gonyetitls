@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use App\Models\Vendor;
 use App\Models\Account;
 use App\Models\Booking;
+use App\Models\Contact;
 use App\Models\Expense;
 use App\Models\Product;
 use Livewire\Component;
@@ -113,6 +114,10 @@ class Index extends Component
     public $total;
     public $subtotal;
     public $subtotal_incl;
+    public $account_types;
+    public $income_accounts;
+    public $status;
+    public $purchase_product;
 
     public $inputs = [];
     public $i = 1;
@@ -470,6 +475,12 @@ class Index extends Component
         }
     }
 
+    public function calculateExchangeAmount(){
+        if (($this->total && is_numeric($this->total)) && ($this->exchange_rate && is_numeric($this->exchange_rate)) ) {
+            $this->exchange_amount = $this->exchange_rate * $this->total;
+        }
+    }
+
     public function store(){
 
         DB::transaction(function () {
@@ -487,6 +498,7 @@ class Index extends Component
         $purchase->status = '1';
         $purchase->expiry = Carbon::parse($this->date)->addMonth()->format('Y-m-d');
         $purchase->save();
+
         $this->purchase_id = $purchase->id;
 
         foreach($this->selectedProduct as $key => $value){
@@ -538,7 +550,7 @@ class Index extends Component
             
             $purchase_product->save();
         }
-
+            $this->calculateExchangeAmount();
             $purchase = Purchase::find($purchase->id);
             $purchase->tax_amount = $this->tax_amount;
             $purchase->subtotal = $this->subtotal;
@@ -636,6 +648,7 @@ class Index extends Component
         $this->purchase_number = $this->purchase->purchase_number;
         $this->date = $this->purchase->date;
         $this->selectedCurrency = $this->purchase->currency_id;
+        $this->selected_currency = Currency::find($this->selectedCurrency);
         $this->booking_id = $this->purchase->booking_id;
         $this->purchase_order_products = $this->purchase->purchase_products;
         if(isset($this->purchase_order_products)){
@@ -654,6 +667,8 @@ class Index extends Component
         $this->selectedAccount = $this->purchase->account_id;
         $this->expense_id = $this->purchase->expense_id;
         $this->status = $this->purchase->status;
+        $this->exchange_rate = $this->purchase->exchange_rate;
+        $this->exchange_amount = $this->purchase->exchange_amount;
         $this->description = $this->purchase->description;
         $this->purchase_id = $this->purchase->id;
         $this->purchase = $this->purchase;
@@ -737,6 +752,7 @@ class Index extends Component
 
         }
 
+        $this->calculateExchangeAmount();
         $purchase = Purchase::find($purchase->id);
         $purchase->tax_amount = $this->tax_amount;
         $purchase->subtotal = $this->subtotal;
@@ -881,9 +897,6 @@ class Index extends Component
       
         $this->vendors = Vendor::orderBy('name','asc')->get();
 
-        if ((isset($this->exchange_rate) && $this->exchange_rate > 0)  &&  ( isset($this->total) && $this->total > 0 )) {
-            $this->exchange_amount = $this->exchange_rate * $this->total;
-        }
         $this->products = Product::orderBy('name','asc')->where('department', $this->department)->where('status',True)->where('buy',True)->get();
         if (isset($this->from) && isset($this->to)) {
             if (isset($this->search)) {

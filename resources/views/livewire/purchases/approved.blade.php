@@ -18,9 +18,10 @@
                                         </th>
                                         <th class="th-sm">CreatedBy
                                         </th>
-                                        <th class="th-sm">Date
-                                        </th>
-                                        <th class="th-sm">Expiry
+                                        <th class="th-sm">
+                                            Date
+                                           <hr style="margin-top:2px; margin-bottom:2px">
+                                            Expiry
                                         </th>
                                         <th class="th-sm">Vendor
                                         </th>
@@ -50,8 +51,11 @@
                                                 @endif
                                             @endif
                                         </td>
-                                        <td>{{$purchase->date}}</td>
-                                        <td><span class="badge bg-{{Carbon\Carbon::now() < $purchase->expiry ? 'success' : 'danger' }}">{{Carbon\Carbon::parse($purchase->expiry)->format('d-m-Y')}}</span></td>
+                                         <td>
+                                            {{$purchase->date}}
+                                           <hr style="margin-top:2px; margin-bottom:2px">
+                                            <span class="badge bg-{{Carbon\Carbon::now() < $purchase->expiry ? 'success' : 'danger' }}">{{Carbon\Carbon::parse($purchase->expiry)->format('d-m-Y')}}</span>
+                                        </td>
                                         <td>{{$purchase->vendor ? $purchase->vendor->name : ""}}</td>
                                         <td>
                                             @foreach ($purchase->purchase_products as $purchase_product )
@@ -66,7 +70,16 @@
                                             @endif
                                         </td>
                                         <td>{{$purchase->currency ? $purchase->currency->name : ""}}</td>
-                                        <td>{{$purchase->currency ? $purchase->currency->symbol : ""}}{{number_format($purchase->total ? $purchase->total : 0,2)}}</td>
+                                        <td>{{$purchase->currency ? $purchase->currency->symbol : ""}}{{number_format($purchase->total ? $purchase->total : 0,2)}}
+
+                                             @if (Auth::user()->employee->company->currency_id != $purchase->currency_id)
+                                            <br>
+                                            <small>
+                                                <strong>Exc Rate:</strong> {{$purchase->exchange_rate}} <br>
+                                                <strong>Exc Total:</strong> {{Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->name : ""}} {{Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->symbol : ""}}{{number_format($purchase->exchange_amount,2)}}
+                                            </small>
+                                        @endif
+                                        </td>
                                         <td><span class="badge bg-{{($purchase->authorization == 'approved') ? 'success' : (($purchase->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($purchase->authorization == 'approved') ? 'approved' : (($purchase->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
                                             @php
                                                 $user = App\Models\User::find($purchase->authorized_by_id);

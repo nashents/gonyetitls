@@ -107,7 +107,7 @@
                                         @if ($inventory->subtotal_incl)
                                             {{$inventory->currency ? $inventory->currency->symbol : ""}}{{number_format($inventory->subtotal_incl,2)}}  
                                         @endif
-                                        @if (Auth::user()->employee->company->currency_id != $inventory->currency_id && $inventory->currency_id && $inventory->exchange_rate)
+                                        @if (Auth::user()->employee->company->currency_id != $inventory->currency_id)
                                             <br>
                                             <small>
                                                 <strong>Exc Rate:</strong> {{number_format($inventory->exchange_rate,2)}} <br>

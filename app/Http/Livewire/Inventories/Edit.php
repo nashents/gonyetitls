@@ -20,6 +20,7 @@ use App\Models\Measurement;
 use App\Models\ExchangeRate;
 use App\Models\GoodsReceived;
 use Livewire\WithFileUploads;
+use App\Models\PurchaseProduct;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
@@ -110,6 +111,11 @@ class Edit extends Component
     public $worknumber;
     public $email;
     public $website;
+
+    public $category_id;
+    public $rate;
+    public $part_number;
+    public $inventory_id;
 
 
     public $expires_at;
@@ -231,6 +237,7 @@ class Edit extends Component
         $this->serial_number = $inventory->serial_number;
         $this->selectedGoodsReceived = $inventory->goods_received_id;
         $this->selectedPurchase = $inventory->purchase_id;
+        $this->exchange_rate = $inventory->exchange_rate;
         $this->purchase_order = Purchase::find($inventory->purchase_id);
         if (isset($this->purchase_order)) {
             $this->purchase_products = $this->purchase_order->purchase_products; 
@@ -247,10 +254,33 @@ class Edit extends Component
             $purchase_order = Purchase::find($id);
             if(isset($purchase_order)){
                 $this->selectedCurrency = $purchase_order->currency_id;
+                $this->exchange_rate = $purchase_order->exchange_rate;
+                $this->selected_currency = Currency::find($this->selectedCurrency);
                 $this->vendor_id = $purchase_order->vendor_id;
                 $this->selectedAccount = $purchase_order->account_id;
                 $this->purchase_products = $purchase_order->purchase_products;
             }
+        }
+    }
+      public function updatedSelectedPurchaseProduct($id, $key){
+        if (!is_null($id)) {
+            $purchase_product = PurchaseProduct::find($id);
+            if (isset($purchase_product)) {
+                $this->selectedProduct[$key] = $purchase_product->product_id;
+                $this->amount[$key] = $purchase_product->amount;
+                $this->item_description[$key] = $purchase_product->product->description;
+                $this->qty[$key] = $purchase_product->qty;
+                $this->weight[$key] = 1;
+                if($purchase_product->tax_id){
+                    $this->selectedTax[$key] = $purchase_product->tax_id;
+                    $tax = Account::find($purchase_product->tax_id);
+                    if (isset($tax)) {
+                        $this->tax_rate[$key] = $tax->rate;
+                    }
+                }
+                
+            }
+           
         }
     }
 
@@ -389,6 +419,12 @@ class Edit extends Component
         }
     }
 
+    public function calculateExchangeAmount(){
+        if (($this->total && is_numeric($this->total)) && ($this->exchange_rate && is_numeric($this->exchange_rate)) ) {
+            $this->exchange_amount = $this->exchange_rate * $this->total;
+        }
+    }
+
 
     public function update(){
 
@@ -439,6 +475,10 @@ class Edit extends Component
             }
             
         }
+
+        $this->calculateExchangeAmount();
+        $inventory->exchange_rate = $this->exchange_rate;
+        $inventory->exchange_amount = $this->exchange_amount;
        
         $inventory->account_id = $this->selectedAccount;
         $inventory->residual_value = $this->residual_value;
@@ -554,11 +594,7 @@ class Edit extends Component
     public function render()
     {
 
-        if ((isset($this->exchange_rate) && $this->exchange_rate > 0)  &&  ( isset($this->total) && $this->total > 0 )) {
-
-            $this->exchange_amount = $this->exchange_rate * $this->total;
-
-        }
+        
       
          $this->goods_receiveds = GoodsReceived::where('status',1)->where('department','inventory')->where('created_at', '>=', Carbon::now()->subMonth())->orderBy('created_at','desc')->get();
         $this->products = Product::with('brand')->orderBy('name','asc')->where('department','inventory')->where('status',True)->where('buy',True)->get()->sortBy('brand.name');

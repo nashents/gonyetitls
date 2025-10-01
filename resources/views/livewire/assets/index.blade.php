@@ -101,6 +101,13 @@
                                         @if ($asset->subtotal_incl)
                                             {{$asset->currency ? $asset->currency->symbol : ""}}{{number_format($asset->subtotal_incl,2)}}  
                                         @endif
+                                        @if (Auth::user()->employee->company->currency_id != $asset->currency_id)
+                                            <br>
+                                            <small>
+                                                <strong>Exc Rate:</strong> {{$asset->exchange_rate}} <br>
+                                                <strong>Exc Total:</strong> {{Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->name : ""}} {{Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->symbol : ""}}{{number_format($asset->exchange_amount,2)}}
+                                            </small>
+                                        @endif
                                     </td>
                                     <td><span class="badge bg-{{$asset->status == 1 ? "success" : "danger"}}">{{$asset->status == 1 ? "Instore" : "Out Of stock"}}</span></td>
                                     <td class="w-10 line-height-35 table-dropdown">
