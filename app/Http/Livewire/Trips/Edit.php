@@ -223,6 +223,7 @@ class Edit extends Component
     public $total_transporter_expenses;
     public $total_customer_expenses;
     public $total_expenses;
+    public $commission_id;
 
     public $distance;
     public $duration;
@@ -272,6 +273,10 @@ class Edit extends Component
     public $file;
     public $fuel_comments;
     public $selected_container;
+    public $fuel;
+    public $from;
+    public $to;
+    public $fuel_id;
 
      //trip timelines
     public $arrive_lp;
@@ -279,6 +284,8 @@ class Edit extends Component
     public $arrive_op;
     public $depart_op;
     public $timelines;
+
+    public $allowances;
 
  
     public $selectedContainer;
@@ -993,7 +1000,7 @@ class Edit extends Component
          $this->arrive_lp = $this->trip->arrive_loading_point;
          $this->depart_lp = $this->trip->depart_loading_point;
          $this->arrive_op = $this->trip->arrive_offloading_point;
-         $this->depart_of = $this->trip->depart_offloading_point;
+         $this->depart_op = $this->trip->depart_offloading_point;
          $this->selectedHorse = $this->trip->horse_id;
          $this->selectedVehicle = $this->trip->vehicle_id;
          $this->horse_selected = Horse::find($this->selectedHorse);
@@ -2888,18 +2895,13 @@ class Edit extends Component
       {
 
         
-        if($this->with_cargos == True){
-            if(isset($this->distance) && isset($this->fuel_consumption_loaded_standard)){
-                if (preg_match('/^\d+(\.\d+)?$/', $this->fuel_consumption_loaded_standard)) {
-                    $this->trip_fuel = $this->distance * $this->fuel_consumption_loaded_standard;
-                }
-            }
-        }elseif($this->with_cargos == False){
-            if(isset($this->distance) && isset($this->fuel_consumption_empty_standard)){
-                if (preg_match('/^\d+(\.\d+)?$/', $this->fuel_consumption_empty_standard)) {
-                    $this->trip_fuel = $this->distance * $this->fuel_consumption_empty_standard;
-                }
-              
+        if ($this->distance && is_numeric($this->distance)) {
+            $consumption = $this->with_cargos 
+                ? $this->fuel_consumption_loaded_standard 
+                : $this->fuel_consumption_empty_standard;
+
+            if ($consumption && is_numeric($consumption)) {
+                $this->trip_fuel = $this->distance * $consumption;
             }
         }
     

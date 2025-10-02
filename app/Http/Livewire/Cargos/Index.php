@@ -37,7 +37,7 @@ class Index extends Component
     public $user_id;
 
     public $transporters;
-    public $transporter_id;
+    public array $transporter_id = []; // e.g. [5, 9]
     public $cargo_transporters;
     public $cargo_transporter_id;
    
@@ -83,7 +83,7 @@ class Index extends Component
         $this->risk = '';
         $this->chargeable_loss = '';
         $this->measurement = '';
-        $this->transporter_id = "" ;
+        $this->transporter_id = [] ;
     }
 
     public function exportCargosCSV(Excel $excel){
@@ -99,8 +99,14 @@ class Index extends Component
     }
 
     public function store(){
-    
+        $this->validate([
+            'transporter_id' => 'array',
+            'transporter_id.*' => 'integer',
+        ]);
+            
         DB::transaction(function () {
+
+
         $cargo = new Cargo;
         $cargo->user_id = Auth::user()->id;
         $cargo->name = $this->name;
@@ -111,11 +117,8 @@ class Index extends Component
         $cargo->risk = $this->risk;
         $cargo->save();
 
-        if (!empty($this->transporter_id) && is_numeric($this->transporter_id)) {
-            // Check if it's not already attached
-            if (!$cargo->transporters->contains($this->transporter_id)) {
-                $cargo->transporters()->sync($this->transporter_id);
-            }
+        if (!empty($this->transporter_id)) {
+            $cargo->transporters()->syncWithoutDetaching($this->transporter_id);
         }
         $this->dispatchBrowserEvent('hide-cargoModal');
         $this->resetInputFields();
@@ -174,8 +177,15 @@ class Index extends Component
 
     public function render()
     {
-        return view('livewire.cargos.index',[
-            'cargos'=> Cargo::orderBy('name','asc')->paginate(10)
-        ]);
+        if (filled($this->search)) {
+            return view('livewire.cargos.index',[
+            'cargos'=> Cargo::where('name','like', '%'.$this->search.'%')->orderBy('name','asc')->paginate(10)
+            ]);
+        }else{
+                return view('livewire.cargos.index',[
+                'cargos'=> Cargo::orderBy('name','asc')->paginate(10)
+                ]);
+        }
+        
     }
 }

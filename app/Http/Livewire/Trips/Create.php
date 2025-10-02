@@ -216,6 +216,8 @@ class Create extends Component
     public $offloading_point_id;
     public $routes;
     public $selectedRoute;
+    
+    public $account;
     //truck stop vars
     public $truck_stops;
     public $truck_stop_id;
@@ -1160,7 +1162,9 @@ class Create extends Component
         $this->total_expenses = 0;
         
         if ($this->trip_expenses->isNotEmpty()) {
+
             foreach ($this->trip_expenses as $expense) {
+                
                 $use_amount = ($expense->currency_id == Auth::user()->employee->company->currency_id) 
                     ? $expense->amount 
                     : $expense->exchange_amount;
@@ -2465,18 +2469,13 @@ class Create extends Component
     public function render()
     {
 
-        if($this->with_cargos == True){
-            if(isset($this->distance) && isset($this->fuel_consumption_loaded_standard)){
-                if (preg_match('/^\d+(\.\d+)?$/', $this->fuel_consumption_loaded_standard)) {
-                    $this->trip_fuel = $this->distance * $this->fuel_consumption_loaded_standard;
-                }
-            }
-        }elseif($this->with_cargos == False){
-            if(isset($this->distance) && isset($this->fuel_consumption_empty_standard)){
-                if (preg_match('/^\d+(\.\d+)?$/', $this->fuel_consumption_empty_standard)) {
-                    $this->trip_fuel = $this->distance * $this->fuel_consumption_empty_standard;
-                }
-              
+        if ($this->distance && is_numeric($this->distance)) {
+            $consumption = $this->with_cargos 
+                ? $this->fuel_consumption_loaded_standard 
+                : $this->fuel_consumption_empty_standard;
+
+            if ($consumption && is_numeric($consumption)) {
+                $this->trip_fuel = $this->distance * $consumption;
             }
         }
    

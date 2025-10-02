@@ -19,7 +19,11 @@
                             </div>
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
-
+                             <div class="col-md-3" style="float: right; padding-right:0px">
+                                <div class="form-group">
+                                    <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search cargos...">
+                                </div>
+                            </div>
                             <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
@@ -218,17 +222,24 @@
                                 </thead>
                                 @if ($transporters->count()>0)
                                 <tbody>
-                                    @foreach ($transporters as $transporter)
-                                  <tr>
-                                    <td>
-                                        <div class="mb-10">
-                                            <input type="checkbox" wire:model.debounce.300ms="transporter_id.{{$transporter->id}}" wire:key="{{ $transporter->id }}" value="{{ $transporter->id }}" class="line-style"  />
-                                            <label for="one" class="radio-label">{{$transporter->name}} </label>
-                                            @error('transporter_id.'.$transporter->id) <span class="text-danger error">{{ $message }}</span>@enderror
-                                        </div>
-                                    </td>
-                                  </tr>
-                                  @endforeach
+                                   @foreach ($transporters as $transporter)
+                                        <tr>
+                                            <td>
+                                            <div class="mb-10">
+                                                <input
+                                                type="checkbox"
+                                                id="transporter_{{ $transporter->id }}"
+                                                wire:model.defer="transporter_id"
+                                                value="{{ $transporter->id }}"
+                                                class="line-style"
+                                                />
+                                                <label for="transporter_{{ $transporter->id }}" class="radio-label">
+                                                {{ $transporter->name }}
+                                                </label>
+                                            </div>
+                                            </td>
+                                        </tr>
+                                    @endforeach
                                 </tbody>
                                 @endif
                               </table>  
