@@ -24,7 +24,6 @@ class CreateJobTitleQualificationsTable extends Migration
             $table->unsignedSmallInteger('weight')->default(100);  // scoring weight (0–100)
             $table->unsignedSmallInteger('min_score')->nullable(); // if you score quals
             $table->timestamps();
-
             $table->unique(['job_title_id','qualification_id']);
         });
     }
