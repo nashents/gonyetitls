@@ -5,6 +5,7 @@ namespace App\Http\Livewire\JobTitles;
 use Livewire\Component;
 use App\Models\JobTitle;
 use App\Models\Department;
+use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
@@ -15,13 +16,17 @@ class Index extends Component
     public $department_id;
     public $title;
 
-    public $job_titles;
+    use WithPagination;
+    protected $paginationTheme = 'bootstrap';
+    public $search;
+    protected $queryString = ['search'];
+    private $job_titles;
     public $job_title_id;
     public $user_id;
 
     public function mount(){
         $this->departments = Department::all();
-        $this->job_titles = JobTitle::latest()->get();
+         
     }
     private function resetInputFields(){
         $this->title = '';
@@ -108,9 +113,16 @@ class Index extends Component
 
     public function render()
     {
-        $this->job_titles = JobTitle::latest()->get();
-        return view('livewire.job-titles.index',[
-            'job_titles' => $this->job_titles
-        ]);
+
+
+        if (filled($this->search)) {
+            return view('livewire.job-titles.index',[
+            'job_titles'=> JobTitle::where('title','like', '%'.$this->search.'%')->orderBy('title','asc')->paginate(10)
+            ]);
+        }else{
+                return view('livewire.job_titles.index',[
+                'job_titles'=> JobTitle::orderBy('title','asc')->paginate(10)
+                ]);
+        }
     }
 }

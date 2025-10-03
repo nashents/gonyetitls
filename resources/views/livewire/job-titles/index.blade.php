@@ -35,9 +35,9 @@
                                     </th>
                                   </tr>
                                 </thead>
-                                @if ($job_titles->count()>0)
+                                @if (isset($job_titles))
                                 <tbody>
-                                    @foreach ($job_titles as $job_title)
+                                    @forelse ($job_titles as $job_title)
                                   <tr>
                                     <td>{{$job_title->title}}</td>
                                     <td>{{$job_title->department ? $job_title->department->name : ""}}</td>
@@ -61,12 +61,28 @@
                                         @include('job_titles.delete')
                                 </td>
                                   </tr>
-                                  @endforeach
+                                   @empty
+                                  <tr>
+                                    <td colspan="7">
+                                        <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
+                                            No Job Titles Found ....
+                                        </div>
+                                       
+                                    </td>
+                                  </tr>  
+                                @endforelse
                                 </tbody>
                                 @else
                                     <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
                                  @endif
                               </table>
+                               <nav class="text-center" style="float: right">
+                                <ul class="pagination rounded-corners">
+                                    @if (isset($job_titles))
+                                        {{ $job_titles->links() }} 
+                                    @endif 
+                                </ul>
+                            </nav>    
 
                             <!-- /.col-md-12 -->
                         </div>
