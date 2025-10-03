@@ -120,7 +120,7 @@ class Index extends Component
             'job_titles'=> JobTitle::where('title','like', '%'.$this->search.'%')->orderBy('title','asc')->paginate(10)
             ]);
         }else{
-                return view('livewire.job_titles.index',[
+                return view('livewire.job-titles.index',[
                 'job_titles'=> JobTitle::orderBy('title','asc')->paginate(10)
                 ]);
         }
