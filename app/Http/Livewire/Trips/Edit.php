@@ -1513,8 +1513,8 @@ class Edit extends Component
         //   try{
           $trip = Trip::find($this->trip_id);
           $trip->trip_ref = $this->trip_ref;
-          $trip->user_id =  $this->user->id;
-          $trip->company_id = $this->company->id;
+          $trip->user_id =  $this->user->id ?: null;
+          $trip->company_id = $this->company->id ?: null;
           $trip->horse_id = $this->mode_of_transport === "Horse" ? $this->selectedHorse : null;
           $trip->vehicle_id = $this->mode_of_transport === "Vehicle" ? $this->selectedVehicle : null;
           $trip->transporter_id = $this->selectedTransporter;
@@ -1526,11 +1526,11 @@ class Edit extends Component
           $trip->driver_id = $this->driver_id ?: null;
           $trip->with_customer_rates = $this->with_customer_rates;
           $trip->with_transporter_rates = $this->with_transporter_rates;
-          $trip->broker_id = $this->selectedBroker;
+          $trip->broker_id = $this->selectedBroker ?: null;
           $trip->initial_trip_id = $this->trip_type_name === "Return" ? $this->selectedTrip : null;
-          $trip->customer_id = $this->customer_id;
+          $trip->customer_id = $this->customer_id ?: null;
           $trip->consignee_id = $this->consignee_id ?: null;
-          $trip->shift_id = $this->selectedShift;
+          $trip->shift_id = $this->selectedShift ?: null;
           $trip->shift = $this->shift;
           $trip->arrive_loading_point = $this->arrive_lp;
           $trip->depart_loading_point = $this->depart_lp;

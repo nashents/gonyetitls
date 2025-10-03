@@ -47,7 +47,7 @@
                                         </th>
                                         <th class="th-sm">Email
                                         </th>
-                                        <th class="th-sm">Dpt
+                                        <th class="th-sm">Work Info
                                         </th>
                                         <th class="th-sm">Post
                                         </th>
@@ -69,10 +69,19 @@
                                             <td>{{ucfirst($employee->name)}} {{ucfirst($employee->surname)}}</td>
                                             <td>{{$employee->gender}}</td>
                                             <td>{{$employee->email}}</td>
-                                            <td>@foreach ($employee->departments as $department)
+                                            <td>
+                                                <strong></strong>Dpts:
+                                                @foreach ($employee->departments as $department)
                                                 {{$department->name}}
-                                            @endforeach</td>
-                                            <td>{{$employee->post}}</td>
+                                                    @if (!$loop->last)
+                                                    , 
+                                                    @endif
+                                                @endforeach
+                                                <br>
+                                                <strong>Post: </strong>{{$employee->post}} <br>
+                                                <strong>Branch: </strong>{{$employee->branch ? $employee->branch->name : ""}} <br>
+                                            </td>
+                                            <td></td>
                                             <td>
                                                 @if ($employee->user)
                                                 <span class="badge bg-{{$employee->user->active == 1 ? "success" : "danger"}}">{{$employee->user->active == 1 ? "Active" : "Inactive"}}</span>
