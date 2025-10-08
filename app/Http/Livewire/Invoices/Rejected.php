@@ -67,46 +67,70 @@ class Rejected extends Component
                     $invoice->update();
 
                     if ($this->authorize == "approved") {
-                             if((isset($invoice->customer_id) && isset($invoice->currency_id))){
+                            if (isset($invoice->customer_id, $invoice->currency_id)) {
+                                if ($invoice->accrual_balance === null) {
 
-                if ($invoice->accrual_balance === Null) {
+                                    $customerId = $invoice->customer_id;
+                                    $currencyId = $invoice->currency_id;
 
-                 $last_payment = Payment::where('customer_id', $invoice->customer_id)
-                                        ->where('currency_id', $invoice->currency_id)
-                                        ->whereNotNull('invoice_id') // Ensure payment is linked to an invoice
-                                        ->whereNotNull('accrual_balance') // Ensure accrual balance exists
-                                        ->orderByDesc('date') // Prioritize latest transaction date
-                                        ->orderByDesc('created_at') // If same date, get most recently recorded
-                                        ->orderByDesc('id') // If same creation time, get latest ID
+                                    // Payments subquery
+                                    $payments = DB::table('payments')
+                                        ->select([
+                                            'customer_id',
+                                            'currency_id',
+                                            DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
+                                            DB::raw('DATE(`date`) AS txn_date'),
+                                            'created_at',
+                                            DB::raw("'payment' AS source"),
+                                            DB::raw('0 AS source_priority'),
+                                            'id',
+                                        ])
+                                        ->whereNull('deleted_at') // exclude soft-deleted payments
+                                        ->where('customer_id', $customerId)
+                                        ->where('currency_id', $currencyId)
+                                        ->whereNotNull('accrual_balance');
+
+                                    // Invoices subquery (exclude the current invoice)
+                                    $invoices = DB::table('invoices')
+                                        ->select([
+                                            'customer_id',
+                                            'currency_id',
+                                            DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
+                                            DB::raw('DATE(`date`) AS txn_date'),
+                                            'created_at',
+                                            DB::raw("'invoice' AS source"),
+                                            DB::raw('1 AS source_priority'),
+                                            'id',
+                                        ])
+                                        ->where('authorization', 'approved')
+                                        ->where('customer_id', $customerId)
+                                        ->where('currency_id', $currencyId)
+                                        ->whereNotNull('accrual_balance')
+                                        ->whereNull('deleted_at') // exclude soft-deleted payments
+                                        ->when(isset($invoice->id), function ($q) use ($invoice) {
+                                            $q->where('id', '<>', $invoice->id);
+                                        });
+
+                                    // Union and pick the most recent by our deterministic ordering
+                                    $last = DB::query()
+                                        ->fromSub($payments->unionAll($invoices), 't')
+                                        // prefer real transaction date; if it's null, fall back to created_at
+                                        ->orderByRaw('COALESCE(t.txn_date, DATE(t.created_at)) DESC')
+                                        ->orderByDesc('t.created_at')
+                                        ->orderBy('t.source_priority')   // payments (0) before invoices (1) on ties
+                                        ->orderByDesc('t.id')
                                         ->first();
 
-                                    // If no valid payment exists, retrieve the last invoice with the highest accrual balance
-                $last_invoice = null;
+                                   
 
-                if (!$last_payment) {
-                    
-                    $last_invoice = Invoice::where('authorization', 'approved')
-                        ->where('customer_id', $invoice->customer_id)
-                        ->where('currency_id', $invoice->currency_id)
-                        ->whereNotNull('accrual_balance') // Ensure accrual balance exists
-                        ->orderByDesc('accrual_balance') // Prioritize highest balance
-                        ->orderByDesc('date') // If tie, use latest invoice date
-                        ->orderByDesc('id') // If tie, use latest ID
-                        ->first();
-                }
+                                    $previous_balance = ($last && is_numeric($last->accrual_balance))
+                                        ? (float) $last->accrual_balance
+                                        : 0.0;
 
-              
-                // Determine the last accrual balance, prioritizing payments over invoices
-                $previous_balance = $last_payment && is_numeric($last_payment->accrual_balance) 
-                    ? $last_payment->accrual_balance 
-                    : ($last_invoice && is_numeric($last_invoice->accrual_balance) ? $last_invoice->accrual_balance : 0);
-
-                // Compute and set the new accrual balance
-                $invoice->accrual_balance = $previous_balance + $invoice->total;
-                $invoice->update(); // Save the updated invoice
-                   
-                }
-            }
+                                    $invoice->accrual_balance = $previous_balance + (float) $invoice->total;
+                                    $invoice->save();
+                                }
+                            }
                     }
 
                 }
@@ -150,7 +174,7 @@ class Rejected extends Component
         $this->dispatchBrowserEvent('show-invoiceAuthorizationModal');
       }
 
-      public function update(){
+    public function update(){
 
         DB::transaction(function () {
       try{
@@ -162,41 +186,68 @@ class Rejected extends Component
 
         if ($this->authorize == "approved") {
 
-            if((isset($invoice->customer_id) && isset($invoice->currency_id))){
-                if ($invoice->accrual_balance === Null) {
+                  if (isset($invoice->customer_id, $invoice->currency_id)) {
+                if ($invoice->accrual_balance === null) {
 
-                 $last_payment = Payment::where('customer_id', $invoice->customer_id)
-                                        ->where('currency_id', $invoice->currency_id)
-                                        ->whereNotNull('invoice_id') // Ensure payment is linked to an invoice
-                                        ->whereNotNull('accrual_balance') // Ensure accrual balance exists
-                                        ->orderByDesc('date') // Prioritize latest transaction date
-                                        ->orderByDesc('created_at') // If same date, get most recently recorded
-                                        ->orderByDesc('id') // If same creation time, get latest ID
-                                        ->first();
+                    $customerId = $invoice->customer_id;
+                    $currencyId = $invoice->currency_id;
 
-                                    // If no valid payment exists, retrieve the last invoice with the highest accrual balance
-                $last_invoice = null;
-                if (!$last_payment) {
-                    $last_invoice = Invoice::where('authorization', 'approved')
-                        ->where('customer_id', $invoice->customer_id)
-                        ->where('currency_id', $invoice->currency_id)
-                        ->whereNotNull('accrual_balance') // Ensure accrual balance exists
-                        ->orderByDesc('accrual_balance') // Prioritize highest balance
-                        ->orderByDesc('date') // If tie, use latest invoice date
-                        ->orderByDesc('id') // If tie, use latest ID
+                    // Payments subquery
+                    $payments = DB::table('payments')
+                        ->select([
+                            'customer_id',
+                            'currency_id',
+                            DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
+                            DB::raw('DATE(`date`) AS txn_date'),
+                            'created_at',
+                            DB::raw("'payment' AS source"),
+                            DB::raw('0 AS source_priority'),
+                            'id',
+                        ])
+                         ->whereNull('deleted_at') // exclude soft-deleted payments
+                        ->where('customer_id', $customerId)
+                        ->where('currency_id', $currencyId)
+                        ->whereNotNull('accrual_balance');
+
+                    // Invoices subquery (exclude the current invoice)
+                    $invoices = DB::table('invoices')
+                        ->select([
+                            'customer_id',
+                            'currency_id',
+                            DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
+                            DB::raw('DATE(`date`) AS txn_date'),
+                            'created_at',
+                            DB::raw("'invoice' AS source"),
+                            DB::raw('1 AS source_priority'),
+                            'id',
+                        ])
+                        ->where('authorization', 'approved')
+                        ->where('customer_id', $customerId)
+                        ->where('currency_id', $currencyId)
+                        ->whereNotNull('accrual_balance')
+                        ->whereNull('deleted_at') // exclude soft-deleted payments
+                        ->when(isset($invoice->id), function ($q) use ($invoice) {
+                            $q->where('id', '<>', $invoice->id);
+                        });
+
+                    // Union and pick the most recent by our deterministic ordering
+                    $last = DB::query()
+                        ->fromSub($payments->unionAll($invoices), 't')
+                        // prefer real transaction date; if it's null, fall back to created_at
+                        ->orderByRaw('COALESCE(t.txn_date, DATE(t.created_at)) DESC')
+                        ->orderByDesc('t.created_at')
+                        ->orderBy('t.source_priority')   // payments (0) before invoices (1) on ties
+                        ->orderByDesc('t.id')
                         ->first();
-                }
 
-              
-                // Determine the last accrual balance, prioritizing payments over invoices
-                $previous_balance = $last_payment && is_numeric($last_payment->accrual_balance) 
-                    ? $last_payment->accrual_balance 
-                    : ($last_invoice && is_numeric($last_invoice->accrual_balance) ? $last_invoice->accrual_balance : 0);
+                  
 
-                // Compute and set the new accrual balance
-                $invoice->accrual_balance = $previous_balance + $invoice->total;
-                $invoice->update(); // Save the updated invoice
-                   
+                    $previous_balance = ($last && is_numeric($last->accrual_balance))
+                        ? (float) $last->accrual_balance
+                        : 0.0;
+
+                    $invoice->accrual_balance = $previous_balance + (float) $invoice->total;
+                    $invoice->save();
                 }
             }
 

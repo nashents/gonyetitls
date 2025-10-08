@@ -266,25 +266,35 @@ class Index extends Component
             }
         }
 
-        public function drawdownPayments(){
+   
+    public function drawdownPayments(){
 
-             DB::transaction(function () {
+         DB::transaction(function () {
+
+        $this->amount_paid = 0;
+        $this->payment_drawdown_balance = 0;
 
         if (isset($this->drawdown_amount) && isset($this->bill_drawdown_balance) && ($this->drawdown_amount >= $this->bill_drawdown_balance)) {
             $this->payment_drawdown_balance = $this->drawdown_amount - $this->bill_drawdown_balance;
             $this->bill_drawdown_balance = 0;
             $this->amount_paid = $this->bill_drawdown_balance;
-        }else{
+        }elseif(isset($this->drawdown_amount) && isset($this->bill_drawdown_balance) && ($this->drawdown_amount <= $this->bill_drawdown_balance)){
             $this->bill_drawdown_balance = $this->bill_drawdown_balance - $this->drawdown_amount;
             $this->payment_drawdown_balance = 0;
             $this->amount_paid = $this->drawdown_amount;
+        }else{
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'error',
+                'message'=>"Invalid Drawdown Amount!!"
+            ]);
+            return;
         }
 
-      
-        
+       
+
         $bill = Bill::find($this->selectedBill); 
 
-          $payments = DB::table('payments')
+        $payments = DB::table('payments')
             ->select([
                 'vendor_id',
                 'currency_id',
@@ -294,10 +304,12 @@ class Index extends Component
                 DB::raw("'payment' AS source"),
                 'id',
             ])
-            ->where('vendor_id', $this->bill->vendor_id)
-            ->where('currency_id', $this->bill->currency_id)
+            ->where('vendor_id', $bill->vendor_id)
+            ->where('currency_id', $bill->currency_id)
+             ->whereNull('deleted_at') // exclude soft-deleted payments
+             ->whereNotNull('accrual_balance'); // Ensure accrual balance exists
             // ->whereNotNull('bill_id') // Ensure the payment is linked to an bill
-        ;
+        
 
         // 2) Build bills subquery
         $bills = DB::table('bills')
@@ -310,8 +322,11 @@ class Index extends Component
                 DB::raw("'bill' AS source"),
                 'id',
             ])
-            ->where('vendor_id', $this->bill->vendor_id)
-            ->where('currency_id', $this->bill->currency_id);
+            ->where('authorization','approved')
+            ->where('vendor_id', $bill->vendor_id)
+            ->where('currency_id', $bill->currency_id)
+             ->whereNull('deleted_at') // exclude soft-deleted bills
+            ->whereNotNull('accrual_balance'); // Ensure accrual balance exists
 
         // 3) Union and pick the most recent row
         $latest = DB::query()
@@ -320,33 +335,25 @@ class Index extends Component
             ->orderByDesc('created_at')  // ✅ system timestamp next
             ->orderByRaw("CASE WHEN source = 'payment' THEN 1 ELSE 0 END DESC") // ✅ prefer payments over bills
             ->first();
-
+        
         $payment = Payment::find($this->last_payment->id);
         $payment->drawdown_balance = $this->payment_drawdown_balance;
-      
-
-        if ($latest && is_numeric($latest->accrual_balance) && is_numeric($this->amount)) {
+        
+        if ($latest && is_numeric($latest->accrual_balance) && is_numeric($this->amount_paid)) {
             // Use bc math if you care about money precision
             $payment->accrual_balance = (float) bcsub(
                 (string) $latest->accrual_balance,
-                (string) $this->amount,
+                (string) $this->amount_paid,
                 2
             );
+        }else{
+
         }
 
         $payment->update();
 
-        $bill_payment = new BillPayment;
-        $bill_payment->bill_id = $this->selectedBill;
-        $bill_payment->vendor_id = $bill->vendor_id;
-        $bill_payment->payment_id =$this->last_payment->id;
-        $bill_payment->currency_id = $bill->currency_id;
-        $bill_payment->amount = $this->amount_paid;
-        $bill_payment->save();
-      
     
-
-        $bill = Bill::find($this->selectedBill);
+        
         $bill->balance = $this->bill_drawdown_balance;
         if ($this->bill_drawdown_balance <= 0) {
             $bill->status = "Paid";
@@ -354,6 +361,14 @@ class Index extends Component
             $bill->status = "Partial";
         }
         $bill->update();
+
+        $bill_payment = new BillPayment;
+        $bill_payment->vendor_id = $bill->vendor_id;
+        $bill_payment->bill_id = $bill->id;
+        $bill_payment->payment_id = $payment->id;
+        $bill_payment->currency_id = $bill->currency_id;
+        $bill_payment->amount = $this->amount_paid;
+        $bill_payment->save();  
  
         $this->dispatchBrowserEvent('hide-paymentDrawdownModal');
         $this->dispatchBrowserEvent('alert',[
@@ -444,6 +459,7 @@ class Index extends Component
 
         $account = Account::find($this->account_id);
         $current_balance = $account->balance;
+
         if (isset($current_balance)) {
            
         if ($current_balance >= $this->amount ) {
@@ -478,18 +494,7 @@ class Index extends Component
         }
         $payment->balance = $this->current_balance;
 
-        // $last_bill = Bill::where('authorization','approved')->where('vendor_id',$this->bill->vendor_id)->where('currency_id', $this->bill->currency_id)->whereRaw('accrual_balance REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->where('accrual_balance','>',0)->orderBy('accrual_balance','desc')->first();
-        // if(isset($last_bill)){
-        //     if((isset($last_bill->accrual_balance) && is_numeric($last_bill->accrual_balance)) && is_numeric($this->amount)){
-        //         $payment->accrual_balance = $last_bill->accrual_balance - $this->amount;
-        //     }
-        // }else{
-        //     $accrual_balance = Bill::where('authorization','approved')->where('vendor_id',$this->bill->vendor_id)->where('accrual_balance', Null)->where('currency_id', $this->bill->currency_id)->whereRaw('balance REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->get()->sum('balance');
-        //     if(isset($accrual_balance)){
-        //         $payment->accrual_balance = $accrual_balance - $this->amount;
-        //     }
-        // }
-
+        // 1) Build payments subquery
         $payments = DB::table('payments')
             ->select([
                 'vendor_id',
@@ -500,9 +505,9 @@ class Index extends Component
                 DB::raw("'payment' AS source"),
                 'id',
             ])
+             ->whereNull('deleted_at') // exclude soft-deleted payments
             ->where('vendor_id', $this->bill->vendor_id)
             ->where('currency_id', $this->bill->currency_id)
-            // ->whereNotNull('bill_id') // Ensure the payment is linked to an bill
         ;
 
         // 2) Build bills subquery
@@ -511,12 +516,14 @@ class Index extends Component
                 'vendor_id',
                 'currency_id',
                 DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
-                DB::raw('bills.bill_date AS date'), // ✅ alias to "date"
+                DB::raw('bills.bill_date AS date'), // alias to date
                 'bills.created_at',
                 DB::raw("'bill' AS source"),
                 'id',
             ])
+            ->where('authorization','approved')
             ->where('vendor_id', $this->bill->vendor_id)
+             ->whereNull('deleted_at') // exclude soft-deleted bill
             ->where('currency_id', $this->bill->currency_id);
 
         // 3) Union and pick the most recent row
@@ -526,6 +533,7 @@ class Index extends Component
             ->orderByDesc('created_at')  // ✅ system timestamp next
             ->orderByRaw("CASE WHEN source = 'payment' THEN 1 ELSE 0 END DESC") // ✅ prefer payments over bills
             ->first();
+          
 
         if ($latest && is_numeric($latest->accrual_balance) && is_numeric($this->amount)) {
             // Use bc math if you care about money precision
@@ -535,7 +543,7 @@ class Index extends Component
                 2
             );
         }
-
+        
         $payment->date = $this->date;
         $payment->save();
 

@@ -80,61 +80,69 @@ class Pending extends Component
 
                 if ($this->authorize == "approved") {
 
-                    // if((isset($bill->vendor_id) && isset($bill->currency_id))){
+                if (isset($bill->vendor_id, $bill->currency_id)) {
 
-                    //     if ($bill->accrual_balance == Null) {
+                if ($bill->accrual_balance === null) {
 
-                    //         $accrual_balance = Bill::where('authorization','approved')->where('vendor_id',$bill->vendor_id)->where('id','!=',$bill->id)->where('currency_id', $bill->currency_id)->whereRaw('balance REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->get()->sum('balance');
-                    //         if (is_numeric($accrual_balance) && is_numeric($bill->total)) {
-                    //             $accrual_balance = $accrual_balance + $bill->total;
-                    //             $bill->accrual_balance =   $accrual_balance;
-                    //             $bill->update();
-                    //         }
-                           
-                    //     }
-                    // }
-                    // $accrual_balance = Null;
+                    $vendorId = $bill->vendor_id;
+                    $currencyId = $bill->currency_id;
 
-                if((isset($bill->vendor_id) && isset($bill->currency_id))){
+                    // Payments subquery
+                    $payments = DB::table('payments')
+                        ->select([
+                            'vendor_id',
+                            'currency_id',
+                            DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
+                            DB::raw('DATE(`date`) AS txn_date'),
+                            'created_at',
+                            DB::raw("'payment' AS source"),
+                            DB::raw('0 AS source_priority'),
+                            'id',
+                        ])
+                         ->whereNull('deleted_at') // exclude soft-deleted payments
+                        ->where('vendor_id', $vendorId)
+                        ->where('currency_id', $currencyId)
+                        ->whereNotNull('accrual_balance');
 
-                if ($bill->accrual_balance === Null) {
+                    // bills subquery (exclude the current bill)
+                    $bills = DB::table('bills')
+                        ->select([
+                            'vendor_id',
+                            'currency_id',
+                            DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
+                            DB::raw('DATE(`bill_date`) AS txn_date'),
+                            'created_at',
+                            DB::raw("'bill' AS source"),
+                            DB::raw('1 AS source_priority'),
+                            'id',
+                        ])
+                        ->where('authorization', 'approved')
+                        ->where('vendor_id', $vendorId)
+                        ->where('currency_id', $currencyId)
+                        ->whereNotNull('accrual_balance')
+                        ->whereNull('deleted_at') // exclude soft-deleted bill
+                        ->when(isset($bill->id), function ($q) use ($bill) {
+                            $q->where('id', '<>', $bill->id);
+                        });
 
-                 $last_payment = Payment::where('vendor_id', $bill->vendor_id)
-                                        ->where('currency_id', $bill->currency_id)
-                                        ->whereNotNull('bill_id') // Ensure payment is linked to an bill
-                                        ->whereNotNull('accrual_balance') // Ensure accrual balance exists
-                                        ->orderByDesc('date') // Prioritize latest transaction date
-                                        ->orderByDesc('created_at') // If same date, get most recently recorded
-                                        ->orderByDesc('id') // If same creation time, get latest ID
-                                        ->first();
-
-                                    // If no valid payment exists, retrieve the last bill with the highest accrual balance
-                $last_bill = null;
-
-                if (!$last_payment) {
-                    
-                    $last_bill = Bill::where('authorization', 'approved')
-                        ->where('vendor_id', $bill->vendor_id)
-                        ->where('currency_id', $bill->currency_id)
-                        ->whereNotNull('accrual_balance') // Ensure accrual balance exists
-                        ->orderByDesc('accrual_balance') // Prioritize highest balance
-                        ->orderByDesc('bill_date') // If tie, use latest bill date
-                        ->orderByDesc('id') // If tie, use latest ID
+                    // Union and pick the most recent by our deterministic ordering
+                    $last = DB::query()
+                        ->fromSub($payments->unionAll($bills), 't')
+                        // prefer real transaction date; if it's null, fall back to created_at
+                        ->orderByRaw('COALESCE(t.txn_date, DATE(t.created_at)) DESC')
+                        ->orderByDesc('t.created_at')
+                        ->orderBy('t.source_priority')   // payments (0) before bills (1) on ties
+                        ->orderByDesc('t.id')
                         ->first();
-                }
 
-              
-                // Determine the last accrual balance, prioritizing payments over bills
-                $previous_balance = $last_payment && is_numeric($last_payment->accrual_balance) 
-                    ? $last_payment->accrual_balance 
-                    : ($last_bill && is_numeric($last_bill->accrual_balance) ? $last_bill->accrual_balance : 0);
+                    $previous_balance = ($last && is_numeric($last->accrual_balance))
+                        ? (float) $last->accrual_balance
+                        : 0.0;
 
-                // Compute and set the new accrual balance
-                $bill->accrual_balance = $previous_balance + $bill->total;
-                $bill->update(); // Save the updated bill
-                   
+                    $bill->accrual_balance = $previous_balance + (float) $bill->total;
+                    $bill->save();
                 }
-                }
+            }
 
                 }
     
@@ -282,46 +290,69 @@ class Pending extends Component
 
         if ($this->authorize == "approved") {
 
-                if((isset($bill->vendor_id) && isset($bill->currency_id))){
+                if (isset($bill->vendor_id, $bill->currency_id)) {
 
-                if ($bill->accrual_balance === Null) {
+                if ($bill->accrual_balance === null) {
 
-                 $last_payment = Payment::where('vendor_id', $bill->vendor_id)
-                                        ->where('currency_id', $bill->currency_id)
-                                        ->whereNotNull('bill_id') // Ensure payment is linked to an bill
-                                        ->whereNotNull('accrual_balance') // Ensure accrual balance exists
-                                        ->orderByDesc('date') // Prioritize latest transaction date
-                                        ->orderByDesc('created_at') // If same date, get most recently recorded
-                                        ->orderByDesc('id') // If same creation time, get latest ID
-                                        ->first();
+                    $vendorId = $bill->vendor_id;
+                    $currencyId = $bill->currency_id;
 
-                                    // If no valid payment exists, retrieve the last bill with the highest accrual balance
-                $last_bill = null;
+                    // Payments subquery
+                    $payments = DB::table('payments')
+                        ->select([
+                            'vendor_id',
+                            'currency_id',
+                            DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
+                            DB::raw('DATE(`date`) AS txn_date'),
+                            'created_at',
+                            DB::raw("'payment' AS source"),
+                            DB::raw('0 AS source_priority'),
+                            'id',
+                        ])
+                         ->whereNull('deleted_at') // exclude soft-deleted payments
+                        ->where('vendor_id', $vendorId)
+                        ->where('currency_id', $currencyId)
+                        ->whereNotNull('accrual_balance');
 
-                if (!$last_payment) {
-                    
-                    $last_bill = Bill::where('authorization', 'approved')
-                        ->where('vendor_id', $bill->vendor_id)
-                        ->where('currency_id', $bill->currency_id)
-                        ->whereNotNull('accrual_balance') // Ensure accrual balance exists
-                        ->orderByDesc('accrual_balance') // Prioritize highest balance
-                        ->orderByDesc('date') // If tie, use latest bill date
-                        ->orderByDesc('id') // If tie, use latest ID
+                    // bills subquery (exclude the current bill)
+                    $bills = DB::table('bills')
+                        ->select([
+                            'vendor_id',
+                            'currency_id',
+                            DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
+                            DB::raw('DATE(`bill_date`) AS txn_date'),
+                            'created_at',
+                            DB::raw("'bill' AS source"),
+                            DB::raw('1 AS source_priority'),
+                            'id',
+                        ])
+                        ->where('authorization', 'approved')
+                        ->where('vendor_id', $vendorId)
+                        ->where('currency_id', $currencyId)
+                        ->whereNotNull('accrual_balance')
+                        ->whereNull('deleted_at') // exclude soft-deleted bill
+                        ->when(isset($bill->id), function ($q) use ($bill) {
+                            $q->where('id', '<>', $bill->id);
+                        });
+
+                    // Union and pick the most recent by our deterministic ordering
+                    $last = DB::query()
+                        ->fromSub($payments->unionAll($bills), 't')
+                        // prefer real transaction date; if it's null, fall back to created_at
+                        ->orderByRaw('COALESCE(t.txn_date, DATE(t.created_at)) DESC')
+                        ->orderByDesc('t.created_at')
+                        ->orderBy('t.source_priority')   // payments (0) before bills (1) on ties
+                        ->orderByDesc('t.id')
                         ->first();
-                }
 
-              
-                // Determine the last accrual balance, prioritizing payments over bills
-                $previous_balance = $last_payment && is_numeric($last_payment->accrual_balance) 
-                    ? $last_payment->accrual_balance 
-                    : ($last_bill && is_numeric($last_bill->accrual_balance) ? $last_bill->accrual_balance : 0);
+                    $previous_balance = ($last && is_numeric($last->accrual_balance))
+                        ? (float) $last->accrual_balance
+                        : 0.0;
 
-                // Compute and set the new accrual balance
-                $bill->accrual_balance = $previous_balance + $bill->total;
-                $bill->update(); // Save the updated bill
-                   
+                    $bill->accrual_balance = $previous_balance + (float) $bill->total;
+                    $bill->save();
                 }
-                }
+            }
             
             $this->dispatchBrowserEvent('hide-authorizationModal');
             $this->dispatchBrowserEvent('alert',[

@@ -979,6 +979,7 @@ class Create extends Component
             $invoice->exchange_amount = $this->exchange_amount;
             $invoice->balance = $this->total;
             $invoice->update();
+            
     }elseif ($this->from_trips == false) {
 
         if (isset($this->from_inventory) && $this->from_inventory == false) {

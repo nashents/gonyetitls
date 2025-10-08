@@ -719,34 +719,6 @@ class Index extends Component
         
         $payment->balance = $this->current_balance;
 
-        // $payments = DB::table('payments')->select('customer_id','currency_id',
-        //         DB::raw('CAST(accrual_balance AS DECIMAL(10,2)) as accrual_balance')
-        //     )
-        //     ->where('customer_id', $this->invoice->customer_id)
-        //     ->where('currency_id', $this->invoice->currency_id)
-        //     ->whereNotNull('invoice_id'); // Ensure the payment is linked to an invoice
-
-        // $invoices = DB::table('invoices')
-        //     ->select(
-        //         'customer_id',
-        //         'customer_id',
-        //         DB::raw('CAST(accrual_balance AS DECIMAL(10,2)) as accrual_balance')
-        //     )
-        //     ->where('customer_id', $this->invoice->customer_id)
-        //     ->where('currency_id', $this->invoice->currency_id);
-
-        // $highestBalance = DB::table(DB::raw("({$payments->toSql()} UNION ALL {$invoices->toSql()}) as combined_data"))
-        //     ->mergeBindings($payments)
-        //     ->mergeBindings($invoices)
-        //     ->select(DB::raw('MAX(accrual_balance) as highest_accrual_balance'))
-        //     ->first();
-
-
-
-        //     if((isset($highestBalance) && is_numeric($highestBalance->highest_accrual_balance)) && is_numeric($this->amount)){
-        //         $payment->accrual_balance = $highestBalance->highest_accrual_balance - $this->amount;
-        //     }
-
         // 1) Build payments subquery
         $payments = DB::table('payments')
             ->select([
@@ -758,6 +730,7 @@ class Index extends Component
                 DB::raw("'payment' AS source"),
                 'id',
             ])
+             ->whereNull('deleted_at') // exclude soft-deleted payments
             ->where('customer_id', $this->invoice->customer_id)
             ->where('currency_id', $this->invoice->currency_id)
             // ->whereNotNull('invoice_id') // Ensure the payment is linked to an invoice
@@ -774,6 +747,7 @@ class Index extends Component
                 DB::raw("'invoice' AS source"),
                 'id',
             ])
+             ->whereNull('deleted_at') // exclude soft-deleted payments
             ->where('authorization','approved')
             ->where('customer_id', $this->invoice->customer_id)
             ->where('currency_id', $this->invoice->currency_id);
@@ -799,14 +773,6 @@ class Index extends Component
         $payment->date = $this->date;
         $payment->save();
 
-        // $invoice_payment = new InvoicePayment;
-        // $invoice_payment->customer_id = $this->invoice->customer_id;
-        // $invoice_payment->invoice_id = $this->invoice->id;
-        // $invoice_payment->payment_id = $payment->id;
-        // $invoice_payment->currency_id = $this->invoice->currency_id;
-        // $invoice_payment->amount = $this->amount;
-        // $invoice_payment->save();  
-        
 
         if(isset($this->pop)){
             $file = $this->pop;

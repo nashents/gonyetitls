@@ -14,9 +14,6 @@
                         <form wire:submit.prevent="store()" >
                         <div class="modal-body">
                           
-                            
-                           
-
                             <div class="row">
                                 <div class="col-md-8">
                                     <div class="form-group">
@@ -53,7 +50,7 @@
                                    <div class="row">  
                                         <div class="col-md-5">
                                             <div class="form-group">
-                                                <select wire:model.debounce.300ms="selectedAllowance.0" class="form-control">
+                                                <select wire:model.debounce.300ms="selectedEarning.0" class="form-control">
                                                     <option value="">Select Earning</option>
                                                     @foreach ($earnings as $earning)
                                                         <option value="{{ $earning->id }}">{{ $earning->name }}</option>
@@ -85,14 +82,14 @@
                                         @foreach ($earnings_inputs as $key => $value)
                                             <div class="col-md-5">
                                                 <div class="form-group">
-                                                    <select wire:model.debounce.300ms="selectedAllowance.{{ $value }}" class="form-control">
+                                                    <select wire:model.debounce.300ms="selectedEarning.{{ $value }}" class="form-control">
                                                         <option value="">Select Earning</option>
                                                         @foreach ($allowances as $allowance)
                                                             <option value="{{ $allowance->id }}">{{ $allowance->name }}</option>
                                                         @endforeach
                                                     </select>
                                                 </div>
-                                                @error('selectedAllowance.'. $value) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                @error('selectedEarning.'. $value) <span class="text-danger error">{{ $message }}</span>@enderror
                                             </div>
                                             <div class="col-md-3">
                                                 <div class="form-group">
@@ -107,8 +104,8 @@
                                             </div>
                                             <div class="col-md-2">
                                                 <div class="form-group">
-                                                    <input  type="number" step="any"  class="form-control" wire:model.debounce.300ms="allowance_amount.{{ $value }}" placeholder="Amount">
-                                                    @error('allowance_amount.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                    <input  type="number" step="any"  class="form-control" wire:model.debounce.300ms="earning_amount.{{ $value }}" placeholder="Amount">
+                                                    @error('earning_amount.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                                 </div>
                                             </div>
                                             <div class="col-md-1">
@@ -126,6 +123,8 @@
                                             </div>
                                         </div>
                                     </div>
+
+                                    <div class="mt-30">
                                     <label for="">Allowances</label>
                                     <div class="row">  
                                         <div class="col-md-5">
@@ -197,6 +196,7 @@
                                             </div>
                                         @endforeach
                                     </div>
+                                    
                                 
                                     <div class="row">
                                         <div class="col-md-12">
@@ -205,6 +205,7 @@
                                             </div>
                                         </div>
                                     </div>
+                                     </div>
 
                                         @if ($driver)
                                     <label for="">Gain Recoveries</label>
