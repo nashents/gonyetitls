@@ -316,6 +316,7 @@ class Index extends Component
             ])
             ->where('customer_id', $invoice->customer_id)
             ->where('currency_id', $invoice->currency_id)
+             ->whereNull('deleted_at') // exclude soft-deleted payments
              ->whereNotNull('accrual_balance'); // Ensure accrual balance exists
             // ->whereNotNull('invoice_id') // Ensure the payment is linked to an invoice
         
@@ -334,6 +335,7 @@ class Index extends Component
             ->where('authorization','approved')
             ->where('customer_id', $invoice->customer_id)
             ->where('currency_id', $invoice->currency_id)
+             ->whereNull('deleted_at') // exclude soft-deleted invoices
             ->whereNotNull('accrual_balance'); // Ensure accrual balance exists
 
         // 3) Union and pick the most recent row
@@ -747,7 +749,7 @@ class Index extends Component
                 DB::raw("'invoice' AS source"),
                 'id',
             ])
-             ->whereNull('deleted_at') // exclude soft-deleted payments
+             ->whereNull('deleted_at') // exclude soft-deleted invoices
             ->where('authorization','approved')
             ->where('customer_id', $this->invoice->customer_id)
             ->where('currency_id', $this->invoice->currency_id);

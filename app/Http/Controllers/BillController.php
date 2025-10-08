@@ -7,6 +7,8 @@ use App\Models\Vendor;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\SendVendorStatementMail;
 use App\Http\Requests\StoreBillRequest;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;

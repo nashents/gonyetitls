@@ -208,29 +208,91 @@ Customer Statement Preview |@if (Auth::user()->employee->company)
                                     <div class="date" style="padding-bottom: 3px"> <strong>From: </strong>{{ date('F j, Y', strtotime($from)) }}</div>
                                     <div class="date" style="padding-bottom: 3px"> <strong>To: </strong>{{ date('F j, Y', strtotime($to)) }}</div>
                                     <hr>
-                                               @php
-                                                // $from = new DateTime($from);
-                                                // $to = new DateTime($to);
-                                                $opening_balance = App\Models\Bill::where('date','<=',$from)
-                                                                        ->where('authorization','approved')
-                                                                        ->where('vendor_id',$selectedCustomer)
-                                                                        ->where('currency_id', $currency->id)
-                                                                        ->whereRaw('accrual_balance REGEXP "^-?[0-9]+(\.[0-9]+)?$"')
-                                                                        ->where('accrual_balance', function ($query) {
-                                                                            $query->selectRaw('MAX(CAST(accrual_balance AS DECIMAL(10,2)))')->from('bills');
-                                                                        })
-                                                                        ->first();
-                                                                    
-                                               $closing_balance = App\Models\Bill::where('date','<=',$to)
-                                                                        ->where('authorization','approved')
-                                                                        ->where('vendor_id',$vendor->id)
-                                                                        ->where('currency_id', $currency->id)
-                                                                        ->whereRaw('balance REGEXP "^-?[0-9]+(\.[0-9]+)?$"')
-                                                                        ->get()->sum('balance');
-        
-                                               $billed = App\Models\Bill::where('vendor_id',$vendor->id)->where('authorization','approved')->where('currency_id',$currency->id)->where('date','>=',$from)->where('date','<=',$to)->whereRaw('total REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->get()->sum('total');
-                                               $paid = App\Models\Payment::where('vendor_id',$vendor->id)->where('currency_id',$currency->id)->whereBetween('date',[$from, $to])->whereRaw('amount REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->get()->sum('amount');
-                                            @endphp
+                                           @php
+                                use Illuminate\Support\Facades\DB;
+                                use Carbon\Carbon;
+
+                                // Normalize bounds
+                                $from = Carbon::parse($from)->startOfDay();
+                                $to   = Carbon::parse($to)->endOfDay();
+
+                                $vendorId   = $vendor->id;
+                                $currencyId = $currency->id;
+
+                                // Build a unified ledger: bills + payments with consistent columns
+                                $makeLedger = function () use ($vendorId, $currencyId) {
+                                    // Bills side (approved, not soft-deleted)
+                                    $billLedger = App\Models\Bill::query()
+                                        ->select([
+                                            DB::raw('bill_date as date'),
+                                            'created_at',
+                                            DB::raw('1 as pay_first'), // payments win ties
+                                            DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
+                                            'id',
+                                        ])
+                                        ->where('authorization', 'approved')
+                                        ->where('vendor_id', $vendorId)
+                                        ->where('currency_id', $currencyId)
+                                        ->whereNotNull('accrual_balance')
+                                        ->whereRaw('accrual_balance REGEXP "^-?[0-9]+(\\.[0-9]+)?$"')
+                                        ->whereNull('deleted_at');
+
+                                    // Payments side (not soft-deleted)
+                                    $paymentLedger = App\Models\Payment::query()
+                                        ->select([
+                                            'date',
+                                            'created_at',
+                                            DB::raw('0 as pay_first'), // payments first on ties
+                                            DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
+                                            'id',
+                                        ])
+                                        ->where('vendor_id', $vendorId)
+                                        ->where('currency_id', $currencyId)
+                                        ->whereNotNull('accrual_balance')
+                                        ->whereRaw('accrual_balance REGEXP "^-?[0-9]+(\\.[0-9]+)?$"')
+                                        ->whereNull('deleted_at');
+
+                                    return $billLedger->unionAll($paymentLedger);
+                                };
+
+                                // OPENING: last txn strictly before $from (payments win ties)
+                                $opening_balance = DB::query()
+                                    ->fromSub($makeLedger(), 'l')
+                                    ->where('date', '<', $from)
+                                    ->orderBy('date', 'desc')
+                                    ->orderBy('created_at', 'desc')
+                                    ->orderBy('pay_first', 'asc') // 0 (payments) before 1 (bills)
+                                    ->orderBy('id', 'desc')       // final deterministic tie-breaker
+                                    ->value('accrual_balance') ?? 0.00;
+
+                                // CLOSING: last txn on/before $to (payments win ties)
+                                $closing_balance = DB::query()
+                                    ->fromSub($makeLedger(), 'l')
+                                    ->where('date', '<=', $to)
+                                    ->orderBy('date', 'desc')
+                                    ->orderBy('created_at', 'desc')
+                                    ->orderBy('pay_first', 'asc')
+                                    ->orderBy('id', 'desc')
+                                    ->value('accrual_balance') ?? 0.00;
+
+                                // Period totals (respect soft-deletes and numerics)
+                                $billed = App\Models\Bill::query()
+                                    ->where('vendor_id', $vendorId)
+                                    ->where('authorization', 'approved')
+                                    ->where('currency_id', $currencyId)
+                                    ->whereBetween('bill_date', [$from, $to])
+                                    ->whereNull('deleted_at')
+                                    ->whereRaw('total REGEXP "^-?[0-9]+(\\.[0-9]+)?$"')
+                                    ->sum('total');
+
+                                $paid = App\Models\Payment::query()
+                                    ->where('vendor_id', $vendorId)
+                                    ->where('currency_id', $currencyId)
+                                    ->whereBetween('date', [$from, $to])
+                                    ->whereNull('deleted_at')
+                                    ->whereRaw('amount REGEXP "^-?[0-9]+(\\.[0-9]+)?$"')
+                                    ->sum('amount');
+                            @endphp
                                             
                                                 <div class="date" style="padding-bottom: 3px" ><strong>Opening Balance({{$currency->name}}) on {{ date('F j, Y', strtotime($from)) }}</strong> {{$currency->symbol}}{{ number_format($opening_balance ? $opening_balance->accrual : 0,2) }}</div>
                                            
@@ -271,7 +333,7 @@ Customer Statement Preview |@if (Auth::user()->employee->company)
                                                 <td class="text-center">{{ date('F j, Y', strtotime($result->transaction_date)) }}</td>
                                                 <td class="text-center">
                                                         @php
-                                                              if ($result->transaction_type === 'bill') {
+                                                            if ($result->transaction_type === 'bill') {
                                                                 $bill = \App\Models\Bill::where('bill_number', $result->number)
                                                                             ->where('authorization', 'approved')
                                                                             ->first();
@@ -288,23 +350,21 @@ Customer Statement Preview |@if (Auth::user()->employee->company)
                                                             <a href="{{ route('bills.show',$bill->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Bill# {{ $result->number }} </a><br>
                                                             Due {{ $bill->expiry }}
                                                         @elseif ($result->transaction_type === 'payment')
-                                                        <a href="{{ route('payments.show',$payment->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">{{ $result->number }}</a> Payment  made for 
-                                                        @if (isset($payment->bill))
-                                                        <a href="{{ route('bills.show',$payment->bill->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Bill# {{ $payment->bill ? $payment->bill->bill_number : "" }} </a> 
-                                                        @else
-                                                            @foreach ($payment->bill_payments as $bill_payment)
-                                                                <a href="{{ route('bills.show',$bill_payment->bill->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Bill# {{ $bill_payment->bill ? $bill_payment->bill->bill_number : "" }} </a> 
-                                                                @if (!$loop->last)
-                                                                    ,
-                                                                @endif
-                                                                
-                                                            @endforeach
-                                                        @endif
-                                                      
+                                                            <a href="{{ route('payments.show',$payment->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">{{ $result->number }}</a> Payment  made for 
+                                                            @if (isset($payment->bill))
+                                                                <a href="{{ route('bills.show',$payment->bill->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Bill# {{ $payment->bill ? $payment->bill->bill_number : "" }} </a> 
+                                                            @else
+                                                                @foreach ($payment->bill_payments as $bill_payment)
+                                                                    <a href="{{ route('bills.show',$bill_payment->bill->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Bill# {{ $bill_payment->bill ? $bill_payment->bill->bill_number : "" }} </a> 
+                                                                    @if (!$loop->last)
+                                                                        ,
+                                                                    @endif
+                                                                @endforeach
+                                                            @endif
                                                             <br>
                                                             {{ $payment->notes }} 
                                                         @endif
-                                                    </td>
+                                                </td>
                                                 <td class="text-center">{{ $currency->name}}</td>
                                                 <td class="text-center">{{ $currency->symbol}}{{ number_format($result->amount,2) }}</td>
                                                 <td class="text-center">{{ $currency->symbol}}{{ number_format($result->balance,2) }}</td>
