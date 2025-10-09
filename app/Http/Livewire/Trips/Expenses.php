@@ -23,7 +23,7 @@ class Expenses extends Component
     public $trip_id;
     public $user_id;
     public $expenses;
-    public $trip_expense_type = [] ;
+    public $trip_expense_type ;
     public $allowances;
     public $category;
     public $selectedExpense;
@@ -35,11 +35,13 @@ class Expenses extends Component
     public $exchange_amount;
     public $turnover;
     public $cost_of_sales;
+    public $net_profit;
+    public $trip_expense;
 
 
 
     public $name;
-    public $amount = [];
+    public $amount;
     public $currencies;
     public $selectedCurrency;
     public $selected_currency;
@@ -204,6 +206,7 @@ class Expenses extends Component
     }
 
     public function updatedAmount($amount, $key = null){
+        
         if ($key) {
             if (!is_null($amount)) {
                 if ((isset($this->exchange_rate[$key]) && $this->exchange_rate[$key] > 0)  &&  ( isset($amount) && $amount > 0 )) {
@@ -267,7 +270,18 @@ class Expenses extends Component
                     $trip_expense->category = $this->category[$key] ?? null;
                     $trip_expense->amount = $this->amount[$key] ?? 0;
                     $trip_expense->exchange_rate = $this->exchange_rate[$key] ?? null;
-                    $trip_expense->exchange_amount = $this->exchange_amount[$key] ?? null;
+
+                   if (isset($this->exchange_amount[$key]) && $this->exchange_amount[$key] !== null) {
+                        $trip_expense->exchange_amount = $this->exchange_amount[$key];
+                    } elseif (
+                        isset($this->exchange_rate[$key], $this->amount[$key]) &&
+                        $this->exchange_rate[$key] > 0 &&
+                        $this->amount[$key] > 0
+                    ) {
+                        $trip_expense->exchange_amount = $this->exchange_rate[$key] * $this->amount[$key];
+                    }
+                                    
+                   
                     $trip_expense->save();
 
                     $account = Account::where('name','Trip Expense')->get()->first();
