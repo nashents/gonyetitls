@@ -36,6 +36,7 @@ class Preview extends Component
     public function render()
     {
         if ( isset($this->selectedCustomer) && $this->selectedType == "Outstanding Invoices") {
+
             $this->invoices = Invoice::where('customer_id', $this->selectedCustomer)
             ->where('authorization', 'approved')
             ->where('status', 'Unpaid')
@@ -47,6 +48,7 @@ class Preview extends Component
         }elseif ( isset($this->selectedCustomer) && $this->selectedType == "Account Activity") {
 
             if (isset($this->from) && isset($this->to)) {
+                
                 $this->invoices = DB::table('invoices')
                 ->select(
                     DB::raw("'invoice' as transaction_type"),

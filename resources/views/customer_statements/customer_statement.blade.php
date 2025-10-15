@@ -235,6 +235,7 @@
                                                                     Illuminate\Support\Facades\DB::raw('0 as pay_first'),
                                                                     Illuminate\Support\Facades\DB::raw('CAST(accrual_balance AS DECIMAL(20,2)) AS accrual_balance'),
                                                                 ])
+                                                                ->whereNotNull('accrual_balance')
                                                                 ->where('customer_id', $customerId)
                                                                 ->where('currency_id', $currencyId);
 
@@ -319,17 +320,20 @@
                                                             <a href="{{ route('invoices.show',$invoice->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Invoice# {{ $result->number }} </a><br>
                                                             Due {{ $invoice->expiry }}
                                                         @elseif ($result->transaction_type === 'payment')
-                                                        <a href="{{ route('payments.show',$payment->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">{{ $result->number }}</a> Payment  made for 
+                                                            <a href="{{ route('payments.show',$payment->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">{{ $result->number }}</a> Payment 
                                                         @if (isset($payment->invoice))
-                                                            <a href="{{ route('invoices.show',$payment->invoice->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Invoice# {{ $payment->invoice ? $payment->invoice->invoice_number : "" }} </a> 
+                                                            made for <a href="{{ route('invoices.show',$payment->invoice->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Invoice# {{ $payment->invoice ? $payment->invoice->invoice_number : "" }} </a> 
                                                         @else
-                                                            @foreach ($payment->invoice_payments as $invoice_payment)
-                                                                <a href="{{ route('invoices.show',$invoice_payment->invoice->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Invoice# {{ $invoice_payment->invoice ? $invoice_payment->invoice->invoice_number : "" }} </a> 
-                                                                @if (!$loop->last)
-                                                                    ,
-                                                                @endif
-                                                                
-                                                            @endforeach
+                                                            @if ($payment->invoice_payments->count()> 0)
+                                                                    made for
+                                                                    @foreach ($payment->invoice_payments as $invoice_payment)
+                                                                        <a href="{{ route('invoices.show',$invoice_payment->invoice->id) }}" target="_blank" rel="noopener noreferrer" style="color: blue">Invoice# {{ $invoice_payment->invoice ? $invoice_payment->invoice->invoice_number : "" }} </a> 
+                                                                        @if (!$loop->last)
+                                                                            ,
+                                                                        @endif
+                                                                        
+                                                                    @endforeach
+                                                            @endif
                                                         @endif
                                                             <br>
                                                             {{ $payment->notes }} 

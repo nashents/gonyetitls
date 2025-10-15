@@ -283,15 +283,19 @@ class Index extends Component
 
         $this->amount_paid = 0;
         $this->payment_drawdown_balance = 0;
+       
+      
 
         if (isset($this->drawdown_amount) && isset($this->invoice_drawdown_balance) && ($this->drawdown_amount >= $this->invoice_drawdown_balance)) {
             $this->payment_drawdown_balance = $this->drawdown_amount - $this->invoice_drawdown_balance;
-            $this->invoice_drawdown_balance = 0;
             $this->amount_paid = $this->invoice_drawdown_balance;
+            $this->invoice_drawdown_balance = 0;
         }elseif(isset($this->drawdown_amount) && isset($this->invoice_drawdown_balance) && ($this->drawdown_amount <= $this->invoice_drawdown_balance)){
+           
             $this->invoice_drawdown_balance = $this->invoice_drawdown_balance - $this->drawdown_amount;
-            $this->payment_drawdown_balance = 0;
             $this->amount_paid = $this->drawdown_amount;
+            $this->payment_drawdown_balance = 0;
+            
         }else{
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'error',
@@ -346,18 +350,21 @@ class Index extends Component
             ->orderByRaw("CASE WHEN source = 'payment' THEN 1 ELSE 0 END DESC") // ✅ prefer payments over bills
             ->first();
         
+        
+        
+
         $payment = Payment::find($this->last_payment->id);
         $payment->drawdown_balance = $this->payment_drawdown_balance;
-        
         if ($latest && is_numeric($latest->accrual_balance) && is_numeric($this->amount_paid)) {
+           
             // Use bc math if you care about money precision
             $payment->accrual_balance = (float) bcsub(
                 (string) $latest->accrual_balance,
                 (string) $this->amount_paid,
                 2
             );
-        }else{
 
+        
         }
 
         $payment->update();

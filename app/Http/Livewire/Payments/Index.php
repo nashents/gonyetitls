@@ -457,192 +457,44 @@ class Index extends Component
 
         }
 
-        if ($this->movement == "all") {
-            if (isset($this->from) && isset($this->to)) {
-                if (isset($this->search)) {
-                    return view('livewire.payments.index',[
-                        'payments' => Payment::query()->with(['customer','currency'])->whereBetween($this->payment_filter,[$this->from, $this->to] )
-                        ->where('payment_number','like', '%'.$this->search.'%')
-                        ->orWhere('transaction_category','like', '%'.$this->search.'%')
-                        ->orWhere('date','like', '%'.$this->search.'%')
-                        ->orWhere('mode_of_payment','like', '%'.$this->search.'%')
-                        ->orWhereHas('transaction_type', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('customer', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('currency', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                        })
-                        ->orderBy($this->payment_filter,'desc')->paginate(10),
-                    
-                    ]);
-                }else {
-                    return view('livewire.payments.index',[
-                        'payments' => Payment::query()->with(['customer','currency'])
-                        ->whereBetween($this->payment_filter,[$this->from, $this->to] )
-                        ->orderBy($this->payment_filter,'desc')->paginate(10),
-                    ]);
-                }
-           
-        }
-        elseif (isset($this->search)) {
-            return view('livewire.payments.index',[
-                'payments' => Payment::query()->with(['customer','currency'])
-                ->whereMonth($this->payment_filter,date('m'))
-                ->whereYear($this->payment_filter,date('Y'))
-                ->where('payment_number','like', '%'.$this->search.'%')
-                ->orWhere('transaction_category','like', '%'.$this->search.'%')
-                ->orWhere('mode_of_payment','like', '%'.$this->search.'%')
-                ->orWhere('date','like', '%'.$this->search.'%')
-                ->orWhereHas('transaction_type', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('customer', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('currency', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orderBy($this->payment_filter,'desc')->paginate(10),
-            ]);
-        }
-        else {
-            return view('livewire.payments.index',[
-                'payments' => Payment::query()->with(['customer:id,name','currency'])->whereMonth($this->payment_filter, date('m'))
-                ->whereYear($this->payment_filter, date('Y'))->orderBy($this->payment_filter,'desc')->paginate(10),
-              
-            ]);
-        }
-        }elseif($this->movement == "Debit"){
-            if (isset($this->from) && isset($this->to)) {
-                if (isset($this->search)) {
-                    return view('livewire.payments.index',[
-                        'payments' => Payment::query()->with(['customer','currency'])->whereBetween($this->payment_filter,[$this->from, $this->to] )
-                        ->whereNotNull('bill_id')
-                        ->where('payment_number','like', '%'.$this->search.'%')
-                        ->orWhere('transaction_category','like', '%'.$this->search.'%')
-                        ->orWhere('date','like', '%'.$this->search.'%')
-                        ->orWhere('mode_of_payment','like', '%'.$this->search.'%')
-                        ->orWhereHas('transaction_type', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('customer', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('currency', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                        })
-                        ->orderBy($this->payment_filter,'desc')->paginate(10),
-                    
-                    ]);
-                }else {
-                    return view('livewire.payments.index',[
-                        'payments' => Payment::query()->with(['customer','currency'])
-                        ->whereBetween($this->payment_filter,[$this->from, $this->to] )
-                        ->whereNotNull('bill_id')
-                        ->orderBy($this->payment_filter,'desc')->paginate(10),
-                    ]);
-                    }
-            }
-            elseif (isset($this->search)) {
-                return view('livewire.payments.index',[
-                    'payments' => Payment::query()->with(['customer','currency'])
-                    ->whereMonth($this->payment_filter,date('m'))
-                    ->whereYear($this->payment_filter,date('Y'))
-                    ->whereNotNull('bill_id')
-                    ->where('payment_number','like', '%'.$this->search.'%')
-                    ->orWhere('transaction_category','like', '%'.$this->search.'%')
-                    ->orWhere('mode_of_payment','like', '%'.$this->search.'%')
-                    ->orWhere('date','like', '%'.$this->search.'%')
-                    ->orWhereHas('transaction_type', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('customer', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('currency', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orderBy($this->payment_filter,'desc')->paginate(10),
-                ]);
-            }
-            else {
-                return view('livewire.payments.index',[
-                    'payments' => Payment::query()->with(['customer:id,name','currency'])->whereMonth($this->payment_filter, date('m'))
-                    ->whereYear($this->payment_filter, date('Y'))->whereNotNull('bill_id')->orderBy($this->payment_filter,'desc')->paginate(10),
-                
-                ]);
-            }
+        $query = Payment::query()
+        ->with(['customer:id,name', 'currency:id,name,symbol', 'transaction_type:id,name']);
 
-        }elseif($this->movement == "Credit"){
-             if (isset($this->from) && isset($this->to)) {
-                    if (isset($this->search)) {
-                        return view('livewire.payments.index',[
-                            'payments' => Payment::query()->with(['customer','currency'])->whereBetween($this->payment_filter,[$this->from, $this->to] )
-                            ->where('payment_number','like', '%'.$this->search.'%')
-                            ->whereNull('bill_id')
-                            ->orWhere('transaction_category','like', '%'.$this->search.'%')
-                            ->orWhere('date','like', '%'.$this->search.'%')
-                            ->orWhere('mode_of_payment','like', '%'.$this->search.'%')
-                            ->orWhereHas('transaction_type', function ($query) {
-                                return $query->where('name', 'like', '%'.$this->search.'%');
-                            })
-                            ->orWhereHas('customer', function ($query) {
-                                return $query->where('name', 'like', '%'.$this->search.'%');
-                            })
-                            ->orWhereHas('currency', function ($query) {
-                                return $query->where('name', 'like', '%'.$this->search.'%');
-                            })
-                            ->orderBy($this->payment_filter,'desc')->paginate(10),
-                        
-                        ]);
-
-                    }else {
-                        return view('livewire.payments.index',[
-                            'payments' => Payment::query()->with(['customer','currency'])
-                            ->whereBetween($this->payment_filter,[$this->from, $this->to] )
-                            ->whereNull('bill_id')
-                            ->orderBy($this->payment_filter,'desc')->paginate(10),
-                        
-                        ]);
-                    }
-           
-            }
-            elseif (isset($this->search)) {
-                return view('livewire.payments.index',[
-                    'payments' => Payment::query()->with(['customer','currency'])
-                    ->whereMonth($this->payment_filter,date('m'))
-                    ->whereYear($this->payment_filter,date('Y'))
-                    ->whereNull('bill_id')
-                    ->where('payment_number','like', '%'.$this->search.'%')
-                    ->orWhere('transaction_category','like', '%'.$this->search.'%')
-                    ->orWhere('mode_of_payment','like', '%'.$this->search.'%')
-                    ->orWhere('date','like', '%'.$this->search.'%')
-                    ->orWhereHas('transaction_type', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('customer', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('currency', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orderBy($this->payment_filter,'desc')->paginate(10),
-                ]);
-            }
-            else {
-                return view('livewire.payments.index',[
-                    'payments' => Payment::query()->with(['customer:id,name','currency'])->whereMonth($this->payment_filter, date('m'))
-                    ->whereYear($this->payment_filter, date('Y'))->whereNull('bill_id')->orderBy($this->payment_filter,'desc')->paginate(10),
-                
-                ]);
-            }
+        switch ($this->movement) {
+        case 'Debit':
+            $query->whereNotNull('bill_id');
+            break;
+        case 'Credit':
+            $query->whereNull('bill_id');
+            break;
+        // 'all' or anything else → no bill_id constraint
         }
-        return view('livewire.payments.index',[
-            'payments' => $this->payments,
-            'customers' => $this->customers,
+
+        if (!empty($this->from) && !empty($this->to)) {
+            $query->whereBetween($this->payment_filter, [$this->from, $this->to]);
+        } else {
+            $start = Carbon::now()->startOfMonth()->toDateString();
+            $end   = Carbon::now()->endOfMonth()->toDateString();
+            $query->whereBetween($this->payment_filter, [$start, $end]);
+        }
+
+        $search = trim((string) ($this->search ?? ''));
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('payments.payment_number', 'like', "%{$search}%")
+                ->orWhere('payments.transaction_category', 'like', "%{$search}%")
+                ->orWhere('payments.mode_of_payment', 'like', "%{$search}%")
+                ->orWhere('payments.date', 'like', "%{$search}%")
+                ->orWhereHas('transaction_type', fn ($qq) => $qq->where('name', 'like', "%{$search}%"))
+                ->orWhereHas('customer', fn ($qq) => $qq->where('name', 'like', "%{$search}%"))
+                ->orWhereHas('currency', fn ($qq) => $qq->where('name', 'like', "%{$search}%"));
+            });
+        }
+
+        $payments = $query->orderBy($this->payment_filter, 'desc')->paginate(10);
+
+        return view('livewire.payments.index', [
+        'payments' => $payments,
         ]);
     }
 }

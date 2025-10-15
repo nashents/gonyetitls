@@ -268,6 +268,7 @@ class Index extends Component
 
    
     public function drawdownPayments(){
+       
 
          DB::transaction(function () {
 
@@ -276,12 +277,12 @@ class Index extends Component
 
         if (isset($this->drawdown_amount) && isset($this->bill_drawdown_balance) && ($this->drawdown_amount >= $this->bill_drawdown_balance)) {
             $this->payment_drawdown_balance = $this->drawdown_amount - $this->bill_drawdown_balance;
-            $this->bill_drawdown_balance = 0;
             $this->amount_paid = $this->bill_drawdown_balance;
+            $this->bill_drawdown_balance = 0;
         }elseif(isset($this->drawdown_amount) && isset($this->bill_drawdown_balance) && ($this->drawdown_amount <= $this->bill_drawdown_balance)){
             $this->bill_drawdown_balance = $this->bill_drawdown_balance - $this->drawdown_amount;
-            $this->payment_drawdown_balance = 0;
             $this->amount_paid = $this->drawdown_amount;
+            $this->payment_drawdown_balance = 0;
         }else{
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'error',
