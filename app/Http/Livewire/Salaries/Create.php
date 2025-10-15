@@ -15,6 +15,7 @@ use App\Models\SalaryItem;
 use App\Models\TaxBracket;
 use App\Models\SalaryDetail;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
@@ -241,6 +242,7 @@ class Create extends Component
             if (!is_null($id)) {
               $allowance = Allowance::find($id);
               if (isset($allowance)) {
+                 $this->selectedAllowanceCurrency[$key] = $allowance->currency_id;
                     if ($allowance->calculate_by == "currency") {
                         $this->allowance_amount[$key] = $allowance->amount;
                     }elseif($allowance->calculate_by == "percentage"){
@@ -249,10 +251,22 @@ class Create extends Component
               }
             }
     }
+  
+    public function updatedSelectedEarning($id, $key){
+            if (!is_null($id)) {
+              $earning = Earning::find($id);
+              if (isset($earning)) {
+                    $this->selectedEarningCurrency[$key] = $earning->currency_id;
+              }
+            }
+    }
+
+
     public function updatedSelectedDeduction($id, $key){
             if (!is_null($id)) {
                 $deduction = Deduction::find($id);
                 if (isset($deduction)) {
+                     $this->selectedDeductionCurrency[$key] = $deduction->currency_id;
                       if ($deduction->calculate_by == "currency") {
                           $this->deduction_amount[$key] = $deduction->amount;
                       }elseif($deduction->calculate_by == "percentage"){
@@ -269,6 +283,32 @@ class Create extends Component
                      $this->selected_currency = $currency;
                 }
             }
+    }
+
+    
+    public function refresh($category){
+
+        if($category == "earnings"){
+            $this->earnings = Earning::where('status',1)->orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Earnings Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "allowances"){
+            $this->allowances = Allowance::where('status',1)->orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Allowances Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "deductions"){
+            $this->deductions = Deduction::where('status',1)->orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Deductions Refreshed Successfully!!."
+            ]);
+        }
     }
 
     

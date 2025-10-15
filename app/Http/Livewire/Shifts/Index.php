@@ -4,7 +4,9 @@ namespace App\Http\Livewire\Shifts;
 
 use Carbon\Carbon;
 use App\Models\Fuel;
+use App\Models\Hour;
 use App\Models\Team;
+use App\Models\Trip;
 use App\Models\Work;
 use App\Models\Cargo;
 use App\Models\Horse;
@@ -12,14 +14,19 @@ use App\Models\Shift;
 use App\Models\TopUp;
 use App\Models\Driver;
 use App\Models\Company;
+use App\Models\Mileage;
 use App\Models\Vehicle;
 use Livewire\Component;
 use App\Models\Currency;
 use App\Models\Customer;
 use App\Models\Location;
+use App\Models\TripType;
 use App\Models\Container;
 use App\Models\Rehandling;
+use App\Models\Destination;
+use App\Models\Measurement;
 use App\Models\Transporter;
+use App\Models\DeliveryNote;
 use App\Models\ExchangeRate;
 use App\Models\LoadingPoint;
 use Livewire\WithPagination;
@@ -69,6 +76,15 @@ class Index extends Component
     public $selected_currency;
     public $customers;
     public $customer_id;
+   
+    public $haulage_type;
+    public $destinations;
+    public $selectedFrom;
+    public $selectedTo;
+    public $arrive_lp;
+    public $arrive_op;
+    public $depart_lp;
+    public $depart_op;
     public $fuel_order = False;
     public $transporters;
     public $selectedTransporter;
@@ -92,7 +108,7 @@ class Index extends Component
     public $teams;
     public $team_id;
     public $cargos;
-    public $cargo_id;
+    public $selectedCargo;
     public $loading_points;
     public $loading_point_id;
     public $offloading_points;
@@ -110,10 +126,21 @@ class Index extends Component
     public $stop_time;
     public $close_hours;
     public $close_mileage;
-    public $weight;
-    public $freight;
+    public $weight = [];
+    public $freight  = [];
     public $exchange_rate;
     public $exchange_amount;
+
+    public $rate = [];
+    public $turnover;
+  
+
+
+    public $name;
+    public $location;
+    public $team;
+    public $odometer;
+    public $trip_ref = [];
 
      //fuel vars
 
@@ -142,6 +169,16 @@ class Index extends Component
     public $importFile;
     public $shift_tripsimportFile;
 
+    public $cargo_type;
+    public $calculation_measurement;
+
+    public $measurements;
+    public $measurement;
+    public $liquid_measurements;
+    public $solid_measurements;
+
+    public $trip_type;
+
 
     private function resetInputFields(){
         $this->name = '';
@@ -161,6 +198,26 @@ class Index extends Component
         $this->close_hours = [];
     }
 
+    public $trip_inputs = [];
+    public $t = 1;
+    public $r = 1;
+
+    public function addTrip($t)
+    {
+        $t = $t + 1;
+        $this->t = $t;
+        
+        array_push($this->trip_inputs ,$t);
+
+        $this->weight[$t] = $this->company->default_weight ?? 105;
+        $this->rate[$t]   = $this->company->default_rate ?? 3;
+
+    }
+    public function removeTrip($t)
+    {
+        unset($this->trip_inputs[$t]);
+    }
+
     public $inputs = [];
     public $i = 1;
     public $n = 1;
@@ -169,6 +226,7 @@ class Index extends Component
         $i = $i + 1;
         $this->i = $i;
         array_push($this->inputs ,$i);
+       
     }
     public function remove($i)
     {
@@ -197,15 +255,41 @@ class Index extends Component
         
     }
 
+    
+
+     public function updatedSelectedCargo($id)
+    {
+            if (!is_null($id)) {
+                $cargo = Cargo::find($id);
+                $this->cargo_type = $cargo?->type;
+                if(isset($this->cargo_type)){
+                    if($this->cargo_type == "Solid"){
+                        $this->calculation_measurement = "weight";
+                    }elseif($this->cargo_type == "Liquid"){
+                        $this->calculation_measurement = "litreage_at_20";
+                    }
+                }
+            }
+    }
+
+
     public function mount(){
         $this->resetPage();
         $this->user = Auth::user();
         $this->equipment = "Horse";
         $this->shift_filter = "created_at";
         $this->employee =  $this->user->employee;
+        $this->company = Company::with('currency')->find( $this->employee->company_id);
+     
         $this->team = $this->employee->teams->first();
         $this->team_id =  $this->team?->id;
-        $this->company = Company::with('currency')->find( $this->employee->company_id);
+        $this->liquid_measurements = Measurement::where('cargo_type','Liquid')->orderBy('name','asc')->get();
+        $this->solid_measurements = Measurement::where('cargo_type','Solid')->orderBy('name','asc')->get();  
+      
+        $this->destinations = Destination::with('country')->get()->sortBy('country.name');
+       
+        
+        $this->trip_type = TripType::where('name','Local')->first();
         $this->customers = Customer::orderBy('name','asc')->get();
         $this->selectedCurrency = 1;
         $this->drivers = Driver::all();
@@ -220,6 +304,153 @@ class Index extends Component
         $this->works = Work::orderBy('description','asc')->get();
         $this->locations = Location::orderBy('name','asc')->get();
         $this->teams = Team::orderBy('name','asc')->get();
+    }
+
+    
+    public function refresh($category){
+
+  
+        if($category == 'transporters'){
+            $this->transporters = Transporter::with('vehicles:id,registration_number','vehicles.vehicle_make:id,name','vehicles.vehicle_model:id,name','horses:id,registration_number','horses.horse_make:id,name','horses.horse_model:id,name','cargos:id,name','trailers:id,registration_number,make,model','drivers:id','drivers.employee:id,name,surname')->where('authorization','approved')->orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Transporters Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == 'horses'){
+            if (isset($this->selectedStatus) && ($this->selectedStatus == "Scheduled" || $this->selectedStatus == "Offloaded" || $this->selectedStatus == "Cancelled") ) {
+                $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$this->selectedTransporter)
+                ->where('archive',0)
+                ->orderBy('registration_number','asc')->get();
+            }else{
+                $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$this->selectedTransporter)
+                ->where('status', 1)
+                ->where('service',0)
+                ->where('archive',0)
+                ->orderBy('registration_number','asc')->get();
+            }
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Horses Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == 'vehicles'){
+            if (isset($this->selectedStatus) && ($this->selectedStatus == "Scheduled" || $this->selectedStatus == "Offloaded" || $this->selectedStatus == "Cancelled") ) {
+              
+                $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('transporter_id',$this->selectedTransporter)
+                ->where('archive',0)
+                ->orderBy('registration_number','asc')->get();
+       
+            }else{
+              
+                $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('transporter_id',$this->selectedTransporter)
+                ->where('status', 1)
+                ->where('service',0)
+                ->where('archive',0)
+                ->orderBy('registration_number','asc')->get();
+             
+            }
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Vehicles Refreshed Successfully!!."
+            ]);
+        }
+        
+        elseif($category == 'drivers'){
+            if (isset($this->selectedStatus) && ($this->selectedStatus == "Scheduled" || $this->selectedStatus == "Offloaded" || $this->selectedStatus == "Cancelled") ) {
+                $this->drivers = Driver::query()->with('employee:id,name,surname')->where('transporter_id',$this->selectedTransporter)
+                ->withAggregate('employee','name')
+                ->where('archive',0)
+                ->orderBy('employee_name','asc')->get();
+            }else{
+                $this->drivers = Driver::query()->with('employee:id,name,surname')->where('transporter_id',$this->selectedTransporter)
+                ->withAggregate('employee','name')
+                ->where('status', 1)
+                ->where('archive',0)
+                ->orderBy('employee_name','asc')->get();
+            }
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Drivers Refreshed Successfully!!."
+            ]);
+        }
+     
+        elseif($category == 'customers'){
+            $this->customers = Customer::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Customers Refreshed Successfully!!."
+            ]);
+        }
+      
+     
+        elseif($category == 'destinations'){
+            $this->destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Destinations Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == 'loading_points'){
+            $this->loading_points = LoadingPoint::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Loading Points Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == 'offloading_points'){
+            $this->offloading_points = OffloadingPoint::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Offloading Points Refreshed Successfully!!."
+            ]);
+        }
+ 
+  
+        elseif($category == 'cargos'){
+            if ($this->selectedTransporter) {
+                $this->cargos = Transporter::find($this->selectedTransporter)->cargos->sortBy('name');
+            }else{
+                $this->cargos = Cargo::orderBy('name','asc')->get();
+            }
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Cargos Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == 'measurements'){
+            $this->measurements = Measurement::orderBy('name','asc')->get();
+            $this->liquid_measurements = Measurement::where('cargo_type','Liquid')->get();
+            $this->solid_measurements = Measurement::where('cargo_type','Solid')->get(); 
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Measurements Refreshed Successfully!!."
+            ]);
+        }
+          elseif($category == "works"){
+            $this->works = Work::where('status',1)->orderBy('description','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Work Descriptions Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "locations"){
+            $this->locations = Location::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Locations Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "teams"){
+            $this->teams = Team::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Teams Refreshed Successfully!!."
+            ]);
+        }
+     
+    
+        
     }
 
     public function updatingCloseMileage(){
@@ -260,30 +491,7 @@ class Index extends Component
     }
     
 
-       public function refresh($category){
-
-        if($category == "works"){
-            $this->works = Work::where('status',1)->orderBy('description','asc')->get();
-            $this->dispatchBrowserEvent('alert',[
-                'type'=>'success',
-                'message'=>"Work Descriptions Refreshed Successfully!!."
-            ]);
-        }
-        elseif($category == "locations"){
-            $this->locations = Location::orderBy('name','asc')->get();
-            $this->dispatchBrowserEvent('alert',[
-                'type'=>'success',
-                'message'=>"Locations Refreshed Successfully!!."
-            ]);
-        }
-        elseif($category == "teams"){
-            $this->teams = Team::orderBy('name','asc')->get();
-            $this->dispatchBrowserEvent('alert',[
-                'type'=>'success',
-                'message'=>"Teams Refreshed Successfully!!."
-            ]);
-        }
-    }
+      
 
         public function updatedSelectedContainer($id)
             {
@@ -584,7 +792,315 @@ class Index extends Component
          $durationFormatted = sprintf('%02dH: %02dM: %02dS', $hours, $minutes, $seconds);
         return $durationFormatted;
     }
+
+      public function tripNumber(){
+
+     if (isset($this->company)) {
+            $str = $this->company->name;
+            $words = explode(' ', $str);
+            if (isset($words[1][0])) {
+                $initials = $words[0][0].$words[1][0];
+            }else {
+                $initials = $words[0][0];
+            }
+        }
+ 
+        $trip = Trip::orderBy('id','desc')->first();
+
+        if (!$trip) {
+            $trip_number =  $initials .'T'. str_pad(1, 5, "0", STR_PAD_LEFT);
+        }else {
+            $number = $trip->id + 1;
+            $trip_number =  $initials .'T'. str_pad($number, 5, "0", STR_PAD_LEFT);
+        }
+
+        return  $trip_number;
+
+    }
     
+
+    public function createTrips(){
+            if(isset($this->trip_haulage)){
+
+                foreach($this->trip_haulage as $key => $value){
+
+                $trip = new Trip;
+                $trip->trip_number = $this->tripNumber();
+                $trip->trip_ref = $this->trip_ref;
+                $trip->user_id =  $this->user->id ?: null;
+                $trip->company_id = $this->company->id ?: null;
+                $trip->horse_id =  $this->selectedHorse ?: null;
+                $trip->vehicle_id =  $this->selectedVehicle ?: null;
+                $trip->transporter_id = $this->selectedTransporter ?: null;
+                $trip->driver_id = $this->driver_id ?: null;
+                $trip->customer_id = $this->customer_id ?: null;
+                $trip->freight_calculation = "rate_weight";
+                $trip->calculation_measurement = "weight";
+                $trip->currency_id = $this->selectedCurrency ?: $this->company->currency_id;
+                $trip->exchange_rate = $this->exchange_rate;
+                $trip->start_date = $this->date;
+                $trip->cargo_id = $this->selectedCargo;
+                $trip->trip_type_id = $this->trip_type?->id;
+                $trip->with_cargos = True;
+                $trip->end_date = $this->date;
+               
+
+               
+                if(isset($this->arrive_lp[$key]) && isset($this->depart_lp[$key])){
+                     $trip->arrive_loading_point = $this->arrive_lp[$key];
+                     $trip->depart_loading_point = $this->depart_lp[$key];
+                     $trip->loading_time = $this->calculateTimeDifference($this->arrive_lp[$key], $this->depart_lp[$key]);
+                }
+               
+                if(isset($this->arrive_op[$key]) && isset($this->depart_op[$key])){
+                     $trip->arrive_offloading_point = $this->arrive_op[$key];
+                     $trip->depart_offloading_point = $this->depart_op[$key];
+                     $trip->offloading_time = $this->calculateTimeDifference($this->arrive_op[$key], $this->depart_op[$key]);
+                }
+               
+                if(isset($this->haulage_type[$key])){
+                    $trip->haulage_type = $this->haulage_type[$key];
+
+                }
+                if(isset($this->starting_mileage[$key])){
+                    $trip->starting_mileage = $this->starting_mileage[$key];
+                }
+                if(isset($this->starting_hours[$key])){
+                    $trip->starting_hours = $this->starting_hours[$key];
+                }
+                if(isset($this->ending_mileage[$key])){
+                    $trip->ending_mileage = $this->ending_mileage[$key];
+                }
+                if(isset($this->ending_hours[$key])){
+                    $trip->ending_hours = $this->ending_hours[$key];
+                }
+                if((isset($this->starting_mileage[$key]) && is_numeric($this->starting_mileage[$key])) && (isset($this->ending_mileage[$key]) && is_numeric($this->ending_mileage[$key])) && $this->ending_mileage[$key] >= $this->starting_mileage[$key]){
+                    $trip->distance = $this->ending_mileage[$key] - $this->starting_mileage[$key];
+                }
+                if((isset($this->starting_hours[$key]) && is_numeric($this->starting_hours[$key])) && (isset($this->ending_hours[$key]) && is_numeric($this->ending_hours[$key])) && $this->ending_hours[$key] >= $this->starting_hours[$key]){
+                    $trip->hours_distance = $this->ending_hours[$key] - $this->starting_hours[$key];
+                }
+               
+                if(isset($this->selectedFrom[$key])){
+                    $trip->from = $this->selectedFrom[$key];
+                }
+                if(isset($this->selectedTo[$key])){
+                    $trip->to = $this->selectedTo[$key];
+                }
+                if(isset($this->offloading_point_id[$key])){
+                    $trip->offloading_point_id = $this->offloading_point_id[$key];
+                }
+                if(isset($this->loading_point_id[$key])){
+                    $trip->loading_point_id = $this->loading_point_id[$key];
+                }
+                if(isset($this->rate[$key])){
+                    $trip->rate = $this->rate[$key];
+                }
+                if(isset($this->weight[$key])){
+                    $trip->weight = $this->weight[$key];
+                }
+                if(isset($this->litreage[$key])){
+                    $trip->litreage = $this->litreage[$key];
+                }
+                if(isset($this->litreage_at_20[$key])){
+                    $trip->litreage_at_20 = $this->litreage_at_20[$key];
+                }
+
+                if($this->cargo_type == "Solid"){
+                   if((isset($this->rate[$key]) && is_numeric($this->rate[$key])) && (isset($this->weight[$key]) && is_numeric($this->weight[$key])) ){
+                    $this->freight = $this->rate[$key] * $this->weight[$key]; 
+                }
+                }else{
+                    if((isset($this->rate[$key]) && is_numeric($this->rate[$key])) && (isset($this->litreage_at_20[$key]) && is_numeric($this->litreage_at_20[$key])) ){
+                    $this->freight[$key] = $this->rate[$key] * $this->litreage_at_20[$key]; 
+                }
+                }
+                
+
+                $trip->freight = $this->freight[$key];
+                $trip->turnover = $this->freight[$key];
+                $this->turnover = $this->freight[$key];
+
+
+                if(isset($this->quantity[$key])){
+                    $trip->quantity = $this->quantity[$key];
+                }
+                
+                if(isset($this->measurement[$key])){
+                    $trip->measurement = $this->measurement[$key];
+                }
+               
+               
+                
+                
+                if($this->selectedCurrency != $this->company->currency_id){
+                    if(is_numeric($this->exchange_rate) && $this->exchange_rate > 0){
+                          $trip->exchange_customer_freight = $this->freight[$key] * $this->exchange_rate;
+                    }
+
+                }
+               
+            
+                $trip->trip_status = "Offloaded";
+                $trip->trip_status_date = $this->date;
+
+                
+                $trip->authorization = "approved";
+                $trip->authorization_date = date('Y-m-d');
+                $trip->authorized_by_id = $this->user->id;
+                $trip->save();
+     
+                $last_mileage = Mileage::where('horse_id',$this->selectedHorse)->orWhere('vehicle_id',$this->selectedVehicle)->whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
+      
+                if(isset($this->starting_mileage[$key]) && $this->ending_mileage[$key]){
+                    if(isset($last_mileage)){
+                        if($last_mileage->mileage < $this->ending_mileage[$key]){
+                            $mileage = new Mileage;
+                            $mileage->user_id = $this->user->id;
+                            $mileage->trip_id = $trip->id;
+                            $mileage->horse_id = $this->selectedHorse ?:  Null;
+                            $mileage->vehicle_id = $this->selectedVehicle ?: Null;
+                            $mileage->mileage = $this->starting_mileage[$key];
+                            $mileage->date = $this->date;
+                            $mileage->category = "Trip";
+                            $mileage->position = "starting";
+                            $mileage->save();
+                        }
+                    }else{
+                        $mileage = new Mileage;
+                        $mileage->user_id = $this->user->id;
+                        $mileage->trip_id = $trip->id;
+                        $mileage->horse_id = $this->selectedHorse ?:  Null;
+                        $mileage->vehicle_id = $this->selectedVehicle ?: Null;
+                        $mileage->mileage = isset($this->starting_mileage[$key]) ? $this->starting_mileage[$key] : null;
+                        $mileage->date = $this->date;
+                        $mileage->category = "Trip";
+                        $mileage->position = "starting";
+                        $mileage->save();
+                    }          
+                }
+             
+                $last_hours = Hour::where('horse_id',$this->selectedHorse)->orWhere('vehicle_id',$this->selectedVehicle)->whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
+      
+                if(isset($this->starting_hours[$key]) && isset($this->ending_hours[$key])){
+                    if(isset($last_hours)){
+                        if($last_hours->hour < $this->ending_hours[$key]){
+                            $hours = new Hour;
+                            $hours->user_id = $this->user->id;
+                            $hours->trip_id = $trip->id;
+                            $hours->horse_id = $this->selectedHorse ?:  Null;
+                            $hours->vehicle_id = $this->selectedVehicle ?: Null;
+                            $hours->hours = $this->starting_hours[$key];
+                            $hours->date = $this->date;
+                            $hours->category = "Trip";
+                            $hours->position = "starting";
+                            $hours->save();
+                        }
+                    }else{
+                        $hours = new Hour;
+                        $hours->user_id = $this->user->id;
+                        $hours->trip_id = $trip->id;
+                        $hours->horse_id = $this->selectedHorse ?:  Null;
+                        $hours->vehicle_id = $this->selectedVehicle ?: Null;
+                        $hours->hours = isset($this->starting_hours[$key]) ? $this->starting_hours[$key] : null;;
+                        $hours->date = $this->date;
+                        $hours->category = "Trip";
+                        $hours->position = "starting";
+                        $hours->save();
+                    }          
+                }
+             
+          
+
+                $last_mileage = Mileage::where('horse_id',$this->selectedHorse)->orWhere('vehicle_id',$this->selectedVehicle)->whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
+                if(isset($this->ending_mileage[$key])){
+                    if(isset($last_mileage)){
+                        if($last_mileage->mileage < $this->ending_mileage[$key]){
+                            $mileage = new Mileage;
+                            $mileage->user_id = $this->user->id;
+                            $mileage->trip_id = $trip->id;
+                            $mileage->horse_id = $this->selectedHorse ?:  Null;
+                            $mileage->vehicle_id = $this->selectedVehicle ?: Null;
+                            $mileage->mileage = $this->ending_mileage[$key];
+                            $mileage->date = $this->date;
+                            $mileage->category = "Trip";
+                            $mileage->position = "ending";
+                            $mileage->save();
+                        }
+                    }else{
+                        $mileage = new Mileage;
+                        $mileage->user_id = $this->user->id;
+                        $mileage->trip_id = $trip->id;
+                        $mileage->horse_id = $this->selectedHorse ?:  Null;
+                        $mileage->vehicle_id = $this->selectedVehicle ?: Null;
+                        $mileage->mileage = isset($this->ending_mileage[$key]) ? $this->ending_mileage[$key] : null;
+                        $mileage->date = $this->date;
+                        $mileage->category = "Trip";
+                        $mileage->position = "ending";
+                        $mileage->save();
+                    }
+                }
+            
+                $last_hours = Hour::where('horse_id',$this->selectedHorse)->orWhere('vehicle_id',$this->selectedVehicle)->whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
+                if(isset($this->ending_hours[$key])){
+                    if(isset($last_hours)){
+                        if($last_hours->hours < $this->ending_hours[$key]){
+                            $hours = new Hour;
+                            $hours->user_id = $this->user->id;
+                            $hours->trip_id = $trip->id;
+                            $hours->horse_id = $this->selectedHorse ?:  Null;
+                            $hours->vehicle_id = $this->selectedVehicle ?: Null;
+                            $hours->hours = $this->ending_hours[$key];
+                            $hours->date = $this->date;
+                            $hours->category = "Trip";
+                            $hours->position = "ending";
+                            $hours->save();
+                        }
+                    }else{
+                        $hours = new Hour;
+                        $hours->user_id = $this->user->id;
+                        $hours->trip_id = $trip->id;
+                        $hours->horse_id = $this->selectedHorse ?:  Null;
+                        $hours->vehicle_id = $this->selectedVehicle ?: Null;
+                        $hours->hours = $this->ending_hours[$key];
+                        $hours->date = $this->date;
+                        $hours->category = "Trip";
+                        $hours->position = "ending";
+                        $hours->save();
+                    }
+                }
+                
+                $delivery_note = new DeliveryNote;
+                $delivery_note->user_id =  $trip->user->id;
+                $delivery_note->trip_id = $trip->id;
+                $delivery_note->measurement = $trip->measurement;
+                $delivery_note->distance = $trip->distance;
+                $delivery_note->loaded_date = $trip->start_date;
+                $delivery_note->offloaded_date = $trip->end_date;
+                
+                if (isset($trip->cargo)) {
+                if ($trip->cargo->type == "Liquid") {
+                    $delivery_note->loaded_litreage = $trip->litreage;
+                    $delivery_note->loaded_litreage_at_20 = $trip->litreage_at_20;
+                    }elseif($trip->cargo->type == "Solid") {
+                        $delivery_note->loaded_quantity = $trip->quantity;
+                    }
+                }
+   
+                $delivery_note->loaded_weight = $trip->weight;
+                $delivery_note->loaded_rate = $trip->rate;
+                $delivery_note->loaded_freight = $trip->freight;
+                $delivery_note->save();
+                    
+                }
+
+            }    
+        
+            
+                
+      
+            // end trip creation logic
+    }
     
 
     public function store(){
@@ -603,7 +1119,7 @@ class Index extends Component
         $shift->team_id = $this->team_id ?? null;
         $shift->driver_id = $this->driver_id ?? null;
         $shift->currency_id = $this->selectedCurrency ?? null;
-        $shift->cargo_id = $this->cargo_id ?? null;
+        $shift->cargo_id = $this->selectedCargo ?? null;
         $shift->transporter_id = $this->selectedTransporter ?? null;
         $shift->horse_id = $this->equipment === "Horse" ? $this->selectedHorse : null;
         $shift->vehicle_id = $this->equipment === "Vehicle" ? $this->selectedVehicle : null;
@@ -745,7 +1261,7 @@ class Index extends Component
     $this->updatedSelectedTransporter($shift->transporter_id);
     $this->selectedTransporter = $shift->transporter_id;
     $this->selectedHorse = $shift->horse_id;
-    $this->cargo_id = $shift->cargo_id;
+    $this->selectedCargo = $shift->cargo_id;
     $this->team_id = $shift->team_id;
     $this->driver_id = $shift->driver_id;
     $this->selectedVehicle = $shift->vehicle_id;
@@ -808,7 +1324,7 @@ class Index extends Component
             $shift->shift_end_time = $this->shift_end_time;
             $shift->customer_id = $this->customer_id;
             $shift->driver_id = $this->driver_id;
-            $shift->cargo_id = $this->cargo_id;
+            $shift->cargo_id = $this->selectedCargo;
             $shift->team_id = $this->team_id;
             $shift->transporter_id = $this->selectedTransporter;
             $shift->horse_id = $this->equipment === "Horse" ? $this->selectedHorse : null;

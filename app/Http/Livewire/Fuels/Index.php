@@ -110,6 +110,11 @@ class Index extends Component
     public $fuel_category = "Self";
     public $trip_expenses;
 
+    public $selectedDriver;
+    public $vehicle_id;
+    public $selected_vehicle;
+    public $net_profit;
+
 
 
     public $search;

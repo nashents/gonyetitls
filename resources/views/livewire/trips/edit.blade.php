@@ -15,33 +15,7 @@
                             <form wire:submit.prevent="update()" class="p-20" enctype="multipart/form-data">
                                 <div class="row" >
                                 <h5 class="underline mt-n">Trip Info</h5>
-                                                       <div class="mb-10 mt-30">
-                                <input type="checkbox" wire:model.debounce.300ms="shift"   class="line-style" />
-                                <label for="one" class="radio-label">Add trip to a shift</label>
-                                @error('shift') <span class="text-danger error">{{ $message }}</span>@enderror
-                            </div>
-                            @if ($shift == True)
-                                <div class="form-group">
-                                    <label for="trip_group">
-                                        <a href="{{ route('shifts.index') }}" target="_blank" style="color: blue">Trip Shifts</a>
-                                    </label>
-                                    <select class="form-control" wire:model.debounce.300ms="selectedShift">
-                                        <option value="">Select Trip Shift</option>
-                                        @foreach ($shifts as $shift)
-                                            <option value="{{ $shift->id }}">{{ $shift->type }} {{ $shift->for }} {{ $shift->date }} {{ $shift->driver->employee ? $shift->driver->employee->name : "" }} {{ $shift->driver->employee ? $shift->driver->employee->surname : "" }}</option>
-                                        @endforeach
-                                    </select>
-                                    @error('selectedShift') <span class="text-danger error">{{ $message }}</span> @enderror
-                                    <small>
-                                        <a href="{{ route('shifts.index') }}" target="_blank">
-                                            <i class="fa fa-plus-square-o"></i> New Shift
-                                        </a>
-                                    </small>
-                                    <a href="#" wire:click.prevent="refresh('shifts')" class="float-end">
-                                        <i class="fa fa-refresh" aria-hidden="true"></i>
-                                    </a>
-                                </div>
-                            @endif
+                    
                                    <div class="row">
                                     <div class="col-md-2">
                                         <div class="form-group">

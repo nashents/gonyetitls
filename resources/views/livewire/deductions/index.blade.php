@@ -20,6 +20,8 @@
                                   <tr>
                                     <th class="th-sm">Name
                                     </th>
+                                    <th class="th-sm">Ccy
+                                    </th>
                                     <th class="th-sm">Description
                                     </th>
                                     <th class="th-sm">CalculateBy
@@ -41,6 +43,7 @@
                                     @foreach ($deductions as $deduction)
                                   <tr>
                                     <td>{{$deduction->name}}</td>
+                                    <td>{{$deduction->currency ? $deduction->currency->name : ""}}</td>
                                     <td>{{$deduction->description}}</td>
                                     <td>{{$deduction->calculate_by}}</td>
                                     <td>{{$deduction->calculate_on}}</td>
@@ -89,10 +92,26 @@
                 </div>
                 <form wire:submit.prevent="store()" >
                 <div class="modal-body">
-                    <div class="form-group">
-                        <label for="name">Name<span class="required" style="color: red">*</span></label>
-                        <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Name" required />
-                        @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                     <div class="row">
+                        <div class="col-md-6">
+                             <div class="form-group">
+                                <label for="name">Name<span class="required" style="color: red">*</span></label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Name" required />
+                                @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                         <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="country">Currencies</label>
+                                <select wire:model.debounce.300ms="currency_id" class="form-control"  >
+                                    <option value="">Select Currency</option>
+                                    @foreach ($currencies as $currency)
+                                        <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
+                                    @endforeach
+                                </select>
+                                @error('currency_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
                     </div>
                     <h5 class="underline mt-10">Select item calculation.</h5>
                     <div class="row">
@@ -163,10 +182,26 @@
                 </div>
                 <form wire:submit.prevent="update()" >
                 <div class="modal-body">
-                    <div class="form-group">
-                        <label for="name">Name<span class="required" style="color: red">*</span></label>
-                        <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Name" required />
-                        @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                     <div class="row">
+                        <div class="col-md-6">
+                             <div class="form-group">
+                                <label for="name">Name<span class="required" style="color: red">*</span></label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Name" required />
+                                @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="country">Currencies</label>
+                                <select wire:model.debounce.300ms="currency_id" class="form-control"  >
+                                    <option value="">Select Currency</option>
+                                    @foreach ($currencies as $currency)
+                                        <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
+                                    @endforeach
+                                </select>
+                                @error('currency_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
                     </div>
                     <h5 class="underline mt-10">Select item calculation.</h5>
                     <div class="row">

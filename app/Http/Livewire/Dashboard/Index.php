@@ -12,6 +12,7 @@ use App\Models\Agent;
 use App\Models\Asset;
 use App\Models\Horse;
 use App\Models\Leave;
+use App\Models\Shift;
 use App\Models\Branch;
 use App\Models\Driver;
 use App\Models\Ticket;
@@ -48,6 +49,7 @@ use Illuminate\Support\Facades\Auth;
 class Index extends Component
 {
 
+    public $shift_count;
     public $transporter_count;
     public $transporters ;
     public $agents ;
@@ -104,7 +106,199 @@ class Index extends Component
     public $months;
     public $driver_names;
     public $encoded_driver_names;
+    public $fuel_orders;
+    public $product_count;
+
+    public $jan_litreage_loss;
+    public $feb_litreage_loss;
+    public $mar_litreage_loss;
+    public $apr_litreage_loss;
+    public $may_litreage_loss;
+    public $jun_litreage_loss;
+    public $jul_litreage_loss;
+    public $aug_litreage_loss;
+    public $sep_litreage_loss;
+    public $oct_litreage_loss;
+    public $nov_litreage_loss;
+    public $dec_litreage_loss;
+    
+    public $jan_weight_loss;
+    public $feb_weight_loss;
+    public $mar_weight_loss;
+    public $apr_weight_loss;
+    public $may_weight_loss;
+    public $jun_weight_loss;
+    public $jul_weight_loss;
+    public $aug_weight_loss;
+    public $sep_weight_loss;
+    public $oct_weight_loss;
+    public $nov_weight_loss;
+    public $dec_weight_loss;
+
+    public $jan_distance;
+    public $feb_distance;
+    public $mar_distance;
+    public $apr_distance;
+    public $may_distance;
+    public $jun_distance;
+    public $jul_distance;
+    public $aug_distance;
+    public $sep_distance;
+    public $oct_distance;
+    public $nov_distance;
+    public $dec_distance;
+
+    public $top_drivers;
+    public $top_horses;
+    public $resignation_2022;
+    public $resignation_2023;
+    public $resignation_2024;
+    public $resignation_2025;
+    public $males;
+    public $females;
+
+    public $jan_sales;
+    public $feb_sales;
+    public $mar_sales;
+    public $apr_sales;
+    public $may_sales;
+    public $jun_sales;
+    public $jul_sales;
+    public $aug_sales;
+    public $sep_sales;
+    public $oct_sales;
+    public $nov_sales;
+    public $dec_sales;
+
+    public $jan_trips;
+    public $feb_trips;  
+    public $mar_trips;
+    public $apr_trips;
+    public $may_trips;
+    public $jun_trips;
+    public $jul_trips;
+    public $aug_trips;
+    public $sep_trips;
+    public $oct_trips;
+    public $nov_trips;
+    public $dec_trips;
+
+    public $jan_litreage;
+    public $feb_litreage;
+    public $mar_litreage;
+    public $apr_litreage;
+    public $may_litreage;
+    public $jun_litreage;
+    public $jul_litreage;
+    public $aug_litreage;
+    public $sep_litreage;
+    public $oct_litreage;
+    public $nov_litreage;
+    public $dec_litreage;
    
+    public $jan_weight;
+    public $feb_weight;
+    public $mar_weight;
+    public $apr_weight;
+    public $may_weight;
+    public $jun_weight;
+    public $jul_weight;
+    public $aug_weight;
+    public $sep_weight;
+    public $oct_weight;
+    public $nov_weight;
+    public $dec_weight;
+
+    public $jan_open_bookings;
+    public $feb_open_bookings;
+    public $mar_open_bookings;
+    public $apr_open_bookings;
+    public $may_open_bookings;
+    public $jun_open_bookings;
+    public $jul_open_bookings;
+    public $aug_open_bookings;
+    public $sep_open_bookings;
+    public $oct_open_bookings;
+    public $nov_open_bookings;
+    public $dec_open_bookings;
+
+    public $jan_closed_bookings;
+    public $feb_closed_bookings;
+    public $mar_closed_bookings;
+    public $apr_closed_bookings;
+    public $may_closed_bookings;
+    public $jun_closed_bookings;
+    public $jul_closed_bookings;
+    public $aug_closed_bookings;
+    public $sep_closed_bookings;
+    public $oct_closed_bookings;
+    public $nov_closed_bookings;
+    public $dec_closed_bookings;
+
+    public $jan_initial_fuel;
+    public $feb_initial_fuel;
+    public $mar_initial_fuel;
+    public $apr_initial_fuel;
+    public $may_initial_fuel;
+    public $jun_initial_fuel;
+    public $jul_initial_fuel;
+    public $aug_initial_fuel;
+    public $sep_initial_fuel;
+    public $oct_initial_fuel;
+    public $nov_initial_fuel;
+    public $dec_initial_fuel;
+
+    public $jan_topup_fuel;
+    public $feb_topup_fuel;
+    public $mar_topup_fuel;
+    public $apr_topup_fuel;
+    public $may_topup_fuel;
+    public $jun_topup_fuel;
+    public $jul_topup_fuel;
+    public $aug_topup_fuel;
+    public $sep_topup_fuel;
+    public $oct_topup_fuel;
+    public $nov_topup_fuel;
+    public $dec_topup_fuel;
+
+    public $jan;
+    public $feb;
+    public $mar;
+    public $apr;
+    public $may;
+    public $jun;
+    public $jul;
+    public $aug;
+    public $sep;
+    public $oct;
+    public $nov;
+    public $dec;
+
+    public $jan_expense;
+    public $feb_expense;
+    public $mar_expense;
+    public $apr_expense;
+    public $may_expense;
+    public $jun_expense;
+    public $jul_expense;
+    public $aug_expense;
+    public $sep_expense;
+    public $oct_expense;
+    public $nov_expense;
+    public $dec_expense;
+
+    public $income_2021;
+    public $income_2022;
+    public $income_2023;
+    public $income_2024;
+    public $income_2025;
+    public $expenses_2021;
+    public $expenses_2022;
+    public $expenses_2023;
+    public $expenses_2024;
+    public $expenses_2025;
+
+
 
 
 
@@ -677,6 +871,7 @@ class Index extends Component
     
     
    
+        $this->shift_count = Shift::all()->count();
         $this->transporter_count = Transporter::all()->count();
         $this->transporters = Transporter::latest()->take(5)->get();
         $this->agents = Agent::latest()->take(5)->get();

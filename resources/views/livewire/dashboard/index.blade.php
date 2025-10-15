@@ -200,10 +200,10 @@
                 <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
 
                 <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-success" href="{{route('assignments.index')}}">
-                        <span class="number counter">{{$assignment_count}}</span>
-                        <span class="name">Horse-Driver Assignments</span>
-                        <span class="bg-icon"><i class="fa fa-exchange"></i></span>
+                    <a class="dashboard-stat bg-success" href="{{route('transporters.index')}}">
+                        <span class="number counter">{{$transporter_count}}</span>
+                        <span class="name">Transporters</span>
+                        <span class="bg-icon"><i class="fa fa-building-o"></i></span>
                     </a>
 
                     <!-- /.src-code -->
@@ -214,10 +214,10 @@
             <br>
             <div class="row">
                 <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-primary" href="{{route('transporters.index')}}">
-                        <span class="number counter">{{$transporter_count}}</span>
-                        <span class="name">Transporters</span>
-                        <span class="bg-icon"><i class="fa fa-building-o"></i></span>
+                    <a class="dashboard-stat bg-primary" href="{{route('shifts.index')}}">
+                        <span class="number counter">{{$shift_count}}</span>
+                        <span class="name">Shifts</span>
+                        <span class="bg-icon"><i class="fa fa-clock"></i></span>
                     </a>
                     <!-- /.dashboard-stat -->
                     <!-- /.src-code -->

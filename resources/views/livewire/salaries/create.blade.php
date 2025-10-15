@@ -57,6 +57,7 @@
                                                     @endforeach
                                                 </select>
                                                 @error('selectedEarning.0') <span class="text-danger error">{{ $message }}</span>@enderror
+                                                <small>  <a href="{{ route('earnings.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Earning</a></small> <a href="#" wire:click.prevent="refresh('earnings')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
@@ -135,7 +136,7 @@
                                                         <option value="{{ $allowance->id }}">{{ $allowance->name }}</option>
                                                     @endforeach
                                                 </select>
-                                                <small><a href="{{ route('allowances.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Allowance</a></small> 
+                                                <small><a href="{{ route('allowances.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Allowance</a></small> <a href="#" wire:click.prevent="refresh('allowances')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                                 @error('selectedAllowance.0') <span class="text-danger error">{{ $message }}</span>@enderror
                                             </div>
                                         </div>
@@ -219,6 +220,7 @@
                                                     @endforeach
                                                 </select>
                                                 @error('selectedEarningRecovery.0') <span class="text-danger error">{{ $message }}</span>@enderror
+                                                
                                             </div>
                                         </div>
                                     </div>
@@ -276,7 +278,7 @@
                                                         <option value="{{ $deduction->id }}">{{ $deduction->name }}</option>
                                                     @endforeach
                                                 </select>
-                                                <small><a href="{{ route('deductions.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Deductions</a></small> 
+                                                <small><a href="{{ route('deductions.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Deductions</a></small> <a href="#" wire:click.prevent="refresh('deductions')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                                 @error('selectedDeduction.0') <span class="text-danger error">{{ $message }}</span>@enderror
                                             </div>
                                         </div>

@@ -255,7 +255,7 @@
                                                 $from_destination = App\Models\Destination::find($trip->from);
                                             @endphp
                                             @if ($from_destination)
-                                                {{$from_destination->country ? $from_destination->country : ""}} {{$from_destination->city}}
+                                                {{$from_destination->country ? $from_destination->country->name : ""}} {{$from_destination->city}}
                                             @endif    
                                         </td>
                                     </tr>
@@ -266,7 +266,7 @@
                                                 $to_destination = App\Models\Destination::find($trip->to);
                                             @endphp
                                              @if ($to_destination)
-                                                {{$to_destination->country ? $to_destination->country : ""}} {{$to_destination->city}}
+                                                {{$to_destination->country ? $to_destination->country->name : ""}} {{$to_destination->city}}
                                             @endif    
                                         </td>
                                     </tr>
@@ -310,7 +310,7 @@
                                         <th class="text-center"><strong>Fuel Orders</strong></th>
                                         <td class="text-center"> 
                                             @foreach ($trip->fuels as $fuel)
-                                                {{$fuel->order_number}} {{$fuel->fillup == 1 ? "Initial" : "Topup"}} {{$fuel->container ? $fuel->container->name : ""}} {{$fuel->type}} {{ $fuel->quantity."Litres" }} <br>
+                                                {{$fuel->order_number}} {{$fuel->fillup == 1 ? "Initial" : "Topup"}} {{$fuel->container ? $fuel->container->name : ""}} {{$fuel->container ? $fuel->container->fuel_type : ""}} {{ $fuel->quantity ? $fuel->quantity."l" : ""}} <br>
                                             @endforeach
                                         </td>
                                     </tr>
@@ -546,23 +546,60 @@
                                     </tr>
                                     @endif
 
-                                    @if ($trip->currency)
-                                        <tr>
-                                            <th class="text-center"><strong>Currency</strong></th>
-                                            <td class="text-center"> {{$trip->currency ? $trip->currency->name : ""}}</td>
-                                        </tr>
-                                    @endif
-                                    @if ($trip->rate)
-                                    <tr>
-                                        <th class="text-center"><strong>Rate</strong></th>
-                                        <td class="text-center">{{$trip->currency ? $trip->currency->symbol : ""}}{{number_format($trip->rate,2)}}</td>
-                                    </tr>
-                                    @endif
-                                    @if ($trip->freight)
-                                    <tr>
-                                        <th class="text-center"><strong>Freight</strong></th>
-                                        <td class="text-center"> {{$trip->currency ? $trip->currency->symbol : ""}}{{number_format($trip->freight,2)}}</td>
-                                    </tr>
+                                    @php
+                                        $user = Auth::user();
+                                        $employee = $user->employee;
+
+                                        $departments = $employee->departments;
+                                        foreach($departments as $department){
+                                            $department_names[] = $department->name;
+                                        }
+                                        $roles = $user->roles;
+                                        foreach($roles as $role){
+                                            $role_names[] = $role->name;
+                                        }
+                                    @endphp 
+
+                                    @if (Auth::user()->employee->company->rates_managed_by_finance == True)
+                                        @if (in_array('Finance', $department_names) || in_array('Super Admin', $role_names))
+                                                @if ($trip->currency)
+                                                    <tr>
+                                                        <th class="text-center"><strong>Currency</strong></th>
+                                                        <td class="text-center"> {{$trip->currency ? $trip->currency->name : ""}}</td>
+                                                    </tr>
+                                                @endif
+                                                @if ($trip->rate)
+                                                    <tr>
+                                                        <th class="text-center"><strong>Rate</strong></th>
+                                                        <td class="text-center">{{$trip->currency ? $trip->currency->symbol : ""}}{{number_format($trip->rate,2)}}</td>
+                                                    </tr>
+                                                @endif
+                                                @if ($trip->freight)
+                                                    <tr>
+                                                        <th class="text-center"><strong>Freight</strong></th>
+                                                        <td class="text-center"> {{$trip->currency ? $trip->currency->symbol : ""}}{{number_format($trip->freight,2)}}</td>
+                                                    </tr>
+                                                @endif
+                                        @endif
+                                    @else
+                                        @if ($trip->currency)
+                                            <tr>
+                                                <th class="text-center"><strong>Currency</strong></th>
+                                                <td class="text-center"> {{$trip->currency ? $trip->currency->name : ""}}</td>
+                                            </tr>
+                                        @endif
+                                        @if ($trip->rate)
+                                            <tr>
+                                                <th class="text-center"><strong>Rate</strong></th>
+                                                <td class="text-center">{{$trip->currency ? $trip->currency->symbol : ""}}{{number_format($trip->rate,2)}}</td>
+                                            </tr>
+                                        @endif
+                                        @if ($trip->freight)
+                                            <tr>
+                                                <th class="text-center"><strong>Freight</strong></th>
+                                                <td class="text-center"> {{$trip->currency ? $trip->currency->symbol : ""}}{{number_format($trip->freight,2)}}</td>
+                                            </tr>
+                                        @endif
                                     @endif
                                   
                                     <tr>

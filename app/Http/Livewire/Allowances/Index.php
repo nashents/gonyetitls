@@ -3,6 +3,7 @@
 namespace App\Http\Livewire\Allowances;
 
 use Livewire\Component;
+use App\Models\Currency;
 use App\Models\Allowance;
 use Illuminate\Support\Facades\Auth;
 
@@ -17,10 +18,13 @@ class Index extends Component
     public $percentage;
     public $status;
     public $allowance_id;
+    public $currencies;
+    public $currency_id;
     public $user_id;
 
     public function mount(){
         $this->allowances = Allowance::orderBy('name','asc')->get();
+        $this-> currencies = Currency::orderBy('name','asc')->get();
     }
 
     public function updated($value){
@@ -37,6 +41,7 @@ class Index extends Component
         $this->name = '';
         $this->amount = '';
         $this->percentage = '';
+        $this->currency_id = '';
         $this->description = '';
     }
 
@@ -47,6 +52,7 @@ class Index extends Component
         $allowance->name = $this->name;
         $allowance->calculate_by = $this->calculate_by;
         $allowance->calculate_on = $this->calculate_on;
+        $allowance->currency_id = $this->currency_id;
         if ($this->calculate_by == "currency") {
             $allowance->amount = $this->amount;
             $allowance->percentage = Null;
@@ -84,6 +90,7 @@ class Index extends Component
     $this->calculate_on = $allowance->calculate_on;
     $this->calculate_by = $allowance->calculate_by;
     $this->amount = $allowance->amount;
+    $this->currency_id = $allowance->currency_id;
     $this->percentage = $allowance->percentage;
     $this->description = $allowance->description;
     $this->allowance_id = $allowance->id;
@@ -101,6 +108,7 @@ class Index extends Component
             $allowance->user_id = Auth::user()->id;
             $allowance->name = $this->name;
             $allowance->calculate_by = $this->calculate_by;
+            $allowance->currency_id = $this->currency_id;
             $allowance->calculate_on = $this->calculate_on;
             if ($this->calculate_by == "currency") {
                 $allowance->amount = $this->amount;

@@ -14,6 +14,7 @@ use Maatwebsite\Excel\Excel;
 use Livewire\WithFileUploads;
 use App\Exports\VendorsExport;
 use App\Mail\AccountCreationMail;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
@@ -29,6 +30,7 @@ class Index extends Component
     public $contact_surname;
     public $contact_email;
     public $contact_phonenumber;
+    public $department;
     public $name;
     public $vat_number;
     public $tin_number;
@@ -46,6 +48,7 @@ class Index extends Component
     public $vendor_id;
     public $vendor_type_id;
     public $user_id;
+    public $state = Null;
 
     
     public $title;
@@ -145,11 +148,14 @@ class Index extends Component
       protected $rules = [
         'name' => 'required|unique:vendors,name,NULL,id,deleted_at,NULL|string|min:2',
     ];
+
+
     private function resetInputFields(){
-        $this->contact_name = "";
-        $this->contact_surname = "";
-        $this->contact_email = "";
-        $this->contact_phonenumber = "";
+        $this->state == "create" ? $this->contact_name = [] : $this->contact_name = "";
+        $this->state == "create" ? $this->contact_surname = [] : $this->contact_name = "";
+        $this->state == "create" ? $this->contact_email = [] : $this->contact_name = "";
+        $this->state == "create" ? $this->contact_phonenumber = [] : $this->contact_name = "";
+        $this->state == "create" ? $this->department = [] : $this->department = "";
         $this->name = "";
         $this->currency_id = "";
         $this->phonenumber = "";
@@ -181,7 +187,11 @@ class Index extends Component
     }
 
     public function store(){
-        try{
+
+         DB::transaction(function () {
+
+        $this->state = "create";
+      
             $pin = $this->generatePIN();
 
             $user = new User;
@@ -237,6 +247,9 @@ class Index extends Component
                 }
                 if (isset($this->contact_email[$key])) {
                     $contact->email = $this->contact_email[$key];
+                }
+                if (isset($this->department[$key])) {
+                    $contact->department = $this->department[$key];
                 }
               
                $contact->save();
@@ -296,23 +309,14 @@ class Index extends Component
             'message'=>"Vendor Created Successfully!!"
         ]);
 
-        }catch(\Exception $e){
-            // Set Flash Message
-            $this->dispatchBrowserEvent('hide-vendorModal');
-            $this->dispatchBrowserEvent('alert',[
-
-                'type'=>'error',
-                'message'=>"Something went wrong while creating vendor!!"
-            ]);
-        }
+    });
+       
     }
 
     public function edit($id){
     $vendor = Vendor::find($id);
     $this->vendor_type_id = $vendor->vendor_type_id;
     $this->name = $vendor->name;
-    $this->contact_name = $vendor->contact_name;
-    $this->contact_surname = $vendor->contact_surname;
     $this->email = $vendor->email;
     $this->phonenumber = $vendor->phonenumber;
     $this->worknumber = $vendor->worknumber;
@@ -331,8 +335,12 @@ class Index extends Component
 
     public function update()
     {
+         DB::transaction(function () {
+
+         $this->state = "create";
+
         if ($this->vendor_id) {
-            try{
+
             $vendor = Vendor::find($this->vendor_id);
             $vendor->vendor_type_id = $this->vendor_type_id;
             $vendor->currency_id = $this->currency_id;
@@ -354,16 +362,10 @@ class Index extends Component
                 'type'=>'success',
                 'message'=>"Vendor Updated Successfully!!"
             ]);
-            }catch(\Exception $e){
-                // Set Flash Message
-                $this->dispatchBrowserEvent('hide-vendorEditModal');
-                $this->dispatchBrowserEvent('alert',[
-
-                    'type'=>'error',
-                    'message'=>"Something went wrong while updating vendor!!"
-                ]);
-            }
+           
         }
+
+        });
     }
     public function render()
     {  

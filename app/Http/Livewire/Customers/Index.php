@@ -56,6 +56,7 @@ class Index extends Component
 
     public $customer_id;
     public $user_id;
+    public $state = Null;
 
 
     public $title;
@@ -150,11 +151,11 @@ class Index extends Component
 
     private function resetInputFields(){
         $this->customers = "";
-        $this->contact_name = "";
-        $this->contact_surname = "";
-        $this->contact_email = "";
-        $this->contact_phonenumber = "";
-        $this->department = "";
+        $this->state == "create" ? $this->contact_name = [] : $this->contact_name = "";
+        $this->state == "create" ? $this->contact_surname = [] : $this->contact_name = "";
+        $this->state == "create" ? $this->contact_email = [] : $this->contact_name = "";
+        $this->state == "create" ? $this->contact_phonenumber = [] : $this->contact_name = "";
+        $this->state == "create" ? $this->department = [] : $this->contact_name = "";
         $this->name = "";
         $this->initials = "";
         $this->allowable_loss_percentage = "";
@@ -192,6 +193,8 @@ class Index extends Component
 
 
     public function store(){
+
+       $this->state = "create";
 
        DB::transaction(function () {
 
@@ -337,7 +340,8 @@ class Index extends Component
 
     public function update()
     {
-         DB::transaction(function () {
+        $this->state = "create";
+        DB::transaction(function () {
         if ($this->customer_id) {
        
             $customer = Customer::find($this->customer_id);

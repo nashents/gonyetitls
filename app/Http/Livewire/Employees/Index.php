@@ -125,7 +125,7 @@ class Index extends Component
         $this->branches = Branch::orderBy('name','asc')->get();
         $this->ranks = Rank::orderBy('name','asc')->get();
 
-        $this->company = Auth::user()->employee->company;
+        $this->company = Auth::user()->employee ? Auth::user()->employee->company : Auth::user()->company;
        
         if($this->company->positions == False){
              $this->bulkUpdateEmployeePositions();

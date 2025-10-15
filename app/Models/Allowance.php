@@ -15,6 +15,9 @@ class Allowance extends Model implements Auditable
     public function user(){
         return $this->belongsTo('App\Models\User');
     }
+    public function currency(){
+        return $this->belongsTo('App\Models\Currency');
+    }
     public function allowance_drivers(){
         return $this->hasMany('App\Models\AllowanceDriver');
     }

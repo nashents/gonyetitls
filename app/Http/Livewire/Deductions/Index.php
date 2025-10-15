@@ -3,6 +3,7 @@
 namespace App\Http\Livewire\Deductions;
 
 use Livewire\Component;
+use App\Models\Currency;
 use App\Models\Deduction;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
@@ -19,9 +20,12 @@ class Index extends Component
     public $status;
     public $deduction_id;
     public $user_id;
+    public $currencies;
+    public $currency_id;
 
     public function mount(){
         $this->deductions = Deduction::orderBy('name','asc')->get();
+        $this->currencies = Currency::orderBy('name','asc')->get();
     }
 
     public function updated($value){
@@ -36,6 +40,7 @@ class Index extends Component
         $this->calculate_by = "currency";
         $this->calculate_on = '';
         $this->name = '';
+        $this->currency_id = '';
         $this->amount = '';
         $this->percentage = '';
         $this->description = '';
@@ -46,6 +51,7 @@ class Index extends Component
         $deduction = new Deduction;
         $deduction->user_id = Auth::user()->id;
         $deduction->name = $this->name;
+        $deduction->currency_id = $this->currency_id;
         $deduction->calculate_by = $this->calculate_by;
         $deduction->calculate_on = $this->calculate_on;
         if ($this->calculate_by == "currency") {
@@ -82,6 +88,7 @@ class Index extends Component
     $deduction = Deduction::find($id);
     $this->user_id = $deduction->user_id;
     $this->name = $deduction->name;
+    $this->currency_id = $deduction->currency_id;
     $this->calculate_on = $deduction->calculate_on;
     $this->calculate_by = $deduction->calculate_by;
     $this->amount = $deduction->amount;
@@ -103,6 +110,7 @@ class Index extends Component
             $deduction->name = $this->name;
             $deduction->calculate_by = $this->calculate_by;
             $deduction->calculate_on = $this->calculate_on;
+            $deduction->currency_id = $this->currency_id;
             if ($this->calculate_by == "currency") {
                 $deduction->amount = $this->amount;
                 $deduction->percentage = Null;
