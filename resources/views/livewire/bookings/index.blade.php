@@ -271,7 +271,7 @@
                                             <strong>
                                                 Service Type: 
                                             </strong>{{ucfirst($booking->service_type ? $booking->service_type->name : "")}} <br>
-                                            {{$booking->description}}</td>
+                                            {{Str::limit($booking->description,100,'...')}}</td>
                                         <td>{{ optional(\App\Models\Station::find($booking->station_id))->name ?? $booking->station }}</td>
                                         <td><span class="badge bg-{{($booking->authorization == 'approved') ? 'success' : (($booking->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($booking->authorization == 'approved') ? 'approved' : (($booking->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
                                         <td><span class="badge bg-{{$booking->status == 1 ? "warning" : "success"}}">{{$booking->status == 1 ? "Open" : "Closed"}}</span></td>

@@ -111,9 +111,15 @@ class ShiftController extends Controller
     {
         $shift->delete();
         $rehandlings = $shift->rehandlings;
+        $trips = $shift->trips;
         if ($rehandlings) {
             foreach ($rehandlings as $rehandling) {
                 $rehandling->delete();
+            }
+        }
+        if ($trips) {
+            foreach ($trips as $trip) {
+                $trip->delete();
             }
         }
         Session::flash('success','Shift Deleted Successfully');

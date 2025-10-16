@@ -77,14 +77,14 @@ class Index extends Component
     public $customers;
     public $customer_id;
    
-    public $haulage_type;
+    public $haulage_type = [];
     public $destinations;
-    public $selectedFrom;
-    public $selectedTo;
-    public $arrive_lp;
-    public $arrive_op;
-    public $depart_lp;
-    public $depart_op;
+    public $selectedFrom = [];
+    public $selectedTo = [];
+    public $arrive_lp = [];
+    public $arrive_op = [];
+    public $depart_lp = [];
+    public $depart_op = [];
     public $fuel_order = False;
     public $transporters;
     public $selectedTransporter;
@@ -110,9 +110,9 @@ class Index extends Component
     public $cargos;
     public $selectedCargo;
     public $loading_points;
-    public $loading_point_id;
+    public $loading_point_id = [];
     public $offloading_points;
-    public $offloading_point_id;
+    public $offloading_point_id = [];
     public $total_loads;
 
     public $works;
@@ -169,11 +169,19 @@ class Index extends Component
     public $importFile;
     public $shift_tripsimportFile;
 
+    public $starting_mileage = [];
+    public $ending_mileage = [];
+    public $starting_hours = [];
+    public $ending_hours = [];
+
     public $cargo_type;
     public $calculation_measurement;
 
+    public $litreage_at_20 = [];
+    public $litreage = [];
+    public $quantity = [];
     public $measurements;
-    public $measurement;
+    public $measurement = [];
     public $liquid_measurements;
     public $solid_measurements;
 
@@ -192,10 +200,36 @@ class Index extends Component
         $this->stop_time = [];
         $this->work_id = [];
         $this->location_id = [];
-        $this->open_mileage = [];
-        $this->open_hours = [];
-        $this->close_mileage = [];
-        $this->close_hours = [];
+        $this->open_mileage = "";
+        $this->open_hours = "";
+        $this->close_mileage = "";
+        $this->close_hours = "";
+        $this->arrive_lp = [];
+        $this->arrive_op = [];
+        $this->depart_lp = [];
+        $this->depart_op = [];
+        $this->selectedFrom = [];
+        $this->selectedTo = [];
+        $this->haulage_type = [];
+        $this->weight = [];
+        $this->rate = [];
+        $this->trip_ref = [];
+        $this->loading_point_id = [];
+        $this->offloading_point_id = [];
+        $this->selectedCargo = '';
+        $this->selectedContainer = '';
+        $this->selectedCurrency = '';
+        $this->starting_mileage = [];
+        $this->ending_mileage = [];
+        $this->starting_hours = [];
+        $this->ending_hours = [];
+        $this->litreage_at_20 = [];
+        $this->litreage = [];
+        $this->quantity = [];
+        $this->measurement = [];
+        $this->fuel_order = False;
+        $this->selectedFuelCurrency = '';
+
     }
 
     public $trip_inputs = [];
@@ -209,8 +243,8 @@ class Index extends Component
         
         array_push($this->trip_inputs ,$t);
 
-        $this->weight[$t] = $this->company->default_weight ?? 105;
-        $this->rate[$t]   = $this->company->default_rate ?? 3;
+        $this->weight[$t] = $this->company->default_weight;
+        $this->rate[$t]   = $this->company->default_rate;
 
     }
     public function removeTrip($t)
@@ -817,16 +851,32 @@ class Index extends Component
         return  $trip_number;
 
     }
+
+      private function calculateTimeDifference($start, $end)
+    {
+        if ($start && $end) {
+            $start = $start instanceof Carbon ? $start : Carbon::parse($start);
+            $end = $end instanceof Carbon ? $end : Carbon::parse($end);
+            $diff = $end->diffInMinutes($start);
+            return sprintf('%02d:%02d', floor($diff / 60), $diff % 60);
+        }
+        return null;
+    }
     
 
-    public function createTrips(){
-            if(isset($this->trip_haulage)){
+    public function createTrips($shift_id){
 
-                foreach($this->trip_haulage as $key => $value){
+            if(isset($this->haulage_type)){
+
+                foreach($this->haulage_type as $key => $value){
 
                 $trip = new Trip;
                 $trip->trip_number = $this->tripNumber();
-                $trip->trip_ref = $this->trip_ref;
+                if($this->trip_ref[$key]){
+                    $trip->trip_ref = $this->trip_ref[$key];
+
+                }
+                $trip->shift_id = $shift_id;
                 $trip->user_id =  $this->user->id ?: null;
                 $trip->company_id = $this->company->id ?: null;
                 $trip->horse_id =  $this->selectedHorse ?: null;
@@ -908,7 +958,7 @@ class Index extends Component
 
                 if($this->cargo_type == "Solid"){
                    if((isset($this->rate[$key]) && is_numeric($this->rate[$key])) && (isset($this->weight[$key]) && is_numeric($this->weight[$key])) ){
-                    $this->freight = $this->rate[$key] * $this->weight[$key]; 
+                    $this->freight[$key] = $this->rate[$key] * $this->weight[$key]; 
                 }
                 }else{
                     if((isset($this->rate[$key]) && is_numeric($this->rate[$key])) && (isset($this->litreage_at_20[$key]) && is_numeric($this->litreage_at_20[$key])) ){
@@ -916,10 +966,12 @@ class Index extends Component
                 }
                 }
                 
-
-                $trip->freight = $this->freight[$key];
-                $trip->turnover = $this->freight[$key];
-                $this->turnover = $this->freight[$key];
+                if(isset($this->freight[$key])){
+                    $trip->freight = $this->freight[$key];
+                    $trip->turnover = $this->freight[$key];
+                    $this->turnover = $this->freight[$key];
+                }
+                
 
 
                 if(isset($this->quantity[$key])){
@@ -950,125 +1002,125 @@ class Index extends Component
                 $trip->authorized_by_id = $this->user->id;
                 $trip->save();
      
-                $last_mileage = Mileage::where('horse_id',$this->selectedHorse)->orWhere('vehicle_id',$this->selectedVehicle)->whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
+                // $last_mileage = Mileage::where('horse_id',$this->selectedHorse)->orWhere('vehicle_id',$this->selectedVehicle)->whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
       
-                if(isset($this->starting_mileage[$key]) && $this->ending_mileage[$key]){
-                    if(isset($last_mileage)){
-                        if($last_mileage->mileage < $this->ending_mileage[$key]){
-                            $mileage = new Mileage;
-                            $mileage->user_id = $this->user->id;
-                            $mileage->trip_id = $trip->id;
-                            $mileage->horse_id = $this->selectedHorse ?:  Null;
-                            $mileage->vehicle_id = $this->selectedVehicle ?: Null;
-                            $mileage->mileage = $this->starting_mileage[$key];
-                            $mileage->date = $this->date;
-                            $mileage->category = "Trip";
-                            $mileage->position = "starting";
-                            $mileage->save();
-                        }
-                    }else{
-                        $mileage = new Mileage;
-                        $mileage->user_id = $this->user->id;
-                        $mileage->trip_id = $trip->id;
-                        $mileage->horse_id = $this->selectedHorse ?:  Null;
-                        $mileage->vehicle_id = $this->selectedVehicle ?: Null;
-                        $mileage->mileage = isset($this->starting_mileage[$key]) ? $this->starting_mileage[$key] : null;
-                        $mileage->date = $this->date;
-                        $mileage->category = "Trip";
-                        $mileage->position = "starting";
-                        $mileage->save();
-                    }          
-                }
+                // if(isset($this->starting_mileage[$key]) && $this->ending_mileage[$key]){
+                //     if(isset($last_mileage)){
+                //         if($last_mileage->mileage < $this->ending_mileage[$key]){
+                //             $mileage = new Mileage;
+                //             $mileage->user_id = $this->user->id;
+                //             $mileage->trip_id = $trip->id;
+                //             $mileage->horse_id = $this->selectedHorse ?:  Null;
+                //             $mileage->vehicle_id = $this->selectedVehicle ?: Null;
+                //             $mileage->mileage = $this->starting_mileage[$key];
+                //             $mileage->date = $this->date;
+                //             $mileage->category = "Trip";
+                //             $mileage->position = "starting";
+                //             $mileage->save();
+                //         }
+                //     }else{
+                //         $mileage = new Mileage;
+                //         $mileage->user_id = $this->user->id;
+                //         $mileage->trip_id = $trip->id;
+                //         $mileage->horse_id = $this->selectedHorse ?:  Null;
+                //         $mileage->vehicle_id = $this->selectedVehicle ?: Null;
+                //         $mileage->mileage = isset($this->starting_mileage[$key]) ? $this->starting_mileage[$key] : null;
+                //         $mileage->date = $this->date;
+                //         $mileage->category = "Trip";
+                //         $mileage->position = "starting";
+                //         $mileage->save();
+                //     }          
+                // }
              
-                $last_hours = Hour::where('horse_id',$this->selectedHorse)->orWhere('vehicle_id',$this->selectedVehicle)->whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
+                // $last_hours = Hour::where('horse_id',$this->selectedHorse)->orWhere('vehicle_id',$this->selectedVehicle)->whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
       
-                if(isset($this->starting_hours[$key]) && isset($this->ending_hours[$key])){
-                    if(isset($last_hours)){
-                        if($last_hours->hour < $this->ending_hours[$key]){
-                            $hours = new Hour;
-                            $hours->user_id = $this->user->id;
-                            $hours->trip_id = $trip->id;
-                            $hours->horse_id = $this->selectedHorse ?:  Null;
-                            $hours->vehicle_id = $this->selectedVehicle ?: Null;
-                            $hours->hours = $this->starting_hours[$key];
-                            $hours->date = $this->date;
-                            $hours->category = "Trip";
-                            $hours->position = "starting";
-                            $hours->save();
-                        }
-                    }else{
-                        $hours = new Hour;
-                        $hours->user_id = $this->user->id;
-                        $hours->trip_id = $trip->id;
-                        $hours->horse_id = $this->selectedHorse ?:  Null;
-                        $hours->vehicle_id = $this->selectedVehicle ?: Null;
-                        $hours->hours = isset($this->starting_hours[$key]) ? $this->starting_hours[$key] : null;;
-                        $hours->date = $this->date;
-                        $hours->category = "Trip";
-                        $hours->position = "starting";
-                        $hours->save();
-                    }          
-                }
+                // if(isset($this->starting_hours[$key]) && isset($this->ending_hours[$key])){
+                //     if(isset($last_hours)){
+                //         if($last_hours->hour < $this->ending_hours[$key]){
+                //             $hours = new Hour;
+                //             $hours->user_id = $this->user->id;
+                //             $hours->trip_id = $trip->id;
+                //             $hours->horse_id = $this->selectedHorse ?:  Null;
+                //             $hours->vehicle_id = $this->selectedVehicle ?: Null;
+                //             $hours->hours = $this->starting_hours[$key];
+                //             $hours->date = $this->date;
+                //             $hours->category = "Trip";
+                //             $hours->position = "starting";
+                //             $hours->save();
+                //         }
+                //     }else{
+                //         $hours = new Hour;
+                //         $hours->user_id = $this->user->id;
+                //         $hours->trip_id = $trip->id;
+                //         $hours->horse_id = $this->selectedHorse ?:  Null;
+                //         $hours->vehicle_id = $this->selectedVehicle ?: Null;
+                //         $hours->hours = isset($this->starting_hours[$key]) ? $this->starting_hours[$key] : null;;
+                //         $hours->date = $this->date;
+                //         $hours->category = "Trip";
+                //         $hours->position = "starting";
+                //         $hours->save();
+                //     }          
+                // }
              
           
 
-                $last_mileage = Mileage::where('horse_id',$this->selectedHorse)->orWhere('vehicle_id',$this->selectedVehicle)->whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
-                if(isset($this->ending_mileage[$key])){
-                    if(isset($last_mileage)){
-                        if($last_mileage->mileage < $this->ending_mileage[$key]){
-                            $mileage = new Mileage;
-                            $mileage->user_id = $this->user->id;
-                            $mileage->trip_id = $trip->id;
-                            $mileage->horse_id = $this->selectedHorse ?:  Null;
-                            $mileage->vehicle_id = $this->selectedVehicle ?: Null;
-                            $mileage->mileage = $this->ending_mileage[$key];
-                            $mileage->date = $this->date;
-                            $mileage->category = "Trip";
-                            $mileage->position = "ending";
-                            $mileage->save();
-                        }
-                    }else{
-                        $mileage = new Mileage;
-                        $mileage->user_id = $this->user->id;
-                        $mileage->trip_id = $trip->id;
-                        $mileage->horse_id = $this->selectedHorse ?:  Null;
-                        $mileage->vehicle_id = $this->selectedVehicle ?: Null;
-                        $mileage->mileage = isset($this->ending_mileage[$key]) ? $this->ending_mileage[$key] : null;
-                        $mileage->date = $this->date;
-                        $mileage->category = "Trip";
-                        $mileage->position = "ending";
-                        $mileage->save();
-                    }
-                }
+                // $last_mileage = Mileage::where('horse_id',$this->selectedHorse)->orWhere('vehicle_id',$this->selectedVehicle)->whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
+                // if(isset($this->ending_mileage[$key])){
+                //     if(isset($last_mileage)){
+                //         if($last_mileage->mileage < $this->ending_mileage[$key]){
+                //             $mileage = new Mileage;
+                //             $mileage->user_id = $this->user->id;
+                //             $mileage->trip_id = $trip->id;
+                //             $mileage->horse_id = $this->selectedHorse ?:  Null;
+                //             $mileage->vehicle_id = $this->selectedVehicle ?: Null;
+                //             $mileage->mileage = $this->ending_mileage[$key];
+                //             $mileage->date = $this->date;
+                //             $mileage->category = "Trip";
+                //             $mileage->position = "ending";
+                //             $mileage->save();
+                //         }
+                //     }else{
+                //         $mileage = new Mileage;
+                //         $mileage->user_id = $this->user->id;
+                //         $mileage->trip_id = $trip->id;
+                //         $mileage->horse_id = $this->selectedHorse ?:  Null;
+                //         $mileage->vehicle_id = $this->selectedVehicle ?: Null;
+                //         $mileage->mileage = isset($this->ending_mileage[$key]) ? $this->ending_mileage[$key] : null;
+                //         $mileage->date = $this->date;
+                //         $mileage->category = "Trip";
+                //         $mileage->position = "ending";
+                //         $mileage->save();
+                //     }
+                // }
             
-                $last_hours = Hour::where('horse_id',$this->selectedHorse)->orWhere('vehicle_id',$this->selectedVehicle)->whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
-                if(isset($this->ending_hours[$key])){
-                    if(isset($last_hours)){
-                        if($last_hours->hours < $this->ending_hours[$key]){
-                            $hours = new Hour;
-                            $hours->user_id = $this->user->id;
-                            $hours->trip_id = $trip->id;
-                            $hours->horse_id = $this->selectedHorse ?:  Null;
-                            $hours->vehicle_id = $this->selectedVehicle ?: Null;
-                            $hours->hours = $this->ending_hours[$key];
-                            $hours->date = $this->date;
-                            $hours->category = "Trip";
-                            $hours->position = "ending";
-                            $hours->save();
-                        }
-                    }else{
-                        $hours = new Hour;
-                        $hours->user_id = $this->user->id;
-                        $hours->trip_id = $trip->id;
-                        $hours->horse_id = $this->selectedHorse ?:  Null;
-                        $hours->vehicle_id = $this->selectedVehicle ?: Null;
-                        $hours->hours = $this->ending_hours[$key];
-                        $hours->date = $this->date;
-                        $hours->category = "Trip";
-                        $hours->position = "ending";
-                        $hours->save();
-                    }
-                }
+                // $last_hours = Hour::where('horse_id',$this->selectedHorse)->orWhere('vehicle_id',$this->selectedVehicle)->whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
+                // if(isset($this->ending_hours[$key])){
+                //     if(isset($last_hours)){
+                //         if($last_hours->hours < $this->ending_hours[$key]){
+                //             $hours = new Hour;
+                //             $hours->user_id = $this->user->id;
+                //             $hours->trip_id = $trip->id;
+                //             $hours->horse_id = $this->selectedHorse ?:  Null;
+                //             $hours->vehicle_id = $this->selectedVehicle ?: Null;
+                //             $hours->hours = $this->ending_hours[$key];
+                //             $hours->date = $this->date;
+                //             $hours->category = "Trip";
+                //             $hours->position = "ending";
+                //             $hours->save();
+                //         }
+                //     }else{
+                //         $hours = new Hour;
+                //         $hours->user_id = $this->user->id;
+                //         $hours->trip_id = $trip->id;
+                //         $hours->horse_id = $this->selectedHorse ?:  Null;
+                //         $hours->vehicle_id = $this->selectedVehicle ?: Null;
+                //         $hours->hours = $this->ending_hours[$key];
+                //         $hours->date = $this->date;
+                //         $hours->category = "Trip";
+                //         $hours->position = "ending";
+                //         $hours->save();
+                //     }
+                // }
                 
                 $delivery_note = new DeliveryNote;
                 $delivery_note->user_id =  $trip->user->id;
@@ -1104,6 +1156,23 @@ class Index extends Component
     
 
     public function store(){
+       
+
+        if($this->for == "Trips") {
+            $this->validate([
+                'selectedCurrency'     => 'nullable',
+                'rate.*'               => 'nullable|numeric|min:0',
+                'weight.*'             => 'nullable|numeric|min:0',
+                'litreage_at_20.*'     => 'nullable|numeric|min:0',
+                'starting_mileage.*'   => 'nullable|numeric|min:0',
+                'ending_mileage.*'     => 'nullable|numeric|min:0',
+                'starting_hours.*'     => 'nullable|numeric|min:0',
+                'ending_hours.*'       => 'nullable|numeric|min:0',
+                'loading_point_id.*'   => 'nullable|integer|exists:loading_points,id',
+                'offloading_point_id.*'=> 'nullable|integer|exists:offloading_points,id',
+                // …add the rest as needed
+            ]);
+        } 
 
          DB::transaction(function () {
         // try{
@@ -1146,6 +1215,7 @@ class Index extends Component
                 }
             }
         }
+
         
         $shift->calculated_mileage = $this->calculated_mileage;
         $shift->date = $this->date;
@@ -1153,6 +1223,9 @@ class Index extends Component
         $shift->exchange_rate = $this->exchange_rate;
         $shift->status = '1';
         $shift->save();
+
+       $this->createTrips($shift->id);
+       
 
         $shift->loading_points()->sync($this->loading_point_id);
         $shift->offloading_points()->sync($this->offloading_point_id);

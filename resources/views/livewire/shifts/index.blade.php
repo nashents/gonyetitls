@@ -525,9 +525,9 @@
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label for="trip_type">Trip Haulage</a>
+                                        <label for="trip_type">Trip Haulage<span class="required" style="color: red">*</span></a>
                                         </label>
-                                        <select class="form-control" wire:model.debounce.300ms="haulage_type.{{$value}}" >
+                                        <select class="form-control" wire:model.debounce.300ms="haulage_type.{{$value}}" required>
                                             <option value="">Select Option</option>
                                             <option value="short_haul">Short Haul</option>
                                             <option value="long_haul">Long Haul</option>
@@ -614,7 +614,7 @@
                                 <div class="col-md-3">
                                     <div class="form-group">
                                         <label for="name">Loading Points<span class="required" style="color: red">*</span></label>
-                                        <select class="form-control" wire:model.debounce.300ms="loading_point_id.{{$value}}" multiple required>
+                                        <select class="form-control" wire:model.debounce.300ms="loading_point_id.{{$value}}"  required>
                                             <option value="">Select Loading Point(s)</option>
                                             @foreach ($loading_points as $loading_point)
                                                 <option value="{{ $loading_point->id }}">{{ $loading_point->name }}</option>
@@ -639,7 +639,7 @@
                                 <div class="col-md-3">
                                     <div class="form-group">
                                         <label for="name">Offloading Points<span class="required" style="color: red">*</span></label>
-                                        <select class="form-control" wire:model.debounce.300ms="offloading_point_id.{{$value}}" multiple required>
+                                        <select class="form-control" wire:model.debounce.300ms="offloading_point_id.{{$value}}" required>
                                             <option value="">Select Offloading Point(s)</option>
                                             @foreach ($offloading_points as $offloading_point)
                                                 <option value="{{ $offloading_point->id }}">{{ $offloading_point->name }}</option>
@@ -671,11 +671,43 @@
                                     @error('arrive_op.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
                                 </div>
                             </div>
-                            <div class="col-md-2">
+                            <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="">Depart Offloading Point</label>
                                     <input type="time"  class="form-control" wire:model.debounce.300ms="depart_op.{{$value}}"  />
                                     @error('depart_op.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
+                                </div>
+                            </div>
+                         
+                        </div> 
+
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="">Starting Mileage</label>
+                                    <input type="number" step="any" class="form-control" wire:model.debounce.300ms="starting_mileage.{{$value}}"   />
+                                    @error('starting_mileage.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                 <div class="form-group">
+                                    <label for="">Ending Mileage</label>
+                                    <input type="number" step="any" class="form-control" wire:model.debounce.300ms="ending_mileage.{{$value}}"   />
+                                    @error('ending_mileage.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                 <div class="form-group">
+                                    <label for="">Starting Hours</label>
+                                    <input type="number" step="any" class="form-control" wire:model.debounce.300ms="starting_hours.{{$value}}"   />
+                                    @error('starting_hours.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label for="">Ending Hours</label>
+                                    <input type="number" step="any" class="form-control" wire:model.debounce.300ms="ending_hours.{{$value}}"   />
+                                    @error('ending_hours.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
                                 </div>
                             </div>
                             <div class="col-md-1">
@@ -685,6 +717,7 @@
                                 </div>
                             </div>
                         </div> 
+
                          </div>
                 @endforeach
 
