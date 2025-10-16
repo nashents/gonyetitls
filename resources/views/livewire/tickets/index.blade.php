@@ -137,7 +137,7 @@
                                         </td>
                                         <td>
                                             <strong>Service Type: </strong> {{$ticket->service_type ? $ticket->service_type->name : ""}}  <br>
-                                            {{$ticket->booking ? $ticket->booking->description : ""}}
+                                            {{Str::limit($ticket->booking ? $ticket->booking->description : "",100,'...')}}
                                         </td>
                                         <td>{{ optional(\App\Models\Station::find($ticket->booking->station_id))->name ?? $ticket->booking->station }}</td>
                                         <td><span class="badge bg-{{$ticket->status == 1 ? "warning" : "success"}}">{{$ticket->status == 1 ? "Open" : "Closed"}}</span></td>

@@ -78,19 +78,13 @@
                                         </th>
                                         <th class="th-sm">Inspection#
                                         </th>
-                                        <th class="th-sm">Ticket For
+                                        <th class="th-sm">TicketFor
                                         </th>
                                         <th class="th-sm">AssignedTo
                                         </th>
-                                        <th class="th-sm">ServiceType
+                                        <th class="th-sm" style="width: 20%">Timelines
                                         </th>
-                                        <th class="th-sm">InDate
-                                        </th>
-                                        <th class="th-sm">InTime
-                                        </th>
-                                        <th class="th-sm">OutDate
-                                        </th>
-                                        <th class="th-sm">OutTime
+                                        <th class="th-sm">Narration
                                         </th>
                                         <th class="th-sm">Station
                                         </th>
@@ -106,7 +100,7 @@
                                         @forelse ($tickets as $ticket)
                                       <tr>
                                        
-                                      <td>
+                                        <td>
                                            {{$ticket->ticket_number}}
                                         </td>
                                         <td>
@@ -135,12 +129,17 @@
                                                 {{ucfirst($ticket->booking->vendor->name)}}  
                                             @endif
                                         </td>
-                                        <td>{{$ticket->service_type ? $ticket->service_type->name : ""}}</td>
-                                        <td>{{$ticket->in_date}}</td>
-                                        <td>{{$ticket->in_time}}</td>
-                                        <td>{{$ticket->out_date}}</td>
-                                        <td>{{$ticket->out_time}}</td>
-                                        <td>{{$ticket->station}}</td>
+                                       <td>
+                                            <strong>In: </strong> {{$ticket->booking->in_date}} {{$ticket->booking->in_time}} <br>
+                                            <strong>Estimate: </strong> {{$ticket->booking->estimated_out_date}} {{$ticket->booking->estimated_out_time}} <br>
+                                            <strong>Completed: </strong> {{$ticket->booking->out_date}} {{$ticket->booking->out_time}} <br>
+                                            <strong>Out: </strong> {{$ticket->booking ? $ticket->booking->workshop_out_date : ""}} {{$ticket->booking ? $ticket->booking->workshop_out_time : ""}} <br>
+                                        </td>
+                                         <td>
+                                            <strong>Service Type: </strong> {{$ticket->service_type ? $ticket->service_type->name : ""}}  <br>
+                                            {{Str::limit($ticket->booking ? $ticket->booking->description : "",100,'...')}}
+                                        </td>
+                                        <td>{{ optional(\App\Models\Station::find($ticket->booking->station_id))->name ?? $ticket->booking->station }}</td>
                                         <td><span class="badge bg-{{$ticket->status == 1 ? "warning" : "success"}}">{{$ticket->status == 1 ? "Open" : "Closed"}}</span></td>
                                         <td class="w-10 line-height-35 table-dropdown">
                                             <div class="dropdown">
@@ -163,7 +162,7 @@
                                       </tr>
                                       @empty
                                       <tr>
-                                        <td colspan="13">
+                                        <td colspan="9">
                                             <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                                 No Tickets Found ....
                                             </div>
