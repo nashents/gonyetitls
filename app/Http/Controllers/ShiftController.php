@@ -119,6 +119,10 @@ class ShiftController extends Controller
         }
         if ($trips) {
             foreach ($trips as $trip) {
+                $delivery_note = $trip->delivery_note;
+                if ($delivery_note) {
+                    $delivery_note->delete();
+                }
                 $trip->delete();
             }
         }
