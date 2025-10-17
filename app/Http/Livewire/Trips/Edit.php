@@ -174,10 +174,15 @@ class Edit extends Component
     public $cargos;
     public $cargo;
     public $cargo_type;
-    public $destinations;
+    public $from_destinations;
+    public $to_destinations;
     public $destination_id;
     public $selectedFrom;
     public $selectedTo;
+    public $searchFrom;
+    public $searchTo;
+    public $searchLoadingPoint;
+    public $searchOffloadingPoint;
     public $offloading_points;
     public $offloading_point_id;
     public $loading_points;
@@ -242,7 +247,7 @@ class Edit extends Component
     public $searchDriver;
     public $searchTrip;
 
-    protected $queryString = ['searchTrip','searchVehicle','searchHorse','searchTrailer','searchDriver'];
+    protected $queryString = ['searchTrip','searchVehicle','searchHorse','searchTrailer','searchDriver', 'searchFrom','searchTo','searchLoadingPoint','searchOffloadingPoint'];
 
     public $selectedTrip;
     public $trips;
@@ -950,7 +955,8 @@ class Edit extends Component
         $this->brokers = Broker::orderBy('name','asc')->get();
         $this->cargos = Cargo::orderBy('name','asc')->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
-        $this->destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
+        $this->from_destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
+        $this->to_destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
         $this->borders = Border::with('clearing_agents:id,name')->orderBy('name','asc')->get();
         $this->clearing_agents = ClearingAgent::orderBy('name','asc')->get();
         
@@ -1492,6 +1498,31 @@ class Edit extends Component
         return  $bill_number;
 
 
+    }
+
+      public function updatedSearchFrom(){
+            $this->from_destinations = Destination::query()->with('country')
+            ->where('city', 'like', '%'.$this->searchFrom.'%')
+            ->orWhereHas('country', function ($query) {
+                return $query->where('name', 'like', '%'.$this->searchFrom.'%');
+            })
+            ->get()->sortBy('city')->sortBy('country.name');
+    }
+    public function updatedSearchTo(){
+            $this->to_destinations = Destination::query()->with('country')
+            ->where('city', 'like', '%'.$this->searchTo.'%')
+            ->orWhereHas('country', function ($query) {
+                return $query->where('name', 'like', '%'.$this->searchTo.'%');
+            })
+            ->get()->sortBy('city')->sortBy('country.name');
+    }
+    public function updatedSearchLoadingPoint(){
+            $this->loading_points = LoadingPoint::query()
+            ->where('name', 'like', '%'.$this->searchLoadingPoint.'%')->get();
+    }
+    public function updatedSearchOffloadingPoint(){
+            $this->offloading_points = OffloadingPoint::query()
+            ->where('name', 'like', '%'.$this->searchOffloadingPoint.'%')->get();
     }
 
 
@@ -2796,7 +2827,8 @@ class Edit extends Component
                 ]);
             }
             elseif($category == 'destinations'){
-                $this->destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
+                $this->from_destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
+                $this->to_destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
                 $this->dispatchBrowserEvent('alert',[
                     'type'=>'success',
                     'message'=>"Destinations Refreshed Successfully!!."

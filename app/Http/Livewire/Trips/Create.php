@@ -68,7 +68,7 @@ use KMLaravel\GeographicalCalculator\Facade\GeoFacade;
 class Create extends Component
 {
     use WithFileUploads;
-    protected $queryString = ['searchTrip','searchVehicle','searchHorse','searchTrailer','searchDriver'];
+    protected $queryString = ['searchTrip','searchVehicle','searchHorse','searchTrailer','searchDriver', 'searchFrom','searchTo','searchLoadingPoint','searchOffloadingPoint'];
     public $trip_id;
     public $trip_types;
     public $haulage_type;
@@ -206,7 +206,8 @@ class Create extends Component
     public $emptyrun_destination_fuel_amount;
 
     // location vars
-    public $destinations;
+    public $from_destinations;
+    public $to_destinations;
     public $destination_id;
     public $selectedFrom;
     public $loading_points;
@@ -216,6 +217,10 @@ class Create extends Component
     public $offloading_point_id;
     public $routes;
     public $selectedRoute;
+    public $searchFrom;
+    public $searchTo;
+    public $searchLoadingPoint;
+    public $searchOffloadingPoint;
     
     public $account;
     //truck stop vars
@@ -1058,7 +1063,8 @@ class Create extends Component
         $this->brokers = Broker::orderBy('name','asc')->latest()->get();
         $this->cargos = collect();
         $this->currencies = Currency::orderBy('name','asc')->get();
-        $this->destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
+        $this->from_destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
+        $this->to_destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
       }
 
 
@@ -2083,6 +2089,30 @@ class Create extends Component
      
 
     }
+    public function updatedSearchFrom(){
+            $this->from_destinations = Destination::query()->with('country')
+            ->where('city', 'like', '%'.$this->searchFrom.'%')
+            ->orWhereHas('country', function ($query) {
+                return $query->where('name', 'like', '%'.$this->searchFrom.'%');
+            })
+            ->get()->sortBy('city')->sortBy('country.name');
+    }
+    public function updatedSearchTo(){
+            $this->to_destinations = Destination::query()->with('country')
+            ->where('city', 'like', '%'.$this->searchTo.'%')
+            ->orWhereHas('country', function ($query) {
+                return $query->where('name', 'like', '%'.$this->searchTo.'%');
+            })
+            ->get()->sortBy('city')->sortBy('country.name');
+    }
+    public function updatedSearchLoadingPoint(){
+            $this->loading_points = LoadingPoint::query()
+            ->where('name', 'like', '%'.$this->searchLoadingPoint.'%')->get();
+    }
+    public function updatedSearchOffloadingPoint(){
+            $this->offloading_points = OffloadingPoint::query()
+            ->where('name', 'like', '%'.$this->searchOffloadingPoint.'%')->get();
+    }
 
     
 
@@ -2376,8 +2406,9 @@ class Create extends Component
                 'message'=>"Currencies Refreshed Successfully!!."
             ]);
         }
-        elseif($category == 'destinations'){
-            $this->destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
+        elseif($category == 'from_destinations'){
+            $this->from_destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
+            $this->to_destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Destinations Refreshed Successfully!!."

@@ -643,9 +643,10 @@
                                     <div class="col-md-3">
                                         <div class="form-group">
                                             <label for="customer"><a href="{{ route('destinations.index') }}" target="_blank" style="color: blue">From</a><span class="required" style="color: red">*</span></label>
-                                          <select class="form-control" wire:model.debounce.300ms="selectedFrom" required>
+                                           <input type="text" wire:model.debounce.300ms="searchFrom" placeholder="Search origin locations..." class="form-control">
+                                            <select class="form-control" wire:model.debounce.300ms="selectedFrom" size="4" required>
                                               <option value="">Select From Location</option>
-                                              @foreach ($destinations as $destination)
+                                              @foreach ($from_destinations as $destination)
                                                   <option value="{{$destination->id}}">{{$destination->country ? $destination->country->name : ""}} ({{ucfirst($destination->city)}})</option>
                                               @endforeach
                                           </select>
@@ -656,7 +657,8 @@
                                     <div class="col-md-3">
                                         <div class="form-group">
                                             <label for="customer"><a href="{{ route('loading_points.index') }}" target="_blank" style="color: blue">Loading Point(s)</a></label>
-                                              <select class="form-control" wire:model.debounce.300ms="loading_point_id" >
+                                             <input type="text" wire:model.debounce.300ms="searchLoadingPoint" placeholder="Search loading points..." class="form-control">
+                                            <select class="form-control" size="4" wire:model.debounce.300ms="loading_point_id" >
                                               <option value="">Select Loading Point</option>
                                               @foreach ($loading_points as $loading_point)
                                               <option value="{{$loading_point->id}}">{{ucfirst($loading_point->name)}}</option>
@@ -669,9 +671,10 @@
                                     <div class="col-md-3">
                                         <div class="form-group">
                                             <label for="destination"><a href="{{ route('destinations.index') }}" target="_blank" style="color: blue">To</a><span class="required" style="color: red">*</span></label>
-                                          <select class="form-control" wire:model.debounce.300ms="selectedTo" required>
+                                            <input type="text" wire:model.debounce.300ms="searchTo" placeholder="Search destination locations..." class="form-control">
+                                          <select class="form-control" wire:model.debounce.300ms="selectedTo" size="4" required>
                                               <option value="">Select To Location</option>
-                                              @foreach ($destinations as $destination)
+                                              @foreach ($to_destinations as $destination)
                                                   <option value="{{$destination->id}}">{{$destination->country ? $destination->country->name : ""}} ({{ucfirst($destination->city)}})</option>
                                               @endforeach
                                           </select>
@@ -682,7 +685,8 @@
                                     <div class="col-md-3">
                                         <div class="form-group">
                                             <label for="destination"><a href="{{ route('offloading_points.index') }}" target="_blank" style="color: blue">Offloading Point(s)</a></label>
-                                          <select class="form-control" wire:model.debounce.300ms="offloading_point_id" >
+                                           <input type="text" wire:model.debounce.300ms="searchOffloadingPoint" placeholder="Search offloading points..." class="form-control">
+                                            <select class="form-control" size="4" wire:model.debounce.300ms="offloading_point_id" >
                                               <option value="">Select Offloading Point</option>
                                               @foreach ($offloading_points as $offloading_point)
                                                   <option value="{{$offloading_point->id}}">{{ucfirst($offloading_point->name)}}</option>
