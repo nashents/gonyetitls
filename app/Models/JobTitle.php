@@ -23,7 +23,7 @@ class JobTitle extends Model implements Auditable
     }
 
     public function grades(){
-        return $this->belongsToMany('App\Models\Grades');
+        return $this->belongsToMany('App\Models\Grade');
     }
 
     protected $fillable =[

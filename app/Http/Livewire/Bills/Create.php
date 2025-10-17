@@ -71,6 +71,7 @@ class Create extends Component
     public $total_tax_amount;
     public $user_id;
     public $company;
+    public $currency_id;
 
     public $item_key;
     public $item_name;

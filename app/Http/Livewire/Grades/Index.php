@@ -32,11 +32,12 @@ class Index extends Component
     public $promotion_criteria;
     public $max_years_in_grade;
     public $leave_days;
-    public $bonus_eligibility;
-    public $overtime_eligibility;
+    public $bonus_eligibility = False;
+    public $overtime_eligibility = True;
     public $benefits_package;
     public $effective_date;
-    public $status;
+    public $status = True;
+    public $user_id;
 
     public function mount(){
         $this->job_titles = JobTitle::orderBy('title','asc')->get();
@@ -163,8 +164,22 @@ class Index extends Component
 
     public function render()
     {
-        return view('livewire.grades.index',[
+        if(filled($this->search)){
+            return view('livewire.grades.index',[
+            'grades' => Grade::where('grade_name','like','%'.$this->search.'%')
+                            ->orWhere('grade_code','like','%'.$this->search.'%')
+                            ->orWhere('grade_level','like','%'.$this->search.'%')
+                            ->orWhere('job_category','like','%'.$this->search.'%')
+                            ->orWhere('job_band','like','%'.$this->search.'%')
+                            ->orderBy('grade_code','asc')
+                            ->paginate(10)
+            ]);
+          
+        }else{
+             return view('livewire.grades.index',[
             'grades' => Grade::orderBy('grade_code','asc')->paginate(10)
-        ]);
+            ]);
+        }
+       
     }
 }
