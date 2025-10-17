@@ -1915,6 +1915,7 @@ class Create extends Component
 
     public function calculateDistance($from, $to, $category)
     {
+       
         $from_location = null;
         $to_location = null;
     
@@ -1922,6 +1923,7 @@ class Create extends Component
         if ($category === "destinations") {
             $from_location = Destination::find($from);
             $to_location = Destination::find($to);
+          
         } elseif ($category === "loading_points") {
             $from_location = LoadingPoint::find($from);
             $to_location = OffloadingPoint::find($to);
@@ -1952,6 +1954,7 @@ class Create extends Component
             'destinations' => $destination,
             'key' => $apiKey,
         ]);
+       
     
         if (!$response->successful()) {
             return response()->json(['error' => 'Error fetching data from Google Maps API'], 500);
@@ -1963,6 +1966,8 @@ class Create extends Component
         if (!$element) {
             return response()->json(['error' => 'No distance data available'], 404);
         }
+
+       
     
         // Extract distance and duration
         $distance_in_meters = optional($element)['distance']['value'] ?? null;
@@ -2168,6 +2173,7 @@ class Create extends Component
             if (isset($this->loading_point_id) && isset($this->offloading_point_id)) {
                 $this->calculateDistance($this->loading_point_id, $this->offloading_point_id,"loading_points");
             }else{
+              
                 if(isset($this->selectedFrom) && isset($this->selectedTo)){
                     $this->calculateDistance($this->selectedFrom, $this->selectedTo,"destinations");
                 }

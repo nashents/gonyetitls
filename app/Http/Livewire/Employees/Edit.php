@@ -91,6 +91,7 @@ class Edit extends Component
     public $bank_currency_id;
     public $branch_code;
     public $swift_code;
+    public $pin;
 
     public $companies;
     public $company_id;
@@ -160,7 +161,7 @@ class Edit extends Component
           $this->account_name = $employee->bank_account->account_name;
           $this->account_number = $employee->bank_account->account_number;
           $this->bank_branch = $employee->bank_account->bank_branch;
-          $this->brach_code = $employee->bank_account->branch_code;
+          $this->branch_code = $employee->bank_account->branch_code;
           $this->swift_code = $employee->bank_account->swift_code;
         }
       

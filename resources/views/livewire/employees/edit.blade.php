@@ -11,7 +11,6 @@
                             </div>
                         </div>
                         <div class="panel-body">
-
                             <form wire:submit.prevent="update()" class="p-20" enctype="multipart/form-data">
                                 <h5 class="underline mt-n">Employee Details</h5>
                                 <div class="form-group">
@@ -145,8 +144,8 @@
                                <div class="row">
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label for="exampleInputEmail13">Department(s)<span class="required" style="color: red">*</span></label>
-                                       <select wire:model.debounce.300ms="selectedDepartment" class="form-control" required disabled>
+                                        <label for="exampleInputEmail13">Department(s)</label>
+                                       <select wire:model.debounce.300ms="selectedDepartment" class="form-control"  disabled>
                                            <option value="" selected > Select Department</option>
                                            @foreach ($departments as $department)
                                                <option value="{{$department->id}}">{{$department->name}}</option>
@@ -204,10 +203,8 @@
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
-
-                                            <label for="exampleInputEmail1">Role <span class="required" style="color: red">*</span></label>
-
-                                            <select wire:model.debounce.300ms="role_id" class="form-control"  required>
+                                            <label for="exampleInputEmail1">Roles</label>
+                                            <select wire:model.debounce.300ms="role_id" class="form-control">
                                                 <option value="" selected>Select Role</option>
                                                 @foreach ($roles as $role)
                                                     <option value="{{$role->id}}">{{$role->name}}</option>
