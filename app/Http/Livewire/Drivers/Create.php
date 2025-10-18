@@ -148,13 +148,14 @@ class Create extends Component
         'department_id.required' => 'Select Department',
         'branch_id.nullable' => 'Select Branch',
         'role_id.required' => 'Select Role',
+        'transporter_id.required' => 'Select Transporter',
       ];
 
       protected $rules = [
           'name' => 'required|alpha|min:2',
           'middle_name' => 'nullable|alpha|min:2',
           'surname' => 'required|alpha|min:2',
-          'dob' => 'nullable|date',
+          'dob' => 'nullable',
           'email' => 'nullable|email|unique:users,email,NULL,id,deleted_at,NULL',
           'phonenumber' => 'nullable|unique:employees,phonenumber,NULL,id,deleted_at,NULL|max:13',
           'transporter_id' => 'required',
@@ -255,10 +256,10 @@ class Create extends Component
         }
     }
 
-      public function store(){
+    public function store(){
 
-    DB::transaction(function () {
-
+      DB::transaction(function () {
+        
       $pin = $this->generatePIN();
 
       $user = new User;

@@ -143,13 +143,14 @@ class Create extends Component
         'selectedDepartment.required' => 'Select Department',
         'branch_id.nullable' => 'Select Branch',
         'role_id.required' => 'Select Role',
+        'company_id.required' => 'Select Company',
       ];
 
       protected $rules = [
           'name' => 'required|alpha|min:2',
           'middle_name' => 'nullable|alpha|min:2',
           'surname' => 'required|alpha|min:2',
-          'dob' => 'nullable|date',
+          'dob' => 'nullable',
           'email' => 'nullable|email|unique:users,email,NULL,id,deleted_at,NULL',
           'personal_email' => 'nullable|email|unique:employees,personal_email,NULL,id,deleted_at,NULL',
           'phonenumber' => 'nullable|unique:employees,phonenumber,NULL,id,deleted_at,NULL|max:13',

@@ -34,8 +34,7 @@
                                     </th>
                                     <th class="th-sm">Years Worked
                                     </th>
-                                    <th class="th-sm">Action
-                                    </th>
+                                 
                                   </tr>
                                 </thead>
                                 @if ($drivers->count()>0)
@@ -72,17 +71,7 @@
                                     <td>{{ $yearsDifference ? $yearsDifference." Year(s)" : ""}}</td>
                                     <td>{{$driver->employee ? $driver->employee->end_date : "" }}</td>
                                     <td>{{ $yearsOfEmployeementDifference ? $yearsOfEmployeementDifference." Year(s)" : ""}}</td>
-                                    <td class="w-10 line-height-35 table-dropdown">
-                                        <div class="dropdown">
-                                            <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                <i class="fa fa-bars"></i>
-                                                <span class="caret"></span>
-                                            </button>
-                                            <ul class="dropdown-menu">
-                                                {{-- <li><a href="#"  wire:click="edit({{$driver->id}})" ><i class="fa fa-refresh color-success"></i> Update</a></li> --}}
-                                            </ul>
-                                        </div>
-                                </td>
+                                   
                                   </tr>
                                   @endforeach
                                 </tbody>

@@ -242,12 +242,9 @@ class Edit extends Component
             ],
             'dob' => [
                 'nullable',
-                'date',
             ],
            
-            'selectedDepartment' => [
-                'required',
-            ],
+            
         ];
       }
 

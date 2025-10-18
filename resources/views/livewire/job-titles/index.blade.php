@@ -48,12 +48,18 @@
                                     </td>
                                     <td>{{$job_title->description}}</td>
                                     <td>
-                                        <button class="btn btn-success btn-rounded btn-xs" wire:click.prevent="showQualification({{$job_title->id}})"> <i class="fa fa-plus"></i>Qualification</button>
+                                        <button class="btn btn-success btn-rounded btn-xs" wire:click.prevent="showQualification({{$job_title->id}})"> <i class="fa fa-plus"></i> {{$job_title->title}} Qualification(s)</button>
                                         @if ($job_title->job_title_qualifications->count() > 0)
                                           <br>   
                                             @foreach ($job_title->job_title_qualifications as $job_title_qualification)
-                                                {{$job_title_qualification->qualification ? $job_title_qualification->qualification->name : ""}} {{ $job_title_qualification->qualification ? $job_title_qualification->qualification->code : ""}} @if(!$loop->last), @endif 
+                                                <small>{{$job_title_qualification->qualification ? $job_title_qualification->qualification->name : ""}} <strong>{{ $job_title_qualification->mandatory == True ? "Mandatory, " : "Not Mandatory, "}}</strong>  <strong>Weight: </strong>  {{ $job_title_qualification->weight}} <strong>Min Level: </strong> {{ $job_title_qualification->min_level}}  <strong>Min Score: </strong> {{ $job_title_qualification->min_score}}</small> 
+                                                @if(!$loop->last), @endif 
+                                                @if ($loop->last)
+                                                    <button class="btn btn-primary btn-rounded btn-xs" wire:click.prevent="showEditQualification({{$job_title->id}})"> <i class="fa fa-edit"></i></button>
+                                                @endif
                                             @endforeach
+                                            <br>
+                                             
                                         @endif
                                       
                                     </td>
@@ -170,20 +176,20 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="country">Qualifications<span class="required" style="color: red">*</span></label>
-                                        <select wire:model.debounce.300ms="qualification_id.0" class="form-control" required>
+                                        <select wire:model.debounce.300ms="qualification_id.{{$value}}" class="form-control" required>
                                             <option value="">Select Qualification</option>
                                             @foreach ($qualifications as $qualification)
                                             <option value="{{$qualification->id}}">{{$qualification->name}}</option>
                                             @endforeach
                                         </select>
-                                        @error('qualification_id.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        @error('qualification_id.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="mb-10" style="padding-top:28px; ">
-                                    <input type="checkbox" wire:model.debounce.300ms="mandatory.0"   class="line-style" required />
+                                    <input type="checkbox" wire:model.debounce.300ms="mandatory.{{$value}}"   class="line-style" required />
                                     <label for="one" class="radio-label">Mandatory</label>
-                                    @error('mandatory.0') <span class="text-danger error">{{ $message }}</span>@enderror
+                                    @error('mandatory.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>   
                                 </div>
                             </div>
@@ -192,8 +198,8 @@
                                     <div class="form">
                                         <div class="form-group">
                                             <label for="description">Min Level</label>
-                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="min_level.0" placeholder="Enter Min Level" >
-                                            @error('min_level.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="min_level.{{$value}}" placeholder="Enter Min Level" >
+                                            @error('min_level.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
                                     </div>
                                 </div>
@@ -201,8 +207,8 @@
                                     <div class="form">
                                         <div class="form-group">
                                             <label for="description">Weight</label>
-                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="weight.0" placeholder="Enter Weight" >
-                                            @error('weight.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="weight.{{$value}}" placeholder="Enter Weight" >
+                                            @error('weight.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
                                     </div>
                                 </div>
@@ -210,8 +216,8 @@
                                     <div class="form">
                                         <div class="form-group">
                                             <label for="description">Min Score</label>
-                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="min_score.0" placeholder="Enter Min Score" >
-                                            @error('min_score.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="min_score.{{$value}}" placeholder="Enter Min Score" >
+                                            @error('min_score.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
                                     </div>
                                 </div>
@@ -237,6 +243,104 @@
                     <div class="btn-group" role="group">
                         <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
                         <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Save</button>
+                    </div>
+                    <!-- /.btn-group -->
+                </div>
+            </form>
+            </div>
+        </div>
+    </div>
+
+       <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="qualificationEditModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+        <div class="modal-dialog  mw-100 w-50" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modal4Label"><i class="fa fa-plus"></i> Edit Qualification(s) <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                </div>
+                <form wire:submit.prevent="updateQualification()" >
+                    <div class="modal-body">
+                        @foreach($job_title_qualifications as $key => $value)
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="country">Qualifications<span class="required" style="color: red">*</span></label>
+                                        <select wire:model.debounce.300ms="qualification_id.{{$key}}" class="form-control" required>
+                                            <option value="">Select Qualification</option>
+                                            @foreach ($qualifications as $qualification)
+                                            <option value="{{$qualification->id}}">{{$qualification->name}}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('qualification_id.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-10" style="padding-top:28px; ">
+                                    <input type="checkbox" wire:model.debounce.300ms="mandatory.{{$key}}"   class="line-style" required />
+                                    <label for="one" class="radio-label">Mandatory</label>
+                                    @error('mandatory.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
+                                    </div>   
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form">
+                                        <div class="form-group">
+                                            <label for="description">Min Level</label>
+                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="min_level.{{$key}}" placeholder="Enter Min Level" >
+                                            @error('min_level.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form">
+                                        <div class="form-group">
+                                            <label for="description">Weight</label>
+                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="weight.{{$key}}" placeholder="Enter Weight" >
+                                            @error('weight.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="form">
+                                        <div class="form-group">
+                                            <label for="description">Min Score</label>
+                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="min_score.{{$key}}" placeholder="Enter Min Score" >
+                                            @error('min_score.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                </div>
+                                 <div class="col-md-1">
+                                <div class="form-group" style="padding-top:28px; ">
+                                    <label for=""></label>
+                                    <button class="btn btn-danger btn-rounded btn-xs"    wire:click.prevent="removeShow({{ $value->id }})"> <i class="fa fa-times"></i></button>
+                                </div>
+                            </div>
+                            </div>
+                        @endforeach 
+                    </div>    
+                <div class="modal-footer">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                        <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Save</button>
+                    </div>
+                    <!-- /.btn-group -->
+                </div>
+            </form>
+            </div>
+        </div>
+    </div>
+
+     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal fade" id="removeModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content bg-danger">
+                <div class="modal-body">
+                   <center> <strong>Are you sure you want to delete {{$qualification ? $qualification->name : ""}} Qualification from {{$job_title ? ucfirst($job_title->title) : ""}} Job Title </strong> </center>
+                </div>
+                <form wire:submit.prevent="removeQualification()" >
+                <div class="modal-footer no-border">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn bg-white btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                        <button type="submit" class="btn bg-black btn-wide btn-rounded" ><i class="fa fa-trash"></i>Remove</button>
                     </div>
                     <!-- /.btn-group -->
                 </div>

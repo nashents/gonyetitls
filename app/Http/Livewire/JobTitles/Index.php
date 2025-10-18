@@ -35,6 +35,11 @@ class Index extends Component
     private $job_titles;
     public $job_title_id;
     public $user_id;
+    public $qualification;
+    public $job_title;
+    public $job_title_qualifications;
+    public $job_title_qualification;
+    public $job_title_qualification_id;
 
     public $inputs = [];
     public $i = 1;
@@ -54,7 +59,10 @@ class Index extends Component
 
     public function mount(){
         $this->departments = Department::orderBy('name','asc')->get();
-        $this->qualifications = Qualification::orderBy('name','asc')->get();
+        $this->job_title = Null;
+        $this->qualification = Null;
+        $this->qualifications = collect();
+        $this->job_title_qualifications = collect();
         $this->grades = Grade::orderBy('grade_name','asc')->orderBy('grade_code','asc')->get();
          
     }
@@ -133,9 +141,70 @@ class Index extends Component
         }
     }
 
+     public function removeShow($id){
+        $this->job_title_qualification_id = $id;
+        $job_title_qualification = JobTitleQualification::find($id);
+        $this->qualification = $job_title_qualification->qualification;
+        $this->job_title = $job_title_qualification->qualification;
+        $this->dispatchBrowserEvent('show-removeModal');
+    }
+
+    public function removeQualification(){
+
+        $job_title_qualification = JobTitleQualification::find($this->job_title_qualification_id);
+        $job_title_qualification->delete();
+
+         $this->job_title_qualifications = $this->job_title->job_title_qualifications;
+
+        $this->dispatchBrowserEvent('hide-removeModal');
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Qualification Removed Successfully!!"
+        ]);
+
+    }
+
     public function showQualification($id){
         $this->job_title_id = $id;
-        $this->dispatchBrowserEvent('show-qualificationModal');
+        
+         // Get qualification IDs already linked to this job title
+        $existingQualificationIds = JobTitleQualification::where('job_title_id', $id)
+            ->pluck('qualification_id')
+            ->toArray();
+
+        // Fetch only qualifications NOT already assigned
+        $this->qualifications = Qualification::whereNotIn('id', $existingQualificationIds)
+            ->orderBy('name', 'asc')
+            ->get();
+            $this->dispatchBrowserEvent('show-qualificationModal');
+    }
+
+    public function showEditQualification($id){
+
+        $this->job_title_id = $id;
+
+        $this->qualifications = Qualification::orderBy('name','asc')->get();
+
+        $job_title = JobTitle::with('job_title_qualifications')->find($id);
+
+        $this->job_title_qualifications = $job_title->job_title_qualifications;
+
+        if($this->job_title_qualifications->count() > 0) {
+
+           
+            foreach ($this->job_title_qualifications as $key => $job_title_qualification) {
+
+                $this->qualification_id[] = $job_title_qualification->qualification_id;
+                $this->mandatory[] = $job_title_qualification->mandatory;
+                $this->min_level[] = $job_title_qualification->min_level;
+                $this->weight[] = $job_title_qualification->weight;
+                $this->min_score[] = $job_title_qualification->min_score;
+
+            }
+
+        }
+
+        $this->dispatchBrowserEvent('show-qualificationEditModal');
     }
 
     public function addQualification(){
@@ -145,11 +214,15 @@ class Index extends Component
         }
         foreach ($this->qualification_id as $key => $id) {
 
-            $job_title_qualification = new JobTitleQualification();
-            $job_title_qualification->job_title_id = $this->job_title_id;
-            if (isset($this->qualification_id[$key])) {
-                    $job_title_qualification->qualification_id = $this->qualification_id[$key];
+            $job_title_qualification = JobTitleQualification::withTrashed()->firstOrNew([
+            'job_title_id'     => $this->job_title_id,
+            'qualification_id' =>  $this->qualification_id[$key] ?? null,
+            ]);
+
+            if (method_exists($job_title_qualification, 'trashed') && $job_title_qualification->trashed()) {
+                $job_title_qualification->restore();
             }
+
             if (isset($this->mandatory[$key])) {
                     $job_title_qualification->mandatory = $this->mandatory[$key];
             }
@@ -167,6 +240,38 @@ class Index extends Component
         }
        
 
+        $this->resetQualificationInputFields();
+        $this->dispatchBrowserEvent('hide-qualificationModal');
+    }
+
+    public function updateQualification()
+    {
+        if (empty($this->qualification_id)) {
+            return;
+        }
+
+        foreach ($this->qualification_id as $key => $qualificationId) {
+            // Use firstOrNew to find existing qualification or create a new one
+            $job_title_qualification = JobTitleQualification::withTrashed()->firstOrNew([
+                'job_title_id'      => $this->job_title_id,
+                'qualification_id'  => $qualificationId,
+            ]);
+
+             if (method_exists($job_title_qualification, 'trashed') && $job_title_qualification->trashed()) {
+                $job_title_qualification->restore();
+            }
+
+            // Update fields dynamically if present
+            $job_title_qualification->mandatory   = $this->mandatory[$key] ?? null;
+            $job_title_qualification->min_level   = $this->min_level[$key] ?? null;
+            $job_title_qualification->weight      = $this->weight[$key] ?? null;
+            $job_title_qualification->min_score   = $this->min_score[$key] ?? null;
+
+            // Save (either update existing or insert new)
+            $job_title_qualification->save();
+        }
+
+        // Reset input fields and close modal
         $this->resetQualificationInputFields();
         $this->dispatchBrowserEvent('hide-qualificationModal');
     }
