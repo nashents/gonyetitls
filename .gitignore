@@ -13,8 +13,9 @@ npm-debug.log
 yarn-error.log
 /.idea
 /.vscode
-/public/images/*
-/public/myfiles/documents/*
+# /public/images/**
+# /public/myfiles/documents/**
+!public/images/.gitkeep
 !/public/myfiles/documents/.gitkeep
 *.zip
 *.7z
