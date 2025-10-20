@@ -36,7 +36,6 @@
                                 <tbody>
                                     @foreach ($branches as $branch)
                                   <tr>
-
                                     <td>{{$branch->name}}</td>
                                     <td>{{$branch->email}}</td>
                                     <td>{{$branch->phonenumber}}</td>
