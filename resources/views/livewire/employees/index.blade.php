@@ -265,15 +265,15 @@
                     <div class="row">
                          <div class="col-md-6">
                             <div class="form-group">
-                                <label for="start_date">End Date<span class="required" style="color: red">*</span></label>
-                                <input type="date" class="form-control" wire:model.debounce.300ms="end_date" placeholder="Previous position end date" required/>
+                                <label for="start_date">End Date</label>
+                                <input type="date" class="form-control" wire:model.debounce.300ms="end_date" placeholder="Previous position end date"/>
                                 @error('end_date') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="start_date">Start Date<span class="required" style="color: red">*</span></label>
-                                <input type="date" class="form-control" wire:model.debounce.300ms="start_date" placeholder="New position start date" required/>
+                                <label for="start_date">Start Date</label>
+                                <input type="date" class="form-control" wire:model.debounce.300ms="start_date" placeholder="New position start date"/>
                                 @error('start_date') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
                         </div>
@@ -284,11 +284,12 @@
                                 <label for="country">Change Reason<span class="required" style="color: red">*</span></label>
                                 <select wire:model.debounce.300ms="change_reason" class="form-control" required>
                                     <option value="">Select Option</option>
-                                    <option value="Promotion">Promotion</option>
-                                    <option value="Demotion">Demotion</option>
-                                    <option value="Transfer">Transfer</option>
-                                    <option value="Appointment">Appointment</option>
                                     <option value="Acting">Acting</option>
+                                    <option value="Appointment">Appointment</option>
+                                    <option value="Demotion">Demotion</option>
+                                    <option value="Promotion">Promotion</option>
+                                    <option value="Transfer">Transfer</option>
+                                    <option value="Update">Update</option>
                                 </select>
                                 @error('change_reason') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
