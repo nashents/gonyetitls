@@ -145,7 +145,7 @@
                                    @endphp
                                    @if (!is_null($selectedTransporter))
                                         @foreach ($horses as $horse)
-                                        <option value="{{$horse->id}}">{{ucfirst($horse->horse_make ? $horse->horse_make->name : "")}} {{ucfirst($horse->horse_model ? $horse->horse_model->name : "")}} {{ucfirst($horse->registration_number)}}</option>
+                                        <option value="{{$horse->id}}"> {{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}}</option>
                                         @endforeach
                                    @endif
                                   
@@ -161,13 +161,11 @@
                                    @if (!is_null($selectedTransporter)) 
                                         @foreach ($trailers as $trailer)
                                             @if (isset($assignment_trailer_ids))
-                                                @if (in_array($trailer->id, $assignment_trailer_ids ))
-        
-                                                @else
-                                                <option value="{{$trailer->id}}">{{$trailer->registration_number}} </option>
+                                                @if (!in_array($trailer->id, $assignment_trailer_ids ))
+                                                    <option value="{{$trailer->id}}">{{$trailer->registration_number}} {{$trailer->fleet_number ? "(".$trailer->fleet_number.")" : ""}} </option>
                                                 @endif
                                             @else
-                                            <option value="{{$trailer->id}}">{{$trailer->registration_number}} </option>
+                                                <option value="{{$trailer->id}}">{{$trailer->registration_number}} {{$trailer->fleet_number ? "(".$trailer->fleet_number.")" : ""}}</option>
                                             @endif
                                         @endforeach
                                    @endif

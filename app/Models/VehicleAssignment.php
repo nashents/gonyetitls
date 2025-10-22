@@ -26,6 +26,7 @@ class VehicleAssignment extends Model implements Auditable
 
     protected $fillable =[
         'user_id',
+        'transporter_id',
         'vehicle_id',
         'employee_id',
         'starting_odometer',

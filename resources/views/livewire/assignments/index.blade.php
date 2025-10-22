@@ -145,13 +145,11 @@
                                    @if (!is_null($selectedTransporter))
                                         @foreach ($horses as $horse)
                                             @if (isset($assignment_horse_ids))
-                                                @if (in_array($horse->id, $assignment_horse_ids ))
-        
-                                                @else
-                                                <option value="{{$horse->id}}">{{ucfirst($horse->horse_make ? $horse->horse_make->name : "")}} {{ucfirst($horse->horse_model ? $horse->horse_model->name : "")}} {{ucfirst($horse->registration_number)}} </option>
+                                                @if (!in_array($horse->id, $assignment_horse_ids ))
+                                                    <option value="{{$horse->id}}">{{ucfirst($horse->horse_make ? $horse->horse_make->name : "")}} {{ucfirst($horse->horse_model ? $horse->horse_model->name : "")}} {{ucfirst($horse->registration_number)}} </option>
                                                 @endif
                                             @else
-                                            <option value="{{$horse->id}}">{{ucfirst($horse->horse_make ? $horse->horse_make->name : "")}} {{ucfirst($horse->horse_model ? $horse->horse_model->name : "")}} {{ucfirst($horse->registration_number)}} </option>
+                                                <option value="{{$horse->id}}">{{ucfirst($horse->horse_make ? $horse->horse_make->name : "")}} {{ucfirst($horse->horse_model ? $horse->horse_model->name : "")}} {{ucfirst($horse->registration_number)}} </option>
                                             @endif
                                         @endforeach
                                    @endif
@@ -168,13 +166,11 @@
                                    @if (!is_null($selectedTransporter)) 
                                         @foreach ($drivers as $driver)
                                             @if (isset($assignment_driver_ids))
-                                                @if (in_array($driver->id, $assignment_driver_ids ))
-        
-                                                @else
-                                                <option value="{{$driver->id}}">{{$driver->employee ? $driver->employee->name : ""}} {{$driver->employee ? $driver->employee->surname : ""}}</option>
+                                                @if (!in_array($driver->id, $assignment_driver_ids ))
+                                                    <option value="{{$driver->id}}">{{$driver->employee ? $driver->employee->name : ""}} {{$driver->employee ? $driver->employee->surname : ""}}</option>
                                                 @endif
                                             @else
-                                            <option value="{{$driver->id}}">{{$driver->employee ? $driver->employee->name : ""}} {{$driver->employee ? $driver->employee->surname : ""}}</option>
+                                                <option value="{{$driver->id}}">{{$driver->employee ? $driver->employee->name : ""}} {{$driver->employee ? $driver->employee->surname : ""}}</option>
                                             @endif
                                         @endforeach
                                    @endif

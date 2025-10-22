@@ -34,6 +34,8 @@ class Index extends Component
     public $end_date;
     public $start_date;
     public $comments;
+    public $user_id;
+    public $status;
 
 
     public function mount(){
@@ -58,24 +60,32 @@ class Index extends Component
     }
     protected $rules = [
         'selectedHorse' => 'required',
-        'trailer_id' => 'required|unique:trailer_assignments,trailer_id,NULL,id,deleted_at,NULL',
+        'trailer_id' => 'required',
         'selectedTransporter' => 'required',
         'starting_odometer' => 'required',
         'start_date' => 'required',
         'comments' => 'nullable|string',
     ];
+
     public function updatedSelectedTransporter($id){
         if (!is_null($id)) {
-            $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$id)
+            $this->horses = Horse::query()
+            ->with(['horse_make:id,name', 'horse_model:id,name'])
+            ->where('transporter_id', $id)
             ->where('status', 1)
-            ->where('service',0)
-            ->orderBy('registration_number','asc')->get();
-            $this->trailers = Trailer::where('transporter_id',$id)
+            ->where('service', 0)
+            ->orderBy('registration_number', 'asc')
+            ->get();
+
+             $this->trailers = Trailer::query()
+            ->where('transporter_id', $id)
             ->where('status', 1)
-            ->where('service',0)
-            ->orderBy('registration_number','asc')->get();
+            ->where('service', 0)
+            ->orderBy('registration_number', 'asc')
+            ->get();
         }
     }
+
     public function updatedSelectedHorse($horse){
         if (!is_null($horse)) {
             $this->starting_odometer = Horse::find($horse)->mileage;
@@ -83,6 +93,7 @@ class Index extends Component
     }
 
     public function store(){
+
         $assignment = new TrailerAssignment;
         $assignment->user_id = Auth::user()->id;
         $assignment->transporter_id = $this->selectedTransporter;
@@ -121,13 +132,26 @@ class Index extends Component
         $this->trailer_id = $assignment->trailer_id;
         $this->starting_odometer = $assignment->starting_odometer;
         $this->ending_odometer = $assignment->ending_odometer;
-        $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')
+        $this->horses = Horse::query()
+            ->with(['horse_make:id,name', 'horse_model:id,name'])
+            ->where('transporter_id', $id)
+            ->where('status', 1)
+            ->where('service', 0)
+           ->whereDoesntHave('trailer_assignments', function ($query) {
+                $query->where('status', True); // or ->whereNull('end_date')
+            })
+            ->orderBy('registration_number', 'asc')
+            ->get();
+
+        $this->trailers = Trailer::query()
+        ->where('transporter_id', $id)
         ->where('status', 1)
-        ->where('service',0)
-        ->orderBy('registration_number','asc')->get();
-        $this->trailers = Trailer::where('status', 1)
-        ->where('service',0)
-        ->orderBy('registration_number','asc')->get();
+        ->where('service', 0)
+        ->whereDoesntHave('trailer_assignments', function ($query) {
+            $query->where('status', True); // or ->whereNull('end_date')
+        })
+        ->orderBy('registration_number', 'asc')
+        ->get();
         $this->start_date = $assignment->start_date;
         $this->end_date = $assignment->end_date;
         $this->comments = $assignment->comments;
@@ -221,7 +245,8 @@ class Index extends Component
        
         if (filled($this->search)) {
             return view('livewire.trailer-assignments.index',[
-                'assignments' => TrailerAssignment::where('start_date','like', '%'.$this->search.'%')
+                'assignments' => TrailerAssignment::where('status',True)
+                ->where('start_date','like', '%'.$this->search.'%')
                 ->orWhere('end_date','like', '%'.$this->search.'%')
                 ->orWhere('starting_odometer','like', '%'.$this->search.'%')
                 ->orWhere('ending_odometer','like', '%'.$this->search.'%')
@@ -240,7 +265,7 @@ class Index extends Component
             ]);
         }else{
               return view('livewire.trailer-assignments.index',[
-            'assignments' => TrailerAssignment::latest()->paginate(10),
+            'assignments' => TrailerAssignment::where('status',True)->latest()->paginate(10),
             'starting_odometer' =>  $this->starting_odometer
             ]);
         }

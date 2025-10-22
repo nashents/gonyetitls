@@ -22,6 +22,8 @@
                             <table class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
+                                    <th class="th-sm">Transporter
+                                    </th>
                                     <th class="th-sm">Vehicle
                                     </th>
                                     <th class="th-sm">Employee
@@ -46,6 +48,7 @@
                                 <tbody>
                                     @foreach ($assignments as $assignment)
                                   <tr>
+                                       <td>{{$assignment->transporter ? $assignment->transporter->name : ""}}</td>
                                     <td>
                                         @if ($assignment->vehicle)
                                              {{$assignment->vehicle->registration_number}} {{$assignment->vehicle->fleet_number ? "(".$assignment->vehicle->fleet_number.")" : ""}}
@@ -116,6 +119,16 @@
                 </div>
                 <form wire:submit.prevent="store()">
                 <div class="modal-body">
+                    <div class="form-group">
+                        <label for="trailer">Transporters<span class="required" style="color: red">*</span></label>
+                       <select wire:model.debounce.300ms="selectedTransporter" class="form-control" required>
+                           <option value="" selected>Select Transporter</option>
+                            @foreach ($transporters as $transporter)
+                                <option value="{{ $transporter->id }}">{{ $transporter->name }}</option>
+                            @endforeach
+                       </select>
+                        @error('selectedTransporter') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    </div>
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
@@ -132,13 +145,11 @@
                                 
                                     @foreach ($vehicles as $vehicle)
                                         @if (isset($assignment_vehicle_ids))
-                                            @if (in_array($vehicle->id, $assignment_vehicle_ids ))
-
-                                            @else
-                                            <option value="{{$vehicle->id}}">{{ucfirst($vehicle->vehicle_make ? $vehicle->vehicle_make->name : "undefined")}} {{ucfirst($vehicle->vehicle_model ? $vehicle->vehicle_model->name : "")}}({{ucfirst($vehicle->registration_number)}})</option>
+                                            @if (!in_array($vehicle->id, $assignment_vehicle_ids ))
+                                                <option value="{{$vehicle->id}}">{{$vehicle->registration_number}} {{$vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : ""}}</option>
                                             @endif
                                         @else
-                                        <option value="{{$vehicle->id}}">{{ucfirst($vehicle->vehicle_make ? $vehicle->vehicle_make->name : "undefined")}} {{ucfirst($vehicle->vehicle_model ? $vehicle->vehicle_model->name : "")}}({{ucfirst($vehicle->registration_number)}})</option>
+                                            <option value="{{$vehicle->id}}">{{$vehicle->registration_number}} {{$vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : ""}}</option>
                                         @endif
                                     @endforeach    
                                 </select>
@@ -152,13 +163,11 @@
                                     <option value="" selected>Select Employee</option>
                                         @foreach ($employees as $employee)
                                             @if (isset($assignment_employee_ids))
-                                                @if (in_array($employee->id, $assignment_employee_ids ))
-
-                                                @else
-                                                <option value="{{$employee->id}}">{{$employee->name }} {{$employee->surname}}</option>
+                                                @if (!in_array($employee->id, $assignment_employee_ids ))
+                                                    <option value="{{$employee->id}}">{{$employee->name }} {{$employee->surname}}</option>
                                                 @endif
                                             @else
-                                            <option value="{{$employee->id}}">{{$employee->name }} {{$employee->surname}}</option>
+                                                <option value="{{$employee->id}}">{{$employee->name }} {{$employee->surname}}</option>
                                             @endif
                                         @endforeach 
                                 </select>
@@ -209,6 +218,16 @@
                 </div>
                 <form wire:submit.prevent="update()">
                 <div class="modal-body">
+                    <div class="form-group">
+                        <label for="trailer">Transporters<span class="required" style="color: red">*</span></label>
+                       <select wire:model.debounce.300ms="selectedTransporter" class="form-control" required>
+                           <option value="" selected>Select Transporter</option>
+                            @foreach ($transporters as $transporter)
+                                <option value="{{ $transporter->id }}">{{ $transporter->name }}</option>
+                            @endforeach
+                       </select>
+                        @error('selectedTransporter') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    </div>
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">

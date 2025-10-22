@@ -7,6 +7,7 @@ use App\Models\Mileage;
 use App\Models\Vehicle;
 use Livewire\Component;
 use App\Models\Employee;
+use App\Models\Transporter;
 use Livewire\WithPagination;
 use App\Models\VehicleAssignment;
 use Illuminate\Support\Facades\DB;
@@ -22,6 +23,8 @@ class Index extends Component
     public $search;
     protected $queryString = ['search'];
   
+    public $transporters;
+    public $selectedTransporter;
     private $assignments;
     public $assignment;
     public $assignment_id;
@@ -34,17 +37,21 @@ class Index extends Component
     public $end_date;
     public $start_date;
     public $comments;
+    public $user_id;
+    public $status;
 
 
     public function mount(){
      
+        $this->transporters = Transporter::orderBy('name','asc')->get();
         $this->assignments = VehicleAssignment::latest()->get();
-        $this->vehicles = Vehicle::orderBy('registration_number','asc')->get();
+        $this->vehicles = collect();
         $this->employees = Employee::orderBy('name','asc')->get();
         $this->starting_odometer = 0;
     }
 
     private function resetInputFields(){
+        $this->selectedTransporter = "";
         $this->selectedVehicle = "";
         $this->employee_id = "";
         $this->starting_odometer = "";
@@ -57,12 +64,25 @@ class Index extends Component
         $this->validateOnly($value);
     }
     protected $rules = [
-        'selectedVehicle' => 'required|unique:assignments,vehicle_id,NULL,id,deleted_at,NULL',
-        'employee_id' => 'required|unique:assignments,employee_id,NULL,id,deleted_at,NULL',
+        'selectedVehicle' => 'required',
+        'employee_id' => 'required',
         'starting_odometer' => 'required',
         'start_date' => 'required',
         'comments' => 'nullable|string',
     ];
+
+     public function updatedSelectedTransporter($id){
+        if (!is_null($id)) {
+            $this->vehicles = Vehicle::query()
+            ->where('transporter_id', $id)
+            ->where('status', 1)
+            ->where('service', 0)
+            ->orderBy('registration_number', 'asc')
+            ->get();
+
+        
+        }
+    }
   
     public function updatedSelectedVehicle($vehicle){
         if (!is_null($vehicle)) {
@@ -75,6 +95,7 @@ class Index extends Component
         $assignment->user_id = Auth::user()->id;
         $assignment->employee_id = $this->employee_id;
         $assignment->vehicle_id = $this->selectedVehicle;
+        $assignment->transporter_id = $this->selectedTransporter;
         $assignment->starting_odometer = $this->starting_odometer;
         $assignment->start_date = $this->start_date;
         $assignment->comments = $this->comments;
@@ -103,8 +124,16 @@ class Index extends Component
     public function edit($id){
         $assignment = VehicleAssignment::find($id);
         $this->user_id = $assignment->user_id;
+        $this->selectedTransporter = $assignment->transporter_id;
         $this->selectedVehicle = $assignment->vehicle_id;
         $this->employee_id = $assignment->employee_id;
+        $this->vehicles = Vehicle::query()
+            ->where('transporter_id', $this->selectedTransporter)
+            ->where('status', 1)
+            ->where('service', 0)
+            ->orderBy('registration_number', 'asc')
+            ->get();
+
         $this->starting_odometer = $assignment->starting_odometer;
         $this->ending_odometer = $assignment->ending_odometer;
         $this->start_date = $assignment->start_date;
@@ -123,6 +152,7 @@ class Index extends Component
                 $assignment = VehicleAssignment::find($this->assignment_id);
                 $assignment->update([
                     'user_id' => Auth::user()->id,
+                    'transporter_id' => $this->selectedTransporter,
                     'vehicle_id' => $this->selectedVehicle,
                     'employee_id' => $this->employee_id,
                     'starting_odometer' => $this->starting_odometer,
@@ -156,7 +186,7 @@ class Index extends Component
                 $this->resetInputFields();
                 $this->dispatchBrowserEvent('alert',[
                     'type'=>'success',
-                    'message'=>"employee - vehicle assignment Updated Successfully!!"
+                    'message'=>"Employee - Vehicle Assignment Updated Successfully!!"
                 ]);
 
             }else {
@@ -164,7 +194,7 @@ class Index extends Component
                 $this->resetInputFields();
                 $this->dispatchBrowserEvent('alert',[
                     'type'=>'success',
-                    'message'=>"assignment not found!!"
+                    'message'=>"Assignment not found!!"
                 ]);
             }
         }
@@ -195,7 +225,7 @@ class Index extends Component
 
           if (filled($this->search)) {
             return view('livewire.vehicle-assignments.index',[
-                'assignments' => VehicleAssignment::where('start_date','like', '%'.$this->search.'%')
+                'assignments' => VehicleAssignment::where('status',True)->where('start_date','like', '%'.$this->search.'%')
                 ->orWhere('end_date','like', '%'.$this->search.'%')
                 ->orWhere('starting_odometer','like', '%'.$this->search.'%')
                 ->orWhere('ending_odometer','like', '%'.$this->search.'%')
@@ -210,7 +240,7 @@ class Index extends Component
             ]);
         }else{
              return view('livewire.vehicle-assignments.index',[
-                'assignments' => VehicleAssignment::latest()->paginate(10),
+                'assignments' => VehicleAssignment::where('status',True)->latest()->paginate(10),
                 'starting_odometer' =>  $this->starting_odometer
             ]);
         }

@@ -42,6 +42,9 @@ class Vehicle extends Model implements Auditable
     public function inventory_requisitions(){
         return $this->hasMany('App\Models\InventoryRequisition');
     }
+    public function vehicle_assignments(){
+        return $this->hasMany('App\Models\VehicleAssignment');
+    }
     public function inventory_dispatches(){
         return $this->hasMany('App\Models\InventoryDispatch');
     }

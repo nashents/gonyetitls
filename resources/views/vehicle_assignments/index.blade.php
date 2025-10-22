@@ -32,7 +32,7 @@
                                 <div class="col-md-6">
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
-            							<li class="active"> <i class="fa fa-user-plus"></i>Employee - Vehicle Assignments</li>
+            							<li class="active"> <i class="fa fa-list"></i>Employee - Vehicle Assignments</li>
             						</ul>
                                 </div>
                             </div>

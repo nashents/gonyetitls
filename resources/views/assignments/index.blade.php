@@ -31,7 +31,7 @@
                                 <div class="col-md-6">
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
-            							<li class="active"> <i class="fa fa-exchange"></i>Driver - Horse Assignments</li>
+            							<li class="active"> <i class="fa fa-list"></i>Driver - Horse Assignments</li>
             						</ul>
                                 </div>
                             </div>
