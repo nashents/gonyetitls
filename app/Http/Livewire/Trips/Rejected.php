@@ -94,6 +94,8 @@ class Rejected extends Component
     public $horse;
     public $delivery_point;
     public $fuel;
+    public $fuel_station_email;
+    public $station_name;
 
   
     public $customer_updates;
@@ -173,6 +175,8 @@ public function updatingSearch()
 
 
 }
+
+    
    
 
     public function mount(){
@@ -247,6 +251,10 @@ public function updatingSearch()
     }
 
       public function update(){
+
+         $this->validate([
+            'authorize' => 'required',
+        ]);
 
         DB::transaction(function () {
 
@@ -757,6 +765,10 @@ public function updatingSearch()
       }
 
       public function authorizeSelectedRows(){
+
+        $this->validate([
+            'authorize' => 'required',
+        ]);
 
         DB::transaction(function () {
 

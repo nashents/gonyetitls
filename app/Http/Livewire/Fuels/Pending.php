@@ -18,6 +18,7 @@ use App\Mail\FuelOrderMail;
 use App\Models\BillExpense;
 use Livewire\WithPagination;
 use App\Models\TransportOrder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
@@ -140,6 +141,12 @@ class Pending extends Component
     }
 
       public function authorizeSelectedRows(){
+
+         $this->validate([
+            'authorize' => 'required',
+        ]);
+
+         DB::transaction(function () {
 
         $selected_fuels = Fuel::WhereIn('id',$this->selectedRows)->get();
         
@@ -395,10 +402,18 @@ class Pending extends Component
 
         }
 
+    });
+
     }
 
 
       public function update(){
+
+         $this->validate([
+            'authorize' => 'required',
+        ]);
+
+         DB::transaction(function () {
 
   
         $fuel = Fuel::find($this->fuel_id);
@@ -654,7 +669,7 @@ class Pending extends Component
             return redirect()->route('fuels.rejected');
         }
   
-   
+    }); 
 
       }
 

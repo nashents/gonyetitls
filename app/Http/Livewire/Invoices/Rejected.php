@@ -54,6 +54,10 @@ class Rejected extends Component
 
       public function authorizeSelectedRows(){
 
+         $this->validate([
+            'authorize' => 'required',
+        ]);
+
           DB::transaction(function () {
 
            $selected_invoices = Invoice::WhereIn('id',$this->selectedRows)->get();
@@ -175,6 +179,10 @@ class Rejected extends Component
       }
 
     public function update(){
+
+         $this->validate([
+            'authorize' => 'required',
+        ]);
 
         DB::transaction(function () {
       try{

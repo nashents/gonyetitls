@@ -85,8 +85,8 @@
                                                 <div class="form-group">
                                                     <select wire:model.debounce.300ms="selectedEarning.{{ $value }}" class="form-control">
                                                         <option value="">Select Earning</option>
-                                                        @foreach ($allowances as $allowance)
-                                                            <option value="{{ $allowance->id }}">{{ $allowance->name }}</option>
+                                                        @foreach ($earnings as $earning)
+                                                            <option value="{{ $earning->id }}">{{ $earning->name }}</option>
                                                         @endforeach
                                                     </select>
                                                 </div>

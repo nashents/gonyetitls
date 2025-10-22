@@ -54,6 +54,10 @@ class Rejected extends Component
 
       
       public function authorizeSelectedRows(){
+
+         $this->validate([
+            'authorize' => 'required',
+        ]);
           DB::transaction(function () {
             
 
@@ -265,6 +269,10 @@ class Rejected extends Component
     }
 
     public function update(){
+
+         $this->validate([
+            'authorize' => 'required',
+        ]);
 
     DB::transaction(function () {
 

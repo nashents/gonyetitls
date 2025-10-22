@@ -66,6 +66,10 @@ class Pending extends Component
       
       public function authorizeSelectedRows(){
 
+         $this->validate([
+            'authorize' => 'required',
+        ]);
+
           DB::transaction(function () {
 
         $selected_bills = Bill::WhereIn('id',$this->selectedRows)->get();
@@ -279,6 +283,10 @@ class Pending extends Component
       }
 
       public function update(){
+
+         $this->validate([
+            'authorize' => 'required',
+        ]);
 
           DB::transaction(function () {
     //   try{

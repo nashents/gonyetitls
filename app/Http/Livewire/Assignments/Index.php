@@ -37,6 +37,8 @@ class Index extends Component
     public $end_date;
     public $start_date;
     public $comments;
+    public $user_id;
+    public $status;
 
 
     public function mount(){
@@ -62,8 +64,8 @@ class Index extends Component
         $this->validateOnly($value);
     }
     protected $rules = [
-        'selectedHorse' => 'required|unique:assignments,horse_id,NULL,id,deleted_at,NULL',
-        'driver_id' => 'required|unique:assignments,driver_id,NULL,id,deleted_at,NULL',
+        'selectedHorse' => 'required',
+        'driver_id' => 'required',
         'selectedTransporter' => 'required',
         'starting_odometer' => 'required',
         'start_date' => 'required',
@@ -71,14 +73,31 @@ class Index extends Component
     ];
     public function updatedSelectedTransporter($id){
         if (!is_null($id)) {
-            $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$id)
+            $this->horses = Horse::query()
+            ->with(['horse_make:id,name', 'horse_model:id,name'])
+            ->where('transporter_id', $id)
             ->where('status', 1)
-            ->where('service',0)
-            ->orderBy('registration_number','asc')->get();
-            $this->drivers = Driver::query()->with('employee:id,name,surname')->where('transporter_id',$id)
-            ->withAggregate('employee','name')
-            ->where('status', 1)
-            ->orderBy('employee_name','asc')->get();
+            ->where('service', 0)
+           ->whereDoesntHave('assignments', function ($query) {
+                $query->where('status', True); // or ->whereNull('end_date')
+            })
+            ->orderBy('registration_number', 'asc')
+            ->get();
+
+            $this->drivers = Driver::query()
+            ->with('employee:id,name,surname')
+            ->where('drivers.transporter_id', $id)   // ✅ qualify
+            ->where('drivers.status', 1)             // ✅ qualify
+            ->whereDoesntHave('assignments', function ($query) {
+                $query->where('assignments.status', true); // ✅ qualify inside subquery too
+                // or if “active” means no end date:
+                // $query->whereNull('assignments.end_date');
+            })
+            ->join('employees', 'drivers.employee_id', '=', 'employees.id') // for sorting
+            ->orderBy('employees.name', 'asc')
+            ->orderBy('employees.surname', 'asc')
+            ->select('drivers.*') // avoid column conflicts
+            ->get();
         }
     }
     public function updatedSelectedHorse($horse){
@@ -88,6 +107,7 @@ class Index extends Component
     }
 
     public function store(){
+
         $assignment = new Assignment;
         $assignment->user_id = Auth::user()->id;
         $assignment->transporter_id = $this->selectedTransporter;
@@ -129,14 +149,31 @@ class Index extends Component
         $this->start_date = $assignment->start_date;
         $this->end_date = $assignment->end_date;
         $this->comments = $assignment->comments;
-        $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')
-        ->where('status', 1)
-        ->where('service',0)
-        ->orderBy('registration_number','asc')->get();
-        $this->drivers = Driver::query()->with('employee:id,name,surname')
-        ->withAggregate('employee','name')
-        ->where('status', 1)
-        ->orderBy('employee_name','asc')->get();
+        $this->horses = Horse::query()
+            ->with(['horse_make:id,name', 'horse_model:id,name'])
+            ->where('transporter_id', $this->selectedTransporter)
+            ->where('status', 1)
+            ->where('service', 0)
+           ->whereDoesntHave('assignments', function ($query) {
+                $query->where('status', True); // or ->whereNull('end_date')
+            })
+            ->orderBy('registration_number', 'asc')
+            ->get();
+
+            $this->drivers = Driver::query()
+            ->with('employee:id,name,surname')
+            ->where('drivers.transporter_id',  $this->selectedTransporter)   // ✅ qualify
+            ->where('drivers.status', 1)             // ✅ qualify
+            ->whereDoesntHave('assignments', function ($query) {
+                $query->where('assignments.status', true); // ✅ qualify inside subquery too
+                // or if “active” means no end date:
+                // $query->whereNull('assignments.end_date');
+            })
+            ->join('employees', 'drivers.employee_id', '=', 'employees.id') // for sorting
+            ->orderBy('employees.name', 'asc')
+            ->orderBy('employees.surname', 'asc')
+            ->select('drivers.*') // avoid column conflicts
+            ->get();
         $this->status = $assignment->status;
         $this->assignment_id = $assignment->id;
         $this->dispatchBrowserEvent('show-assignmentEditModal');
@@ -224,7 +261,8 @@ class Index extends Component
     {
         if (filled($this->search)) {
             return view('livewire.assignments.index',[
-                'assignments' => Assignment::where('start_date','like', '%'.$this->search.'%')
+                'assignments' => Assignment::where('status',True)
+                ->where('start_date','like', '%'.$this->search.'%')
                 ->orWhere('end_date','like', '%'.$this->search.'%')
                 ->orWhere('starting_odometer','like', '%'.$this->search.'%')
                 ->orWhere('ending_odometer','like', '%'.$this->search.'%')
@@ -244,7 +282,7 @@ class Index extends Component
             ]);
         }else{
              return view('livewire.assignments.index',[
-                'assignments' => Assignment::latest()->paginate(10),
+                'assignments' => Assignment::where('status',True)->latest()->paginate(10),
                 'starting_odometer' =>  $this->starting_odometer
             ]);
         }

@@ -117,6 +117,10 @@ class Pending extends Component
       }
 
       public function update(){
+
+         $this->validate([
+            'authorize' => 'required',
+        ]);
         $booking = Booking::find($this->booking_id);
         if ($booking->authorization == "approved") {
             $this->dispatchBrowserEvent('hide-authorizationModal');

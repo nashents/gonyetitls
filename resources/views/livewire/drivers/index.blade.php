@@ -42,6 +42,8 @@
                                         </th>
                                         <th class="th-sm">Fullname
                                         </th>
+                                        <th class="th-sm">Gender
+                                        </th>
                                         <th class="th-sm">License#
                                         </th>
                                         <th class="th-sm">Class
@@ -52,7 +54,6 @@
                                         </th>
                                         <th class="th-sm">Account
                                         </th>
-                                      
                                         <th class="th-sm">Actions
                                         </th>
 
@@ -65,13 +66,26 @@
                                       <tr>
                                         @php
                                             $user = App\Models\User::find($driver->user_id);
+                                            $employee = App\Models\Employee::find($driver->employee_id);
+                                            $assignments  = $driver->assignments->where('status', 1);
                                         @endphp
                                         <td class="line-height-35">  
                                           <img src="{{asset('images/uploads/'.$user->profile)}}" alt="" class="border-radius-50 img-circle profile-img " style="width: 50px; height:50px">
                                         </td>
                                         <td>{{ucfirst($driver->driver_number)}}</td>
                                         <td>{{ucfirst($driver->transporter ? $driver->transporter->name : "")}}</td>
-                                        <td>{{ucfirst($driver->employee ? $driver->employee->name : "")}} {{ucfirst($driver->employee ?$driver->employee->surname : "")}}</td>
+                                        <td>
+                                            {{ucfirst($driver->employee ? $driver->employee->name : "")}} {{ucfirst($driver->employee ?$driver->employee->surname : "")}}
+                                            
+                                            @if ($assignments && $assignments->count() > 0)
+                                            <br>
+                                                @foreach ($assignments as $assignment)
+                                                    <small> <strong>Assigned To:</strong> {{$assignment->horse ? $assignment->horse->registration_number : ""}} {{$assignment->horse->fleet_number ? "(".$assignment->horse->fleet_number.")" : ""}}</small>
+                                                @endforeach
+
+                                            @endif
+                                        </td>
+                                        <td>{{$employee ? ucfirst($employee->gender) : ""}}</td>
                                         <td>{{$driver->license_number}}</td>
                                         <td>{{$driver->class}}</td>
                                         <td>{{$driver->experience}}</td>

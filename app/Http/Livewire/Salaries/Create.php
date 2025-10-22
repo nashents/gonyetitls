@@ -65,6 +65,7 @@ class Create extends Component
     public $frequency;
     public $exchange_amount;
     public $exchange_rate;
+    public $total_earnings;
 
     public $earnings_inputs = [];
     public $e = 1;
@@ -220,7 +221,7 @@ class Create extends Component
         $this->deductions = Deduction::where('status','1')->where('name','!=','PAYE')->where('name','!=','AIDS Levy')->orderBy('name','asc')->get();
         $this->loans = collect();
        
-        $this->salary_number = $this->salaryNumber();
+       
     }
 
     public function updatedSelectedEmployee($id){
@@ -324,31 +325,33 @@ class Create extends Component
                     'type'=>'error',
                     'message'=>"Salary record already exists for this employee."
                 ]);
-               
-            }else{
+                return;
+            }
 
                 // DB::beginTransaction();
                 DB::transaction(function () {
                     
                 $salary = new Salary;
                 $salary->user_id = Auth::id();
-                $salary->salary_number = $this->salary_number;
+                $salary->salary_number = $this->salaryNumber();
                 $salary->employee_id = $this->selectedEmployee;
                 $salary->currency_id = $this->selectedCurrency;
                 $salary->basic = $this->basic;
                 $salary->paye = $this->paye;
                 $salary->aids_levy = $this->aids_levy;
                 $salary->frequency = $this->frequency;
-                $salary->exchange_rate = $this->exchange_rate;
+              
                 $salary->save();
             
                 $this->salary_id = $salary->id;
                 
                 // Process Allowances
-                $this->total_allowances = $this->processSalaryItems($this->selectedAllowance, 'allowance_id', $this->allowance_amount);
+                $this->total_allowances = $this->processSalaryItems($this->selectedAllowance, 'allowance_id', $this->allowance_amount, $this->selectedAllowanceCurrency);
+                // Process Earnings
+                $this->total_earnings = $this->processSalaryItems($this->selectedEarning, 'earning_id', $this->earning_amount, $this->selectedEarningCurrency);
                 
                 // Process Deductions
-                $this->total_deductions = $this->processSalaryItems($this->selectedDeduction, 'deduction_id', $this->deduction_amount);
+                $this->total_deductions = $this->processSalaryItems($this->selectedDeduction, 'deduction_id', $this->deduction_amount, $this->selectedDeductionCurrency);
                 
                 // Process Loans
                 if (!empty($this->selectedLoan)) {
@@ -401,7 +404,7 @@ class Create extends Component
 
         
 
-            }
+         
 
         } catch (\Exception $e) {
             // DB::rollBack();
@@ -413,7 +416,7 @@ class Create extends Component
     }
 
         // Helper function for processing Salary Items
-        private function processSalaryItems($items, $column, $amounts) {
+        private function processSalaryItems($items, $column, $amounts, $currencyIds) {
             $total = 0;
             if (!empty($items)) {
                 foreach ($items as $key => $item) {

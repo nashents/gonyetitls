@@ -75,6 +75,10 @@ class Rejected extends Component
 
       public function update(){
 
+         $this->validate([
+            'authorize' => 'required',
+        ]);
+
          DB::transaction(function () {
 
         $purchase = Purchase::find($this->purchase_id);

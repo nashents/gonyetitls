@@ -116,6 +116,10 @@ class Rejected extends Component
 
       public function update(){
 
+         $this->validate([
+            'authorize' => 'required',
+        ]);
+
         $booking = Booking::find($this->booking_id);
         $booking->authorized_by_id = Auth::user()->id;
         $booking->authorization = $this->authorize;

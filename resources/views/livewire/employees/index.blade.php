@@ -49,8 +49,6 @@
                                         </th>
                                         <th class="th-sm">Work Info
                                         </th>
-                                        <th class="th-sm">Post
-                                        </th>
                                         <th class="th-sm">Account
                                         </th>
                                        
@@ -81,7 +79,6 @@
                                                 <strong>Post: </strong>{{$employee->post}} <br>
                                                 <strong>Branch: </strong>{{$employee->branch ? $employee->branch->name : ""}} <br>
                                             </td>
-                                            <td></td>
                                             <td>
                                                 @if ($employee->user)
                                                 <span class="badge bg-{{$employee->user->active == 1 ? "success" : "danger"}}">{{$employee->user->active == 1 ? "Active" : "Inactive"}}</span>
@@ -287,9 +284,9 @@
                                     <option value="Acting">Acting</option>
                                     <option value="Appointment">Appointment</option>
                                     <option value="Demotion">Demotion</option>
+                                    <option value="Update">Information Update</option>
                                     <option value="Promotion">Promotion</option>
                                     <option value="Transfer">Transfer</option>
-                                    <option value="Update">Update</option>
                                 </select>
                                 @error('change_reason') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>

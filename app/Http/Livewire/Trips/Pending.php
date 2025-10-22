@@ -244,9 +244,15 @@ class Pending extends Component
         $this->dispatchBrowserEvent('show-authorizationModal');
       }
 
+   
+
       public function update(){
+
+       $this->validate([
+            'authorize' => 'required',
+        ]);
         // try{
-          DB::transaction(function () {
+        DB::transaction(function () {
 
         $trip = Trip::find($this->trip_id);
         $trip->authorized_by_id = Auth::user()->id;
@@ -826,6 +832,11 @@ class Pending extends Component
       }
 
       public function authorizeSelectedRows(){
+
+         $this->validate([
+            'authorize' => 'required',
+        ]);
+
         DB::transaction(function () {
 
            $selected_trips = Trip::WhereIn('id',$this->selectedRows)->get();

@@ -13,10 +13,13 @@ use App\Models\Mileage;
 use App\Models\Vehicle;
 use Livewire\Component;
 use App\Models\Container;
+use App\Mail\FuelOrderMail;
 use App\Models\BillExpense;
 use Livewire\WithPagination;
 use App\Models\TransportOrder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
 
 class Rejected extends Component
@@ -137,6 +140,12 @@ class Rejected extends Component
     }
 
       public function authorizeSelectedRows(){
+
+         $this->validate([
+            'authorize' => 'required',
+        ]);
+
+         DB::transaction(function () {
 
         $selected_fuels = Fuel::WhereIn('id',$this->selectedRows)->get();
         
@@ -395,12 +404,19 @@ class Rejected extends Component
 
         }
 
+    });
+
     }
 
 
       public function update(){
 
-  
+         $this->validate([
+            'authorize' => 'required',
+        ]);
+
+         DB::transaction(function () {
+
         $fuel = Fuel::find($this->fuel_id);
         if ($fuel->authorization == "approved") {
             $this->dispatchBrowserEvent('hide-fuelAuthorizationModal');
@@ -666,6 +682,7 @@ class Rejected extends Component
         }
   }
    
+    });
 
       }
 
