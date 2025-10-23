@@ -64,7 +64,27 @@ class Pending extends Component
 
     public function mount(){
         $this->fuel_filter = "created_at";
+
+        $this->fuel_id = (int) request()->query('fuel_id');
+        $this->authorize = request()->query('authorize');
+        $this->comments = request()->query('comments');
+
+        if ($this->fuel_id && $this->authorize) {
+            // Immediately process the update
+            $this->update();
+
+            if($this->authorize == "approved"){
+                session()->flash('success', 'Fuel Order Approved Successfully !!');
+                return redirect()->route('fuels.approved');
+            }
+        }
     }
+
+    protected $listeners = [
+        // eventName => methodName
+        'authorizeFuel' => 'update',
+    ];
+
     public function authorize($id){
         $fuel = Fuel::find($id);
         $this->fuel_id = $fuel->id;
@@ -428,49 +448,49 @@ class Pending extends Component
 
             if (isset($container)) {
 
-            if ($fuel->horse) {
-                $horse = Horse::find($fuel->horse_id);
-                if((isset($horse->fuel_balance) && is_numeric($horse->fuel_balance)) && (isset($fuel->quantity) && is_numeric($fuel->quantity))){
-                    $horse->fuel_balance = $horse->fuel_balance + $fuel->quantity;
-                }
-               
-                $current_mileage = $horse->mileage;
-                if ($fuel->odometer >  $current_mileage) {
-                    $horse->mileage = $fuel->odometer;
-                }
-              
-                $horse->update();
-            }
-            if ($fuel->vehicle) {
-                $vehicle = Vehicle::find($fuel->vehicle_id);
-                if((isset($vehicle->fuel_balance) && is_numeric($vehicle->fuel_balance)) && (isset($fuel->quantity) && is_numeric($fuel->quantity))){
-                    $vehicle->fuel_balance = $vehicle->fuel_balance + $fuel->quantity;
-                }
-              
-                $current_mileage = $vehicle->mileage;
-                if ($fuel->odometer >  $current_mileage) {
-                    $vehicle->mileage = $fuel->odometer;
-                }
-              
-                $vehicle->update();
-
-            }
-
-                  $last_mileage = Mileage::whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
-                    if(isset($last_mileage)){
-                        if($last_mileage < $fuel->odometer){
-                            $mileage = new Mileage;
-                            $mileage->user_id = Auth::user()->id;
-                            $mileage->trip_id = $fuel->trip_id ? $fuel->trip_id : Null;
-                            $mileage->fuel_id = $fuel->id;
-                            $mileage->horse_id = $fuel->horse_id;
-                            $mileage->vehicle_id = $fuel->vehicle_id;
-                            $mileage->mileage = $fuel->odometer;
-                            $mileage->date = $fuel->date;
-                            $mileage->category = "Fuel Order";
-                            $mileage->save();
+                    if ($fuel->horse) {
+                        $horse = Horse::find($fuel->horse_id);
+                        if((isset($horse->fuel_balance) && is_numeric($horse->fuel_balance)) && (isset($fuel->quantity) && is_numeric($fuel->quantity))){
+                            $horse->fuel_balance = $horse->fuel_balance + $fuel->quantity;
                         }
+                    
+                        $current_mileage = $horse->mileage;
+                        if ($fuel->odometer >  $current_mileage) {
+                            $horse->mileage = $fuel->odometer;
+                        }
+                    
+                        $horse->update();
                     }
+                    if ($fuel->vehicle) {
+                        $vehicle = Vehicle::find($fuel->vehicle_id);
+                        if((isset($vehicle->fuel_balance) && is_numeric($vehicle->fuel_balance)) && (isset($fuel->quantity) && is_numeric($fuel->quantity))){
+                            $vehicle->fuel_balance = $vehicle->fuel_balance + $fuel->quantity;
+                        }
+                    
+                        $current_mileage = $vehicle->mileage;
+                        if ($fuel->odometer >  $current_mileage) {
+                            $vehicle->mileage = $fuel->odometer;
+                        }
+                    
+                        $vehicle->update();
+
+                    }
+
+                    $last_mileage = Mileage::whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
+                        if(isset($last_mileage)){
+                            if($last_mileage < $fuel->odometer){
+                                $mileage = new Mileage;
+                                $mileage->user_id = Auth::user()->id;
+                                $mileage->trip_id = $fuel->trip_id ? $fuel->trip_id : Null;
+                                $mileage->fuel_id = $fuel->id;
+                                $mileage->horse_id = $fuel->horse_id;
+                                $mileage->vehicle_id = $fuel->vehicle_id;
+                                $mileage->mileage = $fuel->odometer;
+                                $mileage->date = $fuel->date;
+                                $mileage->category = "Fuel Order";
+                                $mileage->save();
+                            }
+                        }
                 
                     $last_hours = Hour::whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
                     if(isset($last_hours)){
@@ -488,172 +508,177 @@ class Pending extends Component
                         }
                     }
             
-            if($container->purchase_type == "Bulk Buy"){
-                       
-                if($container->balance && is_numeric($container->balance) && ($fuel->quantity && is_numeric($fuel->quantity)) ){
-                    if($container->balance >= $fuel->quantity){
-                        $container->balance = $container->balance - $fuel->quantity;
-                    } 
-                }
-              
-               
-                if($container->account_balance && is_numeric($container->account_balance) && ($fuel->amount && is_numeric($fuel->amount)) ){
-                    if($container->account_balance >= $fuel->amount){
-                        $container->account_balance = $container->account_balance - $fuel->amount;
+                    if($container->purchase_type == "Bulk Buy"){
+                            
+                        if($container->balance && is_numeric($container->balance) && ($fuel->quantity && is_numeric($fuel->quantity)) ){
+                            if($container->balance >= $fuel->quantity){
+                                $container->balance = $container->balance - $fuel->quantity;
+                            } 
+                        }
+                    
+                    
+                        if($container->account_balance && is_numeric($container->account_balance) && ($fuel->amount && is_numeric($fuel->amount)) ){
+                            if($container->account_balance >= $fuel->amount){
+                                $container->account_balance = $container->account_balance - $fuel->amount;
+                            }
+                        }
+                    
+                        $container->update();
                     }
-                }
-             
-                $container->update();
-            }
             
 
-                $expense = Expense::where('name','Fuel Topup')->get()->first();
+                    $expense = Expense::where('name','Fuel Topup')->get()->first();
                
 
-                $bill = new Bill;
-                if($fuel->trip){
-                    $bill->trip_id = $fuel->trip_id;
-                    $trip_expense = $fuel->trip_expense;
-                    if(isset($trip_expense)){
-                        $bill->trip_expense_id = $trip_expense->id;
+                    $bill = new Bill;
+                    if($fuel->trip){
+                        $bill->trip_id = $fuel->trip_id;
+                        $trip_expense = $fuel->trip_expense;
+                        if(isset($trip_expense)){
+                            $bill->trip_expense_id = $trip_expense->id;
+                        }
+                    
+                        $bill->category = "Trip Expense - Fuel Order";
+                        $account = Account::where('name','Trip Expense')->get()->first();
+                    }else{
+                        $bill->category = "Fuel";
+                        $account = Account::where('name','Fuel')->get()->first();
                     }
-                   
-                    $bill->category = "Trip Expense - Fuel Order";
-                    $account = Account::where('name','Trip Expense')->get()->first();
-                }else{
-                    $bill->category = "Fuel";
-                    $account = Account::where('name','Fuel')->get()->first();
-                }
-                $bill->user_id = Auth::user()->id;
-                $bill->bill_number = $this->billNumber();
-              
-                if (isset($account)) {
-                    $bill->account_id = $account->id;
-                    $bill->account_type_id = $account->account_type->id;
-                }
-
-                if($fuel->container->purchase_type == "Once Off Buy"){
-                    $bill->to_be_paid = True;
-                }else{
-                    $bill->to_be_paid = False;
-                }
-               
-                $bill->fuel_id = $fuel->id;
-                $bill->bill_date = $fuel->date;
-                $bill->currency_id = $fuel->currency_id;
-                $bill->horse_id = $fuel->horse_id;
-                $bill->vehicle_id = $fuel->vehicle_id;
-                $bill->asset_id = $fuel->asset_id;
-                $bill->subtotal = $fuel->amount;
-                $bill->total = $fuel->amount;
-                $bill->balance = $fuel->amount;
-                $bill->authorized_by_id = Auth::user()->id;
-                $bill->authorization = $this->authorize;
-                $bill->comments = $this->comments;
-                $bill->save();
-
-                $bill_expense = new BillExpense;
-                $bill_expense->user_id = Auth::user()->id;
-                $bill_expense->bill_id = $bill->id;
-                $bill_expense->currency_id = $bill->currency_id;
-
-                if($fuel->trip){
-                    if (isset($expense)) {
-                        $bill_expense->expense_id = $expense->id;
+                    $bill->user_id = Auth::user()->id;
+                    $bill->bill_number = $this->billNumber();
+                
+                    if (isset($account)) {
+                        $bill->account_id = $account->id;
+                        $bill->account_type_id = $account->account_type->id;
                     }
-                }
-               
-                if (isset($account)) {
-                    $bill_expense->account_id = $account->id;
-                    $bill_expense->account_type_id = $account->account_type->id;
-                }
-                $bill_expense->qty = $fuel->quantity;
-                $bill_expense->amount = $fuel->unit_price;
-                $bill_expense->subtotal = $fuel->amount;
-                $bill_expense->subtotal_incl = $fuel->amount;
-                $bill_expense->save();
+
+                    if($fuel->container->purchase_type == "Once Off Buy"){
+                        $bill->to_be_paid = True;
+                    }else{
+                        $bill->to_be_paid = False;
+                    }
+                
+                    $bill->fuel_id = $fuel->id;
+                    $bill->bill_date = $fuel->date;
+                    $bill->currency_id = $fuel->currency_id;
+                    $bill->horse_id = $fuel->horse_id;
+                    $bill->vehicle_id = $fuel->vehicle_id;
+                    $bill->asset_id = $fuel->asset_id;
+                    $bill->subtotal = $fuel->amount;
+                    $bill->total = $fuel->amount;
+                    $bill->balance = $fuel->amount;
+                    $bill->authorized_by_id = Auth::user()->id;
+                    $bill->authorization = $this->authorize;
+                    $bill->comments = $this->comments;
+                    $bill->save();
+
+                    $bill_expense = new BillExpense;
+                    $bill_expense->user_id = Auth::user()->id;
+                    $bill_expense->bill_id = $bill->id;
+                    $bill_expense->currency_id = $bill->currency_id;
+
+                    if($fuel->trip){
+                        if (isset($expense)) {
+                            $bill_expense->expense_id = $expense->id;
+                        }
+                    }
+                
+                    if (isset($account)) {
+                        $bill_expense->account_id = $account->id;
+                        $bill_expense->account_type_id = $account->account_type->id;
+                    }
+                    $bill_expense->qty = $fuel->quantity;
+                    $bill_expense->amount = $fuel->unit_price;
+                    $bill_expense->subtotal = $fuel->amount;
+                    $bill_expense->subtotal_incl = $fuel->amount;
+                    $bill_expense->save();
        
 
 
-            // sending fuel order email to station
-            $trip = $fuel->trip;
-            $this->station_email = $fuel->container ? $fuel->container->email : "";
-            $this->station_name = $fuel->container ? $fuel->container->name : "";
-            $this->date = $fuel->date;
-            $this->order_number = $fuel->order_number;
-            $this->driver = $fuel->driver;
-            $this->horse = $fuel->horse;
-            $this->vehicle = $fuel->vehicle;
-            if (isset($trip)) {
-                $this->collection_point = $trip->loading_point ? $trip->loading_point->name : "";
-                $this->delivery_point = $trip->offloading_point ? $trip->offloading_point->name : "";
-            }
-         
-            $this->fuel_type = $fuel->container ? $fuel->container->fuel_type : "";
-            $this->quantity = $fuel->quantity;
-            $this->authorized_by = Auth::user()->employee->name . ' ' . Auth::user()->employee->surname;
-            $this->checked_by = $fuel->user->employee->name . ' ' . $fuel->user->employee->surname;
-            $this->regnumber = $fuel->horse ? $fuel->horse->registration_number : "";
+                    // sending fuel order email to station
+                    $trip = $fuel->trip;
+                    $this->station_email = $fuel->container ? $fuel->container->email : "";
+                    $this->station_name = $fuel->container ? $fuel->container->name : "";
+                    $this->date = $fuel->date;
+                    $this->order_number = $fuel->order_number;
+                    $this->driver = $fuel->driver;
+                    $this->horse = $fuel->horse;
+                    $this->vehicle = $fuel->vehicle;
+                    if (isset($trip)) {
+                        $this->collection_point = $trip->loading_point ? $trip->loading_point->name : "";
+                        $this->delivery_point = $trip->offloading_point ? $trip->offloading_point->name : "";
+                    }
+                
+                    $this->fuel_type = $fuel->container ? $fuel->container->fuel_type : "";
+                    $this->quantity = $fuel->quantity;
+                    $this->authorized_by = Auth::user()->employee->name . ' ' . Auth::user()->employee->surname;
+                    $this->checked_by = $fuel->user->employee->name . ' ' . $fuel->user->employee->surname;
+                    $this->regnumber = $fuel->horse ? $fuel->horse->registration_number : "";
 
-            if ($this->station_email != "") {
-            if (filter_var($this->station_email, FILTER_VALIDATE_EMAIL)) {
-            $data = array(
-                'station_email'=> $this->station_email,
-                'station_name'=> $this->station_name,
-                'date'=> $this->date,
-                'order_number'=> $this->order_number,
-                'driver'=> $this->driver,
-                'horse'=> $this->horse,
-                'vehicle'=> $this->vehicle,
-                'regnumber'=> $this->regnumber,
-                'authorized_by'=> $this->authorized_by,
-                'checked_by'=> $this->checked_by,
-                'collection_point'=> $this->collection_point,
-                'delivery_point'=> $this->delivery_point,
-                'fuel_type'=> $this->fuel_type,
-                'quantity'=> $this->quantity,
-               );
+                    if ($this->station_email != "") {
+                        if (filter_var($this->station_email, FILTER_VALIDATE_EMAIL)) {
+                            $data = array(
+                                'station_email'=> $this->station_email,
+                                'station_name'=> $this->station_name,
+                                'date'=> $this->date,
+                                'order_number'=> $this->order_number,
+                                'driver'=> $this->driver,
+                                'horse'=> $this->horse,
+                                'vehicle'=> $this->vehicle,
+                                'regnumber'=> $this->regnumber,
+                                'authorized_by'=> $this->authorized_by,
+                                'checked_by'=> $this->checked_by,
+                                'collection_point'=> $this->collection_point,
+                                'delivery_point'=> $this->delivery_point,
+                                'fuel_type'=> $this->fuel_type,
+                                'quantity'=> $this->quantity,
+                            );
 
-               if (isset(Auth::user()->company)) {
-                $company = Auth::user()->company;
-                }elseif (isset(Auth::user()->employee->company)) {
-                    $company = Auth::user()->employee->company;
-                }
+                            if (isset(Auth::user()->company)) {
+                                $company = Auth::user()->company;
+                            }elseif (isset(Auth::user()->employee->company)) {
+                                $company = Auth::user()->employee->company;
+                            }
 
-               Mail::to($this->station_email)->send(new FuelOrderMail($data, $company));
+                            Mail::to($this->station_email)->send(new FuelOrderMail($data, $company));
 
-               $this->dispatchBrowserEvent('hide-fuelAuthorizationModal');
-               $this->dispatchBrowserEvent('alert',[
-                   'type'=>'success',
-                   'message'=>"Fuel Order Approved & Email to Station Sent Successfully"
-               ]);
-               return redirect()->route('fuels.approved');
+                            $this->dispatchBrowserEvent('hide-fuelAuthorizationModal');
+                            $this->dispatchBrowserEvent('alert',[
+                                'type'=>'success',
+                                'message'=>"Fuel Order Approved & Email to Station Sent Successfully"
+                            ]);
+                            return redirect()->route('fuels.approved');
 
-            } else {
+                        } else {
+                            $this->dispatchBrowserEvent('hide-fuelAuthorizationModal');
+                            $this->dispatchBrowserEvent('alert',[
+                                'type'=>'success',
+                                'message'=>"Fuel Order Approved But Email Not Sent."
+                            ]);
+                            return redirect()->route('fuels.approved');
+                        }
+                    
+                    }
+
+                    
+
+                    $this->dispatchBrowserEvent('hide-fuelAuthorizationModal');
+
+                    $this->dispatchBrowserEvent('alert',[
+                        'type'=>'success',
+                        'message'=>"Fuel Order Approved Successfully !!"
+                    ]);
+
+                    return redirect()->route('fuels.approved');
+
+            }else{
                 $this->dispatchBrowserEvent('hide-fuelAuthorizationModal');
                 $this->dispatchBrowserEvent('alert',[
-                    'type'=>'success',
-                    'message'=>"Fuel Order Approved But Email Not Sent."
+                    'type'=>'error',
+                    'message'=>"Please select fueling station to proceed!!"
                 ]);
-                return redirect()->route('fuels.approved');
-            }
-               
             }
 
-            $this->dispatchBrowserEvent('hide-fuelAuthorizationModal');
-            $this->dispatchBrowserEvent('alert',[
-                'type'=>'success',
-                'message'=>"Fuel Order Approved Successfully !!"
-            ]);
-            return redirect()->route('fuels.approved');
-
-        }else{
-            $this->dispatchBrowserEvent('hide-fuelAuthorizationModal');
-            $this->dispatchBrowserEvent('alert',[
-                'type'=>'error',
-                'message'=>"Please select fueling station to proceed!!"
-            ]);
-        }
         }else {
 
             $fuel->authorized_by_id = Auth::user()->id;

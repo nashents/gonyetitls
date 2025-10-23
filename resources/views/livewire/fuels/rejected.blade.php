@@ -277,7 +277,7 @@
                 <form wire:submit.prevent="authorizeSelectedRows()" >
                 <div class="modal-body">
                     <div class="form-group">
-                        <label for="name">Authorize</label>
+                        <label for="name">Authorize<span class="required" style="color: red">*</span></label>
                     <select class="form-control" wire:model.debounce.300ms="authorize" required>
                         <option value="">Select Decision</option>
                         <option value="approved">Approve</option>
@@ -312,8 +312,8 @@
                 <form wire:submit.prevent="update()" >
                 <div class="modal-body">
                     <div class="form-group">
-                        <label for="name">Authorize</label>
-                    <select class="form-control" wire:model.debounce.300ms="authorize">
+                        <label for="name">Authorize<span class="required" style="color: red">*</span></label>
+                    <select class="form-control" wire:model.debounce.300ms="authorize" required>
                         <option value="">Select Decision</option>
                         <option value="approved">Approve</option>
                         <option value="rejected">Reject</option>

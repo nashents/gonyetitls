@@ -159,7 +159,11 @@
                            
                             <tr>
                                 <th class="w-10 text-center line-height-35">Authorization</th>
-                                <td class="w-20 line-height-35"> <span class="badge bg-{{($fuel->authorization == 'approved') ? 'success' : (($fuel->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($fuel->authorization == 'approved') ? 'approved' : (($fuel->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
+                                <td class="w-20 line-height-35"> <span class="badge bg-{{($fuel->authorization == 'approved') ? 'success' : (($fuel->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($fuel->authorization == 'approved') ? 'approved' : (($fuel->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
+                                @if ($fuel->authorization != 'approved')
+                                      <li><a href="#" wire:click="authorize({{$fuel->id}})"><i class="fas fa-gavel color-success"></i> Authorization</a></li>
+                                @endif
+                                </td>
                             </tr>
                             @if ($fuel->reason)
                             <tr>
@@ -180,12 +184,44 @@
                     </div>
             </div>
 
-
-
-
-
-
             <!-- /.section-title -->
         </div>
     </div>
+
+
+        <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="fuelAuthorizationModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-gas-pump"></i> Authorize Fuel Order <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                </div>
+                <form wire:submit.prevent="authorizeFuel()" >
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="name">Authorize<span class="required" style="color: red">*</span></label>
+                    <select class="form-control" wire:model.debounce.300ms="authorize" required>
+                        <option value="">Select Decision</option>
+                        <option value="approved">Approve</option>
+                        <option value="rejected">Reject</option>
+                    </select>
+                        @error('authorize') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    </div>
+                    <div class="form-group">
+                        <label for="comment">Comment</label>
+                  <textarea class="form-control" wire:model.debounce.300ms="comments" cols="30" rows="3"></textarea>
+                        @error('comments') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                        <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-refresh"></i>Update</button>
+                    </div>
+                    <!-- /.btn-group -->
+                </div>
+            </form>
+            </div>
+        </div>
+    </div>
+
 </div>
