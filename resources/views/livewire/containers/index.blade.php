@@ -16,6 +16,7 @@
                             </div> --}}
                             <div class="panel-title">
                                 <a href="" data-toggle="modal" data-target="#containerModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Fueling Station</a>
+                                <a href="" data-toggle="modal" data-target="#transferModal" class="btn btn-default"><i class="fa fa-exchange"></i>Fuel Transfer</a>
                             </div>
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
@@ -76,7 +77,7 @@
                                                 <li><a href="{{route('containers.show', $container->id)}}"><i class="fa fa-eye color-default"></i>View</a></li>
                                                 <li><a href="#"  wire:click="edit({{$container->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
                                                 @if ($container->purchase_type == "Bulk Buy")
-                                                <li><a href="#"  wire:click="showTopUpModal({{$container->id}})" ><i class="fa fa-gas-pump color-success"></i> Fuel Top Up</a></li>
+                                                    <li><a href="#"  wire:click="showTopUpModal({{$container->id}})" ><i class="fa fa-gas-pump color-success"></i> Fuel Top Up</a></li>
                                                 @endif
                                                 
                                                 <li><a href="#" data-toggle="modal" data-target="#containerDeleteModal{{ $container->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
@@ -232,6 +233,87 @@
                             </div>
                         </div>
                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                        <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Save</button>
+                    </div>
+                    <!-- /.btn-group -->
+                </div>
+            </form>
+            </div>
+        </div>
+    </div>
+  
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="transferModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modal4Label"><i class="fa fa-plus"></i> Transfer Fuel Between Stations <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                </div>
+                <form wire:submit.prevent="transferFuel()" >
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="from">From<span class="required" style="color: red">*</span></label>
+                               <select wire:model.debounce.300ms="from_station" class="form-control" required>
+                                   <option value="">Select Sending Fueling Station</option>
+                                   @foreach ($containers as $container)
+                                           <option value="{{$container->id}}"
+                                             @if ($to_station && $to_station == $container->id)
+                                                disabled
+                                            @endif
+                                            >{{$container->name}} {{$container->balance ? number_format($container->balance,2)."l" : ""}}</option>
+                                   @endforeach
+                               </select>
+                                @error('from_station') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="to">To<span class="required" style="color: red">*</span></label>
+                               <select wire:model.debounce.300ms="to_station" class="form-control" required>
+                                   <option value="">Select Receiving Fueling Station</option>
+                                   @foreach ($containers as $container)
+                                           <option value="{{$container->id}}" 
+                                            @if ($from_station && $from_station == $container->id)
+                                                disabled
+                                            @endif
+                                            >{{$container->name}} {{$container->balance ? number_format($container->balance,2)."l" : ""}}</option>
+                                   @endforeach
+                               </select>
+                                @error('to_station') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="email">Quantity<span class="required" style="color: red">*</span></label>
+                                <input type="text"  class="form-control" wire:model.debounce.300ms="transfer_quantity" placeholder="Enter Transfer Quanity" required />
+                                @error('transfer_quantity') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="date">Date<span class="required" style="color: red">*</span></label>
+                                <input type="date"  class="form-control" wire:model.debounce.300ms="transfer_date" placeholder="Enter Date"  required/>
+                                @error('transfer_date') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="date">Reason<span class="required" style="color: red">*</span></label>
+                        <textarea class="form-control" wire:model.debounce.300ms="reason" placeholder="Write reason for transfer" cols="30" rows="2" required></textarea>
+                        @error('reason') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    </div>
+                     <div class="mb-10">
+                            <input type="checkbox" wire:model.debounce.300ms="acknowledgment"   class="line-style" required/>
+                            <label for="one" class="radio-label">I confirm the quantities entered above are correct before transfer.</label>
+                            @error('acknowledgment') <span class="text-danger error">{{ $message }}</span>@enderror
+                        </div>
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">
@@ -407,6 +489,7 @@
             </div>
         </div>
     </div>
+
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="containerEditModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
         <div class="modal-dialog" role="document">
             <div class="modal-content">

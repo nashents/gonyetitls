@@ -978,6 +978,7 @@
                             <a href="#"><span>Fueling Stations</span> <i class="fas fa-angle-right arrow"></i></a>
                             <ul class="child-nav">
                                 <li><a href="{{route('containers.index')}}" ><i class="fas fa-list "></i> <span>Manage Stations</span></a></li>
+                                <li><a href="{{route('transfers.fuel')}}" ><i class="fas fa-list "></i> <span>Fuel Transfers</span></a></li>
                             </ul>
                         </li>
                         <li class="has-children {{ request()->routeIs('top_ups.*') ? 'active' : '' }}" >

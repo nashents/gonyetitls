@@ -11,6 +11,7 @@ use App\Models\Expense;
 use Livewire\Component;
 use App\Models\CashFlow;
 use App\Models\Currency;
+use App\Models\Transfer;
 use App\Models\Container;
 use App\Models\BillExpense;
 use Illuminate\Support\Str;
@@ -60,6 +61,13 @@ class Index extends Component
     public $company;
     public $exchange_rate;
     public $exchange_amount;
+
+    public $reason;
+    public $from_station;
+    public $to_station;
+    public $transfer_date;
+    public $transfer_quantity;
+    public $acknowledgment;
 
 
 
@@ -139,6 +147,55 @@ class Index extends Component
 
     }
 
+    public function transferFuel(){
+
+
+        $this->validate([
+            'from_station' => 'required',
+            'to_station' => 'required|different:from_station',
+            'transfer_date' => 'required|date',
+            'transfer_quantity' => 'required|numeric|min:0.01',
+            'acknowledgment' => 'nullable',
+            'reason' => 'required|string',
+        ]);
+        
+
+        $from_container = Container::find($this->from_station);
+        $to_container = Container::find($this->to_station);
+
+        if($from_container && $to_container){
+
+            if($from_container->balance >= $this->transfer_quantity){
+
+                // Deduct from sending station
+                $from_container->balance -= $this->transfer_quantity;
+                $from_container->save();
+
+                // Add to receiving station
+                $to_container->balance += $this->transfer_quantity;
+                $to_container->save();
+
+                $transfer = new Transfer;
+                $transfer->user_id = Auth::user()->id;
+                $transfer->from = $from_container->id;
+                $transfer->to = $to_container->id;
+                $transfer->date = $this->transfer_date;
+                $transfer->quantity = $this->transfer_quantity;
+                $transfer->comments = $this->reason;
+                $transfer->category = "fuel";
+                $transfer->save();
+
+                $this->resetTransferInputFields();
+                $this->dispatchBrowserEvent('hide-transferModal');
+                $this->dispatchBrowserEvent('alert',[
+                    'type'=>'success',
+                    'message'=>"Fuel Transfered Successfully!!"
+                ]);
+
+            }
+        }
+    }
+
     public function updated($value){
         $this->validateOnly($value);
     }
@@ -152,6 +209,19 @@ class Index extends Component
         'fuel_type' => 'required',
         'purchase_type' => 'required',
     ];
+
+
+    private function resetTransferInputFields(){
+
+        $this->transfer_quantity = "";
+        $this->transfer_date = "";
+        $this->from_station = "";
+        $this->to_station = "";
+        $this->reason = "";
+        $this->acknowledgment = "";
+      
+    }
+ 
     private function resetInputFields(){
 
         $this->balance = "";

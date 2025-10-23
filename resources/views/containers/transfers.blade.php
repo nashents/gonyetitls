@@ -9,7 +9,7 @@
     @endif
 @endsection
 @section('title')
-Fueling Stations | @if (isset(Auth::user()->employee->company))
+Fuel Transfers | @if (isset(Auth::user()->employee->company))
     {{Auth::user()->employee->company->name}}
     @elseif (Auth::user()->company)
     {{Auth::user()->company->name}}
@@ -32,14 +32,14 @@ Fueling Stations | @if (isset(Auth::user()->employee->company))
                                 <div class="col-md-6">
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
-            							<li class="active"> <i class="fa fa-list"></i> Fueling Stations</li>
+            							<li class="active"> <i class="fa fa-list"></i> Fuel Transfers</li>
             						</ul>
                                 </div>
                             </div>
                             <!-- /.row -->
                         </div>
 
-                        @livewire('containers.index')
+                        @livewire('containers.transfers')
 
 
                     </div>
@@ -50,7 +50,7 @@ Fueling Stations | @if (isset(Auth::user()->employee->company))
 @section('extra-js')
     <script>
     $(document).ready( function () {
-        $('#containersTable').DataTable();
+        $('#transfersTable').DataTable();
     } );
     </script>
 @endsection

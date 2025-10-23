@@ -17,6 +17,10 @@ class ContainerController extends Controller
     {
         return view('containers.index');
     }
+    public function transfers()
+    {
+        return view('containers.transfers');
+    }
     public function manage(){
         return view('containers.manage');
     }

@@ -116,6 +116,7 @@ Route::get('transportation/order/{trip}//export-to-pdf','TransportOrderControlle
 Route::get('fuel/supplier/{id}/top-up','TopUpController@manage')->name('top_ups.manage');
 Route::get('top_ups/{id}/fuel/','TopUpController@fuel')->name('top_ups.fuel');
 
+Route::get('fuel/transfers','ContainerController@transfers')->name('transfers.fuel');
 Route::get('fuel/containers/deleted','ContainerController@deleted')->name('containers.deleted');
 Route::get('fuel/containers/management','ContainerController@manage')->name('containers.manage');
 Route::get('fuel/containers/reports','ContainerController@reports')->name('containers.reports');
