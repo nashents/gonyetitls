@@ -487,6 +487,98 @@ class Index extends Component
         
     }
 
+      public function updatedSearchDriver()
+        {
+            $term = trim((string) $this->searchDriver);
+
+            $query = Driver::query()
+                ->with('employee:id,name,surname')
+                ->join('employees', 'drivers.employee_id', '=', 'employees.id')  // for sorting
+                ->select('drivers.*')                                            // avoid column conflicts
+                ->where('drivers.archive', 0);
+
+            // Optional transporter filter
+            if (!empty($this->selectedTransporter)) {
+                $query->where('drivers.transporter_id', $this->selectedTransporter);
+            }
+
+            // Flexible search: name, surname, or "name surname"
+            if ($term !== '') {
+                $query->whereHas('employee', function ($q) use ($term) {
+                    $q->where(function ($qq) use ($term) {
+                        $qq->where('name', 'like', "%{$term}%")
+                        ->orWhere('surname', 'like', "%{$term}%")
+                        ->orWhereRaw("CONCAT(name, ' ', surname) LIKE ?", ["%{$term}%"]);
+                    });
+                });
+            }
+
+            // Status gating: only apply drivers.status = 1 if NOT in special statuses
+            $specialStatuses = ['Scheduled', 'Offloaded', 'Cancelled'];
+            if (!in_array($this->selectedStatus, $specialStatuses, true)) {
+                $query->where('drivers.status', 1); // qualify to avoid ambiguity
+            }
+
+            $this->drivers = $query
+                ->orderBy('employees.name', 'asc')
+                ->orderBy('employees.surname', 'asc')
+                ->get();
+        }
+
+        public function updatedSearchHorse()
+    {
+        $term = trim((string) $this->searchHorse);
+
+        $query = Horse::query()
+            ->with('horse_make:id,name', 'horse_model:id,name')
+            ->where('registration_number', 'like', "%{$term}%")
+            ->where('archive', 0);
+
+        // Optional transporter filter
+        if (!empty($this->selectedTransporter)) {
+            $query->where('transporter_id', $this->selectedTransporter);
+        }
+
+        // Only enforce active/service filters when not in the special statuses
+        $specialStatuses = ['Scheduled', 'Offloaded', 'Cancelled'];
+        if (!in_array($this->selectedStatus, $specialStatuses, true)) {
+            $query->where('status', 1)
+                ->where('service', 0);
+        }
+
+        // Order by registration number
+        $this->horses = $query
+            ->orderBy('registration_number', 'asc')
+            ->get();
+    }
+
+    public function updatedSearchVehicle()
+    {
+        $term = trim((string) $this->searchVehicle);
+
+        $query = Vehicle::query()
+            ->with('vehicle_make:id,name', 'vehicle_model:id,name')
+            ->where('registration_number', 'like', "%{$term}%")
+            ->where('archive', 0);
+
+        // Optional transporter filter
+        if (!empty($this->selectedTransporter)) {
+            $query->where('transporter_id', $this->selectedTransporter);
+        }
+
+        // Apply status and service filters only if not in special statuses
+        $specialStatuses = ['Scheduled', 'Offloaded', 'Cancelled'];
+        if (!in_array($this->selectedStatus, $specialStatuses, true)) {
+            $query->where('status', 1)
+                ->where('service', 0);
+        }
+
+        // Order by registration number (ascending)
+        $this->vehicles = $query
+            ->orderBy('registration_number', 'asc')
+            ->get();
+    }
+
     public function updatingCloseMileage(){
         $this->odometer = $this->close_mileage;
     }

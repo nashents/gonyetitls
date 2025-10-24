@@ -360,7 +360,7 @@
                                                 <label for="one" class="radio-label">Select from all trailers</label>
                                                     <input type="text" wire:model.debounce.300ms="searchTrailer" placeholder="Search with reg..." class="form-control">
                                                     <select class="form-control" wire:model.debounce.300ms="trailer_id.0" size="4" required>
-                                                      <option value="">Select Trailer </option>
+                                                      <option value="" disabled >Select Trailer </option>
                                                       @if (!is_null($selectedTransporter) || !is_null($selectedBroker))
                                                         @foreach ($trailers as $trailer)
                                                             <option value="{{$trailer->id}}">{{$trailer->registration_number}} {{$trailer->make}} {{$trailer->model}} </option>
@@ -381,7 +381,7 @@
                                                         <option value="">Select Trailer {{ $value }}</option>
                                                         @if (!is_null($selectedTransporter) || !is_null($selectedBroker))
                                                           @foreach ($trailers as $trailer)
-                                                              <option value="{{$trailer->id}}">{{$trailer->registration_number}} {{$trailer->make}} {{$trailer->model}} </option>
+                                                              <option value="{{$trailer->id}}" disabled>{{$trailer->registration_number}} {{$trailer->make}} {{$trailer->model}} </option>
                                                           @endforeach
                                                           @endif
                                                       </select>

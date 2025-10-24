@@ -64,10 +64,13 @@
                                              <strong>Store:</strong>  {{$asset->store ? $asset->store->name : ""}}
                                              <br>
                                         @endif
-                                        @if ($asset->product->category)
-                                           <strong>Category:</strong> {{$asset->product->category ? $asset->product->category->name : ""}}  {{$asset->product->category_value ? $asset->product->category_value->name : ""}} 
-                                           <br>
+                                        @if ($asset->product)
+                                            @if ($asset->product->category)
+                                                <strong>Category:</strong> {{$asset->product->category ? $asset->product->category->name : ""}}  {{$asset->product->category_value ? $asset->product->category_value->name : ""}} 
+                                                <br>
+                                            @endif 
                                         @endif
+                                        
                                         @if ($asset->rack)
                                           
                                               <strong>Rack:</strong> {{$asset->rack ? $asset->rack->name : ""}} {{$asset->rack ? $asset->rack->rack_number : ""}}

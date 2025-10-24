@@ -70,10 +70,13 @@
                                              <strong>Store:</strong>  {{$inventory->store ? $inventory->store->name : ""}}
                                              <br>
                                         @endif
-                                        @if ($inventory->product->category)
-                                           <strong>Category:</strong> {{$inventory->product->category ? $inventory->product->category->name : ""}}  {{$inventory->product->category_value ? $inventory->product->category_value->name : ""}} 
-                                           <br>
+                                        @if ($inventory->product)
+                                            @if ($inventory->product->category)
+                                                <strong>Category:</strong> {{$inventory->product->category ? $inventory->product->category->name : ""}}  {{$inventory->product->category_value ? $inventory->product->category_value->name : ""}} 
+                                                <br>
+                                            @endif
                                         @endif
+                                      
                                         @if ($inventory->rack)
                                           
                                               <strong>Rack:</strong> {{$inventory->rack ? $inventory->rack->name : ""}} {{$inventory->rack ? $inventory->rack->rack_number : ""}}
