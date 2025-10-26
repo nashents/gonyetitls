@@ -40,6 +40,6 @@ class SendEmails extends Mailable implements ShouldQueue
         return $this->view('emails.send_emails')
                 ->from(Auth::user()->employee->email)
                 ->subject($this->subject)
-                ->attach(public_path('/myfiles/attachments/'.$this->attachment->filename));
+                ->attach(public_path('/myfiles/documents/'.$this->attachment->filename));
     }
 }

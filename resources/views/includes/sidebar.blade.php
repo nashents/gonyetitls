@@ -224,11 +224,11 @@
                     </ul>
                 </li>
 
-                <li class="{{ request()->routeIs('notices.index') ? 'active' : '' }}">
+                {{-- <li class="{{ request()->routeIs('notices.index') ? 'active' : '' }}">
                     <a href="{{route('notices.index')}}"><i class="fas fa-bullhorn"></i> <span>Notice</span> </a>
-                </li>
+                </li> --}}
                 <li class="{{ request()->routeIs('emails.index') ? 'active' : '' }}">
-                    <a href="{{route('emails.index')}}"><i class="fas fa-envelope"></i> <span>E-Mail</span> </a>
+                    <a href="{{route('emails.index')}}"><i class="fas fa-envelope"></i> <span> Inbox</span> </a>
                 </li> 
        
                

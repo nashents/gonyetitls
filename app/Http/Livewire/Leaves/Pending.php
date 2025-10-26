@@ -83,11 +83,16 @@ class Pending extends Component
 
         if ($this->decision == "approved") {
             $employee =  $leave->employee;
-            $employee->leave_days =  $employee->leave_days - $leave->days;
-            $employee->update();
-            if ($employee->personal_email) {
+            if ($employee && $employee->leave_days) {
+                $employee->leave_days =  $employee->leave_days - $leave->days;
+                $employee->update();
+                if ($employee->personal_email) {
                  Mail::to($employee->personal_email)->send(new LeaveApplicationMail($this->company, $leave));
+                }
             }
+            
+           
+            
            
         }
 

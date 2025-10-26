@@ -39,8 +39,10 @@
                                     @foreach ($emails as $email)
                                   <tr>
                                     <td>
-                                        @if ($email->destination == "Employee")
-                                        {{ucfirst($email->destination)}} | {{ucfirst($email->employee ? $email->employee->email : "")}}
+                                        @if ($email->destination == "employee")
+                                            {{ucfirst($email->employee ? $email->employee->email : "")}}
+                                        @else 
+                                            {{ucfirst($email->destination)}}
                                         @endif
                                         
                                     </td>

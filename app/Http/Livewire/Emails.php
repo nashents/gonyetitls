@@ -112,7 +112,9 @@ class Emails extends Component
    
 
  public function send(){
+
     if ($this->selectedDestination == "employees") {
+
         $email = new Email;
         $email->user_id = Auth::user()->id;
         $email->destination = $this->selectedDestination;
@@ -216,11 +218,13 @@ class Emails extends Component
     }
 
     elseif ($this->selectedDestination == "employee") {
+
         $this->employee = Employee::find($this->selectedEmployee);
 
         $email = new Email;
         $email->user_id = Auth::user()->id;
         $email->destination = $this->selectedDestination;
+        $email->employee_id = $this->selectedEmployee;
         $email->subject = $this->subject;
         $email->body = $this->body;
         $email->save();
@@ -235,7 +239,7 @@ class Emails extends Component
             $extention = $file->getClientOriginalExtension();
             //file name to store
             $fileNameToStore= $filename.'_'.time().'.'.$extention;
-            $file->storeAs('/attachments', $fileNameToStore, 'my_files');
+            $file->storeAs('/documents', $fileNameToStore, 'my_files');
         }
 
         $attachment = new Attachment;
@@ -245,7 +249,7 @@ class Emails extends Component
         }
         $attachment->save();
 
-        $data= array(
+        $data = array(
             'body'=> $this->body,
             'subject'=> $this->subject,
         );
@@ -267,6 +271,7 @@ class Emails extends Component
         ]);
 
     }elseif ($this->selectedDestination == "departments") {
+
         $department = Department::find($this->selectedDepartment);
         $this->employees = $department->employees;
         
@@ -297,7 +302,7 @@ class Emails extends Component
         }
         $attachment->save();
 
-        $data= array(
+        $data = array(
             'body'=> $this->body,
             'subject'=> $this->subject,
         );
@@ -320,8 +325,12 @@ class Emails extends Component
             'type'=>'success',
             'message'=>"Email(s) Successfully Sent!!"
         ]);
+
     }elseif ($this->selectedDestination == "branches") {
+
+
         $branch = Branch::find($this->selectedBranch);
+
         $this->employees = $branch->employees->pluck('email');
         
         $email = new Email;
@@ -331,7 +340,14 @@ class Emails extends Component
         $email->body = $this->body;
         $email->save();
 
-        $data= array(
+        $attachment = new Attachment;
+        $attachment->email_id = $email->id;
+        if (isset($fileNameToStore)) {
+            $attachment->filename = $fileNameToStore;
+        }
+        $attachment->save();
+
+        $data = array(
             'body'=> $this->body,
             'subject'=> $this->subject,
         );
@@ -339,7 +355,7 @@ class Emails extends Component
         foreach ($this->employees as $employee) {
             if (!$this->employee->driver) {
                 if (isset($this->employee->email) && $this->employee->email != Null && $this->employee->email != "") {
-                    Mail::to($this->employee->email)->send(new SendEmails($data));
+                    Mail::to($this->employee->email)->send(new SendEmails($data, $attachment));
                 }
             }
           

@@ -267,7 +267,7 @@
                                     
                                     @endphp
                                     
-                                    <div class="date" style="padding-bottom: 3px" ><strong>Opening Balance({{$currency->name}}) on {{ date('F j, Y', strtotime($from)) }}</strong> {{$currency->symbol}}{{ number_format($opening_balance ? $opening_balance->accrual : 0,2) }}</div>
+                                    <div class="date" style="padding-bottom: 3px" ><strong>Opening Balance({{$currency->name}}) on {{ date('F j, Y', strtotime($from)) }}</strong> {{$currency->symbol}}{{ number_format($opening_balance ? $opening_balance : 0, 2) }}</div>
                                    
                                     @if (isset($invoiced))
                                     <div class="date" style="padding-bottom: 3px" ><strong>Invoiced({{$currency->name}})</strong> {{$currency->symbol}}{{ number_format($invoiced,2) }}</div>
@@ -285,7 +285,7 @@
                             <tr>
                                 <td colspan="2"  class="text-center"><strong>{{ date('F j, Y', strtotime($from)) }}</strong></td>
                                 <td colspan="3" class="text-center"><strong>Opening Balance {{ $currency->name }}</strong></td>
-                                <td  class="text-center"><strong>{{ $currency->symbol }}{{  number_format($opening_balance ? $opening_balance->accrual_balance : 0 ,2) }}</strong></td>
+                                <td  class="text-center"><strong>{{ $currency->symbol }}{{  number_format($opening_balance ? $opening_balance : 0 ,2) }}</strong></td>
                             </tr>
                             <tr>
                                 <th class="text-center"><strong>Date</strong></th>
