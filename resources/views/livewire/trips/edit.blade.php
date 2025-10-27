@@ -309,9 +309,9 @@
                                               <option value="">Select Driver</option>
                                               @if (!is_null($selectedTransporter) || !is_null($selectedBroker))
                                                 @foreach ($drivers as $driver)
-                                                @if (isset($driver->employee))
-                                                <option value="{{$driver->id}}">{{$driver->employee->name}} {{$driver->employee->surname}}</option>
-                                                @endif
+                                                    @if (isset($driver->employee))
+                                                    <option value="{{$driver->id}}">{{$driver->employee->name}} {{$driver->employee->surname}}</option>
+                                                    @endif
                                                 @endforeach
                                               @endif
                                           </select>

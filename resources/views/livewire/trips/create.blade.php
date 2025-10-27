@@ -363,7 +363,11 @@
                                                       <option value="" disabled >Select Trailer </option>
                                                       @if (!is_null($selectedTransporter) || !is_null($selectedBroker))
                                                         @foreach ($trailers as $trailer)
-                                                            <option value="{{$trailer->id}}">{{$trailer->registration_number}} {{$trailer->make}} {{$trailer->model}} </option>
+                                                            <option value="{{$trailer->id}}"
+                                                                @if(in_array($trailer->id, $trailer_id ?? []) && ($trailer_id[0] ?? null) != $trailer->id) 
+                                                                    disabled 
+                                                                @endif
+                                                            >{{$trailer->registration_number}} {{$trailer->make}} {{$trailer->model}} </option>
                                                         @endforeach
                                                         @endif
                                                     </select>
@@ -378,19 +382,23 @@
                                             <div class="row">
                                                 <div class="col-md-10">
                                                     <select class="form-control" wire:model.debounce.300ms="trailer_id.{{ $value }}" size="4" required>
-                                                        <option value="">Select Trailer {{ $value }}</option>
+                                                        <option value="" disabled>Select Trailer {{ $value }}</option>
                                                         @if (!is_null($selectedTransporter) || !is_null($selectedBroker))
-                                                          @foreach ($trailers as $trailer)
-                                                              <option value="{{$trailer->id}}" disabled>{{$trailer->registration_number}} {{$trailer->make}} {{$trailer->model}} </option>
-                                                          @endforeach
+                                                            @foreach ($trailers as $trailer)
+                                                                <option value="{{$trailer->id}}"
+                                                                    @if(in_array($trailer->id, $trailer_id ?? []) && ($trailer_id[$value] ?? null) != $trailer->id) 
+                                                                        disabled 
+                                                                    @endif
+                                                                    >{{$trailer->registration_number}} {{$trailer->make}} {{$trailer->model}} </option>
+                                                            @endforeach
                                                           @endif
                                                       </select>
                                                     @error('trailer_id.'. $value) <span class="text-danger error">{{ $message }}</span>@enderror
                                                 </div>
                                                 <div class="col-md-1">
-                                                    <div class="form-group">
+                                                    <div class="form-group" style="margin-top:37px;">
                                                         <label for=""></label>
-                                                        <button class="btn btn-danger btn-rounded btn-sm" style="margin-left:-25px;"   wire:click.prevent="trailerRemove({{$key}})"> <i class="fa fa-times"></i></button>
+                                                        <button class="btn btn-danger btn-rounded btn-xs" style="margin-left:-25px;"   wire:click.prevent="trailerRemove({{$key}})"> <i class="fa fa-times"></i></button>
                                                     </div>
                                                 </div>
                                            
