@@ -30,7 +30,7 @@
                                 <div class="col-md-6">
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
-            							<li><a href="{{route('goods_receiveds.index')}}"><i class="fa fa-list"></i> Goods Received Records</a></li>
+            							<li><a href="{{route('goods_receiveds.index')}}"><i class="fa fa-list"></i> Goods Received</a></li>
             							<li class="active"> <i class="fas fa-eye"></i> Inventory Items</li>
             						</ul>
                                 </div>

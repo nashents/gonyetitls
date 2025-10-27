@@ -9,7 +9,7 @@
     @endif
 @endsection
 @section('title')
-    Trip Tracking Group|@if (isset(Auth::user()->employee->company))
+    Tracking Groups | @if (isset(Auth::user()->employee->company))
     {{Auth::user()->employee->company->name}}
     @elseif (Auth::user()->company)
     {{Auth::user()->company->name}}

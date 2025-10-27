@@ -103,17 +103,11 @@
                                     <td>{{$goods_received->delivery_date}}</td>
                                     <td>
                                         @if ($department == "inventory")
-                                            @if ($goods_received->inventories && $goods_received->inventories->count() > 0)
-                                                {{$goods_received->inventories->count()}}        
-                                            @endif
+                                            {{$goods_received->inventories->count()}}
                                         @elseif($department == "asset")
-                                            @if ($goods_received->assets && $goods_received->assets->count() > 0)
-                                                {{$goods_received->assets->count()}}        
-                                            @endif
+                                           {{$goods_received->assets->count()}}     
                                         @elseif($department == "tyre")
-                                            @if ($goods_received->tyres && $goods_received->tyres->count() > 0)
-                                                {{$goods_received->tyres->count()}}        
-                                            @endif
+                                            {{$goods_received->tyres->count()}} 
                                         @endif 
                                     </td>
                                     <td></td>

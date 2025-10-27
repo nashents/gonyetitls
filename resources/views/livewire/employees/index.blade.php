@@ -184,7 +184,11 @@
         <div class="modal-dialog mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-edit"></i> Change {{$employee ? $employee->name : ""}} {{$employee ? $employee->surname."` " : ""}} Position <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-edit"></i> Change 
+                        @if (isset($employee))
+                            {{$employee ? $employee->name : ""}} {{$employee ? $employee->surname."` " : ""}}
+                        @endif
+                        Position <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                 </div>
                 <div style="padding-left: 20px; padding-right:10px;">
                     <small style="color:green"> PS: if the user has access to modules in different departments after this change you have to add more departments to the user`s account via employees -> employee view -> departments tab -> add department</small>

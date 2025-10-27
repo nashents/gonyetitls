@@ -79,6 +79,7 @@
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{ route('trip_groups.show',$trip_group->id) }}"   ><i class="fa fa-eye color-default"></i> Show</a></li> 
                                                 <li><a href="#"  wire:click="edit({{$trip_group->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li> 
+                                                <li><a href="#"  wire:click="close({{$trip_group->id}})" ><i class="fa fa-check color-success"></i> Mark as completed</a></li> 
                                                 <li><a href="#" data-toggle="modal" data-target="#trip_groupDeleteModal{{ $trip_group->id }}"><i class="fa fa-trash color-danger"></i> Delete</a></li> 
                                               
                                             </ul>
@@ -201,7 +202,7 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-edit"></i> Edit Tracking Name <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-edit"></i> Edit Tracking Group <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                 </div>
                 <form wire:submit.prevent="update()" >
 

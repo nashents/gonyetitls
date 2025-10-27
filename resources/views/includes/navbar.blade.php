@@ -386,7 +386,10 @@
                                     <div class="clearfix"></div>
                                 </div>
                             </li>
-                            <li><a href="{{route('profile',$user->id)}}"><i class="fa fa-cog"></i>Profile Settings</a></li>
+                            @if (Auth::user()->employee)
+                                 <li><a href="{{route('profile',$user->id)}}"><i class="fa fa-cog"></i>Profile Settings</a></li>
+                            @endif
+                           
                             <li><a href="{{route('logout')}}" class="color-danger"><i class="fa fa-sign-out"></i> Logout</a></li>
                         </ul>
                       

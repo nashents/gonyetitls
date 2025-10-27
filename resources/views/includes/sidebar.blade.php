@@ -115,7 +115,6 @@
                 <li class="has-children">
                     <a href="#"><i class="fas fa-cog"></i> <span>Master</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav"> 
-                      
                         <li class="{{ request()->routeIs('allowances.index') ? 'active' : '' }}">
                             <a href="{{route('allowances.index')}}"><i class="fas fa-list"></i> <span>Allowances</span> </a>
                         </li>
@@ -1880,9 +1879,9 @@
               
                       
                 @if (in_array('Management', $rank_names) || in_array('Directors', $rank_names)|| in_array('Super Admin', $role_names))
-                <li class="nav-header">
-                    <span class="">Business Settings</span>
-                </li>
+                    <li class="nav-header">
+                        <span class="">Business Settings</span>
+                    </li>
                 @php
                     $companies = App\Models\Company::where('type','!=','admin')->get();
                     $admin_company = App\Models\Company::where('type','admin')->get()->first();

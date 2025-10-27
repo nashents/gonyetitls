@@ -1247,7 +1247,7 @@
                                        </div>
                                         <div class="col-md-3">
                                             <div class="form-group">
-                                                <label for="odometer">Engine Hours</label>
+                                                <label for="hours">Engine Hours</label>
                                                 <input type="number" step="any" class="form-control" wire:model.debounce.300ms="hours" placeholder="Enter Engine Hours"/>
                                                 @error('hours') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>

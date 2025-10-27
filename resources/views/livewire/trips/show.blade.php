@@ -403,21 +403,38 @@
                                                             <tr>
                                                                 <th scope="row">Estimated Offloading Date</th>
                                                                 <td>
-                                                                    {{$trip->end_date}}
+                                                                     @if ((preg_match($pattern, $trip->end_date)) )
+                                                                        {{ \Carbon\Carbon::parse($trip->end_date)->format('d M Y g:i A')}}
+                                                                    @else
+                                                                        {{$trip->end_date}}
+                                                                    @endif
+                                                                   
                                                                 </td>
                                                             </tr>
                                                             <tr>
                                                                 <th scope="row">Actual Offloading Date</th>
                                                                 <td>
-                                                                    {{$trip->delivery_note? $trip->delivery_note->offloaded_date : ""}}
+                                                                    @if ($trip->delivery_note)
+                                                                        @if ((preg_match($pattern, $trip->delivery_note->offloaded_date)) )
+                                                                        {{ \Carbon\Carbon::parse($trip->delivery_note->offloaded_date)->format('d M Y g:i A')}}
+                                                                        @else
+                                                                            {{$trip->delivery_note->offloaded_date}}
+                                                                        @endif
+                                                                    @endif
+                                                                    
                                                                 </td>
                                                             </tr>
                                                             @if (isset($trip->start_date) && isset($trip->end_date))
                                                             <tr>
                                                                 <th scope="row">  Standard Trip Duration</th>
                                                                 <td>
+                                                                   
                                                                     @if ((preg_match($pattern, $trip->start_date)) && (preg_match($pattern, $trip->end_date)) )
-                                                                    {{ \Carbon\Carbon::parse($trip->start_date)->diffInDays($trip->end_date) }} Day(s)
+                                                                    
+                                                                      {{ \Carbon\Carbon::parse($trip->start_date)
+                                                                        ->diff(\Carbon\Carbon::parse($trip->end_date))
+                                                                        ->format('%d Day(s) %h Hour(s) %i Minute(s)') }}
+
                                                                     @endif
                                                                 </td>
                                                             </tr>
@@ -427,7 +444,12 @@
                                                                 <th scope="row">  Actual Trip Duration</th>
                                                                 <td>
                                                                     @if ((preg_match($pattern, $trip->start_date)) && (preg_match($pattern, $trip->delivery_note->offloaded_date)) )
-                                                                    {{ \Carbon\Carbon::parse($trip->start_date )->diffInDays($trip->delivery_note->offloaded_date) }} Day(s)
+
+                                                                    {{ \Carbon\Carbon::parse($trip->start_date)
+                                                                        ->diff(\Carbon\Carbon::parse($trip->delivery_note->offloaded_date))
+                                                                        ->format('%d Day(s) %h Hour(s) %i Minute(s)') }}
+
+                                                                   
                                                                     @endif
                                                                 </td>
                                                             </tr>

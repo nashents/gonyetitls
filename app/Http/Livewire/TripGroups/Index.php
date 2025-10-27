@@ -32,6 +32,7 @@ class Index extends Component
     public $trip_group_id;
     public $user_id;
     public $tracking_filter;
+    public $status;
 
     public $inputs = [];
     public $i = 1;
@@ -56,7 +57,7 @@ class Index extends Component
     public function mount(){
         $this->customers = Customer::orderBy('name','asc')->get();
         $this->destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
-        $this->tracking_filter = 1;
+        $this->tracking_filter = "all";
         $this->trips = Trip::where('trip_group_id', null)->where('trip_status','!=','Offloaded')->where('authorization', 'approved')->orderBy('trip_number','desc')->get();
     }
 
@@ -92,6 +93,7 @@ class Index extends Component
             $trip_group->from = $this->from;
             $trip_group->to = $this->to;
             $trip_group->name = $this->name;
+            $trip_group->status = 1;
             $trip_group->save();
 
            
@@ -116,6 +118,7 @@ class Index extends Component
     }
 
     public function edit($id){
+        
     $trip_group = TripGroup::find($id);
     $this->user_id = $trip_group->user_id;
     $this->name = $trip_group->name;
@@ -212,11 +215,24 @@ class Index extends Component
         }
     }
 
+    public function close($id){
+        $trip_group = TripGroup::find($id);
+        $trip_group->status = 0;
+        $trip_group->update();
+
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Trip Tracking Group marked as completed successfully!!"
+        ]);
+
+    }
+
 
     public function render()
     {
 
         if (isset($this->searchTrip)) {
+
             $this->trips = Trip::query()->with('customer','loading_point','offloading_point','horse', 'vehicle')
             ->where('trip_group_id', null)
             ->where('trip_status','!=','Offloaded')
@@ -234,20 +250,19 @@ class Index extends Component
             ->orWhereHas('offloading_point', function ($query) {
             return $query->where('name', 'like', '%'.$this->searchTrip.'%');
             })->get();
+
         }
 
+        $query = TripGroup::query();
+        if ($this->tracking_filter != "all") {
+            $query->where('status', $this->tracking_filter);
+        }
+
+        $tracking_groups = $query->orderBy('created_at','desc')->paginate(10);
         
-       if ($this->tracking_filter == "all") {
         return view('livewire.trip-groups.index',[
-            'trip_groups'=>  TripGroup::orderBy('created_at','desc')->paginate(10)
+            'trip_groups'=>  $tracking_groups,
             
         ]);
-       }else {
-        return view('livewire.trip-groups.index',[
-            'trip_groups'=>  TripGroup::where('status',$this->tracking_filter)->orderBy('created_at','desc')->paginate(10)
-            
-        ]);
-       }
-      
     }
 }

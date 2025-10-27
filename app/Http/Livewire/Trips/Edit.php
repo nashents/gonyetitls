@@ -978,6 +978,7 @@ class Edit extends Component
             $this->fuel_amount = $this->fuel->amount;
             $this->fuel_quantity = $this->fuel->quantity;
             $this->odometer = $this->fuel->odometer;
+            $this->hours = $this->fuel->hours;
             $this->date = $this->fuel->date;
             $this->fillup = $this->fuel->fillup;
             $this->fuel_comments = $this->fuel->comments;
