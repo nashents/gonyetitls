@@ -95,14 +95,14 @@
                                     </div>
                                 </div>
                             </div>
-                            @if (is_null($selectedPurchase))
-                                 <small style="color: green">Please note you can only assign old tyres which are not instore from here.</small>
+                         
+                            <small style="color: green">Please note you can only assign old tyres which are not instore from here.</small>
                             <h5 class="underline mt-30">Tyre Assignment</h5>
                             <div class="mb-10">
                                <input type="checkbox" wire:model.debounce.300ms="tyre_assignment"   class="line-style" />
                                <label for="one" class="radio-label">Assign Tyre(s)</label>
                                @error('tyre_assignment') <span class="text-danger error">{{ $message }}</span>@enderror
-                           </div>
+                            </div>
                            @if ($tyre_assignment == True)
                                 <div class="mb-10">
                                     <label for="">Assignment For?</label>
@@ -198,10 +198,7 @@
                                         </div>
                                     </div>
                             @endif
-                            @endif
-                           
-                           
-                           
+                          
                            <div class="mt-30" style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">
                             <div class="row">
                                 <div class="col-md-6">
