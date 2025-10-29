@@ -136,7 +136,7 @@
                                                @endforeach
                                            </select>
                                            @error('branch_id') <span class="text-danger error">{{ $message }}</span>@enderror
-                                           <small>  <a href="{{ route('branches.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Branch</a></small> 
+                                           <small>  <a href="{{ route('branches.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Branch</a></small> <a href="#" wire:click.prevent="refresh('branches')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         </div>
                                     </div>
 
@@ -152,7 +152,6 @@
                                                    <option value="{{$department->id}}">{{$department->name}}</option>
                                                @endforeach
                                            </select>
-                                           <small>  <a href="{{ route('departments.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Department</a></small> 
                                            @error('selectedDepartment') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
@@ -168,7 +167,7 @@
                                                @endif
 
                                            </select>
-                                           <small>  <a href="{{ route('job_titles.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Job Title</a></small> 
+                                           <small>  <a href="{{ route('job_titles.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Job Title</a></small> <a href="#" wire:click.prevent="refresh('job_titles')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                            @error('job_title') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
@@ -181,6 +180,7 @@
                                                     <option value="{{ $grade->id }}">{{ $grade->grade_code }} {{ $grade->grade_name }}</option>
                                                 @endforeach
                                             </select>
+                                            <small>  <a href="{{ route('grades.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Grade</a></small> <a href="#" wire:click.prevent="refresh('grades')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                             @error('grade_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
                                     </div>
@@ -317,7 +317,7 @@
                                             <select class="form-control" wire:model.debounce.300ms="bank_currency_id" >
                                                 <option value="">Select Currency</option>
                                               @foreach ($currencies as $currency)
-                                                  <option value="{{ $currency->id }}">{{ $currency->name }}</option>
+                                                 <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option> 
                                               @endforeach
                                             </select>
                                             @error('bank_currency_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -361,7 +361,7 @@
                                                    <option value="{{$country->id}}">{{$country->name}}</option>
                                                @endforeach
                                            </select>
-                                           <small>  <a href="{{ route('countries.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Country</a></small> 
+                                           <small>  <a href="{{ route('countries.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Country</a></small> <a href="#" wire:click.prevent="refresh('countries')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                            @error('selectedCountry') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
@@ -376,7 +376,7 @@
                                                <option value="{{ $province->id }}">{{ $province->name }}</option>
                                                @endforeach 
                                            </select>
-                                           <small>  <a href="{{ route('provinces.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Province</a></small> 
+                                           <small>  <a href="{{ route('provinces.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Province</a></small> <a href="#" wire:click.prevent="refresh('provinces')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                            @error('province_id') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
@@ -433,23 +433,23 @@
                                         <div class="col-md-4">
                                             <div class="form-group">
                                                 <label for="title">Title</label>
-                                                <input type="text" class="form-control" wire:model.debounce.300ms="title" placeholder="Enter File Title eg Identity Card">
-                                                @error('title') <span class="text-danger error">{{ $message }}</span>@enderror
+                                                <input type="text" class="form-control" wire:model.debounce.300ms="title.0" placeholder="Enter File Title eg Identity Card">
+                                                @error('title.0') <span class="text-danger error">{{ $message }}</span>@enderror
                                             </div>
                                         </div>
                                         <div class="col-md-4">
                                             <div class="form-group">
                                                 <label for="file">File</label>
-                                                <input type="file" class="form-control" wire:model.debounce.300ms="file"  placeholder="Upload File ">
-                                                @error('file') <span class="text-danger error">{{ $message }}</span>@enderror
+                                                <input type="file" class="form-control" wire:model.debounce.300ms="file.0"  placeholder="Upload File ">
+                                                @error('file.0') <span class="text-danger error">{{ $message }}</span>@enderror
                                             </div>
                                         </div>
 
                                         <div class="col-md-4">
                                             <div class="form-group">
                                                 <label for="expiry_date">Expiry Date</label>
-                                                <input type="date" class="form-control" wire:model.debounce.300ms="expiry_date" placeholder="Enter File Expiry Date">
-                                                @error('expiry_date') <span class="text-danger error">{{ $message }}</span>@enderror
+                                                <input type="date" class="form-control" wire:model.debounce.300ms="expiry_date.0" placeholder="Enter File Expiry Date">
+                                                @error('expiry_date.0') <span class="text-danger error">{{ $message }}</span>@enderror
                                             </div>
                                         </div>
                                         <!-- /.col-md-6 -->

@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Drivers;
 
+use Carbon\Carbon;
 use App\Models\Rank;
 use App\Models\Role;
 use App\Models\User;
@@ -85,6 +86,8 @@ class Edit extends Component
     public $grade_id;
     public $grades;
 
+   
+
     
     //bank vars
     public $bank_name;
@@ -94,6 +97,12 @@ class Edit extends Component
     public $bank_currency_id;
     public $branch_code;
     public $swift_code;
+
+    public $employee;
+    public $documents;
+    public $employee_number;
+    public $pin;
+    public $selected_departments;
 
   
     public $city;
@@ -128,6 +137,45 @@ class Edit extends Component
         unset($this->inputs[$i]);
     }
 
+        public function refresh($category){
+
+        if($category == "job_titles"){
+            $this->job_titles = JobTitle::orderBy('title','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Jop Titles Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "branches"){
+            $this->branches = Branch::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Branches Refreshed Successfully!!."
+            ]);
+        }
+         elseif($category == "grades"){
+            $this->grades = Grade::orderBy('grade_name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Grades Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "countries"){
+            $this->countries = Country::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Countries Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "provinces"){
+            $this->provinces = Province::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Provinces Refreshed Successfully!!."
+            ]);
+        }
+      }
+
     public function mount($id){
         $this->departments = Department::all();
         $this->transporters = Transporter::orderBy('name','asc')->get();
@@ -147,8 +195,8 @@ class Edit extends Component
           $this->bank_currency_id = $employee->bank_account->currency_id;
           $this->account_name = $employee->bank_account->account_name;
           $this->account_number = $employee->bank_account->account_number;
-          $this->bank_branch = $employee->bank_account->bank_branch;
-          $this->brach_code = $employee->bank_account->branch_code;
+          $this->bank_branch = $employee->bank_account->branch;
+          $this->branch_code = $employee->bank_account->branch_code;
           $this->swift_code = $employee->bank_account->swift_code;
         }
         $this->user = $driver->user;

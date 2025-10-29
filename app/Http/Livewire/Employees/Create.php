@@ -204,6 +204,45 @@ class Create extends Component
 
     }
 
+      public function refresh($category){
+
+        if($category == "job_titles"){
+            $this->job_titles = JobTitle::orderBy('title','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Jop Titles Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "grades"){
+            $this->grades = Grade::orderBy('grade_name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Grades Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "branches"){
+            $this->branches = Branch::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Branches Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "countries"){
+            $this->countries = Country::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Countries Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "provinces"){
+            $this->provinces = Province::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Provinces Refreshed Successfully!!."
+            ]);
+        }
+      }
+
     public function updatedSelectedDepartment($department)
     {
         if (!is_null($department) ) {
@@ -277,9 +316,7 @@ class Create extends Component
           $employee->frequency = $this->frequency;
           $employee->currency_id = $this->currency_id;
           $employee->salary = $this->salary;
-          if (isset($this->expiration)) {
-            $employee->expiration =  Carbon::create($this->expiration)->toDateTimeString();
-          }
+          $employee->expiration = $this->expiration; 
           $employee->next_of_kin = $this->next_of_kin;
           $employee->relationship = $this->relationship;
           $employee->contact = $this->contact;

@@ -134,7 +134,7 @@
                                                   <option value="{{$branch->id}}">{{$branch->name}}</option>
                                               @endforeach
                                           </select>
-                                          <small>  <a href="{{ route('branches.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Branch</a></small> 
+                                          <small>  <a href="{{ route('branches.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Branch</a></small> <a href="#" wire:click.prevent="refresh('branches')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                           @error('branch_id') <span class="text-danger error">{{ $message }}</span>@enderror
                                        </div>
                                    </div>
@@ -151,7 +151,6 @@
                                                <option value="{{$department->id}}">{{$department->name}}</option>
                                            @endforeach
                                        </select>
-                                       <small>  <a href="{{ route('departments.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Department</a></small> 
                                        @error('selectedDepartment') <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>
                                 </div>
@@ -167,7 +166,7 @@
                                            @endif
 
                                        </select>
-                                       <small>  <a href="{{ route('job_titles.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Job Title</a></small> 
+                                       <small>  <a href="{{ route('job_titles.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Job Title</a></small><a href="#" wire:click.prevent="refresh('job_titles')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                                        @error('job_title') <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>
                                 </div>
@@ -181,6 +180,7 @@
                                             @endforeach
                                         </select>
                                         @error('grade_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        <small>  <a href="{{ route('grades.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Grade</a></small> <a href="#" wire:click.prevent="refresh('grades')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                     </div>
                                 </div>
                                 <!-- /.col-md-6 -->
@@ -315,7 +315,7 @@
                                         <select class="form-control" wire:model.debounce.300ms="bank_currency_id" >
                                             <option value="">Select Currency</option>
                                           @foreach ($currencies as $currency)
-                                              <option value="{{ $currency->id }}">{{ $currency->name }}</option>
+                                              <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option> 
                                           @endforeach
                                         </select>
                                         @error('bank_currency_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -327,8 +327,8 @@
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="expiry_date">Account Branch</label>
-                                            <input type="text" class="form-control"  wire:model.debounce.300ms="brank_branch" placeholder="Enter Branch"  />
-                                            @error('brank_branch') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            <input type="text" class="form-control"  wire:model.debounce.300ms="bank_branch" placeholder="Enter Branch"  />
+                                            @error('bank_branch') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
                                     </div>
                                     <div class="col-md-4">
@@ -360,7 +360,7 @@
                                                    <option value="{{$country->id}}">{{$country->name}}</option>
                                                @endforeach
                                            </select>
-                                           <small>  <a href="{{ route('countries.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Country</a></small> 
+                                           <small>  <a href="{{ route('countries.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Country</a></small> <a href="#" wire:click.prevent="refresh('countries')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                            @error('selectedCountry') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
@@ -375,7 +375,7 @@
                                                <option value="{{ $province->id }}">{{ $province->name }}</option>
                                                @endforeach 
                                            </select>
-                                           <small>  <a href="{{ route('provinces.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Province</a></small> 
+                                           <small>  <a href="{{ route('provinces.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Province</a></small> <a href="#" wire:click.prevent="refresh('provinces')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                            @error('province_id') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
@@ -406,39 +406,7 @@
                                         </div>
                                     </div>
                                     </div>
-                                    {{-- <div class="row">
-                                        <div class="col-md-4">
-                                            <div class="form-group">
-                                                <label for="currency_id">Currencies</label>
-                                                <select wire:model.debounce.300ms="currency_id" class="form-control">
-                                                    <option value="">Select Currency</option>
-                                                  @foreach ($currencies as $currency)
-                                                        <option value="{{ $currency->id }}">{{ $currency->name }}</option>
-                                                  @endforeach
-                                                </select>
-                                                @error('currency_id') <span class="text-danger error">{{ $message }}</span>@enderror
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="form-group">
-                                                <label for="salary">Salary</label>
-                                                <input type="number" step="any" class="form-control" wire:model.debounce.300ms="salary" placeholder="Enter Salary" />
-                                                @error('salary') <span class="text-danger error">{{ $message }}</span>@enderror
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="form-group">
-                                                <label for="frequency">Payment Frequency</label>
-                                                <select wire:model.debounce.300ms="frequency" class="form-control">
-                                                    <option value="">Select Frequency</option>
-                                                    <option value="Daily">Daily</option>
-                                                    <option value="Weekly">Weekly</option>
-                                                    <option value="Monthly">Monthly</option>
-                                                </select>
-                                                @error('frequency') <span class="text-danger error">{{ $message }}</span>@enderror
-                                            </div>
-                                        </div>
-                                    </div> --}}
+
                                     <div class="row">
                                         <div class="col-md-6">
                                             <div class="form-group">

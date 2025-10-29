@@ -160,7 +160,7 @@ class Edit extends Component
           $this->bank_currency_id = $employee->bank_account->currency_id;
           $this->account_name = $employee->bank_account->account_name;
           $this->account_number = $employee->bank_account->account_number;
-          $this->bank_branch = $employee->bank_account->bank_branch;
+          $this->bank_branch = $employee->bank_account->branch;
           $this->branch_code = $employee->bank_account->branch_code;
           $this->swift_code = $employee->bank_account->swift_code;
         }
@@ -265,6 +265,45 @@ class Edit extends Component
         $this->job_titles = JobTitle::where('department_id', $department)->get();
         }
     }
+
+    public function refresh($category){
+
+        if($category == "job_titles"){
+            $this->job_titles = JobTitle::orderBy('title','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Jop Titles Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "branches"){
+            $this->branches = Branch::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Branches Refreshed Successfully!!."
+            ]);
+        }
+         elseif($category == "grades"){
+            $this->grades = Grade::orderBy('grade_name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Grades Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "countries"){
+            $this->countries = Country::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Countries Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "provinces"){
+            $this->provinces = Province::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Provinces Refreshed Successfully!!."
+            ]);
+        }
+      }
 
   
 

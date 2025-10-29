@@ -172,6 +172,7 @@
                                                @endforeach
                                            </select>
                                            @error('branch_id') <span class="text-danger error">{{ $message }}</span>@enderror
+                                            <small>  <a href="{{ route('branches.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Branch</a></small> <a href="#" wire:click.prevent="refresh('branches')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         </div>
                                     </div>
                                     <!-- /.col-md-6 -->
@@ -201,7 +202,6 @@
                                                     <option value="{{$job_title->title}}">{{$job_title->title}}</option>
                                                 @endforeach
                                                @endif
-
                                            </select>
                                            @error('job_title') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
@@ -215,6 +215,7 @@
                                                     <option value="{{ $grade->id }}">{{ $grade->grade_code }} {{ $grade->grade_name }}</option>
                                                 @endforeach
                                             </select>
+                                             <small>  <a href="{{ route('grades.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Grade</a></small> <a href="#" wire:click.prevent="refresh('grades')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                             @error('grade_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
                                     </div>
@@ -391,6 +392,7 @@
                                                @endforeach
                                            </select>
                                            @error('selectedCountry') <span class="text-danger error">{{ $message }}</span>@enderror
+                                            <small>  <a href="{{ route('countries.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Country</a></small> <a href="#" wire:click.prevent="refresh('countries')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         </div>
                                     </div>
                                     <!-- /.col-md-6 -->
@@ -405,6 +407,7 @@
                                                @endforeach 
                                            </select>
                                            @error('province_id') <span class="text-danger error">{{ $message }}</span>@enderror
+                                            <small>  <a href="{{ route('provinces.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Provinces</a></small> <a href="#" wire:click.prevent="refresh('provinces')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         </div>
                                     </div>
                                     <div class="col-md-4">

@@ -12,6 +12,9 @@ class BankAccount extends Model implements Auditable
     use \OwenIt\Auditing\Auditable;
     use HasFactory, SoftDeletes;
 
+    public function employee(){
+        return $this->belongsTo('App\Models\Employee');
+    }
     public function payments(){
         return $this->hasMany('App\Models\Payment');
     }
