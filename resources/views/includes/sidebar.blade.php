@@ -1115,9 +1115,7 @@
                         @endif
                     </ul>
                 </li>
-
-                   
-                  
+                
                     @if (in_array('Finance', $department_names) || in_array('Transport & Logistics', $department_names) || in_array('Super Admin', $role_names))
                     <li class="nav-header">
                         <span class="">Trip Management</span>
@@ -1154,6 +1152,7 @@
                         @endphp
                   
                     @if ((in_array('Admin', $role_names) && in_array('Transport & Logistics', $department_names)) || in_array('Super Admin', $role_names))
+                    
                     <li class="has-children">
                         <a href="#"><i class="fas fa-cog"></i> <span>Master</span> <i class="fas fa-angle-right arrow"></i></a>
                         <ul class="child-nav">
@@ -1164,7 +1163,7 @@
                             <li class="{{ request()->routeIs('clearing_agents.index') ? 'active' : '' }}"><a href="{{route('clearing_agents.index')}}" ><i class="fas fa-building"></i> <span>Clearing Agents</span></a></li>
                             <li class="{{ request()->routeIs('countries.index') ? 'active' : '' }}"><a href="{{route('countries.index')}}"><i class="fas fa-globe-africa"></i> <span>Countries</span> </a></li>
                             <li class="{{ request()->routeIs('consignees.index') ? 'active' : '' }}"><a href="{{route('consignees.index')}}" ><i class="fas fa-users"></i> <span>Consignees</span></a></li>
-                              <li class="{{ request()->routeIs('corridors.index') ? 'active' : '' }}"><a href="{{route('corridors.index')}}" ><i class="fas fa-road"></i> <span>Corridors</span></a></li>
+                            <li class="{{ request()->routeIs('corridors.index') ? 'active' : '' }}"><a href="{{route('corridors.index')}}" ><i class="fas fa-road"></i> <span>Corridors</span></a></li>
                             <li class="{{ request()->routeIs('deductions.index') ? 'active' : '' }}"><a href="{{route('deductions.index')}}" ><i class="fas fa-list "></i> <span>Deductions</span></a></li>
                             <li class="{{ request()->routeIs('destinations.index') ? 'active' : '' }}"><a href="{{route('destinations.index')}}"><i class="fas fa-map-pin"></i> <span>Destinations</span> </a></li>
                             <li class="{{ request()->routeIs('expenses.index') ? 'active' : '' }}"><a href="{{ route('expenses.index') }}"><i class="fas fa-list"></i> <span>Expenses</span> </a></li>
@@ -1177,12 +1176,11 @@
                                 <li class="{{ request()->routeIs('teams.index') ? 'active' : '' }}"><a href="{{route('teams.index')}}" ><i class="fas fa-users"></i> <span>Teams</span></a></li>
                             @endif
                             @if (in_array('Finance', $department_names) || in_array('Super Admin', $role_names))
-                            <li class="{{ request()->routeIs('rates.index') ? 'active' : '' }}"><a href="{{route('rates.index')}}"><i class="fas fa-money"></i> <span>Trip Rates</span></a></li>  
+                                <li class="{{ request()->routeIs('rates.index') ? 'active' : '' }}"><a href="{{route('rates.index')}}"><i class="fas fa-money"></i> <span>Trip Rates</span></a></li>  
                             @endif
                             <li class="{{ request()->routeIs('trip_types.index') ? 'active' : '' }}"><a href="{{route('trip_types.index')}}"><i class="fas fa-road"></i> <span>Trip Types</span> </a></li>
                             <li class="{{ request()->routeIs('truck_stops.index') ? 'active' : '' }}"><a href="{{route('truck_stops.index')}}" ><i class="fas fa-stop"></i> <span>Truck Stops</span></a></li>
                             <li class="{{ request()->routeIs('locations.index') ? 'active' : '' }}"><a href="{{route('locations.index')}}" ><i class="fas fa-map-marker"></i> <span>Worksites</span></a></li>
-                          
                         </ul>
                     </li>
                     @endif

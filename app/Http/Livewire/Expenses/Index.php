@@ -7,13 +7,17 @@ use App\Models\Expense;
 use Livewire\Component;
 use App\Models\Currency;
 use Livewire\WithPagination;
+use Maatwebsite\Excel\Excel;
+use Livewire\WithFileUploads;
+use App\Exports\ExpensesExport;
+use App\Imports\ExpensesImport;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
 class Index extends Component
 {
 
-
+  use WithFileUploads;
     use WithPagination;
 
     protected $paginationTheme = 'bootstrap';
@@ -34,6 +38,7 @@ class Index extends Component
     public $frequency;
     public $description;
     public $type;
+    public $importFile;
 
     public $expense_id;
     public $user_id;
@@ -43,6 +48,18 @@ class Index extends Component
         $this->reset(['search']);
         $this->currencies = Currency::latest()->get();
         $this->accounts = Account::latest()->get();
+    }
+
+     public function exportExpensesCSV(Excel $excel){
+
+        return $excel->download(new ExpensesExport, 'expenses_'.time().'.csv', Excel::CSV);
+    }
+    public function exportExpensesPDF(Excel $excel){
+
+        return $excel->download(new ExpensesExport, 'expenses_'.time().'.pdf', Excel::DOMPDF);
+    }
+    public function exportExpensesExcel(Excel $excel){
+        return $excel->download(new ExpensesExport, 'expenses_'.time().'.xlsx');
     }
     private function resetInputFields(){
         $this->account_id = '';
@@ -61,6 +78,22 @@ class Index extends Component
         'type' => 'required',
         'account_id' => 'required',
     ];
+
+    public function importExpenses(){
+        
+        $file = $this->importFile;
+        $import = new ExpensesImport;
+        $import->import($file);
+
+        $this->dispatchBrowserEvent('hide-expenseImportModal');
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Expense(s) Imported Successfully!!"
+        ]);
+
+        return redirect(request()->header('Referer'));
+      
+    }
 
     public function store(){
         try{

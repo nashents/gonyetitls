@@ -136,11 +136,11 @@ class InventoriesImport implements ToCollection, SkipsEmptyRows, WithLimit,
 
     public function batchSize(): int
     {
-        return 100;
+        return 150;
     }
 
     public function chunkSize(): int
     {
-        return 100;
+        return 150;
     }
 }

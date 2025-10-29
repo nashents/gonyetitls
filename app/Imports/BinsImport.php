@@ -3,6 +3,7 @@
 namespace App\Imports;
 
 use App\Models\Bin;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithLimit;

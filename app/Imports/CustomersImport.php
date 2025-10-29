@@ -62,7 +62,7 @@ class CustomersImport implements
     {
         foreach ($rows as $row) {
             if ($row->filter()->isEmpty()) continue;
-  $name        = $row->get('name');
+            $name        = $row->get('name');
             $email       = $row->get('email');
             $phonenumber = $row->get('phonenumber');
             $worknumber  = $row->get('worknumber');

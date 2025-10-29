@@ -5,7 +5,6 @@ namespace App\Imports;
 use App\Models\User;
 use App\Models\Count;
 use App\Models\Consignee;
-use App\Imports\ConsigneesImport;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;

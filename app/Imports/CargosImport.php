@@ -5,7 +5,6 @@ namespace App\Imports;
 use App\Models\User;
 use App\Models\Cargo;
 use App\Models\Count;
-use App\Imports\CargosImport;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;

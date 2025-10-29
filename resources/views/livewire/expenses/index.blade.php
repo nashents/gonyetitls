@@ -12,6 +12,10 @@
 
                             <div class="panel-title">
                                 <a href="" data-toggle="modal" data-target="#expenseModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Expense</a>
+                                <a href="" data-toggle="modal" data-target="#expenseImportModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import</a>
+                                <a href="#" wire:click="exportExpensesExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
+                                <a href="#" wire:click="exportExpensesCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
+                                <a href="#" wire:click="exportExpensesPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
                             </div>
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
@@ -110,6 +114,34 @@
         </div>
         <!-- /.container-fluid -->
     </section>
+
+        <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="expenseImportModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modal4Label"><i class="fa fa-upload"></i>Import Expense(s) <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                </div>
+                <form wire:submit.prevent="importExpenses()" enctype="multipart/form-data">
+                  
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="name">Upload Expenses Excel File<span class="required" style="color: red">*</span></label>
+                        <input type="file" class="form-control" wire:model.debounce.300ms="importFile" placeholder="Upload Loading Points File" required>
+                        @error('importFile') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                        <button  type="submit"  class="btn bg-success btn-wide btn-rounded"><i class="fa fa-upload"></i>Upload</button>
+                    </div>
+                    <!-- /.btn-group -->
+                </div>
+            </form>
+            </div>
+        </div>
+    </div>
+
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="expenseModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
         <div class="modal-dialog" role="document">
             <div class="modal-content">

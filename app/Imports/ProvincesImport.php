@@ -7,7 +7,6 @@ use App\Models\Count;
 use App\Models\Country;
 use App\Models\Province;
 use App\Models\LoadingPoint;
-use App\Imports\ProvincesImport;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;

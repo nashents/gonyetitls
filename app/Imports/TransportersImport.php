@@ -6,7 +6,6 @@ use App\Models\User;
 use App\Models\Count;
 use App\Models\Transporter;
 use Illuminate\Support\Collection;
-use App\Imports\TransportersImport;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Maatwebsite\Excel\Concerns\WithLimit;

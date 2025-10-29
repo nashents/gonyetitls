@@ -130,6 +130,18 @@
 @stack('scripts')
     
     <script type="text/javascript">
+            window.addEventListener('show-expenseImportModal', event => {
+                $('#expenseImportModal').modal('show');
+            })
+    </script>
+
+    <script type="text/javascript">
+            window.addEventListener('hide-expenseImportModal', event => {
+                $('#expenseImportModal').modal('hide');
+            })
+    </script>
+
+    <script type="text/javascript">
             window.addEventListener('show-exchangeModal', event => {
                 $('#exchangeModal').modal('show');
             })
