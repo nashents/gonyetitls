@@ -8,6 +8,7 @@ use Livewire\Component;
 use App\Models\Currency;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Excel;
+use App\Models\PaymentMethod;
 use Livewire\WithFileUploads;
 use App\Exports\ExpensesExport;
 use App\Imports\ExpensesImport;
@@ -29,6 +30,8 @@ class Index extends Component
 
     public $accounts;
     public $account_id;
+    public $payment_methods;
+    public $payment_method_id;
     private $expenses;
     public $status;
     public $name;
@@ -46,8 +49,9 @@ class Index extends Component
     public function mount(){
         $this->resetPage();
         $this->reset(['search']);
-        $this->currencies = Currency::latest()->get();
-        $this->accounts = Account::latest()->get();
+        $this->currencies = Currency::orderBy('name','asc')->get();
+        $this->payment_methods = PaymentMethod::orderBy('name','asc')->get();
+        $this->accounts = Account::orderBy('name','asc')->get();
     }
 
      public function exportExpensesCSV(Excel $excel){
@@ -63,6 +67,7 @@ class Index extends Component
     }
     private function resetInputFields(){
         $this->account_id = '';
+        $this->payment_method_id = '';
         $this->name = '';
         $this->amount = '';
         $this->frequency = '';
@@ -100,6 +105,7 @@ class Index extends Component
         $expense = new Expense;
         $expense->user_id = Auth::user()->id;
         $expense->account_id = $this->account_id;
+        $expense->payment_method_id = $this->payment_method_id;
         $expense->name = $this->name;
         if (isset($this->currency_id) && $this->currency_id !="") {
             $expense->currency_id = $this->currency_id;
@@ -133,6 +139,7 @@ class Index extends Component
     $this->name = $expense->name;
     $this->type = $expense->type;
     $this->amount = $expense->amount;
+    $this->payment_method_id = $expense->payment_method_id;
     $this->currency_id = $expense->currency_id;
     $this->frequency = $expense->frequency;
     $this->description = $expense->description;
@@ -150,6 +157,7 @@ class Index extends Component
             $expense = Expense::find($this->expense_id);
             $expense->user_id = Auth::user()->id;
             $expense->account_id = $this->account_id;
+            $expense->payment_method_id = $this->payment_method_id;
             $expense->amount = $this->amount;
             if (isset($this->currency_id) && $this->currency_id  != "" ) {
                 $expense->currency_id = $this->currency_id;

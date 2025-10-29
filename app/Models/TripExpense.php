@@ -15,6 +15,9 @@ class TripExpense extends Model implements Auditable
     public function trip(){
         return $this->belongsTo('App\Models\Trip');
     }
+    public function payment_method(){
+        return $this->belongsTo('App\Models\PaymentMethod');
+    }
     public function expense(){
         return $this->belongsTo('App\Models\Expense');
     }

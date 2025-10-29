@@ -358,7 +358,8 @@
                         <li class="has-children">
                             <a href="#"><i class="fas fa-cog"></i> <span>Master</span> <i class="fas fa-angle-right arrow"></i></a>
                             <ul class="child-nav"> 
-                                <li class="{{ request()->routeIs('currencies.index') ? 'active' : '' }}"><a href="{{route('currencies.index')}}"><i class="far fa-money-bill-alt"></i> <span>Currencies</span> </a></li> 
+                                <li class="{{ request()->routeIs('currencies.index') ? 'active' : '' }}"><a href="{{route('currencies.index')}}"><i class="fas fa-money-bill-alt"></i> <span>Currencies</span> </a></li> 
+                                <li class="{{ request()->routeIs('payment_methods.index') ? 'active' : '' }}"><a href="{{route('payment_methods.index')}}"><i class="fas fa-list"></i> <span>Payment Methods</span> </a></li> 
                             
                             </ul>
                         </li>
@@ -1176,7 +1177,7 @@
                                 <li class="{{ request()->routeIs('teams.index') ? 'active' : '' }}"><a href="{{route('teams.index')}}" ><i class="fas fa-users"></i> <span>Teams</span></a></li>
                             @endif
                             @if (in_array('Finance', $department_names) || in_array('Super Admin', $role_names))
-                                <li class="{{ request()->routeIs('rates.index') ? 'active' : '' }}"><a href="{{route('rates.index')}}"><i class="fas fa-money"></i> <span>Trip Rates</span></a></li>  
+                                <li class="{{ request()->routeIs('rates.index') ? 'active' : '' }}"><a href="{{route('rates.index')}}"><i class="fas fa-list"></i> <span>Trip Rates</span></a></li>  
                             @endif
                             <li class="{{ request()->routeIs('trip_types.index') ? 'active' : '' }}"><a href="{{route('trip_types.index')}}"><i class="fas fa-road"></i> <span>Trip Types</span> </a></li>
                             <li class="{{ request()->routeIs('truck_stops.index') ? 'active' : '' }}"><a href="{{route('truck_stops.index')}}" ><i class="fas fa-stop"></i> <span>Truck Stops</span></a></li>

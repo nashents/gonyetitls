@@ -5,6 +5,7 @@ namespace App\Imports;
 use App\Models\Account;
 use App\Models\Expense;
 use App\Models\Currency;
+use App\Models\PaymentMethod;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\ToModel;
@@ -38,6 +39,7 @@ class ExpensesImport implements ToCollection,
             
             $name        = $row->get('name');
             $currency       = Currency::find($row->get('currency'));
+            $payment_method = PaymentMethod::firstOrCreate(['name' => trim($row->get('payment_method'))]);
             $amount = $row->get('amount');
             $account = Account::where('name', 'Trip Expense')->first();
             
@@ -47,6 +49,7 @@ class ExpensesImport implements ToCollection,
 
             $expense->user_id     = Auth::user()->id;
             $expense->currency_id     = $currency ?->id;
+            $expense->payment_method_id     = $payment_method ?->id;
             $expense->account_id     = $account ?->id;
             $expense->amount     = $amount;
             $expense->type     = "Direct";

@@ -1325,8 +1325,9 @@
                                                         <tr>
                                                             <th>Expense</th>
                                                             <th>Category</th>
+                                                            <th>Payment Method</th>
                                                             <th>Currency</th>
-                                                            <th>Amount</th>
+                                                            <th>Amount</th> 
                                                         </tr>
                                                     </thead>
 
@@ -1354,7 +1355,17 @@
                                                                             @error('category.' . $id) <span class="text-danger error">{{ $message }}</span> @enderror
                                                                         </div>
                                                                     </td>
-
+                                                                     <td>
+                                                                           <div class="form-group">
+                                                                            <select class="form-control" wire:model="payment_method_id.{{ $id }}">
+                                                                                <option value="">Select Payment Method</option>
+                                                                                @foreach ($payment_methods as $payment_method)
+                                                                                     <option value="{{$payment_method->id}}">{{$payment_method->name}}</option>
+                                                                                @endforeach
+                                                                            </select>
+                                                                            @error('payment_method_id.' . $id) <span class="text-danger error">{{ $message }}</span> @enderror
+                                                                        </div>
+                                                                    </td>
                                                                     <td>
                                                                         <div class="form-group">
                                                                             <select class="form-control" wire:model="expense_currency_id.{{ $id }}" {{ !isset($company->currency_id) ? 'disabled' : '' }}>
@@ -1390,7 +1401,6 @@
                                                                             </div>
                                                                         @endif
                                                                     </td>
-
                                                                     <td>
                                                                         <div class="form-group">
                                                                             <input type="number" step="any" min="0" class="form-control" wire:model="amount.{{ $id }}" placeholder="Enter Expense Amount" {{ empty($expense_id[$id]) ? 'disabled' : '' }} />

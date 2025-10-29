@@ -9,7 +9,7 @@
     @endif
 @endsection
 @section('title')
-    Currencies | @if (isset(Auth::user()->employee->company))
+    Payment Methods | @if (isset(Auth::user()->employee->company))
     {{Auth::user()->employee->company->name}}
     @elseif (Auth::user()->company)
     {{Auth::user()->company->name}}
@@ -32,14 +32,14 @@
                                 <div class="col-md-6">
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
-            							<li class="active"> <i class="fa fa-list"></i> Currencies</li>
+            							<li class="active"> <i class="fa fa-list"></i> Payment Methods</li>
             						</ul>
                                 </div>
                             </div>
                             <!-- /.row -->
                         </div>
 
-                        @livewire('currencies.index')
+                        @livewire('payment-methods.index')
 
 
                     </div>
@@ -51,7 +51,7 @@
 @section('extra-js')
     <script>
     $(document).ready( function () {
-        $('#currenciesTable').DataTable();
+        $('#payment_methodsTable').DataTable();
     } );
     </script>
 @endsection

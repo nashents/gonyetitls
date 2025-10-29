@@ -12,6 +12,7 @@ use App\Models\Currency;
 use App\Models\Allowance;
 use App\Models\BillExpense;
 use App\Models\TripExpense;
+use App\Models\PaymentMethod;
 use App\Models\AllowanceDriver;
 use App\Models\ExpenseCategory;
 use Illuminate\Support\Facades\Auth;
@@ -25,6 +26,8 @@ class Expenses extends Component
     public $expenses;
     public $trip_expense_type ;
     public $allowances;
+    public $payment_methods;
+    public $payment_method_id;
     public $category;
     public $selectedExpense;
     public $selectedAllowance;
@@ -135,6 +138,7 @@ class Expenses extends Component
     $this->trip_id = $trip->addid;
     $this->currencies = Currency::orderBy('name')->get();
     $this->allowances = Allowance::orderBy('name')->get();
+    $this->payment_methods = PaymentMethod::orderBy('name')->get();
     $this->expenses = Expense::whereHas('account', function($q){
         $q->where('name', 'Trip Expense');
      })->get();
@@ -168,9 +172,11 @@ class Expenses extends Component
 
                 $this->amount[$key] = $expense->amount ?? null;
                 $this->selectedCurrency[$key] = $expense->currency_id ?? null;
+                $this->payment_method_id[$key] = $expense->payment_method_id ?? null;
             } else {
                 $this->amount = $expense->amount ?? null;
                 $this->selectedCurrency = $expense->currency_id ?? null;
+                $this->payment_method_id = $expense->payment_method_id ?? null;
             }
         }
     }
@@ -249,6 +255,7 @@ class Expenses extends Component
                     $trip_expense->user_id = Auth::user()->id;
                     $trip_expense->trip_id = $this->trip->id;
                     $trip_expense->currency_id = $this->selectedCurrency[$key] ?? null;
+                    $trip_expense->payment_method_id = $this->payment_method_id[$key] ?? null;
                 
                     if ($type === 'expense') {
                         $trip_expense->expense_id = $this->selectedExpense[$key];
@@ -401,6 +408,7 @@ class Expenses extends Component
         $this->edit = True;
         $this->trip = Trip::find($this->trip_id);
         $this->selectedCurrency = $expense->currency_id;
+        $this->payment_method_id = $expense->payment_method_id;
         $this->selectedExpense = $expense->expense_id;
         $this->selectedAllowance = $expense->allowance_id;
         if ($expense->expense_id) {
@@ -443,6 +451,7 @@ class Expenses extends Component
                 $trip_expense->exchange_rate = $this->exchange_rate;
                 $trip_expense->exchange_amount = $this->exchange_amount;
                 $trip_expense->currency_id = $this->selectedCurrency;
+                $trip_expense->payment_method_id = $this->payment_method_id;
                 $trip_expense->update();
                 
 

@@ -130,6 +130,26 @@
 @stack('scripts')
     
     <script type="text/javascript">
+            window.addEventListener('show-payment_methodModal', event => {
+                $('#payment_methodModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-payment_methodModal', event => {
+                $('#payment_methodModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-payment_methodEditModal', event => {
+                $('#payment_methodEditModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-payment_methodEditModal', event => {
+                $('#payment_methodEditModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
             window.addEventListener('show-expenseImportModal', event => {
                 $('#expenseImportModal').modal('show');
             })

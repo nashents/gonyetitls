@@ -42,6 +42,9 @@ class Expense extends Model implements Auditable
     public function account(){
         return $this->belongsTo('App\Models\Account');
     }
+    public function payment_method(){
+        return $this->belongsTo('App\Models\PaymentMethod');
+    }
    
     public function currency(){
         return $this->belongsTo('App\Models\Currency');

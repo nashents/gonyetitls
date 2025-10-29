@@ -51,6 +51,7 @@ use App\Models\LoadingPoint;
 use App\Models\Notification;
 use App\Models\RouteExpense;
 use App\Models\ClearingAgent;
+use App\Models\PaymentMethod;
 use Livewire\WithFileUploads;
 use App\Models\AllowanceDriver;
 use App\Models\ExpenseCategory;
@@ -294,6 +295,8 @@ class Create extends Component
     public $trip_expenses = False;
     public $expenses;
     public $expense_id;
+    public $payment_methods;
+    public $payment_method_id;
     public $category;
     public $expense_currency_id = [];
     public $amount = [];
@@ -543,6 +546,7 @@ class Create extends Component
             $this->expense_id = [];
             $this->category = [];
             $this->expense_currency_id = [];
+            $this->payment_method_id = [];
             $this->amount = [];
             $this->expense_exchange_rate = [];
             $this->expense_exchange_amount = [];
@@ -555,6 +559,7 @@ class Create extends Component
                     $this->expense_id[$id] = $id;
                     $this->category[$id] = $route_expense->category;
                     $this->expense_currency_id[$id] = $route_expense->currency_id;
+                    $this->payment_method_id[$id] = $route_expense->payment_method_id;
                     $this->amount[$id] = $route_expense->amount;
 
                     // Optional: handle exchange rate & converted amount if relevant
@@ -1022,6 +1027,7 @@ class Create extends Component
         $this->freight = 0;
         $this->transporter_rate = 0;
         $this->transporter_freight = 0;
+        $this->payment_methods = PaymentMethod::orderBy('name','asc')->get();
         $this->agents = Agent::orderBy('name','asc')->get();
         $this->trip_types = TripType::orderBy('name','asc')->get();
         $this->account = Account::with('expenses')->where('name','Trip Expense')->first();
@@ -1036,6 +1042,7 @@ class Create extends Component
                 $this->category[$id] = $expense->category;
                 $this->expense_currency_id[$id] = $expense->currency_id;
                 $this->amount[$id] = $expense->amount;
+                $this->payment_method_id[$id] = $expense->payment_method_id;
                 // Optional: handle exchange rate & converted amount if relevant
                 if ($expense->currency_id != ($this->company->currency_id ?? null)) {
                     $this->expense_exchange_rate[$id] = $expense->exchange_rate;
@@ -1690,6 +1697,7 @@ class Create extends Component
                         $expenseId = $this->expense_id[$key] ?? null;
                         $trip_expense->expense_id = (is_null($expenseId) || Expense::where('id', $expenseId)->exists()) ? $expenseId : null;
                         $trip_expense->currency_id = $this->expense_currency_id[$key] ?? null;
+                        $trip_expense->payment_method_id = $this->payment_method_id[$key] ?? null;
                         $trip_expense->category = $this->category[$key] ?? null;
                         $trip_expense->amount = $this->amount[$key] ?? 0;
                         $trip_expense->exchange_rate = $this->expense_exchange_rate[$key] ?? null;
@@ -1716,6 +1724,7 @@ class Create extends Component
                 
 
                 if ($this->transporter_agreement) {
+
                     $expense = Expense::where('name', 'Transporter Payment')->first();
                 
                     $trip_expense = new TripExpense;

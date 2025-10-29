@@ -14,6 +14,8 @@
                 </th>
                 <th class="th-sm">Name
                 </th>
+                <th class="th-sm">MOP
+                </th>
                 <th class="th-sm">Category
                 </th>
                 <th class="th-sm">Currency
@@ -47,6 +49,7 @@
                     @endif
 
                 </td>
+                <td>{{$trip_expense->payment_method ? $trip_expense->payment_method->name : ""}}</td>
                 <td>{{$trip_expense->category}}</td>
                 <td>{{ $trip_expense->currency ? $trip_expense->currency->name : ""}}</td>
                 <td>
@@ -186,7 +189,19 @@
                     </div>
                     </div>
                     <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="payment_method_id">Payment Methods<span class="required" style="color: red">*</span></label>
+                           <select wire:model.debounce.300ms="payment_method_id.0" class="form-control" required>
+                               <option value="">Select Payment Method</option>
+                               @foreach ($payment_methods as $payment_method)
+                               <option value="{{ $payment_method->id }}">{{ $payment_method->name }}</option>
+                               @endforeach
+                           </select>
+                            @error('payment_method_id.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+                    <div class="col-md-4">
                         <div class="form-group">
                             <label for="selectedCurrency">Currencies<span class="required" style="color: red">*</span></label>
                            <select wire:model.debounce.300ms="selectedCurrency.0" class="form-control" required>
@@ -211,7 +226,7 @@
                         @endif
                         @endif
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <div class="form-group">
                             <label for="amount">Amount<span class="required" style="color: red">*</span></label>
                             <input type="number" step="any" class="form-control"  wire:model.debounce.300ms="amount.0" placeholder="Enter Amount" required/>
@@ -283,7 +298,19 @@
                 </div>
                 </div>
                 <div class="row">
-                <div class="col-md-5">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="payment_method_id">Payment Methods<span class="required" style="color: red">*</span></label>
+                           <select wire:model.debounce.300ms="payment_method_id.{{$value}}" class="form-control" required>
+                               <option value="">Select Payment Method</option>
+                               @foreach ($payment_methods as $payment_method)
+                               <option value="{{ $payment_method->id }}">{{ $payment_method->name }}</option>
+                               @endforeach
+                           </select>
+                            @error('payment_method_id.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+                <div class="col-md-4">
                     <div class="form-group">
                         <label for="selectedCurrency">Currencies<span class="required" style="color: red">*</span></label>
                        <select wire:model.debounce.300ms="selectedCurrency.{{$value}}" class="form-control" required>
@@ -308,7 +335,7 @@
                     @endif
                     @endif
                 </div>
-                <div class="col-md-5">
+                <div class="col-md-3">
                     <div class="form-group">
                         <label for="amount">Amount<span class="required" style="color: red">*</span></label>
                         <input type="number" step="any" class="form-control"  wire:model.debounce.300ms="amount.{{$value}}" placeholder="Enter Amount" required/>

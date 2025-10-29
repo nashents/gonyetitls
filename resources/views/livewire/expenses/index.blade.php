@@ -35,6 +35,8 @@
                                     </th>
                                     <th class="th-sm">Name
                                     </th>
+                                    <th class="th-sm">MOP
+                                    </th>
                                     <th class="th-sm">Currency
                                     </th>
                                     <th class="th-sm">Amount
@@ -62,6 +64,7 @@
                                     <td>{{ucfirst($expense->account ? $expense->account->name : "")}}</td>
                                     <td>{{ucfirst($expense->type)}}</td>
                                     <td>{{ucfirst($expense->name)}}</td>
+                                    <td>{{$expense->payment_method ? $expense->payment_method->name : ""}}</td>
                                     <td>{{$expense->currency ? $expense->currency->name : ""}}</td>
                                     <td>
                                         @if ($expense->amount)
@@ -177,12 +180,29 @@
                         </div>
                     </div>
                    
-                    
-                    <div class="form-group">
-                        <label for="name">Name<span class="required" style="color: red">*</span></label>
-                        <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Name" required />
-                        @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    <div class="row">
+                        <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="name">Name<span class="required" style="color: red">*</span></label>
+                                    <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Name" required />
+                                    @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="name">Payment Methods</label>
+                               <select wire:model.debounce.300ms="payment_method_id" class="form-control">
+                                <option value="">Select Payment Method</option>
+                                @foreach ($payment_methods as $payment_method)
+                                    <option value="{{ $payment_method->id }}">{{ $payment_method->name }}</option>
+                                @endforeach
+                               </select>
+                               <small>  <a href="{{ route('payment_methods.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Payment Method</a></small> <br> 
+                               @error('payment_method_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
                     </div>
+                   
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
@@ -275,12 +295,28 @@
                         </div>
                     </div>
                 
-                    <div class="form-group">
-                        <label for="name">Name<span class="required" style="color: red">*</span></label>
-                        <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Name" required />
-                        @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                     <div class="row">
+                        <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="name">Name<span class="required" style="color: red">*</span></label>
+                                    <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Name" required />
+                                    @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="name">Payment Methods</label>
+                               <select wire:model.debounce.300ms="payment_method_id" class="form-control">
+                                <option value="">Select Payment Method</option>
+                                @foreach ($payment_methods as $payment_method)
+                                    <option value="{{ $payment_method->id }}">{{ $payment_method->name }}</option>
+                                @endforeach
+                               </select>
+                               <small>  <a href="{{ route('payment_methods.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Payment Method</a></small> <br> 
+                               @error('payment_method_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
                     </div>
-
                     <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
