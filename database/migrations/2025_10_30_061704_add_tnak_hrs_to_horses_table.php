@@ -14,7 +14,7 @@ class AddTnakHrsToHorsesTable extends Migration
     public function up()
     {
         Schema::table('horses', function (Blueprint $table) {
-           $table->string('tnak_hrs')->nullable();
+           $table->text('tnak_hrs')->nullable();
         });
     }
 
