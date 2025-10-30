@@ -21,4 +21,7 @@ class RouteExpense extends Model implements Auditable
     public function currency(){
         return $this->belongsTo('App\Models\Currency');
     }
+    public function payment_method(){
+        return $this->belongsTo('App\Models\PaymentMethod');
+    }
 }

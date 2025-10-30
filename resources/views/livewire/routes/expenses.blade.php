@@ -27,6 +27,8 @@
                                     </th>
                                     <th class="th-sm">Category
                                     </th>
+                                    <th class="th-sm">MOP
+                                    </th>
                                     <th class="th-sm">Currency
                                     </th>
                                     <th class="th-sm">Amount
@@ -43,6 +45,7 @@
                                   <tr>
                                     <td>{{$route_expense->expense ? $route_expense->expense->name : ""}}</td>
                                     <td>{{$route_expense->category}}</td>
+                                    <td>{{$route_expense->payment_method ? $route_expense->currency->name : ""}}</td>
                                     <td>{{$route_expense->currency ? $route_expense->currency->name : ""}}</td>
                                     <td>{{number_format($route_expense->amount ? $route_expense->amount : 0,2)}}</td>
                                     <td><span class="badge bg-{{$route_expense->status == 1 ? "success" : "danger"}}">{{$route_expense->status == 1 ? "Active" : "Inactive"}}</span></td>
@@ -115,7 +118,7 @@
 </div>
 
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="expenseModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog  mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fas fa-plus"></i> Add Expense <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -149,7 +152,19 @@
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="payment_method_id">Payment Methods</label>
+                                    <select wire:model.debounce.300ms="payment_method_id.0" class="form-control">
+                                        <option value="">Select Payment Method</option>
+                                        @foreach ($payment_methods as $payment_method)
+                                        <option value="{{ $payment_method->id }}">{{ $payment_method->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('payment_method_id.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="from">Currencies</label>
                                     <select wire:model.debounce.300ms="currency_id.0" class="form-control">
@@ -161,7 +176,7 @@
                                     @error('currency_id.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="name">Amount</label>
                                     <input type="number" min="1" class="form-control" wire:model.debounce.300ms="amount.0" placeholder="Enter expense mmount for the route"/>
@@ -198,7 +213,19 @@
                                 </div>
                             </div>
                             <div class="row">
-                                <div class="col-md-5">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="payment_method_id">Payment Methods</label>
+                                    <select wire:model.debounce.300ms="payment_method_id.{{$value}}" class="form-control">
+                                        <option value="">Select Payment Method</option>
+                                        @foreach ($payment_methods as $payment_method)
+                                        <option value="{{ $payment_method->id }}">{{ $payment_method->name }}</option>
+                                        @endforeach
+                                    </select>
+                                        @error('payment_method_id.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
                                     <div class="form-group">
                                         <label for="from">Currencies</label>
                                         <select wire:model.debounce.300ms="currency_id.{{$value}}" class="form-control">
@@ -210,7 +237,7 @@
                                         @error('currency_id.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
-                                <div class="col-md-5">
+                                <div class="col-md-3">
                                     <div class="form-group">
                                         <label for="name">Amount</label>
                                         <input type="number" min="1" class="form-control" wire:model.debounce.300ms="amount.{{$value}}" placeholder="Enter expense mmount for the route"/>
@@ -248,7 +275,7 @@
         </div>
     </div>
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="expenseEditModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog  mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fas fa-edit"></i> Edit Expense <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>

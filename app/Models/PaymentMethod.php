@@ -19,6 +19,9 @@ class PaymentMethod extends Model implements Auditable
     public function trip_expenses(){
         return $this->hasMany('App\Models\TripExpense');
     }
+    public function route_expenses(){
+        return $this->hasMany('App\Models\RouteExpense');
+    }
 
     protected $fillable =[
         'user_id',

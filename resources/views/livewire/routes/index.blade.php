@@ -139,6 +139,7 @@
                                         <option value="{{ $destination->id }}">{{ $destination->country ? $destination->country->name : "" }} {{ $destination->city }}</option>
                                    @endforeach
                                </select>
+                                <small>  <a href="{{ route('destinations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Location</a></small> <a href="#" wire:click.prevent="refresh('destinations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 @error('from') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -151,7 +152,8 @@
                                             <option value="{{ $destination->id }}">{{ $destination->country ? $destination->country->name : "" }} {{ $destination->city }}</option>
                                     @endforeach
                                 </select>
-                                    @error('to') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                <small><a href="{{ route('destinations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Location</a></small> <a href="#" wire:click.prevent="refresh('destinations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                @error('to') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                         </div>
                     </div>
@@ -183,7 +185,7 @@
                                           <option value="{{$border->id}}">{{$border->name}}</option>
                                       @endforeach
                                   </select>
-                                  <small><a href="{{ route('borders.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Border</a></small> 
+                                  <small><a href="{{ route('borders.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Border</a></small> <a href="#" wire:click.prevent="refresh('borders')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                   @error('border_id.0') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
 
@@ -291,6 +293,7 @@
                                    @endforeach
                                </select>
                                 @error('from') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                <small><a href="{{ route('destinations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Location</a></small> <a href="#" wire:click.prevent="refresh('destinations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                             </div>
                         </div>
                         <div class="col-md-6">

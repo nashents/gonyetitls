@@ -191,8 +191,8 @@
                     <div class="row">
                     <div class="col-md-4">
                         <div class="form-group">
-                            <label for="payment_method_id">Payment Methods<span class="required" style="color: red">*</span></label>
-                           <select wire:model.debounce.300ms="payment_method_id.0" class="form-control" required>
+                            <label for="payment_method_id">Payment Methods</label>
+                           <select wire:model.debounce.300ms="payment_method_id.0" class="form-control" >
                                <option value="">Select Payment Method</option>
                                @foreach ($payment_methods as $payment_method)
                                <option value="{{ $payment_method->id }}">{{ $payment_method->name }}</option>
@@ -300,8 +300,8 @@
                 <div class="row">
                     <div class="col-md-4">
                         <div class="form-group">
-                            <label for="payment_method_id">Payment Methods<span class="required" style="color: red">*</span></label>
-                           <select wire:model.debounce.300ms="payment_method_id.{{$value}}" class="form-control" required>
+                            <label for="payment_method_id">Payment Methods</label>
+                           <select wire:model.debounce.300ms="payment_method_id.{{$value}}" class="form-control">
                                <option value="">Select Payment Method</option>
                                @foreach ($payment_methods as $payment_method)
                                <option value="{{ $payment_method->id }}">{{ $payment_method->name }}</option>

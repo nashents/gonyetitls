@@ -47,7 +47,7 @@
                                         </th>
                                         <th class="th-sm">Email
                                         </th>
-                                        <th class="th-sm">Work Info
+                                        <th class="th-sm">Work Details
                                         </th>
                                         <th class="th-sm">Account
                                         </th>
@@ -72,16 +72,20 @@
                                             <td>{{$employee->gender}}</td>
                                             <td>{{$employee->email}}</td>
                                             <td>
-                                                <strong></strong>Dpts:
+                                                <strong>Deparments:</strong>
                                                 @foreach ($employee->departments as $department)
-                                                {{$department->name}}
-                                                    @if (!$loop->last)
-                                                    , 
-                                                    @endif
+                                                    {{$department->name}} @if (!$loop->last),@endif
                                                 @endforeach
                                                 <br>
                                                 <strong>Post: </strong>{{$employee->post}} <br>
                                                 <strong>Branch: </strong>{{$employee->branch ? $employee->branch->name : ""}} <br>
+                                                <strong>Rank: </strong>{{$employee->ranks ? $employee->ranks->first()->name : ""}} <br>
+                                                <strong>Role(s):</strong> 
+                                                    @if ($employee->user->roles)
+                                                        @foreach ($employee->user->roles as $role)
+                                                            {{$role->name}} @if (!$loop->last),@endif
+                                                        @endforeach
+                                                    @endif
                                             </td>
                                             <td>
                                                 @if ($employee->user)

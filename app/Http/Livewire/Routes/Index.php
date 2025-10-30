@@ -131,6 +131,24 @@ class Index extends Component
 
     }
 
+       public function refresh($category){
+
+        if($category == "destinations"){
+            $this->destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Destinations Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "borders"){
+            $this->borders = Border::with('clearing_agents:id,name')->orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Borders Refreshed Successfully!!."
+            ]);
+        }
+    }
+
 
     public function update()
     {
