@@ -8,6 +8,7 @@ use Livewire\Component;
 use App\Models\Currency;
 use App\Models\RouteExpense;
 use Livewire\WithPagination;
+use App\Models\PaymentMethod;
 use Livewire\WithFileUploads;
 
 class Expenses extends Component
@@ -23,6 +24,9 @@ class Expenses extends Component
     private $route_expenses;
     public $route_expense_id;
     public $route_id;
+    public $payment_methods;
+    public $payment_method_id;
+    public $route;
     public $expenses;
     public $expense_id;
     public $currencies;
@@ -55,6 +59,7 @@ class Expenses extends Component
             $q->where('name', 'Trip Expense');
         })->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
+        $this->payment_methods = PaymentMethod::orderBy('name','asc')->get();
     }
 
         public function updated($value){
@@ -72,6 +77,7 @@ class Expenses extends Component
         $this->amount = Null;
         $this->route_expense_id = Null;
         $this->category = Null;
+        $this->payment_method_id = Null;
        
     }
 
@@ -93,6 +99,9 @@ class Expenses extends Component
                 if (isset($this->category[$key])) {
                    $route_expense->category = $this->category[$key];
                 }
+                if (isset($this->category[$key])) {
+                   $route_expense->payment_method_id = $this->payment_method_id[$key];
+                }
                 $route_expense->status = 1;
                 $route_expense->save();
             }
@@ -105,7 +114,7 @@ class Expenses extends Component
             'message'=>"Expense(s) Added to Route Successfully!!"
         ]);
 
-        redirect(request()->header('Referer'));
+      
     }
 
      public function edit($id){
@@ -115,6 +124,7 @@ class Expenses extends Component
         $this->expense_id = $route_expense->expense_id;
         $this->amount = $route_expense->amount;
         $this->category = $route_expense->category;
+        $this->payment_method_id = $route_expense->payment_method_id;
         $this->status = $route_expense->status;
         $this->dispatchBrowserEvent('show-expenseEditModal');
       
@@ -127,6 +137,7 @@ class Expenses extends Component
         $route_expense->expense_id = $this->expense_id;
         $route_expense->currency_id = $this->currency_id;
         $route_expense->amount = $this->amount;
+        $route_expense->payment_method_id = $this->payment_method_id;
         $route_expense->category = $this->category;
         $route_expense->status = $this->status;
         $route_expense->update();

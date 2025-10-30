@@ -69,11 +69,11 @@
                                         <strong>Tollgates:</strong> {{$route->tollgates}} <br>
                                         <strong>Rank:</strong> {{$route->rank}} <br>
                                         <strong>Borders:</strong>
-                                            [
+                                          
                                                 @foreach ($route->borders as $border)
                                                     {{$border->name}} @if (!$loop->last), @endif
                                                 @endforeach
-                                            ]
+                                        
                                     </td>
                                     <td>
                                         @if ($route->expiry_date >= now()->toDateTimeString())
