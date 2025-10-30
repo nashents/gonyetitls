@@ -546,7 +546,6 @@
                                             <label for="make">Waterpump Belt Size</label>
                                             <select name="" class="form-control" wire:model.debounce.300ms="water_pump_belt_size" >
                                                 <option value="">Select Waterpump Belt Size</option>
-                                                <option value=""></option>
                                             </select>
                                             @error('water_pump_belt_size') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
@@ -571,7 +570,6 @@
                                             <label for="make">Fan Belt Sizes</label>
                                             <select name="" class="form-control" wire:model.debounce.300ms="fan_belt_size" >
                                                 <option value="">Select Fan Belt Size</option>
-                                                <option value=""></option>
                                             </select>
                                             @error('fan_belt_size') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
@@ -645,7 +643,6 @@
                                             <label for="make">Battery Size</label>
                                             <select name="" class="form-control" wire:model.debounce.300ms="battery_size" >
                                                 <option value="">Select Battery Size</option>
-                                                <option value=""></option>
                                             </select>
                                             @error('battery_size') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>

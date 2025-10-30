@@ -5,6 +5,7 @@ namespace App\Http\Livewire\Horses;
 use Carbon\Carbon;
 use App\Models\Horse;
 use Livewire\Component;
+use App\Models\Document;
 use App\Models\HorseMake;
 use App\Models\HorseType;
 use App\Models\HorseGroup;
@@ -43,7 +44,9 @@ class Create extends Component
     public $no_of_wheels;
     public $start_date;
     public $end_date;
+    public $horse_group;
     public $mileage;
+    public $hours;
     public $manufacturer;
     public $origin;
     public $condition;
@@ -88,7 +91,7 @@ class Create extends Component
     public $steering_reservoir;
     public $braking_system_type;
     public $clutch_size;
-    public $tnak_rhs;
+    public $tnak_hrs;
     public $battery_size;
 
     public $inputs = [];
@@ -122,6 +125,7 @@ class Create extends Component
         $this->measurement = '';
         $this->origin = '';
         $this->mileage = '';
+        $this->hours = '';
         $this->manufacturer = '';
         $this->chasis_number = '';
         $this->engine_number = '';
@@ -212,6 +216,7 @@ class Create extends Component
         $horse->color = $this->color;
         $horse->no_of_wheels = $this->no_of_wheels ? $this->no_of_wheels : "";
         $horse->mileage = $this->mileage;
+        $horse->hours = $this->hours;
         $horse->capacity = $this->capacity;
         $horse->measurement = $this->measurement;
         $horse->condition = $this->condition;
@@ -253,7 +258,7 @@ class Create extends Component
         $horse->steering_reservoir = $this->steering_reservoir;
         $horse->braking_system_type = $this->braking_system_type;
         $horse->clutch_size = $this->clutch_size;
-        $horse->tnak_rhs = $this->tnak_rhs;
+        $horse->tnak_hrs = $this->tnak_hrs;
         $horse->battery_size = $this->battery_size;
         $horse->mechanical = $this->mechanical;
         $horse->status = 1;
@@ -299,8 +304,9 @@ class Create extends Component
                   $file->storeAs('/documents', $fileNameToStore, 'my_files');
 
               }
-              $document = new HorseDocument;
+              $document = new Document;
               $document->user_id = Auth::user()->id;
+              $document->category = "horse";
               $document->horse_id = $horse->id;
               if(isset($this->title[$key])){
               $document->title = $this->title[$key];

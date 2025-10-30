@@ -7,6 +7,7 @@ use App\Models\Cargo;
 use App\Models\Trailer;
 use Livewire\Component;
 use App\Models\Capacity;
+use App\Models\Document;
 use App\Models\Measurement;
 use App\Models\TrailerType;
 use App\Models\Transporter;
@@ -307,7 +308,8 @@ public function activate($id){
                   $file->storeAs('/documents', $fileNameToStore, 'my_files');
 
               }
-              $document = new TrailerDocument;
+              $document = new Document;
+              $document->category = "trailer";
               $document->user_id = Auth::user()->id;
               $document->trailer_id = $trailer->id;
               if(isset($this->title[$key])){

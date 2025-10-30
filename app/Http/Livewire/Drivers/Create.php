@@ -55,6 +55,7 @@ class Create extends Component
     public $transporter_id;
     public $class;
     public $email;
+    public $personal_email;
     public $post;
     public $address;
     public $department_id;
@@ -157,6 +158,7 @@ class Create extends Component
           'surname' => 'required|alpha|min:2',
           'dob' => 'nullable',
           'email' => 'nullable|email|unique:users,email,NULL,id,deleted_at,NULL',
+          'personal_email' => 'nullable|email|unique:employees,personal_email,NULL,id,deleted_at,NULL',
           'phonenumber' => 'nullable|unique:employees,phonenumber,NULL,id,deleted_at,NULL|max:13',
           'transporter_id' => 'required',
           'department_id' => 'required',
@@ -340,6 +342,7 @@ class Create extends Component
       $employee->surname = $this->surname;
       $employee->phonenumber = $this->phonenumber;
       $employee->email = $this->email;
+      $employee->personal_email = $this->personal_email;
       $employee->pin = $pin;
       $employee->gender = $this->gender;
       $employee->dob = $this->dob;
@@ -382,7 +385,7 @@ class Create extends Component
         $employee_position->department_id = $employee->departments->first()?->id ?? Null;
         $employee_position->grade_id = $employee->grade_id ?? Null;
         $employee_position->start_date = $employee->start_date ?? Null;
-         $employee_position->changed_by = Auth::user()->id;
+        $employee_position->changed_by = Auth::user()->id;
         $employee_position->change_reason = "Appointment";
         $employee_position->remarks = "Initial Appointment";
         $employee_position->save();

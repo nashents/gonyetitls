@@ -42,17 +42,16 @@ class Edit extends Component
     public $year;
     public $color;
     public $mileage;
+    public $hours;
     public $manufacturer;
     public $origin;
     public $condition;
-    public $horse_images;
-    public $documents;
     public $fuel_type;
     public $capacity;
     public $measurement;
-    public $images = [];
     public $title;
     public $file;
+    public $horse_id;
 
     public $mechanical;
 
@@ -90,7 +89,7 @@ class Edit extends Component
     public $steering_reservoir;
     public $braking_system_type;
     public $clutch_size;
-    public $tnak_rhs;
+    public $tnak_hrs;
     public $battery_size;
 
     public $inputs = [];
@@ -125,6 +124,7 @@ class Edit extends Component
         $this->no_of_wheels = '';
         $this->origin = '';
         $this->mileage = '';
+        $this->hours = '';
         $this->manufacturer = '';
         $this->chasis_number = '';
         $this->engine_number = '';
@@ -148,13 +148,6 @@ class Edit extends Component
         
         $this->selectedMake = $horse->horse_make_id;
         $this->horse_id = $id;
-        $this->documents = $horse->horse_documents;
-        $this->horse_images = $horse->horse_images;
-        foreach($this->documents as $key => $value){
-            $this->title[$key] = $value->name;
-        }
-        $this->images = $horse->horse_images;
-
         $this->fleet_number = $horse->fleet_number;
         $this->registration_number = $horse->registration_number;
         $this->horse_group_id = $horse->horse_group_id;
@@ -173,6 +166,7 @@ class Edit extends Component
         $this->engine_number = $horse->engine_number;
         $this->fuel_type = $horse->fuel_type;
         $this->mileage = $horse->mileage;
+        $this->hours = $horse->hours;
         $this->engine_type =  $horse->engine_type;
         $this->start_date =  $horse->start_date;
         $this->end_date =  $horse->end_date;
@@ -206,7 +200,7 @@ class Edit extends Component
         $this->steering_reservoir =  $horse->steering_reservoir;
         $this->braking_system_type =  $horse->braking_system_type;
         $this->clutch_size =  $horse->clutch_size;
-        $this->tnak_rhs =  $horse->tnak_rhs;
+        $this->tnak_hrs =  $horse->tnak_hrs;
         $this->battery_size =  $horse->battery_size;
         $this->mechanical =  $horse->mechanical;
     }
@@ -249,6 +243,7 @@ class Edit extends Component
         $horse->end_date = $this->end_date;
         $horse->no_of_wheels = $this->no_of_wheels;
         $horse->mileage = $this->mileage;
+        $horse->hours = $this->hours;
         $horse->gvm = $this->gvm;
         $horse->nvm = $this->nvm;
         $horse->capacity = $this->capacity;
@@ -288,7 +283,7 @@ class Edit extends Component
         $horse->steering_reservoir = $this->steering_reservoir;
         $horse->braking_system_type = $this->braking_system_type;
         $horse->clutch_size = $this->clutch_size;
-        $horse->tnak_rhs = $this->tnak_rhs;
+        $horse->tnak_hrs = $this->tnak_hrs;
         $horse->battery_size = $this->battery_size;
         $horse->mechanical = $this->mechanical;
         $horse->update();

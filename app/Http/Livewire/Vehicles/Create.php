@@ -46,6 +46,7 @@ class Create extends Component
     public $color;
     public $no_of_wheels;
     public $mileage;
+    public $hours;
     public $manufacturer;
     public $origin;
     public $condition;
@@ -80,7 +81,7 @@ class Create extends Component
         $this->transporter_id = '';
         $this->fleet_number = '';
         $this->selectedMake = '';
-        $this->vehcile_model_id = '';
+        $this->vehicle_model_id = '';
         $this->year = '';
         $this->color = '';
         $this->start_date = '';
@@ -90,6 +91,7 @@ class Create extends Component
         $this->vehicle_group = '';
         $this->origin = '';
         $this->mileage = '';
+        $this->hours = '';
         $this->no_of_wheels = '';
         $this->manufacturer = '';
         $this->chasis_number = '';
@@ -121,25 +123,16 @@ class Create extends Component
   ];
     protected $rules = [
         'transporter_id' => 'required',
-        'fleet_number' => 'required',
+        'fleet_number' => 'nullable',
         'selectedMake' => 'required',
         'vehicle_model_id' => 'required',
-        'year' => 'required',
-        'color' => 'required',
-        'condition' => 'required',
-        'chasis_number' => 'required|unique:vehicles,chasis_number,NULL,id,deleted_at,NULL',
-        'engine_number' => 'required|unique:vehicles,engine_number,NULL,id,deleted_at,NULL',
         'registration_number' => 'required|unique:vehicles,registration_number,NULL,id,deleted_at,NULL',
-        'fuel_type' => 'required',
-        'no_of_wheels' => 'required',
-        'vehicle_type' => 'required',
-        'mileage' => 'required',
-        'vehicle_group' => 'required',
-        'images.*' => 'required|image',
+        
+        'images.*' => 'nullable|image',
         'title.0' => 'nullable|string',
         'file.0' => 'nullable|file|mimes:docx,doc,pdf,xls,xlsx,pptx|max:10000',
-        'title.*' => 'required',
-        'file.*' => 'required|file|mimes:docx,doc,pdf,xls,xlsx,pptx|max:10000',
+        'title.*' => 'nullable',
+        'file.*' => 'nullable|file|mimes:docx,doc,pdf,xls,xlsx,pptx|max:10000',
     ];
 
      public function updatedSelectedMake($make)
@@ -205,6 +198,7 @@ class Create extends Component
         $vehicle->color = $this->color;
         $vehicle->no_of_wheels = $this->no_of_wheels;
         $vehicle->mileage = $this->mileage;
+        $vehicle->hours = $this->hours;
         $vehicle->condition = $this->condition;
         $vehicle->fuel_type = $this->fuel_type;
         $vehicle->vehicle_type_id = $this->vehicle_type_id;

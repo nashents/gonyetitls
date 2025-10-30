@@ -57,6 +57,7 @@ class Edit extends Component
     public $driver;
     public $class;
     public $email;
+    public $personal_email;
     public $post;
     public $address;
     public $department_id;
@@ -235,6 +236,7 @@ class Edit extends Component
         $this->surname = $employee->surname;
         $this->phonenumber = $employee->phonenumber ;
         $this->email =   $employee->email ;
+        $this->personal_email =   $employee->personal_email ;
         $this->salary =   $employee->salary ;
         $this->use_email_as_username = $employee->user ? $employee->user->use_email_as_username : "1";
         $this->currency_id =   $employee->currency_id ;
@@ -291,6 +293,7 @@ class Edit extends Component
           'surname' => 'required|alpha|min:2',
           'dob' => 'nullable|date',
           'email' => 'nullable|email|unique:users,email,NULL,id,deleted_at,NULL',
+          'personal_email' => 'nullable|email|unique:employees,personal_email,NULL,id,deleted_at,NULL',
           'phonenumber' => 'nullable|unique:employees,phonenumber,NULL,id,deleted_at,NULL|max:13',
           'transporter_id' => 'required',
           'department_id' => 'required',
@@ -345,6 +348,7 @@ class Edit extends Component
           $employee->phonenumber = $this->phonenumber;
           $employee->grade_id = $this->grade_id;
           $employee->email = $this->email;
+          $employee->personal_email = $this->personal_email;
           $employee->gender = $this->gender;
           $employee->dob = $this->dob;
 

@@ -64,7 +64,9 @@
                                         <tr>
                                             <td class="line-height-35"><img src="{{asset('images/uploads/'.$employee->user->profile)}}" alt="" class="border-radius-50 img-circle profile-img " style="width: 50px; height:50px"></td>
                                             <td>{{ucfirst($employee->employee_number)}}
-                                                <small><strong>Created On:</strong> {{$employee->created_at}}</small>
+                                                <br>
+                                                <small><strong>Created: </strong> 
+                                                {{Carbon\Carbon::parse($employee->created_at)->format('d F Y')}}</small>
                                             </td>
                                             <td>{{ucfirst($employee->name)}} {{ucfirst($employee->surname)}}</td>
                                             <td>{{$employee->gender}}</td>

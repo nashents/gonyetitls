@@ -98,14 +98,21 @@
                                     @error('use_email_as_username') <span class="text-danger error">{{ $message }}</span>@enderror
                                 </div>
                                 <div class="row">
-                                    <div class="col-md-6">
+                                    <div class="col-md-4">
                                         <div class="form-group">
-                                            <label for="email">Email</label>
-                                            <input type="email" class="form-control" wire:model.debounce.300ms="email" placeholder="Enter Email"  />
+                                            <label for="email">Work Email</label>
+                                            <input type="email" class="form-control" wire:model.debounce.300ms="email" placeholder="Enter Work Email"  />
                                             @error('email') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
+                                     <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="email">Personal Email</label>
+                                            <input type="email" class="form-control" wire:model.debounce.300ms="personal_email" placeholder="Enter Personal Email" />
+                                            @error('personal_email') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="contact13">Phonenumber</label>
                                             <input type="text" class="form-control" wire:model.debounce.300ms="phonenumber" placeholder="Enter Phonenumber " />

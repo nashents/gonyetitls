@@ -388,7 +388,7 @@
                             </tr>
                             <tr>
                                 <th class="w-10 text-center line-height-35">Tnak HRS</th>
-                                <td class="w-20 line-height-35">{{$horse->tnak_rhs}}</td>
+                                <td class="w-20 line-height-35">{{$horse->tnak_hrs}}</td>
                             </tr>
                             <tr>
                                 <th class="w-10 text-center line-height-35">Battery Size</th>

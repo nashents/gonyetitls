@@ -31,7 +31,7 @@ class Index extends Component
     public $next_grade_id;
     public $promotion_criteria;
     public $max_years_in_grade;
-    public $leave_days;
+    public $leave_days = 30;
     public $bonus_eligibility = False;
     public $overtime_eligibility = True;
     public $benefits_package;

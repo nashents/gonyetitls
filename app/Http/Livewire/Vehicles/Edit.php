@@ -43,6 +43,7 @@ class Edit extends Component
     public $nvm;
     public $gvm;
     public $mileage;
+    public $hours;
     public $manufacturer;
     public $origin;
     public $condition;
@@ -56,6 +57,8 @@ class Edit extends Component
     public $expires_at;
     public $file;
     public $filename;
+    public $vehicle_number;
+    public $vehicle_id;
 
     public $inputs = [];
     public $i = 1;
@@ -78,7 +81,7 @@ class Edit extends Component
         $this->transporter_id = '';
         $this->vehicle_number = '';
         $this->selectedMake = '';
-        $this->vehcile_model_id = '';
+        $this->vehicle_model_id = '';
         $this->year = '';
         $this->color = '';
         $this->condition = '';
@@ -86,6 +89,7 @@ class Edit extends Component
         $this->vehicle_group = '';
         $this->origin = '';
         $this->mileage = '';
+        $this->hours = '';
         $this->no_of_wheels = '';
         $this->end_date = '';
         $this->start_date = '';
@@ -127,9 +131,10 @@ class Edit extends Component
         $this->chasis_number = $vehicle->chasis_number;
         $this->engine_number = $vehicle->engine_number;
         $this->fuel_type = $vehicle->fuel_type;
-        $this->fuel_consumption_empty_standard = $horse->fuel_consumption_empty_standard;
-        $this->fuel_consumption_loaded_standard = $horse->fuel_consumption_loaded_standard;
+        $this->fuel_consumption_empty_standard = $vehicle->fuel_consumption_empty_standard;
+        $this->fuel_consumption_loaded_standard = $vehicle->fuel_consumption_loaded_standard;
         $this->mileage = $vehicle->mileage;
+        $this->hours = $vehicle->hours;
     }
 
     public function updatedSelectedMake($make)
@@ -154,28 +159,14 @@ class Edit extends Component
   ];
     protected $rules = [
         'transporter_id' => 'required',
-        'fleet_number' => 'required',
         'selectedMake' => 'required',
         'vehicle_model_id' => 'required',
-        'year' => 'required',
-        'color' => 'required',
-        'condition' => 'required',
-        'chasis_number' => 'required|unique:vehicles,chasis_number,NULL,id,deleted_at,NULL',
-        'engine_number' => 'required|unique:vehicles,engine_number,NULL,id,deleted_at,NULL',
         'registration_number' => 'required|unique:vehicles,registration_number,NULL,id,deleted_at,NULL',
-        'origin' => 'required',
-        'manufacturer' => 'required',
-        'fuel_type' => 'required',
-        'vehicle_type' => 'required',
-        'no_of_wheels' => 'required',
-        'mileage' => 'required',
-        'vehicle_group' => 'required',
-        'fuel_measurement' => 'required',
-        'images.*' => 'required|image',
+        'images.*' => 'nullable|image',
         'title.0' => 'nullable|string',
         'file.0' => 'nullable|file|mimes:docx,doc,pdf,xls,xlsx,pptx|max:10000',
-        'title.*' => 'required',
-        'file.*' => 'required|file|mimes:docx,doc,pdf,xls,xlsx,pptx|max:10000',
+        'title.*' => 'nullable',
+        'file.*' => 'nullable|file|mimes:docx,doc,pdf,xls,xlsx,pptx|max:10000',
     ];
 
     public function update(){
@@ -194,6 +185,7 @@ class Edit extends Component
         $vehicle->gvm = $this->gvm;
         $vehicle->nvm = $this->nvm;
         $vehicle->mileage = $this->mileage;
+        $vehicle->hours = $this->hours;
         $vehicle->fuel_consumption_empty_standard = $this->fuel_consumption_empty_standard;
         $vehicle->fuel_consumption_loaded_standard = $this->fuel_consumption_loaded_standard;
         $vehicle->start_date = $this->start_date;

@@ -266,7 +266,7 @@
                         </tbody>
                     </table>
                 </div>
-                <div role="tabpanel" class="tab-pane active" id="history">
+                <div role="tabpanel" class="tab-pane" id="history">
                        <table   class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                         <thead>
                           <tr>
@@ -297,8 +297,8 @@
                                 <strong>Rank</strong> {{$employee_position->rank ? $employee_position->rank->name : ""}} <br>
                                 <strong>Branch</strong> {{$employee_position->branch ? $employee_position->branch->name : ""}} <br>
                             </td>
-                            <td>{{$employee_position->start_date}}</td>
                             <td>{{$employee_position->end_date}}</td>
+                            <td>{{$employee_position->start_date}}</td>
                             <td>{{$employee_position->change_reason}}</td>
                             <td>
                                 @php

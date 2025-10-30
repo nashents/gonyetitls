@@ -14,7 +14,7 @@ class RankSeeder extends Seeder
      */
     public function run()
     {
-        $ranks = ['Management', 'HOD', 'Director', 'Employee'];
+        $ranks = ['Management', 'Director', 'Employee'];
         foreach($ranks as $rank){
             Rank::create([
                 'name' => $rank
