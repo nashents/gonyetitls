@@ -53,20 +53,20 @@
       <div class="card">
         <h3>Consignor (Shipper)</h3>
         <div class="kv">
-          <div class="k">Name</div><div class="v" data-field="shipper.name">{{$customer->name}}</div>
-          <div class="k">Address</div><div class="v" data-field="shipper.address">{{$customer->street_address}} {{$customer->suburb}} {{$customer->city ? ", ".$customer->city : ""}} {{$customer->country}}</div>
-          <div class="k">Contact</div><div class="v" data-field="shipper.contact">{{$customer->phonenumber}} {{$customer->email ? "/".$customer->email: ""}}</div>
-          <div class="k">VAT/TIN</div><div class="v" data-field="shipper.tax_id">{{$customer->vat_number}} {{$customer->tin_number ? "/".$customer->tin_number : ""}}</div>
+          <div class="k">Name</div><div class="v" data-field="shipper.name">{{$customer?->name}}</div>
+          <div class="k">Address</div><div class="v" data-field="shipper.address">{{$customer?->street_address}} {{$customer?->suburb ? $customer?->suburb.", " : ""}} {{$customer?->city ? $customer?->city : ""}} {{$customer?->country}}</div>
+          <div class="k">Contact</div><div class="v" data-field="shipper.contact">{{$customer?->phonenumber}} {{$customer?->email ? "/".$customer?->email: ""}}</div>
+          <div class="k">VAT/TIN</div><div class="v" data-field="shipper.tax_id">{{$customer?->vat_number}} {{$customer?->tin_number ? "/".$customer?->tin_number : ""}}</div>
         </div>
       </div>
 
       <div class="card">
         <h3>Consignee (Receiver)</h3>
         <div class="kv">
-          <div class="k">Name</div><div class="v" data-field="consignee.name">{{$consignee->name}}</div>
-          <div class="k">Address</div><div class="v" data-field="consignee.address">{{$consignee->street_address}} {{$consignee->suburb}} {{$consignee->city ? ", ".$consignee->city : ""}} {{$consignee->country}}</div>
-          <div class="k">Contact</div><div class="v" data-field="consignee.contact">{{$consignee->phonenumber}} {{$consignee->email}}</div>
-          <div class="k">VAT/TIN</div><div class="v" data-field="consignee.tax_id">{{$consignee->vat_number}} {{$consignee->tin_number ? "/".$consignee->tin_number : ""}}</div>
+          <div class="k">Name</div><div class="v" data-field="consignee.name">{{$consignee?->name}}</div>
+          <div class="k">Address</div><div class="v" data-field="consignee.address">{{$consignee?->street_address}} {{$consignee?->suburb ? $consignee?->suburb.", " : ""}} {{$consignee?->city ? $consignee?->city : ""}} {{$consignee?->country}}</div>
+          <div class="k">Contact</div><div class="v" data-field="consignee.contact">{{$consignee?->phonenumber}} {{$consignee?->email}}</div>
+          <div class="k">VAT/TIN</div><div class="v" data-field="consignee.tax_id">{{$consignee?->vat_number}} {{$consignee?->tin_number ? "/".$consignee?->tin_number : ""}}</div>
         </div>
       </div>
 

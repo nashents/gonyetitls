@@ -19,10 +19,10 @@ class Manifest extends Component
     public function mount($trip){
         
         $this->trip = $trip;
-        $this->company = $trip->company;
-        $this->customer = $trip->customer;
-        $this->consignee = $trip->consignee;
-        $this->cargo = $trip->cargo;
+        $this->company = $trip->company ?? null;
+        $this->customer = $trip->customer ?? null;
+        $this->consignee = $trip->consignee ?? null;
+        $this->cargo = $trip->cargo ?? null;
 
         $this->from = Destination::find($trip->from);
         $this->to = Destination::find($trip->to);
