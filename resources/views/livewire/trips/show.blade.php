@@ -768,22 +768,6 @@
                                                                                     @endif
                                                                                 </td>
                                                                             </tr>
-                                                                            <tr>
-                                                                                <th scope="row">  Payment Status</th>
-                                                                                <td>
-                                                                                    @if ($trip->payment_status == "Pending")
-                                                                                    <span class="label label-danger label-wide">{{$trip->payment_status}}</span>
-                                                                                    @elseif($trip->payment_status == "Partial Payment")
-                                                                                    <span class="label label-warning label-wide">{{$trip->payment_status}}</span>
-                                                                                    @elseif($trip->payment_status == "Half Payment")
-                                                                                    <span class="label label-info label-wide">{{$trip->payment_status}}</span>
-                                                                                    @elseif($trip->payment_status == "Full Payment")
-                                                                                    <span class="label label-success label-wide">{{$trip->payment_status}}</span>
-                                                                                    @endif
-                                                                                </td>
-                                                                            </tr>
-                                                                       
-                                                                    
                                                                             @if ($trip->agent)
                                                                             <tr>
                                                                                 <th scope="row">  Agent</th>
@@ -947,36 +931,7 @@
                                                                                 @endif
                                                                             </td>
                                                                         </tr>
-                                                                        <tr>
-                                                                            <th scope="row">  Payment Status</th>
-                                                                            <td>
-                                                                                @if ($trip->payment_status == "Pending")
-                                                                                <span class="label label-danger label-wide">{{$trip->payment_status}}</span>
-                                                                                @elseif($trip->payment_status == "Partial Payment")
-                                                                                <span class="label label-warning label-wide">{{$trip->payment_status}}</span>
-                                                                                @elseif($trip->payment_status == "Half Payment")
-                                                                                <span class="label label-info label-wide">{{$trip->payment_status}}</span>
-                                                                                @elseif($trip->payment_status == "Full Payment")
-                                                                                <span class="label label-success label-wide">{{$trip->payment_status}}</span>
-                                                                                @endif
-                                                                            </td>
-                                                                        </tr>
-                                                                        <tr>
-                                                                            <th scope="row">  Payment Status</th>
-                                                                            <td>
-                                                                                @if ($trip->payment_status == "Pending")
-                                                                                <span class="label label-danger label-wide">{{$trip->payment_status}}</span>
-                                                                                @elseif($trip->payment_status == "Partial Payment")
-                                                                                <span class="label label-warning label-wide">{{$trip->payment_status}}</span>
-                                                                                @elseif($trip->payment_status == "Half Payment")
-                                                                                <span class="label label-info label-wide">{{$trip->payment_status}}</span>
-                                                                                @elseif($trip->payment_status == "Full Payment")
-                                                                                <span class="label label-success label-wide">{{$trip->payment_status}}</span>
-                                                                                @endif
-                                                                            </td>
-                                                                        </tr>
-                                                                
-
+                                                                       
                                                                         @if ($trip->agent)
                                                                         <tr>
                                                                             <th scope="row">  Agent</th>

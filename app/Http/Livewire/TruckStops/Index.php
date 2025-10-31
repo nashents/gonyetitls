@@ -43,8 +43,8 @@ class Index extends Component
     public $user_id;
 
     public function mount(){
-        $this->truck_stops = TruckStop::latest()->get();
-        $this->routes = Route::latest()->get();
+        $this->truck_stops = TruckStop::orderBy('name','asc')->get();
+        $this->routes = Route::orderBy('name','asc')->get();
     }
     private function resetInputFields(){
         $this->name = '';

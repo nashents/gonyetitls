@@ -210,6 +210,16 @@ class Index extends Component
         'purchase_type' => 'required',
     ];
 
+       public function refresh($category){
+
+        if($category == "vendors"){
+            $this->vendors = Vendor::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Vendors Refreshed Successfully!!."
+            ]);
+        }
+    }
 
     private function resetTransferInputFields(){
 

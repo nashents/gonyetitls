@@ -400,7 +400,7 @@
                                </select>
                                 @error('account_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 <small style="color: green">Any account into which you deposit and withdraw funds from.</small> <br>
-                                <small><a href="{{ route('accounts.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Account</a></small>
+                                <small><a href="{{ route('accounts.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Account</a></small> <a href="#" wire:click.prevent="refresh('accounts')" class="float-end"><i class="fa fa-refresh"></i></a>
                                 
                             </div>
                         </div>

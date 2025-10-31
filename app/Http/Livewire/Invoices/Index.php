@@ -270,6 +270,17 @@ class Index extends Component
       
     }
 
+    public function refresh($category){
+
+        if($category == "accounts"){
+            $this->accounts = Account::where('account_type_id',1)->orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Accounts Refreshed Successfully!!."
+            ]);
+        }
+    }
+
     public function updatedSelectedLoan($id){
         if(!is_null($id)){
             $this->loan = Loan::find($id);

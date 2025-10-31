@@ -164,6 +164,7 @@
                                     @endforeach
                                 </select>
                                 @error('from') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                <small>  <a href="{{ route('destinations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Destination</a></small> <a href="#" wire:click.prevent="refresh('destinations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -176,6 +177,7 @@
                                     @endforeach
                                 </select>
                                 @error('to') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                <small>  <a href="{{ route('destinations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Destination</a></small> <a href="#" wire:click.prevent="refresh('destinations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                             </div>
                         </div>
                     </div>

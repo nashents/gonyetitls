@@ -932,7 +932,11 @@
                                                         <option value="">Select Truck Stop</option>
                                                         @if (!is_null($selectedRoute))
                                                         @foreach ($truck_stops as $truck_stop)
-                                                            <option value="{{ $truck_stop->id }}">{{ $truck_stop->name }}</option>
+                                                            <option value="{{ $truck_stop->id }}"
+                                                                  @if(in_array($truck_stop->id, $truck_stop_id ?? []) && ($truck_stop_id[0] ?? null) != $truck_stop->id) 
+                                                                    disabled 
+                                                                @endif
+                                                                >{{ $truck_stop->name }}</option>
                                                         @endforeach
                                                         @endif
                                                     </select>
@@ -949,7 +953,11 @@
                                                         <option value="">Select Truck Stop </option>
                                                        @if (!is_null($selectedRoute))
                                                             @foreach ($truck_stops as $truck_stop)
-                                                                 <option value="{{ $truck_stop->id }}">{{ $truck_stop->name }}</option>
+                                                                 <option value="{{ $truck_stop->id }}"
+                                                                      @if(in_array($truck_stop->id, $truck_stop_id ?? []) && ($truck_stop_id[$value] ?? null) != $truck_stop->id) 
+                                                                    disabled 
+                                                                @endif
+                                                                    >{{ $truck_stop->name }}</option>
                                                             @endforeach
                                                        @endif
                                                        

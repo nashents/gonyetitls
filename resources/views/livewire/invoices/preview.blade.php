@@ -16,8 +16,8 @@
                     <div class="row">
                         <div class="col">
                             <a href="javascript:;">
-                                            <img src="{{asset('images/uploads/'.$company->logo)}}" width="200" alt="">
-                                        </a>
+                                <img src="{{asset('images/uploads/'.$company->logo)}}" width="200" alt="">
+                            </a>
                         </div>
                         <div class="col company-details">
                           

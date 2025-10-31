@@ -64,6 +64,9 @@ class Index extends Component
     public $category_id;
     public $active_group;
     public $last_payment;
+    public $company;
+    public $user_id;
+    public $account;
 
     public function mount(){
         $this->resetPage();
@@ -82,6 +85,7 @@ class Index extends Component
                 }
             }
         }
+        $this->company = Auth::user()->employee->company;
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->bank_accounts = collect();
         $this->customers = Customer::orderBy('name','asc')->get();
@@ -99,7 +103,7 @@ class Index extends Component
     ];
 
     public function updatedSelectedCurrency($id){
-        $this->bank_accounts = BankAccount::where('currency_id',$id)->orderBy('name','asc')->get();
+        $this->bank_accounts = BankAccount::where('currency_id',$id)->where('company_id',$this->company->id)->orderBy('name','asc')->get();
     }
 
     private function resetInputFields(){
@@ -340,9 +344,9 @@ class Index extends Component
                          $document->filename = $fileNameToStore;
                     }
                     if(isset($this->expires_at)){
-                        $document->expires_at = Carbon::create($this->expires_at[$key])->toDateTimeString();
+                        $document->expires_at = Carbon::create($this->expires_at)->toDateTimeString();
                         $today = now()->toDateTimeString();
-                        $expire = Carbon::create($this->expires_at[$key])->toDateTimeString();
+                        $expire = Carbon::create($this->expires_at)->toDateTimeString();
                         if ($today <=  $expire) {
                             $document->status = 1;
                         }else{
@@ -420,9 +424,9 @@ class Index extends Component
                  $document->filename = $fileNameToStore;
             }
             if(isset($this->expires_at)){
-                $document->expires_at = Carbon::create($this->expires_at[$key])->toDateTimeString();
+                $document->expires_at = Carbon::create($this->expires_at)->toDateTimeString();
                 $today = now()->toDateTimeString();
-                $expire = Carbon::create($this->expires_at[$key])->toDateTimeString();
+                $expire = Carbon::create($this->expires_at)->toDateTimeString();
                 if ($today <=  $expire) {
                     $document->status = 1;
                 }else{

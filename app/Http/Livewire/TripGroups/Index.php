@@ -74,6 +74,18 @@ class Index extends Component
         'to' => 'required',
     ];
 
+
+       public function refresh($category){
+
+        if($category == "destinations"){
+            $this->destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Destinations Refreshed Successfully!!."
+            ]);
+        }
+       
+    }
     private function resetInputFields(){
         $this->name = '';
         $this->customer_id = '';

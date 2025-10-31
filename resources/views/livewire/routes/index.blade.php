@@ -162,7 +162,7 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="name">Distance</label>
-                                <input type="number" min="1" class="form-control" wire:model.debounce.300ms="distance" placeholder="Enter route distance"/>
+                                <input type="number" step="any" min="1" class="form-control" wire:model.debounce.300ms="distance" placeholder="Enter route distance"/>
                                 @error('distance') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -314,7 +314,7 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="name">Distance</label>
-                                <input type="number" min="1" class="form-control" wire:model.debounce.300ms="distance" placeholder="Enter route distance"/>
+                                <input type="number" step="any" min="1" class="form-control" wire:model.debounce.300ms="distance" placeholder="Enter route distance"/>
                                 @error('distance') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>

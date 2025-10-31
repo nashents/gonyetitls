@@ -45,6 +45,9 @@
                                                 @endforeach
                                                </select>
                                                <small>  <a href="#" data-toggle="modal" data-target="#customerModal"><i class="fa fa-plus-square-o"></i> New Customer</a></small> 
+                                                <a href="#" wire:click.prevent="refresh('customers')" class="float-end">
+                                                            <i class="fa fa-refresh"></i>
+                                                        </a>
                                                 @error('selectedCustomer') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         </div>
@@ -126,6 +129,9 @@
                                                <br>
                                                <small>You can select multiple bank accounts visible on invoice.</small>
                                                 @error('bank_account_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                 <a href="#" wire:click.prevent="refresh('bank_accounts')" class="float-end">
+                                                            <i class="fa fa-refresh"></i>
+                                                        </a>
                                             </div>
                                             </div>
                                     </div>

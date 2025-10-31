@@ -147,7 +147,7 @@
                                     <option value="{{$vendor->id}}">{{$vendor->name}}</option>
                                    @endforeach
                                </select>
-                               <small><a href="{{ route('vendors.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Vendor</a></small> 
+                                <small><a href="{{ route('vendors.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Vendor</a></small><a href="#" wire:click.prevent="refresh('vendors')" class="float-end"><i class="fa fa-refresh"></i></a>
                                 @error('vendor_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -359,8 +359,8 @@
                     </div>
                   
                     <div class="form-group">
-                        <label for="address">Address<span class="required" style="color: red">*</span></label>
-                        <input type="text"  class="form-control" wire:model.debounce.300ms="address" placeholder="Enter Station Address" required />
+                        <label for="address">Address</label>
+                        <input type="text"  class="form-control" wire:model.debounce.300ms="address" placeholder="Enter Station Address" />
                         @error('address') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
 
@@ -430,6 +430,7 @@
                                    @endforeach
                                </select>
                                 @error('vendor_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                <small><a href="{{ route('vendors.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Vendor</a></small><a href="#" wire:click.prevent="refresh('vendors')" class="float-end"><i class="fa fa-refresh"></i></a>
                             </div>
                         </div>
                       

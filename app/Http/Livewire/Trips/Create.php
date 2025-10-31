@@ -2451,7 +2451,7 @@ class Create extends Component
                 'message'=>"Currencies Refreshed Successfully!!."
             ]);
         }
-        elseif($category == 'from_destinations'){
+        elseif($category == 'destinations'){
             $this->from_destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
             $this->to_destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
             $this->dispatchBrowserEvent('alert',[
