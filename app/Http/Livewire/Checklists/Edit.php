@@ -77,16 +77,18 @@ class Edit extends Component
         $this->horse_id = $checklist->horse_id;
         $this->vehicle_id = $checklist->vehicle_id;
         $this->trailer_id = $checklist->trailer_id;
+        $this->selectedChecklistCategory = $checklist->checklist_category_id;
+        $this->checklist_category = $checklist->checklist_category;
         $this->date = $checklist->date;
         $this->description = $checklist->description;
         $this->mileage = $checklist->mileage;
 
-        $checklist_results = $checklist->checklist_results;
-        if ($checklist_results) {
-            foreach ($checklist_results as $result) {
-                $this->status[] = $result->status;
-                $this->comments[] = $result->comments;
-            }
+        $results = $checklist->checklist_results; // ->with('checklist_item') if you need it
+        foreach ($results as $result) {
+            $id = $result->checklist_item_id;     // <— key by item id
+            $this->status[$id] = $result->status; // e.g., 'Yes'/'No' or 1/0
+            $this->comments[$id] = $result->comments ?? '';
+            $this->checklist_item_id[$id] = $id;  // optional hidden field you had
         }
 
         $this->checklist_categories = ChecklistCategory::latest()->get();
@@ -97,8 +99,8 @@ class Edit extends Component
         $this->employees = Employee::latest()->get();
         $this->trailers = Trailer::orderBy('registration_number','asc')->get();
         $this->horses = Horse::orderBy('registration_number','asc')->get();
-    }
 
+    }
     
     public function updatedSelectedChecklistCategory($id){
         if (!is_null($id)) {
