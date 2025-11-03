@@ -6,7 +6,7 @@
                 <div class="col-md-10 col-md-offset-1">
                     <div class="panel">
                         <div class="panel-body">
-                            <form wire:submit.prevent="store()" >
+                            <form wire:submit.prevent="update()" >
                                 <h5 class="underline mt-30">Inspection For ?</h5>
                                 <div class="mb-10">
                                     <input type="radio" wire:model.debounce.300ms="type" value="Horse"  class="line-style"  />
@@ -149,7 +149,7 @@
                                 
                             
                                 @if (!is_null($selectedChecklistCategory))
-                                <small>  <a href="{{ route('checklist_categories.show',$selectedChecklistCategory) }}" target="_blank"><i class="fa fa-plus-square-o"></i> New </a></small> <br> 
+                                <small> <a href="{{ route('checklist_categories.show',$selectedChecklistCategory) }}" target="_blank"><i class="fa fa-plus-square-o"></i> Add items to checklist </a></small><a href="#" wire:click.prevent="refresh('checklist_categories')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>  <br> 
                                 <div  style="height: 500px; overflow: auto">
                                 <table id="inspectionsTable" class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                     <caption><strong>{{$checklist_category->name}}</strong></caption>
@@ -166,7 +166,7 @@
                                        @foreach ($category_checklists as $key => $category_checklist)
                                         
                                       <tr>
-                                        <td>{{$category_checklist->checklist_item ? $category_checklist->checklist_item->name : ""}} | <small>{{$category_checklist->checklist_item ? $category_checklist->checklist_item->notes : ""}}</small> 
+                                        <td>{{$category_checklist->checklist_sub_category ? $category_checklist->checklist_sub_category->name : ""}} {{$category_checklist->checklist_item ? $category_checklist->checklist_item->name : ""}} 
                                             <input type="hidden" wire:model.debounce.300ms="checklist_item_id.{{$category_checklist->checklist_item->id}}" value="{{$category_checklist->checklist_item->id}}">
                                          <br>
                                          <div class="form-group">
@@ -204,7 +204,7 @@
                             <div class="modal-footer">
                                 <div class="btn-group" role="group">
                                     <a onclick="goBack()" class="btn bg-gray btn-wide btn-rounded"><i class="fa fa-arrow-left"></i>Back</a>
-                                    <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Save</button>
+                                    <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-refresh"></i>Update</button>
                                 </div>
                                 <!-- /.btn-group -->
                             </div>

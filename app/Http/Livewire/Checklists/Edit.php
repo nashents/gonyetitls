@@ -61,6 +61,7 @@ class Edit extends Component
     public function mount($id){
 
         $checklist = Checklist::find($id);
+        $this->checklist_id = $id;
         if ($checklist->horse_id) {
             $this->type = 'Horse';
         }
@@ -80,7 +81,7 @@ class Edit extends Component
         $this->selectedChecklistCategory = $checklist->checklist_category_id;
         $this->checklist_category = $checklist->checklist_category;
         $this->date = $checklist->date;
-        $this->description = $checklist->description;
+        $this->description = $checklist->comments;
         $this->mileage = $checklist->mileage;
 
         $results = $checklist->checklist_results; // ->with('checklist_item') if you need it
@@ -101,6 +102,26 @@ class Edit extends Component
         $this->horses = Horse::orderBy('registration_number','asc')->get();
 
     }
+
+        public function updatedHorseId($id){
+        if(!is_null($id)){
+           $horse = Horse::find($id);
+           $this->mileage = $horse->mileage;
+        }
+    }
+    public function updatedVehicleId($id){
+        if(!is_null($id)){
+           $vehicle = Vehicle::find($id);
+           $this->mileage = $vehicle->mileage;
+        }
+    }
+    public function updatedTrailerId($id){
+        if(!is_null($id)){
+           $trailer = Trailer::find($id);
+           $this->mileage = $trailer->mileage;
+        }
+    }
+
     
     public function updatedSelectedChecklistCategory($id){
         if (!is_null($id)) {
@@ -134,12 +155,11 @@ class Edit extends Component
     public function update(){
   
         $checklist =  Checklist::find($this->checklist_id);
-      
         $checklist->employee_id = $this->employee_id;
         $checklist->driver_id = $this->driver_id;
         $checklist->vehicle_id = $this->vehicle_id;
         $checklist->trailer_id = $this->trailer_id;
-        $checklist->checklist_category_id = $this->checklist_category_id;
+        $checklist->checklist_category_id = $this->selectedChecklistCategory;
         $checklist->horse_id = $this->horse_id;
         $checklist->date = $this->date;
         $checklist->comments = $this->description;
@@ -150,20 +170,40 @@ class Edit extends Component
         if (isset($this->status)) {
 
             foreach ($this->status as $key => $value) {
-            $result = new ChecklistResult;
-            $result->checklist_id = $checklist->id;
-            if (isset($this->status[$key])) {
-                $result->status = $this->status[$key];
-            }
-            if (isset($this->comments[$key])) {
-                $result->comments = $this->comments[$key];
-            }
-            $result->checklist_item_id = $key;
-            $result->save();
-    
+                 ChecklistResult::updateOrCreate(
+                [
+                    'checklist_id'      => $checklist->id,
+                    'checklist_item_id' => $key,
+                ],
+                [
+                    'status'   => $this->status[$key],
+                    'comments' => $this->comments[$key],
+                ]
+            );
+          
               }
               
          
+            }
+
+               if ($this->type == "Horse") {
+                $horse = Horse::find($this->horse_id);
+                if ($this->mileage > $horse->mileage) {
+                    $horse->mileage = $this->mileage;
+                    $horse->update();
+                }
+            }elseif($this->type == "Vehicle"){
+                $vehicle = Vehicle::find($this->vehicle_id);
+                if ($this->mileage > $vehicle->mileage) {
+                    $vehicle->mileage = $this->mileage;
+                    $vehicle->update();
+                }
+            }elseif($this->type == "Trailer"){
+                $trailer = Trailer::find($this->trailer_id);
+                if ($this->mileage > $trailer->mileage) {
+                    $trailer->mileage = $this->mileage;
+                    $trailer->update();
+                }
             }
             $this->dispatchBrowserEvent('hide-checklistModal');
             $this->resetInputFields();
@@ -173,7 +213,6 @@ class Edit extends Component
             ]);
 
             return redirect(route('checklists.index'));
-
      
     }
 
@@ -183,7 +222,7 @@ class Edit extends Component
             $this->category_checklists = CategoryChecklist::where('checklist_category_id',$this->checklist_category_id)->get();
         }
       
-        return view('livewire.checklists.create',[
+        return view('livewire.checklists.edit',[
             'category_checklists' => $this->category_checklists
         ]);
     }

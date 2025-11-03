@@ -116,7 +116,7 @@
                                 
                             
                                 @if (!is_null($selectedChecklistCategory))
-                                <small>  <a href="{{ route('checklist_categories.show',$selectedChecklistCategory) }}" target="_blank"><i class="fa fa-plus-square-o"></i> New </a></small> <br> 
+                                <small>  <a href="{{ route('checklist_categories.show',$selectedChecklistCategory) }}" target="_blank"><i class="fa fa-plus-square-o"></i> Add items to checklist </a></small><a href="#" wire:click.prevent="refresh('checklist_categories')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> <br> 
                                 <div  style="height: 500px; overflow: auto">
                                 <table id="inspectionsTable" class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                     <caption><strong>{{$checklist_category->name}}</strong></caption>
@@ -133,7 +133,7 @@
                                        @foreach ($category_checklists as $key => $category_checklist)
                                         
                                       <tr>
-                                        <td>{{$category_checklist->checklist_item ? $category_checklist->checklist_item->name : ""}} | <small>{{$category_checklist->checklist_item ? $category_checklist->checklist_item->notes : ""}}</small> 
+                                        <td>{{$category_checklist->checklist_sub_category ? $category_checklist->checklist_sub_category->name : ""}} {{$category_checklist->checklist_item ? $category_checklist->checklist_item->name : ""}}
                                             <input type="hidden" wire:model.debounce.300ms="checklist_item_id.{{$category_checklist->checklist_item->id}}" value="{{$category_checklist->checklist_item->id}}">
                                          <br>
                                          <div class="form-group">

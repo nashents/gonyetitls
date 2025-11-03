@@ -43,7 +43,7 @@ class Create extends Component
     public $date;
     public $type = "Horse";
     public $mileage;
-    public $checklist_category_id;
+
 
 
     public $yes = '1';
@@ -72,7 +72,7 @@ class Create extends Component
     
     public function updatedSelectedChecklistCategory($id){
         if (!is_null($id)) {
-            $this->checklist_category_id = $id;
+          
             $this->checklist_category = ChecklistCategory::find($id);
             $this->category_checklists = CategoryChecklist::where('checklist_category_id',$id)->get();
         }
@@ -155,7 +155,7 @@ class Create extends Component
         $checklist = new Checklist;
         $checklist->user_id = Auth::user()->id;
         $checklist->checklist_number = $this->checklistNumber();
-        $checklist->checklist_category_id = $this->checklist_category_id;
+        $checklist->checklist_category_id = $this->selectedChecklistCategory;
         $checklist->employee_id = $this->employee_id;
         $checklist->driver_id = $this->driver_id;
         $checklist->vehicle_id = $this->vehicle_id;
@@ -225,8 +225,8 @@ class Create extends Component
 
     public function render()
     {
-        if (isset($this->checklist_category_id)) {
-            $this->category_checklists = CategoryChecklist::where('checklist_category_id',$this->checklist_category_id)->get();
+        if (isset($this->selectedChecklistCategory)) {
+            $this->category_checklists = CategoryChecklist::where('checklist_category_id',$this->selectedChecklistCategory)->get();
         }
       
         return view('livewire.checklists.create',[

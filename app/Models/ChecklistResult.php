@@ -18,4 +18,11 @@ class ChecklistResult extends Model implements Auditable
     public function checklist(){
         return $this->belongsTo('App\Models\Checklist');
     }
+
+    protected $fillable = [
+        'checklist_id',
+        'checklist_item_id',
+        'status',
+        'comments'
+    ];
 }
