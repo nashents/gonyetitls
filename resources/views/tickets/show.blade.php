@@ -64,5 +64,10 @@
         $('#partsTable').DataTable();
     } );
     </script>
+    <script>
+    $(document).ready( function () {
+        $('#requestsTable').DataTable();
+    } );
+    </script>
 @endsection
 

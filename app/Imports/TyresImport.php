@@ -2,6 +2,7 @@
 
 namespace App\Imports;
 
+
 use DateTime;
 use Carbon\Carbon;
 use App\Models\Tyre;
@@ -17,6 +18,7 @@ use App\Models\Movement;
 use App\Models\TyreDispatch;
 use App\Models\TyreAssignment;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithLimit;
@@ -273,6 +275,7 @@ WithBatchInserts
                     $horse   = Horse::where('registration_number', 'LIKE', "%{$horseReg}%")->first();
                     $vehicle = Vehicle::where('registration_number', 'LIKE', "%{$vehicleReg}%")->first();
                     $trailer = Trailer::where('registration_number', 'LIKE', "%{$trailerReg}%")->first();
+                    
 
                     // Handle Product
                     $productName = trim($row->get('product_name'));
@@ -313,14 +316,18 @@ WithBatchInserts
                         $store = Store::firstOrCreate(['name' => $storeName], ['status' => 1]);
                     }
 
+
                     // Handle Tyre
                     $serial_number = trim($row->get('serial_number'));
                     if (empty($serial_number)) {
-                        \Log::warning('Skipped tyre row due to empty serial number:', $row->toArray());
+                        Log::warning('Skipped tyre row due to empty serial number:', $row->toArray());
                         continue;
                     }
 
                     $unitPrice = (float) $row->get('unit_price', 0);
+                    $quantity = (int) $row->get('quantity');
+
+                    for ($i = 0; $i < $quantity; $i++) {
 
                     $tyre = Tyre::firstOrNew(['serial_number' => $serial_number]);
                     $tyre->fill([
@@ -345,6 +352,8 @@ WithBatchInserts
 
                     // Assign the tyre
                     $this->assignTyre($row, $horse, $trailer, $vehicle, $tyre);
+
+                }
 
                 }
         }

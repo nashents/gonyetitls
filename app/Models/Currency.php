@@ -86,6 +86,9 @@ class Currency extends Model implements Auditable
     public function ticket_inventories(){
         return $this->hasMany('App\Models\TicketInventory');
     }
+    public function ticket_requests(){
+        return $this->hasMany('App\Models\TicketRequest');
+    }
     public function customers(){
         return $this->hasMany('App\Models\Customers');
     }

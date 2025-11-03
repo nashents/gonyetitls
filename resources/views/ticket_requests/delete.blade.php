@@ -1,10 +1,10 @@
-<div data-backdrop="static" data-keyboard="false" class="modal fade" id="checklist_sub_categoryDeleteModal{{ $checklist_sub_category->id }}" tabindex="-1" role="dialog">
+<div data-backdrop="static" data-keyboard="false" class="modal fade" id="ticket_requestDeleteModal{{ $ticket_request->id }}" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content bg-danger">
             <div class="modal-body">
-               <center> <strong>Are you sure you want to delete this Checklist Items Group?</strong> </center> 
+               <center> <strong>Are you sure you want to delete this Requested Item?</strong> </center>
             </div>
-            <form action="{{route('checklist_sub_categories.destroy', $checklist_sub_category->id)}}" method="POST" >
+            <form action="{{route('ticket_requests.destroy', $ticket_request->id)}}" method="POST" >
                 {{ csrf_field() }}
                 <input type="hidden" name="_method" value="DELETE">
             <div class="modal-footer no-border">

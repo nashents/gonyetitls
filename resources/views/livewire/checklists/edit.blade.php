@@ -20,42 +20,19 @@
                        
                                 <hr>  
                                 @if (!is_null($type))
+                                    @if ($type == "Horse")
                                     <div class="row">
                                         <div class="col-md-4">
-                                            @if ($type == "Horse")
-                                                <div class="form-group">
-                                                    <label for="name">Horses<span class="required" style="color: red">*</span></label>
-                                                    <select class="form-control" wire:model.debounce.300ms="horse_id" required>
-                                                        <option value="">Select Horse</option>
-                                                        @foreach ($horses as $horse)
-                                                            <option value="{{ $horse->id }}">{{ $horse->registration_number }} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}} </option>
-                                                        @endforeach
-                                                    </select>
-                                                    @error('horse_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                                </div>
-                                            @elseif ($type == "Vehicle")
-                                                <div class="form-group">
-                                                    <label for="name">Vehicles<span class="required" style="color: red">*</span></label>
-                                                    <select class="form-control" wire:model.debounce.300ms="vehicle_id" required>
-                                                        <option value="">Select Vehicle</option>
-                                                        @foreach ($vehicles as $vehicle)
-                                                            <option value="{{ $vehicle->id }}">{{ $vehicle->registration_number }} {{$vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : ""}} </option>
-                                                        @endforeach
-                                                    </select>
-                                                    @error('vehicle_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                                </div>
-                                            @elseif ($type == "Trailer")
-                                                <div class="form-group">
-                                                    <label for="name">Trailers<span class="required" style="color: red">*</span></label>
-                                                    <select class="form-control" wire:model.debounce.300ms="trailer_id" required>
-                                                        <option value="">Select Trailer</option>
-                                                        @foreach ($trailers as $trailer)
-                                                            <option value="{{ $trailer->id }}"> {{ $trailer->registration_number }} {{$trailer->fleet_number ? "(".$trailer->fleet_number.")" : ""}} </option>
-                                                        @endforeach
-                                                    </select>
-                                                    @error('trailer_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                                </div>
-                                            @endif
+                                            <div class="form-group">
+                                                <label for="name">Horses<span class="required" style="color: red">*</span></label>
+                                                <select class="form-control" wire:model.debounce.300ms="horse_id" required>
+                                                    <option value="">Select Horse</option>
+                                                    @foreach ($horses as $horse)
+                                                        <option value="{{ $horse->id }}">{{ $horse->registration_number }} | {{ $horse->horse_make ? $horse->horse_make->name : "" }} {{ $horse->horse_model ? $horse->horse_model->name : "" }} </option>
+                                                    @endforeach
+                                                </select>
+                                                @error('horse_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            </div>
                                         </div>
                                         <div class="col-md-4">
                                             <div class="form-group">
@@ -65,31 +42,87 @@
                                             </div>
                                         </div>
                                         <div class="col-md-4">
-                                            @if (in_array($type,['Trailer','Horse']))
-                                                <div class="form-group">
-                                                    <label for="name">Driver<span class="required" style="color: red">*</span></label>
-                                                    <select class="form-control" wire:model.debounce.300ms="driver_id" required>
-                                                        <option value="">Select Driver</option>
-                                                        @foreach ($drivers as $driver)
-                                                            <option value="{{ $driver->id }}">{{ $driver->employee ? $driver->employee->name : ""}} {{$driver->employee ? $driver->employee->surname : ""}}</option>
-                                                        @endforeach
-                                                    </select>
-                                                    @error('driver_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                                </div>
-                                            @else
-                                                <div class="form-group">
-                                                    <label for="name">Employee<span class="required" style="color: red">*</span></label>
-                                                    <select class="form-control" wire:model.debounce.300ms="employee_id" required>
-                                                        <option value="">Select Employee</option>
-                                                        @foreach ($employees as $employee)
-                                                            <option value="{{ $employee->id }}">{{ $employee->name}} {{ $employee->surname}}</option>
-                                                        @endforeach
-                                                    </select>
-                                                    @error('employee_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                                </div>
-                                            @endif
+                                            <div class="form-group">
+                                                <label for="name">Driver<span class="required" style="color: red">*</span></label>
+                                                <select class="form-control" wire:model.debounce.300ms="driver_id" required>
+                                                    <option value="">Select Driver</option>
+                                                    @foreach ($drivers as $driver)
+                                                        <option value="{{ $driver->id }}">{{ $driver->employee ? $driver->employee->name : ""}} {{$driver->employee ? $driver->employee->surname : ""}}</option>
+                                                    @endforeach
+                                                </select>
+                                                @error('driver_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            </div>
                                         </div>
                                     </div>
+                                    @elseif ($type == "Vehicle")
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label for="name">Vehicles<span class="required" style="color: red">*</span></label>
+                                                <select class="form-control" wire:model.debounce.300ms="vehicle_id" required>
+                                                    <option value="">Select Vehicle</option>
+                                                    @foreach ($vehicles as $vehicle)
+                                                        <option value="{{ $vehicle->id }}">{{ $vehicle->registration_number }} | {{ $vehicle->vehicle_make ? $vehicle->vehicle_make->name : "" }} {{ $vehicle->vehicle_model ? $vehicle->vehicle_model->name : "" }} </option>
+                                                    @endforeach
+                                                </select>
+                                                @error('vehicle_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label for="name">Mileage<span class="required" style="color: red">*</span></label>
+                                                <input type="number" step="any" class="form-control" wire:model.debounce.300ms="mileage" placeholder="Enter Odometer Mileage" required>
+                                                @error('mileage') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label for="name">Employee<span class="required" style="color: red">*</span></label>
+                                                <select class="form-control" wire:model.debounce.300ms="employee_id" required>
+                                                    <option value="">Select Employee</option>
+                                                    @foreach ($employees as $employee)
+                                                        <option value="{{ $employee->id }}">{{ $employee->name}} {{ $employee->surname}}</option>
+                                                    @endforeach
+                                                </select>
+                                                @error('employee_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @elseif ($type == "Trailer")
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label for="name">Trailers<span class="required" style="color: red">*</span></label>
+                                                <select class="form-control" wire:model.debounce.300ms="trailer_id" required>
+                                                    <option value="">Select Trailer</option>
+                                                    @foreach ($trailers as $trailer)
+                                                        <option value="{{ $trailer->id }}"> {{ $trailer->registration_number }} | {{ $trailer->make}} {{ $trailer->model }} </option>
+                                                    @endforeach
+                                                </select>
+                                                @error('trailer_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label for="name">Mileage</label>
+                                                <input type="number" step="any" class="form-control" wire:model.debounce.300ms="mileage" placeholder="Enter Odometer Mileage" >
+                                                @error('mileage') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label for="name">Driver<span class="required" style="color: red">*</span></label>
+                                                <select class="form-control" wire:model.debounce.300ms="driver_id" required>
+                                                    <option value="">Select Driver</option>
+                                                    @foreach ($drivers as $driver)
+                                                        <option value="{{ $driver->id }}">{{ $driver->employee ? $driver->employee->name : ""}} {{$driver->employee ? $driver->employee->surname : ""}}</option>
+                                                    @endforeach
+                                                </select>
+                                                @error('driver_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @endif
                                 @endif
                                     <div class="row">
                                         <div class="col-md-6">

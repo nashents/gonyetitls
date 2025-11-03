@@ -10,6 +10,7 @@
             <ul class="nav nav-tabs nav-justified" role="tablist">
                 <li role="presentation" class="active"><a href="#jd" aria-controls="jd" role="tab" data-toggle="tab">Ticket Description</a></li>
                 <li role="presentation"><a href="#inspection" aria-controls="inspection" role="tab" data-toggle="tab">Inspection Results</a></li>
+                <li role="presentation"><a href="#requests" aria-controls="requests" role="tab" data-toggle="tab">Requested Items</a></li>
                 <li role="presentation"><a href="#parts" aria-controls="parts" role="tab" data-toggle="tab">Dispatched Items</a></li>
                 <li role="presentation"><a href="#expenses" aria-controls="expenses" role="tab" data-toggle="tab">Other Expenses</a></li>
             </ul>
@@ -240,22 +241,13 @@
                                 <th class="w-10 text-center line-height-35">Inspection#</th>
                                 <td class="w-20 line-height-35">
                                     @if ($ticket->inspection->inspection_results->count()>0)
-                                    <a href="{{route('tickets.show', $ticket->id)}}" style="color: blue" target="_blank">{{$ticket->inspection ? $ticket->inspection->inspection_number : ""}}</a>
+                                        {{$ticket->inspection ? $ticket->inspection->inspection_number : ""}}
+                                    @else
+                                        {{$ticket->inspection ? $ticket->inspection->inspection_number : ""}} <a href="{{route('inspections.show', $ticket->inspection->id)}}" style="color: blue" target="_blank"><i class="fas fa-edit color-primary"></i>Click me to inspect</a>
                                     @endif
-                                    @if ($ticket->inspection->status == 1)
-                                     <a href="{{route('inspections.show', $ticket->inspection->id)}}" style="color: blue" target="_blank">{{$ticket->inspection ? $ticket->inspection->inspection_number : ""}}</a>
-                                    @endif
+                                    
                                 </td>
                             </tr>
-                            <tr>
-                                <th class="w-10 text-center line-height-35">Status</th>
-                                <td class="w-20 line-height-35">
-                                    @if ($ticket->inspection)
-                                    <span class="badge bg-{{$ticket->inspection->status == 1 ? "warning" : "success"}}">{{$ticket->inspection->status == 1 ? "Pending" : "Completed"}}</span>
-                                    @endif
-                                  </td>
-                            </tr>
-                          
                             <hr>
                         </tbody>
                     </table>
@@ -277,7 +269,7 @@
                         </thead>
 
                         <tbody>
-                           @foreach ($inspection_results as  $inspection_result)
+                           @forelse ($inspection_results as  $inspection_result)
                             <tr>
                                 <td>{{$inspection_result->inspection_type ? $inspection_result->inspection_type->name : ""}}</td>
                                 <td><span class="badge bg-{{($inspection_result->status == 'green') ? 'success' : (($inspection_result->status == 'red') ? 'danger' : 'warning') }}">{{($inspection_result->status == 'green') ? 'No Attention' : (($inspection_result->status == 'red') ? 'Immediate Attention' : 'Intermediate Attetion') }}</span></td>
@@ -285,11 +277,23 @@
                                 <td>{{$inspection_result->cost}}</td>
                                 <td>{{$inspection_result->hours}}</td>
                             </tr>
-                            @endforeach
+                            @empty
+                                <tr>
+                                <td colspan="5">
+                                    <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
+                                        No Inspection Results Found ....
+                                    </div>
+                                    
+                                </td>
+                                </tr> 
+                            @endforelse
                         </tbody>
                       </table>
                 </div>
 
+                <div role="tabpanel" class="tab-pane " id="requests">
+                    @livewire('ticket-requests.index', ['ticket' => $ticket])
+                </div>
                 <div role="tabpanel" class="tab-pane " id="parts">
                     @livewire('ticket-inventories.index', ['ticket' => $ticket])
                 </div>

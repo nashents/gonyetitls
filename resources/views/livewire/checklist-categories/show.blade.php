@@ -9,27 +9,32 @@
         <div class="col-md-10 col-md-offset-1" >
 
             <ul class="nav nav-tabs nav-justified" role="tablist">
-                <li role="presentation" class="active"><a href="#basic" aria-controls="basic" role="tab" data-toggle="tab"> <strong>{{ $checklist_category->name }} Checklist</strong>  </a></li>
+                <li role="presentation" class="active"><a href="#basic" aria-controls="basic" role="tab" data-toggle="tab"> <strong><span style="color: green">Checklist:</span> {{ $checklist_category->name }}</strong>  </a></li>
             </ul>
             <div class="tab-content bg-white p-15">
                 <div role="tabpanel" class="tab-pane active" id="basic">
-                    <a href="" data-toggle="modal" data-target="#category_checklistModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Inspection Item</a>
+                    <a href="" data-toggle="modal" data-target="#category_checklistModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i> Add item(s) to checklist</a>
                     <br>
                     <br>
-                    <table id="category_checklistsTable" class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
+                     <div class="col-md-3" style="float: right; padding-right:0px">
+                        <div class="form-group">
+                            <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search items in checklist...">
+                        </div>
+                    </div>
+                    <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                         <thead>
                           <tr>
-                            <th class="th-sm">Inspection Group
+                            <th class="th-sm">Group
                             </th>
-                            <th class="th-sm">Inspection Item
+                            <th class="th-sm">Item
                             </th>
                             <th class="th-sm">Action
                             </th>
                           </tr>
                         </thead>
-                        @if ($category_checklists->count()>0)
+                        @if (isset($category_checklists))
                         <tbody>
-                            @foreach ($category_checklists as $category_checklist)
+                            @forelse ($category_checklists as $category_checklist)
                           <tr>
                             <td>{{$category_checklist->checklist_sub_category ? $category_checklist->checklist_sub_category->name : ""}}</td>
                             <td>{{$category_checklist->checklist_item ? $category_checklist->checklist_item->name : ""}}</td>
@@ -47,12 +52,27 @@
                                 @include('category_checklists.delete')
                         </td>
                           </tr>
-                          @endforeach
+                            @empty
+                                <tr>
+                                <td colspan="3">
+                                    <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
+                                        No Items in Checklist Found ....
+                                    </div>
+                                </td>
+                                </tr>  
+                            @endforelse
                         </tbody>
                         @else
                             <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
                          @endif
                         </table>
+                         <nav class="text-center" style="float: right">
+                                <ul class="pagination rounded-corners">
+                                    @if (isset($category_checklists))
+                                        {{ $category_checklists->links() }} 
+                                    @endif 
+                                </ul>
+                            </nav>  
                 </div>
               
                 <div class="row">
@@ -87,20 +107,20 @@
                                         <option value="{{ $checklist_sub_category->id }}">{{ $checklist_sub_category->name }}</option>
                                     @endforeach
                                 </select>
-                                <small>  <a href="{{ route('checklist_sub_categories.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Group</a></small> <br> 
+                                <small>  <a href="{{ route('checklist_sub_categories.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Group</a></small><a href="#" wire:click.prevent="refresh('checklist_sub_categories')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 @error('checklist_sub_category_id.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
                         <div class="col-md-8">
                             <div class="form-group">
-                                <label for="title">Inspection Item(s)</label>
-                                <select class="form-control" wire:model.debounce.300ms="checklist_item_id.0">
+                                <label for="title">Inspection Item(s)<span class="required" style="color: red">*</span></label>
+                                <select class="form-control" wire:model.debounce.300ms="checklist_item_id.0" required>
                                     <option value="">Select Inspection Item</option>
                                     @foreach ($checklist_items as $checklist_item)
                                         <option value="{{ $checklist_item->id }}">{{ $checklist_item->name }}</option>
                                     @endforeach
                                 </select>
-                                <small>  <a href="{{ route('checklist_items.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Inspection Item</a></small> <br> 
+                                <small>  <a href="{{ route('checklist_items.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Inspection Item</a></small><a href="#" wire:click.prevent="refresh('checklist_items')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 @error('checklist_item_id.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -122,8 +142,8 @@
                             </div>
                             <div class="col-md-7">
                                 <div class="form-group">
-                                    <label for="title">Inspection Item(s)</label>
-                                    <select class="form-control" wire:model.debounce.300ms="checklist_item_id.{{ $value }}">
+                                    <label for="title">Inspection Item(s)<span class="required" style="color: red">*</span></label>
+                                    <select class="form-control" wire:model.debounce.300ms="checklist_item_id.{{ $value }}" required>
                                         <option value="">Select Inspection Item</option>
                                         @foreach ($checklist_items as $checklist_item)
                                             <option value="{{ $checklist_item->id }}">{{ $checklist_item->name }}</option>
@@ -177,20 +197,20 @@
                                         <option value="{{ $checklist_sub_category->id }}">{{ $checklist_sub_category->name }}</option>
                                     @endforeach
                                 </select>
-                                <small>  <a href="{{ route('checklist_sub_categories.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Inspection</a></small> <br> 
+                                <small>  <a href="{{ route('checklist_sub_categories.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Inspection</a></small> <a href="#" wire:click.prevent="refresh('checklist_sub_categories')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                                 @error('checklist_sub_category_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
                         <div class="col-md-8">
                             <div class="form-group">
-                                <label for="title">Inspection Item(s)</label>
-                                <select class="form-control" wire:model.debounce.300ms="checklist_item_id">
+                                <label for="title">Inspection Item(s)<span class="required" style="color: red">*</span></label>
+                                <select class="form-control" wire:model.debounce.300ms="checklist_item_id" required>
                                     <option value="">Select Inspection Item</option>
                                     @foreach ($checklist_items as $checklist_item)
                                         <option value="{{ $checklist_item->id }}">{{ $checklist_item->name }}</option>
                                     @endforeach
                                 </select>
-                                <small>  <a href="{{ route('checklist_items.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Inspection Item</a></small> <br> 
+                                <small>  <a href="{{ route('checklist_items.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Inspection Item</a></small><a href="#" wire:click.prevent="refresh('checklist_items')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 @error('checklist_item_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>

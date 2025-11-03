@@ -60,6 +60,9 @@ class User extends Authenticatable implements Auditable
     public function stations(){
         return $this->hasMany('App\Models\Station');
     }
+     public function ticket_requests(){
+        return $this->hasMany('App\Models\TicketRequest');
+    }
     public function earnings(){
         return $this->hasMany('App\Models\Earning');
     }

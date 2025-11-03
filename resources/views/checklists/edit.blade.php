@@ -19,7 +19,7 @@
 <body class="top-navbar-fixed">
 @endsection
 
-
+    
                     <div class="main-page">
                         <div class="container-fluid">
                             <div class="row page-title-div">
@@ -38,21 +38,17 @@
                             <!-- /.row -->
                         </div>
 
-                        @livewire('checklists.add',['id'=>$id])
+                        @livewire('checklists.edit',['id'=> $checklist->id])
 
 
                     </div>
 
 
+             
+
 
 
 @endsection
 
-@section('extra-js')
-    <script>
-    $(document).ready( function () {
-        $('#jobsTable').DataTable();
-    } );
-    </script>
-@endsection
+
 

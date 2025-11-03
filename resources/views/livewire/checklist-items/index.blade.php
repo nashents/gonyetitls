@@ -11,12 +11,16 @@
                             </div>
 
                             <div class="panel-title">
-                                <a href="#" data-toggle="modal" data-target="#checklist_itemModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Inspection Item</a>
+                                <a href="#" data-toggle="modal" data-target="#checklist_itemModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Checklist Item</a>
                                
                             </div>
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
-
+                             <div class="col-md-3" style="float: right; padding-right:0px">
+                                <div class="form-group">
+                                    <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search items...">
+                                </div>
+                            </div>
                             <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
@@ -30,7 +34,7 @@
                                 </thead>
                                 @if (isset($checklist_items))
                                 <tbody>
-                                    @foreach ($checklist_items as $checklist_item)
+                                    @forelse ($checklist_items as $checklist_item)
                                   <tr>
                                     <td>{{$checklist_item->name}}</td>
                                     <td>{{$checklist_item->notes}}</td>
@@ -48,7 +52,16 @@
                                         @include('checklist_items.delete')
                                 </td>
                                   </tr>
-                                  @endforeach
+                                 @empty
+                                  <tr>
+                                    <td colspan="3">
+                                        <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
+                                            No Checklist Items Found ....
+                                        </div>
+                                       
+                                    </td>
+                                  </tr>  
+                                    @endforelse
                                 </tbody>
                                 @else
                                     <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
@@ -78,7 +91,7 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-plus"></i> Add Inspection Item <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-plus"></i> Add Checklist Item <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                 </div>
                 <form wire:submit.prevent="store()" >
                 <div class="modal-body">
@@ -112,7 +125,7 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-edit"></i> Edit Inspection Item <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-edit"></i> Edit Checklist Item <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                 </div>
                 <form wire:submit.prevent="update()" >
 

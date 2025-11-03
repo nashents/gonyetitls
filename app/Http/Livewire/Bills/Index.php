@@ -693,137 +693,80 @@ class Index extends Component
             $this->current_balance = $this->bill_balance - $this->amount;
         }
         
-            if (isset($this->from) && isset($this->to)) {
-                if (isset($this->search)) {
-                    return view('livewire.bills.index',[
-                        'bills' => Bill::query()->with('invoice','transporter','container','top_up','trip','horse','driver','purchase','currency','payments')
-                        ->whereDate($this->bill_filter, '>=', $this->from)
-                        ->whereDate($this->bill_filter, '<=', $this->to)
-                        ->where('to_be_paid', True)
-                        ->where('bill_number','like', '%'.$this->search.'%')
-                        ->orWhere('status','like', '%'.$this->search.'%')
-                        ->orWhere('bill_date','like', '%'.$this->search.'%')
-                        ->orWhereHas('horse', function ($query) {
-                            return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('vehicle', function ($query) {
-                            return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('trailer', function ($query) {
-                            return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('driver', function ($query) {
-                            $query->whereHas('employee', function ($subQuery) {
-                                $subQuery->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
-                            });
-                        })
-                        ->orWhereHas('ticket', function ($query) {
-                            return $query->where('ticket_number', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('trip', function ($query) {
-                            return $query->where('trip_number', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('currency', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('invoice', function ($query) {
-                            return $query->where('invoice_number', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('transporter', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('container', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('purchase', function ($query) {
-                            return $query->where('purchase_number', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('vendor', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                        })
-                        ->orderBy($this->bill_filter,'desc')->paginate(10),
-                       
-    
+         
 
-                    ]);
-                }else {
-                    return view('livewire.bills.index',[
-                        'bills' => Bill::query()->with('invoice','transporter','container','top_up','trip','horse','driver','purchase','currency','payments')
-                        ->whereDate($this->bill_filter, '>=', $this->from)
-                        ->whereDate($this->bill_filter, '<=', $this->to)
-                        ->where('to_be_paid', True)
-                        ->orderBy($this->bill_filter,'desc')->paginate(10),
+            $base = Bill::query()
+                ->with([
+                    'invoice','transporter','container','top_up','trip',
+                    'horse','driver','purchase','currency','payments',
+                    // add these if the relationships exist and you use them in search:
+                    'vehicle','trailer','ticket','vendor',
+                ])
+                ->where('to_be_paid', true);
 
-                    ]);
-                }
-               
-            }
-            elseif (isset($this->search)) {
-               
-                return view('livewire.bills.index',[
-                    'bills' => Bill::query()->with('invoice','transporter','container','top_up','trip','horse','driver','purchase','currency','payments')
-                    ->whereMonth($this->bill_filter, date('m'))
-                    ->whereYear($this->bill_filter, date('Y'))
-                    ->where('to_be_paid', True)
-                    ->where('bill_number','like', '%'.$this->search.'%')
-                    ->orWhere('status','like', '%'.$this->search.'%')
-                    ->orWhere('bill_date','like', '%'.$this->search.'%')
-                    ->orWhereHas('horse', function ($query) {
-                        return $query->where('registration_number', 'like', '%'.$this->search.'%');
+            // Date filter: use provided range, else current month
+            $base->when(filled($this->from) && filled($this->to), function ($q) {
+                $q->whereDate($this->bill_filter, '>=', $this->from)
+                ->whereDate($this->bill_filter, '<=', $this->to);
+            }, function ($q) {
+                $q->whereMonth($this->bill_filter, Carbon::now()->month)
+                ->whereYear($this->bill_filter, Carbon::now()->year);
+            });
+
+            // Search filter (grouped to keep AND/OR logic correct)
+            $base->when(filled($this->search), function ($q) {
+                $term = '%'.$this->search.'%';
+
+                $q->where(function ($qq) use ($term) {
+                    $qq->where('bill_number', 'like', $term)
+                    ->orWhere('status', 'like', $term)
+                    ->orWhere('bill_date', 'like', $term)
+                    ->orWhereHas('horse', function ($sub) use ($term) {
+                        $sub->where('registration_number', 'like', $term);
                     })
-                    ->orWhereHas('vehicle', function ($query) {
-                        return $query->where('registration_number', 'like', '%'.$this->search.'%');
+                    ->orWhereHas('vehicle', function ($sub) use ($term) {
+                        $sub->where('registration_number', 'like', $term);
                     })
-                    ->orWhereHas('trailer', function ($query) {
-                        return $query->where('registration_number', 'like', '%'.$this->search.'%');
+                    ->orWhereHas('trailer', function ($sub) use ($term) {
+                        $sub->where('registration_number', 'like', $term);
                     })
-                    ->orWhereHas('driver', function ($query) {
-                        $query->whereHas('employee', function ($subQuery) {
-                            $subQuery->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
+                    ->orWhereHas('driver', function ($sub) use ($term) {
+                        $sub->whereHas('employee', function ($emp) use ($term) {
+                            $emp->where(DB::raw("concat(name, ' ', surname)"), 'like', $term);
                         });
                     })
-                    ->orWhereHas('ticket', function ($query) {
-                        return $query->where('ticket_number', 'like', '%'.$this->search.'%');
+                    ->orWhereHas('ticket', function ($sub) use ($term) {
+                        $sub->where('ticket_number', 'like', $term);
                     })
-                    ->orWhereHas('trip', function ($query) {
-                        return $query->where('trip_number', 'like', '%'.$this->search.'%');
+                    ->orWhereHas('trip', function ($sub) use ($term) {
+                        $sub->where('trip_number', 'like', $term);
                     })
-                    ->orWhereHas('invoice', function ($query) {
-                        return $query->where('invoice_number', 'like', '%'.$this->search.'%');
+                    ->orWhereHas('currency', function ($sub) use ($term) {
+                        $sub->where('name', 'like', $term);
                     })
-                    ->orWhereHas('transporter', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
+                    ->orWhereHas('invoice', function ($sub) use ($term) {
+                        $sub->where('invoice_number', 'like', $term);
                     })
-                    ->orWhereHas('currency', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
+                    ->orWhereHas('transporter', function ($sub) use ($term) {
+                        $sub->where('name', 'like', $term);
                     })
-                    ->orWhereHas('container', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
+                    ->orWhereHas('container', function ($sub) use ($term) {
+                        $sub->where('name', 'like', $term);
                     })
-                    ->orWhereHas('purchase', function ($query) {
-                        return $query->where('purchase_number', 'like', '%'.$this->search.'%');
+                    ->orWhereHas('purchase', function ($sub) use ($term) {
+                        $sub->where('purchase_number', 'like', $term);
                     })
-                    ->orWhereHas('vendor', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orderBy($this->bill_filter,'desc')->paginate(10),
-                ]);
-            }
-            else {
-               
-                return view('livewire.bills.index',[
-                    'bills' => Bill::query()->with('invoice','transporter','container','top_up','trip','horse','driver','purchase','currency','payments')
-                    ->whereMonth($this->bill_filter, date('m'))
-                    ->whereYear($this->bill_filter, date('Y'))
-                    ->where('to_be_paid', True)
-                    ->orderBy($this->bill_filter,'desc')->paginate(10),
-                ]);
-              
-            }
-        
-        
+                    ->orWhereHas('vendor', function ($sub) use ($term) {
+                        $sub->where('name', 'like', $term);
+                    });
+                });
+            });
 
-   
+            $bills = $base
+                ->orderByDesc($this->bill_filter)
+                ->paginate(10);
 
+            return view('livewire.bills.index', compact('bills'));
+        
     }
 }

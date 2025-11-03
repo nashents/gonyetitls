@@ -902,8 +902,8 @@
                                 <a href="#"><i class="fas fa-tasks"></i> <span>Fleet Inspections</span> <i class="fas fa-angle-right arrow"></i></a>
                                 <ul class="child-nav">
                                     <li class="{{ request()->routeIs('checklist_categories.index') ? 'active' : '' }}" style="padding-left: 10px"><a href="{{route('checklist_categories.index')}}" ><i class="fas fa-list "></i> <span>Checklists</span></a></li>
-                                    <li class="{{ request()->routeIs('checklist_sub_categories.index') ? 'active' : '' }}" style="padding-left: 10px"><a href="{{route('checklist_sub_categories.index')}}"><i class="fas fa-list "></i> <span>Inspection Groups</span></a></li>
-                                    <li class="{{ request()->routeIs('checklist_items.index') ? 'active' : '' }}" style="padding-left: 10px"><a href="{{route('checklist_items.index')}}"><i class="fas fa-list "></i> <span>Inspection Items</span></a></li>
+                                    <li class="{{ request()->routeIs('checklist_sub_categories.index') ? 'active' : '' }}" style="padding-left: 10px"><a href="{{route('checklist_sub_categories.index')}}"><i class="fas fa-list "></i> <span>Checklist Items Groups</span></a></li>
+                                    <li class="{{ request()->routeIs('checklist_items.index') ? 'active' : '' }}" style="padding-left: 10px"><a href="{{route('checklist_items.index')}}"><i class="fas fa-list "></i> <span>Checklist Items</span></a></li>
                                 </ul>
                             </li>
                            

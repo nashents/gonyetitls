@@ -1,5 +1,5 @@
 <div>
-                    @php
+                    {{-- @php
                         $departments = Auth::user()->employee->departments;
                         foreach($departments as $department){
                             $department_names[] = $department->name;
@@ -26,7 +26,7 @@
                     @endif
                         <br>
                         <br>
-                        <br>
+                        <br> --}}
                     <table id="partsTable" class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                         <thead >
                          <tr>

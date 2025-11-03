@@ -130,6 +130,26 @@
 @stack('scripts')
     
     <script type="text/javascript">
+            window.addEventListener('show-ticket_requestModal', event => {
+                $('#ticket_requestModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-ticket_requestModal', event => {
+                $('#ticket_requestModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-ticket_requestEditModal', event => {
+                $('#ticket_requestEditModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-ticket_requestEditModal', event => {
+                $('#ticket_requestEditModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
             window.addEventListener('show-payment_methodModal', event => {
                 $('#payment_methodModal').modal('show');
             })

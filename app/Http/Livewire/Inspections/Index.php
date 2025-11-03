@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Inspections;
 
+use Carbon\Carbon;
 use Livewire\Component;
 use App\Models\Inspection;
 use Livewire\WithPagination;
@@ -32,75 +33,40 @@ class Index extends Component
 
     public function getInspectionsProperty(){
 
-             if (filled($this->from) && filled($this->to)) {
+            $query = Inspection::query()
+                ->with(['booking','horse','service_type','trailer','vehicle'])
+                // Date range: use given range if both are set, else default to current month
+                ->when(filled($this->from) && filled($this->to), function ($q) {
+                    $from = Carbon::parse($this->from)->startOfDay();
+                    $to   = Carbon::parse($this->to)->endOfDay();
+                    $q->whereBetween('created_at', [$from, $to]);
+                }, function ($q) {
+                    $q->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()]);
+                })
+                // Search block (only when a term is present)
+                ->when(filled($this->search), function ($q) {
+                    $s = '%'.$this->search.'%';
 
-                if (filled($this->search)) {
+                    $q->where(function ($inner) use ($s) {
+                        $inner->where('inspection_number', 'like', $s)
+                            ->orWhereHas('horse', fn ($qq) => $qq
+                                ->where('registration_number', 'like', $s)
+                                ->orWhere('fleet_number', 'like', $s))
+                            ->orWhereHas('vehicle', fn ($qq) => $qq
+                                ->where('registration_number', 'like', $s)
+                                ->orWhere('fleet_number', 'like', $s))
+                            ->orWhereHas('trailer', fn ($qq) => $qq
+                                ->where('registration_number', 'like', $s)
+                                ->orWhere('fleet_number', 'like', $s))
+                            ->orWhereHas('booking', fn ($qq) => $qq
+                                ->where('booking_number', 'like', $s))
+                            ->orWhereHas('service_type', fn ($qq) => $qq
+                                ->where('name', 'like', $s));
+                    });
+                })
+                ->latest('created_at');
 
-                    return Inspection::query()->with('booking','horse','service_type','trailer','vehicle')
-                    ->whereBetween('created_at',[$this->from, $this->to] )
-                    ->where(function ($query) {
-                          $query->where('inspection_number','like', '%'.$this->search.'%')
-                                ->orWhereHas('horse', function ($query) {
-                                    return $query->where('registration_number', 'like', '%'.$this->search.'%')
-                                                ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('service_type', function ($query) {
-                                    return $query->where('name', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('booking', function ($query) {
-                                    return $query->where('booking_number', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('vehicle', function ($query) {
-                                    return $query->where('registration_number', 'like', '%'.$this->search.'%')
-                                                ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
-                                })
-                              
-                                ->orWhereHas('trailer', function ($query) {
-                                    return $query->where('registration_number', 'like', '%'.$this->search.'%')
-                                                ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
-                                });
-                        })->orderBy('created_at','desc')->paginate(10);
-                }else {
-                    return Inspection::query()->with('booking','horse','service_type','trailer','vehicle')
-                    ->whereBetween('created_at',[$this->from, $this->to] )
-                    ->orderBy('created_at','desc')->paginate(10);
-                }
-               
-            }
-            elseif (filled($this->search)) {
-               
-                return Inspection::query()->with('booking','horse','service_type','trailer','vehicle')
-                ->whereMonth('created_at', date('m'))
-                ->whereYear('created_at', date('Y'))
-                ->where(function ($query) {
-                          $query->where('inspection_number','like', '%'.$this->search.'%')
-                                ->orWhereHas('horse', function ($query) {
-                                    return $query->where('registration_number', 'like', '%'.$this->search.'%')
-                                                ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('service_type', function ($query) {
-                                    return $query->where('name', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('booking', function ($query) {
-                                    return $query->where('booking_number', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('vehicle', function ($query) {
-                                    return $query->where('registration_number', 'like', '%'.$this->search.'%')
-                                                ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
-                                })
-                              
-                                ->orWhereHas('trailer', function ($query) {
-                                    return $query->where('registration_number', 'like', '%'.$this->search.'%')
-                                                ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
-                                });
-                        })->orderBy('created_at','desc')->paginate(10);
-            }
-            else {
-               
-                return Inspection::query()->with('booking','horse','service_type','trailer','vehicle')->whereMonth('created_at', date('m'))
-                ->whereYear('created_at', date('Y'))->orderBy('created_at','desc')->paginate(10);
-              
-            }
+            return $query->paginate(10);
     }
 
     public function render()

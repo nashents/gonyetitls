@@ -16,7 +16,7 @@ use App\Models\ChecklistCategory;
 use App\Models\ChecklistSubCategory;
 use Illuminate\Support\Facades\Auth;
 
-class Create extends Component
+class Edit extends Component
 {
     public $category_checklists;
     public $category_checklist_id;
@@ -41,7 +41,7 @@ class Create extends Component
     public $horse_id;
     public $description;
     public $date;
-    public $type = "Horse";
+    public $type;
     public $mileage;
     public $checklist_category_id;
 
@@ -58,7 +58,37 @@ class Create extends Component
  
  
 
-    public function mount(){
+    public function mount($id){
+
+        $checklist = Checklist::find($id);
+        if ($checklist->horse_id) {
+            $this->type = 'Horse';
+        }
+        elseif($checklist->vehicle_id){
+             $this->type = 'Vehicle';
+        }
+        elseif($checklist->trailer_id){
+             $this->type = 'Trailer';
+        }
+
+        $this->category_checklists = CategoryChecklist::where('checklist_category_id',$checklist->checklist_category_id)->get();
+        $this->employee_id = $checklist->employee_id;
+        $this->driver_id = $checklist->driver_id;
+        $this->horse_id = $checklist->horse_id;
+        $this->vehicle_id = $checklist->vehicle_id;
+        $this->trailer_id = $checklist->trailer_id;
+        $this->date = $checklist->date;
+        $this->description = $checklist->description;
+        $this->mileage = $checklist->mileage;
+
+        $checklist_results = $checklist->checklist_results;
+        if ($checklist_results) {
+            foreach ($checklist_results as $result) {
+                $this->status[] = $result->status;
+                $this->comments[] = $result->comments;
+            }
+        }
+
         $this->checklist_categories = ChecklistCategory::latest()->get();
         $this->checklist_sub_categories = ChecklistSubCategory::latest()->get();
         $this->checklist_items = collect();
@@ -90,58 +120,7 @@ class Create extends Component
     }
 
     
-    public function checklistNumber(){
-       
-        if (isset(Auth::user()->company)) {
-            $str = Auth::user()->company->name;
-            $words = explode(' ', $str);
-            if (isset($words[1][0])) {
-                $initials = $words[0][0].$words[1][0];
-            }else {
-                $initials = $words[0][0];
-            }
-        }elseif (isset(Auth::user()->employee->company)) {
-            $str = Auth::user()->employee->company->name;
-            $words = explode(' ', $str);
-            if (isset($words[1][0])) {
-                $initials = $words[0][0].$words[1][0];
-            }else {
-                $initials = $words[0][0];
-            }
-        }
-
-            $checklist = Checklist::orderBy('id', 'desc')->first();
-
-        if (!$checklist) {
-            $checklist_number =  $initials .'I'. str_pad(1, 5, "0", STR_PAD_LEFT);
-        }else {
-            $number = $checklist->id + 1;
-            $checklist_number =  $initials .'I'. str_pad($number, 5, "0", STR_PAD_LEFT);
-        }
-
-        return  $checklist_number;
-
-
-    }
-
-    public function updatedHorseId($id){
-        if(!is_null($id)){
-           $horse = Horse::find($id);
-           $this->mileage = $horse->mileage;
-        }
-    }
-    public function updatedVehicleId($id){
-        if(!is_null($id)){
-           $vehicle = Vehicle::find($id);
-           $this->mileage = $vehicle->mileage;
-        }
-    }
-    public function updatedTrailerId($id){
-        if(!is_null($id)){
-           $trailer = Trailer::find($id);
-           $this->mileage = $trailer->mileage;
-        }
-    }
+   
 
     public function updated($value){
         $this->validateOnly($value);
@@ -150,16 +129,15 @@ class Create extends Component
         'date' => 'required',
     ];
 
-    public function store(){
-        try{
-        $checklist = new Checklist;
-        $checklist->user_id = Auth::user()->id;
-        $checklist->checklist_number = $this->checklistNumber();
-        $checklist->checklist_category_id = $this->checklist_category_id;
+    public function update(){
+  
+        $checklist =  Checklist::find($this->checklist_id);
+      
         $checklist->employee_id = $this->employee_id;
         $checklist->driver_id = $this->driver_id;
         $checklist->vehicle_id = $this->vehicle_id;
         $checklist->trailer_id = $this->trailer_id;
+        $checklist->checklist_category_id = $this->checklist_category_id;
         $checklist->horse_id = $this->horse_id;
         $checklist->date = $this->date;
         $checklist->comments = $this->description;
@@ -170,40 +148,21 @@ class Create extends Component
         if (isset($this->status)) {
 
             foreach ($this->status as $key => $value) {
-                $result = new ChecklistResult;
-                $result->checklist_id = $checklist->id;
-                if (isset($this->status[$key])) {
-                    $result->status = $this->status[$key];
-                }
-                if (isset($this->comments[$key])) {
-                    $result->comments = $this->comments[$key];
-                }
-                $result->checklist_item_id = $key;
-                $result->save();
-
+            $result = new ChecklistResult;
+            $result->checklist_id = $checklist->id;
+            if (isset($this->status[$key])) {
+                $result->status = $this->status[$key];
             }
-        }
-
-            if ($this->type == "Horse") {
-                $horse = Horse::find($this->horse_id);
-                if ($this->mileage > $horse->mileage) {
-                    $horse->mileage = $this->mileage;
-                    $horse->update();
-                }
-            }elseif($this->type == "Vehicle"){
-                $vehicle = Vehicle::find($this->vehicle_id);
-                if ($this->mileage > $vehicle->mileage) {
-                    $vehicle->mileage = $this->mileage;
-                    $vehicle->update();
-                }
-            }elseif($this->type == "Trailer"){
-                $trailer = Trailer::find($this->trailer_id);
-                if ($this->mileage > $trailer->mileage) {
-                    $trailer->mileage = $this->mileage;
-                    $trailer->update();
-                }
+            if (isset($this->comments[$key])) {
+                $result->comments = $this->comments[$key];
             }
-
+            $result->checklist_item_id = $key;
+            $result->save();
+    
+              }
+              
+         
+            }
             $this->dispatchBrowserEvent('hide-checklistModal');
             $this->resetInputFields();
             $this->dispatchBrowserEvent('alert',[
@@ -213,14 +172,7 @@ class Create extends Component
 
             return redirect(route('checklists.index'));
 
-        }
-        catch(\Exception $e){
-        // Set Flash Message
-        $this->dispatchBrowserEvent('alert',[
-            'type'=>'error',
-            'message'=>"Something goes wrong while creating checklist!!"
-        ]);
-    }
+     
     }
 
     public function render()

@@ -24,4 +24,7 @@ class Measurement extends Model implements Auditable
     public function incidents(){
         return $this->hasMany('App\Models\Incident');
     }
+    public function ticket_requests(){
+        return $this->hasMany('App\Models\TicketRequest');
+    }
 }

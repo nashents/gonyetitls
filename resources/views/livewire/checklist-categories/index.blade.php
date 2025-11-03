@@ -16,21 +16,64 @@
                             </div>
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
-
+                             <div class="col-md-3" style="float: right; padding-right:0px">
+                                <div class="form-group">
+                                    <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search checklists...">
+                                </div>
+                            </div>
                             <table id="checklist_categoriesTable" class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
                                     <th class="th-sm">Name
                                     </th>
+                                    <th class="th-sm">Items
+                                    </th>
                                     <th class="th-sm">Action
                                     </th>
                                   </tr>
                                 </thead>
-                                @if ($checklist_categories->count()>0)
+                                @if (isset($checklist_categories))
                                 <tbody>
-                                    @foreach ($checklist_categories as $checklist_category)
+                                    @forelse ($checklist_categories as $checklist_category)
                                   <tr>
                                     <td>{{$checklist_category->name}}</td>
+                                    <td>
+                                        @php
+                                            // Group items by sub-category name (null becomes 'no-category')
+                                            $grouped = $checklist_category->category_checklists
+                                                ->groupBy(function ($item) {
+                                                    return $item->checklist_sub_category->name ?? 'no-category';
+                                                });
+
+                                            // Separate the "no-category" group
+                                            $noCategoryItems = $grouped->pull('no-category');
+                                        @endphp
+                                          <ul style="list-style-type: none; padding-left: 0; margin: 0;">
+                                            {{-- Sub-category groups --}}
+                                            @foreach ($grouped as $subCategory => $items)
+                                                <li>
+                                                    <strong>{{ $subCategory }}</strong>
+                                                    <ul style="margin-left: 1rem;">
+                                                        @foreach ($items as $item)
+                                                            <li>{{ $item->checklist_item->name ?? '' }}</li>
+                                                        @endforeach
+                                                    </ul>
+                                                </li>
+                                            @endforeach
+
+                                            {{-- Uncategorized items --}}
+                                            @if ($noCategoryItems && $noCategoryItems->count())
+                                                <li>
+                                                    <strong>Uncategorized</strong>
+                                                    <ul style="margin-left: 1rem;">
+                                                        @foreach ($noCategoryItems as $item)
+                                                            <li>{{ $item->checklist_item->name ?? '' }}</li>
+                                                        @endforeach
+                                                    </ul>
+                                                </li>
+                                            @endif
+                                        </ul>
+                                    </td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -46,12 +89,27 @@
                                         @include('checklist_categories.delete')
                                 </td>
                                   </tr>
-                                  @endforeach
+                                  @empty
+                                  <tr>
+                                    <td colspan="3">
+                                        <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
+                                            No Checklists Found ....
+                                        </div>
+                                    </td>
+                                  </tr>  
+                                    @endforelse
                                 </tbody>
                                 @else
                                     <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
                                  @endif
                               </table>
+                              <nav class="text-center" style="float: right">
+                                <ul class="pagination rounded-corners">
+                                    @if (isset($checklist_categories))
+                                        {{ $checklist_categories->links() }} 
+                                    @endif 
+                                </ul>
+                            </nav>  
 
                             <!-- /.col-md-12 -->
                         </div>

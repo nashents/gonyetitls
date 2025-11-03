@@ -9,7 +9,7 @@
     @endif
 @endsection
 @section('title')
-    Checklist | @if (isset(Auth::user()->employee->company))
+    Checklists | @if (isset(Auth::user()->employee->company))
     {{Auth::user()->employee->company->name}}
     @elseif (Auth::user()->company)
     {{Auth::user()->company->name}}
@@ -31,7 +31,7 @@
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
             							<li><a href="{{route('checklist_categories.index')}}"><i class="fa fa-list"></i> Checklists</a></li>
-            							<li class="active"> <i class="fas fa-list"></i> Inspection Items in Checklist</li>
+            							<li class="active"> <i class="fas fa-list"></i> Checklist items</li>
             						</ul>
                                 </div>
                             </div>

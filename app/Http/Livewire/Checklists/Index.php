@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Checklists;
 
+use Carbon\Carbon;
 use App\Models\Horse;
 use App\Models\Driver;
 use App\Models\Trailer;
@@ -9,16 +10,25 @@ use App\Models\Vehicle;
 use Livewire\Component;
 use App\Models\Employee;
 use App\Models\Checklist;
+use Livewire\WithPagination;
 use App\Models\ChecklistItem;
 use App\Models\ChecklistResult;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
 class Index extends Component
 {
 
+
+    use WithPagination;
+    protected $paginationTheme = 'bootstrap';
+    public $search;
+    protected $queryString = ['search'];
+    public $from;
+    public $to;
     public $checklist_items;
     public $checklist_item_id;
-    public $checklists;
+    private $checklists;
     public $checklist_id;
     public $trailers;
     public $trailer_id;
@@ -32,6 +42,7 @@ class Index extends Component
     public $horse_id;
     public $description;
     public $date;
+    public $checklist_filter = "date";
 
     public $available = '1';
     public $notavailable = '0';
@@ -40,61 +51,9 @@ class Index extends Component
  
 
     public function mount(){
-        $this->checklists = Checklist::latest()->get();
-        $this->checklist_items = ChecklistItem::latest()->get();
-        $this->vehicles = Vehicle::latest()->get();
-        $this->drivers = Driver::latest()->get();
-        $this->employees = Employee::latest()->get();
-        $this->trailers = Trailer::latest()->get();
-        $this->horses = Horse::latest()->get();
-    }
-
-    
-    private function resetInputFields(){
-        $this->date = '';
-        $this->horse_id = '';
-        $this->employee_id = '';
-        $this->vehicle_id = '';
-        $this->trailer_id = '';
-        $this->description = '';
-        $this->status = '';
-        $this->comments = '';
-    }
-
-    
-    public function checklistNumber(){
        
-        if (isset(Auth::user()->company)) {
-            $str = Auth::user()->company->name;
-            $words = explode(' ', $str);
-            if (isset($words[1][0])) {
-                $initials = $words[0][0].$words[1][0];
-            }else {
-                $initials = $words[0][0];
-            }
-        }elseif (isset(Auth::user()->employee->company)) {
-            $str = Auth::user()->employee->company->name;
-            $words = explode(' ', $str);
-            if (isset($words[1][0])) {
-                $initials = $words[0][0].$words[1][0];
-            }else {
-                $initials = $words[0][0];
-            }
-        }
-
-            $checklist = Checklist::orderBy('id', 'desc')->first();
-
-        if (!$checklist) {
-            $checklist_number =  $initials .'I'. str_pad(1, 5, "0", STR_PAD_LEFT);
-        }else {
-            $number = $checklist->id + 1;
-            $checklist_number =  $initials .'I'. str_pad($number, 5, "0", STR_PAD_LEFT);
-        }
-
-        return  $checklist_number;
-
-
     }
+
 
     public function updated($value){
         $this->validateOnly($value);
@@ -105,6 +64,7 @@ class Index extends Component
 
     public function store(){
         try{
+
         $checklist = new Checklist;
         $checklist->user_id = Auth::user()->id;
         $checklist->checklist_number = $this->checklistNumber();
@@ -153,11 +113,57 @@ class Index extends Component
     }
     }
 
+
+   
     public function render()
     {
-        $this->checklists = Checklist::latest()->get();
-        return view('livewire.checklists.index',[
-            'checklists' => $this->checklists
-        ]);
+
+         $base = Checklist::query()
+                ->with([
+                    'employee','checklist_category','horse','driver','vehicle','trailer',
+                ]);
+
+            // Date filter: use provided range, else current month
+            $base->when(filled($this->from) && filled($this->to), function ($q) {
+                $q->whereDate($this->checklist_filter, '>=', $this->from)
+                ->whereDate($this->checklist_filter, '<=', $this->to);
+            }, function ($q) {
+                $q->whereMonth($this->checklist_filter, Carbon::now()->month)
+                ->whereYear($this->checklist_filter, Carbon::now()->year);
+            });
+
+            // Search filter (grouped to keep AND/OR logic correct)
+            $base->when(filled($this->search), function ($q) {
+                $term = '%'.$this->search.'%';
+
+                $q->where(function ($qq) use ($term) {
+                    $qq->where('checklist_number', 'like', $term)
+                    ->orWhere('date', 'like', $term)
+                    ->orWhereHas('horse', function ($sub) use ($term) {
+                        $sub->where('registration_number', 'like', $term);
+                    })
+                    ->orWhereHas('vehicle', function ($sub) use ($term) {
+                        $sub->where('registration_number', 'like', $term);
+                    })
+                    ->orWhereHas('trailer', function ($sub) use ($term) {
+                        $sub->where('registration_number', 'like', $term);
+                    })
+                    ->orWhereHas('driver', function ($sub) use ($term) {
+                        $sub->whereHas('employee', function ($emp) use ($term) {
+                            $emp->where(DB::raw("concat(name, ' ', surname)"), 'like', $term);
+                        });
+                    })
+                    ->orWhereHas('checklist_category', function ($sub) use ($term) {
+                        $sub->where('name', 'like', $term);
+                    });
+                });
+            });
+
+            $checklists = $base
+                ->orderByDesc($this->checklist_filter)
+                ->paginate(10);
+
+            return view('livewire.checklists.index', compact('checklists'));
+       
     }
 }

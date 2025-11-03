@@ -64,7 +64,7 @@ class ChecklistController extends Controller
      */
     public function edit(Checklist $checklist)
     {
-        //
+         return view('checklists.edit')->with('checklist',$checklist);
     }
 
     /**

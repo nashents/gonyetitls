@@ -3,18 +3,24 @@
 namespace App\Http\Livewire\ChecklistSubCategories;
 
 use Livewire\Component;
+use Livewire\WithPagination;
 use App\Models\ChecklistSubCategory;
 use Illuminate\Support\Facades\Auth;
 
 class Index extends Component
 {
-    public $checklist_sub_categories;
+    use WithPagination;
+    protected $paginationTheme = 'bootstrap';
+    public $search;
+    protected $queryString = ['search'];
+    private $checklist_sub_categories;
     public $checklist_sub_category_id;
     public $name;
+    public $user_id;
 
 
     public function mount(){
-        $this->checklist_sub_categories = ChecklistSubCategory::all();
+       
     }
     
     public function updated($value){
@@ -92,9 +98,18 @@ class Index extends Component
 
     public function render()
     {
-        $this->checklist_sub_categories = ChecklistSubCategory::all();
-        return view('livewire.checklist-sub-categories.index',[
-            'checklist_sub_categories' => $this->checklist_sub_categories,
-        ]);
+
+        if (filled($this->search)) {
+            return view('livewire.checklist-sub-categories.index',[
+                'checklist_sub_categories' => ChecklistSubCategory::where('name','like', '%'.$this->search.'%')
+                ->orderBy('name','asc')->paginate(10),
+            ]);
+        }else{
+            return view('livewire.checklist-sub-categories.index',[
+                'checklist_sub_categories' => ChecklistSubCategory::orderBy('name','asc')->paginate(10),
+            ]);
+        }
+       
+        
     }
 }

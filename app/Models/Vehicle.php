@@ -30,6 +30,9 @@ class Vehicle extends Model implements Auditable
     public function mileages(){
         return $this->hasMany('App\Models\Mileage');
     }
+     public function ticket_requests(){
+        return $this->hasMany('App\Models\TicketRequest');
+    }
     public function capacities(){
         return $this->hasMany('App\Models\Capacity');
     }

@@ -11,13 +11,15 @@ class Index extends Component
 {
 
     use WithPagination;
-
     protected $paginationTheme = 'bootstrap';
+    public $search;
+    protected $queryString = ['search'];
     
     private $checklist_items;
     public $checklist_item_id;
     public $name;
     public $notes;
+    public $user_id;
 
     public function mount(){
         
@@ -102,9 +104,18 @@ class Index extends Component
 
     public function render()
     {
+
+        if (filled($this->search)) {
+            return view('livewire.checklist-items.index',[
+            'checklist_items'=> ChecklistItem::where('name','like', '%'.$this->search.'%')
+                                            ->orderBy('name','asc')->paginate(10)
+            ]);
+        }else{
+            return view('livewire.checklist-items.index',[
+            'checklist_items'=> ChecklistItem::orderBy('name','asc')->paginate(10)
+            ]);
+        }
       
-        return view('livewire.checklist-items.index',[
-            'checklist_items'=> ChecklistItem::orderBy('created_at','desc')->paginate(10)
-        ]);
+       
     }
 }

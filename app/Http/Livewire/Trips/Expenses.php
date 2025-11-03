@@ -337,6 +337,8 @@ class Expenses extends Component
                     'type'=>'success',
                     'message'=>"Expense(s) Added Successfully!!"
                 ]);
+
+                redirect(request()->header('Referer'));
     
                 
             }
@@ -491,6 +493,8 @@ class Expenses extends Component
                     'type'=>'success',
                     'message'=>"Expense Updated Successfully!!"
                 ]);
+
+                redirect(request()->header('Referer'));
            
 
             }

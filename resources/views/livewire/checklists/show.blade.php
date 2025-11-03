@@ -17,59 +17,44 @@
                                 <td class="w-20 line-height-35">{{$checklist->checklist_number}} </td>
                             </tr>
                             <tr>
-                                <th class="w-10 text-center line-height-35">CheckedBy</th>
+                                <th class="w-10 text-center line-height-35">Inspected By</th>
                                 <td class="w-20 line-height-35">
                                     {{$checklist->user ? $checklist->user->name : ""}} {{$checklist->user ? $checklist->user->surname : ""}}
                                 </td>
                             </tr>
                             <tr>
-                                <th class="w-10 text-center line-height-35">Checked On</th>
-                                <td class="w-20 line-height-35">{{$checklist->date}}</td>
+                                <th class="w-10 text-center line-height-35">Checklist</th>
+                                <td class="w-20 line-height-35">
+                                    {{$checklist->checklist_category ? $checklist->checklist_category->name : ""}}
+                                </td>
                             </tr>
                             <tr>
-                                <th class="w-10 text-center line-height-35">DrivenBy</th>
+                                <th class="w-10 text-center line-height-35">Inspected On</th>
+                                <td class="w-20 line-height-35">{{Carbon\Carbon::parse($checklist->date)->format('F j, Y g:i A')}}</td>
+                            </tr>
+                            <tr>
+                                <th class="w-10 text-center line-height-35">Driver</th>
                                 <td class="w-20 line-height-35">
                                     @if ($checklist->employee)
-                                    {{$checklist->employee ? $checklist->employee->name : ""}} {{$checklist->employee ? $checklist->employee->surname : ""}}        
+                                        {{$checklist->employee ? $checklist->employee->name : ""}} {{$checklist->employee ? $checklist->employee->surname : ""}}        
                                     @elseif($checklist->driver)
-                                    {{$checklist->driver->employee ? $checklist->driver->employee->name : ""}} {{$checklist->driver->employee ? $checklist->driver->employee->surname : ""}}
+                                        {{$checklist->driver->employee ? $checklist->driver->employee->name : ""}} {{$checklist->driver->employee ? $checklist->driver->employee->surname : ""}}
                                     @endif   
                                 </td>
                             </tr>
-
-                            @if (isset($checklist->horse))
                             <tr>
-                                <th class="w-10 text-center line-height-35">Horse Details</th>
+                                <th class="w-10 text-center line-height-35">Inspection For</th>
                                 <td class="w-20 line-height-35">
-                                    @if ($checklist->horse)
-                                    <a href="{{route('horses.show',$checklist->horse->id)}}">{{$checklist->horse->horse_make ? $checklist->horse->horse_make->name : "undefined make & model"}} {{$checklist->horse->horse_model ? $checklist->horse->horse_model->name : ""}} [HRN: {{$checklist->horse->registration_number}}]</a>
-                                    @endif
+                                        @if ($checklist->horse)
+                                            Horse | {{$checklist->horse->registration_number}} {{$checklist->horse->fleet_number ?  "(".$checklist->horse->fleet_number.")" : ""}}
+                                        @elseif($checklist->vehicle)
+                                            Vehicle | {{$checklist->vehicle->registration_number}} {{$checklist->vehicle->fleet_number ?  "(".$checklist->vehicle->fleet_number.")" : ""}}
+                                        @elseif($checklist->trailer)
+                                            Trailer | {{$checklist->trailer ? $checklist->trailer->registration_number : ""}} {{$checklist->trailer->fleet_number ?  "(".$checklist->trailer->fleet_number.")" : ""}}
+                                        @endif
+                                        
                                 </td>
                             </tr>
-                            @endif
-
-                            @if (isset($checklist->vehicle))
-                            <tr>
-                                <th class="w-10 text-center line-height-35">Vehicle Details</th>
-                                <td class="w-20 line-height-35">
-                                    @if ($checklist->vehicle)
-                                    <a href="{{route('vehicles.show',$checklist->vehicle->id)}}">{{$checklist->vehicle->vehicle_make ? $checklist->vehicle->vehicle_make->name : "undefined make & model"}} {{$checklist->vehicle->vehicle_model ? $checklist->vehicle->vehicle_model->name : ""}} [VRN: {{$checklist->vehicle->registration_number}}]</a>
-                                    @endif
-                                </td>
-                            </tr>
-                            @endif
-
-                            @if (isset($checklist->trailer))
-                            <tr>
-                                <th class="w-10 text-center line-height-35">Trailer Details</th>
-                                <td class="w-20 line-height-35">
-
-                                    <a href="{{route('trailers.show',$checklist->trailer->id)}}">{{$checklist->trailer ? $checklist->trailer->make : "undefined make & model"}} {{$checklist->trailer ? $checklist->trailer->model : ""}} [TRN: {{$checklist->trailer->registration_number}}]</a>
-
-                                </td>
-                            </tr>
-                            @endif
-
                             <tr>
                                 <th class="w-10 text-center line-height-35">Comments</th>
                                 <td class="w-20 line-height-35">{{$checklist->comments}}</td>

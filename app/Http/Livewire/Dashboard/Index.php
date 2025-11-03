@@ -101,6 +101,7 @@ class Index extends Component
     public $currencies ;
     public $trips ;
     public $bookings ;
+    public $inspection_count ;
     
     public $litreage_moved;
     public $months;
@@ -895,6 +896,7 @@ class Index extends Component
         $this->vendor_count = Vendor::where('status',true)->get()->count();
         $this->vehicle_count = Vehicle::where('archive',false)->get()->count();
         $this->assignment_count = Assignment::all()->count();
+        $this->inspection_count = Checklist::whereYear('date',date('Y'))->get()->count();
         $this->branch_count = Branch::all()->count();
         $this->customer_count = Customer::where('status',true)->get()->count();
         $this->bill_count = Bill::whereYear('bill_date',date('Y'))->get()->count();

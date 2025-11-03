@@ -163,8 +163,17 @@
         @if (in_array('Transport & Logistics', $department_names) || in_array('Super Admin', $role_names))
         @if (!Auth::user()->driver)
             <div class="row">
-                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-primary" href="{{route('horses.index')}}">
+                 <div class="col-lg-2 col-md-2 col-sm-6 col-xs-12">
+                    <a class="dashboard-stat bg-primary" href="{{route('transporters.index')}}">
+                        <span class="number counter">{{$transporter_count}}</span>
+                        <span class="name">Transporters</span>
+                        <span class="bg-icon"><i class="fa fa-building-o"></i></span>
+                    </a>
+
+                    <!-- /.src-code -->
+                </div>
+                <div class="col-lg-2 col-md-2 col-sm-6 col-xs-12">
+                    <a class="dashboard-stat bg-danger" href="{{route('horses.index')}}">
                         <span class="number counter">{{$horse_count}}</span>
                         <span class="name">Horses</span>
                         <span class="bg-icon"><i class="fas fa-truck"></i></span>
@@ -172,9 +181,20 @@
 
                 </div>
                 <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
+                  <div class="col-lg-2 col-md-2 col-sm-6 col-xs-12">
+                    <a class="dashboard-stat bg-default" href="{{route('assignments.index')}}">
+                        <span class="number counter">{{$assignment_count}}</span>
+                        <span class="name">Assignments</span>
+                        <span class="bg-icon"><i class="fa fa-tasks"></i></span>
+                    </a>
+                    <!-- /.dashboard-stat -->
 
-                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-danger" href="{{route('trailers.index')}}">
+
+                    <!-- /.src-code -->
+                </div>
+
+                <div class="col-lg-2 col-md-2 col-sm-6 col-xs-12">
+                    <a class="dashboard-stat bg-warning" href="{{route('trailers.index')}}">
                         <span class="number counter">{{$trailer_count}}</span>
                         <span class="name">Trailers</span>
                         <span class="bg-icon"><i class="fa fa-trailer"></i></span>
@@ -186,8 +206,8 @@
                 </div>
                 <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
 
-                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-warning" href="{{route('vehicles.index')}}">
+                <div class="col-lg-2 col-md-2 col-sm-6 col-xs-12">
+                    <a class="dashboard-stat bg-success" href="{{route('vehicles.index')}}">
                         <span class="number counter">{{$vehicle_count}}</span>
                         <span class="name">Vehicles</span>
                         <span class="bg-icon"><i class="fa fa-car"></i></span>
@@ -197,17 +217,21 @@
 
                     <!-- /.src-code -->
                 </div>
-                <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
-
-                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-success" href="{{route('transporters.index')}}">
-                        <span class="number counter">{{$transporter_count}}</span>
-                        <span class="name">Transporters</span>
-                        <span class="bg-icon"><i class="fa fa-building-o"></i></span>
+              
+                <div class="col-lg-2 col-md-2 col-sm-6 col-xs-12">
+                    <a class="dashboard-stat bg-secondary" href="{{route('checklists.index')}}">
+                        <span class="number counter">{{$inspection_count}}</span>
+                        <span class="name">Fleet Inspections</span>
+                        <span class="bg-icon"><i class="fa fa-search"></i></span>
                     </a>
+                    <!-- /.dashboard-stat -->
+
 
                     <!-- /.src-code -->
                 </div>
+                <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
+
+               
                 <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
 
             </div>

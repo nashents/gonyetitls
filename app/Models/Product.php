@@ -19,7 +19,9 @@ class Product extends Model implements Auditable
     public function requisition_items(){
         return $this->hasMany('App\Models\RequisitionItem');
     }
-
+    public function ticket_requests(){
+        return $this->hasMany('App\Models\TicketRequest');
+    }
     public function category(){
         return $this->belongsTo('App\Models\Category');
     }

@@ -439,7 +439,19 @@
                     </div>
                     </div>
                     <div class="row">
-                        <div class="col-md-6">
+                          <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="payment_method_id">Payment Methods</label>
+                           <select wire:model.debounce.300ms="payment_method_id" class="form-control" >
+                               <option value="">Select Payment Method</option>
+                               @foreach ($payment_methods as $payment_method)
+                               <option value="{{ $payment_method->id }}">{{ $payment_method->name }}</option>
+                               @endforeach
+                           </select>
+                            @error('payment_method_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label for="selectedCurrency">Currencies<span class="required" style="color: red">*</span></label>
                                <select wire:model.debounce.300ms="selectedCurrency" class="form-control" required>
@@ -467,7 +479,7 @@
                             @endif
                            
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label for="amount">Amount<span class="required" style="color: red">*</span></label>
                                 <input type="number" step="any" class="form-control"  wire:model.debounce.300ms="amount" placeholder="Enter Amount" required/>

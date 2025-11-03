@@ -3,6 +3,7 @@
 namespace App\Http\Livewire\ChecklistCategories;
 
 use Livewire\Component;
+use Livewire\WithPagination;
 use App\Models\ChecklistItem;
 use App\Models\CategoryChecklist;
 use App\Models\ChecklistCategory;
@@ -12,11 +13,16 @@ use Illuminate\Support\Facades\Auth;
 class Show extends Component
 {
 
+    use WithPagination;
+    protected $paginationTheme = 'bootstrap';
+    public $search;
+    protected $queryString = ['search'];
+
     public $checklist_items;
     public $checklist_item_id;
     public $checklist_sub_categories;
     public $checklist_sub_category_id;
-    public $category_checklists;
+    private $category_checklists;
     public $category_checklist_id;
     public $checklist_category;
     public $checklist_category_id;
@@ -44,11 +50,30 @@ class Show extends Component
     }
 
 
+      public function refresh($category){
+
+        if($category == "checklist_items"){
+            $this->checklist_items = ChecklistItem::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Checklist Items Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "checklist_sub_categories"){
+            $this->checklist_sub_categories = ChecklistSubCategory::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Item Groups Refreshed Successfully!!."
+            ]);
+        }
+    }
+
+   
+
 
     public function mount($id){
         $this->checklist_category_id = $id;
         $this->checklist_category = ChecklistCategory::find($id);
-        $this->category_checklists = CategoryChecklist::where('checklist_category_id', $this->checklist_category_id)->get();
         $this->checklist_sub_categories = ChecklistSubCategory::orderBy('name','asc')->get();
         $this->checklist_items = ChecklistItem::orderBy('name','asc')->get();
     }
@@ -73,7 +98,7 @@ class Show extends Component
             $this->resetInputFields();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
-                'message'=>"Inspection Item Added to Checklist Successfully!!"
+                'message'=>"Checklist Item Added Successfully!!"
             ]);
         }
     }
@@ -99,16 +124,41 @@ class Show extends Component
             $this->resetInputFields();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
-                'message'=>"Inspection Item in Checklist Updated Successfully!!"
+                'message'=>" Checklist Item Updated Successfully!!"
             ]);
         }
     }
 
     public function render()
     {
-        $this->category_checklists = CategoryChecklist::where('checklist_category_id', $this->checklist_category_id)->get();
-        return view('livewire.checklist-categories.show',[
-            'category_checklists' => $this->category_checklists
+        $base = CategoryChecklist::query()
+            ->with(['checklist_category', 'checklist_item', 'checklist_sub_category'])
+            ->where('category_checklists.checklist_category_id', $this->checklist_category_id)
+            ->leftJoin(
+                'checklist_sub_categories',
+                'category_checklists.checklist_sub_category_id',
+                '=',
+                'checklist_sub_categories.id'
+            )
+            ->select('category_checklists.*')
+            ->orderByRaw('checklist_sub_categories.name IS NULL') // nulls last
+            ->orderBy('checklist_sub_categories.name', 'asc');
+
+        if (filled($this->search)) {
+            $term = '%' . $this->search . '%';
+
+            $base->where(function ($q) use ($term) {
+                $q->whereHas('checklist_item', function ($qq) use ($term) {
+                    $qq->where('name', 'like', $term);
+                })->orWhereHas('checklist_sub_category', function ($qq) use ($term) {
+                    $qq->where('name', 'like', $term);
+                });
+            });
+        }
+
+        return view('livewire.checklist-categories.show', [
+            'category_checklists' => $base->paginate(10),
         ]);
+        
     }
 }

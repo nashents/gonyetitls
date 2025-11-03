@@ -40,6 +40,11 @@ class Index extends Component
     public $subtotal;
     public $usage;
     public $previous_weight;
+    public $tyres;
+    public $vehicle_id;
+    public $horse_id;
+    public $currency_id;
+    public $trailer_id;
 
  
     public function mount($ticket){
@@ -316,7 +321,7 @@ class Index extends Component
         }
         $this->inventories = Inventory::where('status',1)->where('balance','>',0)->get();
         $this->tyres = Tyre::where('status',1)->get();
-        $this->tickect_id = $ticket_inventory->ticket_id;
+        $this->ticket_id = $ticket_inventory->ticket_id;
         $this->horse_id = $ticket_inventory->horse_id;
         $this->vehicle_id = $ticket_inventory->vehicle_id;
         
