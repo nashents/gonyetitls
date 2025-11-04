@@ -39,6 +39,10 @@
                             <th class="w-10 text-center line-height-35">Requested By</th>
                             <td class="w-20 line-height-35">{{ucfirst($booking->employee ? $booking->employee->name : "")}} {{ucfirst($booking->employee ? $booking->employee->surname : "")}}</td>
                         </tr>
+                         <tr>
+                            <th class="w-10 text-center line-height-35">Job Type</th>
+                            <td class="w-20 line-height-35">{{$booking->service_type ? $booking->service_type->name : ""}}</td>
+                        </tr>
                             <tr>
                             <th class="w-10 text-center line-height-35">AssignedTo</th>
                             <td class="w-20 line-height-35">
@@ -89,14 +93,14 @@
                                 <th class="w-10 text-center line-height-35">Work Station</th>
                                 <td class="w-20 line-height-35">{{$work_station ? $work_station->name : ""}}</td>
                             </tr>
-                            @if ($booking->odometer)
+                          
                             <tr>
-                                <th class="w-10 text-center line-height-35">Odometer</th>
+                                <th class="w-10 text-center line-height-35">Mileage</th>
                                     <td class="w-20 line-height-35">
-                                        {{$booking->odometer}}Kms
+                                        {{$booking->odometer ? $booking->odometer."Kms" : ""}}
                                     </td>
                             </tr>
-                            @endif
+                          
                             <tr>
                                 <th class="w-10 text-center line-height-35">Problem Description</th>
                                 <td class="w-20 line-height-35">{{$booking->description}}</td>

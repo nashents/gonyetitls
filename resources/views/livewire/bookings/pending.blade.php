@@ -62,7 +62,7 @@
                                         </th>
                                         <th class="th-sm">BookingFor
                                         </th>
-                                        <th class="th-sm">ServiceType
+                                        <th class="th-sm">JobType
                                         </th>
                                         <th class="th-sm">Date
                                         </th>

@@ -90,9 +90,9 @@
                                     </div>
                                     <div class="col-md-4">
                                         <div class="form-group">
-                                            <label for="exampleInputEmail13">Service Type<span class="required" style="color: red">*</span></label>
+                                            <label for="exampleInputEmail13">Job Types<span class="required" style="color: red">*</span></label>
                                        <select wire:model.debounce.300ms="service_type_id" class="form-control" required>
-                                           <option value="">Select Service Type</option>
+                                           <option value="">Select Job Type</option>
                                          @foreach ($service_types as $service_type)
                                             <option value="{{$service_type->id}}">{{$service_type->name}}</option>
                                          @endforeach

@@ -136,7 +136,7 @@
                                             <strong>Out: </strong> {{$ticket->booking ? $ticket->booking->workshop_out_date : ""}} {{$ticket->booking ? $ticket->booking->workshop_out_time : ""}} <br>
                                         </td>
                                         <td>
-                                            <strong>Service Type: </strong> {{$ticket->service_type ? $ticket->service_type->name : ""}}  <br>
+                                            <strong>Job Type: </strong> {{$ticket->service_type ? $ticket->service_type->name : ""}}  <br>
                                             {{Str::limit($ticket->booking ? $ticket->booking->description : "",100,'...')}}
                                         </td>
                                         <td>{{ optional(\App\Models\Station::find($ticket->booking->station_id))->name ?? $ticket->booking->station }}</td>

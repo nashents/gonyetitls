@@ -16,6 +16,7 @@
                             </div>
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
+                            <small style="color: green">To add items to any checklist click view under actions.</small>
                              <div class="col-md-3" style="float: right; padding-right:0px">
                                 <div class="form-group">
                                     <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search checklists...">
@@ -48,28 +49,28 @@
                                             // Separate the "no-category" group
                                             $noCategoryItems = $grouped->pull('no-category');
                                         @endphp
-                                          <ul style="list-style-type: none; padding-left: 0; margin: 0;">
+                                        <ul style="list-style-type: none; padding-left: 0; margin: 0;">
                                             {{-- Sub-category groups --}}
                                             @foreach ($grouped as $subCategory => $items)
-                                                <li>
+                                                <li style="margin-bottom: 0.5rem;">
                                                     <strong>{{ $subCategory }}</strong>
-                                                    <ul style="margin-left: 1rem;">
+                                                    <ol style="margin-left: 1.5rem; padding-left: 1rem;">
                                                         @foreach ($items as $item)
                                                             <li>{{ $item->checklist_item->name ?? '' }}</li>
                                                         @endforeach
-                                                    </ul>
+                                                    </ol>
                                                 </li>
                                             @endforeach
 
                                             {{-- Uncategorized items --}}
                                             @if ($noCategoryItems && $noCategoryItems->count())
-                                                <li>
-                                                    <strong>Uncategorized</strong>
-                                                    <ul style="margin-left: 1rem;">
+                                                <li style="margin-bottom: 0.5rem;">
+                                                    <strong>Ungrouped</strong>
+                                                    <ol style="margin-left: 1.5rem; padding-left: 1rem;">
                                                         @foreach ($noCategoryItems as $item)
                                                             <li>{{ $item->checklist_item->name ?? '' }}</li>
                                                         @endforeach
-                                                    </ul>
+                                                    </ol>
                                                 </li>
                                             @endif
                                         </ul>

@@ -820,8 +820,11 @@ class Edit extends Component
             $invoice->footer = $this->footer;
             $invoice->subheading = $this->subheading;
             $invoice->update();
-            $invoice->bank_accounts()->detach();
-            $invoice->bank_accounts()->sync($this->bank_account_id);
+            $validAccounts = BankAccount::whereIn('id', (array) $this->bank_account_id)->pluck('id')->toArray();
+            if (!empty($validAccounts)) {
+                $invoice->bank_accounts()->sync($validAccounts);
+            }
+          
 
             if ($this->is_discount == True) {
                 $discount = $invoice->discount;

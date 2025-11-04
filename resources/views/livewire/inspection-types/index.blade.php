@@ -15,12 +15,14 @@
                             </div>
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
-
+                             <div class="col-md-3" style="float: right; padding-right:0px">
+                                <div class="form-group">
+                                    <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search inspection items...">
+                                </div>
+                            </div>
                             <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
-                                    <th class="th-sm">Inspection Item Group
-                                    </th>
                                     <th class="th-sm">Name
                                     </th>
                                     <th class="th-sm">Action
@@ -29,9 +31,8 @@
                                 </thead>
                                 @if (isset($inspection_types))
                                 <tbody>
-                                    @foreach ($inspection_types as $inspection_type)
+                                    @forelse ($inspection_types as $inspection_type)
                                   <tr>
-                                    <td>{{$inspection_type->inspection_group ? $inspection_type->inspection_group->name : ""}}</td>
                                     <td>{{$inspection_type->name}}</td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
@@ -47,7 +48,15 @@
                                         @include('inspection_types.delete')
                                 </td>
                                   </tr>
-                                  @endforeach
+                                   @empty
+                                  <tr>
+                                    <td colspan="2">
+                                        <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
+                                            No Inspection Items Found ....
+                                        </div>
+                                    </td>
+                                  </tr>  
+                                    @endforelse
                                 </tbody>
                                 @else
                                     <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
@@ -81,16 +90,6 @@
                 <form wire:submit.prevent="store()" >
                 <div class="modal-body">
                     <div class="form-group">
-                        <label for="country">Inspection Groups</label>
-                       <select wire:model.debounce.300ms="inspection_group_id" class="form-control" >
-                           <option value="">Select Inspection Group</option>
-                           @foreach ($inspection_groups as $inspection_group)
-                                <option value="{{$inspection_group->id}}">{{$inspection_group->name}}</option>
-                           @endforeach
-                       </select>
-                        @error('inspection_group_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                    </div>
-                    <div class="form-group">
                         <label for="name">Name<span class="required" style="color: red">*</span></label>
                         <input type="text" class="form-control" wire:model.debounce.300ms="name"  placeholder="Enter Name" required >
                         @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -115,16 +114,6 @@
                 </div>
                 <form wire:submit.prevent="update()" >
                 <div class="modal-body">
-                    <div class="form-group">
-                        <label for="country">Inspection Groups</label>
-                       <select wire:model.debounce.300ms="inspection_group_id" class="form-control">
-                           <option value="">Select Inspection Group</option>
-                           @foreach ($inspection_groups as $inspection_group)
-                                <option value="{{$inspection_group->id}}">{{$inspection_group->name}}</option>
-                           @endforeach
-                       </select>
-                        @error('inspection_group_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                    </div>
                     <div class="form-group">
                         <label for="name">Name<span class="required" style="color: red">*</span></label>
                         <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Name" required >

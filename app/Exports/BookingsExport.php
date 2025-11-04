@@ -263,7 +263,7 @@ class BookingsExport implements
             'RequestedBy',
             'AssignedTo',
             'BookingFor',
-            'Service Type',
+            'Job Type',
             'Narration',
             'In Date',
             'Estimated Completion',

@@ -75,7 +75,7 @@
                                 <td class="w-20 line-height-35">{{$ticket->out_date}} @ {{$ticket->out_time}}</td>
                             </tr>
                             <tr>
-                                <th class="w-10 text-center line-height-35">Service Type</th>
+                                <th class="w-10 text-center line-height-35">Job Type</th>
                                 <td class="w-20 line-height-35">{{$ticket->service_type ? $ticket->service_type->name : ""}}</td>
                             </tr>
                             @if ($ticket->odometer)

@@ -1416,16 +1416,16 @@
                     <a href="#"><i class="fas fa-cog"></i> <span>Master</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
                         <li class="{{ request()->routeIs('service_types.index') ? 'active' : '' }}">
-                            <a href="{{route('service_types.index')}}"><i class="fas fa-list"></i> <span>Service Types</span> </a>
+                            <a href="{{route('service_types.index')}}"><i class="fas fa-list"></i> <span>Job Types</span> </a>
                         </li>
                         <li class="{{ request()->routeIs('inspection_groups.index') ? 'active' : '' }}">
-                            <a href="{{route('inspection_groups.index')}}"><i class="fas fa-list"></i> <span>Inspection Groups</span> </a>
+                            <a href="{{route('inspection_groups.index')}}"><i class="fas fa-list"></i> <span> Inspection Item Groups</span> </a>
                         </li>
                         <li class="{{ request()->routeIs('inspection_types.index') ? 'active' : '' }}">
                             <a href="{{route('inspection_types.index')}}"><i class="fas fa-list"></i> <span>Inspection Items</span> </a>
                         </li>
                         <li class="{{ request()->routeIs('stations.index') ? 'active' : '' }}">
-                            <a href="{{route('stations.index')}}"><i class="fas fa-list"></i> <span>Stations</span> </a>
+                            <a href="{{route('stations.index')}}"><i class="fas fa-list"></i> <span>Workshop Stations</span> </a>
                         </li>
                     </ul>
                 </li>

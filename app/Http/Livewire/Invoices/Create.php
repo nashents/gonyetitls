@@ -861,32 +861,36 @@ class Create extends Component
 
     public function store(){
 
-          DB::transaction(function () {
+        DB::transaction(function () {
 
-        $invoice = new Invoice;
-        $invoice->user_id = Auth::user()->id;
-        $invoice->company_id = $this->company_id;
-        $invoice->currency_id = $this->selectedCurrency;
-        $invoice->fiscalize = $this->fiscalize_invoice;
-        $invoice->customer_id = $this->selectedCustomer;
-        $invoice->invoice_number = $this->invoice_number;
-        $invoice->number = $this->number;
-        $invoice->account_id = $this->income_account_id;
-        $invoice->date = $this->date;
-        $invoice->expiry = $this->expiry;
-        $invoice->invoicing_values = $this->values;
-        $invoice->purchase_order_number = $this->purchase_order_number;
-        $invoice->sales_order_number = $this->sales_order_number;
-        $invoice->pat_number = $this->pat_number;
-        $invoice->memo = $this->memo;
-        $invoice->footer = $this->footer;
-        $invoice->from_inventory = $this->from_inventory;
-        $invoice->from_trips = $this->from_trips;
-        $invoice->save();
-        $invoice->bank_accounts()->sync($this->bank_account_id);
-        $this->invoice_id = $invoice->id;
+            $invoice = new Invoice;
+            $invoice->user_id = Auth::user()->id;
+            $invoice->company_id = $this->company_id;
+            $invoice->currency_id = $this->selectedCurrency;
+            $invoice->fiscalize = $this->fiscalize_invoice;
+            $invoice->customer_id = $this->selectedCustomer;
+            $invoice->invoice_number = $this->invoice_number;
+            $invoice->number = $this->number;
+            $invoice->account_id = $this->income_account_id;
+            $invoice->date = $this->date;
+            $invoice->expiry = $this->expiry;
+            $invoice->invoicing_values = $this->values;
+            $invoice->purchase_order_number = $this->purchase_order_number;
+            $invoice->sales_order_number = $this->sales_order_number;
+            $invoice->pat_number = $this->pat_number;
+            $invoice->memo = $this->memo;
+            $invoice->footer = $this->footer;
+            $invoice->from_inventory = $this->from_inventory;
+            $invoice->from_trips = $this->from_trips;
+            $invoice->save();
+            $validAccounts = BankAccount::whereIn('id', (array) $this->bank_account_id)->pluck('id')->toArray();
 
-        $discount_account = Account::where('name','Sales Discounts')->first();
+            if (!empty($validAccounts)) {
+                $invoice->bank_accounts()->sync($validAccounts);
+            }
+            $this->invoice_id = $invoice->id;
+
+            $discount_account = Account::where('name','Sales Discounts')->first();
 
         if ($this->is_discount == True) {
             $discount = new Discount;

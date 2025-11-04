@@ -58,9 +58,9 @@
                                         </div>
                                         <div class="col-md-3">
                                             <div class="input-group">
-                                                <span class="input-group-addon">Service Types</span>
+                                                <span class="input-group-addon">Job Types</span>
                                                 <select wire:model.debounce.300ms="service_type_id" class="form-control" aria-label="..." >
-                                                    <option value="all">Select Type</option>
+                                                    <option value="all">Select Job Type</option>
                                                     @foreach ($service_types as $service_type)
                                                         <option value="{{ $service_type->id }}">{{ $service_type->name }}</option>
                                                     @endforeach
@@ -269,7 +269,7 @@
                                         </td>
                                         <td>
                                             <strong>
-                                                Service Type: 
+                                                Job Type: 
                                             </strong>{{ucfirst($booking->service_type ? $booking->service_type->name : "")}} <br>
                                             {{Str::limit($booking->description,100,'...')}}</td>
                                         <td>{{ optional(\App\Models\Station::find($booking->station_id))->name ?? $booking->station }}</td>

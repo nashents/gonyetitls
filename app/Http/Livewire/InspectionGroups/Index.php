@@ -3,15 +3,20 @@
 namespace App\Http\Livewire\InspectionGroups;
 
 use Livewire\Component;
-use App\Models\InspectionGroup;
+use Livewire\WithPagination;
 use App\Models\InspectionType;
+use App\Models\InspectionGroup;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Session;
 
 class Index extends Component
 {
-    public $inspection_groups;
+     use WithPagination;
+    protected $paginationTheme = 'bootstrap';
+    public $search;
+    protected $queryString = ['search'];
+    private $inspection_groups;
     public $name;   
     public $inspection_group_id;
     public $user_id;
@@ -33,7 +38,7 @@ class Index extends Component
     }
 
     public function mount(){
-        $this->inspection_groups = InspectionGroup::all();
+      
     }
     private function resetInputFields(){
         $this->name = '';
@@ -90,9 +95,20 @@ class Index extends Component
 
     public function render()
     {
-        $this->inspection_groups = InspectionGroup::latest()->get();
-        return view('livewire.inspection-groups.index',[
-            'inspection_groups' => $this->inspection_groups
+        $base = InspectionGroup::query();
+
+        $inspection_groups = $base
+            ->when(filled($this->search), function ($q) {
+                $term = '%'.$this->search.'%';
+                $q->where(function ($qq) use ($term) {
+                    $qq->where('name', 'like', $term);
+                });
+            })
+            ->orderBy('name', 'asc')
+            ->paginate(10);
+
+        return view('livewire.inspection-groups.index', [
+            'inspection_groups' => $inspection_groups,
         ]);
     }
 }

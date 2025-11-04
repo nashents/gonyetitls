@@ -21,14 +21,13 @@ class Index extends Component
     
     private $inspection_types;
     public $inspection_type_id;
-    public $inspection_groups;
-    public $inspection_group_id;
+
     public $user_id;
     public $name;
 
     public function mount(){
       
-        $this->inspection_groups = InspectionGroup::all();
+     
         
     }
 
@@ -36,13 +35,12 @@ class Index extends Component
         $this->validateOnly($value);
     }
     protected $rules = [
-        'inspection_group_id' => 'required',
         'name' => 'required|unique:inspection_types,name,NULL,id,deleted_at,NULL|string|min:2',
     ];
 
     private function resetInputFields(){
          $this->name = '';
-         $this->inspection_group_id = '';
+     
     }
 
     public function store(){
@@ -51,7 +49,6 @@ class Index extends Component
             $inspection_type = new InspectionType;
             $inspection_type->user_id = Auth::user()->id;
             $inspection_type->name = $this->name;
-            $inspection_type->inspection_group_id = $this->inspection_group_id;
             $inspection_type->save();
 
             $this->dispatchBrowserEvent('hide-inspection_typeModal');
@@ -75,7 +72,6 @@ class Index extends Component
     public function edit($id){
     $inspection_type = InspectionType::find($id);
     $this->name = $inspection_type->name;
-    $this->inspection_group_id = $inspection_type->inspection_group_id;
     $this->inspection_type_id = $inspection_type->id;
     $this->dispatchBrowserEvent('show-inspection_typeEditModal');
 
@@ -89,7 +85,6 @@ class Index extends Component
             try{
             $inspection_type = InspectionType::find($this->inspection_type_id);
             $inspection_type->name = $this->name;
-            $inspection_type->inspection_group_id = $this->inspection_group_id;
             $inspection_type->update();
 
             $this->dispatchBrowserEvent('hide-inspection_typeEditModal');
@@ -114,8 +109,20 @@ class Index extends Component
 
     public function render()
     {
-        return view('livewire.inspection-types.index',[
-            'inspection_types' => InspectionType::orderBy('created_at','desc')->paginate(10),
+        $base = InspectionType::query();
+
+        $inspection_types = $base
+            ->when(filled($this->search), function ($q) {
+                $term = '%'.$this->search.'%';
+                $q->where(function ($qq) use ($term) {
+                    $qq->where('name', 'like', $term);
+                });
+            })
+            ->orderBy('name', 'asc')
+            ->paginate(10);
+
+        return view('livewire.inspection-types.index', [
+            'inspection_types' => $inspection_types,
         ]);
     }
 }

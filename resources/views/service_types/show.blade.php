@@ -9,7 +9,7 @@
     @endif
 @endsection
 @section('title')
-    Service Types | @if (isset(Auth::user()->employee->company))
+    Job Types | @if (isset(Auth::user()->employee->company))
     {{Auth::user()->employee->company->name}}
     @elseif (Auth::user()->company)
     {{Auth::user()->company->name}}
@@ -30,8 +30,8 @@
                                 <div class="col-md-6">
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
-            							<li><a href="{{route('service_types.index')}}"><i class="fa fa-list"></i> Service Types</a></li>
-            							<li class="active"> <i class="fas fa-eye"></i> Service Type</li>
+            							<li><a href="{{route('service_types.index')}}"><i class="fa fa-list"></i> Job Types</a></li>
+            							<li class="active"> <i class="fas fa-eye"></i> Job Type</li>
             						</ul>
                                 </div>
                             </div>

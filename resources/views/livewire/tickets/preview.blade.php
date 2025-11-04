@@ -76,7 +76,7 @@
 
                         <tbody>
                             <tr>
-                                <th class="text-center"><strong>Service Type</strong></th>
+                                <th class="text-center"><strong>Job Type</strong></th>
                                 <td class="text-center">
                                     {{$ticket->service_type ? $ticket->service_type->name : ""}}
                                 </td>

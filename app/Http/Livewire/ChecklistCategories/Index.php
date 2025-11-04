@@ -101,11 +101,30 @@ class Index extends Component
         }
     }
 
+
     public function render()
     {
-    
-        return view('livewire.checklist-categories.index',[
-            'checklist_categories' => ChecklistCategory::orderBy('name','asc')->paginate(10),
+
+       $base = ChecklistCategory::query()
+            ->with([ 'category_checklists.checklist_item']);
+
+        $checklist_categories = $base
+            ->when(filled($this->search), function ($q) {
+                $term = '%'.$this->search.'%';
+                $q->where(function ($qq) use ($term) {
+                    $qq->where('name', 'like', $term)
+                    ->orWhereHas('category_checklists', function ($sub) use ($term) {
+                        $sub->whereHas('checklist_item', function ($qsub) use ($term) {
+                            $qsub->where('name', 'like', $term);
+                        });
+                    });
+                });
+            })
+            ->orderBy('name', 'asc')
+            ->paginate(10);
+
+        return view('livewire.checklist-categories.index', [
+            'checklist_categories' => $checklist_categories,
         ]);
     }
 }

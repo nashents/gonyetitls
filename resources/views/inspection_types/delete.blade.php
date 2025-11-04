@@ -2,7 +2,7 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content bg-danger">
             <div class="modal-body">
-               <center> <strong>Are you sure you want to delete this Inspection Type?</strong> </center>
+               <center> <strong>Are you sure you want to delete this Inspection Item?</strong> </center>
             </div>
             <form action="{{route('inspection_types.destroy', $inspection_type->id)}}" method="POST" >
                 {{ csrf_field() }}

@@ -2,7 +2,7 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content bg-danger">
             <div class="modal-body">
-               <center> <strong>Are you sure you want to delete this Service Type?</strong> </center> 
+               <center> <strong>Are you sure you want to delete this Job Type?</strong> </center> 
             </div>
             <form action="{{route('service_types.destroy', $service_type->id)}}" method="POST" >
                 {{ csrf_field() }}

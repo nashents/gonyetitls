@@ -83,7 +83,7 @@ class InspectionTypeController extends Controller
     public function destroy(InspectionType $inspectionType)
     {
         $inspectionType->delete();
-        Session::flash('success','Inspection Type Successfully Deleted');
+        Session::flash('success','Inspection Item Deleted Successfully !!');
         return redirect()->back();
     }
 }

@@ -35,6 +35,10 @@ WithCustomStartCell
     public $to;
     public $ticket_status;
     public $filter;
+    public $selectedHorse;
+    public $selectedTrailer;
+    public $selectedAsset;
+    public $selectedVehicle;
 
 
     public function __construct($ticket_status = null, $filter = null, $search = null, $from = null, $to = null ) {
@@ -190,7 +194,7 @@ WithCustomStartCell
                 'RequestedBy',
                 'AssignedTo',
                 'TicketFor',
-                'Service Type',
+                'Job Type',
                 'Narration',
                 'date',
                 'Authorization',
