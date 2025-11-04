@@ -883,8 +883,8 @@ class Create extends Component
             $invoice->from_inventory = $this->from_inventory;
             $invoice->from_trips = $this->from_trips;
             $invoice->save();
+            
             $validAccounts = BankAccount::whereIn('id', (array) $this->bank_account_id)->pluck('id')->toArray();
-
             if (!empty($validAccounts)) {
                 $invoice->bank_accounts()->sync($validAccounts);
             }
