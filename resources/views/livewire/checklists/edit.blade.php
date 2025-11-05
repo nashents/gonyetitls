@@ -137,11 +137,18 @@
                                                 @error('selectedChecklistCategory') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         </div>
-                                        <div class="col-md-6">
+                                         <div class="col-md-4">
                                             <div class="form-group">
-                                                <label for="name">Checklist Date<span class="required" style="color: red">*</span></label>
+                                                <label for="name">Inspection Date<span class="required" style="color: red">*</span></label>
                                                 <input type="datetime-local" class="form-control" wire:model.debounce.300ms="date" placeholder="Date" required>
                                                 @error('date') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label for="name">Next Inspection Date</label>
+                                                <input type="datetime-local" class="form-control" wire:model.debounce.300ms="next_date" placeholder="Date">
+                                                @error('next_date') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         </div>
                                     </div>
@@ -195,11 +202,30 @@
                                  
                                   @endif
             
-                                <div class="form-group">
-                                    <label for="name">Overal Inspection Remarks</label>
-                                   <textarea class="form-control" wire:model.debounce.300ms="description" cols="30" rows="4" placeholder="Enter Remarks"></textarea>
-                                    @error('description') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                </div>
+                                  <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="rating">Overall Tyre Rating (1 = Poor, 5 = Excellent)</label>
+                                            <div class="d-flex gap-3">
+                                                @for ($i = 1; $i <= 5; $i++)
+                                                    <label>
+                                                        <input type="radio" name="rating" value="{{ $i }}" 
+                                                            @checked(old('rating', $tyre->rating ?? 5) == $i)>
+                                                        {{ $i }}
+                                                    </label>
+                                                @endfor
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="name">Overal Inspection Remarks</label>
+                                            <textarea class="form-control" wire:model.debounce.300ms="description" cols="30" rows="4" placeholder="Enter Remarks"></textarea>
+                                            @error('description') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                  </div>
+                               
                                
                             <div class="modal-footer">
                                 <div class="btn-group" role="group">

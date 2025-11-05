@@ -79,8 +79,8 @@ class Show extends Component
                     ),
             ],
 
-            'inspection_group_id'   => ['required', 'array'],
-            'inspection_group_id.*' => ['required'],
+            'inspection_group_id'   => ['nullable', 'array'],
+            'inspection_group_id.*' => ['nullable'],
         ],
     
             // Custom messages
@@ -90,8 +90,8 @@ class Show extends Component
             'inspection_type_id.*.distinct'   => 'You have duplicate inspection items in the list.',
             'inspection_type_id.*.unique'     => "This inspection item is already linked to {$typeName}.",
 
-            'inspection_group_id.required'    => 'Add at least one item group.',
-            'inspection_group_id.*.required'  => 'Select an item group.',
+            'inspection_group_id.nullable'    => 'Add at least one item group.',
+            'inspection_group_id.*.nullable'  => 'Select an item group.',
         ],
 
         // (Optional) Nicely formatted attribute names

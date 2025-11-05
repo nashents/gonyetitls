@@ -39,7 +39,7 @@
                                     </th>
                                     <th class="th-sm">Total
                                     </th>
-                                    <th class="th-sm">Status
+                                    <th class="th-sm">Condition
                                     </th>
                                     <th class="th-sm">Action
                                     </th>

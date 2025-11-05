@@ -92,12 +92,18 @@ class Edit extends Component
             $this->checklist_item_id[$id] = $id;  // optional hidden field you had
         }
 
-        $this->checklist_categories = ChecklistCategory::latest()->get();
-        $this->checklist_sub_categories = ChecklistSubCategory::latest()->get();
+        $this->checklist_categories = ChecklistCategory::orderBy('name','asc')->get();
+        $this->checklist_sub_categories = ChecklistSubCategory::orderBy('name','asc')->get();
         $this->checklist_items = collect();
         $this->vehicles = Vehicle::orderBy('registration_number','asc')->get();
-        $this->drivers = Driver::latest()->get();
-        $this->employees = Employee::latest()->get();
+        $this->drivers = Driver::query()
+                            ->join('employees', 'drivers.employee_id', '=', 'employees.id')
+                            ->orderBy('employees.name', 'asc')
+                            ->orderBy('employees.surname', 'asc')
+                            ->with('employee') // keep eager loading intact
+                            ->select('drivers.*') // prevent column conflicts
+                            ->get();
+        $this->employees = Employee::orderBy('name','asc')->orderBy('surname','asc')->get();
         $this->trailers = Trailer::orderBy('registration_number','asc')->get();
         $this->horses = Horse::orderBy('registration_number','asc')->get();
 

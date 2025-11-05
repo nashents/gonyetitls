@@ -94,8 +94,11 @@
                                             </button>
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{ route('service_types.show',$service_type->id) }}"  ><i class="fa fa-eye color-default"></i> View</a></li>
-                                                <li><a href="#" data-toggle="modal" data-target="#service_typeEditModal" wire:click="edit({{$service_type->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                                @if ($service_type->name != "Tyre Inspection")
+                                                     <li><a href="#" data-toggle="modal" data-target="#service_typeEditModal" wire:click="edit({{$service_type->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
                                                 <li><a href="#" data-toggle="modal" data-target="#service_typeDeleteModal{{ $service_type->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                                                @endif
+                                               
                                             </ul>
                                         </div>
                                         @include('service_types.delete')

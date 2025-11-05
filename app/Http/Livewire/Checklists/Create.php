@@ -10,6 +10,7 @@ use Livewire\Component;
 use App\Models\Employee;
 use App\Models\Checklist;
 use App\Models\ChecklistItem;
+use App\Models\TyreAssignment;
 use App\Models\ChecklistResult;
 use App\Models\CategoryChecklist;
 use App\Models\ChecklistCategory;
@@ -43,6 +44,8 @@ class Create extends Component
     public $date;
     public $type = "Horse";
     public $mileage;
+    public $tyre_assignments;
+    public $next_inspection_at;
 
 
 
@@ -55,16 +58,34 @@ class Create extends Component
     public $inputs = [];
     
     public $comments;
+    public $tread_depth_mm = [];
+    public $pressure_psi = [];
+    public $valve_ok = [];
+    public $sidewall_damage = [];
+    public $wear_pattern = [];
+    public $rim_condition = [];
+    public $wheel_nuts_torqued = [];
+    public $axle_match = [];
+    public $action_required = [];
+    public $rating = [];
+    public $notes = [];
+    public $tyre_assignment_id = [];
  
  
 
     public function mount(){
-        $this->checklist_categories = ChecklistCategory::latest()->get();
-        $this->checklist_sub_categories = ChecklistSubCategory::latest()->get();
+        $this->checklist_categories = ChecklistCategory::orderBy('name','asc')->get();
+        $this->checklist_sub_categories = ChecklistSubCategory::orderBy('name','asc')->get();
         $this->checklist_items = collect();
         $this->vehicles = Vehicle::orderBy('registration_number','asc')->get();
-        $this->drivers = Driver::latest()->get();
-        $this->employees = Employee::latest()->get();
+        $this->drivers = Driver::query()
+                            ->join('employees', 'drivers.employee_id', '=', 'employees.id')
+                            ->orderBy('employees.name', 'asc')
+                            ->orderBy('employees.surname', 'asc')
+                            ->with('employee') // keep eager loading intact
+                            ->select('drivers.*') // prevent column conflicts
+                            ->get();
+        $this->employees = Employee::orderBy('name','asc')->orderBy('surname','asc')->get();
         $this->trailers = Trailer::orderBy('registration_number','asc')->get();
         $this->horses = Horse::orderBy('registration_number','asc')->get();
     }
@@ -72,9 +93,42 @@ class Create extends Component
     
     public function updatedSelectedChecklistCategory($id){
         if (!is_null($id)) {
-          
+       
             $this->checklist_category = ChecklistCategory::find($id);
             $this->category_checklists = CategoryChecklist::where('checklist_category_id',$id)->get();
+
+            if ($this->checklist_category && $this->checklist_category->name == "Tyre Inspection") {
+              
+                if ($this->type == "Horse" && isset($this->horse_id)) {
+                  
+                    $this->tyre_assignments = TyreAssignment::query()
+                    ->with('tyre')               // eager load tyre details
+                    ->where('horse_id', $this->horse_id)  // or $horseId
+                    ->where('status',1)                   // status = 1
+                    ->orderBy('axle')            // optional: stable ordering
+                    ->orderBy('position')        // optional
+                    ->get();
+
+                }elseif ($this->type == "Vehicle" && isset($this->vehicle_id)) {
+
+                    $this->tyre_assignments = TyreAssignment::query()
+                    ->with('tyre')               // eager load tyre details
+                    ->where('vehicle_id', $this->vehicle_id)  // or $vehicle_id
+                    ->where('status',1)                   // status = 1
+                    ->orderBy('axle')            // optional: stable ordering
+                    ->orderBy('position')        // optional
+                    ->get();
+
+                }elseif ($this->type == "Trailer" && isset($this->trailer_id)) {
+                      $this->tyre_assignments = TyreAssignment::query()
+                    ->with('tyre')               // eager load tyre details
+                    ->where('trailer_id', $this->trailer_id)  // or $trailer_id
+                    ->where('status',1)                   // status = 1
+                    ->orderBy('axle')            // optional: stable ordering
+                    ->orderBy('position')        // optional
+                    ->get();
+                }
+            }
         }
     }
 
@@ -162,27 +216,76 @@ class Create extends Component
         $checklist->trailer_id = $this->trailer_id;
         $checklist->horse_id = $this->horse_id;
         $checklist->date = $this->date;
+        $checklist->next_inspection_at = $this->next_inspection_at;
         $checklist->comments = $this->description;
         $checklist->mileage = $this->mileage;
         $checklist->save();
 
-        
-        if (isset($this->status)) {
-
-            foreach ($this->status as $key => $value) {
-                $result = new ChecklistResult;
-                $result->checklist_id = $checklist->id;
-                if (isset($this->status[$key])) {
-                    $result->status = $this->status[$key];
+        if ($this->checklist_category->name != "Tyre Inspection") {
+                if (isset($this->status)) {
+                    foreach ($this->status as $key => $value) {
+                        $result = new ChecklistResult;
+                        $result->checklist_id = $checklist->id;
+                        if (isset($this->status[$key])) {
+                            $result->status = $this->status[$key];
+                        }
+                        if (isset($this->comments[$key])) {
+                            $result->comments = $this->comments[$key];
+                        }
+                        $result->checklist_item_id = $key;
+                        $result->save();
+                    }
                 }
-                if (isset($this->comments[$key])) {
-                    $result->comments = $this->comments[$key];
-                }
-                $result->checklist_item_id = $key;
-                $result->save();
+        }else{
+             if (isset($this->tread_depth_mm)) {
+                foreach ($this->tread_depth_mm as $key => $value) {
 
+                    $result = new ChecklistResult;
+                    $result->checklist_id = $checklist->id;
+                  
+                    if (isset($this->tread_depth_mm[$key])) {
+                        $result->tread_depth_mm = $this->tread_depth_mm[$key];
+                    }
+                    if (isset($this->tyre_assignment_id[$key])) {
+                        $result->tyre_assignment_id = $this->tyre_assignment_id[$key];
+                    }
+                    if (isset($this->pressure_psi[$key])) {
+                        $result->pressure_psi = $this->pressure_psi[$key];
+                    }
+                    if (isset($this->valve_ok[$key])) {
+                        $result->valve_ok = $this->valve_ok[$key];
+                    }
+                    if (isset($this->sidewall_damage[$key])) {
+                        $result->sidewall_damage = $this->sidewall_damage[$key];
+                    }
+                    if (isset($this->wear_pattern[$key])) {
+                        $result->wear_pattern = $this->wear_pattern[$key];
+                    }
+                    if (isset($this->rim_condition[$key])) {
+                        $result->rim_condition = $this->rim_condition[$key];
+                    }
+                    if (isset($this->wheel_nuts_torqued[$key])) {
+                        $result->wheel_nuts_torqued = $this->wheel_nuts_torqued[$key];
+                    }
+                    if (isset($this->axle_match[$key])) {
+                        $result->axle_match = $this->axle_match[$key];
+                    }
+                    if (isset($this->action_required[$key])) {
+                        $result->action_required = $this->action_required[$key];
+                    }
+                    if (isset($this->rating[$key])) {
+                        $result->rating = $this->rating[$key];
+                    }
+                    if (isset($this->notes[$key])) {
+                        $result->notes = $this->notes[$key];
+                    }
+                    $result->tyre_id = $key;
+                    $result->save();
+                }
             }
         }
+     
+       
 
             if ($this->type == "Horse") {
                 $horse = Horse::find($this->horse_id);

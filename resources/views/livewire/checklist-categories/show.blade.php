@@ -94,6 +94,7 @@
                 <form wire:submit.prevent="store()"> 
                 <div class="modal-body">
                     <div class="row">
+                        
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label for="title">Inspection Groups</label>

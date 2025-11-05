@@ -14,6 +14,7 @@ use App\Models\TyreDispatch;
 use Livewire\WithPagination;
 use App\Models\TyreAssignment;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Session;
 
 class Index extends Component
 {
@@ -45,6 +46,7 @@ class Index extends Component
     public $ending_odometer;
     public $description;
     public $status;
+    public $user_id;
 
     public function mount(){
         $this->resetPage();
@@ -264,17 +266,17 @@ class Index extends Component
         }
 
         public function unAssignment($id){
-            $assignment = Assignment::find($id);
-            $this->assignment_id = $assignment->id;
+            $tyre_assignment = TyreAssignment::find($id);
+            $this->tyre_assignment_id = $tyre_assignment->id;
             $this->dispatchBrowserEvent('show-unAssignmentModal');
         }
 
         public function updateAssignment(){
-           $assignment = Assignment::find($this->assignment_id);
-           $assignment->ending_odometer = $this->ending_odometer;
-           $assignment->end_date = $this->end_date;
-           $assignment->status = 0;
-           $assignment->update();
+           $tyre_assignment = TyreAssignment::find($this->tyre_assignment_id);
+           $tyre_assignment->ending_odometer = $this->ending_odometer;
+           $tyre_assignment->end_date = $this->end_date;
+           $tyre_assignment->status = 0;
+           $tyre_assignment->update();
            Session::flash('success','Driver horse Unassignment Successful');
             $this->dispatchBrowserEvent('hide-unAssignmentModal');
             return redirect()->route('assignments.index');

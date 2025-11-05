@@ -216,7 +216,7 @@ WithBatchInserts
         $employee->relationship    = $row['relationship'];
         $employee->contact    = $row['contact'];
         $employee->update();
-        $employee->ranks()->attach([4]);
+        $employee->ranks()->attach([3]);
 
         $employee_position  = new EmployeePosition;
         $employee_position->employee_id = $employee->id;
@@ -283,7 +283,7 @@ WithBatchInserts
        $employee->relationship    = $row['relationship'];
        $employee->contact    = $row['contact'];
        $employee->save();
-       $employee->ranks()->attach([4]);
+       $employee->ranks()->attach([3]);
 
        $driver = new Driver;
        if (isset($transporter_id) && $transporter_id != "") {

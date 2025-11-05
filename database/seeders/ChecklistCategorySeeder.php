@@ -14,7 +14,10 @@ class ChecklistCategorySeeder extends Seeder
      */
     public function run()
     {
-        $checklist_categories = ['Road tanker safe loading','Stock on board', 'Intermediate inspection of horse', 'Intermediate inspection of trailer', 'Intermediate inspection of vehicle'];
+        $checklist_categories = [
+            // 'Road tanker safe loading','Stock on board', 'Intermediate inspection of horse', 'Intermediate inspection of trailer', 'Intermediate inspection of vehicle',
+            'Tyre Inspection'
+        ];
         foreach($checklist_categories as $checklist_category){
             ChecklistCategory::create([
                 'user_id' => 3,

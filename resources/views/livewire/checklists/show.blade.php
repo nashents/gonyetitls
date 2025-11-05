@@ -69,7 +69,8 @@
                 </div>
                 <div role="tabpanel" class="tab-pane " id="results">
 
-                    <table id="checklist_resultsTable" class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
+                    @if ($checklist->checklist_category->name != "Tyre Inspection")
+                        <table id="checklist_resultsTable" class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                         <thead >
                          <tr>
                             <th class="th-sm">Inspection Group
@@ -94,6 +95,61 @@
                             @endforeach
                         </tbody>
                       </table>
+                    @else
+                    <table id="checklist_resultsTable" class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
+                        <thead >
+                         <tr>
+                            <th class="th-sm">Tyre
+                            </th>
+                            <th class="th-sm">Depth
+                            </th>
+                            <th class="th-sm">PSI
+                            </th>
+                            <th class="th-sm">Wear
+                            </th>
+                            <th class="th-sm">Sidewall
+                            </th>
+                            <th class="th-sm">Valve
+                            </th>
+                            <th class="th-sm">Nuts Torqued
+                            </th>
+                            <th class="th-sm">Axle Match
+                            </th>
+                            <th class="th-sm">Rim
+                            </th>
+                            <th class="th-sm">Rating
+                            </th>
+                            <th class="th-sm">Actions
+                            </th>
+                          </tr>
+                        </thead>
+
+                        <tbody>
+                           @foreach ($checklist_results as  $result)
+                            <tr>
+                                <td>
+                                    @if ($result->tyre)
+                                        {{$result->tyre->product ? $result->tyre->product->name : ""}} {{$result->tyre->product->brand ? $result->tyre->product->brand->name : ""}} {{$result->tyre->serial_number}}</strong> <br> {{$result->tyre_assignment ? $result->tyre_assignment->axle : ""}} {{$result->tyre_assignment ? $result->tyre_assignment->position : ""}}
+                                    @endif
+                                </td>
+                                <td>{{$result->tread_depth_mm}}</td>
+                                <td>{{$result->pressure_psi}}</td>
+                                <td>{{$result->valve_ok}}</td>
+                                <td>{{$result->sidewall_damage}}</td>
+                                <td>{{$result->wear_pattern}}</td>
+                                <td>{{$result->rim_condition}}</td>
+                                <td>{{$result->wheel_nuts_torqued}}</td>
+                                <td>{{$result->axle_match}}</td>
+                                <td>{{$result->action_required}}</td>
+                                <td>{{$result->rating}}</td>
+                                <td>{{$result->notes}}</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                      </table>
+                    @endif
+
+                    
 
 
                     </div>

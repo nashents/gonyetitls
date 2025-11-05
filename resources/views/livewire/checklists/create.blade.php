@@ -1,9 +1,10 @@
 <div>
+
     <section class="section">
         <x-loading/>
         <div class="container-fluid">
             <div class="row">
-                <div class="col-md-10 col-md-offset-1">
+                <div class="col-md-11 ">
                     <div class="panel">
                         <div class="panel-body">
                             <form wire:submit.prevent="store()" >
@@ -106,11 +107,12 @@
                                         </div>
                                         <div class="col-md-6">
                                             <div class="form-group">
-                                                <label for="name">Checklist Date<span class="required" style="color: red">*</span></label>
+                                                <label for="name">Inspection Date<span class="required" style="color: red">*</span></label>
                                                 <input type="datetime-local" class="form-control" wire:model.debounce.300ms="date" placeholder="Date" required>
                                                 @error('date') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         </div>
+                                      
                                     </div>
                                
                                 
@@ -118,6 +120,8 @@
                                 @if (!is_null($selectedChecklistCategory))
                                 <small>  <a href="{{ route('checklist_categories.show',$selectedChecklistCategory) }}" target="_blank"><i class="fa fa-plus-square-o"></i> Add items to checklist </a></small><a href="#" wire:click.prevent="refresh('checklist_categories')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> <br> 
                                 <div  style="height: 500px; overflow: auto">
+                                @if ($checklist_category->name != "Tyre Inspection")
+
                                 <table id="inspectionsTable" class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                     <caption><strong>{{$checklist_category->name}}</strong></caption>
                                     <thead >
@@ -158,14 +162,195 @@
                                     </tbody>
                 
                                   </table>
+
+                                @else
+                                    <!--
+                                        This is the table for all tyre inspections
+                                    -->
+                                    
+                                    <table id="inspectionsTable" class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
+                                    <caption><strong>{{$checklist_category->name}}</strong></caption>
+                                    <thead >
+                                     <tr>
+                                        <th class="th-sm" style="width: 15%;">Tyre
+                                        </th>
+                                        <th class="th-sm" style="width: 7%;">Depth
+                                        </th>
+                                        <th class="th-sm" style="width: 7%;">PSI
+                                        </th>
+                                         <th class="th-sm" style="width: 8%;">Wear
+                                        </th>
+                                        <th class="th-sm" style="width: 8%;">Sidewall
+                                        </th>
+                                        <th class="th-sm" style="width: 8%;">Valve
+                                        </th>
+                                        <th class="th-sm" style="width: 10%;">Nuts Torqued
+                                        </th>
+                                        <th class="th-sm" style="width: 7%;">Axle
+                                        </th>
+                                        <th class="th-sm" style="width: 10%;">Rim
+                                        </th>
+                                        <th class="th-sm" style="width: 7%;">Rating
+                                        </th>
+                                        <th class="th-sm" style="width: 10%;">Actions
+                                        </th>
+                                      </tr>
+                                    </thead>
+                
+                                    <tbody>
+                                        @if (isset($tyre_assignments))
+                                            
+                                       
+                                       @foreach ($tyre_assignments as $key => $tyre_assignment)
+                                        
+                                      <tr>
+                                        <td>
+                                            <strong>{{$tyre_assignment->tyre->product ? $tyre_assignment->tyre->product->name : ""}} {{$tyre_assignment->tyre->product->brand ? $tyre_assignment->tyre->product->brand->name : ""}} {{$tyre_assignment->tyre->serial_number}}</strong> <br> {{$tyre_assignment->axle}} {{$tyre_assignment->position}}
+                                            <input type="hidden" wire:model.debounce.300ms="tyre_id.{{$tyre_assignment->tyre->id}}" value="{{$tyre_assignment->tyre->id}}">
+                                            <input type="hidden" wire:model.debounce.300ms="tyre_assignment_id.{{$tyre_assignment->tyre->id}}" value="{{$tyre_assignment->id}}">
+                                         <br>
+                                         <div class="form-group">
+                                            <label for="exampleInputEmail13">Notes</label>
+                                           <textarea  wire:model.debounce.300ms="notes.{{$tyre_assignment->tyre->id}}" wire:key="{{$tyre_assignment->tyre->id}}" class="form-control" cols="15" rows="3"></textarea>
+                                        </div>
+                                        </td>
+                                        <td>
+                                            <div class="form-group">
+                                                <input type="number" step="any" wire:model.debounce.300ms="tread_depth_mm.{{$tyre_assignment->tyre->id}}" wire:key="{{$tyre_assignment->tyre->id}}" class="form-control">
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="form-group">
+                                                <input type="number" step="any" wire:model.debounce.300ms="pressure_psi.{{$tyre_assignment->tyre->id}}" wire:key="{{$tyre_assignment->tyre->id}}" class="form-control">
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="form-group">
+                                                <select wire:model.debounce.300ms="wear_pattern.{{$tyre_assignment->tyre->id}}" wire:key="{{$tyre_assignment->tyre->id}}" class="form-control">
+                                                    <option value="" disabled>Select Wear Pattern</option>
+                                                    <option value="Even">Even</option>
+                                                    <option value="Inner Edge">Inner Edge</option>
+                                                    <option value="Outer Edge">Outer Edge</option>
+                                                    <option value="Center">Center</option>
+                                                    <option value="Cupping">Cupping</option>
+                                                    <option value="Feathering">Feathering</option>
+                                                </select>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="form-group">
+                                                <select wire:model.debounce.300ms="sidewall_damage.{{$tyre_assignment->tyre->id}}" wire:key="{{$tyre_assignment->tyre->id}}" class="form-control">
+                                                    <option value="" disabled>Select Sidewall Damage</option>
+                                                    <option value="None">None</option>
+                                                    <option value="Cuts">Cuts</option>
+                                                    <option value="Bulges">Bulges</option>
+                                                    <option value="Cracks">Cracks</option>
+                                                </select>
+                                            </div>
+                                        </td>
+                                        <td>
+                                           <div class="mb-10">
+                                                <input type="radio" wire:model.debounce.300ms="valve_ok.{{$tyre_assignment->tyre->id}}" wire:key="{{ $tyre_assignment->tyre->id }}" value="1"  class="line-style" required/>
+                                                <label for="one" class="radio-label">Tight</label>
+                                            </div>
+                                            <div class="mb-10">
+                                                <input type="radio" wire:model.debounce.300ms="valve_ok.{{$tyre_assignment->tyre->id}}"wire:key="{{ $tyre_assignment->tyre->id }}"  value="0" class="line-style" required/>
+                                                <label for="three" class="radio-label">Leaking</label>
+                                            </div> 
+                                        </td>
+                                        <td>
+                                           <div class="mb-10">
+                                                <input type="radio" wire:model.debounce.300ms="wheel_nuts_torqued.{{$tyre_assignment->tyre->id}}" wire:key="{{ $tyre_assignment->tyre->id }}" value="1"  class="line-style" required/>
+                                                <label for="one" class="radio-label">Yes</label>
+                                            </div>
+                                            <div class="mb-10">
+                                                <input type="radio" wire:model.debounce.300ms="wheel_nuts_torqued.{{$tyre_assignment->tyre->id}}"wire:key="{{ $tyre_assignment->tyre->id }}"  value="0" class="line-style" required/>
+                                                <label for="three" class="radio-label">No</label>
+                                            </div> 
+                                        </td>
+                                        <td>
+                                           <div class="mb-10">
+                                                <input type="radio" wire:model.debounce.300ms="axle_match.{{$tyre_assignment->tyre->id}}" wire:key="{{ $tyre_assignment->tyre->id }}" value="1"  class="line-style" required/>
+                                                <label for="one" class="radio-label">Yes</label>
+                                            </div>
+                                            <div class="mb-10">
+                                                <input type="radio" wire:model.debounce.300ms="axle_match.{{$tyre_assignment->tyre->id}}"wire:key="{{ $tyre_assignment->tyre->id }}"  value="0" class="line-style" required/>
+                                                <label for="three" class="radio-label">No</label>
+                                            </div> 
+                                        </td>
+                                        <td>
+                                             <div class="form-group">
+                                                <select wire:model.debounce.300ms="rim_condition.{{$tyre_assignment->tyre->id}}" wire:key="{{$tyre_assignment->tyre->id}}" class="form-control">
+                                                    <option value="" disabled>Select Sidewall Damage</option>
+                                                    <option value="OK">OK</option>
+                                                    <option value="Bent">Bent</option>
+                                                    <option value="Cracked">Cracked</option>
+                                                    <option value="Rusty">Rusty</option>
+                                                </select>
+                                            </div>
+                                        </td>
+                                         <td>
+                                           <div class="mb-10">
+                                                <input type="radio" wire:model.debounce.300ms="rating.{{$tyre_assignment->tyre->id}}" wire:key="{{ $tyre_assignment->tyre->id }}" value="1"  class="line-style" required/>
+                                                <label for="one" class="radio-label">1</label>
+                                            </div>
+                                            <div class="mb-10">
+                                                <input type="radio" wire:model.debounce.300ms="rating.{{$tyre_assignment->tyre->id}}"wire:key="{{ $tyre_assignment->tyre->id }}"  value="2" class="line-style" required/>
+                                                <label for="three" class="radio-label">2</label>
+                                            </div> 
+                                            <div class="mb-10">
+                                                <input type="radio" wire:model.debounce.300ms="rating.{{$tyre_assignment->tyre->id}}"wire:key="{{ $tyre_assignment->tyre->id }}"  value="3" class="line-style" required/>
+                                                <label for="three" class="radio-label">3</label>
+                                            </div> 
+                                            <div class="mb-10">
+                                                <input type="radio" wire:model.debounce.300ms="rating.{{$tyre_assignment->tyre->id}}"wire:key="{{ $tyre_assignment->tyre->id }}"  value="4" class="line-style" required/>
+                                                <label for="three" class="radio-label">4</label>
+                                            </div> 
+                                            <div class="mb-10">
+                                                <input type="radio" wire:model.debounce.300ms="rating.{{$tyre_assignment->tyre->id}}"wire:key="{{ $tyre_assignment->tyre->id }}"  value="5" class="line-style" required/>
+                                                <label for="three" class="radio-label">5</label>
+                                            </div> 
+                                        </td>
+                                        <td>
+                                             <div class="form-group">
+                                                <select wire:model.debounce.300ms="action_required.{{$tyre_assignment->tyre->id}}" wire:key="{{$tyre_assignment->tyre->id}}" class="form-control">
+                                                    <option value="" disabled>Select Action</option>
+                                                    <option value="None">None</option>
+                                                    <option value="Rotate">Rotate</option>
+                                                    <option value="Repair">Repair</option>
+                                                    <option value="Replace">Replace</option>
+                                                </select>
+                                            </div>
+                                        </td>
+                                       
+                 
+                                      </tr>
+                
+                                      @endforeach
+                                       @endif
+                                    </tbody>
+                
+                                  </table>
+                                    @endif
                                 </div>
                                  
                                   @endif
             
-                                <div class="form-group">
-                                    <label for="name">Overal Inspection Remarks</label>
-                                   <textarea class="form-control" wire:model.debounce.300ms="description" cols="30" rows="4" placeholder="Enter Remarks"></textarea>
-                                    @error('description') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="name">Overal Inspection Remarks</label>
+                                            <textarea class="form-control" wire:model.debounce.300ms="description" cols="30" rows="4" placeholder="Enter Remarks"></textarea>
+                                            @error('description') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="name">Next Inspection Date</label>
+                                            <input type="datetime-local" class="form-control" wire:model.debounce.300ms="next_inspection_at" placeholder="Date">
+                                            @error('next_inspection_at') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
                                 </div>
                                
                             <div class="modal-footer">
@@ -187,6 +372,5 @@
         </div>
         <!-- /.container-fluid -->
     </section>
-
 
 </div>

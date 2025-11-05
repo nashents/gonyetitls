@@ -97,8 +97,8 @@ class Show extends Component
                     ),
             ],
 
-            'checklist_sub_category_id'   => ['required', 'array'],
-            'checklist_sub_category_id.*' => ['required'],
+            'checklist_sub_category_id'   => ['nullable', 'array'],
+            'checklist_sub_category_id.*' => ['nullable'],
         ],
     
             // Custom messages
@@ -108,8 +108,8 @@ class Show extends Component
             'checklist_item_id.*.distinct'   => 'You have duplicate checklist items in the list.',
             'checklist_item_id.*.unique'     => "This checklist item is already linked to {$typeName}.",
 
-            'checklist_sub_category_id.required'    => 'Add at least one item group.',
-            'checklist_sub_category_id.*.required'  => 'Select an checklist item group.',
+            'checklist_sub_category_id.nullable'    => 'Add at least one item group.',
+            'checklist_sub_category_id.*.nullable'  => 'Select an checklist item group.',
         ],
 
         // (Optional) Nicely formatted attribute names

@@ -83,8 +83,11 @@
                                             </button>
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{ route('checklist_categories.show', $checklist_category->id) }}" ><i class="fa fa-eye color-default"></i> View</a></li>
-                                                <li><a href="#"  wire:click="edit({{$checklist_category->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
-                                                <li><a href="#" data-toggle="modal" data-target="#checklist_categoryDeleteModal{{ $checklist_category->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                                                @if ($checklist_category->name != "Tyre Inspection")
+                                                    <li><a href="#"  wire:click="edit({{$checklist_category->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                                    <li><a href="#" data-toggle="modal" data-target="#checklist_categoryDeleteModal{{ $checklist_category->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                                                @endif
+                                                
                                             </ul>
                                         </div>
                                         @include('checklist_categories.delete')
