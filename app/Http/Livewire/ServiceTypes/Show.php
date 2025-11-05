@@ -63,7 +63,7 @@ class Show extends Component
 
     public function store(){
 
-        $typeName = optional(\App\Models\ServiceType::find($this->service_type_id))->name ?? 'this service type';
+        $typeName = optional(\App\Models\ServiceType::find($this->service_type_id))->name ?? 'this job type';
         
         $this->validate([
             // the array itself
@@ -85,19 +85,19 @@ class Show extends Component
     
             // Custom messages
         [
-            'inspection_type_id.required'     => 'Add at least one inspection type.',
-            'inspection_type_id.*.required'   => 'Select an inspection type.',
-            'inspection_type_id.*.distinct'   => 'You have duplicate inspection types in the list.',
-            'inspection_type_id.*.unique'     => "This inspection type is already linked to {$typeName}.",
+            'inspection_type_id.required'     => 'Add at least one inspection item.',
+            'inspection_type_id.*.required'   => 'Select an inspection item.',
+            'inspection_type_id.*.distinct'   => 'You have duplicate inspection items in the list.',
+            'inspection_type_id.*.unique'     => "This inspection item is already linked to {$typeName}.",
 
-            'inspection_group_id.required'    => 'Add at least one inspection group.',
-            'inspection_group_id.*.required'  => 'Select an inspection group.',
+            'inspection_group_id.required'    => 'Add at least one item group.',
+            'inspection_group_id.*.required'  => 'Select an item group.',
         ],
 
         // (Optional) Nicely formatted attribute names
         [
-            'inspection_type_id.*'  => 'inspection type',
-            'inspection_group_id.*' => 'inspection group',
+            'inspection_type_id.*'  => 'inspection item',
+            'inspection_group_id.*' => 'inspection item group',
         ]
 
     );
@@ -124,6 +124,24 @@ class Show extends Component
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Category Checklist Item Added Successfully!!"
+            ]);
+        }
+    }
+
+       public function refresh($category){
+
+        if($category == "inspection_types"){
+            $this->inspection_types = InspectionType::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Checklist Items Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "inspection_groups"){
+            $this->inspection_groups = InspectionGroup::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Item Groups Refreshed Successfully!!."
             ]);
         }
     }
@@ -157,9 +175,36 @@ class Show extends Component
 
     public function render()
     {
-       
-        return view('livewire.service-types.show',[
-            'inspection_services' => InspectionService::where('service_type_id', $this->service_type_id)->paginate(10)
+
+             $base = InspectionService::query()
+            ->with(['service_type', 'inspection_type', 'inspection_group'])
+            ->where('inspection_services.service_type_id', $this->service_type_id)
+            ->leftJoin(
+                'inspection_groups',
+                'inspection_services.inspection_group_id',
+                '=',
+                'inspection_groups.id'
+            )
+            ->select('inspection_services.*')
+            ->orderByRaw('inspection_groups.name IS NULL') // nulls last
+            ->orderBy('inspection_groups.name', 'asc');
+
+        if (filled($this->search)) {
+            $term = '%' . $this->search . '%';
+
+            $base->where(function ($q) use ($term) {
+                $q->whereHas('inspection_type', function ($qq) use ($term) {
+                    $qq->where('name', 'like', $term);
+                })->orWhereHas('inspection_group', function ($qq) use ($term) {
+                    $qq->where('name', 'like', $term);
+                });
+            });
+        }
+
+        return view('livewire.service-types.show', [
+            'inspection_services' => $base->paginate(10),
         ]);
+       
+       
     }
 }

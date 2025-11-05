@@ -1,10 +1,6 @@
 <div>
     <div class="row mt-30">
-        <div>
-            @include('includes.messages')
-        </div>
-
-        <!-- /.col-md-3 -->
+       
 
         <div class="col-md-10 col-md-offset-1" >
 
@@ -95,7 +91,7 @@
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fa fa-plus"></i> Add Inspection Item(s) to Checklist <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                 </div>
-                <form wire:submit.prevent="store()" >
+                <form wire:submit.prevent="store()"> 
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-md-4">
@@ -117,7 +113,11 @@
                                 <select class="form-control" wire:model.debounce.300ms="checklist_item_id.0" required>
                                     <option value="">Select Inspection Item</option>
                                     @foreach ($checklist_items as $checklist_item)
-                                        <option value="{{ $checklist_item->id }}">{{ $checklist_item->name }}</option>
+                                        <option value="{{ $checklist_item->id }}"
+                                             @if(in_array($checklist_item->id, $checklist_item_id ?? []) && ($checklist_item_id[0] ?? null) != $checklist_item->id) 
+                                                            disabled 
+                                                @endif
+                                            >{{ $checklist_item->name }}</option>
                                     @endforeach
                                 </select>
                                 <small>  <a href="{{ route('checklist_items.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Inspection Item</a></small><a href="#" wire:click.prevent="refresh('checklist_items')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
@@ -146,7 +146,11 @@
                                     <select class="form-control" wire:model.debounce.300ms="checklist_item_id.{{ $value }}" required>
                                         <option value="">Select Inspection Item</option>
                                         @foreach ($checklist_items as $checklist_item)
-                                            <option value="{{ $checklist_item->id }}">{{ $checklist_item->name }}</option>
+                                            <option value="{{ $checklist_item->id }}"
+                                                 @if(in_array($checklist_item->id, $checklist_item_id ?? []) && ($checklist_item_id[$value] ?? null) != $checklist_item->id) 
+                                                            disabled 
+                                                @endif
+                                                >{{ $checklist_item->name }}</option>
                                         @endforeach
                                     </select>
                                     @error('checklist_item_id.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror

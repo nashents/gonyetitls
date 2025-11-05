@@ -5,6 +5,7 @@ namespace App\Http\Livewire\ChecklistCategories;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\ChecklistItem;
+use Illuminate\Validation\Rule;
 use App\Models\CategoryChecklist;
 use App\Models\ChecklistCategory;
 use App\Models\ChecklistSubCategory;
@@ -79,6 +80,46 @@ class Show extends Component
     }
 
     public function store(){
+        
+        $typeName = optional(\App\Models\ChecklistCategory::find($this->checklist_category_id))->name ?? 'this checklist';
+        
+        $this->validate([
+            // the array itself
+            'checklist_item_id' => ['required', 'array'],
+            // prevent duplicates within the submitted array too
+            'checklist_item_id.*' => [
+                'required',
+                'distinct',
+                Rule::unique('inspection_services', 'checklist_item_id') // 👈 explicit column
+                    ->where(fn ($q) => $q->where('checklist_category_id', $this->checklist_category_id)
+                                        // ->whereNull('deleted_at') // add if the table is soft-deleting
+                                        // ->where('company_id', $this->company_id) // add if multi-tenant
+                    ),
+            ],
+
+            'checklist_sub_category_id'   => ['required', 'array'],
+            'checklist_sub_category_id.*' => ['required'],
+        ],
+    
+            // Custom messages
+        [
+            'checklist_item_id.required'     => 'Add at least one checklist item.',
+            'checklist_item_id.*.required'   => 'Select a checklist item.',
+            'checklist_item_id.*.distinct'   => 'You have duplicate checklist items in the list.',
+            'checklist_item_id.*.unique'     => "This checklist item is already linked to {$typeName}.",
+
+            'checklist_sub_category_id.required'    => 'Add at least one item group.',
+            'checklist_sub_category_id.*.required'  => 'Select an checklist item group.',
+        ],
+
+        // (Optional) Nicely formatted attribute names
+        [
+            'checklist_item_id.*'  => 'checklist item',
+            'checklist_sub_category_id.*' => 'item group',
+        ]
+
+    );
+    
         if (isset($this->checklist_item_id)) {
             foreach ($this->checklist_item_id as $key => $value) {
                 $category_checklist = new CategoryChecklist;
