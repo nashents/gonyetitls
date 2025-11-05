@@ -15,7 +15,7 @@ class ServiceTypeSeeder extends Seeder
     public function run()
     {
         $service_types = [
-            // 'Fix & Repair', 'Small Service', 'Medium Service', 'Large Service',
+            'Fix & Repair', 'Small Service', 'Medium Service', 'Large Service',
             'Tyre Inspection'];
         foreach($service_types as $service_type){
             ServiceType::create([
