@@ -102,21 +102,23 @@
                                     <tr>
                                         <th class="th-sm">Order#
                                         </th>
-                                        <th class="th-sm">CreatedBy
-                                        </th>
                                         <th class="th-sm">Date
                                         </th>
-                                        <th class="th-sm">Category
+                                        <th class="th-sm">OrderFor
                                         </th>
                                         <th class="th-sm">Station
                                         </th>
                                         <th class="th-sm">FillUp
                                         </th>
-                                        <th class="th-sm">Quantity
+                                        <th class="th-sm">Qty(l)
                                         </th>
-                                        <th class="th-sm">Authorization
+                                        <th class="th-sm">Ccy
                                         </th>
-                                        <th class="th-sm">Comments
+                                        <th class="th-sm">Amt
+                                        </th>
+                                        <th class="th-sm">Auth
+                                        </th>
+                                        <th class="th-sm">Notes
                                         </th>
                                         <th class="th-sm">Action
                                         </th>
@@ -127,8 +129,11 @@
                                     @forelse  ($fuels as $fuel)
                                     @if ($fuel->fillup == 1)
                                     <tr style="background-color: #4CAF50">
-                                      <td>{{$fuel->order_number}}</td>
-                                      <td>{{$fuel->user ? $fuel->user->name : ""}} {{$fuel->user ? $fuel->user->surname : ""}}</td>
+                                    <td>
+                                        {{$fuel->order_number}} <br>
+                                        <small><strong>CreatedBy: </strong>{{$fuel->user ? $fuel->user->name : ""}} {{$fuel->user ? $fuel->user->surname : ""}}</small>
+                                    </td>
+                                     
                                       <td>
                                         @php
                                         $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
@@ -143,7 +148,7 @@
 
                                         @if ($fuel->type == "Horse")
                                             @if (isset($fuel->horse))
-                                            Horse: {{$fuel->horse ? $fuel->horse->registration_number : ""}} {{$fuel->horse ? "| ".$fuel->horse->fleet_number : ""}} {{$fuel->horse->horse_make ? "| ".$fuel->horse->horse_make->name : ""}} {{$fuel->horse->horse_model ? $fuel->horse->horse_model->name : ""}} 
+                                            Horse | {{$fuel->horse ? $fuel->horse->registration_number : ""}} {{$fuel->horse->fleet_number ? "(".$fuel->horse->fleet_number.")" : ""}}  
                                                 @if (isset($fuel->trip))
                                                 <br>
                                                     @php
@@ -162,7 +167,7 @@
                                             @endif
                                         @elseif($fuel->type == "Vehicle")
                                             @if(isset($fuel->vehicle)) 
-                                                Vehicle: {{  $fuel->vehicle ? $fuel->vehicle->registration_number : "" }} {{$fuel->vehicle->vehicle_make ? $fuel->vehicle->vehicle_make->name : ""}} {{$fuel->vehicle->vehicle_model ? $fuel->vehicle->vehicle_model->name : ""}} 
+                                                Vehicle | {{  $fuel->vehicle ? $fuel->vehicle->registration_number : "" }} {{$fuel->vehicle->fleet_number ? "(".$fuel->vehicle->fleet_number.")" : ""}}  
                                                 @if (isset($fuel->trip))
                                                 <br>
                                                     @php
@@ -181,7 +186,7 @@
                                             @endif
                                         @elseif($fuel->type == "Asset")
                                             @if(isset($fuel->asset))
-                                                Asset: | {{$fuel->asset->product->brand ? $fuel->asset->product->brand->name : ""}} {{$fuel->asset->product ? $fuel->asset->product->name : ""}}
+                                                Asset | {{$fuel->asset->product->brand ? $fuel->asset->product->brand->name : ""}} {{$fuel->asset->product ? $fuel->asset->product->name : ""}}
                                             @endif
                                         @elseif($fuel->type == "Other")
                                             Other
@@ -189,7 +194,9 @@
                                       </td>
                                       <td>{{ucfirst($fuel->container ? $fuel->container->name : "")}}</td>
                                       <td>{{$fuel->fillup == "1" ? "Initial" : ($fuel->fillup == "0" ? "Top Up" : "")}}</td>
-                                      <td>{{$fuel->quantity}}Litres</td>
+                                      <td>{{$fuel->quantity}}</td>
+                                      <td>{{$fuel->currency ? $fuel->currency->name : ""}} {{$fuel->currency ? $fuel->currency->symbol : ""}}</td>
+                                      <td>{{number_format($fuel->amount,2)}}</td>
                                       <td><span class="badge bg-{{($fuel->authorization == 'approved') ? 'success' : (($fuel->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($fuel->authorization == 'approved') ? 'approved' : (($fuel->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
                                       <td>{{$fuel->comments}}</td>
                                       <td class="w-10 line-height-35 table-dropdown">
@@ -229,7 +236,7 @@
                                       <td>
                                         @if ($fuel->type == "Horse")
                                         @if (isset($fuel->horse))
-                                        Horse: {{$fuel->horse ? $fuel->horse->registration_number : ""}} {{$fuel->horse ? "| ".$fuel->horse->fleet_number : ""}} {{$fuel->horse->horse_make ? "| ".$fuel->horse->horse_make->name : ""}} {{$fuel->horse->horse_model ? $fuel->horse->horse_model->name : ""}} 
+                                        Horse | {{$fuel->horse ? $fuel->horse->registration_number : ""}} {{$fuel->horse->fleet_number ? "(".$fuel->horse->fleet_number.")" : ""}}  
                                             @if (isset($fuel->trip))
                                             <br>
                                                 @php
@@ -248,14 +255,14 @@
                                         @endif
                                     @elseif($fuel->type == "Vehicle")
                                         @if(isset($fuel->vehicle)) 
-                                            Vehicle: {{  $fuel->vehicle ? $fuel->vehicle->registration_number : "" }} {{$fuel->vehicle->vehicle_make ? $fuel->vehicle->vehicle_make->name : ""}} {{$fuel->vehicle->vehicle_model ? $fuel->vehicle->vehicle_model->name : ""}} 
+                                            Vehicle | {{  $fuel->vehicle ? $fuel->vehicle->registration_number : "" }} {{$fuel->vehicle->fleet_number ? "(".$fuel->vehicle->fleet_number.")" : ""}}  
                                             @if (isset($fuel->trip))
                                             <br>
                                                 @php
                                                     $from = App\Models\Destination::find($fuel->trip->from);
                                                     $to = App\Models\Destination::find($fuel->trip->from);
                                                 @endphp
-                                                Trip: {{$fuel->trip ? $fuel->trip->trip_number : ""}}{{$fuel->trip->trip_ref ? "/".$fuel->trip->trip_ref : ""}}
+                                                Trip | {{$fuel->trip ? $fuel->trip->trip_number : ""}}{{$fuel->trip->trip_ref ? "/".$fuel->trip->trip_ref : ""}}
                                                 @if (isset($from))
                                                     {{$from->country ? $from->country->name : ""}}   {{$from->city}} - 
                                                 @endif
@@ -267,7 +274,7 @@
                                         @endif
                                     @elseif($fuel->type == "Asset")
                                         @if(isset($fuel->asset))
-                                            Asset: | {{$fuel->asset->product->brand ? $fuel->asset->product->brand->name : ""}} {{$fuel->asset->product ? $fuel->asset->product->name : ""}}
+                                            Asset | {{$fuel->asset->product->brand ? $fuel->asset->product->brand->name : ""}} {{$fuel->asset->product ? $fuel->asset->product->name : ""}}
                                         @endif
                                     @elseif($fuel->type == "Other")
                                         Other
@@ -275,7 +282,9 @@
                                       </td>
                                       <td>{{ucfirst($fuel->container ? $fuel->container->name : "")}}</td>
                                       <td>{{$fuel->fillup == "1" ? "Initial" : ($fuel->fillup == "0" ? "Top Up" : "")}}</td>
-                                      <td>{{$fuel->quantity}}Litres</td>
+                                      <td>{{$fuel->quantity}}</td>
+                                      <td>{{$fuel->currency ? $fuel->currency->name : ""}} {{$fuel->currency ? $fuel->currency->symbol : ""}}</td>
+                                       <td>{{number_format($fuel->amount,2)}}</td>
                                       <td><span class="badge bg-{{($fuel->authorization == 'approved') ? 'success' : (($fuel->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($fuel->authorization == 'approved') ? 'approved' : (($fuel->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
                                       <td>{{$fuel->comments}}</td>
                                       <td class="w-10 line-height-35 table-dropdown">

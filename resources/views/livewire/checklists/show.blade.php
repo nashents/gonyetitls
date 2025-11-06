@@ -1,7 +1,7 @@
 <div>
     <div class="row mt-30">
         <!-- /.col-md-3 -->
-        <div class="col-md-10 col-md-offset-1">
+        <div class="col-md-12">
             <ul class="nav nav-tabs nav-justified" role="tablist">
                 <li role="presentation" class="active"><a href="#checklist" aria-controls="checklist" role="tab" data-toggle="tab">Inspection Details</a></li>
                 <li role="presentation" ><a href="#results" aria-controls="results" role="tab" data-toggle="tab">Inspection Results</a></li>
@@ -99,15 +99,15 @@
                     <table id="checklist_resultsTable" class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                         <thead >
                          <tr>
-                            <th class="th-sm">Tyre
+                            <th class="th-sm" style="width: 15%">Tyre
                             </th>
-                            <th class="th-sm">Depth
+                            <th class="th-sm">Tread Depth(<i>mm</i>)
                             </th>
-                            <th class="th-sm">PSI
+                            <th class="th-sm">Pressure(<i>PSI</i>)
                             </th>
-                            <th class="th-sm">Wear
+                            <th class="th-sm">Wear Pattern
                             </th>
-                            <th class="th-sm">Sidewall
+                            <th class="th-sm">Sidewall Damage
                             </th>
                             <th class="th-sm">Valve
                             </th>
@@ -115,12 +115,13 @@
                             </th>
                             <th class="th-sm">Axle Match
                             </th>
-                            <th class="th-sm">Rim
+                            <th class="th-sm">Rim Condition
                             </th>
                             <th class="th-sm">Rating
                             </th>
                             <th class="th-sm">Actions
                             </th>
+                           
                           </tr>
                         </thead>
 
@@ -129,20 +130,38 @@
                             <tr>
                                 <td>
                                     @if ($result->tyre)
-                                        {{$result->tyre->product ? $result->tyre->product->name : ""}} {{$result->tyre->product->brand ? $result->tyre->product->brand->name : ""}} {{$result->tyre->serial_number}}</strong> <br> {{$result->tyre_assignment ? $result->tyre_assignment->axle : ""}} {{$result->tyre_assignment ? $result->tyre_assignment->position : ""}}
+                                        <strong>{{$result->tyre->product ? $result->tyre->product->name : ""}} {{$result->tyre->product->brand ? $result->tyre->product->brand->name : ""}} {{$result->tyre->serial_number}}</strong></strong>
+                                    @endif
+                                    @if ($result->tyre_assignment)
+                                        <br>
+                                        {{$result->tyre_assignment->axle}} {{$result->tyre_assignment->position}}
+                                    @endif
+                                    @if ($result->notes)
+                                        <br>
+                                        <small><strong>Notes:</strong> {{$result->notes}}</small> 
                                     @endif
                                 </td>
                                 <td>{{$result->tread_depth_mm}}</td>
                                 <td>{{$result->pressure_psi}}</td>
-                                <td>{{$result->valve_ok}}</td>
-                                <td>{{$result->sidewall_damage}}</td>
                                 <td>{{$result->wear_pattern}}</td>
+                                <td>{{$result->sidewall_damage}}</td>
+                                <td>
+                                    <span class="badge bg-{{($result->valve_ok == '1') ? 'success' : 'danger' }}">{{($result->valve_ok == '1') ? 'Tight' : 'Leaking' }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{($result->wheel_nuts_torqued == '1') ? 'success' : 'danger' }}">{{($result->wheel_nuts_torqued == '1') ? 'Yes' : 'No' }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{($result->axle_match == '1') ? 'success' : 'danger' }}">{{($result->axle_match == '1') ? 'Yes' : 'No' }}</span>
+                                </td>
                                 <td>{{$result->rim_condition}}</td>
-                                <td>{{$result->wheel_nuts_torqued}}</td>
-                                <td>{{$result->axle_match}}</td>
+                                <td>
+                                    @for ($i = 1; $i <= 5; $i++)
+                                        <span style="color: {{ $i <= $result->rating ? '#FFD700' : '#ccc' }};">★</span>
+                                    @endfor
+                                </td>
                                 <td>{{$result->action_required}}</td>
-                                <td>{{$result->rating}}</td>
-                                <td>{{$result->notes}}</td>
+                            
                             </tr>
                             @endforeach
                         </tbody>

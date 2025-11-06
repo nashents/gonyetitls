@@ -1141,8 +1141,10 @@ class Index extends Component
             if (filled($this->from) && filled($this->to)) {
                 $trips->whereBetween($this->trip_filter, [$this->from, $this->to]);
             } else {
-                $trips->whereMonth($this->trip_filter, date('m'))
+                if(!filled($this->search)){
+                     $trips->whereMonth($this->trip_filter, date('m'))
                     ->whereYear($this->trip_filter, date('Y'));
+                }
             }
 
             if (filled($this->search)) {

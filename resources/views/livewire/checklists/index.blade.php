@@ -60,7 +60,9 @@
                                
                             </div>
                         </div>
+                       
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
+                                 <small style="color: green"> PS: you can only edit inspection results within 10 Minutes after inspection.</small>
                             <div class="col-md-3" style="float: right; padding-right:0px">
                                 <div class="form-group">
                                     <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search inspection...">
@@ -117,8 +119,22 @@
                                             </button>
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{ route('checklists.show', $checklist->id) }}" ><i class="fa fa-eye color-default"></i> View</a></li>
-                                                <li><a href="{{ route('checklists.edit', $checklist->id) }}"   ><i class="fa fa-edit color-success"></i> Edit</a></li>
-                                                <li><a href="#" data-toggle="modal" data-target="#checklistDeleteModal{{ $checklist->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                                                @php
+                                                    $canEdit = \Carbon\Carbon::parse($checklist->created_at)->diffInMinutes(now()) <= 10;
+                                                @endphp
+
+                                                @if($canEdit)
+                                                    <li>
+                                                        <a href="{{ route('checklists.edit', $checklist->id) }}">
+                                                            <i class="fa fa-edit color-success"></i> Edit
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="#" data-toggle="modal" data-target="#checklistDeleteModal{{ $checklist->id }}">
+                                                            <i class="fa fa-trash color-danger"></i> Delete
+                                                        </a>
+                                                    </li>
+                                                @endif
                                             </ul>
                                         </div>
                                         @include('checklists.delete')

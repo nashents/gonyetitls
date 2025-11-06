@@ -161,7 +161,7 @@
                                 <th class="w-10 text-center line-height-35">Authorization</th>
                                 <td class="w-20 line-height-35"> <span class="badge bg-{{($fuel->authorization == 'approved') ? 'success' : (($fuel->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($fuel->authorization == 'approved') ? 'approved' : (($fuel->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
                                 @if ($fuel->authorization != 'approved')
-                                      <li><a href="#" wire:click="authorize({{$fuel->id}})"><i class="fas fa-gavel color-success"></i> Authorization</a></li>
+                                      <a href="#" wire:click="authorize({{$fuel->id}})"><i class="fas fa-gavel color-success"></i> Authorization</a>
                                 @endif
                                 </td>
                             </tr>

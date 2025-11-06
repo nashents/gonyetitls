@@ -33,6 +33,9 @@ class TyreAssignment extends Model implements Auditable
     public function ticket_inventory(){
         return $this->belongsTo('App\Models\TicketInventory');
     }
+     public function checklist_results(){
+        return $this->hasMany('App\Models\ChecklistResult');
+    }
     public function tyre(){
         return $this->belongsTo('App\Models\Tyre');
     }

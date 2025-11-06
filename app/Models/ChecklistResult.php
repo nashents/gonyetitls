@@ -18,6 +18,12 @@ class ChecklistResult extends Model implements Auditable
     public function checklist(){
         return $this->belongsTo('App\Models\Checklist');
     }
+    public function tyre(){
+        return $this->belongsTo('App\Models\Tyre');
+    }
+    public function tyre_assignment(){
+        return $this->belongsTo('App\Models\TyreAssignment');
+    }
 
     protected $fillable = [
         'checklist_id',

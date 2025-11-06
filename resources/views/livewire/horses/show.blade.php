@@ -5,7 +5,6 @@
             <div class="panel-heading">
                 <div class="panel-title">
                     <center><h5>{{$horse->horse_make ? $horse->horse_make->name : ""}} {{$horse->horse_model ? $horse->horse_model->name : ""}}</h5></center>
-                  
                 </div>
             </div>
             <div class="panel-body">
