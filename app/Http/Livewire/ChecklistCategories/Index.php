@@ -106,7 +106,8 @@ class Index extends Component
     {
 
        $base = ChecklistCategory::query()
-            ->with([ 'category_checklists.checklist_item']);
+            ->with([ 'category_checklists.checklist_item'])
+           ->whereNotIn('name', ['Tyre Inspection', 'Stock on board']);
 
         $checklist_categories = $base
             ->when(filled($this->search), function ($q) {

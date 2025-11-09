@@ -74,7 +74,7 @@ class Show extends Component
                 'distinct',
                 Rule::unique('inspection_services', 'inspection_type_id') // 👈 explicit column
                     ->where(fn ($q) => $q->where('service_type_id', $this->service_type_id)
-                                        // ->whereNull('deleted_at') // add if the table is soft-deleting
+                                        ->whereNull('deleted_at') // add if the table is soft-deleting
                                         // ->where('company_id', $this->company_id) // add if multi-tenant
                     ),
             ],

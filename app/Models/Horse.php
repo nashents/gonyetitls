@@ -15,6 +15,9 @@ class Horse extends Model implements Auditable
 
     public function clusters()   { return $this->hasOne(Cluster::class); } // if one horse can be in many clusters
 
+   public function category_checklists(){
+        return $this->hasMany('App\Models\CategoryChecklist');
+    }
     public function horse_documents(){
         return $this->hasMany('App\Models\HorseDocument');
     }

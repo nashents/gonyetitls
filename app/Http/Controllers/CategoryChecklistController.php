@@ -83,7 +83,7 @@ class CategoryChecklistController extends Controller
     public function destroy(CategoryChecklist $categoryChecklist)
     {
         $categoryChecklist->delete();
-        Session::flash('success','Category Checklist Item Deleted Successfully');
+        Session::flash('success','Item removed from checklist successfully!!');
         return redirect()->back();
     }
 }

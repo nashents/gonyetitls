@@ -48,7 +48,14 @@ class ChecklistCategoryController extends Controller
      */
     public function show(ChecklistCategory $checklistCategory)
     {
-        return view('checklist_categories.show')->with('checklist_category', $checklistCategory);
+        $equipment_id = request('equipment_id');
+        $category = request('category');
+     
+        return view('checklist_categories.show')->with([
+            'checklist_category' => $checklistCategory,
+            'equipment_id' => $equipment_id,
+            'category' => $category,
+        ]);
     }
 
     /**

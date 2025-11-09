@@ -38,7 +38,11 @@
                             <!-- /.row -->
                         </div>
 
-                        @livewire('checklist-categories.show',['id' => $checklist_category->id])
+                        @livewire('checklist-categories.show',[
+                            'id' => $checklist_category->id,
+                            'equipment_id' => $equipment_id,
+                            'category' => $category,
+                            ])
 
 
                     </div>

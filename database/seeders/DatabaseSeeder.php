@@ -87,7 +87,6 @@ class DatabaseSeeder extends Seeder
         $this->call(AccountSeeder::class);
         $this->call(ExpenseSeeder::class);
         $this->call(LoanTypeSeeder::class);
-        $this->call(ReminderItemSeeder::class);
         $this->call(DeductionSeeder::class);
         $this->call(AllowanceSeeder::class);
         $this->call(HorseMakeSeeder::class);

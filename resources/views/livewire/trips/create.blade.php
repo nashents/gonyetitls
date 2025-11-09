@@ -22,7 +22,7 @@
                                     <div class="col-md-2">
                                         <div class="form-group">
                                             <label for="trip_ref">Custom Reference</label>
-                                            <input type="text" class="form-control" wire:model.debounce.300ms="trip_ref" placeholder="Trip Reference #" {{ $trip_type_name == 'Return' ? 'disabled' : '' }} />
+                                            <input type="text" class="form-control" wire:model.debounce.300ms="trip_ref" placeholder="Custom Trip Reference#"  />
                                             @error('trip_ref') <span class="text-danger error">{{ $message }}</span> @enderror
                                         </div>
                                     </div>

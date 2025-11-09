@@ -165,15 +165,21 @@
                                             @error('diameter') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
-    
-                                    <div class="col-md-3">
+                                    <div class="col-md-2">
                                         <div class="form-group">
-                                            <label for="width">Thread Depth</label>
-                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="thread_depth"  placeholder="Tyre Thread Depth " />
+                                            <label for="width">Tread Depth</label>
+                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="thread_depth"  placeholder="Tyre Tread Depth " />
                                             @error('thread_depth') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
-                                    <div class="col-md-3">
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label for="width">Tyre Pressure(PSI)</label>
+                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="pressure_psi"  placeholder="Standard (PSI) " />
+                                            @error('pressure_psi') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
                                         <div class="form-group">
                                             <label for="aspect_ratio">Lifespan in (Kms)</label>
                                             <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="life_span" placeholder="Tyre life span in kilometers" />

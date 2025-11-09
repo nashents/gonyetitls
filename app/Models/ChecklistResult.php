@@ -29,6 +29,19 @@ class ChecklistResult extends Model implements Auditable
         'checklist_id',
         'checklist_item_id',
         'status',
-        'comments'
+        'comments',
+        'tread_depth_mm',
+        'tyre_assignment_id',
+        'pressure_psi',
+        'valve_ok',
+        'sidewall_damage',
+        'wear_pattern',
+        'rim_condition',
+        'wheel_nuts_torqued',
+        'axle_match',
+        'action_required',
+        'rating',
+        'notes',
     ];
+
 }

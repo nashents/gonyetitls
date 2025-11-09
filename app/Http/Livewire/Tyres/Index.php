@@ -8,6 +8,8 @@ use App\Models\Product;
 use Livewire\Component;
 use App\Models\TyreDetail;
 use Livewire\WithPagination;
+use App\Models\TyreAssignment;
+use App\Models\ChecklistResult;
 use Illuminate\Support\Facades\Auth;
 
 class Index extends Component
@@ -35,6 +37,20 @@ class Index extends Component
     public $dispose;
     public $comments;
     public $date;
+    public $tread_depth_mm;
+    public $pressure_psi;
+    public $rim_condition;
+    public $wear_pattern;
+    public $sidewall_damage;
+    public $valve_ok;
+    public $axle_match;
+    public $wheel_nuts_torqued;
+    public $notes;
+    public $rating;
+    public $action_required;
+    public $checklist_result;
+    public $usage;
+    public $balance;
 
     public function mount(){
         $this->products = Product::where('department','tyre')->get();
@@ -59,6 +75,41 @@ class Index extends Component
     ];
 
 
+   
+
+    public function badge($id, $category){
+        $checklist_result = ChecklistResult::where('tyre_id',$id)->latest()->first();
+        $tyre = Tyre::find($id);
+        $badge = "active";
+        if ($checklist_result) {
+                if ($category == "pressure") {
+                    $standard = $tyre->pressure_psi;
+                    $current = $checklist_result->pressure_psi;
+                }elseif($category == "depth")
+                {
+                    $standard = $tyre->thread_depth ?? 0;
+                    $current = $checklist_result->tread_depth_mm ?? 0;
+                }
+            
+                if ($standard > 0) {
+                    $pct = ($current / $standard) * 100;
+                }else{
+                    $pct = 0;
+                }
+
+                if ($pct >= 90) {
+                    $badge = 'success';    // green
+                } elseif ($pct >= 50) {
+                    $badge = 'warning';    // yellow
+                } else {
+                    $badge = 'danger';     // red
+                }
+        }
+
+        return $badge;
+
+    }
+
 
         public function update(){
             $tyre = Tyre::find($this->tyre_id);
@@ -78,6 +129,8 @@ class Index extends Component
                 'message'=>"Tyre Updated Successfully!!"
             ]);
         }
+
+        
 
 
    
@@ -141,11 +194,11 @@ class Index extends Component
 
     public function render()
     {
-        if(isset($this->search)){
+        if(filled($this->search)){
             return view('livewire.tyres.index',[
                 'tyres' => Tyre::with('product.brand')
-                ->where('disposed',0)
-                ->where('retread',0)
+                ->where('disposed', 0)
+                ->where('retread', 0)
                 ->where('tyre_number','like', '%'.$this->search.'%')
                 ->orWhere('serial_number','like', '%'.$this->search.'%')
                 ->orWhere('purchase_date','like', '%'.$this->search.'%')

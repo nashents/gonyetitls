@@ -19,6 +19,9 @@ class Trailer extends Model implements Auditable
     public function clusters(){
          return $this->belongsToMany(Cluster::class)->withPivot(['position','attached_at'])->withTimestamps();
     }
+    public function category_checklists(){
+        return $this->hasMany('App\Models\CategoryChecklist');
+    }
      public function ticket_requests(){
         return $this->hasMany('App\Models\TicketRequest');
     }

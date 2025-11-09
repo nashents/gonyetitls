@@ -9,10 +9,13 @@ use App\Models\Vehicle;
 use Livewire\Component;
 use App\Models\Employee;
 use App\Models\Checklist;
+use App\Models\Assignment;
 use App\Models\ChecklistItem;
+use App\Models\TyreAssignment;
 use App\Models\ChecklistResult;
 use App\Models\CategoryChecklist;
 use App\Models\ChecklistCategory;
+use App\Models\VehicleAssignment;
 use App\Models\ChecklistSubCategory;
 use Illuminate\Support\Facades\Auth;
 
@@ -21,7 +24,8 @@ class Edit extends Component
     public $category_checklists;
     public $category_checklist_id;
     public $checklist_items;
-    public $checklist_item_id;
+    public $checklist_item_id = [];
+    public $tyre_id = [];
     public $checklist_categories;
     public $checklist_category;
     public $selectedChecklistCategory;
@@ -44,6 +48,8 @@ class Edit extends Component
     public $type;
     public $mileage;
     public $checklist_category_id;
+    public $next_inspection_at;
+    public $tyre_assignments;
 
 
     public $yes = '1';
@@ -55,6 +61,19 @@ class Edit extends Component
     public $inputs = [];
     
     public $comments;
+
+    public $tread_depth_mm = [];
+    public $pressure_psi = [];
+    public $valve_ok = [];
+    public $sidewall_damage = [];
+    public $wear_pattern = [];
+    public $rim_condition = [];
+    public $wheel_nuts_torqued = [];
+    public $axle_match = [];
+    public $action_required = [];
+    public $rating = [];
+    public $notes = [];
+    public $tyre_assignment_id = [];
  
  
 
@@ -83,13 +102,35 @@ class Edit extends Component
         $this->date = $checklist->date;
         $this->description = $checklist->comments;
         $this->mileage = $checklist->mileage;
+        $this->next_inspection_at = $checklist->next_inspection_at;
 
         $results = $checklist->checklist_results; // ->with('checklist_item') if you need it
         foreach ($results as $result) {
-            $id = $result->checklist_item_id;     // <— key by item id
+
+            if ($checklist->checklist_category->name == "Tyre Inspection") {
+                    $id = $result->tyre_id;
+            }else{
+                 $id = $result->checklist_item_id;
+               
+            }
+            
             $this->status[$id] = $result->status; // e.g., 'Yes'/'No' or 1/0
-            $this->comments[$id] = $result->comments ?? '';
-            $this->checklist_item_id[$id] = $id;  // optional hidden field you had
+            $this->comments[$id] = $result->comments; // e.g., 'Yes'/'No' or 1/0
+
+            $this->tread_depth_mm[$id] = $result->tread_depth_mm ?? '';
+            $this->pressure_psi[$id] = $result->pressure_psi ?? '';
+            $this->valve_ok[$id] = $result->valve_ok ?? '';
+            $this->sidewall_damage[$id] = $result->sidewall_damage ?? '';
+            $this->wear_pattern[$id] = $result->wear_pattern ?? '';
+            $this->rim_condition[$id] = $result->rim_condition ?? '';
+            $this->wheel_nuts_torqued[$id] = $result->wheel_nuts_torqued ?? '';
+            $this->axle_match[$id] = $result->axle_match ?? '';
+            $this->action_required[$id] = $result->action_required ?? '';
+            $this->rating[$id] = $result->rating ?? '';
+            $this->notes[$id] = $result->notes ?? '';
+            $this->tyre_assignment_id[$id] = $result->tyre_assignment_id ?? '';
+
+            // $checklist->checklist_category->name == "Tyre Inspection" ? $this->tyre_id[$id] : $this->checklist_item_id[$id] = $id;  // optional hidden field you had
         }
 
         $this->checklist_categories = ChecklistCategory::orderBy('name','asc')->get();
@@ -109,16 +150,24 @@ class Edit extends Component
 
     }
 
-        public function updatedHorseId($id){
+      public function updatedHorseId($id){
         if(!is_null($id)){
            $horse = Horse::find($id);
            $this->mileage = $horse->mileage;
+           $assignment = Assignment::where('horse_id',$id)->where('status',1)->first();
+           if ($assignment) {
+                $this->driver_id = $assignment->driver_id;
+           }
         }
     }
     public function updatedVehicleId($id){
         if(!is_null($id)){
            $vehicle = Vehicle::find($id);
            $this->mileage = $vehicle->mileage;
+           $assignment = VehicleAssignment::where('vehicle_id',$id)->where('status',1)->first();
+           if ($assignment) {
+                $this->employee_id = $assignment->employee_id;
+           }
         }
     }
     public function updatedTrailerId($id){
@@ -161,38 +210,66 @@ class Edit extends Component
     public function update(){
   
         $checklist =  Checklist::find($this->checklist_id);
+        $checklist->checklist_category_id = $this->selectedChecklistCategory;
         $checklist->employee_id = $this->employee_id;
         $checklist->driver_id = $this->driver_id;
         $checklist->vehicle_id = $this->vehicle_id;
         $checklist->trailer_id = $this->trailer_id;
-        $checklist->checklist_category_id = $this->selectedChecklistCategory;
         $checklist->horse_id = $this->horse_id;
         $checklist->date = $this->date;
+        $checklist->next_inspection_at = $this->next_inspection_at;
         $checklist->comments = $this->description;
         $checklist->mileage = $this->mileage;
-        $checklist->save();
+        $checklist->update();
 
-        
-        if (isset($this->status)) {
+        if ($this->checklist_category->name != "Tyre Inspection") {
+            if (isset($this->status)) {
 
-            foreach ($this->status as $key => $value) {
-                 ChecklistResult::updateOrCreate(
-                [
-                    'checklist_id'      => $checklist->id,
-                    'checklist_item_id' => $key,
-                ],
-                [
-                    'status'   => $this->status[$key],
-                    'comments' => $this->comments[$key],
-                ]
-            );
-          
-              }
-              
-         
+                foreach ($this->status as $key => $value) {
+                    ChecklistResult::updateOrCreate(
+                    [
+                        'checklist_id'      => $checklist->id,
+                        'checklist_item_id' => $key,
+                    ],
+                    [
+                        'status'   => $this->status[$key],
+                        'comments' => $this->comments[$key],
+                    ]);
+            
+                }
+                
+            }
+              }else{
+
+                if (isset($this->tread_depth_mm)) {
+                    foreach ($this->tread_depth_mm as $key => $value) {
+
+                        ChecklistResult::updateOrCreate(
+                        [
+                            'checklist_id'      => $checklist->id,
+                            'tyre_id' => $key,
+                        ],
+                        [
+                            'tread_depth_mm'   => $this->tread_depth_mm[$key],
+                            'tyre_assignment_id' => $this->tyre_assignment_id[$key],
+                            'pressure_psi' => $this->pressure_psi[$key],
+                            'valve_ok' => $this->valve_ok[$key],
+                            'sidewall_damage' => $this->sidewall_damage[$key],
+                            'wear_pattern' => $this->wear_pattern[$key],
+                            'rim_condition' => $this->rim_condition[$key],
+                            'wheel_nuts_torqued' => $this->wheel_nuts_torqued[$key],
+                            'axle_match' => $this->axle_match[$key],
+                            'action_required' => $this->action_required[$key],
+                            'rating' => $this->rating[$key],
+                            'notes' => $this->notes[$key],
+                        ]);
+                    }
+                }
             }
 
-               if ($this->type == "Horse") {
+
+
+            if ($this->type == "Horse") {
                 $horse = Horse::find($this->horse_id);
                 if ($this->mileage > $horse->mileage) {
                     $horse->mileage = $this->mileage;
@@ -224,6 +301,47 @@ class Edit extends Component
 
     public function render()
     {
+          if ($this->checklist_category && $this->checklist_category->name == "Tyre Inspection") {
+            
+
+                if ($this->type == "Horse" && isset($this->horse_id)) {
+                  
+                    $this->tyre_assignments = TyreAssignment::query()
+                    ->with('tyre')               // eager load tyre details
+                    ->where('horse_id', $this->horse_id)  // or $horseId
+                    ->where('status',1)                   // status = 1
+                    ->orderBy('axle')            // optional: stable ordering
+                    ->orderBy('position')        // optional
+                    ->get();
+
+                }elseif ($this->type == "Vehicle" && isset($this->vehicle_id)) {
+
+                    $this->tyre_assignments = TyreAssignment::query()
+                    ->with('tyre')               // eager load tyre details
+                    ->where('vehicle_id', $this->vehicle_id)  // or $vehicle_id
+                    ->where('status',1)                   // status = 1
+                    ->orderBy('axle')            // optional: stable ordering
+                    ->orderBy('position')        // optional
+                    ->get();
+
+                }elseif ($this->type == "Trailer" && isset($this->trailer_id)) {
+                      $this->tyre_assignments = TyreAssignment::query()
+                    ->with('tyre')               // eager load tyre details
+                    ->where('trailer_id', $this->trailer_id)  // or $trailer_id
+                    ->where('status',1)                   // status = 1
+                    ->orderBy('axle')            // optional: stable ordering
+                    ->orderBy('position')        // optional
+                    ->get();
+                }
+
+                if ( $this->tyre_assignments) {
+                    foreach ($this->tyre_assignments as $ta) {
+                        $id = $ta->tyre->id;
+                        $this->tyre_assignment_id[$id] = $ta->id;
+                    }
+                }
+            }
+
         if (isset($this->checklist_category_id)) {
             $this->category_checklists = CategoryChecklist::where('checklist_category_id',$this->checklist_category_id)->get();
         }

@@ -13,6 +13,7 @@ use Maatwebsite\Excel\Excel;
 use App\Models\TyreAssignment;
 use App\Exports\HorseFuelExport;
 use App\Exports\HorseBillsExport;
+use App\Models\ChecklistCategory;
 use App\Exports\HorseBookingExport;
 use App\Exports\HorseTyreAssignmentExport;
 
@@ -37,6 +38,7 @@ class Show extends Component
     public $next_service_hours;
     public $active_option;
     public $horse_trips;
+ 
 
 
     public function mount($id){
@@ -47,7 +49,7 @@ class Show extends Component
         if (isset($this->horse->trips)) {
             $this->total_usage = $this->horse->trips->where('trip_fuel','!=',null)->where('deleted_at',Null)->where('trip_status',"Offloaded")->where('trip_fuel','!=',"")->sum('trip_fuel');
         }
-      
+       
         $this->documents = $this->horse->horse_documents;
         $this->fuel_balance = $this->horse->fuel_balance;
         $this->fuel_tank_capacity = $this->horse->fuel_tank_capacity;

@@ -33,6 +33,10 @@
                                 <td class="w-20 line-height-35">{{Carbon\Carbon::parse($checklist->date)->format('F j, Y g:i A')}}</td>
                             </tr>
                             <tr>
+                                <th class="w-10 text-center line-height-35">Next Inspection Date</th>
+                                <td class="w-20 line-height-35">{{Carbon\Carbon::parse($checklist->next_inspection_at)->format('F j, Y g:i A')}}</td>
+                            </tr>
+                            <tr>
                                 <th class="w-10 text-center line-height-35">Driver</th>
                                 <td class="w-20 line-height-35">
                                     @if ($checklist->employee)

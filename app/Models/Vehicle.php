@@ -15,6 +15,9 @@ class Vehicle extends Model implements Auditable
     public function vehicle_documents(){
         return $this->hasMany('App\Models\VehicleDocument');
     }
+    public function category_checklists(){
+        return $this->hasMany('App\Models\CategoryChecklist');
+    }
     public function movements(){
         return $this->hasMany('App\Models\Movement');
     }

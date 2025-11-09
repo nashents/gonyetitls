@@ -95,6 +95,7 @@ class Create extends Component
     public $width;
     public $tyre_number;
     public $thread_depth;
+    public $pressure_psi;
     public $life_span;
     public $aspect_ratio;
     public $diameter;
@@ -477,6 +478,9 @@ class Create extends Component
                 }
                 if (isset($this->thread_depth[$key])) {
                     $tyre->thread_depth = $this->thread_depth[$key];
+                }
+                if (isset($this->pressure_psi[$key])) {
+                    $tyre->pressure_psi = $this->pressure_psi[$key];
                 }
                 if (isset($this->life_span[$key])) {
                     $tyre->life_span = $this->life_span[$key];

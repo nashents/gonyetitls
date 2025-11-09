@@ -9,11 +9,13 @@ use App\Models\Vehicle;
 use Livewire\Component;
 use App\Models\Employee;
 use App\Models\Checklist;
+use App\Models\Assignment;
 use App\Models\ChecklistItem;
 use App\Models\TyreAssignment;
 use App\Models\ChecklistResult;
 use App\Models\CategoryChecklist;
 use App\Models\ChecklistCategory;
+use App\Models\VehicleAssignment;
 use App\Models\ChecklistSubCategory;
 use Illuminate\Support\Facades\Auth;
 
@@ -95,40 +97,9 @@ class Create extends Component
         if (!is_null($id)) {
        
             $this->checklist_category = ChecklistCategory::find($id);
-            $this->category_checklists = CategoryChecklist::where('checklist_category_id',$id)->get();
+            // $this->category_checklists = CategoryChecklist::where('checklist_category_id',$id)->get();
 
-            if ($this->checklist_category && $this->checklist_category->name == "Tyre Inspection") {
-              
-                if ($this->type == "Horse" && isset($this->horse_id)) {
-                  
-                    $this->tyre_assignments = TyreAssignment::query()
-                    ->with('tyre')               // eager load tyre details
-                    ->where('horse_id', $this->horse_id)  // or $horseId
-                    ->where('status',1)                   // status = 1
-                    ->orderBy('axle')            // optional: stable ordering
-                    ->orderBy('position')        // optional
-                    ->get();
-
-                }elseif ($this->type == "Vehicle" && isset($this->vehicle_id)) {
-
-                    $this->tyre_assignments = TyreAssignment::query()
-                    ->with('tyre')               // eager load tyre details
-                    ->where('vehicle_id', $this->vehicle_id)  // or $vehicle_id
-                    ->where('status',1)                   // status = 1
-                    ->orderBy('axle')            // optional: stable ordering
-                    ->orderBy('position')        // optional
-                    ->get();
-
-                }elseif ($this->type == "Trailer" && isset($this->trailer_id)) {
-                      $this->tyre_assignments = TyreAssignment::query()
-                    ->with('tyre')               // eager load tyre details
-                    ->where('trailer_id', $this->trailer_id)  // or $trailer_id
-                    ->where('status',1)                   // status = 1
-                    ->orderBy('axle')            // optional: stable ordering
-                    ->orderBy('position')        // optional
-                    ->get();
-                }
-            }
+          
         }
     }
 
@@ -182,12 +153,20 @@ class Create extends Component
         if(!is_null($id)){
            $horse = Horse::find($id);
            $this->mileage = $horse->mileage;
+           $assignment = Assignment::where('horse_id',$id)->where('status',1)->first();
+           if ($assignment) {
+                $this->driver_id = $assignment->driver_id;
+           }
         }
     }
     public function updatedVehicleId($id){
         if(!is_null($id)){
            $vehicle = Vehicle::find($id);
            $this->mileage = $vehicle->mileage;
+           $assignment = VehicleAssignment::where('vehicle_id',$id)->where('status',1)->first();
+           if ($assignment) {
+                $this->employee_id = $assignment->employee_id;
+           }
         }
     }
     public function updatedTrailerId($id){
@@ -237,6 +216,7 @@ class Create extends Component
                     }
                 }
         }else{
+          
              if (isset($this->tread_depth_mm)) {
                 foreach ($this->tread_depth_mm as $key => $value) {
 
@@ -328,8 +308,65 @@ class Create extends Component
 
     public function render()
     {
+
+          if ($this->checklist_category && $this->checklist_category->name == "Tyre Inspection") {
+            
+
+                if ($this->type == "Horse" && isset($this->horse_id)) {
+                  
+                    $this->tyre_assignments = TyreAssignment::query()
+                    ->with('tyre')               // eager load tyre details
+                    ->where('horse_id', $this->horse_id)  // or $horseId
+                    ->where('status',1)                   // status = 1
+                    ->orderBy('axle')            // optional: stable ordering
+                    ->orderBy('position')        // optional
+                    ->get();
+
+                }elseif ($this->type == "Vehicle" && isset($this->vehicle_id)) {
+
+                    $this->tyre_assignments = TyreAssignment::query()
+                    ->with('tyre')               // eager load tyre details
+                    ->where('vehicle_id', $this->vehicle_id)  // or $vehicle_id
+                    ->where('status',1)                   // status = 1
+                    ->orderBy('axle')            // optional: stable ordering
+                    ->orderBy('position')        // optional
+                    ->get();
+
+                }elseif ($this->type == "Trailer" && isset($this->trailer_id)) {
+                      $this->tyre_assignments = TyreAssignment::query()
+                    ->with('tyre')               // eager load tyre details
+                    ->where('trailer_id', $this->trailer_id)  // or $trailer_id
+                    ->where('status',1)                   // status = 1
+                    ->orderBy('axle')            // optional: stable ordering
+                    ->orderBy('position')        // optional
+                    ->get();
+                }
+
+                if ( $this->tyre_assignments) {
+                    foreach ($this->tyre_assignments as $ta) {
+                        $id = $ta->tyre->id;
+                        $this->tyre_assignment_id[$id] = $ta->id;
+                    }
+                }
+            }
+
         if (isset($this->selectedChecklistCategory)) {
-            $this->category_checklists = CategoryChecklist::where('checklist_category_id',$this->selectedChecklistCategory)->get();
+
+            if ($this->checklist_category->name == "Stock on board") {
+                if ($this->type === "Horse") {
+                   $this->category_checklists = CategoryChecklist::where('checklist_category_id',$this->selectedChecklistCategory)
+                   ->where('horse_id',$this->horse_id)->get();
+                }elseif ($this->type === "Vehicle") {
+                   $this->category_checklists = CategoryChecklist::where('checklist_category_id',$this->selectedChecklistCategory)
+                   ->where('vehicle_id',$this->vehicle_id)->get();
+                }elseif ($this->type === "Trailer") {
+                    $this->category_checklists = CategoryChecklist::where('checklist_category_id',$this->selectedChecklistCategory)
+                   ->where('trailer_id',$this->trailer_id)->get();
+                }
+            }else{
+                 $this->category_checklists = CategoryChecklist::where('checklist_category_id',$this->selectedChecklistCategory)->get();
+            }
+           
         }
       
         return view('livewire.checklists.create',[

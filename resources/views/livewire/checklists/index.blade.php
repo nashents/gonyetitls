@@ -134,6 +134,17 @@
                                                             <i class="fa fa-trash color-danger"></i> Delete
                                                         </a>
                                                     </li>
+                                                @elseif(Auth::user()->is_admin())
+                                                 <li>
+                                                        <a href="{{ route('checklists.edit', $checklist->id) }}">
+                                                            <i class="fa fa-edit color-success"></i> Edit
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="#" data-toggle="modal" data-target="#checklistDeleteModal{{ $checklist->id }}">
+                                                            <i class="fa fa-trash color-danger"></i> Delete
+                                                        </a>
+                                                    </li>
                                                 @endif
                                             </ul>
                                         </div>

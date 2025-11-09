@@ -130,6 +130,16 @@
 @stack('scripts')
     
     <script type="text/javascript">
+            window.addEventListener('show-category_checklistDeleteModal', event => {
+                $('#category_checklistDeleteModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-category_checklistDeleteModal', event => {
+                $('#category_checklistDeleteModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
             window.addEventListener('show-ticket_requestModal', event => {
                 $('#ticket_requestModal').modal('show');
             })

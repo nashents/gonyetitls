@@ -279,14 +279,21 @@
                                     </div>
                                 </div>
 
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <div class="form-group">
-                                        <label for="width">Thread Depth</label>
-                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="thread_depth.0"  placeholder="Tyre Thread Depth " />
+                                        <label for="width">Tread Depth</label>
+                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="thread_depth.0"  placeholder="Tyre Tread Depth " />
                                         @error('thread_depth.0') <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label for="width">Tyre Pressure(PSI)</label>
+                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="pressure_psi.0"  placeholder="Standard (PSI) " />
+                                        @error('pressure_psi.0') <span class="text-danger error">{{ $message }}</span>@enderror
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
                                     <div class="form-group">
                                         <label for="aspect_ratio">Lifespan in (Kms)</label>
                                         <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="life_span.0" placeholder="Tyre life span in kilometers" />
@@ -428,15 +435,22 @@
 
                                 <div class="col-md-2">
                                     <div class="form-group">
-                                        <label for="width">Thread Depth</label>
-                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="thread_depth.{{ $value }}"  placeholder="Tyre Thread Depth " />
+                                        <label for="width">Tread Depth</label>
+                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="thread_depth.{{ $value }}"  placeholder="Tyre Tread Depth " />
                                         @error('thread_depth.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label for="width">Tyre Pressure(PSI)</label>
+                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="pressure_psi.{{ $value }}"  placeholder="Standard (PSI) " />
+                                        @error('pressure_psi.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
                                     <div class="form-group">
                                         <label for="aspect_ratio">Lifespan in (Kms)</label>
-                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="life_span.{{ $value }}" placeholder="Tyre life span in kilometers" />
+                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="life_span.{{ $value }}" placeholder="Tyre life span in KMs" />
                                         @error('life_span.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>
                                 </div>

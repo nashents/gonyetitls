@@ -83,6 +83,7 @@
 
         <ul class="nav nav-tabs nav-justified" role="tablist">
             <li role="presentation" class="active"><a href="#basic" aria-controls="basic" role="tab" data-toggle="tab">Trailer Details</a></li>
+             <li role="presentation" ><a href="#stock_on_board" aria-controls="stock_on_board" role="tab" data-toggle="tab">Stock On Board</a></li>
             <li role="presentation"><a href="#documents" aria-controls="documents" role="tab" data-toggle="tab">Document(s)</a></li>
             <li role="presentation"><a href="#images" aria-controls="images" role="tab" data-toggle="tab">Image(s)</a></li>
             <li role="presentation"><a href="#fitness" aria-controls="fitness" role="tab" data-toggle="tab">Reminder(s)</a></li>
@@ -198,6 +199,9 @@
 
                     </tbody>
                 </table>
+            </div>
+             <div role="tabpanel" class="tab-pane " id="stock_on_board">
+                    @livewire('stock-on-board.index', ['id' => $trailer->id, 'equipment' => "trailer"])
             </div>
             <div role="tabpanel" class="tab-pane" id="documents">
 

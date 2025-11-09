@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Contracts\Auditable;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -78,6 +79,29 @@ class Tyre extends Model implements Auditable
     }
     public function user(){
         return $this->belongsTo('App\Models\User');
+    }
+
+     protected $dates = ['purchase_date'];
+
+      public function getAgeAttribute()
+    {
+        if (!$this->purchase_date) {
+            return null;
+        }
+
+        $purchase = Carbon::parse($this->purchase_date);
+        $now = Carbon::now();
+
+        $diff = $purchase->diff($now);
+
+        // Format smartly: "X years Y months" or "X months" or "X days"
+        if ($diff->y > 0) {
+            return "{$diff->y} year(s) {$diff->m} month(s)";
+        } elseif ($diff->m > 0) {
+            return "{$diff->m} month(s)";
+        } else {
+            return "{$diff->d} day(s)";
+        }
     }
 
     protected $fillable = [

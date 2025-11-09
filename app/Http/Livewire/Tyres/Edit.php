@@ -88,6 +88,7 @@ class Edit extends Component
   public $width;
   public $tyre_number;
   public $thread_depth;
+  public $pressure_psi;
   public $life_span;
   public $aspect_ratio;
   public $diameter;
@@ -154,6 +155,7 @@ class Edit extends Component
         $this->qty = $tyre->qty;
         $this->diameter = $tyre->diameter;
         $this->thread_depth = $tyre->thread_depth;
+        $this->pressure_psi = $tyre->pressure_psi;
         $this->life_span = $tyre->life_span;
         $this->aspect_ratio = $tyre->aspect_ratio;
         $this->selectedTax = $tyre->tax_id;
@@ -176,9 +178,10 @@ class Edit extends Component
         $this->selectedAccount = $tyre->account_id;
         $this->selectedCurrency = $tyre->currency_id;
         $this->amount = $tyre->amount;
+        $this->qty = $tyre->qty ?? 1;
         $this->cost = $tyre->cost;
         $this->total = $tyre->total;
-        $this->purchase_date = $tyre->purchase_date;
+        $this->purchase_date = $tyre->purchase_date ? Carbon::parse($tyre->purchase_date)->format('Y-m-d') : Null;
         $this->tyre_number = $tyre->tyre_number;
         $this->condition = $tyre->condition;
         $this->residual_value = $tyre->residual_value;
@@ -453,6 +456,7 @@ public function updatedSelectedTax($id){
               $tyre->account_id = $this->selectedAccount;
               $tyre->diameter = $this->diameter;
               $tyre->thread_depth = $this->thread_depth;
+              $tyre->pressure_psi = $this->pressure_psi;
               $tyre->life_span = $this->life_span;
               $tyre->aspect_ratio = $this->aspect_ratio;
               $tyre->tyre_number = $this->tyre_number;

@@ -12,6 +12,8 @@ class TyreAssignment extends Model implements Auditable
     use \OwenIt\Auditing\Auditable;
     use HasFactory, SoftDeletes;
 
+    protected $appends = ['travelled_km', 'remaining_km', 'remaining_pct'];
+
     public function vehicle(){
         return $this->belongsTo('App\Models\Vehicle');
     }
@@ -61,4 +63,45 @@ class TyreAssignment extends Model implements Auditable
         'axle',
         'status',
     ];
+
+      public function getTravelledKmAttribute()
+    {
+        $start = $this->starting_odometer;
+        if (is_null($start)) {
+            return null;
+        }
+
+        // If removed, freeze distance at removal; else use current horse odometer.
+        $end = $this->ending_odometer ?? optional($this->horse)->mileage;
+
+        if (is_null($end)) {
+            return null;
+        }
+
+        return max(0, (int)$end - (int)$start);
+    }
+
+    public function getRemainingKmAttribute()
+    {
+        $std = optional($this->tyre)->life_span;
+        $travelled = $this->travelled_km;
+
+        if (is_null($std) || is_null($travelled)) {
+            return null;
+        }
+
+        return max(0, (int)$std - (int)$travelled);
+    }
+
+    public function getRemainingPctAttribute()
+    {
+        $std = optional($this->tyre)->life_span;
+        $rem = $this->remaining_km;
+
+        if (empty($std) || is_null($rem)) {
+            return null;
+        }
+
+        return round(($rem / $std) * 100, 1); // e.g., 63.4
+    }
 }
