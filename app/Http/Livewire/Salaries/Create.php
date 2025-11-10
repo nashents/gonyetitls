@@ -336,7 +336,7 @@ class Create extends Component
                 $salary->salary_number = $this->salaryNumber();
                 $salary->employee_id = $this->selectedEmployee;
                 $salary->currency_id = $this->selectedCurrency;
-                $salary->basic = $this->basic;
+            
                 $salary->paye = $this->paye;
                 $salary->aids_levy = $this->aids_levy;
                 $salary->frequency = $this->frequency;

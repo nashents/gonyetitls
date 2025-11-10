@@ -65,6 +65,7 @@ class Index extends Component
         $this->comments = '';
     }
 
+    
     public function mount(){
         $this->resetPage();
         $this->horses = Horse::where('status',1)->orderby('registration_number')->get();

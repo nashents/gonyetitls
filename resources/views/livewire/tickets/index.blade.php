@@ -39,6 +39,122 @@
                                         </div>
                                         <!-- /input-group -->
                                     </div>
+                                          <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="input-group">
+                                                <span class="input-group-addon">Ticket Status</span>
+                                                <select wire:model.debounce.300ms="booking_status" class="form-control" aria-label="..." >
+                                                    <option value="all">All</option>
+                                                    <option value="0">Closed</option>
+                                                    <option value="1">Open</option>
+                                                </select>
+                                            </div>
+                                            <!-- /input-group -->
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="input-group">
+                                                <span class="input-group-addon">Job Types</span>
+                                                <select wire:model.debounce.300ms="service_type_id" class="form-control" aria-label="..." >
+                                                    <option value="all">Select Job Type</option>
+                                                    @foreach ($service_types as $service_type)
+                                                        <option value="{{ $service_type->id }}">{{ $service_type->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <!-- /input-group -->
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="input-group">
+                                                <span class="input-group-addon">Stations</span>
+                                                <select wire:model.debounce.300ms="station_id" class="form-control" aria-label="..." >
+                                                    <option value="all">Select Station</option>
+                                                    @foreach ($stations as $station)
+                                                        <option value="{{ $station->id }}">{{ $station->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <!-- /input-group -->
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="input-group">
+                                                <span class="input-group-addon">Mechanics</span>
+                                                <select wire:model.debounce.300ms="employee_id" class="form-control" aria-label="..." >
+                                                    <option value="all">Select Mechanic</option>
+                                                    @foreach ($employees as $employee)
+                                                        <option value="{{ $employee->id }}">{{ $employee->name }} {{ $employee->surname }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <!-- /input-group -->
+                                        </div>
+                                      
+                                </div>
+                                <div class="row">
+                                      <div class="col-md-3">
+                                            <div class="input-group">
+                                                <span class="input-group-addon">Equipment</span>
+                                                <select wire:model.debounce.300ms="filter" class="form-control" aria-label="..." >
+                                                    <option value="">Select Option</option>
+                                                    <option value="asset">Asset</option>
+                                                    <option value="horse">Horse</option>
+                                                    <option value="trailer">Trailer</option>
+                                                    <option value="vehicle">Vehicle</option>
+                                                </select>
+                                            </div>
+                                            <!-- /input-group -->
+                                        </div>
+                                        @if ($filter)
+                                             <div class="col-md-3">
+                                                <div class="input-group">
+                                                    @if ($filter == "horse")
+                                                         <span class="input-group-addon">
+                                                            Horses
+                                                        </span>
+                                                        <select wire:model.debounce.300ms="selectedHorse" class="form-control" aria-label="..." >
+                                                            <option value="">Select Horse</option>
+                                                            @foreach ($horses as $horse)
+                                                                <option value="{{ $horse->id }}">{{ $horse->registration_number }} {{ $horse->fleet_number ? "(".$horse->fleet_number.")" : "" }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    @elseif($filter == "vehicle")
+                                                         <span class="input-group-addon">
+                                                            Horses
+                                                        </span>
+                                                        <select wire:model.debounce.300ms="selectedVehicle" class="form-control" aria-label="..." >
+                                                            <option value="">Select Vehicle</option>
+                                                            @foreach ($vehicles as $vehicle)
+                                                                <option value="{{ $vehicle->id }}">{{ $vehicle->registration_number }} {{ $vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : "" }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    @elseif($filter == "asset")
+                                                         <span class="input-group-addon">
+                                                            Assets
+                                                        </span>
+                                                        <select wire:model.debounce.300ms="selectedAsset" class="form-control" aria-label="..." >
+                                                            <option value="">Select Asset</option>
+                                                            @foreach ($assets as $asset)
+                                                                @if ($asset->product)
+                                                                    <option value="{{ $asset->id }}">{{ $asset->product ? $asset->product->name : "" }} {{ $asset->product->identification_number ? "(".$asset->product->identification_number.")" : "" }} </option>
+                                                                @endif
+                                                            @endforeach
+                                                        </select>
+                                                    @elseif($filter == "trailer")
+                                                         <span class="input-group-addon">
+                                                            Trailers
+                                                        </span>
+                                                        <select wire:model.debounce.300ms="selectedTrailer" class="form-control" aria-label="..." >
+                                                            <option value="">Select Trailer</option>
+                                                            @foreach ($trailers as $trailer)
+                                                                <option value="{{ $trailer->id }}">{{ $trailer->registration_number }} {{ $trailer->fleet_number ? "(".$trailer->fleet_number.")" : "" }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    @endif
+                                                   
+                                                </div>
+                                            <!-- /input-group -->
+                                            </div>
+                                        @endif
+                                </div>
                                   
                                 </div>
                             

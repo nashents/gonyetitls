@@ -951,9 +951,9 @@ class Create extends Component
             $hours_distance = $this->ending_hours - $this->starting_hours;
         }
 
-        $total_fuel = $fuels && $fuels->count() > 0 
-            ? $fuels->sum('quantity') 
-            : ($this->trip_fuel ?? 0);
+        $total_fuel = $fuels && $fuels->count() > 0
+        ? $fuels->sum(fn($fuel) => (float) $fuel->quantity)
+        : (float) ($this->trip_fuel ?? 0);
 
         if (is_numeric($distance) && $distance > 0 && $total_fuel > 0) {
             $trip->fuel_consumption_mileage = $distance / $total_fuel;

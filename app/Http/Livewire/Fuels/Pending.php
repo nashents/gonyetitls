@@ -58,6 +58,7 @@ class Pending extends Component
     public $fuel_filter;
     public $from;
     public $to;
+    
 
     public $selectedRows = [];
     public $selectPageRows = false;

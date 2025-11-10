@@ -6,9 +6,12 @@ use Carbon\Carbon;
 use App\Models\Asset;
 use App\Models\Horse;
 use App\Models\Ticket;
+use App\Models\Station;
 use App\Models\Trailer;
 use App\Models\Vehicle;
 use Livewire\Component;
+use App\Models\Employee;
+use App\Models\ServiceType;
 use App\Models\TripExpense;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Excel;
@@ -45,10 +48,16 @@ class Index extends Component
     public $user;
     public $employee;
     public $company;
+    public $service_types;
+    public $service_type_id;
     public $default_currency;
     public $out_of_workshop_time;
     public $out_of_workshop_date;
     public $ticket_status = "all";
+    public $stations;
+    public $station_id;
+    public $employees;
+    public $employee_id;
 
     public function mount(){
         $this->resetPage();
@@ -60,6 +69,13 @@ class Index extends Component
         $this->assets = Asset::where('status',1)->get();
         $this->trailers = Trailer::where('status',1)->orderby('registration_number')->get();
         $this->vehicles = Vehicle::where('status',1)->orderby('registration_number')->get();
+        $this->service_types = ServiceType::where('status',1)->orderby('name')->get();
+        $this->stations = Station::where('status',1)->orderby('name')->get();
+        $this->employees = Employee::query()
+        ->whereHas('departments', fn ($q) => $q->where('departments.name', 'Workshop'))
+        ->with('departments:id,name')
+        ->distinct()
+        ->get();
 
     }
 
@@ -241,6 +257,27 @@ class Index extends Component
         $query = Ticket::query()
             ->with(['booking', 'inspection', 'horse', 'trailer', 'vehicle','service_type']);
 
+             // ✅ Date filter
+        if (!empty($this->from) && !empty($this->to)) {
+            $query->whereBetween('created_at', [$this->from, $this->to]);
+        } else {
+            $query->whereMonth('created_at', date('m'))
+                ->whereYear('created_at', date('Y'));
+        }
+
+        if ($this->station_id) {
+           $query->where('station_id', $this->station_id);
+        }
+       
+        if ($this->service_type_id) {
+            $query->where('service_type_id', $this->service_type_id);
+        }
+        if ($this->employee_id) {
+            $query->whereHas('employees', function ($q) {
+                $q->where('employees.id', $this->employee_id);
+            });
+        }
+
         // ✅ Status filter
         if ($this->ticket_status !== 'all') {
             $query->where('status', $this->ticket_status);
@@ -266,13 +303,7 @@ class Index extends Component
 
         }
 
-        // ✅ Date filter
-        if (!empty($this->from) && !empty($this->to)) {
-            $query->whereBetween('created_at', [$this->from, $this->to]);
-        } else {
-            $query->whereMonth('created_at', date('m'))
-                ->whereYear('created_at', date('Y'));
-        }
+       
 
         // ✅ Search filter
        if (($search = trim((string) $this->search)) !== '') {
@@ -302,7 +333,7 @@ class Index extends Component
     }
 
         // ✅ Order + paginate
-        return $query->orderBy('ticket_number', 'desc')->paginate(10);
+        return $query->orderByDesc('created_at')->paginate(10);
     }
 
     public function showTicket($id){
