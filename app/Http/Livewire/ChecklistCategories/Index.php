@@ -41,7 +41,11 @@ class Index extends Component
 
     public function store(){
         try{
-            
+            $this->validate(
+                [
+                    'name' => 'required|unique:checklist_categories,name,NULL,id,deleted_at,NULL|string|min:2'
+                ]
+            );
         $checklist_category = new Checklistcategory;
         $checklist_category->user_id = Auth::user()->id;
         $checklist_category->name = $this->name;
@@ -106,8 +110,8 @@ class Index extends Component
     {
 
        $base = ChecklistCategory::query()
-            ->with([ 'category_checklists.checklist_item'])
-           ->whereNotIn('name', ['Tyre Inspection', 'Stock on board']);
+            ->with([ 'category_checklists.checklist_item']);
+        //    ->whereNotIn('name', ['Tyre Inspection', 'Stock on board']);
 
         $checklist_categories = $base
             ->when(filled($this->search), function ($q) {

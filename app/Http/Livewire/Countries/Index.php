@@ -70,7 +70,6 @@ class Index extends Component
 
     public function edit($id){
     $country = Country::find($id);
-    $this->updateMode = true;
     $this->user_id = $country->user_id;
     $this->name = $country->name;
     $this->country_id = $country->id;
