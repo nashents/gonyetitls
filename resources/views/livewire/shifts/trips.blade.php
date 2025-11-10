@@ -139,12 +139,12 @@
                 </td>
                 @endif
                 @if ($company->rates_managed_by_finance == True)
-                                            @if (in_array('Finance', $department_names) ||  in_array('Super Admin', $role_names))
-                                                <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight : 0,2)}}</td>
-                                            @endif
-                                        @else
-                                            <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight : 0,2)}}</td>
-                                        @endif
+                    @if (in_array('Finance', $department_names) ||  in_array('Super Admin', $role_names))
+                        <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight : 0,2)}}</td>
+                    @endif
+                @else
+                    <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight : 0,2)}}</td>
+                @endif
                  <td class="w-10 line-height-35 table-dropdown">
                     <div class="dropdown">
                         <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

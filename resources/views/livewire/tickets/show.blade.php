@@ -13,6 +13,7 @@
                 <li role="presentation"><a href="#requests" aria-controls="requests" role="tab" data-toggle="tab">Requested Items</a></li>
                 <li role="presentation"><a href="#parts" aria-controls="parts" role="tab" data-toggle="tab">Dispatched Items</a></li>
                 <li role="presentation"><a href="#expenses" aria-controls="expenses" role="tab" data-toggle="tab">Other Expenses</a></li>
+                 <li role="presentation"><a href="#documents" aria-controls="documents" role="tab" data-toggle="tab">Documents</a></li>
             </ul>
             <div class="tab-content bg-white p-15">
                 <div role="tabpanel" class="tab-pane active" id="jd">
@@ -299,6 +300,9 @@
                 </div>
                 <div role="tabpanel" class="tab-pane " id="expenses">
                     @livewire('ticket-expenses.index', ['ticket' => $ticket])
+                </div>
+                <div role="tabpanel" class="tab-pane" id="documents">
+                    @livewire('documents.index', ['id' => $ticket->id,'category'=>'ticket'])
                 </div>
                 <br>
                 <br>

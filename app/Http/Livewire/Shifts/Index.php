@@ -13,6 +13,7 @@ use App\Models\Horse;
 use App\Models\Shift;
 use App\Models\TopUp;
 use App\Models\Driver;
+use App\Models\Cluster;
 use App\Models\Company;
 use App\Models\Mileage;
 use App\Models\Vehicle;
@@ -76,6 +77,7 @@ class Index extends Component
     public $selected_currency;
     public $customers;
     public $customer_id;
+
    
     public $haulage_type = [];
     public $destinations;
@@ -104,6 +106,7 @@ class Index extends Component
     public $drivers;
     public $driver_id;
     public $equipment;
+    public $trailer_id;
 
     public $teams;
     public $team_id;
@@ -320,7 +323,7 @@ class Index extends Component
         $this->liquid_measurements = Measurement::where('cargo_type','Liquid')->orderBy('name','asc')->get();
         $this->solid_measurements = Measurement::where('cargo_type','Solid')->orderBy('name','asc')->get();  
       
-        $this->destinations = Destination::with('country')->get()->sortBy('country.name');
+       $this->destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
        
         
         $this->trip_type = TripType::where('name','Local')->first();
@@ -419,7 +422,7 @@ class Index extends Component
       
      
         elseif($category == 'destinations'){
-            $this->destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
+           $this->destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Destinations Refreshed Successfully!!."
@@ -962,137 +965,143 @@ class Index extends Component
 
                 foreach($this->haulage_type as $key => $value){
 
-                $trip = new Trip;
-                $trip->trip_number = $this->tripNumber();
-                if($this->trip_ref[$key]){
-                    $trip->trip_ref = $this->trip_ref[$key];
+                    $trip = new Trip;
+                    $trip->trip_number = $this->tripNumber();
 
-                }
-                $trip->shift_id = $shift_id;
-                $trip->user_id =  $this->user->id ?: null;
-                $trip->company_id = $this->company->id ?: null;
-                $trip->horse_id =  $this->selectedHorse ?: null;
-                $trip->vehicle_id =  $this->selectedVehicle ?: null;
-                $trip->transporter_id = $this->selectedTransporter ?: null;
-                $trip->driver_id = $this->driver_id ?: null;
-                $trip->customer_id = $this->customer_id ?: null;
-                $trip->freight_calculation = "rate_weight";
-                $trip->calculation_measurement = "weight";
-                $trip->currency_id = $this->selectedCurrency ?: $this->company->currency_id;
-                $trip->exchange_rate = $this->exchange_rate;
-                $trip->start_date = $this->date;
-                $trip->cargo_id = $this->selectedCargo;
-                $trip->trip_type_id = $this->trip_type?->id;
-                $trip->with_cargos = True;
-                $trip->end_date = $this->date;
-               
+                    if(isset($this->trip_ref[$key])){
+                        $trip->trip_ref = $this->trip_ref[$key];
 
-               
-                if(isset($this->arrive_lp[$key]) && isset($this->depart_lp[$key])){
-                     $trip->arrive_loading_point = $this->arrive_lp[$key];
-                     $trip->depart_loading_point = $this->depart_lp[$key];
-                     $trip->loading_time = $this->calculateTimeDifference($this->arrive_lp[$key], $this->depart_lp[$key]);
-                }
-               
-                if(isset($this->arrive_op[$key]) && isset($this->depart_op[$key])){
-                     $trip->arrive_offloading_point = $this->arrive_op[$key];
-                     $trip->depart_offloading_point = $this->depart_op[$key];
-                     $trip->offloading_time = $this->calculateTimeDifference($this->arrive_op[$key], $this->depart_op[$key]);
-                }
-               
-                if(isset($this->haulage_type[$key])){
-                    $trip->haulage_type = $this->haulage_type[$key];
-
-                }
-                if(isset($this->starting_mileage[$key])){
-                    $trip->starting_mileage = $this->starting_mileage[$key];
-                }
-                if(isset($this->starting_hours[$key])){
-                    $trip->starting_hours = $this->starting_hours[$key];
-                }
-                if(isset($this->ending_mileage[$key])){
-                    $trip->ending_mileage = $this->ending_mileage[$key];
-                }
-                if(isset($this->ending_hours[$key])){
-                    $trip->ending_hours = $this->ending_hours[$key];
-                }
-                if((isset($this->starting_mileage[$key]) && is_numeric($this->starting_mileage[$key])) && (isset($this->ending_mileage[$key]) && is_numeric($this->ending_mileage[$key])) && $this->ending_mileage[$key] >= $this->starting_mileage[$key]){
-                    $trip->distance = $this->ending_mileage[$key] - $this->starting_mileage[$key];
-                }
-                if((isset($this->starting_hours[$key]) && is_numeric($this->starting_hours[$key])) && (isset($this->ending_hours[$key]) && is_numeric($this->ending_hours[$key])) && $this->ending_hours[$key] >= $this->starting_hours[$key]){
-                    $trip->hours_distance = $this->ending_hours[$key] - $this->starting_hours[$key];
-                }
-               
-                if(isset($this->selectedFrom[$key])){
-                    $trip->from = $this->selectedFrom[$key];
-                }
-                if(isset($this->selectedTo[$key])){
-                    $trip->to = $this->selectedTo[$key];
-                }
-                if(isset($this->offloading_point_id[$key])){
-                    $trip->offloading_point_id = $this->offloading_point_id[$key];
-                }
-                if(isset($this->loading_point_id[$key])){
-                    $trip->loading_point_id = $this->loading_point_id[$key];
-                }
-                if(isset($this->rate[$key])){
-                    $trip->rate = $this->rate[$key];
-                }
-                if(isset($this->weight[$key])){
-                    $trip->weight = $this->weight[$key];
-                }
-                if(isset($this->litreage[$key])){
-                    $trip->litreage = $this->litreage[$key];
-                }
-                if(isset($this->litreage_at_20[$key])){
-                    $trip->litreage_at_20 = $this->litreage_at_20[$key];
-                }
-
-                if($this->cargo_type == "Solid"){
-                   if((isset($this->rate[$key]) && is_numeric($this->rate[$key])) && (isset($this->weight[$key]) && is_numeric($this->weight[$key])) ){
-                    $this->freight[$key] = $this->rate[$key] * $this->weight[$key]; 
-                }
-                }else{
-                    if((isset($this->rate[$key]) && is_numeric($this->rate[$key])) && (isset($this->litreage_at_20[$key]) && is_numeric($this->litreage_at_20[$key])) ){
-                    $this->freight[$key] = $this->rate[$key] * $this->litreage_at_20[$key]; 
-                }
-                }
-                
-                if(isset($this->freight[$key])){
-                    $trip->freight = $this->freight[$key];
-                    $trip->turnover = $this->freight[$key];
-                    $this->turnover = $this->freight[$key];
-                }
-                
-
-
-                if(isset($this->quantity[$key])){
-                    $trip->quantity = $this->quantity[$key];
-                }
-                
-                if(isset($this->measurement[$key])){
-                    $trip->measurement = $this->measurement[$key];
-                }
-               
-               
-                
-                
-                if($this->selectedCurrency != $this->company->currency_id){
-                    if(is_numeric($this->exchange_rate) && $this->exchange_rate > 0){
-                          $trip->exchange_customer_freight = $this->freight[$key] * $this->exchange_rate;
                     }
 
-                }
+                    $trip->shift_id = $shift_id;
+                    $trip->user_id =  $this->user->id ?: null;
+                    $trip->company_id = $this->company->id ?: null;
+                    $trip->horse_id =  $this->selectedHorse ?: null;
+                    $trip->vehicle_id =  $this->selectedVehicle ?: null;
+                    $trip->transporter_id = $this->selectedTransporter ?: null;
+                    $trip->driver_id = $this->driver_id ?: null;
+                    $trip->customer_id = $this->customer_id ?: null;
+                    $trip->freight_calculation = "rate_weight";
+                    $trip->calculation_measurement = "weight";
+                    $trip->currency_id = $this->selectedCurrency ?: $this->company->currency_id;
+                    $trip->exchange_rate = $this->exchange_rate;
+                    $trip->start_date = $this->date;
+                    $trip->cargo_id = $this->selectedCargo;
+                    $trip->trip_type_id = $this->trip_type?->id;
+                    $trip->with_cargos = True;
+                    $trip->end_date = $this->date;
                
-            
-                $trip->trip_status = "Offloaded";
-                $trip->trip_status_date = $this->date;
-
+                    if(isset($this->arrive_lp[$key]) && isset($this->depart_lp[$key])){
+                        $trip->arrive_loading_point = $this->arrive_lp[$key];
+                        $trip->depart_loading_point = $this->depart_lp[$key];
+                        $trip->loading_time = $this->calculateTimeDifference($this->arrive_lp[$key], $this->depart_lp[$key]);
+                    }
+               
+                    if(isset($this->arrive_op[$key]) && isset($this->depart_op[$key])){
+                        $trip->arrive_offloading_point = $this->arrive_op[$key];
+                        $trip->depart_offloading_point = $this->depart_op[$key];
+                        $trip->offloading_time = $this->calculateTimeDifference($this->arrive_op[$key], $this->depart_op[$key]);
+                    }
                 
-                $trip->authorization = "approved";
-                $trip->authorization_date = date('Y-m-d');
-                $trip->authorized_by_id = $this->user->id;
-                $trip->save();
+                    if(isset($this->haulage_type[$key])){
+                        $trip->haulage_type = $this->haulage_type[$key];
+
+                    }
+
+                    if(isset($this->starting_mileage[$key])){
+                        $trip->starting_mileage = $this->starting_mileage[$key];
+                    }
+
+                    if(isset($this->starting_hours[$key])){
+                        $trip->starting_hours = $this->starting_hours[$key];
+                    }
+
+                    if(isset($this->ending_mileage[$key])){
+                        $trip->ending_mileage = $this->ending_mileage[$key];
+                    }
+
+                    if(isset($this->ending_hours[$key])){
+                        $trip->ending_hours = $this->ending_hours[$key];
+                    }
+                    if((isset($this->starting_mileage[$key]) && is_numeric($this->starting_mileage[$key])) && (isset($this->ending_mileage[$key]) && is_numeric($this->ending_mileage[$key])) && $this->ending_mileage[$key] >= $this->starting_mileage[$key]){
+                        $trip->distance = $this->ending_mileage[$key] - $this->starting_mileage[$key];
+                    }
+                    if((isset($this->starting_hours[$key]) && is_numeric($this->starting_hours[$key])) && (isset($this->ending_hours[$key]) && is_numeric($this->ending_hours[$key])) && $this->ending_hours[$key] >= $this->starting_hours[$key]){
+                        $trip->hours_distance = $this->ending_hours[$key] - $this->starting_hours[$key];
+                    }
+               
+                    if(isset($this->selectedFrom[$key])){
+                        $trip->from = $this->selectedFrom[$key];
+                    }
+                    if(isset($this->selectedTo[$key])){
+                        $trip->to = $this->selectedTo[$key];
+                    }
+                    if(isset($this->offloading_point_id[$key])){
+                        $trip->offloading_point_id = $this->offloading_point_id[$key];
+                    }
+                    if(isset($this->loading_point_id[$key])){
+                        $trip->loading_point_id = $this->loading_point_id[$key];
+                    }
+                    if(isset($this->rate[$key])){
+                        $trip->rate = $this->rate[$key];
+                    }
+                    if(isset($this->weight[$key])){
+                        $trip->weight = $this->weight[$key];
+                    }
+                    if(isset($this->litreage[$key])){
+                        $trip->litreage = $this->litreage[$key];
+                    }
+                    if(isset($this->litreage_at_20[$key])){
+                        $trip->litreage_at_20 = $this->litreage_at_20[$key];
+                    }
+
+                    if($this->cargo_type == "Solid"){
+                    if((isset($this->rate[$key]) && is_numeric($this->rate[$key])) && (isset($this->weight[$key]) && is_numeric($this->weight[$key])) ){
+                        $this->freight[$key] = $this->rate[$key] * $this->weight[$key]; 
+                    }
+                    }else{
+                        if((isset($this->rate[$key]) && is_numeric($this->rate[$key])) && (isset($this->litreage_at_20[$key]) && is_numeric($this->litreage_at_20[$key])) ){
+                        $this->freight[$key] = $this->rate[$key] * $this->litreage_at_20[$key]; 
+                    }
+                }
+                
+                    if(isset($this->freight[$key])){
+                        $trip->freight = $this->freight[$key];
+                        $trip->turnover = $this->freight[$key];
+                        $this->turnover = $this->freight[$key];
+                    }
+                
+
+
+                    if(isset($this->quantity[$key])){
+                        $trip->quantity = $this->quantity[$key];
+                    }
+                    
+                    if(isset($this->measurement[$key])){
+                        $trip->measurement = $this->measurement[$key];
+                    }
+                
+               
+                
+                
+                    if($this->selectedCurrency != $this->company->currency_id){
+                        if(is_numeric($this->exchange_rate) && $this->exchange_rate > 0){
+                            $trip->exchange_customer_freight = $this->freight[$key] * $this->exchange_rate;
+                        }
+
+                    }
+               
+                    $trip->trip_status = "Offloaded";
+                    $trip->trip_status_date = $this->date;
+
+                    
+                    $trip->authorization = "approved";
+                    $trip->authorization_date = date('Y-m-d');
+                    $trip->authorized_by_id = $this->user->id;
+                    $trip->save();
+                    if(!empty($this->trailer_id)){
+                        $trip->trailers()->sync($this->trailer_id);
+                    }
      
                 // $last_mileage = Mileage::where('horse_id',$this->selectedHorse)->orWhere('vehicle_id',$this->selectedVehicle)->whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
       
@@ -1244,6 +1253,22 @@ class Index extends Component
                 
       
             // end trip creation logic
+    }
+
+    public function updatedSelectedHorse($id){
+        if (!is_null($id)) {
+            $horse = Horse::find($id);
+            $this->open_mileage = $horse->mileage;
+            $assignment = $horse?->assignment;
+            $this->driver_id = $assignment?->driver_id;
+            $cluster = Cluster::where('horse_id',$id)->where('status',True)->first();
+            $trailers = $cluster?->trailers;
+            if($trailers){
+                foreach($trailers as $trailer){
+                    $this->trailer_id[] = $trailer->id;
+                }
+            }
+        }
     }
     
 

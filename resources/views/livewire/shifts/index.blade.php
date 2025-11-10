@@ -399,7 +399,7 @@
                                         <option value="">Select Horse </option>
                                         @if (!is_null($selectedTransporter))
                                         @foreach ($horses as $horse)
-                                        <option value="{{$horse->id}}"> {{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}} {{$horse->horse_make ? $horse->horse_make->name : ""}} {{$horse->horse_model ? $horse->horse_model->name : ""}}</option>
+                                        <option value="{{$horse->id}}"> {{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}} </option>
                                         @endforeach
                                         @endif
 
@@ -417,7 +417,7 @@
                                         <option value="">Select Vehicle </option>
                                         @if (!is_null($selectedTransporter))
                                         @foreach ($vehicles as $vehicle)
-                                        <option value="{{$vehicle->id}}"> {{$vehicle->registration_number}} {{$vehicle->vehicle_make ? $vehicle->vehicle_make->name : ""}} {{$vehicle->vehicle_model ? $vehicle->vehicle_model->name : ""}}</option>
+                                        <option value="{{$vehicle->id}}"> {{$vehicle->registration_number}} {{$vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : ""}} </option>
                                         @endforeach
                                         @endif
 
@@ -1214,7 +1214,7 @@
                                         <option value="">Select Horse </option>
                                         @if (!is_null($selectedTransporter))
                                         @foreach ($horses as $horse)
-                                        <option value="{{$horse->id}}"> {{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}} {{$horse->horse_make ? $horse->horse_make->name : ""}} {{$horse->horse_model ? $horse->horse_model->name : ""}}</option>
+                                        <option value="{{$horse->id}}"> {{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}}</option>
                                         @endforeach
                                         @endif
 
@@ -1232,10 +1232,9 @@
                                         <option value="">Select Vehicle </option>
                                         @if (!is_null($selectedTransporter))
                                         @foreach ($vehicles as $vehicle)
-                                        <option value="{{$vehicle->id}}"> {{$vehicle->registration_number}} {{$vehicle->vehicle_make ? $vehicle->vehicle_make->name : ""}} {{$vehicle->vehicle_model ? $vehicle->vehicle_model->name : ""}}</option>
+                                        <option value="{{$vehicle->id}}"> {{$vehicle->registration_number}} </option>
                                         @endforeach
                                         @endif
-
                                     </select>
                                     @error('selectedVehicle') <span class="text-danger error">{{ $message }}</span>@enderror
                                     <small>  <a href="{{ route('vehicles.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Vehicle</a></small> <a href="#" wire:click.prevent="refresh('vehicles')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
