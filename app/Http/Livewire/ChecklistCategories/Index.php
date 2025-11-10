@@ -40,7 +40,7 @@ class Index extends Component
     }
 
     public function store(){
-        try{
+        // try{
             $this->validate(
                 [
                     'name' => 'required|unique:checklist_categories,name,NULL,id,deleted_at,NULL|string|min:2'
@@ -59,14 +59,14 @@ class Index extends Component
         ]);
 
 
-        }
-        catch(\Exception $e){
-        // Set Flash Message
-        $this->dispatchBrowserEvent('alert',[
-            'type'=>'error',
-            'message'=>"Something goes wrong while creating checklist !!"
-        ]);
-    }
+    //     }
+    //     catch(\Exception $e){
+    //     // Set Flash Message
+    //     $this->dispatchBrowserEvent('alert',[
+    //         'type'=>'error',
+    //         'message'=>"Something goes wrong while creating checklist !!"
+    //     ]);
+    // }
     }
 
     public function edit($id){
