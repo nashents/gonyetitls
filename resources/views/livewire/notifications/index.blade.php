@@ -154,7 +154,7 @@
                         </div>
                         <div class="col-md-5">
                             <div class="form-group">
-                                <label for="country">Notification Categories<span class="required" style="color: red">*</span></label>
+                               <label for="country">Notification Categories<span class="required" style="color: red">*</span></label>
                                <select wire:model.debounce.300ms="category" class="form-control" required >
                                    <option value="">Select Category</option>
                                    <option value="Bill Authorization">Bill Authorization</option>
@@ -167,7 +167,7 @@
                                    <option value="Requisition Authorization">Requisition Authorization</option>
                                    <option value="Trip Authorization">Trip Authorization</option>
                                </select>
-                                @error('category') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                               @error('category') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
                         <div class="col-md-3">
@@ -268,18 +268,18 @@
                         <div class="col-md-5">
                             <div class="form-group">
                                 <label for="country">Notification Categories<span class="required" style="color: red">*</span></label>
-                               <select wire:model.debounce.300ms="category" class="form-control" required >
-                                   <option value="">Select Category</option>
-                                   <option value="Bill Authorization">Bill Authorization</option>
-                                   <option value="Credit Note Authorization">Credit Note Authorization</option>
-                                   <option value="Fuel Order Authorization">Fuel Order Authorization</option> 
-                                   <option value="Garage Booking Authorization">Garage Booking Authorization</option>
-                                   <option value="Invoice Authorization">Invoice Authorization</option>
-                                   <option value="Purchase Order Authorization">Purchase Order Authorization</option>
-                                   <option value="Reminder Notification">Reminder Notification</option>
-                                   <option value="Requisition Authorization">Requisition Authorization</option>
-                                   <option value="Trip Authorization">Trip Authorization</option>
-                               </select>
+                                <select wire:model.debounce.300ms="category" class="form-control" required >
+                                    <option value="">Select Category</option>
+                                    <option value="Bill Authorization">Bill Authorization</option>
+                                    <option value="Credit Note Authorization">Credit Note Authorization</option>
+                                    <option value="Fuel Order Authorization">Fuel Order Authorization</option> 
+                                    <option value="Garage Booking Authorization">Garage Booking Authorization</option>
+                                    <option value="Invoice Authorization">Invoice Authorization</option>
+                                    <option value="Purchase Order Authorization">Purchase Order Authorization</option>
+                                    <option value="Reminder Notification">Reminder Notification</option>
+                                    <option value="Requisition Authorization">Requisition Authorization</option>
+                                    <option value="Trip Authorization">Trip Authorization</option>
+                                </select>
                                 @error('category') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>

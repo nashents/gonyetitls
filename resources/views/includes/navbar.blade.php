@@ -211,11 +211,14 @@
                         
                             $horses = App\Models\Horse::all();
 
+                            // $requisitions = App\Models\Requisition::where('authorization','pending')->whereNull('deleted_at')->get()
+
+                            // $notifications_count = $reminders_count + $requisitions_count;
                  
                     @endphp
                     <a href="#" class="dropdown-toggle tour-one" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><i class="fa fa-bell"></i>
                         @if ($reminders_count > 0)
-                        <span class="badge badge-danger">{{ $reminders_count }}</span>
+                        <span class="badge badge-danger">{{ $reminders_count  }}</span>
                         @endif
                     </a>
                     @if ($reminders->count() > 10)

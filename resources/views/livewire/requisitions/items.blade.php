@@ -35,15 +35,15 @@
                     @endif
                     </td>
                   <td>{{ $requisition_item->qty}}</td>
-                  <td>{{ $requisition_item->requisition->currency ? $requisition_item->requisition->currency->name : ""}}</td>
+                  <td>{{ $requisition_item->currency ? $requisition_item->currency->name : ""}}</td>
                   <td>
                     @if ($requisition_item->amount)
-                        {{ $requisition_item->requisition->currency ? $requisition_item->requisition->currency->symbol : ""}}{{ number_format($requisition_item->amount,2)}}
+                        {{ $requisition_item->currency ? $requisition_item->currency->symbol : ""}}{{ number_format($requisition_item->amount,2)}}
                     @endif
                   </td>
                   <td>
                     @if ($requisition_item->subtotal)
-                   {{ $requisition_item->requisition->currency ? $requisition_item->requisition->currency->symbol : ""}}{{ number_format($requisition_item->subtotal,2)}}
+                   {{ $requisition_item->currency ? $requisition_item->currency->symbol : ""}}{{ number_format($requisition_item->subtotal,2)}}
                     @endif
                   </td>
               

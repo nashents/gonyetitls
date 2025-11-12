@@ -42,6 +42,7 @@ class SalaryItem extends Model implements Auditable
     protected $fillable = [
         'user_id',
         'salary_id',
+        'currency_id',
         'loan_id',
         'allowance_id',
         'deduction_id',

@@ -50,10 +50,19 @@ class Create extends Component
     public $selectedCurrency;
     public $selected_currency;
     public $basic;
+    // public $earning_selected_currency = [];
+    public $earningExchangeRate = [];
+    public $earningExchangeAmount = [];
     public $selectedEarning = [];
+    public $allowance_selected_currency = [];
+    public $allowanceExchangeRate = [];
+    public $allowanceExchangeAmount = [];
     public $selectedAllowance = [];
     public $allowance_amount = [];
     public $earning_amount = [];
+    public $deduction_selected_currency = [];
+    public $deductionExchangeAmount = [];
+    public $deductionExchangeRate = [];
     public $selectedDeduction = [];
     public $deduction_amount = [];
     public $selectedLoan = [];
@@ -66,6 +75,7 @@ class Create extends Component
     public $exchange_amount;
     public $exchange_rate;
     public $total_earnings;
+    public $company;
 
     public $earnings_inputs = [];
     public $e = 1;
@@ -214,6 +224,10 @@ class Create extends Component
     }
 
     public function mount(){
+       
+        $this->company = Auth::user()->employee->company;
+        $this->selectedCurrency = $this->company->currency_id;
+        $this->frequency = "monthly";
         $this->employees = Employee::orderBy('name','asc')->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->allowances = Allowance::where('status','1')->orderBy('name','asc')->get();
@@ -239,6 +253,7 @@ class Create extends Component
         }
     }
 
+   
     public function updatedSelectedAllowance($id, $key){
             if (!is_null($id)) {
               $allowance = Allowance::find($id);
@@ -252,15 +267,7 @@ class Create extends Component
               }
             }
     }
-  
-    public function updatedSelectedEarning($id, $key){
-            if (!is_null($id)) {
-              $earning = Earning::find($id);
-              if (isset($earning)) {
-                    $this->selectedEarningCurrency[$key] = $earning->currency_id;
-              }
-            }
-    }
+   
 
 
     public function updatedSelectedDeduction($id, $key){
@@ -289,14 +296,7 @@ class Create extends Component
     
     public function refresh($category){
 
-        if($category == "earnings"){
-            $this->earnings = Earning::where('status',1)->orderBy('name','asc')->get();
-            $this->dispatchBrowserEvent('alert',[
-                'type'=>'success',
-                'message'=>"Earnings Refreshed Successfully!!."
-            ]);
-        }
-        elseif($category == "allowances"){
+      if($category == "allowances"){
             $this->allowances = Allowance::where('status',1)->orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
@@ -336,22 +336,19 @@ class Create extends Component
                 $salary->salary_number = $this->salaryNumber();
                 $salary->employee_id = $this->selectedEmployee;
                 $salary->currency_id = $this->selectedCurrency;
-            
+                $salary->basic = $this->basic;
                 $salary->paye = $this->paye;
                 $salary->aids_levy = $this->aids_levy;
                 $salary->frequency = $this->frequency;
-              
                 $salary->save();
             
                 $this->salary_id = $salary->id;
                 
                 // Process Allowances
-                $this->total_allowances = $this->processSalaryItems($this->selectedAllowance, 'allowance_id', $this->allowance_amount, $this->selectedAllowanceCurrency);
-                // Process Earnings
-                $this->total_earnings = $this->processSalaryItems($this->selectedEarning, 'earning_id', $this->earning_amount, $this->selectedEarningCurrency);
-                
+                $this->total_allowances = $this->processSalaryItems($this->selectedAllowance, 'allowance_id', $this->allowance_amount, $this->selectedAllowanceCurrency, $this->allowanceExchangeRate);
+              
                 // Process Deductions
-                $this->total_deductions = $this->processSalaryItems($this->selectedDeduction, 'deduction_id', $this->deduction_amount, $this->selectedDeductionCurrency);
+                $this->total_deductions = $this->processSalaryItems($this->selectedDeduction, 'deduction_id', $this->deduction_amount, $this->selectedDeductionCurrency, $this->deductionExchangeRate);
                 
                 // Process Loans
                 if (!empty($this->selectedLoan)) {
@@ -416,20 +413,28 @@ class Create extends Component
     }
 
         // Helper function for processing Salary Items
-        private function processSalaryItems($items, $column, $amounts, $currencyIds) {
+        private function processSalaryItems($items, $column, $amounts, $currencyIds, $exchangeRates) {
             $total = 0;
             if (!empty($items)) {
                 foreach ($items as $key => $item) {
-                    if (!empty($item) && isset($amounts[$key])) {
-                        $exchange_amount = $this->exchange_rate * $amounts[$key];
+
+                    if (!empty($item) && isset($amounts[$key]) && isset($currencyIds[$key])) {
+
+                        $exchange_amount = 0;
+
+                        if ($exchangeRates[$key] && ($currencyIds[$key] != Auth::user()->employee->company->currency_id)) {
+                            $exchange_amount = $exchangeRates[$key] * $amounts[$key];
+                        }
+                       
                         SalaryItem::create([
                             'salary_id' => $this->salary_id,
                             $column => $item,
+                            'currency_id' => $currencyIds[$key],
                             'amount' => $amounts[$key],
-                            'exchange_rate' => $this->exchange_rate,
+                            'exchange_rate' => $exchangeRates[$key] ?? Null,
                             'exchange_amount' =>  $exchange_amount,
                         ]);
-                        $total += $amounts[$key];
+                        $total += $currencyIds[$key] != Auth::user()->employee->company->currency_id ? $exchange_amount : $amounts[$key];
                     }
                 }
             }

@@ -99,7 +99,7 @@
                                         @forelse ($requisitions as $requisition)
                                       <tr>
                                         <td>
-                                            {{ucfirst($requisition->requisition_number)}}
+                                            {{ucfirst($requisition->requisition_number)}} <br>
                                             <small><strong>CreatedBy:</strong> {{ucfirst($requisition->user->name)}} {{ucfirst($requisition->user->surname)}}</small>
                                         </td>
                                         <td>
@@ -109,22 +109,22 @@
                                         </td>
                                         <td>
                                              @if ($requisition->requisition_items)
-                                            @foreach ($requisition->requisition_items as $requisition_item)
-                                                @if ($requisition_item->expense)
-                                                    {{$requisition_item->expense ? $requisition_item->expense->name : ""}} 
-                                                @elseif($requisition_item->allowance)
-                                                    {{ $requisition_item->allowance ? $requisition_item->allowance->name : ""}}
-                                                @elseif($requisition_item->product)
-                                                    {{ $requisition_item->product->brand ? $requisition_item->product->brand->name : ""}} {{ $requisition_item->product ? $requisition_item->product->name : ""}}
-                                                @elseif($requisition_item->inventory)
-                                                    {{ $requisition_item->inventory->product->brand ? $requisition_item->inventory->product->brand->name : ""}} {{ $requisition_item->inventory->product ? $requisition_item->inventory->product->name : ""}}
-                                                @endif
-                                                    @ @if ($requisition_item->amount)
-                                                    {{ $requisition_item->currency ? $requisition_item->currency->name : ""}} {{ $requisition_item->currency ? $requisition_item->currency->symbol : ""}}{{ number_format($requisition_item->amount,2)}}
-                                                @endif
-                                                @if (!$loop->last), @endif
-                                            @endforeach
-                                        @endif
+                                                @foreach ($requisition->requisition_items as $requisition_item)
+                                                    @if ($requisition_item->expense)
+                                                        {{$requisition_item->expense ? $requisition_item->expense->name : ""}} 
+                                                    @elseif($requisition_item->allowance)
+                                                        {{ $requisition_item->allowance ? $requisition_item->allowance->name : ""}}
+                                                    @elseif($requisition_item->product)
+                                                        {{ $requisition_item->product->brand ? $requisition_item->product->brand->name : ""}} {{ $requisition_item->product ? $requisition_item->product->name : ""}}
+                                                    @elseif($requisition_item->inventory)
+                                                        {{ $requisition_item->inventory->product->brand ? $requisition_item->inventory->product->brand->name : ""}} {{ $requisition_item->inventory->product ? $requisition_item->inventory->product->name : ""}}
+                                                    @endif
+                                                        @ @if ($requisition_item->amount)
+                                                        {{ $requisition_item->currency ? $requisition_item->currency->name : ""}} {{ $requisition_item->currency ? $requisition_item->currency->symbol : ""}}{{ number_format($requisition_item->amount,2)}}
+                                                    @endif
+                                                    @if (!$loop->last), @endif
+                                                @endforeach
+                                            @endif
                                            
                                         </td>
                                         <td>
