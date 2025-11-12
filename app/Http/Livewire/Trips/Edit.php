@@ -379,6 +379,8 @@ class Edit extends Component
             $initial_trip = Trip::find($id);
             if(isset($initial_trip)){
                 $this->selectedTransporter = $initial_trip->transporter_id;
+                $transporter = Transporter::find($initial_trip->transporter_id);
+                $this->cargos = $transporter->cargos->sortBy('name');
                 $this->trip_ref = $initial_trip->trip_ref;
                 $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$initial_trip->transporter_id)
                 ->where('archive',0)
