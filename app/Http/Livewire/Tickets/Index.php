@@ -265,8 +265,10 @@ class Index extends Component
                 ->whereYear('created_at', date('Y'));
         }
 
-        if ($this->station_id) {
-           $query->where('station_id', $this->station_id);
+       if ($this->station_id) {
+            $query->whereHas('booking', function ($q) {
+                $q->where('station_id', $this->station_id);
+            });
         }
        
         if ($this->service_type_id) {

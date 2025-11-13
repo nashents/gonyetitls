@@ -25,6 +25,7 @@ class Index extends Component
     public $from;
     public $to;
     
+    public $status;
     public $name;
     public $reminder_items;
     public $reminder_item_id;
@@ -173,7 +174,6 @@ class Index extends Component
 
     public function edit($id){
         $fitness = Fitness::find($id);
-        $this->user_id = $fitness->user_id;
         $this->reminder_item_id = $fitness->reminder_item_id;
         $this->issued_at = $fitness->issued_at;
         $this->expires_at =  $fitness->expires_at;
