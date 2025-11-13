@@ -20,16 +20,16 @@ Account Creation | {{$company->name}}
 										<tr>
 											<td style="padding:0 0 15px 0;color:#153643;">
 												<h3 style="font-size:16px; margin:0 0 20px 0;font-family:Arial,sans-serif;">{{$company->name}}</h3>
-												<p style="margin:0 0 12px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">This is an automated account creation email</p>
+												<p style="margin:0 0 12px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">This is an automated account credentials email</p>
 											</td>
 										</tr>
 										<tr>
 											<td>
-												<p style="margin:0 0 12px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">Congratulations your {{ ucfirst($user->category) }} account has been created successfully. Please verify if your details below are correct.</p>
-												<p style="margin:0 0 12px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;"><strong>Name:</strong> {{ucfirst($user->name)}},
+												<p style="margin:0 0 12px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">Congratulations! Your {{ ucfirst($user->category) }} account details are ready. Please review the information below to ensure everything is correct.</p>
+												<p style="margin:0 0 12px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">
+													<strong>Name:</strong> {{ucfirst($user->name)}},
 													@if (isset($user->surname))
-													<strong>Surname:</strong> {{ucfirst($user->surname)}},
-													@else
+														<strong>Surname:</strong> {{ucfirst($user->surname)}},
 													@endif
 													<strong>Email:</strong>{{$user->email}}
 													<br>
@@ -37,7 +37,7 @@ Account Creation | {{$company->name}}
 												<br>
 												<p style="margin:0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;"><a href="{{ $company->website }}" style="color:#fcc02d;text-decoration:underline;" target="_blank">Click me to get started</a></p>
 
-												<p style="margin:0 0 12px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;color: red">Note: your password is your secret. You can change this password to your new desired password in your dashboard under account.</p>
+												<p style="margin:0 0 12px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;color: red">Note: Your PIN is confidential. You may change it to a new one anytime from your dashboard under Profile Settings.</p>
 											</td>
 										</tr>
 
@@ -54,7 +54,7 @@ Account Creation | {{$company->name}}
 													<br>
 												<p style="margin:0;font-size:14px;line-height:16px;font-family:Arial,sans-serif;color:#ffffff;">
 													&reg;
-													Gonyeti TLS {{date('Y')}} | <a href="mailto:info@basilmark.com" style="color:#ffffff;text-decoration:underline;">info@basilmark.com</a>
+													Gonyeti T & L ERP {{date('Y')}} | <a href="mailto:info@basilmark.com" style="color:#ffffff;text-decoration:underline;">info@basilmark.com</a>
 												</p>
 											
 											</td>

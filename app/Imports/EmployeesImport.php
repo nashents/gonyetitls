@@ -8,9 +8,12 @@ use App\Models\Count;
 use App\Models\Employee;
 use App\Models\JobTitle;
 use App\Models\EmployeePosition;
+use App\Mail\AccountCreationMail;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Maatwebsite\Excel\Concerns\WithLimit;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\SkipsErrors;
@@ -31,6 +34,8 @@ WithBatchInserts
 {
     use Importable, SkipsErrors;
 
+    public $company;
+
     public function generatePIN($digits = 4){
         $i = 0; //counter
         $pin = ""; //our default pin is blank.
@@ -41,6 +46,16 @@ WithBatchInserts
         }
         return $pin;
     }
+
+    public function __construct()
+        {
+            if (optional(Auth::user()->company)) {
+                $this->company = Auth::user()->company;
+            } elseif (optional(Auth::user()->employee->company)) {
+                $this->company = Auth::user()->employee->company;
+            }
+        }
+
 
     public function limit(): int
     {
@@ -127,122 +142,148 @@ WithBatchInserts
     public function collection(Collection $rows)
     {
 
+         foreach ($rows as $row) {
 
-       foreach($rows as $row){
-        if($row->filter()->isNotEmpty()){
+                // Skip completely empty rows
+                if ($row->filter()->isEmpty()) {
+                    continue;
+                }
 
-        $pin =  $this->generatePIN();
+                $name    = $row->get('name');
+                $surname = $row->get('surname');
 
-        $name = $row->get('name');
-        $surname = $row->get('surname');
+                if (!$name || !$surname) {
+                    // Skip row if required fields are missing
+                    continue;
+                }
 
-        if (!$name || !$surname) {
-            // skip row if required fields are missing
-            continue;
-        }
+                $email          = $row->get('email');
+                $gender         = $row->get('gender');
+                $dob            = $row->get('dob');
+                $phone          = $row->get('phonenumber');
+                $idNumber       = $row->get('idnumber');
+                $country        = $row->get('country');
+                $city           = $row->get('city');
+                $suburb         = $row->get('suburb');
+                $contract       = $row->get('contract_duration');
+                $startDate      = $row->get('start_date');
+                $expiryDate     = $row->get('expiry_date');
+                $streetAddress  = $row->get('streetaddress');
+                $nextOfKin      = $row->get('nextofkin');
+                $relationship   = $row->get('relationship');
+                $contact        = $row->get('contact');
 
-        $user = User::where('name', $name)
-                    ->where('surname', $surname)
-                    ->first();
-        $employee = Employee::where('name', $name)
-                    ->where('surname', $surname)
-                    ->first();
+                DB::transaction(function () use ($row,$name,$surname,$email,$gender,$dob,$phone,$idNumber,
+                    $country,$city,$suburb,$contract,$startDate,$expiryDate,$streetAddress,$nextOfKin,$relationship,$contact
+                ) {
+                    $pin = $this->generatePIN();
+
+                    // Find or instantiate by name + surname
+                    $user = User::firstOrNew([
+                        'name'    => $name,
+                        'surname' => $surname,
+                    ]);
+
+                    $employee = Employee::firstOrNew([
+                        'name'    => $name,
+                        'surname' => $surname,
+                    ]);
+
+                    // Check if both existed already (mirrors your old if(isset($user) && isset($employee)))
+                    $existingPair = $user->exists && $employee->exists;
+
+                    /*
+                    |----------------------
+                    | USER FIELDS
+                    |----------------------
+                    */
+                    $isNewUser = !$user->exists;
+
+                    $user->category = 'employee';
+                    $user->is_admin = '0';
+                    $user->active   = '1';
+                    $user->email    = $email;
+
+                    if ($isNewUser) {
+                        $user->password = Hash::make($pin);
+                    }
+
+                    $user->save();
+
+                    // Avoid duplicate pivot records
+                    $user->roles()->syncWithoutDetaching([3]);
+
+                    /*
+                    |----------------------
+                    | EMPLOYEE FIELDS
+                    |----------------------
+                    */
+                    $isNewEmployee = !$employee->exists;
+
+                    if ($isNewEmployee) {
+                        if (optional(Auth::user()->company)->id) {
+                            $employee->company_id = Auth::user()->company->id;
+                        } elseif (optional(Auth::user()->employee->company)->id) {
+                            $employee->company_id = Auth::user()->employee->company->id;
+                        }
+
+                        $employee->creator_id       = Auth::id();
+                        $employee->user_id          = $user->id;
+                        $employee->employee_number  = $this->employeeNumber();
+                        $employee->pin              = $pin;
+                    }
+
+                    $employee->name          = $name;
+                    $employee->surname       = $surname;
+                    $employee->gender        = $this->parseGender($gender);
+                    $employee->dob           = $this->parseExcelDate($dob);
+                    $employee->email         = $email;
+                    $employee->phonenumber   = $phone;
+                    $employee->idnumber      = $idNumber;
+                    $employee->country       = $country;
+                    $employee->city          = $city;
+                    $employee->suburb        = $suburb;
+                    $employee->duration      = is_numeric($contract) ? (int) $contract : null;
+                    $employee->start_date    = $this->parseExcelDate($startDate);
+                    $employee->expiration    = $this->parseExcelDate($expiryDate);
+                    $employee->street_address = $streetAddress;
+                    $employee->next_of_kin   = $nextOfKin;
+                    $employee->relationship  = $relationship;
+                    $employee->contact       = $contact;
+
+                    $employee->save();
+
+                    if (!empty($employee->email) && filter_var($employee->email, FILTER_VALIDATE_EMAIL)) {
+                         Mail::to($employee->email)->send(new AccountCreationMail($user, $this->company,$pin));
+                    }
+
+                    // Avoid duplicate pivot records
+                    $employee->ranks()->syncWithoutDetaching([3]);
+
+                    /*
+                    |----------------------
+                    | EMPLOYEE POSITION
+                    | Only when both user & employee existed already,
+                    | same behaviour as your original code
+                    |----------------------
+                    */
+                    if ($existingPair) {
+                        $employeePosition = new EmployeePosition;
+                        $employeePosition->employee_id   = $employee->id;
+                        $employeePosition->job_title_id  = JobTitle::where('title', $employee->post)->first()?->id ?? null;
+                        $employeePosition->rank_id       = $employee->ranks->first()?->id ?? null;
+                        $employeePosition->branch_id     = $employee->branch_id ?? null;
+                        $employeePosition->department_id = $employee->departments->first()?->id ?? null;
+                        $employeePosition->grade_id      = $employee->grade_id ?? null;
+                        $employeePosition->start_date    = $employee->start_date ?? null;
+                        $employeePosition->changed_by    = Auth::id();
+                        $employeePosition->change_reason = 'Appointment';
+                        $employeePosition->remarks       = 'Initial Appointment';
+                        $employeePosition->save();
+                    }
+                });
+            }
       
-
-     
-        if (isset($user) && isset($employee)) {
-
-            $user->name = $row['name'];
-            $user->surname = $row['surname'];
-            $user->category  = 'employee';
-            $user->is_admin = '0';
-            $user->active = '1';
-            $user->email = $row['email'];
-            $user->update();
-            $user->roles()->attach([3]);
-    
-       
-            $employee->name    = $row['name'];
-            $employee->surname     = $row['surname'];
-            $employee->gender = $this->parseGender($row['gender']);
-            $employee->dob = $this->parseExcelDate($row['dob']);
-            $employee->email    = $row['email'];
-            $employee->phonenumber    = $row['phonenumber'];
-            $employee->idnumber    = $row['idnumber'];
-            $employee->country    = $row['country'];
-            $employee->city    = $row['city'];
-            $employee->suburb    = $row['suburb'];
-            $employee->duration = is_numeric($row['contract_duration']) ? (int) $row['contract_duration'] : null;
-            $employee->start_date = $this->parseExcelDate($row['start_date']);
-            $employee->expiration = $this->parseExcelDate($row['expiry_date']);
-            $employee->street_address    = $row['streetaddress'];
-            $employee->next_of_kin    = $row['nextofkin'];
-            $employee->relationship    = $row['relationship'];
-            $employee->contact    = $row['contact'];
-            $employee->update();
-            $employee->ranks()->attach([3]);
-
-            $employee_position  = new EmployeePosition;
-            $employee_position->employee_id = $employee->id;
-            $employee_position->job_title_id = JobTitle::where('title',$employee->post)->first()?->id ?? Null;
-            $employee_position->rank_id = $employee->ranks->first()?->id ?? Null;
-            $employee_position->branch_id = $employee->branch_id ?? Null;
-            $employee_position->department_id = $employee->departments->first()?->id ?? Null;
-            $employee_position->grade_id = $employee->grade_id ?? Null;
-            $employee_position->start_date = $employee->start_date ?? Null;
-            $employee_position->changed_by = Auth::user()->id;
-            $employee_position->change_reason = "Appointment";
-            $employee_position->remarks = "Initial Appointment";
-            $employee_position->save();
-            
- 
-        } else {
-            $user = User::create([
-                'name'     => $row['name'],
-                'category'     => 'employee',
-                'surname'     => $row['surname'],
-                'is_admin'     => '0',
-                'active'     => '1',
-                'email'     => $row['email'],
-                'password'    => Hash::make($pin),
-    
-            ]);
-            $user->roles()->attach([3]);
-    
-           $employee = new Employee;
-           if (isset(Auth::user()->company)) {
-                $employee->company_id     = Auth::user()->company->id;
-           }elseif (isset(Auth::user()->employee->company)) {
-                $employee->company_id     = Auth::user()->employee->company->id;
-           }
-           $employee->creator_id     = Auth::user()->id;
-           $employee->user_id     = $user->id;
-           $employee->employee_number   = $this->employeeNumber();
-           $employee->name    = $row['name'];
-           $employee->surname     = $row['surname'];
-           $employee->gender = $this->parseGender($row['gender']);
-           $employee->dob = $this->parseExcelDate($row['dob']);
-           $employee->email    = $row['email'];
-           $employee->pin    = $pin;
-           $employee->phonenumber    = $row['phonenumber'];
-           $employee->idnumber    = $row['idnumber'];
-           $employee->country    = $row['country'];
-           $employee->city    = $row['city'];
-           $employee->suburb    = $row['suburb'];
-           $employee->duration = is_numeric($row['contract_duration']) ? (int) $row['contract_duration'] : null;
-           $employee->start_date = $this->parseExcelDate($row['start_date']);
-           $employee->expiration = $this->parseExcelDate($row['expiry_date']);
-           $employee->street_address    = $row['streetaddress'];
-           $employee->next_of_kin    = $row['nextofkin'];
-           $employee->relationship    = $row['relationship'];
-           $employee->contact    = $row['contact'];
-           $employee->save();
-           $employee->ranks()->attach([3]);
-        }
-        
-
-    }
-       }
     }
 
     public function rules(): array{
@@ -252,15 +293,15 @@ WithBatchInserts
     }
 
 
-
+ 
 
        public function batchSize(): int
     {
-        return 10;
+       return 150;
     }
 
     public function chunkSize(): int
     {
-        return 10;
+        return 150;
     }
 }

@@ -50,11 +50,13 @@
                                     <td>
                                         <small class="color-success"><i class="fa fa-arrow-right"></i> {{$employee->pin}}</small>
                                     </td>
+                                
                                 </tr>
+
                                 <tr>
                                     <th>Use email <br> as username</th>
                                     <td>
-                                        {{-- <h5 class="underline mt-30">Cargo Details</h5> --}}
+                                       
                                         <div class="mb-10">
                                            <input type="checkbox" wire:model.debounce.300ms="use_email_as_username" wire:change="setUsername()"  class="line-style" />
                                            <label for="one" class="radio-label"></label>
@@ -62,6 +64,15 @@
                                        </div>
                                     </td>
                                 </tr>
+                                @if (!empty($employee->email) && filter_var($employee->email, FILTER_VALIDATE_EMAIL))
+                                    <tr>
+                                        <th>Share Credentials</th>
+                                        <td>
+                                            <button type="button" wire:click.prevent="sendCredentials()" class="btn btn-default btn-rounded btn-wide"><i class="fa fa-send-o"></i>Send</button>
+                                        </td>
+                                    </tr>
+                                @endif
+                               
                             </tbody>
                         </table>
                     </div>

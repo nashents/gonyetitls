@@ -10,6 +10,8 @@ use App\Models\Allowance;
 use App\Models\Department;
 use Livewire\WithPagination;
 use App\Models\AllowanceDriver;
+use App\Mail\AccountCreationMail;
+use Illuminate\Support\Facades\Mail;
 
 class Show extends Component
 {
@@ -19,6 +21,8 @@ class Show extends Component
   
     public $employee_id;
     public $employee;
+    public $company;
+    public $user;
     public $driver;
     private $driver_allowances;
     private $recoveries;
@@ -31,6 +35,7 @@ class Show extends Component
     public $use_email_as_username;
     public $driver_allowance;
     public $pattern;
+    public $department;
 
 
     public $inputs = [];
@@ -54,6 +59,8 @@ class Show extends Component
         $this->pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
         $this->all_departments = Department::orderBy('name','asc')->get();
         $this->employee = Employee::with('leaves','documents','dependants','departments','driver')->find($id);
+        $this->user = $this->employee->user;
+        $this->company = $this->employee->company;
         $this->employee_id = $id;
         $this->use_email_as_username =  $this->employee->user->use_email_as_username;
         $this->driver = $this->employee->driver;
@@ -70,6 +77,7 @@ class Show extends Component
 
     public function setUsername(){
         if ($this->use_email_as_username == TRUE) {
+
             $user = $this->employee->user;
             $user->username = $this->employee->email;
             $user->email = $this->employee->email;
@@ -91,6 +99,16 @@ class Show extends Component
     }
 
 
+
+    public function sendCredentials(){
+         if (isset($this->employee->email) && filter_var($this->employee->email, FILTER_VALIDATE_EMAIL)) {
+            Mail::to($this->employee->email)->send(new AccountCreationMail($this->user, $this->company,$this->employee->pin));
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Credentials sent to ".$this->employee->email." successfully!!"
+            ]);
+        }
+    }
 
  
 

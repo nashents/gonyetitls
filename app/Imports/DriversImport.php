@@ -11,9 +11,12 @@ use App\Models\JobTitle;
 use App\Models\Transporter;
 use App\Imports\EmployeesImport;
 use App\Models\EmployeePosition;
+use App\Mail\AccountCreationMail;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Maatwebsite\Excel\Concerns\WithLimit;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\SkipsErrors;
@@ -35,6 +38,16 @@ WithBatchInserts
     use Importable, SkipsErrors;
     public $transporter;
     public $transporter_id;
+    public $company;
+
+     public function __construct()
+        {
+            if (optional(Auth::user()->company)) {
+                $this->company = Auth::user()->company;
+            } elseif (optional(Auth::user()->employee->company)) {
+                $this->company = Auth::user()->employee->company;
+            }
+        }
 
 
     public function generatePIN($digits = 4){
@@ -164,151 +177,216 @@ WithBatchInserts
     */
     public function collection(Collection $rows)
     {
-       foreach($rows as $row){
-        if($row->filter()->isNotEmpty()){
-        $pin =  $this->generatePIN();
-        
-        $transporter = Transporter::where('transporter_number',$row['transporter_number'])->first();
-      
-        if (isset($transporter)) {
-            $transporter_id = $transporter->id;
-        }    
-
-        $user = User::where('name',$row['name'])
-                     ->where('surname',$row['surname'])->first();
-       
-        $employee = Employee::where('name',$row['name'])
-                            ->where('surname',$row['surname'])->first();
-
-        if ($employee) {
-            $driver = Driver::where('employee_id',$employee->id)
-                            ->where('license_number',$row['license_number'])->first();
-        }
-       
-       
-        if (isset($user) && isset($employee) && isset($driver)) {
-       
-        $user->name = $row['name'];
-        $user->surname = $row['surname'];
-        $user->category  = 'driver';
-        $user->is_admin = '0';
-        $user->active = '1';
-        $user->email = $row['email'];
-        $user->update();
-        $user->roles()->attach([3]);
-
-      
-        $employee->name    = $row['name'];
-        $employee->surname     = $row['surname'];
-        $employee->gender = $this->parseGender($row['gender']);
-        $employee->dob = $this->parseExcelDate($row['dob']);
-        $employee->email    = $row['email'];
-        $employee->phonenumber    = $row['phonenumber'];
-        $employee->idnumber    = $row['idnumber'];
-        $employee->country    = $row['country'];
-        $employee->city    = $row['city'];
-        $employee->suburb    = $row['suburb'];
-        $employee->duration = is_numeric($row['contract_duration']) ? (int) $row['contract_duration'] : null;
-        $employee->start_date = $this->parseExcelDate($row['start_date']);
-        $employee->expiration = $this->parseExcelDate($row['expiry_date']);
-        $employee->street_address    = $row['streetaddress'];
-        $employee->next_of_kin    = $row['nextofkin'];
-        $employee->relationship    = $row['relationship'];
-        $employee->contact    = $row['contact'];
-        $employee->update();
-        $employee->ranks()->attach([3]);
-
-        $employee_position  = new EmployeePosition;
-        $employee_position->employee_id = $employee->id;
-        $employee_position->job_title_id = JobTitle::where('title',$employee->post)->first()?->id ?? Null;
-        $employee_position->rank_id = $employee->ranks->first()?->id ?? Null;
-        $employee_position->branch_id = $employee->branch_id ?? Null;
-        $employee_position->department_id = $employee->departments->first()?->id ?? Null;
-        $employee_position->grade_id = $employee->grade_id ?? Null;
-        $employee_position->start_date = $employee->start_date ?? Null;
-        $employee_position->changed_by = Auth::user()->id;
-        $employee_position->change_reason = "Appointment";
-        $employee_position->remarks = "Initial Appointment";
-        $employee_position->save();
-
-     
-       if (isset($transporter_id) && $transporter_id != "") {
-        $driver->transporter_id     = $transporter_id;
-      }
-     
-       $driver->license_number    = $row['license_number'];
-       $driver->passport_number    = $row['passport_number'];
-       $driver->experience     = $row['experience'];
-       $driver->class     = $row['class'];
-       $driver->reference    = $row['reference'];
-       $driver->reference_phonenumber    = $row['reference_phonenumber'];
-       $driver->update();
-       $transporter_id = "";
- 
-        } else {
-           
-        $user = User::create([
-            'name'     => $row['name'],
-            'category'     => 'employee',
-            'surname'     => $row['surname'],
-            'is_admin'     => '0',
-            'active'     => '1',
-            'email'     => $row['email'],
-            'password'    => Hash::make($pin),
-
-        ]);
-        $user->roles()->attach([3]);
-
-       $employee = new Employee;
-       $employee->company_id     = Auth::user()->employee->company_id;
-       $employee->creator_id     = Auth::user()->id;
-       $employee->user_id     = $user->id;
-       $employee->employee_number   = $this->employeeNumber();
-       $employee->name    = $row['name'];
-       $employee->surname     = $row['surname'];
-       $employee->gender = $this->parseGender($row['gender']);
-       $employee->dob = $this->parseExcelDate($row['dob']);
-       $employee->email    = $row['email'];
-       $employee->pin    = $pin;
-       $employee->phonenumber    = $row['phonenumber'];
-       $employee->idnumber    = $row['idnumber'];
-       $employee->country    = $row['country'];
-       $employee->city    = $row['city'];
-       $employee->suburb    = $row['suburb'];
-       $employee->duration = is_numeric($row['contract_duration']) ? (int) $row['contract_duration'] : null;
-       $employee->start_date = $this->parseExcelDate($row['start_date']);
-       $employee->expiration = $this->parseExcelDate($row['expiry_date']);
-       $employee->street_address    = $row['streetaddress'];
-       $employee->next_of_kin    = $row['nextofkin'];
-       $employee->relationship    = $row['relationship'];
-       $employee->contact    = $row['contact'];
-       $employee->save();
-       $employee->ranks()->attach([3]);
-
-       $driver = new Driver;
-       if (isset($transporter_id) && $transporter_id != "") {
-        $driver->transporter_id     = $transporter_id;
-      }
-       $driver->company_id     = Auth::user()->employee->company_id;
-       $driver->creator_id     = Auth::user()->id;
-       $driver->user_id     = $user->id;
-       $driver->employee_id     = $employee->id;
-       $driver->driver_number   = $this->driverNumber();
-       $driver->license_number    = $row['license_number'];
-       $driver->passport_number    = $row['passport_number'];
-       $driver->experience     = $row['experience'];
-       $driver->class     = $row['class'];
-       $driver->reference    = $row['reference'];
-       $driver->reference_phonenumber    = $row['reference_phonenumber'];
-       $driver->save();
-       $transporter_id = "";
-        }
-        
-
-
+      foreach ($rows as $row) {
+    // Skip empty rows
+    if ($row->filter()->isEmpty()) {
+        continue;
     }
-       }
 
+    $name    = $row->get('name');
+    $surname = $row->get('surname');
+
+    if (!$name || !$surname) {
+        // required for matching
+        continue;
+    }
+
+    // Common columns
+    $email            = $row->get('email');
+    $gender           = $row->get('gender');
+    $dob              = $row->get('dob');
+    $phone            = $row->get('phonenumber');
+    $idNumber         = $row->get('idnumber');
+    $country          = $row->get('country');
+    $city             = $row->get('city');
+    $suburb           = $row->get('suburb');
+    $contractDuration = $row->get('contract_duration');
+    $startDate        = $row->get('start_date');
+    $expiryDate       = $row->get('expiry_date');
+    $streetAddress    = $row->get('streetaddress');
+    $nextOfKin        = $row->get('nextofkin');
+    $relationship     = $row->get('relationship');
+    $contact          = $row->get('contact');
+
+    // Driver-specific columns
+    $transporterNumber  = $row->get('transporter_number');
+    $licenseNumber      = $row->get('license_number');
+    $passportNumber     = $row->get('passport_number');
+    $experience         = $row->get('experience');
+    $licenseClass       = $row->get('class');
+    $reference          = $row->get('reference');
+    $referencePhone     = $row->get('reference_phonenumber');
+
+    DB::transaction(function () use (
+        $row,
+        $name,
+        $surname,
+        $email,
+        $gender,
+        $dob,
+        $phone,
+        $idNumber,
+        $country,
+        $city,
+        $suburb,
+        $contractDuration,
+        $startDate,
+        $expiryDate,
+        $streetAddress,
+        $nextOfKin,
+        $relationship,
+        $contact,
+        $transporterNumber,
+        $licenseNumber,
+        $passportNumber,
+        $experience,
+        $licenseClass,
+        $reference,
+        $referencePhone
+    ) {
+        $pin = $this->generatePIN();
+
+        /*
+         |----------------------
+         | TRANSPORTER (optional)
+         |----------------------
+         */
+        $transporter = $transporterNumber
+            ? Transporter::where('transporter_number', $transporterNumber)->first()
+            : null;
+
+        $transporterId = optional($transporter)->id;
+
+        /*
+         |----------------------
+         | USER (by name + surname)
+         |----------------------
+         */
+        $user = User::firstOrNew([
+            'name'    => $name,
+            'surname' => $surname,
+        ]);
+        $existingUser = $user->exists;
+
+        $user->category = 'driver'; // you can change to 'employee' if you really want old behaviour
+        $user->is_admin = '0';
+        $user->active   = '1';
+        $user->email    = $email;
+
+        if (!$existingUser) {
+            $user->password = Hash::make($pin);
+        }
+
+        $user->save();
+        $user->roles()->syncWithoutDetaching([3]);
+
+        /*
+         |----------------------
+         | EMPLOYEE (by name + surname)
+         |----------------------
+         */
+        $employee = Employee::firstOrNew([
+            'name'    => $name,
+            'surname' => $surname,
+        ]);
+        $existingEmployee = $employee->exists;
+
+        if (!$existingEmployee) {
+            $employee->company_id      = optional(Auth::user()->employee)->company_id;
+            $employee->creator_id      = Auth::id();
+            $employee->user_id         = $user->id;
+            $employee->employee_number = $this->employeeNumber();
+            $employee->pin             = $pin;
+        }
+
+        $employee->name          = $name;
+        $employee->surname       = $surname;
+        $employee->gender        = $this->parseGender($gender);
+        $employee->dob           = $this->parseExcelDate($dob);
+        $employee->email         = $email;
+        $employee->phonenumber   = $phone;
+        $employee->idnumber      = $idNumber;
+        $employee->country       = $country;
+        $employee->city          = $city;
+        $employee->suburb        = $suburb;
+        $employee->duration      = is_numeric($contractDuration) ? (int) $contractDuration : null;
+        $employee->start_date    = $this->parseExcelDate($startDate);
+        $employee->expiration    = $this->parseExcelDate($expiryDate);
+        $employee->street_address = $streetAddress;
+        $employee->next_of_kin   = $nextOfKin;
+        $employee->relationship  = $relationship;
+        $employee->contact       = $contact;
+
+        $employee->save();
+        $employee->ranks()->syncWithoutDetaching([3]);
+
+        if (!empty($employee->email) && filter_var($employee->email, FILTER_VALIDATE_EMAIL)) {
+            Mail::to($employee->email)->send(new AccountCreationMail($user, $this->company,$pin));
+        }
+
+        /*
+         |----------------------
+         | DRIVER (by employee + license_number)
+         |----------------------
+         */
+        $driver = null;
+        $existingDriver = false;
+
+        if ($employee->id && $licenseNumber) {
+            $driver = Driver::firstOrNew([
+                'employee_id'    => $employee->id,
+                'license_number' => $licenseNumber,
+            ]);
+            $existingDriver = $driver->exists;
+        } else {
+            // fallback: no license number, just new driver
+            $driver = new Driver;
+        }
+
+        if (!$existingDriver) {
+            $driver->company_id   = optional(Auth::user()->employee)->company_id;
+            $driver->creator_id   = Auth::id();
+            $driver->user_id      = $user->id;
+            $driver->employee_id  = $employee->id;
+            $driver->driver_number = $this->driverNumber();
+        }
+
+        if ($transporterId) {
+            $driver->transporter_id = $transporterId;
+        }
+
+        $driver->license_number        = $licenseNumber;
+        $driver->passport_number       = $passportNumber;
+        $driver->experience            = $experience;
+        $driver->class                 = $licenseClass;
+        $driver->reference             = $reference;
+        $driver->reference_phonenumber = $referencePhone;
+
+        $driver->save();
+
+        /*
+         |----------------------
+         | EMPLOYEE POSITION
+         | Only when user + employee + driver already existed before import
+         | (mirrors your original "isset($user) && isset($employee) && isset($driver)" path)
+         |----------------------
+         */
+        if ($existingUser && $existingEmployee && $existingDriver) {
+            $employeePosition = new EmployeePosition;
+            $employeePosition->employee_id   = $employee->id;
+            $employeePosition->job_title_id  = JobTitle::where('title', $employee->post)->first()?->id ?? null;
+            $employeePosition->rank_id       = $employee->ranks->first()?->id ?? null;
+            $employeePosition->branch_id     = $employee->branch_id ?? null;
+            $employeePosition->department_id = $employee->departments->first()?->id ?? null;
+            $employeePosition->grade_id      = $employee->grade_id ?? null;
+            $employeePosition->start_date    = $employee->start_date ?? null;
+            $employeePosition->changed_by    = Auth::id();
+            $employeePosition->change_reason = 'Appointment';
+            $employeePosition->remarks       = 'Initial Appointment';
+            $employeePosition->save();
+        }
+    });
+}
        
     }
 
@@ -322,13 +400,13 @@ WithBatchInserts
 
 
 
- public function batchSize(): int
+    public function batchSize(): int
     {
-        return 10;
+       return 150;
     }
 
     public function chunkSize(): int
     {
-        return 10;
+        return 150;
     }
 }
