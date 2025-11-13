@@ -40,6 +40,7 @@
                                                <small>  <a href="#" data-toggle="modal" data-target="#customerModal"><i class="fa fa-plus-square-o"></i> New Customer</a></small><a href="#" wire:click.prevent="refresh('customers')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                                 @error('selectedCustomer') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
+                                        </div>
                                     </div>
                                     <div class="row">
                                         <div class="col-md-2">
