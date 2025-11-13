@@ -209,6 +209,45 @@ public function updatedSelectedCargo($id){
         }
     }
 
+        public function refresh($category){
+
+        if($category == "customers"){
+            $this->customers = Customer::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Customers Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "destinations"){
+            $this->destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Destinations Refreshed Successfully!!."
+            ]);
+        }
+         elseif($category == 'loading_points'){
+            $this->loading_points = LoadingPoint::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Loading Points Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == 'offloading_points'){
+            $this->offloading_points = OffloadingPoint::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Offloading Points Refreshed Successfully!!."
+            ]);
+        }
+             elseif($category == 'cargos'){
+           $this->cargos = Cargo::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Cargos Refreshed Successfully!!."
+            ]);
+        }
+    }
+
 public function quotationNumber(){
     
     if (Auth::user()->employee->company->quotation_serialize_by_customer == TRUE) {

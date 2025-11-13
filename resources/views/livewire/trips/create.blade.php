@@ -17,7 +17,26 @@
                             <form wire:submit.prevent="store()" class="p-20" enctype="multipart/form-data">
                               
                                 <h5 class="underline mt-n">Trip Info</h5>
-                        
+                                 <div class="mb-10">
+                                        <input type="checkbox" wire:model.debounce.300ms="with_quotation"   class="line-style" />
+                                        <label for="one" class="radio-label">Attach a quotation</label>
+                                        @error('with_quotation') <span class="text-danger error">{{ $message }}</span>@enderror
+                                    </div>
+                                @if ($with_quotation == True)
+                                        <div class="form-group">
+                                            <label for="trip_type">
+                                                <a href="{{ route('quotations.index') }}" target="_blank" style="color: blue">Quotations</a>
+                                                <span class="required text-danger">*</span>
+                                            </label>
+                                            <select class="form-control" wire:model.debounce.300ms="selectedQuotation" required>
+                                                <option value="">Select Quotation</option>
+                                                @foreach ($quotations as $quotation)
+                                                    <option value="{{ $quotation->id }}">{{ $quotation->quotation_number }} {{ $quotation->customer ? $quotation->customer->name : "" }}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('selectedQuotation') <span class="text-danger error">{{ $message }}</span> @enderror
+                                        </div>
+                                @endif
                                 <div class="row">
                                     <div class="col-md-2">
                                         <div class="form-group">
@@ -303,11 +322,15 @@
                                         @endif
                                         @if (isset($mode_of_transport) && $mode_of_transport == "Horse")
                                         <div class="form-group">
-                                            <label for="horse"><a href="{{ route('horses.index') }}" target="_blank" style="color: blue">Horse(s)</a><span class="required" style="color: red">*</span></label>
+                                            <label for="horse"><a href="{{ route('horses.index') }}" target="_blank" style="color: blue">Horse(s)</a>
+                                                @if (!isset($selectedQuotation))
+                                                    <span class="required" style="color: red">*</span>        
+                                                @endif
+                                            </label>
                                             <input type="checkbox" wire:model.debounce.300ms="all_horses"   class="line-style" />
                                             <label for="one" class="radio-label">Select from all horses</label>
                                             <input type="text" wire:model.debounce.300ms="searchHorse" placeholder="Search with reg..." class="form-control">
-                                            <select class="form-control" wire:model.debounce.300ms="selectedHorse"  required size="4">
+                                            <select class="form-control" wire:model.debounce.300ms="selectedHorse" {{isset($selectedQuotation) ? "" : "required"}}  size="4">
                                                 <option value="">Select Horse </option>
                                               @if (!is_null($selectedTransporter) || !is_null($selectedBroker))
                                               @foreach ($horses as $horse)
@@ -322,11 +345,15 @@
                                         @elseif (isset($mode_of_transport) && $mode_of_transport == "Vehicle")
                                         
                                         <div class="form-group">
-                                            <label for="horse"><a href="{{ route('vehicles.index') }}" target="_blank" style="color: blue">Vehicle(s)</a><span class="required" style="color: red">*</span></label>
+                                            <label for="horse"><a href="{{ route('vehicles.index') }}" target="_blank" style="color: blue">Vehicle(s)</a>
+                                                @if (!isset($selectedQuotation))
+                                                    <span class="required" style="color: red">*</span>        
+                                                @endif
+                                            </label>
                                             <input type="checkbox" wire:model.debounce.300ms="all_vehicles"   class="line-style" />
                                             <label for="one" class="radio-label">Select from all vehicles</label>
                                             <input type="text" wire:model.debounce.300ms="searchVehicle" placeholder="Search with reg..." class="form-control">
-                                            <select class="form-control" wire:model.debounce.300ms="selectedVehicle"  required size="4">
+                                            <select class="form-control" wire:model.debounce.300ms="selectedVehicle"  {{isset($selectedQuotation) ? "" : "required"}} size="4">
                                                 <option value="">Select Vehicle </option>
                                                 @if (!is_null($selectedTransporter) || !is_null($selectedBroker))
                                               @foreach ($vehicles as $vehicle)
@@ -355,11 +382,15 @@
                                         <div class="row">  
                                             <div class="col-md-12">
                                             <div class="form-group">
-                                                <label for="trailers"><a href="{{ route('trailers.index') }}" target="_blank" style="color: blue">Trailer(s)</a><span class="required" style="color: red">*</span></label>
+                                                <label for="trailers"><a href="{{ route('trailers.index') }}" target="_blank" style="color: blue">Trailer(s)</a>
+                                                   @if (!isset($selectedQuotation))
+                                                    <span class="required" style="color: red">*</span>        
+                                                @endif
+                                                </label>
                                                 <input type="checkbox" wire:model.debounce.300ms="all_trailers"   class="line-style" />
                                                 <label for="one" class="radio-label">Select from all trailers</label>
                                                     <input type="text" wire:model.debounce.300ms="searchTrailer" placeholder="Search with reg..." class="form-control">
-                                                    <select class="form-control" wire:model.debounce.300ms="trailer_id.0" size="4" required>
+                                                    <select class="form-control" wire:model.debounce.300ms="trailer_id.0" size="4" {{isset($selectedQuotation) ? "" : "required"}}>
                                                       <option value="" disabled >Select Trailer </option>
                                                       @if (!is_null($selectedTransporter) || !is_null($selectedBroker))
                                                         @foreach ($trailers as $trailer)
@@ -381,7 +412,7 @@
                                             @foreach ($trailer_inputs as $key => $value)
                                             <div class="row">
                                                 <div class="col-md-10">
-                                                    <select class="form-control" wire:model.debounce.300ms="trailer_id.{{ $value }}" size="4" required>
+                                                    <select class="form-control" wire:model.debounce.300ms="trailer_id.{{ $value }}" size="4" {{isset($selectedQuotation) ? "" : "required"}}>
                                                         <option value="" disabled>Select Trailer {{ $value }}</option>
                                                         @if (!is_null($selectedTransporter) || !is_null($selectedBroker))
                                                             @foreach ($trailers as $trailer)
@@ -420,11 +451,15 @@
                                     <div class="col-md-6">
                                         <div class="row">
                                             <div class="form-group">
-                                                <label for="driver"><a href="{{ route('drivers.index') }}" target="_blank" style="color: blue">Driver(s)</a><span class="required" style="color: red">*</span></label> 
+                                                <label for="driver"><a href="{{ route('drivers.index') }}" target="_blank" style="color: blue">Driver(s)</a>
+                                                    @if (!isset($selectedQuotation))
+                                                        <span class="required" style="color: red">*</span>        
+                                                    @endif
+                                                </label> 
                                                 <input type="checkbox" wire:model.debounce.300ms="all_drivers"   class="line-style" />
                                                 <label for="one" class="radio-label">Select from all drivers</label>
                                                 <input type="text" wire:model.debounce.300ms="searchDriver" placeholder="Search with name..." class="form-control" >
-                                                <select class="form-control" wire:model.debounce.300ms="driver_id" required size="4">
+                                                <select class="form-control" wire:model.debounce.300ms="driver_id" {{isset($selectedQuotation) ? "" : "required"}} size="4">
                                                     <option value="">Select Driver</option>
                                                     @if (!is_null($selectedTransporter) || !is_null($selectedBroker))
                                                         @foreach ($drivers as $driver)

@@ -131,9 +131,17 @@
                                         <div class="row">
                                             <center>
                                                 @if ($fitness->closed == 0)
-                                                <a href="#" wire:click="edit({{ $fitness->id }})"  class="btn btn-success border-primary btn-rounded btn-wide"><i class="fa fa-edit"></i>Edit</a>
-                                                <a href="#" wire:click="close({{ $fitness->id }})"  class="btn btn-danger border-primary btn-rounded btn-wide"><i class="fa fa-remove"></i>Close</a>
-                                                <a href="#" wire:click="snooze({{ $fitness->id }})"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-bell"></i>Snoose</a>
+                                                    <a href="#" wire:click="edit({{ $fitness->id }})"  class="btn btn-success border-primary btn-rounded btn-wide"><i class="fa fa-edit"></i>Edit</a>
+                                                    <a href="#" wire:click="close({{ $fitness->id }})"  class="btn btn-danger border-primary btn-rounded btn-wide"><i class="fa fa-remove"></i>Close</a>
+                                                    @php
+                                                        $expired = Carbon\Carbon::parse($fitness->expires_at)->lessThanOrEqualTo(now());
+                                                    @endphp
+
+                                                    <a href="#" @if($expired) disabled style="pointer-events:none; opacity:0.5;" @endif
+                                                        wire:click="{{ $expired ? '' : 'snooze('.$fitness->id.')' }}"
+                                                        class="btn btn-default border-primary btn-rounded btn-wide">
+                                                        <i class="fa fa-bell"></i> Snooze
+                                                    </a>
                                                 @endif
                                                
                                             </center>

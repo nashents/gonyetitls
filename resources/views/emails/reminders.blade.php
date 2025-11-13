@@ -9,9 +9,9 @@ Reminder | {{$company->name}}
 			<td align="center" style="padding:0;">
 				<table role="presentation" style="width:602px;border-collapse:collapse;border:1px solid #cccccc;border-spacing:0;text-align:left;">
 					<tr>
-						<td align="center" style="padding:40px 0 30px 0;background:{{$company->color}};">
-                            <img src="{{asset('images/gonyeti-mini.png')}}" alt="" width="300" style="height:auto;display:block;" />
-                        </td>
+						<td align="center" style="padding:40px 0 30px 0;background:{{$company->logo}};">
+							<img src="{{$company->website.'/images/uploads/'.$company->logo}}" alt=""  style="display:block;" />
+						</td>
 					</tr>
 					<tr>
 						<td style="padding:36px 30px 42px 30px;">
@@ -19,25 +19,66 @@ Reminder | {{$company->name}}
 								<tr>
 									<td style="padding:0 0 15px 0;color:#153643;">
 										<h3 style="font-size:16px; margin:0 0 20px 0;font-family:Arial,sans-serif;">{{$company->name}}</h3>
-										<p style="margin:0 0 12px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">This is an automated fitness reminder email</p>
+										<p style="margin:0 0 12px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">This is an automated reminder email</p>
 									</td>
 								</tr>
                                 <tr>
                                     <td>
-
                                         @if ($fitness->horse)
-                                        <p style="margin:0;font-size:17px;line-height:24px;font-family:Arial,sans-serif;">Your horse <strong>{{$fitness->name}}</strong>  issued on {{Carbon\Carbon::parse($fitness->issued_at)->format('d-m-Y')}}, </p>
-                                        <p style="margin:0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">for <strong>{{$fitness->horse->horse_make ? $fitness->horse->horse_make->name : "Horse make & model undefined"}} {{$fitness->horse->horse_model ? $fitness->horse->horse_model->name : ""}}</strong> with registration number <strong>{{$fitness->horse->registration_number}}</strong>  is about to expire. </p>
+                                        	<p style="margin:0;font-size:17px;line-height:24px;font-family:Arial,sans-serif;">
+												Your horse <strong>{{$fitness->name}}</strong> issued on {{Carbon\Carbon::parse($fitness->issued_at)->format('d-m-Y')}},
+											 </p>
+                                        	<p style="margin:0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">
+												    for <strong> {{$fitness->horse->horse_make->name ?? ''}} {{$fitness->horse->horse_model->name ?? ''}} </strong> with registration number 
+														<strong>
+															{{$fitness->horse->registration_number}} 
+															{{ $fitness->horse->fleet_number ? '(' . $fitness->horse->fleet_number . ')' : '' }}
+														</strong>
+													is about to expire.
+											</p>
                                         @endif
                                         @if ($fitness->vehicle)
-                                        <p style="margin:0;font-size:17px;line-height:24px;font-family:Arial,sans-serif;">Your motor vehicle <strong>{{$fitness->name}}</strong> issued on {{Carbon\Carbon::parse($fitness->issued_at)->format('d-m-Y')}} </p>
-                                        <p style="margin:0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">for  <strong> {{$fitness->vehicle->vehicle_make ? $fitness->vehicle->vehicle_make->name : "Vehicle make & model undefined"}} {{$fitness->vehicle->vehicle_model ? $fitness->vehicle->vehicle_model->name : ""}} </strong> with registration number <strong>{{$fitness->vehicle->registration_number}}</strong> </p>
-                                        @endif
+											<p style="margin:0;font-size:17px;line-height:24px;font-family:Arial,sans-serif;">
+												Your vehicle <strong>{{$fitness->name}}</strong> issued on {{Carbon\Carbon::parse($fitness->issued_at)->format('d-m-Y')}},
+											</p>
+											<p style="margin:0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">
+												 	for <strong> {{$fitness->vehicle->vehicle_make->name ?? ''}} {{$fitness->vehicle->vehicle_model->name ?? ''}} </strong> with registration number 
+												  		<strong>
+															{{$fitness->vehicle->registration_number}} 
+															{{ $fitness->vehicle->fleet_number ? '(' . $fitness->vehicle->fleet_number . ')' : '' }}
+														</strong>
+													is about to expire.
+											</p>
+										@endif
                                         @if ($fitness->trailer)
-                                        <p style="margin:0;font-size:17px;line-height:24px;font-family:Arial,sans-serif;">Your trailer <strong>{{$fitness->name}}</strong> issued on {{Carbon\Carbon::parse($fitness->issued_at)->format('d-m-Y')}} </p>
-                                        <p style="margin:0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">for  <strong> {{$fitness->trailer->make}} {{$fitness->trailer->model}} </strong> with registration number <strong> {{$fitness->trailer->registration_number}}</strong></p>
+											<p style="margin:0;font-size:17px;line-height:24px;font-family:Arial,sans-serif;">
+												Your trailer <strong>{{$fitness->name}}</strong> issued on {{Carbon\Carbon::parse($fitness->issued_at)->format('d-m-Y')}},
+											</p>
+											<p style="margin:0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">
+												 	for <strong> {{$fitness->trailer->trailer_make->name ?? ''}} {{$fitness->trailer->trailer_model->name ?? ''}} </strong> with registration number 
+												  		<strong>
+															{{$fitness->trailer->registration_number}} 
+															{{ $fitness->trailer->fleet_number ? '(' . $fitness->trailer->fleet_number . ')' : '' }}
+														</strong>
+													is about to expire.
+											</p>
+										@endif
+                                        @if ($fitness->employee)
+											<p style="margin:0;font-size:17px;line-height:24px;font-family:Arial,sans-serif;">
+												Your <strong>{{$fitness->name}}</strong> issued on {{Carbon\Carbon::parse($fitness->issued_at)->format('d-m-Y')}},
+											</p>
+											<p style="margin:0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">
+													for <strong>
+														 	{{ucfirst($fitness->employee->name)}} {{ucfirst($fitness->employee->surname)}}
+														</strong>
+													is about to expire.
+											</p>
                                         @endif
-                                        <p style="margin:0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">Renew your <strong>{{$fitness->name}}</strong> before <strong style="color: red">{{Carbon\Carbon::parse($fitness->expires_at)->format('d-m-Y')}}</strong> to avoid any inconveniences.</p>
+                                        
+                                        <p style="margin:0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">
+											Renew your <strong>{{$fitness->name}}</strong> before
+											<strong style="color: red">{{Carbon\Carbon::parse($fitness->expires_at)->format('d-m-Y')}}</strong> to avoid any inconveniences. <a href="{{$company->website}}/fitnesses/{{$fitness->id}}" target="_blank" style="color: blue"> Click me to take action</a>
+										</p>
                                     </td>
                                 </tr>
 

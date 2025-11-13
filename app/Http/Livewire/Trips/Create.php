@@ -71,7 +71,9 @@ class Create extends Component
     use WithFileUploads;
     protected $queryString = ['searchTrip','searchVehicle','searchHorse','searchTrailer','searchDriver', 'searchFrom','searchTo','searchLoadingPoint','searchOffloadingPoint'];
     public $trip_id;
-    public $trip_types;
+    public $with_quotation = False;
+    public $selectedQuotation;
+    public $quotations;
     public $haulage_type;
     public $selectedTripType;
     public $shifts;
@@ -1000,6 +1002,7 @@ class Create extends Component
         $this->user = Auth::user();
         $this->employee =  $this->user->employee;
         $this->manifest_number =  $this->manifestNumber();
+        $this->quotations = Quotation::with('customer')->latest()->get();
         $this->company = Company::with('currency')->find($this->employee->company_id);
         $this->exchange_rates = ExchangeRate::all();
         $this->shifts = Shift::where('for','Trips')->where('status','1')->latest()->get();
@@ -1253,6 +1256,9 @@ class Create extends Component
     }
 
 
+   
+
+
     private function syncRelations($trip)
     {
         if ($this->with_trailer && !empty($this->trailer_id)) {
@@ -1325,6 +1331,7 @@ class Create extends Component
                 $trip->customer_updates = $this->customer_updates;
                 $trip->transporter_agreement = $this->transporter_agreement;
                 $trip->volume = $this->volume;
+                $trip->quotation_id = $this->selectedQuotation ?: null;
                 $trip->temparature = $this->temparature;
                 $trip->net_weight = $this->net_weight;
                 $trip->seal_number = $this->seal_number;

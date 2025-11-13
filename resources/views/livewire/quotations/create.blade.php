@@ -37,9 +37,8 @@
                                                         <option value="{{ $customer->id }}">{{ $customer->name }} </option>                                        
                                                 @endforeach
                                                </select>
-                                               <small>  <a href="#" data-toggle="modal" data-target="#customerModal"><i class="fa fa-plus-square-o"></i> New Customer</a></small> 
+                                               <small>  <a href="#" data-toggle="modal" data-target="#customerModal"><i class="fa fa-plus-square-o"></i> New Customer</a></small><a href="#" wire:click.prevent="refresh('customers')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                                 @error('selectedCustomer') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                            </div>
                                         </div>
                                     </div>
                                     <div class="row">
@@ -52,7 +51,7 @@
                                         </div>
                                         <div class="col-md-2">
                                             <div class="form-group">
-                                                <label for="date">Valid Until</label>
+                                                <label for="date">Expires</label>
                                                 <input type="date" class="form-control" wire:model.debounce.300ms="expiry"  placeholder="Enter Quotation Expiry Date" >
                                                 @error('expiry') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
@@ -121,7 +120,8 @@
                                               @endforeach
                                           </select>
                                             @error('from.0') <span class="text-danger error">{{ $message }}</span>@enderror
-                                            <small>  <a href="{{ route('destinations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Destination</a></small> 
+                                            <small>  <a href="{{ route('destinations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Destination</a></small><a href="#" wire:click.prevent="refresh('destinations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                                @error('selectedCustomer') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
                                     </div>
                                     <div class="col-md-3">
@@ -134,7 +134,8 @@
                                               @endforeach
                                           </select>
                                             @error('loading_point_id.0') <span class="text-danger error">{{ $message }}</span>@enderror
-                                            <small>  <a href="{{ route('loading_points.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Loading Point</a></small> 
+                                            <small>  <a href="{{ route('loading_points.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Loading Point</a></small><a href="#" wire:click.prevent="refresh('loading_points')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                                @error('selectedCustomer') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
                                     </div>
                                     <div class="col-md-3">
@@ -147,7 +148,8 @@
                                               @endforeach
                                           </select>
                                             @error('to.0') <span class="text-danger error">{{ $message }}</span>@enderror
-                                            <small>  <a href="{{ route('destinations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Destination</a></small> 
+                                            <small>  <a href="{{ route('destinations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Destination</a></small><a href="#" wire:click.prevent="refresh('destinations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                                @error('selectedCustomer') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
                                     </div>
                                     
@@ -161,7 +163,8 @@
                                               @endforeach
                                           </select>
                                             @error('offloading_point_id.0') <span class="text-danger error">{{ $message }}</span>@enderror
-                                            <small>  <a href="{{ route('offloading_points.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Offloading Point</a></small> 
+                                            <small>  <a href="{{ route('offloading_points.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Offloading Point</a></small><a href="#" wire:click.prevent="refresh('offloading_points')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                                @error('selectedCustomer') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
                                     </div>
                                 </div>
@@ -176,7 +179,8 @@
                                                   @endforeach
                                               </select>
                                                 @error('selectedCargo.0') <span class="text-danger error">{{ $message }}</span>@enderror
-                                                <small>  <a href="{{ route('cargos.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Cargo</a></small> 
+                                                <small>  <a href="{{ route('cargos.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Cargo</a></small><a href="#" wire:click.prevent="refresh('cargos')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                                @error('selectedCustomer') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         </div>
                                     <div class="col-md-2">
