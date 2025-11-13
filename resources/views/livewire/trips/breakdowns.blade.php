@@ -180,6 +180,7 @@
                         <label for="title">Trips<span class="required" style="color: red">*</span></label>
                             <select class="form-control" wire:model.debounce.300ms="trip_id" required disabled>
                                 <option value="">Select Trip</option>
+                                 @if (isset($trips) && !empty($trips))
                                     @foreach ($trips as $trip)
                                         @php
                                             $from = App\Models\Destination::find($trip->from);
@@ -189,6 +190,8 @@
                                             <option value="{{ $trip->id }}">{{$trip->trip_number}}{{$trip->trip_ref ? "/".$trip->trip_ref : ""}} | {{$trip->customer ? $trip->customer->name : ""}} | {{$from->country ? $from->country->name : ""}} {{$from->city}} {{$trip->loading_point ? $trip->loading_point->name : ""}}- {{$to->country ? $to->country->name : ""}} {{$to->city}} {{$trip->offloading_point ? $trip->offloading_point->name : ""}} </option>
                                         @endif
                                     @endforeach
+                                @endif
+                                    
                             </select>
                         @error('trip_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
@@ -238,6 +241,7 @@
                         <label for="title">Trips<span class="required" style="color: red">*</span></label>
                             <select class="form-control" wire:model.debounce.300ms="trip_id" required disabled>
                                 <option value="">Select Trip</option>
+                                @if (isset($trips) && !empty($trips))
                                     @foreach ($trips as $trip)
                                         @php
                                             $from = App\Models\Destination::find($trip->from);
@@ -247,6 +251,8 @@
                                             <option value="{{ $trip->id }}">{{$trip->trip_number}}{{$trip->trip_ref ? "/".$trip->trip_ref : ""}} | {{$trip->customer ? $trip->customer->name : ""}} | {{$from->country ? $from->country->name : ""}} {{$from->city}} {{$trip->loading_point ? $trip->loading_point->name : ""}}- {{$to->country ? $to->country->name : ""}} {{$to->city}} {{$trip->offloading_point ? $trip->offloading_point->name : ""}} </option>
                                         @endif
                                     @endforeach
+                                @endif
+                                    
                             </select>
                         @error('trip_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
