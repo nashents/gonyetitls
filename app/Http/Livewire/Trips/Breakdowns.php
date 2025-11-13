@@ -57,7 +57,8 @@ class Breakdowns extends Component
         $this->trip = $trip;
         $this->driver = $trip->driver;
         $this->trip_id = $trip->id;
-        $this->trips = Trip::select('id', 'trip_number', 'trip_ref', 'customer_id', 'from', 'to', 'loading_point_id', 'offloading_point_id')
+        if ( $this->driver) {
+            $this->trips = Trip::select('id', 'trip_number', 'trip_ref', 'customer_id', 'from', 'to', 'loading_point_id', 'offloading_point_id')
                     ->with([
                         'customer:id,name',
                         'loading_point:id,name',
@@ -67,6 +68,8 @@ class Breakdowns extends Component
                     ->where('driver_id',$this->driver->id)
                     ->orderBy('start_date', 'desc')
                     ->get();
+        }
+       
                     
         $this->breakdowns = $this->trip->breakdowns;
         $this->breakdown_assignments = $this->trip->breakdown_assignments;

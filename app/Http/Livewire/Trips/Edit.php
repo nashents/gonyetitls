@@ -62,6 +62,9 @@ class Edit extends Component
     public $trip;
     public $trip_id;
     public $trip_number;
+    public $with_quotation;
+    public $selectedQuotation;
+    public $quotations;
     public $shifts;
     public $shift;
     public $selectedShift;
@@ -371,6 +374,17 @@ class Edit extends Component
     public function removeAllowance($x)
     {
         unset($this->allowance_inputs[$x]);
+    }
+
+    public function updatedSelectedQuotation($id){
+            if (!is_null($id)) {
+              $quotation = Quotation::find($id);
+              if (isset($quotation)) {
+                $this->customer_id = $quotation->customer ? $quotation->customer->id : "";
+                $this->selectedCurrency = $quotation->currency_id;
+              }
+              
+            }
     }
 
 
