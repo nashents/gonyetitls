@@ -685,6 +685,7 @@ class Create extends Component
               $quotation = Quotation::find($id);
               if (isset($quotation)) {
                 $this->customer_id = $quotation->customer ? $quotation->customer->id : "";
+                $this->selectedCurrency = $quotation->currency_id;
               }
               
             }
