@@ -11,7 +11,12 @@
                 <div class="panel-body">
                     <div class="row">
                         <div class="col-md-8 col-md-offset-2">
-                            <img src="{{asset('images/'.$customer->user->profile)}}" alt="{{$customer->name}}" class="img-responsive">
+                            @if ($customer->user)
+                                <img src="{{asset('images/'.$customer->user->profile)}}" alt="{{$customer->name}}" class="img-responsive">
+                            @else
+                                <img src="{{asset('images/uploads/logo.png')}}" alt="{{$customer->name}}" class="img-responsive">
+                            @endif
+                            
                         </div>
                     </div>
                 </div>
