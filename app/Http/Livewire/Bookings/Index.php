@@ -250,6 +250,7 @@ class Index extends Component
             ]);
         }
 
+        
         // Status (skip when "all")
         if ($this->booking_status !== 'all') {
             $query->where('status', $this->booking_status);

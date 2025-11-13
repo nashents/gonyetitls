@@ -43,7 +43,7 @@
                                         <div class="col-md-3">
                                             <div class="input-group">
                                                 <span class="input-group-addon">Ticket Status</span>
-                                                <select wire:model.debounce.300ms="booking_status" class="form-control" aria-label="..." >
+                                                <select wire:model.debounce.300ms="ticket_status" class="form-control" aria-label="..." >
                                                     <option value="all">All</option>
                                                     <option value="0">Closed</option>
                                                     <option value="1">Open</option>
