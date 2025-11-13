@@ -214,7 +214,7 @@
                                         <option value="{{$job_title->id}}">{{$job_title->title}}</option>
                                     @endforeach
                                 </select>
-                                {{-- <small><a href="{{ route('job_titles.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Job Title</a></small>  --}}
+                                <small><a href="{{ route('job_titles.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Job Title</a></small> <a href="#" wire:click.prevent="refresh('job_titles')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 @error('job_title_id') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
                         </div>
@@ -227,7 +227,7 @@
                                         <option value="{{ $grade->id }}">{{ $grade->grade_code }} {{ $grade->grade_name }}</option>
                                     @endforeach
                                 </select>
-                                {{-- <small><a href="{{ route('grades.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Grade</a></small>  --}}
+                                 <small><a href="{{ route('grades.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Grade</a></small> <a href="#" wire:click.prevent="refresh('grades')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 @error('grade_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -267,6 +267,7 @@
                                         <option value="{{ $branch->id }}"> {{$branch->name }} </option>
                                     @endforeach
                                 </select>
+                                 <small><a href="{{ route('branches.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Branch</a></small> <a href="#" wire:click.prevent="refresh('branches')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 @error('branch_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>

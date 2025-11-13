@@ -72,6 +72,32 @@ class Index extends Component
         $this->remarks = Null;
     }
 
+      public function refresh($category){
+
+        if($category == "job_titles"){
+            $this->job_titles = JobTitle::orderBy('title','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Jop Titles Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "grades"){
+            $this->grades = Grade::orderBy('grade_name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Grades Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "branches"){
+            $this->branches = Branch::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Branches Refreshed Successfully!!."
+            ]);
+        }
+       
+      }
+
     public function bulkUpdateEmployeePositions(){
 
         $created = 0;
