@@ -991,6 +991,12 @@ class Edit extends Component
                 $this->total = $this->total + $total_cost;
             }
         }
+         if($this->current_cost_total){
+            $current_total_cost = collect($this->current_cost_total)->sum();
+            if(is_numeric($total_cost)){
+                $this->total = $this->total + $current_total_cost;
+            }
+        }
 
         $quotation = Quotation::find($quotation->id);
         $quotation->tax_amount =  $this->tax_amount;
@@ -1153,6 +1159,13 @@ class Edit extends Component
                 $this->total = $this->total + $total_cost;
             }
         }
+         if($this->current_cost_total){
+            $current_total_cost = collect($this->current_cost_total)->sum();
+            if(is_numeric($total_cost)){
+                $this->total = $this->total + $current_total_cost;
+            }
+        }
+
 
         $quotation = Quotation::find($quotation->id);
         $quotation->tax_amount =  $this->tax_amount;
