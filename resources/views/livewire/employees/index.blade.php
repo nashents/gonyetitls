@@ -46,13 +46,14 @@
                                         </th>
                                         <th class="th-sm">Gender
                                         </th>
-                                        <th class="th-sm">Email
+                                        <th class="th-sm" style="width: 15%">Contact
                                         </th>
                                         <th class="th-sm">Work Details
                                         </th>
                                         <th class="th-sm">Account
                                         </th>
-                                       
+                                         <th class="th-sm">Last Login
+                                        </th>
                                         <th class="th-sm">Actions
                                         </th>
 
@@ -61,17 +62,26 @@
                                     @if (isset($employees))
                                     <tbody>
                                         @forelse ($employees as $employee)
+                                        @php
+                                            $lastLogin = $employee->user->last_login_at;
+                                        @endphp
                                         @if (!$employee->driver)
                                         <tr>
                                             <td class="line-height-35"><img src="{{asset('images/uploads/'.$employee->user->profile)}}" alt="" class="border-radius-50 img-circle profile-img " style="width: 50px; height:50px"></td>
-                                            <td>{{ucfirst($employee->employee_number)}}
+                                            <td>
+                                                {{ucfirst($employee->employee_number)}}
                                                 <br>
                                                 <small><strong>Created: </strong> 
                                                 {{Carbon\Carbon::parse($employee->created_at)->format('d F Y')}}</small>
                                             </td>
                                             <td>{{ucfirst($employee->name)}} {{ucfirst($employee->surname)}}</td>
                                             <td>{{$employee->gender}}</td>
-                                            <td>{{$employee->email}}</td>
+                                            <td>
+                                                <small>
+                                                    <strong><i class="fas fa-envelope"></i></strong> {{$employee->email}} <br>
+                                                    <strong><i class="fas fa-phone"></i></strong> {{$employee->phonenumber}}
+                                                </small>
+                                            </td>
                                             <td>
                                                 <strong>Deparments:</strong>
                                                 @foreach ($employee->departments as $department)
@@ -89,7 +99,9 @@
                                                     @endif
                                             </td>
                                             <td>
+
                                                 @if ($employee->user)
+                                                    <small><strong>Username: </strong> {{$employee->user->username}}</small>  <br>
                                                     <span class="badge bg-{{$employee->user->active == 1 ? "success" : "danger"}}">{{$employee->user->active == 1 ? "Active" : "Inactive"}}</span> <br>
                                                     @if (!empty($employee->email) && filter_var($employee->email, FILTER_VALIDATE_EMAIL))
                                                             <button type="button"  wire:click.prevent="sendCredentials({{$employee->id}})" class="btn btn-default btn-rounded btn-xs mt-5"><i class="fa fa-send-o"></i>{{$employee->user->sent_credentials == False ? "Send Credentials" : "Resend Credentials"}}</button>
@@ -98,6 +110,7 @@
                                                 <span class="badge bg-danger">Deleted</span>
                                                 @endif
                                             </td>
+                                            <td>{{ $lastLogin ? \Carbon\Carbon::parse($lastLogin)->diffForHumans() : 'Never' }}</td>
                                             <td class="w-10 line-height-35 table-dropdown">
                                                 <div class="dropdown">
                                                     <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

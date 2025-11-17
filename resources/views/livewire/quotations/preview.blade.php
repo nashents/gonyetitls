@@ -178,6 +178,13 @@
                                     </td>
                                 </tr>
                             @endif
+                             @foreach ($quotation->additional_costs as $additional_cost)
+                                <tr>
+                                    <td colspan="4"></td>
+                                    <td colspan="2">{{$additional_cost->cost_item ? $additional_cost->cost_item->name : ""}}</td>
+                                    <td>{{ $quotation->currency ? $quotation->currency->symbol : "" }}{{number_format($additional_cost->total ? $additional_cost->total : 0,2)}}</td>
+                                </tr> 
+                            @endforeach
                             <tr>
                                 <td colspan="4"></td>
                                 <td colspan="2">QUOTATION TOTAL {{ $quotation->currency ? $quotation->currency->name : "" }} </td>

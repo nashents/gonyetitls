@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers;
 use Session;
+use Carbon\Carbon;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\Category;
 use App\Models\Customer;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 
 class LoginController extends Controller
 {
@@ -51,6 +55,9 @@ class LoginController extends Controller
         if(Auth::attempt(['username'=>$request['username'],'password'=>$request['password']])){
             $user = Auth::user();
             if ($user->active == "1") {
+
+                    $user->last_login_at = now();
+                    $user->update();
                
                 if ($user->category == "company") {
                     Session::flash('success','Welcome to your company dashboard '.Auth::user()->name);
