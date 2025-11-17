@@ -37,10 +37,8 @@
                                 </div>
                                 <table class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                     <thead >
-                                        <th class="th-sm">
+                                        <th class="th-sm" style="width:10%">
                                             Profile
-                                        </th>
-                                        <th class="th-sm">Emp#
                                         </th>
                                         <th class="th-sm">Fullname
                                         </th>
@@ -67,19 +65,25 @@
                                         @endphp
                                         @if (!$employee->driver)
                                         <tr>
-                                            <td class="line-height-35"><img src="{{asset('images/uploads/'.$employee->user->profile)}}" alt="" class="border-radius-50 img-circle profile-img " style="width: 50px; height:50px"></td>
-                                            <td>
-                                                {{ucfirst($employee->employee_number)}}
+                                            <td class="line-height-35">
+                                                <img src="{{asset('images/uploads/'.$employee->user->profile)}}" alt="" class="border-radius-50 img-circle profile-img " style="width: 50px; height:50px">
                                                 <br>
-                                                <small><strong>Created: </strong> 
-                                                {{Carbon\Carbon::parse($employee->created_at)->format('d F Y')}}</small>
+                                                <small>
+                                                    <strong>Emp#: </strong> {{ucfirst($employee->employee_number)}}
+                                                    <strong>Created: </strong>   {{Carbon\Carbon::parse($employee->created_at)->format('d-m-y')}}
+                                                </small>
                                             </td>
+                                          
                                             <td>{{ucfirst($employee->name)}} {{ucfirst($employee->surname)}}</td>
-                                            <td>{{$employee->gender}}</td>
+                                            <td>{{ucfirst(strtolower($employee->gender))}}</td>
                                             <td>
                                                 <small>
-                                                    <strong><i class="fas fa-envelope"></i></strong> {{$employee->email}} <br>
-                                                    <strong><i class="fas fa-phone"></i></strong> {{$employee->phonenumber}}
+                                                    @if ($employee->email)
+                                                        <i class="fas fa-envelope"></i>{{$employee->email}} <br>
+                                                    @endif
+                                                    @if ($employee->phonenumber)
+                                                        <i class="fas fa-phone"></i>{{$employee->phonenumber}}
+                                                    @endif
                                                 </small>
                                             </td>
                                             <td>
@@ -101,7 +105,9 @@
                                             <td>
 
                                                 @if ($employee->user)
-                                                    <small><strong>Username: </strong> {{$employee->user->username}}</small>  <br>
+                                                    @if ($employee->user->username)
+                                                        <small><strong><i class="fas fa-user"></i> </strong> {{$employee->user->username}}</small>  <br>    
+                                                    @endif
                                                     <span class="badge bg-{{$employee->user->active == 1 ? "success" : "danger"}}">{{$employee->user->active == 1 ? "Active" : "Inactive"}}</span> <br>
                                                     @if (!empty($employee->email) && filter_var($employee->email, FILTER_VALIDATE_EMAIL))
                                                             <button type="button"  wire:click.prevent="sendCredentials({{$employee->id}})" class="btn btn-default btn-rounded btn-xs mt-5"><i class="fa fa-send-o"></i>{{$employee->user->sent_credentials == False ? "Send Credentials" : "Resend Credentials"}}</button>

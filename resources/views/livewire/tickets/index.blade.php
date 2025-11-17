@@ -221,7 +221,7 @@
                                         </td>
                                         <td>
                                             @if (isset($ticket->inspection))
-                                                <a href="{{route('bookings.show',$ticket->inspection->id)}}" style="color: blue">{{$ticket->inspection->inspection_number}}</a>
+                                                <a href="{{route('inspections.show',$ticket->inspection->id)}}" style="color: blue">{{$ticket->inspection->inspection_number}}</a>
                                             @endif
                                         </td>
                                         <td>

@@ -36,13 +36,13 @@
                                     <thead >
                                         <th class="th-sm">Profile
                                         </th>
-                                        <th class="th-sm">Driver#
-                                        </th>
                                         <th class="th-sm">Transporter
                                         </th>
                                         <th class="th-sm">Fullname
                                         </th>
                                         <th class="th-sm">Gender
+                                        </th>
+                                        <th class="th-sm">Contact
                                         </th>
                                         <th class="th-sm">License#
                                         </th>
@@ -53,6 +53,8 @@
                                         <th class="th-sm">Availability
                                         </th>
                                         <th class="th-sm">Account
+                                        </th>
+                                        <th class="th-sm">Last Login
                                         </th>
                                         <th class="th-sm">Actions
                                         </th>
@@ -66,13 +68,19 @@
                                       <tr>
                                         @php
                                             $user = App\Models\User::find($driver->user_id);
+                                              $lastLogin = $user?->last_login_at;
                                             $employee = App\Models\Employee::find($driver->employee_id);
                                             $assignments  = $driver->assignments->where('status', 1);
                                         @endphp
                                         <td class="line-height-35">  
                                           <img src="{{asset('images/uploads/'.$user->profile)}}" alt="" class="border-radius-50 img-circle profile-img " style="width: 50px; height:50px">
+                                          <br>  
+                                            <small>
+                                                <strong>Emp#: </strong> {{ucfirst($employee->employee_number)}} <br style="margin-bottom: -10px;">
+                                                <strong>Created: </strong>   {{Carbon\Carbon::parse($employee->created_at)->format('d-m-y')}}
+                                            </small>
                                         </td>
-                                        <td>{{ucfirst($driver->driver_number)}}</td>
+                                       
                                         <td>{{ucfirst($driver->transporter ? $driver->transporter->name : "")}}</td>
                                         <td>
                                             {{ucfirst($driver->employee ? $driver->employee->name : "")}} {{ucfirst($driver->employee ?$driver->employee->surname : "")}}
@@ -85,19 +93,35 @@
 
                                             @endif
                                         </td>
-                                        <td>{{$employee ? ucfirst($employee->gender) : ""}}</td>
+                                        <td>{{ucfirst(strtolower($employee->gender))}}</td>
+                                        <td>
+                                            <small>
+                                                @if ($employee->email)
+                                                    <strong><i class="fas fa-envelope"></i></strong> {{$employee->email}} <br>
+                                                @endif
+                                                @if ($employee->phonenumber)
+                                                    <strong><i class="fas fa-phone"></i></strong> {{$employee->phonenumber}}
+                                                @endif
+                                            </small>
+                                        </td>
                                         <td>{{$driver->license_number}}</td>
                                         <td>{{$driver->class}}</td>
                                         <td>{{$driver->experience}}</td>
                                         <td><span class="badge bg-{{$driver->status == 1 ? "success" : "danger"}}">{{$driver->status == 1 ? "Available" : "Unavailable"}}</span></td>
-                                        <td>
-                                            @if ($driver->user)
-                                            <span class="badge bg-{{$driver->user->active == 1 ? "success" : "danger"}}">{{$driver->user->active == 1 ? "Active" : "Inactive"}}</span>
-                                            @else
-                                            <span class="badge bg-danger">Deleted</span>
-                                            @endif
-                                        </td>
-                                       
+                                         <td>
+                                                @if ($driver->user)
+                                                      @if ($driver->user->username)
+                                                        <small><strong><i class="fas fa-user"></i> </strong> {{$driver->user->username}}</small>  <br>    
+                                                    @endif
+                                                    <span class="badge bg-{{$driver->user->active == 1 ? "success" : "danger"}}">{{$driver->user->active == 1 ? "Active" : "Inactive"}}</span> <br>
+                                                    @if (!empty($driver->email) && filter_var($driver->email, FILTER_VALIDATE_EMAIL))
+                                                            <button type="button"  wire:click.prevent="sendCredentials({{$driver->id}})" class="btn btn-default btn-rounded btn-xs mt-5"><i class="fa fa-send-o"></i>{{$driver->user->sent_credentials == False ? "Send Credentials" : "Resend Credentials"}}</button>
+                                                    @endif
+                                                @else
+                                                <span class="badge bg-danger">Deleted</span>
+                                                @endif
+                                            </td>
+                                            <td>{{ $lastLogin ? \Carbon\Carbon::parse($lastLogin)->diffForHumans() : 'Never' }}</td>
                                         <td class="w-10 line-height-35 table-dropdown">
                                             <div class="dropdown">
                                                 <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
