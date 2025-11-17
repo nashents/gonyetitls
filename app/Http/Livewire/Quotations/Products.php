@@ -14,8 +14,8 @@ class Products extends Component
 {
     public $quotation;
     public $quotation_id;
-    public $quotation_products;
-    public $quotation_product_id;
+    public $quotation_items;
+    public $quotation_item_id;
     public $loading_points;
     public $loading_point_id;
     public $offloading_points;
@@ -45,6 +45,7 @@ class Products extends Component
     public $weight;
     public $rate;
     public $freight;
+    public $quotation_item;
 
 
     public $user_id;
@@ -80,7 +81,7 @@ private function resetInputFields(){
         $this->vat = $this->quotation->vat;
         $this->total = $this->quotation->total;
         $this->subtotal = $this->quotation->subtotal;
-        $this->quotation_products = $this->quotation->quotation_products;
+        $this->quotation_items = $this->quotation->quotation_items;
         $this->cargos = Cargo::orderBy('name','asc')->get();
         $this->loading_points = LoadingPoint::orderBy('name','asc')->get();
         $this->offloading_points = OffloadingPoint::orderBy('name','asc')->get();
@@ -91,37 +92,37 @@ public function store(){
 
     if (isset($this->cargo_id )) {
     foreach ($this->cargo_id as $key => $value) {
-        $quotation_product = new QuotationProduct;
-        $quotation_product->quotation_id =  $this->quotation_id;
+        $quotation_item = new QuotationProduct;
+        $quotation_item->quotation_id =  $this->quotation_id;
         if (isset($this->cargo_id[$key])) {
-            $quotation_product->cargo_id = $this->cargo_id[$key];
+            $quotation_item->cargo_id = $this->cargo_id[$key];
         }
         if (isset($this->description[$key])) {
-            $quotation_product->description = $this->description[$key];
+            $quotation_item->description = $this->description[$key];
         }
         if (isset($this->to[$key])) {
-            $quotation_product->to = $this->to[$key];
+            $quotation_item->to = $this->to[$key];
         }
         if (isset($this->from[$key])) {
-            $quotation_product->from = $this->from[$key];
+            $quotation_item->from = $this->from[$key];
         }
         if (isset($this->loading_point_id[$key])) {
-            $quotation_product->loading_point_id = $this->loading_point_id[$key];
+            $quotation_item->loading_point_id = $this->loading_point_id[$key];
         }
         if (isset($this->offloading_point_id[$key])) {
-            $quotation_product->offloading_point_id = $this->offloading_point_id[$key];
+            $quotation_item->offloading_point_id = $this->offloading_point_id[$key];
         }
         if (isset($this->rate[$key])) {
-            $quotation_product->rate = $this->rate[$key];
+            $quotation_item->rate = $this->rate[$key];
         }
         if (isset($this->weight[$key])) {
-            $quotation_product->weight = $this->weight[$key];
+            $quotation_item->weight = $this->weight[$key];
         }
         if (isset($this->freight[$key])) {
-            $quotation_product->freight = $this->freight[$key];
+            $quotation_item->freight = $this->freight[$key];
         }
        
-        $quotation_product->save();
+        $quotation_item->save();
 
       
         $this->add_products_subtotal = $this->add_products_subtotal + $this->freight[$key];
@@ -157,19 +158,19 @@ public function store(){
 
 
 
-    public function removeShow($quotation_product_id){
-        $this->quotation_product = QuotationProduct::find($quotation_product_id);
+    public function removeShow($quotation_item_id){
+        $this->quotation_item = QuotationProduct::find($quotation_item_id);
         $this->vat = $this->quotation->vat;
         $this->total = $this->quotation->total;
         $this->subtotal = $this->quotation->subtotal;
-        $this->quotation_products = $this->quotation->quotation_products;
+        $this->quotation_items = $this->quotation->quotation_items;
         $this->dispatchBrowserEvent('show-removeModal');
     }
 
     public function removeQuotationProduct(){ 
 
-        $quotation = $this->quotation_product->quotation;
-        $this->deleted_product_subtotal = $this->subtotal - $this->quotation_product->freight;
+        $quotation = $this->quotation_item->quotation;
+        $this->deleted_product_subtotal = $this->subtotal - $this->quotation_item->freight;
 
         if ($this->vat != "") {
             $this->total = $this->deleted_product_subtotal + ( $this->deleted_product_subtotal * ($this->vat/100));
@@ -186,7 +187,7 @@ public function store(){
             $quotation->vat = $this->vat;
             $quotation->update();
         }
-        $this->quotation_product->delete();
+        $this->quotation_item->delete();
         $this->dispatchBrowserEvent('hide-removeModal');
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
@@ -199,24 +200,24 @@ public function store(){
 
     public function edit($id){
      
-        $this->quotation_product = QuotationProduct::find($id);
-        $this->quotation_product_id = $id;
+        $this->quotation_item = QuotationProduct::find($id);
+        $this->quotation_item_id = $id;
         $this->vat = $this->quotation->vat;
         $this->total = $this->quotation->total;
         $this->subtotal = $this->quotation->subtotal;
-        $this->quotation_products = $this->quotation->quotation_products;
-        $this->description = $this->quotation_product->description;
-        $this->freight = $this->quotation_product->freight;
+        $this->quotation_items = $this->quotation->quotation_items;
+        $this->description = $this->quotation_item->description;
+        $this->freight = $this->quotation_item->freight;
         $this->dispatchBrowserEvent('show-editQuotationProductModal');
     }
 
     public function update(){
-        $quotation_product = QuotationProduct::find($this->quotation_product_id);
-        $quotation_product->description = $this->description;
-        $quotation_product->freight = $this->freight;
-        $quotation_product->update();
-        $quotation = $quotation_product->quotation;
-        $this->edited_product_subtotal = $quotation->quotation_products->sum('freight');
+        $quotation_item = QuotationProduct::find($this->quotation_item_id);
+        $quotation_item->description = $this->description;
+        $quotation_item->freight = $this->freight;
+        $quotation_item->update();
+        $quotation = $quotation_item->quotation;
+        $this->edited_product_subtotal = $quotation->quotation_items->sum('freight');
 
         if ($this->vat != "") {
             $this->total = $this->edited_product_subtotal + ( $this->edited_product_subtotal * ($this->vat/100));
@@ -243,9 +244,9 @@ public function store(){
 
     public function render()
     {
-        $this->quotation_products = QuotationProduct::where('quotation_id',$this->quotation_id)->get();
+        $this->quotation_items = QuotationProduct::where('quotation_id',$this->quotation_id)->get();
         return view('livewire.quotations.products',[
-            'quotation_products' => $this->quotation_products
+            'quotation_items' => $this->quotation_items
         ]);
     }
 }

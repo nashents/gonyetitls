@@ -144,7 +144,7 @@
                                 @forelse ($payments as $payment)
                               <tr>
                                 
-                                <td>{{ucfirst($payment->payment_number)}}</td>
+                                <td>{{$payment->payment_number}}</td>
                                 <td>{{$payment->mode_of_payment}}</td>
                                 <td>{{$payment->currency ? $payment->currency->name : ""}}</td>
                                 <td>
@@ -153,13 +153,7 @@
                                     @endif
                                 </td>
                                 <td>
-                                   @if ($payment->bill)
-                                   {{$payment->currency ? $payment->currency->symbol : ""}}{{number_format($payment->bill->balance,2)}} 
-                                   @elseif ($payment->invoice)
-                                   {{$payment->currency ? $payment->currency->symbol : ""}}{{number_format($payment->invoice->balance,2)}} 
-                                   @elseif ($payment->invoice)
-                                   {{$payment->currency ? $payment->currency->symbol : ""}}{{number_format($payment->invoice->balance,2)}} 
-                                    @endif
+                                   {{$payment->currency ? $payment->currency->symbol : ""}}{{number_format($payment->balance,2)}} 
                                 </td>
                                  <td class="w-10 line-height-35 table-dropdown">
                                     <div class="dropdown">

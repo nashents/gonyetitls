@@ -98,14 +98,14 @@
                         <div class="col-md-6">
                              <div class="form-group">
                                 <label for="name">Name<span class="required" style="color: red">*</span></label>
-                                <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Tax Name" required>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="eg Value Added Tax 15%" required>
                                 @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="account_number">Abbreviation<span class="required" style="color: red">*</span></label>
-                                <input type="text" class="form-control" wire:model.debounce.300ms="abbreviation" placeholder="Enter Abbreviation" required>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="abbreviation" placeholder="eg VAT 15%" required>
                                 @error('abbreviation') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -114,14 +114,14 @@
                         <div class="col-md-6">
                              <div class="form-group">
                                 <label for="name">Rate<span class="required" style="color: red">*</span></label>
-                                <input type="text" class="form-control" wire:model.debounce.300ms="rate" placeholder="Enter Tax Rate" required>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="rate" placeholder="eg 15" required>
                                 @error('rate') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="account_number">HS Code<span class="required" style="color: red">*</span></label>
-                                <input type="text" class="form-control" wire:model.debounce.300ms="hs_code" placeholder="Enter HS Code" required>
+                                <label for="account_number">HS Code</label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="hs_code" placeholder="Enter HS Code">
                                 @error('hs_code') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -157,14 +157,14 @@
                         <div class="col-md-6">
                              <div class="form-group">
                                 <label for="name">Name<span class="required" style="color: red">*</span></label>
-                                <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Tax Name" required>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="eg Value Added Tax 15%" required>
                                 @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="account_number">Abbreviation<span class="required" style="color: red">*</span></label>
-                                <input type="text" class="form-control" wire:model.debounce.300ms="abbreviation" placeholder="Enter Abbreviation" required>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="abbreviation" placeholder="eg VAT 15%" required>
                                 @error('abbreviation') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -173,14 +173,14 @@
                         <div class="col-md-6">
                              <div class="form-group">
                                 <label for="name">Rate<span class="required" style="color: red">*</span></label>
-                                <input type="text" class="form-control" wire:model.debounce.300ms="rate" placeholder="Enter Tax Rate" required>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="rate" placeholder="eg 15" required>
                                 @error('rate') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="account_number">HS Code<span class="required" style="color: red">*</span></label>
-                                <input type="text" class="form-control" wire:model.debounce.300ms="hs_code" placeholder="Enter HS Code" required>
+                                <label for="account_number">HS Code</label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="hs_code" placeholder="Enter HS Code">
                                 @error('hs_code') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>

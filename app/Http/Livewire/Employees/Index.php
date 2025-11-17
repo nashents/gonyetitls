@@ -15,8 +15,10 @@ use Livewire\WithPagination;
 use Maatwebsite\Excel\Excel;
 use App\Exports\EmployeesExport;
 use App\Models\EmployeePosition;
+use App\Mail\AccountCreationMail;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
 
 class Index extends Component
@@ -97,6 +99,45 @@ class Index extends Component
         }
        
       }
+
+    public function bulkSendCredentials(){
+
+        $employees = Employee::whereHas('user')->with('user')->get();
+       
+            foreach ($employees as $employee) {
+                $user = $employee->user;
+                $company = $employee->company;
+                if (isset($user)) {
+                    if (!empty($employee->email) && filter_var($employee->email, FILTER_VALIDATE_EMAIL)) {
+                        Mail::to($employee->email)->send(new AccountCreationMail($user, $company,$employee->pin));
+                        $user->sent_credentials = True;
+                        $user->update();
+                    }
+                }
+            }
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Credentials sent successfully!!"
+            ]);
+
+    }
+
+     public function sendCredentials($id){
+        $employee = Employee::find($id);
+        $user = $employee->user;
+        $company = $employee->company;
+         if (isset($employee->email) && filter_var($employee->email, FILTER_VALIDATE_EMAIL)) {
+            Mail::to($employee->email)->send(new AccountCreationMail($user, $company, $employee->pin));
+            $user->sent_credentials = True;
+            $user->update();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Credentials sent to ".$employee->email." successfully!!"
+            ]);
+        }
+    }
+
+       
 
     public function bulkUpdateEmployeePositions(){
 

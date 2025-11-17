@@ -7,6 +7,7 @@ use App\Models\Cargo;
 use App\Models\Account;
 use App\Models\Product;
 use Livewire\Component;
+use App\Models\CostItem;
 use App\Models\Currency;
 use App\Models\Customer;
 use App\Models\Discount;
@@ -16,8 +17,10 @@ use App\Models\Destination;
 use App\Models\ExchangeRate;
 use App\Models\LoadingPoint;
 use App\Models\QuotationItem;
+use App\Models\AdditionalCost;
 use App\Models\OffloadingPoint;
 use App\Models\QuotationProduct;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
@@ -28,6 +31,7 @@ class Edit extends Component
     public $quotation_items;
     public $quotations;
     public $quotation_number;
+    public $custom_ref;
     public $quotation_id;
     public $customers;
     public $selectedCustomer;
@@ -128,6 +132,12 @@ class Edit extends Component
     public $suburb;
     public $street_address;
 
+    public $quotation;
+    public $discount;
+    public $accounts;
+
+    public $quotation_item;
+
   
 
     // bank acc vars
@@ -141,6 +151,15 @@ class Edit extends Component
     public $branch_code;
     public $swift_code;
     public $status;
+
+    public $cost_items;
+    public $current_additional_costs;
+    public $current_cost_item_id = [];
+    public $current_cost_total = [];
+    public $cost_item_id = [];
+    public $cost_total = [];
+
+    public $customer;
 
 
     public $user_id;
@@ -163,6 +182,23 @@ class Edit extends Component
         unset($this->inputs[$i]);
     }
 
+    public $cost_inputs = [];
+    public $c = 1;
+    public $d = 1;
+
+    public function addCost($c)
+    {
+        $c = $c + 1;
+        $this->c = $c;
+        array_push($this->cost_inputs ,$c);
+    }
+
+    public function removeCost($c)
+    {
+        unset($this->cost_inputs[$c]);
+    }
+
+
 
 
     public function updatedSelectedCustomer($id){
@@ -177,6 +213,62 @@ class Edit extends Component
         }
        
     
+    }
+
+
+    public function refresh($category){
+
+        if($category == "customers"){
+            $this->customers = Customer::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Customers Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "destinations"){
+            $this->destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Destinations Refreshed Successfully!!."
+            ]);
+        }
+         elseif($category == 'loading_points'){
+            $this->loading_points = LoadingPoint::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Loading Points Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == 'offloading_points'){
+            $this->offloading_points = OffloadingPoint::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Offloading Points Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == 'cargos'){
+            $this->cargos = Cargo::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Cargos Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == 'products'){
+            $this->products = Product::where('sell',True)->orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Products Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == 'taxes'){
+             $this->tax_accounts = Account::whereHas('account_type', function ($query) {
+            return $query->where('name','Sales Taxes');
+        })->orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Sales Taxes Refreshed Successfully!!."
+            ]);
+        }
     }
 
 
@@ -197,6 +289,7 @@ class Edit extends Component
 
     public function mount($quotation){
         $this->company = Auth::user()->employee->company;
+         $this->cost_items = CostItem::orderBy('name','asc')->get();
         $this->quotation = $quotation;
         $this->for_trips = $this->quotation->for_trips;
         $this->user_id = $this->quotation->user_id;
@@ -204,6 +297,7 @@ class Edit extends Component
         $this->selectedCurrency = $this->quotation->currency_id;
         $this->company_id = $this->quotation->company_id;
         $this->quotation_number = $this->quotation->quotation_number;
+        $this->custom_ref = $this->quotation->custom_ref;
         $this->footer = $this->quotation->footer;
         $this->memo = $this->quotation->memo;
         $this->date = $this->quotation->date;
@@ -219,6 +313,13 @@ class Edit extends Component
             $this->discount_unit = $this->discount->unit;   
         }
        
+        $this->current_additional_costs = $this->quotation->additional_costs;
+        if(isset($this->current_additional_costs)){
+            foreach($this->current_additional_costs as $cost){
+                $this->current_cost_item_id[] = $cost->cost_item_id;
+                $this->current_cost_total[] = $cost->total;
+            }
+        }
 
         $this->quotation_items = $this->quotation->quotation_items;
 
@@ -589,9 +690,12 @@ class Edit extends Component
 
     public function update(){
 
+         DB::transaction(function () {
+
         $quotation = Quotation::find($this->quotation_id);
         $quotation->company_id = $this->company_id;
         $quotation->customer_id = $this->selectedCustomer;
+        $quotation->custom_ref = $this->custom_ref;
         $quotation->currency_id = $this->selectedCurrency;
         $quotation->bank_account_id = $this->bank_account_id;
         $quotation->date = $this->date;
@@ -602,6 +706,27 @@ class Edit extends Component
         $quotation->update();
         $quotation->bank_accounts()->detach();
         $quotation->bank_accounts()->sync($this->bank_account_id);
+
+        if($this->cost_item_id){
+            foreach($this->cost_item_id as $index => $cost_item_id){
+                $cost = new AdditionalCost;
+                $cost->quotation_id = $this->quotation_id;
+                $cost->cost_item_id = $cost_item_id;
+                $cost->total = isset($this->cost_total[$index]) ? $this->cost_total[$index] : 0;
+                $cost->save();
+            }
+        }
+        if($this->current_cost_item_id){
+            foreach($this->current_cost_item_id as $index => $cost_item_id){
+                $cost =  AdditionalCost::where('quotation_id', $this->quotation_id)
+                        ->where('cost_item_id', $cost_item_id)
+                        ->first();
+                $cost->quotation_id = $this->quotation_id;
+                $cost->cost_item_id = $cost_item_id;
+                $cost->total = isset($this->current_cost_total[$index]) ? $this->current_cost_total[$index] : 0;
+                $cost->update();
+            }
+        }
 
         if ($this->is_discount == True) {
             $discount = $quotation->discount;
@@ -709,13 +834,14 @@ class Edit extends Component
                 $this->total = $this->total +  $current_item_subtotal_incl ;
                 
             }else{
-                $quotation_item->subtotal_incl =  $current_item_subtotal;
-                $this->total = $this->total +  $current_item_subtotal;
+                $current_item_subtotal_incl = $current_item_subtotal;
+                $quotation_item->subtotal_incl =  $current_item_subtotal_incl;
+                $this->total = $this->total +  $current_item_subtotal_incl;
             }
     
             if ((isset($this->exchange_rate) && is_numeric($this->exchange_rate))) {
                 $quotation_item->exchange_rate = $this->exchange_rate;
-                $quotation_item->exchange_amount = $this->exchange_rate * $item_subtotal_incl ;
+                $quotation_item->exchange_amount = $this->exchange_rate * $current_item_subtotal_incl ;
              }
             $quotation_item->update();
 
@@ -723,7 +849,6 @@ class Edit extends Component
        
         }
 
-      
         $quotation = Quotation::find($quotation->id);
         $quotation->tax_amount =  $this->tax_amount;
         $quotation->subtotal = $this->subtotal;
@@ -854,6 +979,13 @@ class Edit extends Component
             }
         }
 
+         if($this->cost_total){
+            $total_cost = collect($this->cost_total)->sum();
+            if(is_numeric($total_cost)){
+                $this->total = $this->total + $total_cost;
+            }
+        }
+
         $quotation = Quotation::find($quotation->id);
         $quotation->tax_amount =  $this->tax_amount;
         $quotation->subtotal = $this->subtotal;
@@ -927,6 +1059,7 @@ class Edit extends Component
         }
 
        
+        
 
         $quotation = Quotation::find($quotation->id);
         $quotation->tax_amount =  $this->tax_amount;
@@ -976,14 +1109,14 @@ class Edit extends Component
                     $item_tax_amount = ($item_subtotal * ($this->tax_rate[$key] / 100 ));
                     $quotation_item->tax_amount =  $item_tax_amount;
                     $this->tax_amount = $this->tax_amount + $item_tax_amount;
-                    $item_subtota_incl = $item_tax_amount + $item_subtotal;
-                    $quotation_item->subtotal_incl =  $item_subtota_incl;
-                    $this->total =  $this->total + $item_subtota_incl;
+                    $item_subtotal_incl = $item_tax_amount + $item_subtotal;
+                    $quotation_item->subtotal_incl =  $item_subtotal_incl;
+                    $this->total =  $this->total + $item_subtotal_incl;
     
                 }else{
-                    $item_subtota_incl = $item_subtotal;
-                    $quotation_item->subtotal_incl = $item_subtota_incl;
-                    $this->total =  $this->total + $item_subtota_incl;
+                    $item_subtotal_incl = $item_subtotal;
+                    $quotation_item->subtotal_incl = $item_subtotal_incl;
+                    $this->total =  $this->total + $item_subtotal_incl;
                 }
 
                 if ((isset($this->exchange_rate) && is_numeric($this->exchange_rate))) {
@@ -1008,6 +1141,13 @@ class Edit extends Component
             }
         }
 
+         if($this->cost_total){
+            $total_cost = collect($this->cost_total)->sum();
+            if(is_numeric($total_cost)){
+                $this->total = $this->total + $total_cost;
+            }
+        }
+
         $quotation = Quotation::find($quotation->id);
         $quotation->tax_amount =  $this->tax_amount;
         $quotation->subtotal = $this->subtotal;
@@ -1021,6 +1161,8 @@ class Edit extends Component
     
         Session::flash('success','Quotation Updated Successfully!!');
         return redirect()->route('quotations.index');
+
+    } );
     }
 
 
@@ -1030,6 +1172,12 @@ class Edit extends Component
         $this->tax_amount = $this->quotation->tax_amount;
         $this->total = $this->quotation->total;
         $this->subtotal = $this->quotation->subtotal;
+        $this->dispatchBrowserEvent('show-removeModal');
+    }
+    
+    public function removeAdditionalCostShow($id){
+
+        $cost = AdditionalCost::find($id);
         $this->dispatchBrowserEvent('show-removeModal');
     }
 
@@ -1066,7 +1214,7 @@ class Edit extends Component
             $this->exchange_amount = $this->exchange_rate * $this->total;
 
         }
-
+        $this->cost_items = CostItem::orderBy('name','asc')->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->customers = Customer::orderBy('name','asc')->get();
         $this->bank_accounts = BankAccount::where('company_id',$this->company->id)->orderBy('name','asc')->get();

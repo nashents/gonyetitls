@@ -277,7 +277,7 @@
                                                         <option value="{{$tax->id}}">{{$tax->abbreviation}}</option> 
                                                         @endforeach
                                                     </select>
-                                                    
+                                                    <small><a href="{{ route('accounts.tax') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small><a href="#" wire:click.prevent="refresh('taxes')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                                                 @error('selectedTax.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         </div>
@@ -349,7 +349,7 @@
                                                             <option value="{{$tax->id}}">{{$tax->abbreviation}} {{$tax->rate ? $tax->rate."%" : ""}}</option> 
                                                             @endforeach
                                                         </select>
-                                                        
+                                                        <small><a href="{{ route('accounts.tax') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small><a href="#" wire:click.prevent="refresh('taxes')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                                                     @error('selectedTax.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                                 </div>
                                             </div>
@@ -431,7 +431,7 @@
                                                                 <option value="{{$tax->id}}">{{$tax->abbreviation}}</option> 
                                                                 @endforeach
                                                             </select>
-                                                            
+                                                            <small><a href="{{ route('accounts.tax') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small><a href="#" wire:click.prevent="refresh('taxes')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                                                         @error('selectedTax.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                                     </div>
                                                 </div>      
@@ -486,7 +486,7 @@
                                                                         <option value="{{$tax->id}}">{{$tax->abbreviation}}</option> 
                                                                         @endforeach
                                                                     </select>
-                                                                    
+                                                                    <small><a href="{{ route('accounts.tax') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small><a href="#" wire:click.prevent="refresh('taxes')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                                                                 @error('selectedTax.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                                             </div>
                                                         </div>      
@@ -582,7 +582,7 @@
                                                                 <option value="{{$tax->id}}">{{$tax->abbreviation}}</option> 
                                                                 @endforeach
                                                             </select>
-                                                           
+                                                           <small><a href="{{ route('accounts.tax') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small><a href="#" wire:click.prevent="refresh('taxes')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                                                         @error('selectedTax.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                                     </div>
                                                 </div> 
@@ -664,7 +664,7 @@
                                                                     <option value="{{$tax->id}}">{{$tax->abbreviation}}</option> 
                                                                     @endforeach
                                                                 </select>
-                                                               
+                                                               <small><a href="{{ route('accounts.tax') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small><a href="#" wire:click.prevent="refresh('taxes')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                                                             @error('selectedTax.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                                         </div>
                                                     </div>      
@@ -1074,7 +1074,7 @@
                                 <option value="{{$tax->id}}">{{$tax->abbreviation}} {{$tax->rate ? $tax->rate."%" : ""}}</option> 
                                 @endforeach
                             </select>
-                            
+                            <small><a href="{{ route('accounts.tax') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small><a href="#" wire:click.prevent="refresh('taxes')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                         @error('tax_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
                 </div>

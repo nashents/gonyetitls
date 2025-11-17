@@ -78,6 +78,8 @@
                                     </th>
                                     <th class="th-sm">Tax Amt
                                     </th>
+                                    <th class="th-sm">Add Cost
+                                    </th>
                                     <th class="th-sm">Total
                                     </th>
                                     <th class="th-sm">Action
@@ -109,6 +111,16 @@
                                         {{$quotation->currency ? $quotation->currency->name : ""}} {{$quotation->currency ? $quotation->currency->symbol : ""}}{{number_format($quotation->tax_amount ? $quotation->tax_amount : 0, 2)}}
                                       </td>
                                     <td>
+                                        @if ($quotation->additional_costs)
+                                            @php
+                                                $total_cost = $quotation->additional_costs->sum('total');
+                                            @endphp
+                                            @if (!empty($total_cost) && isset($total_cost))
+                                                {{$quotation->currency ? $quotation->currency->symbol : ""}}{{number_format($total_cost,2)}}
+                                            @endif
+                                        @endif
+                                    </td>
+                                    <td>
                                         @if ($quotation->total)
                                         {{$quotation->currency ? $quotation->currency->symbol : ""}}{{number_format($quotation->total,2)}}
                                         @endif
@@ -122,10 +134,8 @@
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{route('quotations.show',$quotation->id)}}"  ><i class="fa fa-eye color-default"></i>View</a></li>
                                                 <li><a href="{{route('quotations.preview',$quotation->id)}}"  ><i class="fa fa-file-invoice color-primary"></i> Preview</a></li>
-                                                @if ($quotation->trips->count()>0)
-
-                                                @else   
-                                                <li><a href="{{route('quotations.edit',$quotation->id)}}" ><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                                @if ($quotation->trips)
+                                                 <li><a href="{{route('quotations.edit',$quotation->id)}}" @disabled(true) ><i class="fa fa-edit color-success"></i> Edit</a></li>
                                                 <li><a href="#" data-toggle="modal" data-target="#quotationDeleteModal{{ $quotation->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                                 @endif
                                             </ul>

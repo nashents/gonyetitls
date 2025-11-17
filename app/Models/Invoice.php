@@ -22,6 +22,9 @@ class Invoice extends Model implements Auditable
     public function invoice_items(){
         return $this->hasMany('App\Models\InvoiceItem');
     }
+    public function additional_costs(){
+        return $this->hasMany('App\Models\AdditionalCost');
+    }
     public function discount(){
         return $this->hasOne('App\Models\Discount');
     }

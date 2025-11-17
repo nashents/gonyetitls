@@ -4,7 +4,8 @@
         <!-- /.row -->
         <ul class="nav nav-tabs nav-justified" role="tablist">
             <li role="presentation"class="active"><a href="#basic" aria-controls="basic" role="tab" data-toggle="tab">Quotation Details</a></li>
-            {{-- <li role="presentation"><a href="#quotation_products" aria-controls="quotation_products" role="tab" data-toggle="tab">Quotation Items</a></li> --}}
+            <li role="presentation"><a href="#quotation_items" aria-controls="quotation_items" role="tab" data-toggle="tab">Quotation Items</a></li>
+             <li role="presentation"><a href="#trips" aria-controls="trips" role="tab" data-toggle="tab">Trips</a></li>
         </ul>
         <div class="tab-content bg-white p-15">
             <div role="tabpanel" class="tab-pane active" id="basic">
@@ -89,68 +90,14 @@
                 </table>
               
             </div>
-            {{-- <div role="tabpanel" class="tab-pane" id="quotation_products">
-                @livewire('quotations.products', ['id' => $quotation->id])
-            </div> --}}
+            <div role="tabpanel" class="tab-pane" id="quotation_items">
+                @livewire('quotations.items', ['id' => $quotation->id])
+            </div>
+               <div role="tabpanel" class="tab-pane" id="trips">
+                @livewire('quotations.trips', ['id' => $quotation->id])
+            </div>
 
-            {{-- <div role="tabpanel" class="tab-pane" id="trips">
-                <table id="tripsTable" class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
-                    <thead >
-                        <th class="th-sm">Trip#
-                        </th>
-                        <th class="th-sm">Customer
-                        </th>
-                        <th class="th-sm">From
-                        </th>
-                        <th class="th-sm">To
-                        </th>
-                        <th class="th-sm">Currency
-                        </th>
-                        <th class="th-sm">Turnover
-                        </th>
-                        <th class="th-sm">Trip Status
-                        </th>
-                      </tr>
-                    </thead>
-        
-                    <tbody>
-                        @foreach ($trips as $trip)
-                        @php
-                        $from = App\Models\Destination::find($trip->from);
-                        $to = App\Models\Destination::find($trip->to);
-                    @endphp
-                      <tr>
-                        <td><a href="{{ route('trips.show',$trip->id) }}" style="color: blue">{{$trip->trip_number}}</a></td>
-                        <td>{{$trip->customer->name}}</td>
-                        <td>{{$from->country ? $from->country->name : ""}} {{ $from->city }}</td>
-                        <td>{{$to->country ? $to->country->name : ""}} {{ $to->city }}</td>
-                        <td>{{$trip->currency ? $trip->currency->name : ""}}</td>
-                        <td>
-                            @if ($trip->turnover)
-                            {{$trip->currency ? $trip->currency->symbol : ""}}{{number_format($trip->turnover,2)}}        
-                            @endif
-                        </td>
-                        @if ($trip->trip_status == "Offloaded")
-                        <td class="table-success"><span class="label label-success label-wide">{{$trip->trip_status}}</span></td>
-                        @elseif($trip->trip_status == "Scheduled")
-                        <td class="table-warning" ><span class="label label-warning label-wide">{{$trip->trip_status}}</span></td>
-                        @elseif($trip->trip_status == "Loading Point")
-                        <td class="table-gray" ><span class="label label-gray label-wide">{{$trip->trip_status}}</span></td>
-                        @elseif($trip->trip_status == "Loaded")
-                        <td class="table-info"><span class="label label-info label-wide">{{$trip->trip_status}}</span></td>
-                        @elseif($trip->trip_status == "InTransit")
-                        <td class="table-primary"><span class="label label-primary label-wide">{{$trip->trip_status}}</span></td>
-                        @elseif($trip->trip_status == "OnHold")
-                        <td class="table-danger"><span class="label label-danger label-wide">{{$trip->trip_status}}</span></td>
-                        @elseif($trip->trip_status == "Offloading Point")
-                        <td class="table-accent"><span class="label label-accent label-wide">{{$trip->trip_status}}</span></td>
-                        @endif
-                    </tr>
-                      @endforeach
-                    </tbody>
-                  </table>
-              
-            </div> --}}
+
               <div class="row">
                 <div class="col-md-12">
                     <div class="btn-group pull-right mt-10" >

@@ -17,7 +17,7 @@
                                         <div class="col-md-3">
                                             <div class="form-group">
                                                 <label for="name">Quotation Number<span class="required" style="color: red">*</span></label>
-                                                <input type="text" class="form-control" wire:model.debounce.300ms="quotation_number" placeholder="Enter Quotation Number" required>
+                                                <input type="text" class="form-control" wire:model.debounce.300ms="quotation_number" placeholder="Enter Quotation Number" disabled required>
                                                 @error('quotation_number') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                                 <small style="color: green">
                                                     @if (Auth::user()->employee->company->quotation_serialize_by_customer == True)
@@ -28,7 +28,14 @@
                                                    </small>
                                             </div>
                                         </div>
-                                        <div class="col-md-9">
+                                          <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label for="name">Custom Reference</label>
+                                                <input type="text" class="form-control" wire:model.debounce.300ms="custom_ref" placeholder="Enter Custom Quote Ref">
+                                                @error('custom_ref') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
                                             <div class="form-group">
                                                 <label for="vat"><a href="{{route('customers.index')}}">Customers<span class="required" style="color: red">*</span></a></label>
                                                <select class="form-control" wire:model.debounce.300ms="selectedCustomer" required>
@@ -37,7 +44,7 @@
                                                         <option value="{{ $customer->id }}">{{ $customer->name }} </option>                                        
                                                 @endforeach
                                                </select>
-                                               <small>  <a href="#" data-toggle="modal" data-target="#customerModal"><i class="fa fa-plus-square-o"></i> New Customer</a></small> 
+                                               <small>  <a href="{{route('customers.index')}}" ><i class="fa fa-plus-square-o"></i> New Customer</a></small><a href="#" wire:click.prevent="refresh('customers')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                                                 @error('selectedCustomer') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         </div>
@@ -52,7 +59,7 @@
                                         </div>
                                         <div class="col-md-2">
                                             <div class="form-group">
-                                                <label for="date">Valid Until</label>
+                                                <label for="date">Expires</label>
                                                 <input type="date" class="form-control" wire:model.debounce.300ms="expiry"  placeholder="Enter Quotation Expiry Date" >
                                                 @error('expiry') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
@@ -91,7 +98,7 @@
                                                             <option value="{{ $bank_account->id }}">{{ $bank_account->name }} {{ $bank_account->account_name }} {{ $bank_account->account_number }} {{ $bank_account->currency ? $bank_account->currency->name : "" }}({{ $bank_account->currency ? $bank_account->currency->symbol : "" }})</option>
                                                         @endforeach
                                                 </select>
-                                                <small>  <a href="#" data-toggle="modal" data-target="#bank_accountModal"><i class="fa fa-plus-square-o"></i> New Bank Account</a></small>
+                                                <small>  <a href="#" data-toggle="modal" data-target="#bank_accountModal"><i class="fa fa-plus-square-o"></i> New Bank Account</a></small><a href="#" wire:click.prevent="refresh('bank_accounts')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                                  <br>
                                                 <small>You can select multiple bank accounts visible on invoice.</small>
                                                 @error('bank_account_id') <span class="text-danger error">{{ $message }}</span>@enderror
@@ -123,7 +130,7 @@
                                               @endforeach
                                           </select>
                                             @error('current_from.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
-                                            <small>  <a href="{{ route('destinations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Destination</a></small> 
+                                            <small>  <a href="{{ route('destinations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Destination</a></small><a href="#" wire:click.prevent="refresh('destinations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
@@ -136,7 +143,7 @@
                                               @endforeach
                                           </select>
                                             @error('current_loading_point_id.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
-                                            <small>  <a href="{{ route('loading_points.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Loading Point</a></small> 
+                                            <small>  <a href="{{ route('loading_points.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Loading Point</a></small><a href="#" wire:click.prevent="refresh('loading_points')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                                         </div>
                                     </div>
                                     <div class="col-md-3">
@@ -149,7 +156,7 @@
                                               @endforeach
                                           </select>
                                             @error('current_to.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
-                                            <small>  <a href="{{ route('destinations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Destination</a></small> 
+                                            <small>  <a href="{{ route('destinations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Destination</a></small><a href="#" wire:click.prevent="refresh('destinations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                                         </div>
                                     </div>
                                     
@@ -163,7 +170,7 @@
                                               @endforeach
                                           </select>
                                             @error('current_offloading_point_id.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
-                                            <small>  <a href="{{ route('offloading_points.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Offloading Point</a></small> 
+                                            <small>  <a href="{{ route('offloading_points.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Offloading Point</a></small><a href="#" wire:click.prevent="refresh('offloading_points')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                                         </div>
                                     </div>
                                 </div>
@@ -178,7 +185,7 @@
                                                   @endforeach
                                               </select>
                                                 @error('currentSelectedCargo.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
-                                                <small>  <a href="{{ route('cargos.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Cargo</a></small> 
+                                                <small>  <a href="{{ route('cargos.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Cargo</a></small><a href="#" wire:click.prevent="refresh('cargos')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                                             </div>
                                         </div>
                                     <div class="col-md-2">
@@ -211,7 +218,7 @@
                                                        <option value="{{$tax->id}}">{{$tax->abbreviation}} {{$tax->rate ? $tax->rate."%" : ""}}</option> 
                                                     @endforeach
                                                 </select>
-                                                <small><a href="{{ route('taxes.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small> 
+                                                <small><a href="{{ route('accounts.tax') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small><a href="#" wire:click.prevent="refresh('taxes')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                                             @error('currentSelectedTax.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
                                     </div>    
@@ -318,7 +325,7 @@
                                                        <option value="{{$tax->id}}">{{$tax->abbreviation}} </option> 
                                                     @endforeach
                                                 </select>
-                                                <small><a href="{{ route('taxes.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small> 
+                                                <small><a href="{{ route('accounts.tax') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small><a href="#" wire:click.prevent="refresh('taxes')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                                             @error('selectedTax.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
                                     </div>     
@@ -350,7 +357,7 @@
                                                         <option value="{{$product->id}}">{{$product->brand ? $product->brand->name : ""}} {{$product->name}} {{$product->identification_number ? "ID#:".$product->identification_number : ""}}</option> 
                                                         @endforeach
                                                     </select>
-                                                    <small>  <a href="#"  wire:click="showItem()"><i class="fa fa-plus-square-o"></i> New Product / Service</a></small> 
+                                                    <small>  <a href="#"  wire:click="showItem()"><i class="fa fa-plus-square-o"></i> New Product / Service</a></small><a href="#" wire:click.prevent="refresh('products')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                                                 @error('currentSelectedProduct.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         </div>
@@ -384,7 +391,7 @@
                                                            <option value="{{$tax->id}}">{{$tax->abbreviation}} {{$tax->rate ? $tax->rate."%" : ""}}</option> 
                                                         @endforeach
                                                     </select>
-                                                    <small><a href="{{ route('taxes.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small> 
+                                                    <small><a href="{{ route('accounts.tax') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small><a href="#" wire:click.prevent="refresh('taxes')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                                                 @error('currentSelectedTax.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         </div>  
@@ -441,7 +448,7 @@
                                                                    <option value="{{$tax->id}}">{{$tax->abbreviation}} </option> 
                                                                 @endforeach
                                                             </select>
-                                                            <small><a href="{{ route('taxes.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small> 
+                                                            <small><a href="{{ route('accounts.tax') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small><a href="#" wire:click.prevent="refresh('taxes')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                                                         @error('selectedTax.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                                     </div>
                                                 </div>      
@@ -463,6 +470,76 @@
                                     </div> 
                                     @endif
         
+                                    <br>
+                                    <h5 class="underline mt-30">Additional Costs</h5>
+
+                                    @foreach ($current_additional_costs as $key => $value)
+                                        <div class="row">  
+                                            <div class="col-md-7">
+                                                <div class="form-group">
+                                                     <label for="country">Cost Items<span class="required" style="color: red">*</span></label>
+                                                        <select wire:model.debounce.300ms="current_cost_item_id.{{ $key }}" class="form-control" required>
+                                                            <option value="">Select Item</option>
+                                                            @foreach ($cost_items as $item)
+                                                            <option value="{{$item->id}}">{{$item->name}}</option> 
+                                                            @endforeach
+                                                        </select>
+                                                        <small><a href="#"  wire:click="showCost({{$key}})" ><i class="fa fa-plus-square-o"></i> New Cost</a></small> 
+                                                    @error('current_cost_item_id.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="form-group">
+                                                        <label for="name">Total<span class="required" style="color: red">*</span></label>
+                                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="current_cost_total.{{ $key }}"  required >
+                                                        @error('current_cost_total.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-1">
+                                                    <div class="form-group" style="margin-top: 29px; ">
+                                                        <a href="#" wire:click.prevent="removeAdditionalCostShow({{ $key }})"  ><i class="fa fa-trash color-danger"></i></a>
+                                                    </div>
+                                                </div>      
+                                        </div>
+                                    @endforeach
+                                   
+                                     @foreach ($cost_inputs as $key => $value)
+                                        <div class="row">  
+                                            <div class="col-md-7">
+                                                <div class="form-group">
+                                                     <label for="country">Cost Items<span class="required" style="color: red">*</span></label>
+                                                        <select wire:model.debounce.300ms="cost_item_id.{{ $value }}" class="form-control" required>
+                                                            <option value="">Select Item</option>
+                                                            @foreach ($cost_items as $item)
+                                                            <option value="{{$item->id}}">{{$item->name}}</option> 
+                                                            @endforeach
+                                                        </select>
+                                                        <small><a href="#"  wire:click="showCost({{$value}})" ><i class="fa fa-plus-square-o"></i> New Cost</a></small> 
+                                                    @error('cost_item_id.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="form-group">
+                                                        <label for="name">Total<span class="required" style="color: red">*</span></label>
+                                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="cost_total.{{ $value }}"  required >
+                                                        @error('cost_total.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-1">
+                                                    <div class="form-group">
+                                                        <label for=""></label>
+                                                        <button class="btn btn-danger btn-rounded xs" style="margin-top:23px"  wire:click.prevent="removeCost({{$key}})"> <i class="fa fa-times"></i></button>
+                                                    </div>
+                                                </div>
+                                        </div>
+                                    @endforeach
+                                     <div class="row">
+                                        <div class="col-md-12">
+                                            <div class="form-group">
+                                                <button class="btn btn-success btn-rounded" style="float: right" wire:click.prevent="addCost({{$c}})"> <i class="fa fa-plus"></i>Additional Cost</button>
+                                            </div>
+                                        </div>
+                                    </div> 
                                     <br>
                                     <div class="row">
                                         @if ($is_discount == False)
@@ -568,6 +645,24 @@
                     <!-- /.btn-group -->
                 </div>
             </form>
+            </div>
+        </div>
+    </div>
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal fade" id="removeCostModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content bg-danger">
+                <div class="modal-body">
+                   <center> <strong>Are you sure you want to delete this Cost Item</strong> </center>
+                </div>
+                <form wire:submit.prevent="removeCostItem()" >
+                    <div class="modal-footer no-border">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn bg-white btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button> 
+                            <button type="submit" class="btn bg-black btn-wide btn-rounded" disabled ><i class="fa fa-trash"></i>Delete</button>
+                        </div>
+                        <!-- /.btn-group -->
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -865,7 +960,7 @@
                                 <option value="{{$tax->id}}">{{$tax->abbreviation}} {{$tax->rate ? $tax->rate."%" : ""}}</option> 
                                 @endforeach
                             </select>
-                            <small><a href="{{ route('taxes.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small> 
+                            <small><a href="{{ route('accounts.tax') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small><a href="#" wire:click.prevent="refresh('taxes')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                         @error('tax_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
                 </div>

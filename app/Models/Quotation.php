@@ -15,6 +15,9 @@ class Quotation extends Model implements Auditable
     public function quotation_items(){
         return $this->hasMany('App\Models\QuotationItem');
     }
+     public function additional_costs(){
+        return $this->hasMany('App\Models\AdditionalCost');
+    }
     public function customer(){
         return $this->belongsTo('App\Models\Customer');
     }

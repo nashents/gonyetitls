@@ -21,6 +21,7 @@
                                     <a href="#" wire:click="exportEmployeesExcel()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
                                     <a href="#" wire:click="exportEmployeesCSV()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
                                     <a href="#" wire:click="exportEmployeesPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
+                                    <a href="#" wire:click="bulkSendCredentials()" class="btn btn-default border-primary btn-rounded btn-wide" style="float: right"><i class="fa fa-send-o"></i>Bulk Send Credentails</a> 
                                     @if (Auth::user()->is_admin())
                                     <a href="#" wire:click="setUsernames()" class="btn btn-default border-primary btn-rounded btn-wide" style="float: right"><i class="fa fa-key"></i>Set Usernames</a> 
                                     @endif
@@ -89,7 +90,10 @@
                                             </td>
                                             <td>
                                                 @if ($employee->user)
-                                                <span class="badge bg-{{$employee->user->active == 1 ? "success" : "danger"}}">{{$employee->user->active == 1 ? "Active" : "Inactive"}}</span>
+                                                    <span class="badge bg-{{$employee->user->active == 1 ? "success" : "danger"}}">{{$employee->user->active == 1 ? "Active" : "Inactive"}}</span> <br>
+                                                    @if (!empty($employee->email) && filter_var($employee->email, FILTER_VALIDATE_EMAIL))
+                                                            <button type="button"  wire:click.prevent="sendCredentials({{$employee->id}})" class="btn btn-default btn-rounded btn-xs mt-5"><i class="fa fa-send-o"></i>{{$employee->user->sent_credentials == False ? "Send Credentials" : "Resend Credentials"}}</button>
+                                                    @endif
                                                 @else
                                                 <span class="badge bg-danger">Deleted</span>
                                                 @endif

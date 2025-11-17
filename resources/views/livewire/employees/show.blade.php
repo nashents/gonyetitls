@@ -46,11 +46,15 @@
                                     </td>
                                 </tr>
                                 <tr>
-                                    <th>Passcode</th>
+                                    <th>Pin</th>
                                     <td>
-                                        <small class="color-success"><i class="fa fa-arrow-right"></i> {{$employee->pin}}</small>
+                                        <small class="color-success">
+                                            <i class="fa fa-arrow-right"></i> 
+                                            <span class="pin-blur">
+                                                    {{$employee->pin}}
+                                            </span>
+                                        </small>
                                     </td>
-                                
                                 </tr>
 
                                 <tr>
@@ -68,7 +72,7 @@
                                     <tr>
                                         <th>Share Credentials</th>
                                         <td>
-                                            <button type="button" wire:click.prevent="sendCredentials()" class="btn btn-default btn-rounded btn-wide"><i class="fa fa-send-o"></i>Send</button>
+                                            <button type="button" wire:click.prevent="sendCredentials()" class="btn btn-default btn-rounded btn-wide"><i class="fa fa-send-o"></i>{{$employee->user->sent_credentials == False ? "Send" : "Resend"}}</button>
                                         </td>
                                     </tr>
                                 @endif

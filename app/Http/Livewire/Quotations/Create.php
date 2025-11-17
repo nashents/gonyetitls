@@ -8,15 +8,19 @@ use App\Models\Cargo;
 use App\Models\Account;
 use App\Models\Product;
 use Livewire\Component;
+use App\Models\CostItem;
 use App\Models\Currency;
 use App\Models\Customer;
+use App\Models\Discount;
 use App\Models\Quotation;
 use App\Models\BankAccount;
 use App\Models\Destination;
 use App\Models\ExchangeRate;
 use App\Models\LoadingPoint;
 use App\Models\QuotationItem;
+use App\Models\AdditionalCost;
 use App\Models\OffloadingPoint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
@@ -26,6 +30,7 @@ class Create extends Component
 
     public $quotations;
     public $quotation_number;
+    public $custom_ref;
     public $quotation_id;
     public $customers;
     public $selectedCustomer;
@@ -62,6 +67,13 @@ class Create extends Component
     public $exchange_rate;
     public $exchange_amount;
 
+
+    public $cost_name;
+    public $cost_item_key;
+    public $cost_items;
+    public $cost_item_id = [];
+    public $cost_total = [];
+
     public $products;
     public $selectedProduct = [] ;
     public $selectedAccount = [];
@@ -71,6 +83,10 @@ class Create extends Component
     public $description = [];
     public $tax_rate;
     public $hs_code;
+    public $number;
+    public $accounts;
+    public $vat;
+    public $discount_unit;
   
 
     public $item_name;
@@ -99,6 +115,8 @@ class Create extends Component
     public $suburb;
     public $street_address;
 
+    public $customer;
+
     public $item_key;
 
         //discount vars
@@ -125,6 +143,22 @@ class Create extends Component
     public $item_subtotal = 0;
     public $subtotal_incl = 0;
   
+    public $cost_inputs = [];
+    public $c = 1;
+    public $d = 1;
+
+    public function addCost($c)
+    {
+        $c = $c + 1;
+        $this->c = $c;
+        array_push($this->cost_inputs ,$c);
+    }
+
+    public function removeCost($c)
+    {
+        unset($this->cost_inputs[$c]);
+    }
+
     public $inputs = [];
     public $i = 1;
     public $n = 1;
@@ -139,6 +173,10 @@ class Create extends Component
     public function remove($i)
     {
         unset($this->inputs[$i]);
+    }
+
+    private function resetCostInputFields(){
+        $this->cost_name = '';
     }
 
     private function resetInputFields(){
@@ -239,11 +277,27 @@ public function updatedSelectedCargo($id){
                 'message'=>"Offloading Points Refreshed Successfully!!."
             ]);
         }
-             elseif($category == 'cargos'){
-           $this->cargos = Cargo::orderBy('name','asc')->get();
+        elseif($category == 'cargos'){
+            $this->cargos = Cargo::orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Cargos Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == 'products'){
+            $this->products = Product::where('sell',True)->orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Products Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == 'taxes'){
+             $this->tax_accounts = Account::whereHas('account_type', function ($query) {
+            return $query->where('name','Sales Taxes');
+        })->orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Sales Taxes Refreshed Successfully!!."
             ]);
         }
     }
@@ -308,6 +362,7 @@ public function quotationNumber(){
         $this->quotation_number = $this->quotationNumber();
         $this->bank_accounts = BankAccount::where('company_id',$this->company->id)->orderBy('name','asc')->get();
         $this->customers = Customer::orderBy('name','asc')->get();
+        $this->cost_items = CostItem::orderBy('name','asc')->get();
         $this->cargos = Cargo::orderBy('name','asc')->get();
         $this->loading_points = LoadingPoint::orderBy('name','asc')->get();
         $this->offloading_points = OffloadingPoint::orderBy('name','asc')->get();
@@ -573,12 +628,38 @@ public function quotationNumber(){
             $this->discount_unit = "";
         }
 
+        public function storeCost(){
+            $cost_item = new CostItem;
+            $cost_item->user_id = Auth::user()->id;
+            $cost_item->name = $this->cost_name;
+            $cost_item->save();
+
+             $this->cost_item_id[$this->cost_item_key] = $cost_item->id;
+
+            $this->dispatchBrowserEvent('hide-costModal');
+            $this->resetCostInputFields();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Cost Created Successfully!!"
+            ]);
+        }
+        public function showCost($key){
+            $this->cost_item_key = $key;
+            $this->dispatchBrowserEvent('show-costModal');
+            
+        }
+
+
     public function store(){
+        
+
+        DB::transaction(function () {
 
         $quotation = new Quotation;
         $quotation->user_id = Auth::user()->id;
         $quotation->company_id = $this->company_id;
         $quotation->customer_id = $this->selectedCustomer;
+        $quotation->custom_ref = $this->custom_ref;
         $quotation->currency_id = $this->selectedCurrency;
         $quotation->quotation_number = $this->quotation_number;
         $quotation->number = $this->number;
@@ -590,6 +671,7 @@ public function quotationNumber(){
         $quotation->save();
         $quotation->bank_accounts()->sync($this->bank_account_id);
 
+        
       
         if ($this->is_discount == True) {
             $discount_account = Account::where('name','Sales Discounts')->first();
@@ -605,6 +687,16 @@ public function quotationNumber(){
         }
 
         $this->quotation_id = $quotation->id;
+
+        if(isset($this->cost_item_id)){
+            foreach($this->cost_item_id as $index => $cost_item_id){
+                $cost = new AdditionalCost;
+                $cost->quotation_id = $this->quotation_id;
+                $cost->cost_item_id = $cost_item_id;
+                $cost->total = isset($this->cost_total[$index]) ? $this->cost_total[$index] : 0;
+                $cost->save();
+            }
+        }
 
         if (isset($this->for_trips) && $this->for_trips == True) {
            
@@ -679,6 +771,7 @@ public function quotationNumber(){
                         $this->subtotal = $this->subtotal + $item_subtotal;
         
                     }
+                   
                     if (isset($this->tax_rate[$key]) && is_numeric($this->tax_rate[$key])) {
         
                         $item_tax_amount = ($item_subtotal * ($this->tax_rate[$key] / 100 ));
@@ -689,6 +782,7 @@ public function quotationNumber(){
                         $this->total =  $this->total + $item_subtotal_incl;
         
                     }else{
+
                         $item_subtotal_incl = $item_subtotal;
                         $quotation_item->subtotal_incl = $item_subtotal_incl;
                         $this->total =  $this->total + $item_subtotal_incl;
@@ -705,6 +799,8 @@ public function quotationNumber(){
                   
                 }
 
+               
+
                 if (isset($discount)) {
                     if($this->discount_unit == "currency"){
                         $this->total = $this->total - $this->discount_amount;
@@ -716,10 +812,20 @@ public function quotationNumber(){
                        
                     }
                 }
+                
+
+                if(isset($this->cost_total)){
+                    
+                    $total_cost = collect($this->cost_total)->sum();
+                    if(is_numeric($total_cost)){
+                        $this->total = $this->total + $total_cost;
+                    }
+                }
         
                 $quotation = Quotation::find($quotation->id);
                 $quotation->tax_amount =  $this->tax_amount;
                 $quotation->subtotal = $this->subtotal;
+               
                 $quotation->total = $this->total;
                 $quotation->exchange_rate = $this->exchange_rate;
                 $quotation->exchange_amount = $this->exchange_amount;
@@ -801,6 +907,17 @@ public function quotationNumber(){
             }
         }
 
+        if($this->cost_total){
+
+            $total_cost = collect($this->cost_total)->sum();
+            dd($total_cost);
+            if(is_numeric($total_cost)){
+                $this->total = $this->total + $total_cost;
+            }
+
+        }
+        
+
         $quotation = Quotation::find($quotation->id);
         $quotation->tax_amount =  $this->tax_amount;
         $quotation->subtotal = $this->subtotal;
@@ -819,6 +936,8 @@ public function quotationNumber(){
         $this->dispatchBrowserEvent('hide-quotationModal');
 
         return redirect()->route('quotations.index');
+
+    });
     }
 
 
@@ -844,7 +963,7 @@ public function quotationNumber(){
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->customers = Customer::orderBy('name','asc')->get();
         $this->bank_accounts = BankAccount::where('company_id',$this->company->id)->orderBy('name','asc')->get();
-
+          $this->cost_items = CostItem::orderBy('name','asc')->get();
         $this->cargos = Cargo::orderBy('name','asc')->get();
         $this->loading_points = LoadingPoint::orderBy('name','asc')->get();
         $this->offloading_points = OffloadingPoint::orderBy('name','asc')->get();

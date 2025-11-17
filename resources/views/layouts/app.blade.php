@@ -130,6 +130,28 @@
 @stack('scripts')
     
     <script type="text/javascript">
+            window.addEventListener('show-removeCostModal', event => {
+                $('#removeCostModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-removeCostModal', event => {
+                $('#removeCostModal').modal('hide');
+            })
+    </script>
+
+    <script type="text/javascript">
+            window.addEventListener('show-costModal', event => {
+                $('#costModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-costModal', event => {
+                $('#costModal').modal('hide');
+            })
+    </script>
+
+    <script type="text/javascript">
             window.addEventListener('show-category_checklistDeleteModal', event => {
                 $('#category_checklistDeleteModal').modal('show');
             })

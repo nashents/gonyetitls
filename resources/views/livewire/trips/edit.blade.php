@@ -14,8 +14,27 @@
                         <div class="panel-body">
                             <form wire:submit.prevent="update()" class="p-20" enctype="multipart/form-data">
                                 <div class="row" >
-                                <h5 class="underline mt-n">Trip Info</h5>
-                    
+                                <h5 class="underline mt-n">Trip Details</h5>
+                                           <div class="mb-10">
+                                        <input type="checkbox" wire:model.debounce.300ms="with_quotation"   class="line-style" />
+                                        <label for="one" class="radio-label">Attach a quotation</label>
+                                        @error('with_quotation') <span class="text-danger error">{{ $message }}</span>@enderror
+                                    </div>
+                                @if ($with_quotation == True)
+                                        <div class="form-group">
+                                            <label for="trip_type">
+                                                <a href="{{ route('quotations.index') }}" target="_blank" style="color: blue">Quotations</a>
+                                                <span class="required text-danger">*</span>
+                                            </label>
+                                            <select class="form-control" wire:model.debounce.300ms="selectedQuotation" required>
+                                                <option value="">Select Quotation</option>
+                                                @foreach ($quotations as $quotation)
+                                                    <option value="{{ $quotation->id }}">{{ $quotation->quotation_number }} {{ $quotation->customer ? $quotation->customer->name : "" }}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('selectedQuotation') <span class="text-danger error">{{ $message }}</span> @enderror
+                                        </div>
+                                @endif
                                    <div class="row">
                                     <div class="col-md-2">
                                         <div class="form-group">

@@ -10,7 +10,7 @@ Account Creation | {{$company->name}}
 						<table role="presentation" style="width:602px;border-collapse:collapse;border:1px solid #cccccc;border-spacing:0;text-align:left;">
 			
 							<tr>
-								<td align="center" style="padding:40px 0 30px 0;background:{{$company->logo}};">
+								<td align="center" style="padding:40px 0 30px 0;background:{{$company->color}};">
 									<img src="{{$company->website.'/images/uploads/'.$company->logo}}" alt=""  style="display:block;" />
 								</td>
 							</tr>

@@ -7,6 +7,21 @@
     @elseif (Auth::user()->company)
     <link rel="shortcut icon" type = "image/png" href="{!! asset('images/uploads/'.Auth::user()->company->logo)!!}">
     @endif
+
+     <style>
+
+        .pin-blur {
+            display: inline-block;
+            filter: blur(6px);
+            transition: 0.2s ease-in-out;
+            cursor: pointer;
+        }
+
+        .pin-blur:hover {
+            filter: blur(0);
+        }
+    </style>
+
 @endsection
 @section('title')
     Employees | @if (isset(Auth::user()->employee->company))

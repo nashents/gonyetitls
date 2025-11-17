@@ -1,18 +1,18 @@
 <?php
 
-namespace App\Http\Livewire\Invoices;
+namespace App\Http\Livewire\Quotations;
 
 use App\Models\Trip;
 use App\Models\Account;
-use App\Models\Invoice;
+use App\Models\quotation;
 use App\Models\Product;
 use Livewire\Component;
 use App\Models\Destination;
-use App\Models\InvoiceItem;
+use App\Models\quotationItem;
 use App\Models\IncomeStream;
 use Illuminate\Support\Facades\Auth;
 
-class InvoiceItems extends Component
+class Items extends Component
 {
     public $income_streams;
     public $income_stream;
@@ -32,17 +32,17 @@ class InvoiceItems extends Component
     public $selectedTax;
     public $tax_amount;
     public $total_tax_amount;
-    public $invoice_total;
-    public $invoice_subtotal;
+    public $quotation_total;
+    public $quotation_subtotal;
     public $total;
     public $selectedTrip;
     public $description;
-    public $invoice;
-    public $invoice_id;
-    public $invoice_items;
-    public $invoice_item_id;
+    public $quotation;
+    public $quotation_id;
+    public $quotation_items;
+    public $quotation_item_id;
     public $accounts;
-    public $invoice_item;
+    public $quotation_item;
     public $current_item_amount;
     public $current_item_tax_amount;
     public $current_item_subtotal;
@@ -87,12 +87,12 @@ class InvoiceItems extends Component
     }
 
     public function mount($id){
-        $this->invoice_id = $id;
-        $this->invoice = Invoice::find($id);
-        $this->subtotal =  $this->invoice->subtotal;
-        $this->total =   $this->invoice->total;
-        $this->tax_amount =   $this->invoice->tax_amount; 
-        $this->invoice_items = $this->invoice->invoice_items;
+        $this->quotation_id = $id;
+        $this->quotation = Quotation::find($id);
+        $this->subtotal =  $this->quotation->subtotal;
+        $this->total =   $this->quotation->total;
+        $this->tax_amount =   $this->quotation->tax_amount; 
+        $this->quotation_items = $this->quotation->quotation_items;
 
         $this->accounts = Account::where('account_type_id',1)->latest()->get();
         $this->income_accounts = Account::whereHas('account_type', function($q){
@@ -176,46 +176,46 @@ class InvoiceItems extends Component
 
         public function store(){
         
-            $invoice_item = new InvoiceItem;
-            $invoice_item->invoice_id = $this->invoice->id;
-            $invoice_item->tax_id = $this->selectedTax;
-            $invoice_item->tax_rate = $this->tax_rate;
-            $invoice_item->product_id = $this->selectedItem;
-            $invoice_item->qty = $this->qty;
-            $invoice_item->amount = $this->amount;
+            $quotation_item = new QuotationItem;
+            $quotation_item->quotation_id = $this->quotation->id;
+            $quotation_item->tax_id = $this->selectedTax;
+            $quotation_item->tax_rate = $this->tax_rate;
+            $quotation_item->product_id = $this->selectedItem;
+            $quotation_item->qty = $this->qty;
+            $quotation_item->amount = $this->amount;
 
             if (is_numeric($this->amount) && is_numeric($this->qty)) {
 
-                $invoice_item_subtotal = $this->amount*$this->qty;
-                $invoice_item->subtotal = $invoice_item_subtotal;
-                $this->subtotal = $this->subtotal + $invoice_item_subtotal;
+                $quotation_item_subtotal = $this->amount*$this->qty;
+                $quotation_item->subtotal = $quotation_item_subtotal;
+                $this->subtotal = $this->subtotal + $quotation_item_subtotal;
 
             }
 
-            if (is_numeric($invoice_item_subtotal) && is_numeric($this->tax_rate)) {
-                $item_tax_amount = ($invoice_item_subtotal * ($this->tax_rate / 100 ));
-                $invoice_item->tax_amount =  $item_tax_amount;
-                $this->subtotal_incl = $item_tax_amount + $invoice_item_subtotal ;
+            if (is_numeric($quotation_item_subtotal) && is_numeric($this->tax_rate)) {
+                $item_tax_amount = ($quotation_item_subtotal * ($this->tax_rate / 100 ));
+                $quotation_item->tax_amount =  $item_tax_amount;
+                $this->subtotal_incl = $item_tax_amount + $quotation_item_subtotal ;
                 $this->tax_amount = $this->tax_amount + $item_tax_amount;
             }else{
-                $this->subtotal_incl = $invoice_item_subtotal;
+                $this->subtotal_incl = $quotation_item_subtotal;
             }
         
-            $invoice_item->subtotal_incl = $this->subtotal_incl;
-            $invoice_item->save();
+            $quotation_item->subtotal_incl = $this->subtotal_incl;
+            $quotation_item->save();
 
             $this->total = $this->total +  $this->subtotal_incl;
     
 
-            $invoice = Invoice::find($this->invoice->id);
-            $invoice->tax_amount =  $this->tax_amount;
-            $invoice->subtotal = $this->subtotal;
-            $invoice->total = $this->total;
-            $invoice->update();
+            $quotation = Quotation::find($this->quotation->id);
+            $quotation->tax_amount =  $this->tax_amount;
+            $quotation->subtotal = $this->subtotal;
+            $quotation->total = $this->total;
+            $quotation->update();
 
 
 
-            $this->dispatchBrowserEvent('hide-addInvoiceItemModal');
+            $this->dispatchBrowserEvent('hide-addquotationItemModal');
             $this->resetInputFields();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
@@ -231,26 +231,26 @@ class InvoiceItems extends Component
   
     public function removeShow($id){
 
-        $this->invoice_item = InvoiceItem::find($id);
-        $this->tax_amount = $this->invoice->tax_amount;
-        $this->total = $this->invoice->total;
-        $this->subtotal = $this->invoice->subtotal;
+        $this->quotation_item = QuotationItem::find($id);
+        $this->tax_amount = $this->quotation->tax_amount;
+        $this->total = $this->quotation->total;
+        $this->subtotal = $this->quotation->subtotal;
         $this->dispatchBrowserEvent('show-removeModal');
     }
 
-    public function removeInvoiceItem(){ 
+    public function removequotationItem(){ 
 
-        $this->subtotal = $this->subtotal - $this->invoice_item->subtotal;
-        $this->total = $this->total - $this->invoice_item->subtotal_incl;
-        $this->tax_amount = $this->tax_amount - $this->invoice_item->tax_amount;
+        $this->subtotal = $this->subtotal - $this->quotation_item->subtotal;
+        $this->total = $this->total - $this->quotation_item->subtotal_incl;
+        $this->tax_amount = $this->tax_amount - $this->quotation_item->tax_amount;
 
-        $invoice =  Invoice::find($this->invoice->id);
-        $invoice->total = $this->total;
-        $invoice->subtotal = $this->subtotal;
-        $invoice->tax_amount = $this->tax_amount;
-        $invoice->update();
+        $quotation =  Quotation::find($this->quotation->id);
+        $quotation->total = $this->total;
+        $quotation->subtotal = $this->subtotal;
+        $quotation->tax_amount = $this->tax_amount;
+        $quotation->update();
 
-        $this->invoice_item->delete();
+        $this->quotation_item->delete();
         
         $this->dispatchBrowserEvent('hide-removeModal');
         $this->dispatchBrowserEvent('alert',[
@@ -264,68 +264,68 @@ class InvoiceItems extends Component
 
 
     public function edit($id){
-        $this->invoice_item = InvoiceItem::find($id);
-        $this->selectedProduct = $this->invoice_item->product_id;
-        $this->selectedTax = $this->invoice_item->tax_id;
-        $this->tax_rate = $this->invoice_item->tax_rate;
-        $this->qty = $this->invoice_item->qty;
-        $this->amount = $this->invoice_item->amount;
+        $this->quotation_item = QuotationItem::find($id);
+        $this->selectedProduct = $this->quotation_item->product_id;
+        $this->selectedTax = $this->quotation_item->tax_id;
+        $this->tax_rate = $this->quotation_item->tax_rate;
+        $this->qty = $this->quotation_item->qty;
+        $this->amount = $this->quotation_item->amount;
 
 
-        $this->current_item_amount = $this->invoice_item->amount;
-        $this->current_item_tax_amount = $this->invoice_item->tax_amount;
-        $this->current_item_subtotal = $this->invoice_item->subtotal;
-        $this->current_item_subtotal_incl = $this->invoice_item->subtotal_incl;
+        $this->current_item_amount = $this->quotation_item->amount;
+        $this->current_item_tax_amount = $this->quotation_item->tax_amount;
+        $this->current_item_subtotal = $this->quotation_item->subtotal;
+        $this->current_item_subtotal_incl = $this->quotation_item->subtotal_incl;
         
 
-        $this->tax_amount = $this->invoice->tax_amount;
-        $this->total = $this->invoice->total;
-        $this->subtotal = $this->invoice->subtotal;
+        $this->tax_amount = $this->quotation->tax_amount;
+        $this->total = $this->quotation->total;
+        $this->subtotal = $this->quotation->subtotal;
        
       
-        $this->invoice_item_id = $id;
-        $this->dispatchBrowserEvent('show-editInvoiceItemModal');
+        $this->quotation_item_id = $id;
+        $this->dispatchBrowserEvent('show-editquotationItemModal');
     }
 
     public function update(){
-        $invoice_item = InvoiceItem::find($this->invoice_item_id);
-        $invoice_item->product_id = $this->selectedProduct;
-        $invoice_item->tax_id = $this->selectedTax;
-        $invoice_item->tax_rate = $this->tax_rate;
-        $invoice_item->amount = $this->amount;
-        $invoice_item->qty = $this->qty;
+        $quotation_item = QuotationItem::find($this->quotation_item_id);
+        $quotation_item->product_id = $this->selectedProduct;
+        $quotation_item->tax_id = $this->selectedTax;
+        $quotation_item->tax_rate = $this->tax_rate;
+        $quotation_item->amount = $this->amount;
+        $quotation_item->qty = $this->qty;
 
         if (is_numeric($this->amount) && is_numeric($this->qty)) {
             $item_subtotal = $this->amount*$this->qty;
-            $invoice_item->subtotal = $item_subtotal;
+            $quotation_item->subtotal = $item_subtotal;
             $this->subtotal = ($this->subtotal - $this->current_item_subtotal) + $item_subtotal;
         }
         if (is_numeric($this->tax_rate)) {
 
             $item_tax_amount = ($item_subtotal * ($this->tax_rate / 100 ));
-            $invoice_item->tax_amount =  $item_tax_amount;
-            $invoice_item->tax_rate =  $this->tax_rate;
+            $quotation_item->tax_amount =  $item_tax_amount;
+            $quotation_item->tax_rate =  $this->tax_rate;
             $item_subtotal_incl = $item_tax_amount + $item_subtotal ;
-            $invoice_item->subtotal_incl =  $item_subtotal_incl;
+            $quotation_item->subtotal_incl =  $item_subtotal_incl;
             $this->tax_amount =($this->tax_amount-$this->current_item_tax_amount)+$item_tax_amount;
             $this->total = ($this->total-$this->current_item_total)+$item_subtotal_incl;
             
         }else{
             $item_subtotal_incl = $item_subtotal ;
-            $invoice_item->subtotal_incl =  $item_subtotal_incl;
+            $quotation_item->subtotal_incl =  $item_subtotal_incl;
             $this->total = ($this->total-$this->current_item_total)+$item_subtotal_incl;
         }
 
-        $invoice_item->update();
+        $quotation_item->update();
 
-        $invoice =  Invoice::find($this->invoice->id);
-        $invoice->total = $this->total;
-        $invoice->subtotal =  $this->subtotal;
-        $invoice->tax_amount = $this->tax_amount;
-        $invoice->tax_amount =  $this->total;
-        $invoice->update();
+        $quotation =  Quotation::find($this->quotation->id);
+        $quotation->total = $this->total;
+        $quotation->subtotal =  $this->subtotal;
+        $quotation->tax_amount = $this->tax_amount;
+        $quotation->tax_amount =  $this->total;
+        $quotation->update();
         
-        $this->dispatchBrowserEvent('hide-editInvoiceItemModal');
+        $this->dispatchBrowserEvent('hide-editquotationItemModal');
         $this->resetInputFields();
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
@@ -337,19 +337,19 @@ class InvoiceItems extends Component
     public function render()
     {
 
-        if ((isset($this->exchange_rate) && $this->exchange_rate > 0)  &&  ( isset($this->invoice_total) && $this->invoice_total > 0 )) {
+        if ((isset($this->exchange_rate) && $this->exchange_rate > 0)  &&  ( isset($this->quotation_total) && $this->quotation_total > 0 )) {
 
             $this->exchange_amount = $this->exchange_rate * $this->total;
 
         }
 
-        $this->invoice_items = InvoiceItem::where('invoice_id',$this->invoice_id)->get();
+        $this->quotation_items = QuotationItem::where('quotation_id',$this->quotation_id)->get();
         $this->products = Product::where('sell',True)->orderBy('name','asc')->get();
         $this->tax_accounts = Account::whereHas('account_type', function ($query) {
             return $query->where('name','Sales Taxes');
         })->get();
-        return view('livewire.invoices.invoice-items',[
-            'invoice_items' => $this->invoice_items,
+        return view('livewire.quotations.items',[
+            'quotation_items' => $this->quotation_items,
             'products' => $this->products,
             'tax_accounts' => $this->tax_accounts,
         ]);
