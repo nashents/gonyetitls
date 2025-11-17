@@ -74,23 +74,17 @@
                                         @endphp
                                         <td class="line-height-35">  
                                           <img src="{{asset('images/uploads/'.$user->profile)}}" alt="" class="border-radius-50 img-circle profile-img " style="width: 50px; height:50px">
-                                          <br>  
-                                            <small>
-                                                <strong>Emp#: </strong> {{ucfirst($employee->employee_number)}} <br style="margin-bottom: -10px;">
-                                                <strong>Created: </strong>   {{Carbon\Carbon::parse($employee->created_at)->format('d-m-y')}}
-                                            </small>
                                         </td>
                                        
                                         <td>{{ucfirst($driver->transporter ? $driver->transporter->name : "")}}</td>
                                         <td>
-                                            {{ucfirst($driver->employee ? $driver->employee->name : "")}} {{ucfirst($driver->employee ?$driver->employee->surname : "")}}
-                                            
+                                            {{ucfirst($driver->employee ? $driver->employee->name : "")}} {{ucfirst($driver->employee ?$driver->employee->surname : "")}} <br>
+                                             <small><strong>Emp#: </strong> {{ucfirst($employee->employee_number)}}</small>
                                             @if ($assignments && $assignments->count() > 0)
-                                            <br>
+                                                <br>
                                                 @foreach ($assignments as $assignment)
                                                     <small> <strong>Assigned To:</strong> {{$assignment->horse ? $assignment->horse->registration_number : ""}} {{$assignment->horse->fleet_number ? "(".$assignment->horse->fleet_number.")" : ""}}</small>
                                                 @endforeach
-
                                             @endif
                                         </td>
                                         <td>{{ucfirst(strtolower($employee->gender))}}</td>
@@ -110,12 +104,13 @@
                                         <td><span class="badge bg-{{$driver->status == 1 ? "success" : "danger"}}">{{$driver->status == 1 ? "Available" : "Unavailable"}}</span></td>
                                          <td>
                                                 @if ($driver->user)
-                                                      @if ($driver->user->username)
+                                                    @if ($driver->user->username)
                                                         <small><strong><i class="fas fa-user"></i> </strong> {{$driver->user->username}}</small>  <br>    
                                                     @endif
                                                     <span class="badge bg-{{$driver->user->active == 1 ? "success" : "danger"}}">{{$driver->user->active == 1 ? "Active" : "Inactive"}}</span> <br>
-                                                    @if (!empty($driver->email) && filter_var($driver->email, FILTER_VALIDATE_EMAIL))
-                                                            <button type="button"  wire:click.prevent="sendCredentials({{$driver->id}})" class="btn btn-default btn-rounded btn-xs mt-5"><i class="fa fa-send-o"></i>{{$driver->user->sent_credentials == False ? "Send Credentials" : "Resend Credentials"}}</button>
+                                                     <small><strong>Created: </strong> {{Carbon\Carbon::parse($user->created_at)->format('d-m-y')}}</small> <br>
+                                                    @if (!empty($employee->email) && filter_var($employee->email, FILTER_VALIDATE_EMAIL))
+                                                            <button type="button"  wire:click.prevent="sendCredentials({{$employee->id}})" class="btn btn-default btn-rounded btn-xs mt-5"><i class="fa fa-send-o"></i>{{$employee->user->sent_credentials == False ? "Send Credentials" : "Resend Credentials"}}</button>
                                                     @endif
                                                 @else
                                                 <span class="badge bg-danger">Deleted</span>

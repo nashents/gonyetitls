@@ -65,16 +65,17 @@
                                         @endphp
                                         @if (!$employee->driver)
                                         <tr>
-                                            <td class="line-height-35">
+                                            <td >
                                                 <img src="{{asset('images/uploads/'.$employee->user->profile)}}" alt="" class="border-radius-50 img-circle profile-img " style="width: 50px; height:50px">
+                                            </td>
+                                          
+                                            <td>
+                                                {{ucfirst($employee->name)}} {{ucfirst($employee->surname)}}
                                                 <br>
                                                 <small>
                                                     <strong>Emp#: </strong> {{ucfirst($employee->employee_number)}}
-                                                    <strong>Created: </strong>   {{Carbon\Carbon::parse($employee->created_at)->format('d-m-y')}}
                                                 </small>
                                             </td>
-                                          
-                                            <td>{{ucfirst($employee->name)}} {{ucfirst($employee->surname)}}</td>
                                             <td>{{ucfirst(strtolower($employee->gender))}}</td>
                                             <td>
                                                 <small>
@@ -109,6 +110,9 @@
                                                         <small><strong><i class="fas fa-user"></i> </strong> {{$employee->user->username}}</small>  <br>    
                                                     @endif
                                                     <span class="badge bg-{{$employee->user->active == 1 ? "success" : "danger"}}">{{$employee->user->active == 1 ? "Active" : "Inactive"}}</span> <br>
+                                                    <small>
+                                                        <strong>Created: </strong>   {{Carbon\Carbon::parse($employee->created_at)->format('d-m-y')}}
+                                                    </small>
                                                     @if (!empty($employee->email) && filter_var($employee->email, FILTER_VALIDATE_EMAIL))
                                                             <button type="button"  wire:click.prevent="sendCredentials({{$employee->id}})" class="btn btn-default btn-rounded btn-xs mt-5"><i class="fa fa-send-o"></i>{{$employee->user->sent_credentials == False ? "Send Credentials" : "Resend Credentials"}}</button>
                                                     @endif

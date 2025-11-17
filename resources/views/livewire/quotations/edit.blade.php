@@ -345,54 +345,54 @@
                                     </div>
                                 </div>
                             @else
-                                    <h5 class="underline mt-30">Product(s) & Service(s)</h5>
+                            <h5 class="underline mt-30">Product(s) & Service(s)</h5>
                                     @foreach ($quotation_items as $key => $value)
                                     <div class="row">
                                         <div class="col-md-3">
                                             <div class="form-group">
                                                 <label for="country">Items<span class="required" style="color: red">*</span></label>
-                                                    <select wire:model.debounce.300ms="currentSelectedProduct.0" class="form-control" required>
+                                                    <select wire:model.debounce.300ms="currentSelectedProduct.{{$key}}" class="form-control" required>
                                                     <option value="">Select Item</option>
                                                         @foreach ($products as $product)
                                                         <option value="{{$product->id}}">{{$product->brand ? $product->brand->name : ""}} {{$product->name}} {{$product->identification_number ? "ID#:".$product->identification_number : ""}}</option> 
                                                         @endforeach
                                                     </select>
                                                     <small>  <a href="#"  wire:click="showItem()"><i class="fa fa-plus-square-o"></i> New Product / Service</a></small><a href="#" wire:click.prevent="refresh('products')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
-                                                @error('currentSelectedProduct.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                @error('currentSelectedProduct.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         </div>
                                         <div class="col-md-3">
                                             <div class="form-group">
                                                 <label for="name">Description</label>
-                                               <textarea wire:model.debounce.300ms="current_description.0" class="form-control" cols="30" rows="2" placeholder="Enter Item Description"></textarea>
-                                                @error('current_description.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                               <textarea wire:model.debounce.300ms="current_description.{{$key}}" class="form-control" cols="30" rows="2" placeholder="Enter Item Description"></textarea>
+                                                @error('current_description.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         </div>
                                         <div class="col-md-1">
                                             <div class="form-group">
                                                 <label for="name">Qty<span class="required" style="color: red">*</span></label>
-                                                <input type="number" class="form-control" wire:model.debounce.300ms="current_qty.0"  required >
-                                                @error('current_qty.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                <input type="number" class="form-control" wire:model.debounce.300ms="current_qty.{{$key}}"  required >
+                                                @error('current_qty.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         </div>
                                         <div class="col-md-2">
                                             <div class="form-group">
                                                 <label for="name">Rate<span class="required" style="color: red">*</span></label>
-                                                <input type="number" step="any" class="form-control" wire:model.debounce.300ms="current_amount.0"  required >
-                                                @error('current_amount.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                <input type="number" step="any" class="form-control" wire:model.debounce.300ms="current_amount.{{$key}}"  required >
+                                                @error('current_amount.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         </div>
                                         <div class="col-md-2">
                                             <div class="form-group">
                                                 <label for="subheading">Taxes</label>
-                                                <select wire:model.debounce.300ms="currentSelectedTax.0"  class="form-control">
+                                                <select wire:model.debounce.300ms="currentSelectedTax.{{$key}}"  class="form-control">
                                                     <option value="">Select Tax</option>
                                                         @foreach ($tax_accounts as $tax)
                                                            <option value="{{$tax->id}}">{{$tax->abbreviation}} {{$tax->rate ? $tax->rate."%" : ""}}</option> 
                                                         @endforeach
                                                     </select>
                                                     <small><a href="{{ route('accounts.tax') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small><a href="#" wire:click.prevent="refresh('taxes')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
-                                                @error('currentSelectedTax.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                @error('currentSelectedTax.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         </div>  
                                         <div class="col-md-1">
@@ -497,7 +497,7 @@
                                                 </div>
                                                 <div class="col-md-1">
                                                     <div class="form-group" style="margin-top: 29px; ">
-                                                        <a href="#" wire:click.prevent="removeAdditionalCostShow({{ $key }})"  ><i class="fa fa-trash color-danger"></i></a>
+                                                        <a href="#" wire:click.prevent="removeAdditionalCostShow({{ $value->id }})"  ><i class="fa fa-trash color-danger"></i></a>
                                                     </div>
                                                 </div>      
                                         </div>
@@ -658,7 +658,7 @@
                     <div class="modal-footer no-border">
                         <div class="btn-group" role="group">
                             <button type="button" class="btn bg-white btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button> 
-                            <button type="submit" class="btn bg-black btn-wide btn-rounded" disabled ><i class="fa fa-trash"></i>Delete</button>
+                            <button type="submit" class="btn bg-black btn-wide btn-rounded" ><i class="fa fa-trash"></i>Delete</button>
                         </div>
                         <!-- /.btn-group -->
                     </div>

@@ -71,6 +71,15 @@
                                     {{ $quotation->currency ? $quotation->currency->symbol : "" }}{{ number_format($quotation->tax_amount ? $quotation->tax_amount : 0,2)}}
                                 </td>
                             </tr>
+                            <tr>
+                                <th class="w-10 text-center line-height-35">Additional Cost(s)</th>
+                                <td class="w-20 line-height-35">
+                                    @foreach($quotation->additional_costs as $additional_cost)
+                                        <strong>{{$additional_cost->cost_item ? $additional_cost->cost_item->name : ""}}</strong> {{ $quotation->currency ? $quotation->currency->symbol : "" }}{{ number_format($additional_cost->total ? $additional_cost->total : 0,2)}}
+                                    @endforeach
+                                    
+                                </td>
+                            </tr>
                          
                             <tr>
                                 <th class="w-10 text-center line-height-35">Total</th>

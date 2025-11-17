@@ -153,6 +153,7 @@ class Edit extends Component
     public $status;
 
     public $cost_items;
+    public $cost_item;
     public $current_additional_costs;
     public $current_cost_item_id = [];
     public $current_cost_total = [];
@@ -686,6 +687,7 @@ class Edit extends Component
         $this->discount_description = "";
         $this->discount_unit = "";
     }
+    
 
 
     public function update(){
@@ -716,6 +718,7 @@ class Edit extends Component
                 $cost->save();
             }
         }
+
         if($this->current_cost_item_id){
             foreach($this->current_cost_item_id as $index => $cost_item_id){
                 $cost =  AdditionalCost::where('quotation_id', $this->quotation_id)
@@ -756,15 +759,19 @@ class Edit extends Component
             $quotation_item = QuotationItem::find($item->id);
             
             if (isset($this->currentSelectedCargo[$key])) {
+
                 $quotation_item->cargo_id = $this->currentSelectedCargo[$key];
                 $cargo = Cargo::find($this->currentSelectedCargo[$key]);
                 $cargo_name = $cargo->name ? $cargo->name: "";
+
               }
               if (isset($this->current_to[$key])) {
+
                 $quotation_item->destination = $this->current_to[$key];
                 $to = Destination::find($this->current_to[$key]);
                 $destination_country = $to->country ?  $to->country->name : "";
                 $destination = $destination_country .' '. $to->city;
+
               }else {
                 $destination = "";
               }
@@ -800,6 +807,7 @@ class Edit extends Component
             }
 
               $description = $cargo_name. " " .$weight.",". " from " .$origin." ".$loading_point_name. " to " .$destination." ".$offloading_point_name.".";
+            
               $quotation_item->description = $description;
 
             if (isset($this->currentSelectedTax[$key])) {
@@ -845,8 +853,6 @@ class Edit extends Component
              }
             $quotation_item->update();
 
-           
-       
         }
 
         $quotation = Quotation::find($quotation->id);
@@ -1178,21 +1184,17 @@ class Edit extends Component
     public function removeAdditionalCostShow($id){
 
         $cost = AdditionalCost::find($id);
-        $this->dispatchBrowserEvent('show-removeModal');
+        $this->cost_item = $cost;
+        $this->dispatchBrowserEvent('show-removeCostModal');
+    }
+    public function removeCostItem(){
+       
+        $this->cost_item->delete();
+        $this->dispatchBrowserEvent('hide-removeCostModal');
     }
 
     public function removeQuotationItem(){ 
-
-        $this->subtotal = $this->subtotal - $this->quotation_item->subtotal;
-        $this->total = $this->total - $this->quotation_item->subtotal_incl;
-        $this->tax_amount = $this->tax_amount - $this->quotation_item->tax_amount;
-
-        $quotation =  Quotation::find($this->quotation->id);
-        $quotation->total = $this->total;
-        $quotation->subtotal = $this->subtotal;
-        $quotation->tax_amount = $this->tax_amount;
-        $quotation->update();
-
+       
         $this->quotation_item->delete();
         
         $this->dispatchBrowserEvent('hide-removeModal');
