@@ -91,7 +91,6 @@ class Edit extends Component
              $this->type = 'Trailer';
         }
 
-        $this->category_checklists = CategoryChecklist::where('checklist_category_id',$checklist->checklist_category_id)->get();
         $this->employee_id = $checklist->employee_id;
         $this->driver_id = $checklist->driver_id;
         $this->horse_id = $checklist->horse_id;
@@ -182,7 +181,7 @@ class Edit extends Component
         if (!is_null($id)) {
             $this->checklist_category_id = $id;
             $this->checklist_category = ChecklistCategory::find($id);
-            $this->category_checklists = CategoryChecklist::where('checklist_category_id',$id)->get();
+          
         }
     }
 
@@ -226,14 +225,18 @@ class Edit extends Component
             if (isset($this->status)) {
 
                 foreach ($this->status as $key => $value) {
+                 
+                    $category_checklist = CategoryChecklist::find($key);
+                       
                     ChecklistResult::updateOrCreate(
                     [
                         'checklist_id'      => $checklist->id,
-                        'checklist_item_id' => $key,
+                        'category_checklist_id' => $key,
                     ],
                     [
                         'status'   => $this->status[$key],
                         'comments' => $this->comments[$key],
+                        'checklist_item_id' => $category_checklist?->checklist_item_id,
                     ]);
             
                 }
@@ -342,8 +345,23 @@ class Edit extends Component
                 }
             }
 
-        if (isset($this->checklist_category_id)) {
-            $this->category_checklists = CategoryChecklist::where('checklist_category_id',$this->checklist_category_id)->get();
+        if (isset($this->selectedChecklistCategory)) {
+
+            if ($this->checklist_category->name == "Stock on board") {
+                if ($this->type === "Horse") {
+                   $this->category_checklists = CategoryChecklist::where('checklist_category_id',$this->selectedChecklistCategory)
+                   ->where('horse_id',$this->horse_id)->get();
+                }elseif ($this->type === "Vehicle") {
+                   $this->category_checklists = CategoryChecklist::where('checklist_category_id',$this->selectedChecklistCategory)
+                   ->where('vehicle_id',$this->vehicle_id)->get();
+                }elseif ($this->type === "Trailer") {
+                    $this->category_checklists = CategoryChecklist::where('checklist_category_id',$this->selectedChecklistCategory)
+                   ->where('trailer_id',$this->trailer_id)->get();
+                }
+            }else{
+                 $this->category_checklists = CategoryChecklist::where('checklist_category_id',$this->selectedChecklistCategory)->get();
+            }
+           
         }
       
         return view('livewire.checklists.edit',[

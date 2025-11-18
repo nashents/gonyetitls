@@ -97,8 +97,6 @@ class Create extends Component
         if (!is_null($id)) {
        
             $this->checklist_category = ChecklistCategory::find($id);
-            // $this->category_checklists = CategoryChecklist::where('checklist_category_id',$id)->get();
-
           
         }
     }
@@ -211,7 +209,9 @@ class Create extends Component
                         if (isset($this->comments[$key])) {
                             $result->comments = $this->comments[$key];
                         }
-                        $result->checklist_item_id = $key;
+                        $result->category_checklist_id = $key;
+                        $category_checklist = CategoryChecklist::find($key);
+                        $result->checklist_item_id = $category_checklist?->checklist_item_id;
                         $result->save();
                     }
                 }

@@ -1007,7 +1007,7 @@ class Create extends Component
                                     ->whereYear('date', date('Y'))
                                     ->whereMonth('date', date('m'))
                                     ->where('status', true)
-                                    ->whereDate('expires_at', '>=', now())
+                                    ->whereDate('expiry', '>=', now())
                                     ->latest()
                                     ->get();
         $this->company = Company::with('currency')->find($this->employee->company_id);

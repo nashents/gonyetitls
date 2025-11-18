@@ -39,41 +39,43 @@
                                   <tr>
                                     <td>{{$checklist_category->name}}</td>
                                     <td>
-                                        @php
-                                            // Group items by sub-category name (null becomes 'no-category')
-                                            $grouped = $checklist_category->category_checklists
-                                                ->groupBy(function ($item) {
-                                                    return $item->checklist_sub_category->name ?? 'no-category';
-                                                });
+                                        @if (!in_array($checklist_category->name,['Tyre Inspection','Stock on board']))
+                                            @php
+                                                // Group items by sub-category name (null becomes 'no-category')
+                                                $grouped = $checklist_category->category_checklists
+                                                    ->groupBy(function ($item) {
+                                                        return $item->checklist_sub_category->name ?? 'no-category';
+                                                    });
 
-                                            // Separate the "no-category" group
-                                            $noCategoryItems = $grouped->pull('no-category');
-                                        @endphp
-                                        <ul style="list-style-type: none; padding-left: 0; margin: 0;">
-                                            {{-- Sub-category groups --}}
-                                            @foreach ($grouped as $subCategory => $items)
-                                                <li style="margin-bottom: 0.5rem;">
-                                                    <strong>{{ $subCategory }}</strong>
-                                                    <ol style="margin-left: 1.5rem; padding-left: 1rem;">
-                                                        @foreach ($items as $item)
-                                                            <li>{{ $item->checklist_item->name ?? '' }}</li>
-                                                        @endforeach
-                                                    </ol>
-                                                </li>
-                                            @endforeach
+                                                // Separate the "no-category" group
+                                                $noCategoryItems = $grouped->pull('no-category');
+                                            @endphp
+                                            <ul style="list-style-type: none; padding-left: 0; margin: 0;">
+                                                {{-- Sub-category groups --}}
+                                                @foreach ($grouped as $subCategory => $items)
+                                                    <li style="margin-bottom: 0.5rem;">
+                                                        <strong>{{ $subCategory }}</strong>
+                                                        <ol style="margin-left: 1.5rem; padding-left: 1rem;">
+                                                            @foreach ($items as $item)
+                                                                <li>{{ $item->checklist_item->name ?? '' }}</li>
+                                                            @endforeach
+                                                        </ol>
+                                                    </li>
+                                                @endforeach
 
-                                            {{-- Uncategorized items --}}
-                                            @if ($noCategoryItems && $noCategoryItems->count())
-                                                <li style="margin-bottom: 0.5rem;">
-                                                    <strong>Ungrouped</strong>
-                                                    <ol style="margin-left: 1.5rem; padding-left: 1rem;">
-                                                        @foreach ($noCategoryItems as $item)
-                                                            <li>{{ $item->checklist_item->name ?? '' }}</li>
-                                                        @endforeach
-                                                    </ol>
-                                                </li>
-                                            @endif
-                                        </ul>
+                                                {{-- Uncategorized items --}}
+                                                @if ($noCategoryItems && $noCategoryItems->count())
+                                                    <li style="margin-bottom: 0.5rem;">
+                                                        <strong>Ungrouped</strong>
+                                                        <ol style="margin-left: 1.5rem; padding-left: 1rem;">
+                                                            @foreach ($noCategoryItems as $item)
+                                                                <li>{{ $item->checklist_item->name ?? '' }}</li>
+                                                            @endforeach
+                                                        </ol>
+                                                    </li>
+                                                @endif
+                                            </ul>
+                                        @endif
                                     </td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">

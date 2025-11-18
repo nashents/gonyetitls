@@ -846,7 +846,7 @@ class Edit extends Component
                                     ->whereYear('date', date('Y'))
                                     ->whereMonth('date', date('m'))
                                     ->where('status', true)
-                                    ->whereDate('expires_at', '>=', now())
+                                    ->whereDate('expiry', '>=', now())
                                     ->latest()
                                     ->get();
         $this->shifts = Shift::where('for','Trips')->where('status','1')->latest()->get();

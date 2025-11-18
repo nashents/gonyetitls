@@ -15,6 +15,9 @@ class ChecklistResult extends Model implements Auditable
     public function checklist_item(){
         return $this->belongsTo('App\Models\ChecklistItem');
     }
+    public function category_checklist(){
+        return $this->belongsTo('App\Models\CategoryChecklist');
+    }
     public function checklist(){
         return $this->belongsTo('App\Models\Checklist');
     }
@@ -28,6 +31,7 @@ class ChecklistResult extends Model implements Auditable
     protected $fillable = [
         'checklist_id',
         'checklist_item_id',
+        'category_checklist_id',
         'status',
         'comments',
         'tread_depth_mm',

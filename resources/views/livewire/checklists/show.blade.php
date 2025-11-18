@@ -87,12 +87,13 @@
                             </th>
                           </tr>
                         </thead>
-
                         <tbody>
                            @foreach ($checklist_results as  $result)
                             <tr>
                                 <td>{{$result->checklist_item->checklist_sub_category ? $result->checklist_item->checklist_sub_category->name : ""}}</td>
-                                <td>{{$result->checklist_item ? $result->checklist_item->name : ""}}</td>
+                                <td>
+                                    {{$result->checklist_item ? $result->checklist_item->name : ""}}
+                                </td>
                                 <td><span class="badge bg-{{($result->status == '1') ? 'success' : 'danger' }}">{{($result->status == '1') ? 'Yes' : 'No' }}</span></td>
                                 <td>{{$result->comments}}</td>
                             </tr>

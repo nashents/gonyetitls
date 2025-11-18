@@ -15,6 +15,9 @@ class CategoryChecklist extends Model implements Auditable
     public function checklist_item(){
         return $this->belongsTo('App\Models\ChecklistItem');
     }
+    public function checklist_results(){
+        return $this->hasMany('App\Models\ChecklistResult');
+    }
     public function horse(){
         return $this->belongsTo('App\Models\Horse');
     }

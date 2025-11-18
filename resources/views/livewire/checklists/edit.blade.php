@@ -167,21 +167,22 @@
                                        @foreach ($category_checklists as $key => $category_checklist)
                                         
                                       <tr>
-                                        <td>{{$category_checklist->checklist_sub_category ? $category_checklist->checklist_sub_category->name : ""}} {{$category_checklist->checklist_item ? $category_checklist->checklist_item->name : ""}}
-                                            <input type="hidden" wire:model.debounce.300ms="checklist_item_id.{{$category_checklist->checklist_item->id}}" value="{{$category_checklist->checklist_item->id}}">
+                                        <td>{{$category_checklist->checklist_sub_category ? $category_checklist->checklist_sub_category->name : ""}} {{$category_checklist->checklist_item ? $category_checklist->checklist_item->name : ""}} <small>(<strong>{{$category_checklist->condition}}</strong>)</small>
+                                            <input type="hidden" wire:model.debounce.300ms="checklist_item_id.{{$category_checklist->id}}" value="{{$category_checklist->checklist_item->id}}">
+                                            
                                          <br>
                                          <div class="form-group">
                                             <label for="exampleInputEmail13">Observations</label>
-                                           <textarea  wire:model.debounce.300ms="comments.{{$category_checklist->checklist_item->id}}" wire:key="{{ $category_checklist->checklist_item->id }}" class="form-control" cols="15" rows="3"></textarea>
+                                           <textarea  wire:model.debounce.300ms="comments.{{$category_checklist->id}}" wire:key="{{ $category_checklist->id }}" class="form-control" cols="15" rows="3"></textarea>
                                         </div>
                                         </td>
                                         <td>
                                             <div class="mb-10">
-                                                <input type="radio" wire:model.debounce.300ms="status.{{$category_checklist->checklist_item->id}}" wire:key="{{ $category_checklist->checklist_item->id }}" value="{{$yes}}"  class="line-style" required/>
+                                                <input type="radio" wire:model.debounce.300ms="status.{{$category_checklist->id}}" wire:key="{{ $category_checklist->id }}" value="{{$yes}}"  class="line-style" required/>
                                                 <label for="one" class="radio-label">Yes</label>
                                             </div>
                                             <div class="mb-10">
-                                                <input type="radio" wire:model.debounce.300ms="status.{{$category_checklist->checklist_item->id}}"wire:key="{{ $category_checklist->checklist_item->id }}"  value="{{$no}}" class="line-style" required/>
+                                                <input type="radio" wire:model.debounce.300ms="status.{{$category_checklist->id}}"wire:key="{{ $category_checklist->id }}"  value="{{$no}}" class="line-style" required/>
                                                 <label for="three" class="radio-label">No</label>
                                             </div>
                                         </td>
