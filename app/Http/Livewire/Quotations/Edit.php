@@ -1193,6 +1193,15 @@ class Edit extends Component
         $this->subtotal = $this->quotation->subtotal;
         $this->dispatchBrowserEvent('show-removeModal');
     }
+
+    public function quotationDate()
+    {
+        if (!empty($this->date) && empty($this->expiry)) {
+            $this->expiry = \Carbon\Carbon::parse($this->date)
+                            ->addMonth()
+                            ->format('Y-m-d');
+        }
+    }
     
     public function removeAdditionalCostShow($id){
 

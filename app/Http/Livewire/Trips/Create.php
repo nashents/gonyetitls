@@ -1003,7 +1003,13 @@ class Create extends Component
         $this->user = Auth::user();
         $this->employee =  $this->user->employee;
         $this->manifest_number =  $this->manifestNumber();
-        $this->quotations = Quotation::with('customer')->latest()->get();
+        $this->quotations = Quotation::with('customer')
+                                    ->whereYear('date', date('Y'))
+                                    ->whereMonth('date', date('m'))
+                                    ->where('status', true)
+                                    ->whereDate('expires_at', '>=', now())
+                                    ->latest()
+                                    ->get();
         $this->company = Company::with('currency')->find($this->employee->company_id);
         $this->exchange_rates = ExchangeRate::all();
         $this->shifts = Shift::where('for','Trips')->where('status','1')->latest()->get();

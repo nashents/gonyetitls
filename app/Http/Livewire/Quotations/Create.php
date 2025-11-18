@@ -399,9 +399,12 @@ public function quotationNumber(){
 
     }
 
-    public function quotationDate(){
-        if ($this->expiry == "") {
-            $this->expiry  = $this->date;
+    public function quotationDate()
+    {
+        if (!empty($this->date) && empty($this->expiry)) {
+            $this->expiry = \Carbon\Carbon::parse($this->date)
+                            ->addMonth()
+                            ->format('Y-m-d');
         }
     }
 

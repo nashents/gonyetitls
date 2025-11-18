@@ -842,6 +842,13 @@ class Edit extends Component
         'route:id,name,rank','truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name','commission:id,commission,amount'])->find($id);
         $this->user = Auth::user();
         $this->employee =  $this->user->employee;
+        $this->quotations = Quotation::with('customer')
+                                    ->whereYear('date', date('Y'))
+                                    ->whereMonth('date', date('m'))
+                                    ->where('status', true)
+                                    ->whereDate('expires_at', '>=', now())
+                                    ->latest()
+                                    ->get();
         $this->shifts = Shift::where('for','Trips')->where('status','1')->latest()->get();
         $this->company = Company::with('currency')->find( $this->employee->company_id);
         $this->defined_customer_rates = Rate::where('category','Customer')->with('loading_point:id,name','offloading_point:id,name')->latest()->get();
@@ -1033,6 +1040,10 @@ class Edit extends Component
          $this->stops = $this->trip->stops;
          $this->volume =  $this->trip->volume;
          $this->temparature =  $this->trip->temparature;
+         $this->selectedQuotation =  $this->trip->quotation_id;
+         if(isset( $this->selectedQuotation)){
+            $this->with_quotation = True;
+         }
          $this->net_weight =  $this->trip->net_weight;
          $this->seal_number =  $this->trip->seal_number;
          $this->agent_id = $this->trip->agent_id;
@@ -1571,6 +1582,7 @@ class Edit extends Component
           $trip->customer_updates = $this->customer_updates;
           $trip->transporter_agreement = $this->transporter_agreement;
           $trip->fuel_order = $this->fuel_order;
+          $trip->quotation_id = $this->selectedQuotation ?: null;
           $trip->driver_id = $this->driver_id ?: null;
           $trip->with_customer_rates = $this->with_customer_rates;
           $trip->with_transporter_rates = $this->with_transporter_rates;

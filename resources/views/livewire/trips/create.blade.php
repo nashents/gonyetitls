@@ -31,7 +31,7 @@
                                             <select class="form-control" wire:model.debounce.300ms="selectedQuotation" required>
                                                 <option value="">Select Quotation</option>
                                                 @foreach ($quotations as $quotation)
-                                                    <option value="{{ $quotation->id }}">{{ $quotation->quotation_number }} {{ $quotation->customer ? $quotation->customer->name : "" }}</option>
+                                                    <option value="{{ $quotation->id }}">{{ $quotation->quotation_number }}{{ $quotation->custom_ref ? " / ".$quotation->custom_ref : "" }} {{ $quotation->customer ? $quotation->customer->name : "" }} {{$quotation->currency ? $quotation->currency->name : ""}} {{$quotation->currency ? $quotation->currency->symbol : ""}}{{number_format($quotation->total ? $quotation->total : 0, 2)}}</option>
                                                 @endforeach
                                             </select>
                                             @error('selectedQuotation') <span class="text-danger error">{{ $message }}</span> @enderror

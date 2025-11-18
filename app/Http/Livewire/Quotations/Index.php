@@ -42,6 +42,23 @@ class Index extends Component
     }
 
 
+    public function closeQuoteShow($id){
+        $this->quotation = Quotation::find($id);
+        $this->dispatchBrowserEvent('show-closeQuoteModal');
+       
+    }
+    public function closeQuotation(){
+        $quotation = Quotation::find($this->quotation->id);
+        $quotation->status = 0;
+        $quotation->closed_by_id = Auth::user()->id;
+        $quotation->save();
+        $this->dispatchBrowserEvent('hide-closeQuoteModal');
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Quotation Closed Successfully!!"
+        ]);
+    }
+
 
     public function render()
     {

@@ -130,6 +130,16 @@
 @stack('scripts')
     
     <script type="text/javascript">
+            window.addEventListener('show-closeQuoteModal', event => {
+                $('#closeQuoteModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-closeQuoteModal', event => {
+                $('#closeQuoteModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
             window.addEventListener('show-removeCostModal', event => {
                 $('#removeCostModal').modal('show');
             })

@@ -82,6 +82,8 @@
                                     </th>
                                     <th class="th-sm">Total
                                     </th>
+                                    <th class="th-sm">Status
+                                    </th>
                                     <th class="th-sm">Action
                                     </th>
                                   </tr>
@@ -125,6 +127,7 @@
                                         {{$quotation->currency ? $quotation->currency->symbol : ""}}{{number_format($quotation->total,2)}}
                                         @endif
                                     </td>
+                                      <td><span class="badge bg-{{$quotation->status == True ? "warning" : "success" }}">{{$quotation->status == True ? 'open' : "closed" }}</span></td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -134,10 +137,14 @@
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{route('quotations.show',$quotation->id)}}"  ><i class="fa fa-eye color-default"></i>View</a></li>
                                                 <li><a href="{{route('quotations.preview',$quotation->id)}}"  ><i class="fa fa-file-invoice color-primary"></i> Preview</a></li>
-                                                @if ($quotation->trips)
-                                                 <li><a href="{{route('quotations.edit',$quotation->id)}}" @disabled(true) ><i class="fa fa-edit color-success"></i> Edit</a></li>
-                                                <li><a href="#" data-toggle="modal" data-target="#quotationDeleteModal{{ $quotation->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                                                @if ($quotation->status == True)
+                                                    <li><a href="#" wire:click.prevent="closeQuoteShow({{$quotation->id}})"  ><i class="fa fa-remove color-active"></i> Close Quote</a></li>
+                                                    @if ($quotation->trips->count() == 0)
+                                                        <li><a href="{{route('quotations.edit',$quotation->id)}}"><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                                        <li><a href="#" data-toggle="modal" data-target="#quotationDeleteModal{{ $quotation->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                                                    @endif
                                                 @endif
+                                                 
                                             </ul>
                                         </div>
                                         @include('quotations.delete')
@@ -181,7 +188,27 @@
 
 
 
-
+        <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="closeQuoteModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title" id="modal4Label"><i class="fas fa-window-close"></i> Close Quotation<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                    </div>
+                    <form wire:submit.prevent="closeQuotation()" >
+                    <div class="modal-body">
+                        <p>Are you sure you want to close quotation {{$quotation?->quotation_number}}</p>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                            <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-refresh"></i>Update</button>
+                        </div>
+                        <!-- /.btn-group -->
+                    </div>
+                </form>
+                </div>
+            </div>
+        </div>
 
 
 </div>
