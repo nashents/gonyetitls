@@ -50,6 +50,7 @@ class Index extends Component
     public $description;
     public $selectedEmployee;
     public $requested_by_id;
+    public $currency_id;
     public $date;
     public $expand = False;
 

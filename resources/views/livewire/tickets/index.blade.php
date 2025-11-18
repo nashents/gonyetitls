@@ -268,7 +268,7 @@
                                                     {{-- <li><a href="{{route('tickets.preview',$ticket->id)}}"   ><i class="fas fa-file-invoice color-primary"></i> Preview</a></li> --}}
                                                      <li><a href="{{route('tickets.jobcard',$ticket->id)}}"   ><i class="fas fa-file color-warning"></i> JobCard</a></li>
                                                     @if ($ticket->status == 1)
-                                                    <li><a href="#"  wire:click="showTicket({{$ticket->id}})"><i class="fa fa-window-close color-success"></i> Close Ticket</a></li>
+                                                        <li><a href="#"  wire:click="showTicket({{$ticket->id}})"><i class="fa fa-window-close color-success"></i> Close Ticket</a></li>
                                                     @endif
                                                     {{-- <li><a href="{{route('tickets.edit', $ticket->id)}}"><i class="fa fa-edit color-success"></i> Edit</a></li> --}}
                                                     {{-- <li><a href="#" data-toggle="modal" data-target="#ticketDeleteModal{{$ticket->id}}"><i class="fa fa-trash color-danger"></i>Delete</a></li> --}}

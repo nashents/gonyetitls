@@ -888,9 +888,9 @@ class Show extends Component
                       $container = Container::find($fuel->container_id);
 
                       if (isset($container)) {
-                          if($container->balance >= $fuel->quantity){
+                          if(is_numeric($container->balance) && is_numeric($fuel->quantity) &&  $container->balance >= $fuel->quantity){
                               $container->balance = $container->balance - $fuel->quantity;
-                              if(isset($container->account_balance)){
+                              if(is_numeric($container->account_balance) && is_numeric($fuel->amount) && $container->account_balance >= $fuel->amount){
                                   $container->account_balance = $container->account_balance - $fuel->amount;
                               }
                               $container->update();
