@@ -13,6 +13,7 @@ use App\Models\Employee;
 use App\Models\Inventory;
 use App\Models\Department;
 use App\Models\DispatchItem;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
@@ -47,6 +48,7 @@ class Index extends Component
     public $employees;
     public $company;
     public $max;
+    public $max_weight;
     public $description;
     public $selectedEmployee;
     public $requested_by_id;
@@ -72,128 +74,115 @@ class Index extends Component
 
     public function updatedSearchProduct($value)
     {
+        $relation = $this->department === 'tyre' 
+            ? 'tyres'
+            : ($this->department === 'asset'
+                ? 'assets'
+                : 'inventories');
+
+        $relationFields = [
+            'tyre' => 'tyres:id,product_id,tyre_number,serial_number,total,currency_id,status',
+            'asset' => 'assets:id,product_id,asset_number,serial_number,balance,weight,total,currency_id,status',
+            'inventory' => 'inventories:id,product_id,inventory_number,serial_number,balance,weight,total,currency_id,status',
+        ];
+
+        // Base query
+        $query = Product::with('brand:id,name', $relationFields[$this->department])
+            ->where('department', $this->department)
+            ->whereHas($relation, function ($q) {
+                $q->where('status', 1);
+
+                if ($this->department !== 'tyre') {
+                    $q->where('balance', '>', 0);
+                }
+            });
+
+        // If search term exists
         if (filled($value)) {
-            if ($this->department == "tyre") {
-                $this->products = Product::with('brand:id,name','tyres:id,product_id,tyre_number,serial_number,total,currency_id')
-                                    ->where(function ($query) use ($value) {
-                                        $query
-                                        ->where('department', $this->department)
-                                        ->whereHas('tyres', function ($query) {
-                                            $query->where('status', 1);
-                                        })
-                                        ->where('name', 'like', '%'.$value.'%')
-                                            ->orWhereHas('brand', function ($q) use ($value) {
-                                                $q->where('name', 'like', '%'.$value.'%');
-                                            })
-                                            ->orWhere('identification_number', 'like', '%'.$value.'%')
-                                            ->orWhere('product_number', 'like', '%'.$value.'%')
-                                            
-                                            ;
-                                    })->get();
-            }elseif ($this->department == "asset") {
-                 $this->products = Product::with('brand:id,name','assets:id,product_id,asset_number,serial_number,balance,weight,total,currency_id')
-                                    ->where(function ($query) use ($value) {
-                                        $query
-                                        ->where('department', $this->department)
-                                        ->whereHas('assets', function ($query) {
-                                            $query->where('status', 1)->where('balance', '>', 0);
-                                        })
-                                        ->where('name', 'like', '%'.$value.'%')
-                                            ->orWhereHas('brand', function ($q) use ($value) {
-                                                $q->where('name', 'like', '%'.$value.'%');
-                                            })
-                                            ->orWhere('identification_number', 'like', '%'.$value.'%')
-                                            ->orWhere('product_number', 'like', '%'.$value.'%')
-                                            
-                                            ;
-                                    })->get();
-            }elseif ($this->department == "inventory") {
-                 $this->products = Product::with('brand:id,name', 'inventories:id,product_id,inventory_number,serial_number,balance,weight,total,currency_id')
-                                    ->where(function ($query) use ($value) {
-                                        $query
-                                        ->where('department', $this->department)
-                                        ->whereHas('inventories', function ($query) {
-                                            $query->where('status', 1)->where('balance', '>', 0);
-                                        })
-                                        ->where('name', 'like', '%'.$value.'%')
-                                            ->orWhereHas('brand', function ($q) use ($value) {
-                                                $q->where('name', 'like', '%'.$value.'%');
-                                            })
-                                            ->orWhere('identification_number', 'like', '%'.$value.'%')
-                                            ->orWhere('product_number', 'like', '%'.$value.'%')
-                                            
-                                            ;
-                                    })->get();
-            }
-           
-        }else{
-            if ($this->department == "asset") {
-                $this->products = Product::with('brand','assets')
-                ->where('department', $this->department)
-                ->whereHas('assets', function ($query) {
-                    $query->where('status', 1)
-                        ->where('balance', '>', 0);
-                })
-                ->orderBy('name', 'asc')
-                ->get();
-            }elseif ($this->department == "inventory") {
-                $this->products = Product::with('brand', 'inventories')
-                ->where('department', $this->department)
-                ->whereHas('inventories', function ($query) {
-                    $query->where('status', 1)
-                        ->where('balance', '>', 0);
-                })
-                ->orderBy('name', 'asc')
-                ->get();
-            }elseif ($this->department == "tyre") {
-                $this->products = Product::with('brand','tyres')
-                ->where('department', $this->department)
-                ->whereHas('tyres', function ($query) {
-                    $query->where('status', 1);
-                })
-                ->orderBy('name', 'asc')
-                ->get();
-            }
+            $query->where(function ($q) use ($value) {
+                $q->where('name', 'like', "%{$value}%")
+                ->orWhere('product_number', 'like', "%{$value}%")
+                ->orWhere('identification_number', 'like', "%{$value}%")
+                ->orWhereHas('brand', function ($b) use ($value) {
+                    $b->where('name', 'like', "%{$value}%");
+                });
+            });
         }
-           
+
+        $this->products = $query->orderBy('name', 'asc')->get();
     }
 
-    public function updatedSearchTicket($query){
-        if (filled($query)) {
-           $this->tickets = Ticket::whereYear('created_at',date('Y'))
-            ->where('status',1)
-            ->where('ticket_number','like', '%'.$this->searchTicket.'%')
-            ->orWhere('in_date','like', '%'.$this->searchTicket.'%')
-            ->orWhereHas('booking', function ($query) {
-                return $query->where('booking_number', 'like', '%'.$this->searchTicket.'%')
-                            ->orWhereHas('employee', function ($q2) {
-                            $q2->where(DB::raw("concat(name, ' ', surname)"), 'LIKE', "%".$this->searchTicket."%");
-                });
-            })
-            ->orWhereHas('booking', function ($q) {
-                    $q->whereHas('employees', function ($query) {
-                        $query->where(DB::raw("concat(name, ' ', surname)"), 'LIKE', "%".$this->searchTicket."%");
-                    });
+    public function updatedSearchTicket($value)
+    {
+        $search = trim($value);
+
+        $baseQuery = Ticket::query()
+            ->whereYear('created_at', date('Y'))
+            ->where('status', 1);
+
+        if (filled($search)) {
+            $baseQuery->where(function ($q) use ($search) {
+                $q->where('ticket_number', 'like', "%{$search}%")
+                ->orWhere('in_date', 'like', "%{$search}%")
+                ->orWhereHas('booking', function ($qb) use ($search) {
+                    $qb->where('booking_number', 'like', "%{$search}%")
+                        ->orWhereHas('employee', function ($q2) use ($search) {
+                            $q2->where(DB::raw("concat(name, ' ', surname)"), 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('employees', function ($q3) use ($search) {
+                            $q3->where(DB::raw("concat(name, ' ', surname)"), 'like', "%{$search}%");
+                        });
                 })
-            ->orWhereHas('service_type', function ($query) {
-                return $query->where('name', 'like', '%'.$this->searchTicket.'%');
-            })
-            ->orWhereHas('horse', function ($query) {
-                return $query->where('registration_number', 'like', '%'.$this->searchTicket.'%')
-                             ->orWhere('fleet_number', 'like', '%'.$this->searchTicket.'%');
-            })
-            ->orWhereHas('vehicle', function ($query) {
-                return $query->where('registration_number', 'like', '%'.$this->searchTicket.'%')
-                            ->orWhere('fleet_number', 'like', '%'.$this->searchTicket.'%');
-            })
-            ->orWhereHas('trailer', function ($query) {
-                return $query->where('registration_number', 'like', '%'.$this->searchTicket.'%')
-                             ->orWhere('fleet_number', 'like', '%'.$this->searchTicket.'%');
-            })->orderBy('created_at','desc')
-           ->get();
-        }else{
-             $this->tickets = Ticket::whereYear('created_at',date('Y'))->where('status',1)->orderBy('created_at','desc')->get();
+                ->orWhereHas('service_type', function ($qs) use ($search) {
+                    $qs->where('name', 'like', "%{$search}%");
+                })
+                ->orWhereHas('horse', function ($qh) use ($search) {
+                    $qh->where('registration_number', 'like', "%{$search}%")
+                        ->orWhere('fleet_number', 'like', "%{$search}%");
+                })
+                ->orWhereHas('vehicle', function ($qv) use ($search) {
+                    $qv->where('registration_number', 'like', "%{$search}%")
+                        ->orWhere('fleet_number', 'like', "%{$search}%");
+                })
+                ->orWhereHas('trailer', function ($qt) use ($search) {
+                    $qt->where('registration_number', 'like', "%{$search}%")
+                        ->orWhere('fleet_number', 'like', "%{$search}%");
+                });
+            });
         }
+
+        $this->tickets = $baseQuery
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+    public function loadProducts()
+    {
+        $map = [
+            'asset'     => 'assets',
+            'inventory' => 'inventories',
+            'tyre'      => 'tyres',
+        ];
+
+        $relation = $map[$this->department] ?? null;
+
+        if (! $relation) {
+            $this->products = collect();
+            return;
+        }
+
+        $this->products = Product::with('brand', $relation)
+            ->where('department', $this->department)
+            ->whereHas($relation, function ($q) use ($relation) {
+                $q->where('status', 1);
+
+                // Only enforce balance for stock-type departments
+                if (in_array($relation, ['assets', 'inventories'])) {
+                    $q->where('balance', '>', 0);
+                }
+            })
+            ->orderBy('name', 'asc')
+            ->get();
     }
 
     public function mount($department){
@@ -206,34 +195,8 @@ class Index extends Component
         $this->tickets = Ticket::whereYear('created_at',date('Y'))->where('status',1)->orderBy('created_at','desc')->get();
         $this->all_departments = Department::orderBy('name','asc')->get();
         $this->branches = Branch::orderBy('name','asc')->get();
-
-        if ($this->department == "asset") {
-            $this->products = Product::with('brand','assets')
-            ->where('department', $this->department)
-            ->whereHas('assets', function ($query) {
-                $query->where('status', 1)
-                    ->where('balance', '>', 0);
-            })
-            ->orderBy('name', 'asc')
-            ->get();
-        }elseif ($this->department == "inventory") {
-            $this->products = Product::with('brand', 'inventories')
-            ->where('department', $this->department)
-            ->whereHas('inventories', function ($query) {
-                $query->where('status', 1)
-                    ->where('balance', '>', 0);
-            })
-            ->orderBy('name', 'asc')
-            ->get();
-        }elseif ($this->department == "tyre") {
-             $this->products = Product::with('brand','tyres')
-            ->where('department', $this->department)
-            ->whereHas('tyres', function ($query) {
-                $query->where('status', 1);
-            })
-            ->orderBy('name', 'asc')
-            ->get();
-        }
+        $this->reset(['searchProduct', 'searchTicket']);
+        $this->loadProducts();
        
        
      
@@ -243,7 +206,7 @@ class Index extends Component
         if (!is_null($id)) {
             $employee = Employee::find($id);
             if ($employee) {
-                $this->asset_department_id = $employee->departments->first()->id;
+                $this->asset_department_id = $employee->departments->first()?->id;
                 $this->branch_id = $employee->branch_id;
             }
           
@@ -266,6 +229,7 @@ class Index extends Component
             $inventory = Inventory::find($id);
             if ($inventory && $this->expand == True) {
                 $this->weight[$key] = $inventory->balance;
+                $this->max_weight[$key] = $inventory->balance;
             }
         }
          
@@ -291,11 +255,11 @@ class Index extends Component
             $product = Product::find($id);
 
             if ($product && $this->department == "inventory") {
-                $this->max[$key] = $product->inventories->count();
+                $this->max[$key] = $product->inventories->where('status',1)->where('balance','>',0)->count();
             }elseif ($product && $this->department == "tyre") {
-                $this->max[$key] = $product->tyres->count();
+                $this->max[$key] = $product->tyres->where('status',1)->count();
             }elseif ($product && $this->department == "asset") {
-                $this->max[$key] = $product->assets->count();
+                $this->max[$key] = $product->assets->where('status',1)->where('balance','>',0)->count();
             }
 
         
@@ -359,6 +323,13 @@ class Index extends Component
     public function store(){
 
         DB::transaction(function () {
+
+        $this->validate([
+            'selectedEmployee' => [
+                'nullable',
+                Rule::exists('employees', 'id'),
+            ],
+        ]);
         
         $dispatch = new Dispatch;
         $dispatch->user_id = Auth::user()->id;
@@ -382,6 +353,7 @@ class Index extends Component
         if ($this->expand == True) {
 
             if ($this->department == "inventory") {
+
                 foreach ($this->selectedInventory as $key => $id) {
 
                     $amount = 0;
