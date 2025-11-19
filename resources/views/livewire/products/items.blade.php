@@ -1,4 +1,10 @@
 <div>
+  @if (Auth::user()->is_admin())
+      <a href="#" wire:click.prevent="deleteShow()" class="btn btn-danger"><i class="fa fa-trash"></i>Delete All Inventory Items</a>
+      <br>
+      <br>
+  @endif
+   
     <table id="itemsTable" class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
         <thead >
         <th class="th-sm">Product
@@ -62,8 +68,8 @@
                 
             </td>
             <td>
-                @if ($item->subtotal_incl)
-                    {{$item->currency ? $item->currency->symbol : ""}}{{number_format($item->subtotal_incl,2)}}  
+                @if ($item->total)
+                    {{$item->currency ? $item->currency->symbol : ""}}{{number_format($item->total,2)}}  
                 @endif
             </td>
             <td><span class="badge bg-{{$item->status == 1 ? "success" : "danger"}}">{{$item->status == 1 ? "Instore" : "Out Of stock"}}</span></td>
@@ -76,6 +82,25 @@
 
 
       </table>
+
+      <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal fade" id="removeModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content bg-danger">
+                <div class="modal-body">
+                   <center> <strong>Are you sure you want to delete every {{$product?->name}} in inventory</strong> </center>
+                </div>
+                <form wire:submit.prevent="deleteItems()" >
+                <div class="modal-footer no-border">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn bg-white btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                        <button type="submit" class="btn bg-black btn-wide btn-rounded" ><i class="fa fa-trash"></i>Delete</button>
+                    </div>
+                    <!-- /.btn-group -->
+                </div>
+            </form>
+            </div>
+        </div>
+    </div>
 
     
 </div>

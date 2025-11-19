@@ -75,6 +75,7 @@ class Create extends Component
     public $selectedQuotation;
     public $quotations;
     public $haulage_type;
+    public $trip_types;
     public $selectedTripType;
     public $shifts;
     public $shift = False;

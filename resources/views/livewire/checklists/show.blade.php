@@ -92,7 +92,7 @@
                             <tr>
                                 <td>{{$result->checklist_item->checklist_sub_category ? $result->checklist_item->checklist_sub_category->name : ""}}</td>
                                 <td>
-                                    {{$result->checklist_item ? $result->checklist_item->name : ""}}
+                                    {{$result->checklist_item ? $result->checklist_item->name : ""}} <small>(<strong>{{$result->category_checklist ? $result->category_checklist->condition : ""}}</strong>)</small>
                                 </td>
                                 <td><span class="badge bg-{{($result->status == '1') ? 'success' : 'danger' }}">{{($result->status == '1') ? 'Yes' : 'No' }}</span></td>
                                 <td>{{$result->comments}}</td>

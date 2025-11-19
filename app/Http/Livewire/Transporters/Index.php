@@ -10,14 +10,15 @@ use Livewire\Component;
 use App\Models\Corridor;
 use App\Models\Document;
 use App\Models\Transporter;
+use Maatwebsite\Excel\Excel;
 use Livewire\WithFileUploads;
 use App\Mail\AccountCreationMail;
 use App\Models\TransporterContact;
+use Illuminate\Support\Facades\DB;
 use App\Exports\TransportersExport;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
-use Maatwebsite\Excel\Excel;
 use Illuminate\Support\Facades\Session;
 
 class Index extends Component
@@ -222,7 +223,10 @@ class Index extends Component
     }
 
     public function store(){
-        // try{
+
+        $this->validate();
+        
+        DB::transaction(function () {
 
         $pin = $this->generatePIN();
 
@@ -239,7 +243,7 @@ class Index extends Component
             $company = Auth::user()->employee->company;
         }
 
-        Mail::to($this->email)->send(new AccountCreationMail($user, $company,$pin));
+        
 
         $transporter = new Transporter;
         $transporter->creator_id = Auth::user()->id;
@@ -358,14 +362,8 @@ class Index extends Component
 
         return redirect(request()->header('Referer'));
 
-        // }
-        //     catch(\Exception $e){
-        //     // Set Flash Message
-        //     $this->dispatchBrowserEvent('alert',[
-        //         'type'=>'error',
-        //         'message'=>"Something went wrong while creating transporter!!"
-        //     ]);
-        // }
+       
+    } );
     }
 
     public function edit($id){
@@ -386,9 +384,12 @@ class Index extends Component
 
     public function update()
     {
+
+         DB::transaction(function () {
+
         if ($this->transporter_id) {
             
-            // try{
+        
             $transporter = Transporter::find($this->transporter_id);
             $transporter->user_id = Auth::user()->id;
             $transporter->name = $this->name;
@@ -407,18 +408,11 @@ class Index extends Component
                 'type'=>'success',
                 'message'=>"Transporter Updated Successfully!!"
             ]);
-            // }
-            //     catch(\Exception $e){
-            //     // Set Flash Message
-            //     $this->dispatchBrowserEvent('alert',[
-            //         'type'=>'error',
-            //         'message'=>"Something went wrong while updating transporter!!"
-            //     ]);
-            // }
-
+         
             return redirect(request()->header('Referer'));
 
         }
+    } );
     }
     public function render()
     {

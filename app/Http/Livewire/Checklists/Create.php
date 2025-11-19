@@ -79,6 +79,7 @@ class Create extends Component
         $this->checklist_categories = ChecklistCategory::orderBy('name','asc')->get();
         $this->checklist_sub_categories = ChecklistSubCategory::orderBy('name','asc')->get();
         $this->checklist_items = collect();
+        $this->category_checklists = collect();
         $this->vehicles = Vehicle::orderBy('registration_number','asc')->get();
         $this->drivers = Driver::query()
                             ->join('employees', 'drivers.employee_id', '=', 'employees.id')
@@ -95,9 +96,7 @@ class Create extends Component
     
     public function updatedSelectedChecklistCategory($id){
         if (!is_null($id)) {
-       
             $this->checklist_category = ChecklistCategory::find($id);
-          
         }
     }
 
@@ -199,6 +198,7 @@ class Create extends Component
         $checklist->save();
 
         if ($this->checklist_category->name != "Tyre Inspection") {
+
                 if (isset($this->status)) {
                     foreach ($this->status as $key => $value) {
                         $result = new ChecklistResult;
@@ -259,7 +259,9 @@ class Create extends Component
                     if (isset($this->notes[$key])) {
                         $result->notes = $this->notes[$key];
                     }
-                    $result->tyre_id = $key;
+                    $result->tyre_assignment_id = $key;
+                    $tyre_assignment = TyreAssignment::find($key);
+                    $result->tyre_id = $tyre_assignment?->tyre_id;
                     $result->save();
                 }
             }
@@ -342,29 +344,31 @@ class Create extends Component
                     ->get();
                 }
 
-                if ( $this->tyre_assignments) {
-                    foreach ($this->tyre_assignments as $ta) {
-                        $id = $ta->tyre->id;
-                        $this->tyre_assignment_id[$id] = $ta->id;
-                    }
-                }
+                // if ( $this->tyre_assignments) {
+                //     foreach ($this->tyre_assignments as $ta) {
+                //         $id = $ta->tyre->id;
+                //         $this->tyre_assignment_id[$id] = $ta->id;
+                //     }
+                // }
             }
 
         if (isset($this->selectedChecklistCategory)) {
 
             if ($this->checklist_category->name == "Stock on board") {
-                if ($this->type === "Horse") {
-                   $this->category_checklists = CategoryChecklist::where('checklist_category_id',$this->selectedChecklistCategory)
+
+                if ($this->type === "Horse" && filled($this->horse_id)) {
+                   $this->category_checklists = CategoryChecklist::query()->where('checklist_category_id',$this->selectedChecklistCategory)
                    ->where('horse_id',$this->horse_id)->get();
-                }elseif ($this->type === "Vehicle") {
-                   $this->category_checklists = CategoryChecklist::where('checklist_category_id',$this->selectedChecklistCategory)
+                }elseif ($this->type === "Vehicle" && filled($this->vehicle_id)) {
+                   $this->category_checklists = CategoryChecklist::query()->where('checklist_category_id',$this->selectedChecklistCategory)
                    ->where('vehicle_id',$this->vehicle_id)->get();
-                }elseif ($this->type === "Trailer") {
-                    $this->category_checklists = CategoryChecklist::where('checklist_category_id',$this->selectedChecklistCategory)
+                }elseif ($this->type === "Trailer" && filled($this->trailer_id)) {
+                    $this->category_checklists = CategoryChecklist::query()->where('checklist_category_id',$this->selectedChecklistCategory)
                    ->where('trailer_id',$this->trailer_id)->get();
                 }
+
             }else{
-                 $this->category_checklists = CategoryChecklist::where('checklist_category_id',$this->selectedChecklistCategory)->get();
+                 $this->category_checklists = CategoryChecklist::query()->where('checklist_category_id',$this->selectedChecklistCategory)->get();
             }
            
         }

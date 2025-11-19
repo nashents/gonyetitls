@@ -15,6 +15,7 @@ class Show extends Component
 
 
     public $products;
+    public $product;
     public $product_id;
 
 
@@ -22,6 +23,8 @@ class Show extends Component
         $this->product = Product::find($id);
     }
 
+
+   
 
 
     public function render()

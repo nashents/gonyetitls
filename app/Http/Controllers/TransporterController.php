@@ -106,7 +106,7 @@ class TransporterController extends Controller
     {
         
         $transporter->delete();
-        Session::flash('success','Transporter Successfully Deleted');
+        Session::flash('success','Transporter Deleted Successfully!!');
         return redirect()->route('transporters.index');
     }
 }

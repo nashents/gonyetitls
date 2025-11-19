@@ -81,6 +81,7 @@ class Edit extends Component
 
         $checklist = Checklist::find($id);
         $this->checklist_id = $id;
+
         if ($checklist->horse_id) {
             $this->type = 'Horse';
         }
@@ -104,12 +105,13 @@ class Edit extends Component
         $this->next_inspection_at = $checklist->next_inspection_at;
 
         $results = $checklist->checklist_results; // ->with('checklist_item') if you need it
+
         foreach ($results as $result) {
 
             if ($checklist->checklist_category->name == "Tyre Inspection") {
-                    $id = $result->tyre_id;
+                    $id = $result->tyre_assignment_id;
             }else{
-                 $id = $result->checklist_item_id;
+                 $id = $result->category_checklist_id;
                
             }
             
@@ -127,7 +129,8 @@ class Edit extends Component
             $this->action_required[$id] = $result->action_required ?? '';
             $this->rating[$id] = $result->rating ?? '';
             $this->notes[$id] = $result->notes ?? '';
-            $this->tyre_assignment_id[$id] = $result->tyre_assignment_id ?? '';
+            $this->tyre_id[$id] = $result->tyre_id ?? '';
+            // $this->tyre_assignment_id[$id] = $result->tyre_assignment_id ?? '';
 
             // $checklist->checklist_category->name == "Tyre Inspection" ? $this->tyre_id[$id] : $this->checklist_item_id[$id] = $id;  // optional hidden field you had
         }
@@ -247,14 +250,16 @@ class Edit extends Component
                 if (isset($this->tread_depth_mm)) {
                     foreach ($this->tread_depth_mm as $key => $value) {
 
+                        $tyre_assignment = TyreAssignment::find($key);
+
                         ChecklistResult::updateOrCreate(
                         [
                             'checklist_id'      => $checklist->id,
-                            'tyre_id' => $key,
+                            'tyre_assignment_id' => $key,
                         ],
                         [
                             'tread_depth_mm'   => $this->tread_depth_mm[$key],
-                            'tyre_assignment_id' => $this->tyre_assignment_id[$key],
+                            'tyre_id' => $tyre_assignment?->tyre_id,
                             'pressure_psi' => $this->pressure_psi[$key],
                             'valve_ok' => $this->valve_ok[$key],
                             'sidewall_damage' => $this->sidewall_damage[$key],

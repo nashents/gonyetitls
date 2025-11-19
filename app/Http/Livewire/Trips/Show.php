@@ -193,6 +193,22 @@ class Show extends Component
     public $role_names = [];
     public $department_names = [];
     public $rank_names = [];
+
+    public $inputs = [];
+    public $i = 1;
+    public $n = 1;
+
+    public function add($i)
+    {
+        $i = $i + 1;
+        $this->i = $i;
+        array_push($this->inputs ,$i);
+    }
+
+    public function remove($i)
+    {
+        unset($this->inputs[$i]);
+    }
    
 
     private function initializeUserDetails() {
@@ -342,17 +358,9 @@ class Show extends Component
         return $gate_pass_number;
     }
 
-    public function add($i)
-    {
-        $i = $i + 1;
-        $this->i = $i;
-        array_push($this->inputs ,$i);
-    }
+    
 
-    public function remove($i)
-    {
-        unset($this->inputs[$i]);
-    }
+
     public function updated($value){
         $this->validateOnly($value);
     }
