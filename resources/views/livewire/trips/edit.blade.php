@@ -108,16 +108,38 @@
                                     <select class="form-control" wire:model.debounce.300ms="selectedTrip" size="4">
                                         <option value="">Select Initial Trip </option>
                                         @if ($trips)
-                                            @foreach ($trips as $trip)
-                                                <option value="{{$trip->id}}">{{$trip->trip_number}}{{$trip->trip_ref ? '/'.$trip->trip_ref : ""}} | {{$trip->start_date}} | {{$trip->customer ? $trip->customer->name : ""}} | {{$trip->horse ? $trip->horse->registration_number : ""}} | 
-                                                    @if ($this->getDestination($trip->from))
-                                                    {{$this->getDestination($trip->from)->country ? $this->getDestination($trip->from)->country->name : ""}} {{$this->getDestination($trip->from) ? $this->getDestination($trip->from)->city : ""}}
+                                            @foreach ($trips as $initial_trip)
+                                                <option value="{{ $initial_trip->id }}" 
+                                                    {{ isset($trip) && $initial_trip->id == $trip->id ? 'disabled' : '' }}
+                                                    >
+                                                    {{ $initial_trip->trip_number }}{{ $initial_trip->trip_ref ? '/' . $initial_trip->trip_ref : '' }} {{ $initial_trip->start_date ? " | ".$initial_trip->start_date : "" }} 
+                                                    @if ($initial_trip->customer)
+                                                        {{ $initial_trip->customer->name ? " | ".$initial_trip->customer->name : "" }} 
                                                     @endif 
-                                                    {{$trip->loading_point ? "(".$trip->loading_point->name.")" : ""}} - 
-                                                    @if ($this->getDestination($trip->to))
-                                                    {{$this->getDestination($trip->to)->country ? $this->getDestination($trip->to)->country->name : ""}} {{$this->getDestination($trip->to) ? $this->getDestination($trip->to)->city : ""}}
-                                                    @endif 
-                                                    {{$trip->offloading_point ? "(".$trip->offloading_point->name.")" : ""}}
+                                                    @if ($initial_trip->horse)
+                                                        {{ $initial_trip->horse->registration_number ? " | ".$initial_trip->horse->registration_number : ""}} {{ $initial_trip->horse->fleet_number ? " | ".$initial_trip->horse->fleet_number : ""}}
+                                                    @endif
+                                                    @if ($from = $this->getDestination($initial_trip->from))
+                                                        @if ($from)
+                                                            @if ($from->country)
+                                                                {{  $from->country->name ? " | ".$from->country->name : "" }}
+                                                            @endif
+                                                             {{ $from->city ?? '' }}
+                                                        @endif    
+                                                    
+                                                    @endif
+                                                    {{ $initial_trip->loading_point ? '(' . $initial_trip->loading_point->name . ')' : '' }} -
+                                                    @if ($to = $this->getDestination($initial_trip->to))
+                                                        @if ($to)
+
+                                                            @if ($to->country)
+                                                                {{  $to->country->name ? $to->country->name : "" }}
+                                                            @endif
+                                                        @endif
+                                                        {{ $to->city ?? '' }}
+                                                    @endif
+                                                     {{ $initial_trip->offloading_point ? '(' . $initial_trip->offloading_point->name . ')' : '' }}
+                                                    
                                                 </option>
                                             @endforeach
                                         @endif

@@ -843,10 +843,6 @@ class Edit extends Component
         $this->user = Auth::user();
         $this->employee =  $this->user->employee;
         $this->quotations = Quotation::with('customer')
-                                    ->whereYear('date', date('Y'))
-                                    ->whereMonth('date', date('m'))
-                                    ->where('status', true)
-                                    ->whereDate('expiry', '>=', now())
                                     ->latest()
                                     ->get();
         $this->shifts = Shift::where('for','Trips')->where('status','1')->latest()->get();
@@ -1021,7 +1017,18 @@ class Edit extends Component
          $this->selectedTripType = $this->trip->trip_type_id;
          $this->haulage_type = $this->trip->haulage_type;
          $this->trip_type_name = TripType::find($this->trip->trip_type_id) ? TripType::find($this->trip->trip_type_id)->name : "";
-        
+           
+        if(isset($this->trip_type_name) && $this->trip_type_name === "Return"){
+            $this->trips = Trip::select('id', 'trip_number', 'trip_ref', 'customer_id', 'horse_id', 'from', 'to', 'loading_point_id', 'offloading_point_id')
+            ->with([
+                'customer:id,name',
+                'horse:id,registration_number',
+                'loading_point:id,name',
+                'offloading_point:id,name'
+            ])
+            ->orderBy('start_date', 'desc')
+            ->get();
+        }
           $this->trip_group_id = $this->trip->trip_group_id;
          $this->selectedBroker = $this->trip->broker_id;
          $this->consignee_id = $this->trip->consignee_id;
@@ -1569,7 +1576,6 @@ class Edit extends Component
  
         DB::transaction(function () {
 
-        //   try{
           $trip = Trip::find($this->trip_id);
           $trip->trip_ref = $this->trip_ref;
           $trip->user_id =  $this->user->id ?: null;

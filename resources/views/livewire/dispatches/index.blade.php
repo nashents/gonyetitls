@@ -154,6 +154,7 @@
                                 @error('date') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
+                        
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="purchase_date">Requested By</label>
