@@ -430,6 +430,7 @@ class Index extends Component
        
 
         $dispatch_total = 0;
+
         if($this->department == "tyre"){
             $collection_item = $this->selectedTyre;
         }elseif($this->department == "asset"){
@@ -546,6 +547,8 @@ class Index extends Component
             }
         }
     }
+
+    
     public function ProductFIFO($dispatch){
        
 

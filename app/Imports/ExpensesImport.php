@@ -39,7 +39,7 @@ class ExpensesImport implements ToCollection,
             
             $name        = $row->get('name');
             $currency       = Currency::find($row->get('currency'));
-            $payment_method = PaymentMethod::firstOrCreate(['name' => trim($row->get('payment_method'))]);
+            $payment_method = PaymentMethod::firstOrCreate(['name' => trim($row->get('payment_method'))], ['user_id' => Auth::user()->id]);
             $amount = $row->get('amount');
             $account = Account::where('name', 'Trip Expense')->first();
             
