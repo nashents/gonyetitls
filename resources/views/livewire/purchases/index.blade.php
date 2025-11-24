@@ -17,12 +17,12 @@
                                 <div class="col-lg-3">
                                     <div class="input-group">
                                         <span class="input-group-addon">
-                                  Filter By
-                                  </span>
-                                  <select wire:model.debounce.300ms="purchase_order_filter" class="form-control" aria-label="..." >
-                                    <option value="created_at">Purchase Order Created At</option>
-                                    <option value="date">Purchase Order Date</option>
-                              </select>
+                                            Filter By
+                                        </span>
+                                        <select wire:model.debounce.300ms="purchase_order_filter" class="form-control" aria-label="..." >
+                                            <option value="created_at">Purchase Order Created At</option>
+                                            <option value="date">Purchase Order Date</option>
+                                        </select>
                                     </div>
                                     <!-- /input-group -->
                                 </div>
@@ -30,18 +30,18 @@
                                 <div class="col-lg-2" style=" margin-left:-15px;">
                                     <div class="input-group">
                                         <span class="input-group-addon">
-                                  From
-                                  </span>
-                                  <input type="date" wire:model.debounce.300ms="from" class="form-control" aria-label="...">
+                                            From
+                                        </span>
+                                        <input type="date" wire:model.debounce.300ms="from" class="form-control" aria-label="...">
                                     </div>
                                     <!-- /input-group -->
                                 </div>
-                                <div class="col-lg-2" style="margin-left: 30px">
+                                <div class="col-lg-2" >
                                     <div class="input-group">
                                         <span class="input-group-addon">
-                                  To
-                                  </span>
-                                  <input type="date" wire:model.debounce.300ms="to" class="form-control" aria-label="...">
+                                            To
+                                        </span>
+                                        <input type="date" wire:model.debounce.300ms="to" class="form-control" aria-label="...">
                                     </div>
                                     <!-- /input-group -->
                                 </div>
@@ -261,7 +261,8 @@
                                         <option value="{{$vendor->id}}">{{$vendor->name}}</option>
                                     @endforeach
                                     </select>
-                                    <small>  <a href="#" data-toggle="modal" data-target="#vendorModal" ><i class="fa fa-plus-square-o"></i> New Vendor</a></small> 
+                                    <small>  <a href="#" data-toggle="modal" data-target="#vendorModal" ><i class="fa fa-plus-square-o"></i> New Vendor</a></small><a href="#" wire:click.prevent="refresh('vendors')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
+                                <br> 
                                     <br>
                                     <small style="color: green">Select the prefered vendor of choice for the purchase order.</small>
                                     @error('vendor_id') <span class="text-danger error">{{ $message }}</span>@enderror
@@ -309,7 +310,7 @@
                                     <option value="{{$vendor->id}}">{{$vendor->name}}</option>
                                 @endforeach
                                 </select>
-                                <small>  <a href="#" data-toggle="modal" data-target="#vendorModal" ><i class="fa fa-plus-square-o"></i> New Vendor</a></small> 
+                                <small>  <a href="#" data-toggle="modal" data-target="#vendorModal" ><i class="fa fa-plus-square-o"></i> New Vendor</a></small><a href="#" wire:click.prevent="refresh('vendors')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                                 <br>
                                 <small style="color: green">Select the prefered vendor of choice for the purchase order.</small>
                                 @error('vendor_id') <span class="text-danger error">{{ $message }}</span>@enderror
@@ -363,7 +364,7 @@
                                       <option value="{{$account->id}}">{{$account->name}}</option>
                                     @endforeach
                                 </select>
-                                <small>  <a href="{{ route('accounts.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Category</a></small> 
+                                <small>  <a href="{{ route('accounts.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Category</a></small><a href="#" wire:click.prevent="refresh('accounts')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                                 @error('selectedAccount') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
                         </div>
@@ -387,11 +388,11 @@
                                     @endforeach
                                 </select>
                                 @if ($department == "tyre")
-                                    <small><a href="{{ route('tyre_products.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Product</a></small> 
+                                    <small><a href="{{ route('tyre_products.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Product</a></small><a href="#" wire:click.prevent="refresh('products')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                                 @elseif ($department == "inventory")
-                                    <small><a href="{{ route('inventory_products.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Product</a></small> 
+                                    <small><a href="{{ route('inventory_products.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Product</a></small><a href="#" wire:click.prevent="refresh('products')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                                 @elseif ($department == "asset")
-                                    <small><a href="{{ route('products.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Product</a></small> 
+                                    <small><a href="{{ route('products.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Product</a></small><a href="#" wire:click.prevent="refresh('products')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                                 @endif
                                 @error('selectedProduct.0') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>

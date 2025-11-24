@@ -17,7 +17,6 @@ use App\Models\Currency;
 use App\Models\Purchase;
 use App\Models\VendorType;
 use App\Models\BillExpense;
-use App\Models\Measurement;
 use App\Models\ExchangeRate;
 use App\Models\CategoryValue;
 use App\Models\GoodsReceived;
@@ -58,7 +57,6 @@ class Edit extends Component
     public $balance;
   
     public $purchase_date;
-    public $total;
     public $residual_value;
     public $weight ;
 
@@ -74,6 +72,7 @@ class Edit extends Component
     // Items Vars
 
     public $products;
+    public $measurement ;
     public $selectedProduct ;
     public $serial_number ;
     public $tax_rate ;
@@ -177,15 +176,13 @@ class Edit extends Component
         $this->selectedAccount = $asset->account_id;
         $this->purchase_date = $asset->purchase_date;
         $this->selectedPurchase = $asset->purchase_id;
+        $this->measurement = $asset->measurement;
         $this->selectedGoodsReceived = $asset->goods_received_id;
         $this->qty = $asset->qty;
         $this->to_bills = $asset->bill ? True : False;
         $this->amount = $asset->amount;
         $this->cost = $asset->cost;
         $this->tax_amount = $asset->tax_amount;
-        $this->subtotal = $asset->subtotal;
-        $this->subtotal_incl = $asset->subtotal_incl;
-        $this->total = $asset->total;
         $this->selectedTax = $asset->tax_id;
         $this->residual_value = $asset->residual_value;
         $this->serial_number = $asset->serial_number;
@@ -230,20 +227,20 @@ class Edit extends Component
         }
     }
 
-          public function updatedSelectedPurchaseProduct($id, $key){
+          public function updatedSelectedPurchaseProduct($id){
         if (!is_null($id)) {
             $purchase_product = PurchaseProduct::find($id);
             if (isset($purchase_product)) {
-                 $this->selectedProduct[$key] = $purchase_product->product_id;
-                $this->amount[$key] = $purchase_product->amount;
-                $this->item_description[$key] = $purchase_product->product->description;
-                $this->qty[$key] = $purchase_product->qty;
-                $this->weight[$key] = 1;
+                 $this->selectedProduct = $purchase_product->product_id;
+                $this->amount = $purchase_product->amount;
+                $this->item_description = $purchase_product->product->description;
+                $this->measurement = $purchase_product->product->unit_of_measure;
+              
                 if($purchase_product->tax_id){
-                    $this->selectedTax[$key] = $purchase_product->tax_id;
+                    $this->selectedTax = $purchase_product->tax_id;
                     $tax = Account::find($purchase_product->tax_id);
                     if (isset($tax)) {
-                        $this->tax_rate[$key] = $tax->rate;
+                        $this->tax_rate = $tax->rate;
                     }
                 }
                 
@@ -258,12 +255,10 @@ class Edit extends Component
             if (isset($product)) {
                 if ($product->price) {
                     $this->amount = $product->price;
-                    $this->item_description = $product->description;
                 }
-                $this->qty = 1;
-                $this->weight = 1;
-               
-          
+                $this->item_description = $product->description;
+                $this->measurement = $product->unit_of_measure;
+            
                 if ($product->tax_id) {
                     $this->selectedTax = $product->tax_id;
                     $tax = Account::find($product->tax_id);
@@ -311,7 +306,15 @@ class Edit extends Component
             ]);
         }
         elseif($category == "products"){
-            $this->products = Product::orderBy('name','asc')->get();
+            $this->products = Product::with('brand')
+            ->where('department', 'asset')
+            ->where('status', true)
+            ->where('buy', true)
+            ->get()
+            ->sortBy([
+                ['name', 'asc'],          // first sort by product name
+                ['brand.name', 'asc'],    // then sort by brand name
+            ]);
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Products Refreshed Successfully!!."
@@ -385,9 +388,9 @@ class Edit extends Component
 
     }
 
-     public function calculateExchangeAmount(){
-        if (($this->total && is_numeric($this->total)) && ($this->exchange_rate && is_numeric($this->exchange_rate)) ) {
-            $this->exchange_amount = $this->exchange_rate * $this->total;
+    public function calculateExchangeAmount($total = null){
+        if (($total && is_numeric($total)) && ($this->exchange_rate && is_numeric($this->exchange_rate)) ) {
+            $this->exchange_amount = $this->exchange_rate * $total;
         }
     }
 
@@ -408,42 +411,40 @@ class Edit extends Component
         $asset->currency_id = $this->selectedCurrency ?? null;
         $asset->amount = $this->amount;
         $asset->cost = $this->cost;
+        $asset->measurement = $this->measurement;
         $asset->qty = $this->qty;
-
-        $subtotal = 0;
-
-        if (isset($this->cost)) {
-            $subtotal = $this->amount + $this->cost;
-            $asset->subtotal = $subtotal ;
-        }else{
-            $subtotal = $this->amount;
-            $asset->subtotal = $subtotal;
-        }
-                        
-    
         $asset->weight = $this->weight;
         $asset->balance = $this->weight;
-
         $asset->tax_rate = $this->tax_rate;
         $asset->tax_id = $this->selectedTax;
 
+        $subtotal = 0;
+        $subtotal_incl = 0;
+        $total = 0;
+
+        if(isset($this->qty) && is_numeric($this->qty) && isset($this->amount) && is_numeric($this->amount) ){
+            if (isset($this->cost) && is_numeric($this->cost)) {
+                $subtotal = ($this->qty * $this->amount) + $this->cost;
+                $asset->subtotal = $subtotal ;
+            }else{
+                $subtotal = ($this->qty * $this->amount);
+                $asset->subtotal = $subtotal;
+            }
+        }
+       
         if (isset($this->tax_rate) && is_numeric($this->tax_rate) && isset($this->selectedTax)) {
-            if (is_numeric($subtotal)) {
                 $tax_amount = ($subtotal * ($this->tax_rate / 100 ));
                 $asset->tax_amount = $tax_amount;
-                $this->total = $tax_amount + $subtotal;
-                $asset->subtotal_incl =  $this->total;
-                $asset->total =  $this->total;
-            }
+                $total = $tax_amount + $subtotal;
+                $asset->subtotal_incl =  $total;
+                $asset->total =  $total;
         }else{
-            if (is_numeric($subtotal)) {
-                $asset->subtotal_incl = $subtotal;
-                $asset->total = $subtotal;
-            }
-            
+            $total = $subtotal;
+            $asset->subtotal_incl = $total;
+            $asset->total = $total;
         }
 
-        $this->calculateExchangeAmount();
+        $this->calculateExchangeAmount($total);
 
         $asset->exchange_rate = $this->exchange_rate;
         $asset->exchange_amount = $this->exchange_amount;
@@ -470,7 +471,7 @@ class Edit extends Component
             if($bill){     
 
             $bill->asset_id = $asset->id;
-            $bill->category = "Inventory Item";
+            $bill->category = "asset Item";
             $bill->bill_date = $asset->purchase_date;
             $bill->account_id = $asset->account_id;
             $account = Account::find($asset->account_id);
@@ -510,7 +511,7 @@ class Edit extends Component
                 $bill->user_id = Auth::user()->id;
                 $bill->bill_number = $this->billNumber();
                 $bill->asset_id = $asset->id;
-                $bill->category = "Inventory Item";
+                $bill->category = "asset Item";
                 $bill->bill_date = $asset->purchase_date;
                 $bill->account_id = $asset->account_id;
                 $account = Account::find($asset->account_id);
@@ -566,7 +567,15 @@ class Edit extends Component
     {
         
         $this->goods_receiveds = GoodsReceived::where('status',1)->where('department','asset')->where('created_at', '>=', Carbon::now()->subMonth())->orderBy('created_at','desc')->get();
-        $this->products = Product::with('brand')->orderBy('name','asc')->where('department','asset')->where('status',True)->where('buy',True)->get()->sortBy('brand.name');
+       $this->products = Product::with('brand')
+        ->where('department', 'asset')
+        ->where('status', true)
+        ->where('buy', true)
+        ->get()
+        ->sortBy([
+            ['name', 'asc'],          // first sort by product name
+            ['brand.name', 'asc'],    // then sort by brand name
+        ]);
         $this->vendor_types = VendorType::orderBy('name','asc')->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();
         $this->purchases = Purchase::where('department','asset')->where('status',1)->where('created_at', '>=', Carbon::now()->subMonth())->where('authorization','approved')->orderBy('created_at','desc')->get();

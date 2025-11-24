@@ -222,74 +222,9 @@ class Index extends Component
         $vendor->street_address = $this->street_address;
         $vendor->status = 1;
         $vendor->save();
+
         $this->vendor_id = $vendor->id;
-
-        if (isset($this->contact_name)) {
-            foreach ($this->contact_name as $key => $value) {
-               $contact = new Contact;
-               $contact->vendor_id = $vendor->id;
-               $contact->category = 'vendor';
-               if (isset($this->contact_name[$key])) {
-                $contact->name = $this->contact_name[$key];
-               }
-               if (isset($this->contact_surname[$key])) {
-                $contact->surname = $this->contact_surname[$key];
-               }
-                if (isset($this->contact_phonenumber[$key])) {
-                    $contact->phonenumber = $this->contact_phonenumber[$key];
-                }
-                if (isset($this->contact_email[$key])) {
-                    $contact->email = $this->contact_email[$key];
-                }
-              
-               $contact->save();
-            }
-        }
-    
-        if (isset($this->file) && isset($this->title) && $this->file != "") {
-           
-            foreach ($this->file as $key => $value) {
-              if(isset($this->file[$key])){
-                  $file = $this->file[$key];
-                  // get file with ext
-                  $fileNameWithExt = $file->getClientOriginalName();
-                  //get filename
-                  $filename = pathinfo($fileNameWithExt, PATHINFO_FILENAME);
-                  //get extention
-                  $extention = $file->getClientOriginalExtension();
-                  //file name to store
-                  $fileNameToStore= $filename.'_'.time().'.'.$extention;
-                  $file->storeAs('/documents', $fileNameToStore, 'my_files');
-
-              }
-              $document = new Document;
-              $document->vendor_id = $vendor->id;
-              $document->category = 'vendor';
-              if(isset($this->title[$key])){
-              $document->title = $this->title[$key];
-              }
-              if (isset($fileNameToStore)) {
-                  $document->filename = $fileNameToStore;
-              }
-              if(isset($this->expires_at[$key])){
-                  $document->expires_at = Carbon::create($this->expires_at[$key])->toDateTimeString();
-                  $today = now()->toDateTimeString();
-                  $expire = Carbon::create($this->expires_at[$key])->toDateTimeString();
-                  if ($today <=  $expire) {
-                      $document->status = 1;
-                  }else{
-                      $document->status = 0;
-                  }
-              }else {
-                $document->status = 1;
-              }
-              $document->save();
-
-            }
-                   # code...
-          
-        }
-
+        
         $this->dispatchBrowserEvent('hide-vendorModal');
         $this->resetInputFields();
         $this->dispatchBrowserEvent('alert',[
@@ -339,7 +274,7 @@ class Index extends Component
             $this->resetPage();
             $this->company = Auth::user()->employee->company;
             $this->purchase_filter = "created_at";
-            $this->bookings = Booking::where('authorization','approved')->where('status',1)->latest()->get();
+            $this->bookings = Booking::where('authorization','approved')->where('status',1)->whereYear('in_date',date('Y'))->latest()->get();
             $this->department = $category;
             $this->products = Product::orderBy('name','asc')->where('department', $this->department)->where('status',True)->where('buy',True)->get();
             $this->vendor_types = VendorType::latest()->get();
@@ -888,6 +823,33 @@ class Index extends Component
 
     }
 
+     public function refresh($category){
+
+        if($category == "vendors"){
+            $this->vendors = Vendor::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Vendors Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "products"){
+            $this->products = Product::where('department', $this->department)->where('status',True)->where('buy',True)->orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Products Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "accounts"){
+             $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
+                return $query->where('name','Expenses');
+            })->orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Accounts Refreshed Successfully!!."
+            ]);
+        }
+    }
+
     public function render()
     {
 
@@ -897,126 +859,45 @@ class Index extends Component
       
         $this->vendors = Vendor::orderBy('name','asc')->get();
 
-        $this->products = Product::orderBy('name','asc')->where('department', $this->department)->where('status',True)->where('buy',True)->get();
-        if (isset($this->from) && isset($this->to)) {
-            if (isset($this->search)) {
-                if ($this->department == "asset") {
-                    return view('livewire.purchases.index',[
-                        'purchases' => Purchase::query()->with('vendor','booking','purchase_products','purchase_products.product')->where('department',$this->department)->whereBetween($this->purchase_filter,[$this->from, $this->to] )
-                        ->where('purchase_number','like', '%'.$this->search.'%')
-                        ->orWhere('date','like', '%'.$this->search.'%')
-                        ->orWhere('description','like', '%'.$this->search.'%')
-                        ->orWhereHas('vendor', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('booking', function ($query) {
-                            return $query->where('booking_number', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('purchase_products.product', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                        })
-                       
-                        ->orderBy($this->purchase_filter,'desc')->paginate(10),
-                      
-                    ]);
-                }else{
-                    return view('livewire.purchases.index',[
-                        'purchases' => Purchase::query()->with('vendor','booking','purchase_products','purchase_products.product')->where('department',$this->department)->whereBetween($this->purchase_filter,[$this->from, $this->to] )
-                        ->where('department',$this->department)
-                        ->where('purchase_number','like', '%'.$this->search.'%')
-                        ->orWhere('date','like', '%'.$this->search.'%')
-                        ->orWhere('description','like', '%'.$this->search.'%')
-                        ->orWhereHas('vendor', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('booking', function ($query) {
-                            return $query->where('booking_number', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('purchase_products.product', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                        })
-                       
-                        ->orderBy($this->purchase_filter,'desc')->paginate(10),
-                      
-                    ]);
-                }
-              
-            }else {
-                if ($this->department == "asset") {
-                    return view('livewire.purchases.index',[
-                        'purchases' => Purchase::query()->with('vendor','purchase_products','purchase_products.product')->whereBetween($this->purchase_filter,[$this->from, $this->to] )->orderBy($this->purchase_filter,'desc')->paginate(10),
-                    ]);
-                }else{
-                    return view('livewire.purchases.index',[
-                        'purchases' => Purchase::query()->with('vendor','purchase_products','purchase_products.product')->where('department',$this->department)->whereBetween($this->purchase_filter,[$this->from, $this->to] )->orderBy($this->purchase_filter,'desc')->paginate(10),
-                    ]);
-                }
-                
-            }
-           
-        }
-        elseif (isset($this->search)) {
-            if ($this->department == "asset") {
-                return view('livewire.purchases.index',[
-                    'purchases' => Purchase::query()->with('vendor','booking','purchase_products','purchase_products.product')->where('department',$this->department)->whereMonth($this->purchase_filter, date('m'))
-                    ->whereYear($this->purchase_filter, date('Y'))
-                    ->where('purchase_number','like', '%'.$this->search.'%')
-                    ->orWhere('date','like', '%'.$this->search.'%')
-                    ->orWhere('description','like', '%'.$this->search.'%')
-                    ->orWhereHas('booking', function ($query) {
-                        return $query->where('booking_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('vendor', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('purchase_products.product', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                   
-                    ->orderBy($this->purchase_filter,'desc')->paginate(10),
-                ]);
-            }else{
-                return view('livewire.purchases.index',[
-                    'purchases' => Purchase::query()->with('vendor','booking','purchase_products','purchase_products.product')->where('department',$this->department)->whereMonth($this->purchase_filter, date('m'))
-                    ->whereYear($this->purchase_filter, date('Y'))
-                    ->where('department',$this->department)
-                    ->where('purchase_number','like', '%'.$this->search.'%')
-                    ->orWhere('date','like', '%'.$this->search.'%')
-                    ->orWhere('description','like', '%'.$this->search.'%')
-                    ->orWhereHas('booking', function ($query) {
-                        return $query->where('booking_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('vendor', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('purchase_products.product', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                   
-                    ->orderBy($this->purchase_filter,'desc')->paginate(10),
-                ]);
-            }
-           
-           
-        }
-        else {
-            if ($this->department == "asset") {
-                return view('livewire.purchases.index',[
-                    'purchases' => Purchase::query()->with('vendor','purchase_products','purchase_products.product')->whereMonth($this->purchase_filter, date('m'))
-                    ->whereYear($this->purchase_filter, date('Y'))->orderBy($this->purchase_filter,'desc')->paginate(10),
-                ]);
-            }else{
-                return view('livewire.purchases.index',[
-                    'purchases' => Purchase::query()->with('vendor','purchase_products','purchase_products.product')->where('department',$this->department)->whereMonth($this->purchase_filter, date('m'))
-                    ->whereYear($this->purchase_filter, date('Y'))->orderBy($this->purchase_filter,'desc')->paginate(10),
-                ]);
-            }
-           
-          
+        $this->products = Product::where('department', $this->department)->where('status',True)->where('buy',True)->orderBy('name','asc')->get();
+        
+        $query = Purchase::query()
+        ->with(['vendor', 'booking', 'purchase_products', 'purchase_products.product'])
+        ->where('department', $this->department);
+
+        // 🔹 Date range filter (from/to) OR current month/year fallback
+        if (!empty($this->from) && !empty($this->to)) {
+            $query->whereBetween($this->purchase_filter, [$this->from, $this->to]);
+        } else {
+            $query->whereYear($this->purchase_filter, date('Y'))
+                ->whereMonth($this->purchase_filter, date('m'));
         }
 
-    
+        // 🔹 Search filter (properly grouped so ORs don't escape other conditions)
+        if (filled($this->search)) {
+            $search = '%'.$this->search.'%';
 
-       
+            $query->where(function ($q) use ($search) {
+                $q->where('purchase_number', 'like', $search)
+                ->orWhere('date', 'like', $search)
+                ->orWhere('description', 'like', $search)
+                ->orWhereHas('vendor', function ($sub) use ($search) {
+                    $sub->where('name', 'like', $search);
+                })
+                ->orWhereHas('booking', function ($sub) use ($search) {
+                    $sub->where('booking_number', 'like', $search);
+                })
+                ->orWhereHas('purchase_products.product', function ($sub) use ($search) {
+                    $sub->where('name', 'like', $search);
+                });
+            });
+        }
+
+        $purchases = $query
+            ->orderBy($this->purchase_filter, 'desc')
+            ->paginate(10);
+
+        return view('livewire.purchases.index', compact('purchases'));
+ 
     }
 }

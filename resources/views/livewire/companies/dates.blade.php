@@ -2,7 +2,7 @@
     <form wire:submit.prevent="update()">
             <div class="row">
                 @if (Auth::user()->is_admin())
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <div class="form-group">
                         <label for="vat">Currencies<span class="required" style="color: red">*</span></label>
                       <select class="form-control" wire:model.debounce.300ms="currency_id" required >
@@ -15,7 +15,7 @@
                     </div>
                 </div>
                 @else
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <div class="form-group">
                         <label for="vat">Currencies<span class="required" style="color: red">*</span></label>
                       <select class="form-control" wire:model.debounce.300ms="currency_id" required disabled >
@@ -28,7 +28,7 @@
                     </div>
                 </div>
                 @endif  
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <div class="form-group">
                         <label for="vat">Exchange Rates Frequency<span class="required" style="color: red">*</span></label>
                         <select class="form-control" wire:model.debounce.300ms="frequency" required >
@@ -39,6 +39,17 @@
                         </select>
                         @error('frequency') <span class="error" style="color:red">{{ $message }}</span> @enderror
                         <small style="color: blue"> <a href="{{route('exchange_rates.index')}}" target="_blank">Click me to update exchange rates</a></small>
+                    </div>
+                </div>
+                 <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="vat">Inventory Valuation Method<span class="required" style="color: red">*</span></label>
+                      <select class="form-control" wire:model.debounce.300ms="valuation_method" required {{ Auth::user()->is_admin() ? '' : 'disabled' }} >
+                            <option value="">Select Valuation Method</option>
+                            <option value="AVCO">AVCO</option>
+                            <option value="FIFO">FIFO</option>
+                      </select>
+                        @error('valuation_method') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
                 </div>
             </div>

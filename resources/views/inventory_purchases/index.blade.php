@@ -38,7 +38,6 @@
                         </div>
 
                         @livewire('purchases.index',['category'=>'inventory'])
-
                     </div>
 
 @endsection

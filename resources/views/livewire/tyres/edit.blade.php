@@ -65,8 +65,8 @@
                                         @if (Auth::user()->employee->company)
                                             @if ($selectedCurrency != Auth::user()->employee->company->currency_id)
                                             <div class="form-group">
-                                                <label for="customer">Conversion Rate</label>
-                                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="exchange_rate"  placeholder="Exchange Rate {{$selected_currency ? "From ".$selected_currency->name : ""}} {{Auth::user()->employee->company->currency ? "To ".Auth::user()->employee->company->currency->name : ""}}" >
+                                                <label for="customer">Conversion Rate<span class="required" style="color: red">*</span></label>
+                                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="exchange_rate"  placeholder="Exchange Rate {{$selected_currency ? "From ".$selected_currency->name : ""}} {{Auth::user()->employee->company->currency ? "To ".Auth::user()->employee->company->currency->name : ""}}" required>
                                                 @error('exchange_rate') <span class="text-danger error">{{ $message }}</span>@enderror
                                                 <small style="color: green">{{$selected_currency ? " 1 ".$selected_currency->name." is how much in" : ""}} {{Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->name." ?" : ""}}</small>
                                                 <small>{{$exchange_amount ? "The converted amount is: ".$exchange_amount : ""}}</small>
@@ -99,7 +99,7 @@
                                            <select wire:model.debounce.300ms="selectedProduct" class="form-control" required>
                                                <option value="">Select Product</option>
                                              @foreach ($products as $product)
-                                                <option value="{{$product->id}}"> {{$product->brand ? $product->brand->name : ""}} {{$product->name}}</option>
+                                                <option value="{{$product->id}}">  {{$product->name}} {{$product->brand ? $product->brand->name : ""}}</option>
                                              @endforeach
                                            </select>
                                             <small><a href="{{ route('products.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Product</a></small><a href="#" wire:click.prevent="refresh('products')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>  
@@ -111,7 +111,7 @@
                                            <select wire:model.debounce.300ms="selectedPurchaseProduct" class="form-control" required>
                                                <option value="">Select Product</option>
                                                @foreach ($purchase_products as $purchase_product)
-                                               <option value="{{$purchase_product->id}}"> {{$purchase_product->product->brand ? $purchase_product->product->brand->name : ""}} {{$purchase_product->product->name}}</option>
+                                               <option value="{{$purchase_product->id}}">  {{$purchase_product->product->name}} {{$purchase_product->product->brand ? $purchase_product->product->brand->name : ""}}</option>
                                             @endforeach
                                            </select>
                                             @error('selectedPurchaseProduct') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -226,7 +226,7 @@
                                         <select wire:model.debounce.300ms="selectedTax"  class="form-control">
                                             <option value="">Select Tax</option>
                                                 @foreach ($tax_accounts as $tax)
-                                                   <option value="{{$tax->id}}">{{$tax->abbreviation}} {{$tax->rate ? $tax->rate."%" : ""}}</option> 
+                                                   <option value="{{$tax->id}}">{{$tax->abbreviation}}</option> 
                                                 @endforeach
                                             </select>
                                             <small><a href="{{ route('taxes.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small> 

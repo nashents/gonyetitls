@@ -89,6 +89,8 @@
                                   <tr>
                                     <th class="th-sm">Bill#
                                     </th>
+                                    <th class="th-sm">CreatedBy
+                                    </th>
                                     <th class="th-sm">Narration
                                     </th>
                                     <th class="th-sm">Items
@@ -120,6 +122,7 @@
                                     @forelse ($bills as $bill)
                                   <tr>
                                     <td>{{$bill->bill_number}}</td>
+                                     <td>{{$bill->user ? $bill->user->name : ""}} {{$bill->user ? $bill->user->surname : ""}}</td>
                                     <td>
                                         @if ($bill->transporter)
                                             Transporter | <a href="{{ route('transporters.show',$bill->transporter->id) }}" style="color: blue" target="_blank">{{ $bill->transporter ? $bill->transporter->name  : ""}}</a> 

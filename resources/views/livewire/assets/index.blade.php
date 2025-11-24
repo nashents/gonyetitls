@@ -29,7 +29,9 @@
                                     </th>
                                     <th class="th-sm">Location
                                     </th>
-                                    <th class="th-sm">Item Contents
+                                    <th class="th-sm">Qty
+                                    </th>
+                                    <th class="th-sm">Capacity & Bal
                                     </th>
                                     <th class="th-sm">Date
                                     </th>
@@ -82,7 +84,8 @@
                                         @endif
                                        
                                     </td>
-                                    <td> <strong>Content(s): </strong> {{$asset->weight}} <strong>Bal: </strong> {{$asset->balance ? $asset->balance : ""}} {{$asset->product ? $asset->product->unit_of_measure : ""}}</td>
+                                    <td>{{$asset->qty}}</td>
+                                    <td> <strong>Capacity: </strong> {{$asset->weight}} <strong>Bal: </strong> {{$asset->balance ? $asset->balance : ""}} {{$asset->measurement ? $asset->measurement : $asset->product->unit_of_measure}}</td>
                                     <td>
                                         @if ($asset->purchase_date)
                                             {{Carbon\Carbon::parse($asset->purchase_date)->format('Y-m-d')}}        
@@ -90,9 +93,7 @@
                                     </td>
                                     <td>{{$asset->currency ? $asset->currency->name : ""}}</td>
                                     <td>
-                                        @if ($asset->amount)
-                                            {{$asset->currency ? $asset->currency->symbol : ""}}{{number_format($asset->amount,2)}}  
-                                        @endif
+                                        {{$asset->currency ? $asset->currency->symbol : ""}}{{number_format($asset->amount ? $asset->amount : 0,2)}}  
                                     </td>
                                     <td>
                                         {{$asset->currency ? $asset->currency->symbol : ""}}{{number_format($asset->tax_amount ? $asset->tax_amount : 0,2)}}  
@@ -101,9 +102,7 @@
                                         {{$asset->currency ? $asset->currency->symbol : ""}}{{number_format($asset->cost ? $asset->cost : 0,2)}}  
                                     </td>
                                     <td>
-                                        @if ($asset->subtotal_incl)
-                                            {{$asset->currency ? $asset->currency->symbol : ""}}{{number_format($asset->subtotal_incl,2)}}  
-                                        @endif
+                                       {{$asset->currency ? $asset->currency->symbol : ""}}{{number_format($asset->total ? $asset->total : 0,2)}}  
                                         @if (Auth::user()->employee->company->currency_id != $asset->currency_id)
                                             <br>
                                             <small>

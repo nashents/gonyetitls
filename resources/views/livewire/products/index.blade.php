@@ -44,9 +44,9 @@
                                     </th>
                                     <th class="th-sm">ID/Part#
                                     </th>
-                                    <th class="th-sm">UOM
-                                    </th>
                                     <th class="th-sm">Item(s) in Inventory
+                                    </th>
+                                    <th class="th-sm">UOM
                                     </th>
                                     <th class="th-sm">Total Value
                                     </th>
@@ -65,16 +65,16 @@
                                     <td>{{$product->product_number}}</td>
                                     <td>{{$product->name}} {{$product->model}} {{$product->brand ? "(".$product->brand->name.")" : ""}}</td>
                                     <td>{{$product->identification_number}}</td>
-                                    <td>{{$product->unit_of_measure}}</td>
                                     <td>
                                         @if ($department == "tyre")
                                             {{$product->tyres->where('status',1)->count()}}
                                         @elseif($department == "inventory")
-                                            {{$product->inventories->where('status',1)->where('balance','>',0)->count()}}
+                                            {{$product->inventories->where('status',1)->where('qty','>',0)->where('balance','>',0)->sum('balance')}}
                                         @elseif($department == "asset")
-                                            {{$product->assets->where('status',1)->where('balance','>',0)->count()}}
+                                            {{$product->assets->where('status',1)->where('qty','>',0)->where('balance','>',0)->sum('balance')}}
                                         @endif
                                     </td>
+                                    <td>{{$product->unit_of_measure}}</td>
                                     <td>
                                         @php
                                             $totalValue = $this->calculateTotalValue($product->id);

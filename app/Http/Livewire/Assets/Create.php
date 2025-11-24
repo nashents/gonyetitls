@@ -27,7 +27,6 @@ use App\Models\VendorType;
 use App\Models\AssetDetail;
 use App\Models\AssetSerial;
 use App\Models\BillExpense;
-use App\Models\Measurement;
 use App\Models\ExchangeRate;
 use App\Models\AssetDocument;
 use App\Models\CategoryValue;
@@ -68,7 +67,6 @@ class Create extends Component
     public $company;
   
     public $purchase_date;
-    public $total;
     public $residual_value;
     public $weight = [];
 
@@ -85,6 +83,7 @@ class Create extends Component
 
     public $products;
     public $selectedProduct = [];
+    public $measurement = [];
     public $serial_number = [];
     public $tax_rate = [];
     public $selectedTax = [];
@@ -484,6 +483,7 @@ class Create extends Component
                     $this->amount[$key] = $product->price;
                     $this->item_description[$key] = $product->description;
                 }
+                $this->measurement[$key] = $product->unit_of_measure;
                 $this->qty[$key] = 1;
                 $this->weight[$key] = 1;
                
@@ -508,6 +508,7 @@ class Create extends Component
                  $this->selectedProduct[$key] = $purchase_product->product_id;
                 $this->amount[$key] = $purchase_product->amount;
                 $this->item_description[$key] = $purchase_product->product->description;
+                $this->measurement[$key] = $purchase_product->product->unit_of_measure;
                 $this->qty[$key] = $purchase_product->qty;
                 $this->weight[$key] = 1;
                 if($purchase_product->tax_id){
@@ -536,9 +537,9 @@ class Create extends Component
     }
 
 
-    public function calculateExchangeAmount(){
-        if (($this->total && is_numeric($this->total)) && ($this->exchange_rate && is_numeric($this->exchange_rate)) ) {
-            $this->exchange_amount = $this->exchange_rate * $this->total;
+    public function calculateExchangeAmount($total = null){
+        if (($total && is_numeric($total)) && ($this->exchange_rate && is_numeric($this->exchange_rate)) ) {
+            $this->exchange_amount = $this->exchange_rate * $total;
         }
     }
 
@@ -552,16 +553,16 @@ class Create extends Component
               foreach ($this->selectedProduct as $key => $value) {
                 
             if (isset($this->qty[$key])) {
-    
-                for ($i=0; $i < $this->qty[$key] ; $i++) { 
-                       
-                   
+          
                     $asset = new Asset;
                     $asset->user_id = Auth::user()->id;
                     $asset->vendor_id = $this->vendor_id ? $this->vendor_id : NULL;
                     $asset->currency_id = $this->selectedCurrency ? $this->selectedCurrency : null;
 
                     $subtotal = 0;
+                    $subtotal_incl = 0;
+                    $total = 0;
+
 
                     if ($this->selectedGoodsReceived) {
                       $asset->goods_received_id = $this->selectedGoodsReceived;
@@ -576,6 +577,9 @@ class Create extends Component
                     if (isset($this->serial_number[$key])) {
                         $asset->serial_number = $this->serial_number[$key];
                     }
+                    if (isset($this->measurement[$key])) {
+                        $asset->measurement = $this->measurement[$key];
+                    }
                     if (isset($this->amount[$key])) {
                         $asset->amount = $this->amount[$key];
                     }
@@ -586,16 +590,7 @@ class Create extends Component
                         $asset->qty = $this->qty[$key];
                     }
                    
-                    if (isset($this->amount[$key])) {
-                         if (isset($this->cost[$key])) {
-                            $subtotal = $this->amount[$key] + $this->cost[$key];
-                            $asset->subtotal = $subtotal ;
-                        }else{
-                            $subtotal = $this->amount[$key];
-                            $asset->subtotal = $subtotal;
-                        }
-                        
-                    }
+                   
                   
                     if (isset($this->weight[$key])) {
                         $asset->weight = $this->weight[$key];
@@ -609,27 +604,32 @@ class Create extends Component
                         $asset->tax_id = $this->selectedTax[$key];
                     }
                     
+                       if (isset($this->qty[$key]) && isset($this->amount[$key]) && (is_numeric($this->amount[$key]) && is_numeric($this->qty[$key]))) {
+                        if (isset($this->cost[$key]) && is_numeric($this->cost[$key])) {
+                            $subtotal = ($this->qty[$key] * $this->amount[$key]) + $this->cost[$key];
+                            $asset->subtotal = $subtotal ;
+                        }else{
+                            $subtotal =($this->qty[$key] * $this->amount[$key]);
+                            $asset->subtotal = $subtotal;
+                        }
+                        
+                    }
+                    
                     if (isset($this->tax_rate[$key]) && is_numeric($this->tax_rate[$key])) {
 
-                        if (is_numeric($subtotal)) {
                             $tax_amount = ($subtotal * ($this->tax_rate[$key] / 100 ));
                             $asset->tax_amount = $tax_amount;
-                            $this->total = $tax_amount + $subtotal;
-                            $asset->subtotal_incl = $this->total;
-                            $asset->total = $this->total;
-                           
-                        }
+                            $total = $tax_amount + $subtotal;
+                            $asset->subtotal_incl = $total;
+                            $asset->total = $total;
 
                     }else{
-                        if (is_numeric($subtotal)) {
-                            $this->total = $subtotal;
-                            $asset->subtotal_incl =  $this->total;
-                            $asset->total =  $this->total;
-                        }
+                            $total = $subtotal;
+                            $asset->subtotal_incl =  $total;
+                            $asset->total =  $total;
                        
                     }
-
-                    $this->calculateExchangeAmount();
+                    $this->calculateExchangeAmount($total);
 
                     $asset->exchange_rate = $this->exchange_rate;
                     $asset->exchange_amount = $this->exchange_amount;
@@ -659,7 +659,7 @@ class Create extends Component
                     $bill->user_id = Auth::user()->id;
                     $bill->bill_number = $this->billNumber();
                     $bill->asset_id = $asset->id;
-                    $bill->category = "Inventory Item";
+                    $bill->category = "asset Item";
                     $bill->bill_date = $asset->purchase_date;
                     $bill->account_id = $asset->account_id;
                     $account = Account::find($asset->account_id);
@@ -696,7 +696,7 @@ class Create extends Component
 
                     }
     
-                }
+             
     
               }
             }
@@ -754,7 +754,15 @@ class Create extends Component
             ]);
         }
         elseif($category == "products"){
-            $this->products = Product::orderBy('name','asc')->get();
+           $this->products = Product::with('brand')
+            ->where('department', 'asset')
+            ->where('status', true)
+            ->where('buy', true)
+            ->get()
+            ->sortBy([
+                ['name', 'asc'],          // first sort by product name
+                ['brand.name', 'asc'],    // then sort by brand name
+            ]);
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Products Refreshed Successfully!!."
@@ -780,9 +788,17 @@ class Create extends Component
     {
 
        
-           $this->goods_receiveds = GoodsReceived::where('status',1)->where('department','asset')->where('created_at', '>=', Carbon::now()->subMonth())->orderBy('created_at','desc')->get();
+        $this->goods_receiveds = GoodsReceived::where('status',1)->where('department','asset')->where('created_at', '>=', Carbon::now()->subMonth())->orderBy('created_at','desc')->get();
        
-        $this->products = Product::with('brand')->orderBy('name','asc')->where('department','asset')->where('status',True)->where('buy',True)->get()->sortBy('brand.name');
+        $this->products = Product::with('brand')
+        ->where('department', 'asset')
+        ->where('status', true)
+        ->where('buy', true)
+        ->get()
+        ->sortBy([
+            ['name', 'asc'],          // first sort by product name
+            ['brand.name', 'asc'],    // then sort by brand name
+        ]);
         $this->stores = Store::orderBy('name','asc')->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();
         $this->purchases = Purchase::where('department','asset')->where('status',1)->where('created_at', '>=', Carbon::now()->subMonth())->where('authorization','approved')->orderBy('created_at','desc')->get();

@@ -294,7 +294,7 @@ public function updatedSelectedCargo($id){
         elseif($category == 'taxes'){
              $this->tax_accounts = Account::whereHas('account_type', function ($query) {
             return $query->where('name','Sales Taxes');
-        })->orderBy('name','asc')->get();
+            })->orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Sales Taxes Refreshed Successfully!!."

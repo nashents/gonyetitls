@@ -27,16 +27,25 @@
                                     </th>
                                     <th class="th-sm">Dimensions
                                     </th>
-                                      <th class="th-sm">Location
+                                    <th class="th-sm">Location
                                     </th>
-                                    <th class="th-sm">Ccy
-                                    </th>
-                                    <th class="th-sm">Total
-                                    </th>
-                                    <th class="th-sm">Usage
+                                     <th class="th-sm">Usage
                                     </th>
                                     <th class="th-sm">Health Status
                                     </th>
+                                    <th class="th-sm">Qty
+                                    </th>
+                                    <th class="th-sm">Ccy
+                                    </th>
+                                    <th class="th-sm">Rate
+                                    </th>
+                                    <th class="th-sm">Tax
+                                    </th>
+                                    <th class="th-sm">Cost
+                                    </th>
+                                    <th class="th-sm">Total
+                                    </th>
+                                   
                                     <th class="th-sm">Action
                                     </th>
                                   </tr>
@@ -64,7 +73,9 @@
                                                 <span class="badge bg-active">{{$tyre->type}}</span>
                                             @endif
                                            </small> <br>
-                                        <small><strong>S#:</strong> {{$tyre->serial_number}}</small>
+                                           @if ($tyre->serial_number)
+                                                <small><strong>S#:</strong> {{$tyre->serial_number}}</small>
+                                           @endif
                                     </td>
                                     <td>
                                         {{$tyre->width}} / {{$tyre->aspect_ratio}} R {{$tyre->diameter}}
@@ -101,18 +112,7 @@
                                             @endif  
                                         @endif
                                     </td>
-                                    <td>{{$tyre->currency ? $tyre->currency->name : ""}}</td>
-                                    <td>
-                                        {{$tyre->currency ? $tyre->currency->symbol : ""}}{{number_format($tyre->subtotal_incl,2)}}
-                                        @if ($tyre->currency_id && $tyre->currency_id != Auth::user()->employee->company->currency_id)
-                                            <br>
-                                            <small>
-                                                <strong>Exc Rate:</strong> {{number_format($tyre->exchange_rate,2)}} <br>
-                                                <strong>Exc Total:</strong> {{Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->name : ""}} {{Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->symbol : ""}}{{number_format($tyre->exchange_amount,2)}}
-                                            </small>
-                                        @endif
-                                    </td>
-                                    <td>
+                                       <td>
                                             <small><strong>Acquisition: </strong> {{Carbon\Carbon::parse($tyre->purchase_date)->format('d M Y')}}</small><br>
                                             <small><strong>Age: </strong> {{ $tyre->age ?? '-' }}</small>
                                         @if ($assignment)
@@ -162,6 +162,28 @@
                                         @endif
                                         {{-- <span class="badge bg-{{$tyre->retread == 0 ? "success" : "warning"}}">{{$tyre->retread == 0 ? "Fit for use" : "Retread"}}</span> --}}
                                     </td>
+                                    <td>{{$tyre->qty}}</td>
+                                    <td>{{$tyre->currency ? $tyre->currency->name : ""}}</td>
+                                    <td>
+                                        {{$tyre->currency ? $tyre->currency->symbol : ""}}{{number_format($tyre->amount ? $tyre->amount : 0,2)}}  
+                                    </td>
+                                    <td>
+                                        {{$tyre->currency ? $tyre->currency->symbol : ""}}{{number_format($tyre->tax_amount ? $tyre->tax_amount : 0,2)}}  
+                                    </td>
+                                    <td>
+                                        {{$tyre->currency ? $tyre->currency->symbol : ""}}{{number_format($tyre->cost ? $tyre->cost : 0,2)}}  
+                                    </td>
+                                    <td>
+                                         {{$tyre->currency ? $tyre->currency->symbol : ""}}{{number_format($tyre->total ? $tyre->total : 0,2)}}  
+                                        @if (Auth::user()->employee->company->currency_id != $tyre->currency_id)
+                                            <br>
+                                            <small>
+                                                <strong>Exc Rate:</strong> {{number_format($tyre->exchange_rate,2)}} <br>
+                                                <strong>Exc Total:</strong> {{Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->name : ""}} {{Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->symbol : ""}}{{number_format($tyre->exchange_amount,2)}}
+                                            </small>
+                                        @endif
+                                    </td>
+                                 
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

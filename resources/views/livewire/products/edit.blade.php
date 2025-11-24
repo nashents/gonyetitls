@@ -16,7 +16,7 @@
                             <div class="row">
                                 <div class="col-md-3">
                                     <div class="form-group">
-                                        <label for="country">Department<span class="required" style="color: red">*</span></label>
+                                        <label for="country">Class<span class="required" style="color: red">*</span></label>
                                        <select wire:model.debounce.300ms="department" class="form-control" required>
                                            <option value="">Select Department</option>
                                            <option value="asset">Assets</option>
@@ -35,7 +35,7 @@
                                             <option value="{{$category->id}}">{{$category->name}}</option>
                                          @endforeach
                                        </select>
-                                       <small>  <a href="#" data-toggle="modal" data-target="#categoryModal" ><i class="fa fa-plus-square-o"></i> New Category</a></small> 
+                                       <small>  <a href="#" data-toggle="modal" data-target="#categoryModal" ><i class="fa fa-plus-square-o"></i> New Category</a></small><a href="#" wire:click.prevent="refresh('categories')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>  
                                         @error('selectedCategory') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
@@ -48,7 +48,7 @@
                                             <option value="{{$value->id}}">{{$value->name}}</option>
                                          @endforeach
                                        </select>
-                                       <small><a href="#" data-toggle="modal" data-target="#categoryValueModal" ><i class="fa fa-plus-square-o"></i> New Sub Category</a></small> 
+                                       <small><a href="#" data-toggle="modal" data-target="#categoryValueModal" ><i class="fa fa-plus-square-o"></i> New Sub Category</a></small><a href="#" wire:click.prevent="refresh('subcategories')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>  
                                         @error('selectedCategoryValue') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
@@ -61,7 +61,7 @@
                                             <option value="{{$brand->id}}">{{$brand->name}}</option>
                                          @endforeach
                                        </select>
-                                       <small><a href="#" data-toggle="modal" data-target="#brandModal" ><i class="fa fa-plus-square-o"></i> New Brand</a></small> 
+                                       <small><a href="#" data-toggle="modal" data-target="#brandModal" ><i class="fa fa-plus-square-o"></i> New Brand</a></small><a href="#" wire:click.prevent="refresh('brands')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>   
                                         @error('brand_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
@@ -90,10 +90,11 @@
                                             <option value="Each">Each</option>
                                             <option value="Item(s)">Item(s)</option>
                                             <option value="Kg(s)">Kg(s)</option>
-                                            <option value="Litres">Litres</option>
+                                            <option value="Litre(s)">Litre(s)</option>
                                             <option value="Metre(s)">Metre(s)</option>
                                             <option value="Piece(s)">Piece(s)</option>
                                             <option value="Ton(s)">Ton(s)</option>
+                                            <option value="Unit(s)">Unit(s)</option>
                                         </select>
                                         @error('unit_of_measure') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
@@ -130,7 +131,7 @@
                                                 <option value="{{$account->id}}">{{$account->name}} </option> 
                                                 @endforeach
                                             </select>
-                                            <small><a href="{{ route('accounts.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Account</a></small> 
+                                            <small><a href="{{ route('accounts.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Expense Account</a></small><a href="#" wire:click.prevent="refresh('expense_accounts')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>  
                                         @error('expense_account_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
@@ -152,6 +153,7 @@
                                                 <option value="{{$account->id}}">{{$account->name}} </option> 
                                                 @endforeach
                                             </select>
+                                              <small><a href="{{ route('accounts.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Income Account</a></small><a href="#" wire:click.prevent="refresh('income_accounts')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>  
                                         @error('income_account_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
@@ -173,10 +175,10 @@
                                 <select wire:model.debounce.300ms="selectedTax" class="form-control">
                                     <option value="">Select Tax</option>
                                         @foreach ($tax_accounts as $tax)
-                                        <option value="{{$tax->id}}">{{$tax->abbreviation}} {{$tax->rate ? $tax->rate."%" : ""}}</option> 
+                                         <option value="{{$tax->id}}">{{$tax->abbreviation}}</option>  
                                         @endforeach
                                     </select>
-                                    <small><a href="{{ route('taxes.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small> 
+                                    <small><a href="{{ route('accounts.tax') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small><a href="#" wire:click.prevent="refresh('taxes')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>  
                                 @error('selectedTax') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>

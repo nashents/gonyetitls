@@ -196,6 +196,63 @@ class Edit extends Component
         });
     }
 
+     public function refresh($category){
+
+        if($category == "brands"){
+            $this->brands = Brand::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Brands Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "categories"){
+            $this->categories = Category::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Categories Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "subcategories"){
+            if(isset($this->selectedCategory)){
+                 $this->category_values = CategoryValue::where('category_id', $this->selectedCategory)->orderBy('name','asc')->get();
+            }else{
+                 $this->category_values = CategoryValue::orderBy('name','asc')->get();
+            }
+          
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Sub Categories Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "expense_accounts"){
+             $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
+                return $query->where('name','Expenses');
+            })->orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Expense Accounts Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "income_expenses"){
+              $this->income_accounts = Account::whereHas('account_type.account_type_group', function($q){
+                    $q->where('name', 'Income');
+                })->orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Income Accounts Refreshed Successfully!!."
+            ]);
+        }
+         elseif($category == 'taxes'){
+             $this->tax_accounts = Account::whereHas('account_type', function ($query) {
+            return $query->where('name','Sales Taxes');
+            })->orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Sales Taxes Refreshed Successfully!!."
+            ]);
+        }
+    }
+
 
     public function render()
     {

@@ -224,7 +224,7 @@ WithBatchInserts
         ->first();
 
         if ($existingEmployeeUser) {
-            Log::warning('Skipped row: Person already registered as employee.', $row->toArray());
+            Log::warning('Skipped row: Person already registered as an employee.', $row->toArray());
             continue;
         }
 
@@ -349,15 +349,22 @@ WithBatchInserts
             $driver = null;
             $existingDriver = false;
 
-            if ($employee->id && $licenseNumber) {
+           if ($employee->id && $licenseNumber) {
                 $driver = Driver::firstOrNew([
                     'employee_id'    => $employee->id,
                     'license_number' => $licenseNumber,
                 ]);
                 $existingDriver = $driver->exists;
+            } elseif ($employee->id) {
+                // fallback: at least enforce one driver per employee
+                $driver = Driver::firstOrNew([
+                    'employee_id' => $employee->id,
+                ]);
+                $existingDriver = $driver->exists;
             } else {
-                // fallback: no license number, just new driver
-                $driver = new Driver;
+                // truly broken row – probably better to skip
+                Log::warning('Skipped row: employee missing when creating driver', $row->toArray());
+                return;
             }
 
             if (!$existingDriver) {
@@ -389,18 +396,34 @@ WithBatchInserts
             |----------------------
             */
             if ($existingUser && $existingEmployee && $existingDriver) {
-                $employeePosition = new EmployeePosition;
-                $employeePosition->employee_id   = $employee->id;
-                $employeePosition->job_title_id  = JobTitle::where('title', $employee->post)->first()?->id ?? null;
-                $employeePosition->rank_id       = $employee->ranks->first()?->id ?? null;
-                $employeePosition->branch_id     = $employee->branch_id ?? null;
-                $employeePosition->department_id = $employee->departments->first()?->id ?? null;
-                $employeePosition->grade_id      = $employee->grade_id ?? null;
-                $employeePosition->start_date    = $employee->start_date ?? null;
-                $employeePosition->changed_by    = Auth::id();
-                $employeePosition->change_reason = 'Appointment';
-                $employeePosition->remarks       = 'Initial Appointment';
-                $employeePosition->save();
+                $jobTitleId  = JobTitle::where('title', $employee->post)->first()?->id ?? null;
+                $rankId      = $employee->ranks->first()?->id ?? null;
+                $branchId    = $employee->branch_id ?? null;
+                $departmentId = $employee->departments->first()?->id ?? null;
+
+                // Check if an active position with same attributes already exists
+                $positionExists = EmployeePosition::where('employee_id', $employee->id)
+                    ->where('job_title_id', $jobTitleId)
+                    ->where('rank_id', $rankId)
+                    ->where('branch_id', $branchId)
+                    ->where('department_id', $departmentId)
+                    ->whereNull('end_date') // if you have end_date / active flag
+                    ->exists();
+
+                if (! $positionExists) {
+                    $employeePosition = new EmployeePosition;
+                    $employeePosition->employee_id   = $employee->id;
+                    $employeePosition->job_title_id  = $jobTitleId;
+                    $employeePosition->rank_id       = $rankId;
+                    $employeePosition->branch_id     = $branchId;
+                    $employeePosition->department_id = $departmentId;
+                    $employeePosition->grade_id      = $employee->grade_id ?? null;
+                    $employeePosition->start_date    = $employee->start_date ?? null;
+                    $employeePosition->changed_by    = Auth::id();
+                    $employeePosition->change_reason = 'Appointment';
+                    $employeePosition->remarks       = 'Initial Appointment';
+                    $employeePosition->save();
+                }
             }
         });
     }

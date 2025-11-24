@@ -2,8 +2,10 @@
 
 namespace App\Http\Livewire\Dispatches;
 
+use Carbon\Carbon;
 use App\Models\Tyre;
 use App\Models\Asset;
+use App\Models\Store;
 use App\Models\Branch;
 use App\Models\Ticket;
 use App\Models\Product;
@@ -13,6 +15,7 @@ use App\Models\Employee;
 use App\Models\Inventory;
 use App\Models\Department;
 use App\Models\DispatchItem;
+use Livewire\WithPagination;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -20,11 +23,18 @@ use Illuminate\Support\Facades\Auth;
 class Index extends Component
 {
 
+    use WithPagination;
+    protected $paginationTheme = 'bootstrap';
+    public $search;
+    public $from;
+    public $to;
+
     public $searchProduct;
     public $searchTicket;
-    protected $queryString = ['searchProduct','searchTicket'];
-    public $dispatches;
+    protected $queryString = ['searchProduct','searchTicket','search'];
+    private $dispatches;
     public $department;
+    public $dispatch_filter = "created_at";
     public $all_departments;
     public $asset_department_id;
     public $horse_id;
@@ -38,6 +48,7 @@ class Index extends Component
     public $inventories;
     public $tyres;
     public $assets;
+    public $dispatch;
     public $selectedTyre = [];
     public $selectedInventory = [];
     public $selectedAsset = [];
@@ -45,6 +56,8 @@ class Index extends Component
     public $qty = [];
     public $weight = [];
     public $selectedProduct = [];
+    public $requestedItem = [];
+    public $ticket_requests;
     public $employees;
     public $company;
     public $max;
@@ -54,6 +67,8 @@ class Index extends Component
     public $requested_by_id;
     public $currency_id;
     public $date;
+    public $stores;
+    public $selectedStore;
     public $expand = False;
 
     public $inputs = [];
@@ -194,6 +209,7 @@ class Index extends Component
         $this->employees = Employee::where('status',1)->where('archive',0)->orderBy('name','asc')->orderBy('surname','asc')->get();
         $this->tickets = Ticket::whereYear('created_at',date('Y'))->where('status',1)->orderBy('created_at','desc')->get();
         $this->all_departments = Department::orderBy('name','asc')->get();
+        $this->stores = Store::orderBy('name','asc')->get();
         $this->branches = Branch::orderBy('name','asc')->get();
         $this->reset(['searchProduct', 'searchTicket']);
         $this->loadProducts();
@@ -214,12 +230,11 @@ class Index extends Component
     }
     public function updatedSelectedTicket($id){
         if (!is_null($id)) {
-            $ticket = Ticket::find($id);
-            if ($ticket) {
-                $this->horse_id = $ticket->horse_id;
-                $this->vehicle_id = $ticket->vehicle_id;
-                $this->trailer_id = $ticket->trailer_id;
-            }
+            $this->ticket = Ticket::find($id);
+            $this->ticket_requests = $this->ticket?->ticket_requests;
+            $this->horse_id = $this->ticket?->horse_id;
+            $this->vehicle_id = $this->ticket?->vehicle_id;
+            $this->trailer_id = $this->ticket?->trailer_id;
            
         }
     }
@@ -255,11 +270,11 @@ class Index extends Component
             $product = Product::find($id);
 
             if ($product && $this->department == "inventory") {
-                $this->max[$key] = $product->inventories->where('status',1)->where('balance','>',0)->count();
+                $this->max[$key] = $product->inventories->where('status',1)->where('balance','>',0)->sum('balance');
             }elseif ($product && $this->department == "tyre") {
-                $this->max[$key] = $product->tyres->where('status',1)->count();
+                $this->max[$key] = $product->tyres->where('status',1)->sum('balance');
             }elseif ($product && $this->department == "asset") {
-                $this->max[$key] = $product->assets->where('status',1)->where('balance','>',0)->count();
+                $this->max[$key] = $product->assets->where('status',1)->where('balance','>',0)->sum('balance');
             }
 
         
@@ -338,6 +353,7 @@ class Index extends Component
         $dispatch->trailer_id = $this->trailer_id ?: null;
         $dispatch->vehicle_id = $this->vehicle_id ?: null;
         $dispatch->ticket_id = $this->selectedTicket ?: null;
+        $dispatch->store_id = $this->selectedStore ?: null;
         $dispatch->employee_id = $this->selectedEmployee ?: null;
         $dispatch->requested_by_id = $this->requested_by_id ?: null;
         $dispatch->department = $this->department;
@@ -347,236 +363,20 @@ class Index extends Component
         $dispatch->description = $this->description;
         $dispatch->date = $this->date;
         $dispatch->save();
-
-        $dispatch_total = 0;
-
+       
         if ($this->expand == True) {
 
-            if ($this->department == "inventory") {
+            $this->InventoryFIFO($dispatch);
+            $this->InventoryAVCO($dispatch);
 
-                foreach ($this->selectedInventory as $key => $id) {
-
-                    $amount = 0;
-                    $exchange_amount = 0;
-
-                    $inventory = Inventory::find($id);
-
-                    if ($inventory) {
-
-                        $dispatch_item = new DispatchItem;
-                        $dispatch_item->dispatch_id = $dispatch->id;
-                        $dispatch_item->product_id = $inventory->product_id;
-                        $dispatch_item->currency_id = $inventory->currency_id;
-                        $dispatch_item->inventory_id = $id;
-
-                       
-
-                        if (isset($this->weight[$key]) && is_numeric($this->weight[$key]) && 
-                            is_numeric($inventory->weight) && $inventory->weight > 0) {
-
-                            $dispatch_item->weight = $this->weight[$key];
-                            $ratio = $this->weight[$key] / $inventory->weight;
-
-                            if ($inventory->currency_id != $this->company->currency_id) {
-                                if (is_numeric($inventory->exchange_amount) && is_numeric($inventory->total)) {
-                                    $exchange_amount = $ratio * $inventory->exchange_amount;
-                                    $amount = $ratio * $inventory->total;
-                                }
-                            } else {
-                                if (is_numeric($inventory->total)) {
-                                    $amount = $ratio * $inventory->total;
-                                }
-                            }
-
-                            $dispatch_item->amount = $amount;
-                            $dispatch_item->exchange_amount = $exchange_amount;
-                        }
-
-                        $dispatch_item->exchange_rate = $inventory->exchange_rate;
-                        $dispatch_item->save();
-
-                        if(is_numeric($exchange_amount) || is_numeric($amount)){
-                            $dispatch_total += $inventory->currency_id != $this->company->currency_id
-                            ? $exchange_amount
-                            : $amount;
-                        }
-                        
-
-                    }
-                }
-            }elseif ($this->department == "tyre") {
-                foreach ($this->selectedTyre as $key => $id) {  
-
-                    $tyre = Tyre::find($id);
-
-                    if ($tyre) {
-                        $dispatch_item = new DispatchItem;
-                        $dispatch_item->dispatch_id = $dispatch->id;
-                        $dispatch_item->product_id = $tyre->product_id;
-                        $dispatch_item->currency_id = $tyre->currency_id;
-                        $dispatch_item->amount = $tyre->total;
-                        $dispatch_item->exchange_amount = $tyre->exchange_amount;
-                        $dispatch_item->exchange_rate = $tyre->exchange_rate;
-                        $dispatch_item->tyre_id = $this->selectedTyre[$key];
-                        $dispatch_item->save();   
-
-                        if(is_numeric($tyre->exchange_amount) || is_numeric($tyre->total)){
-                            $dispatch_total += $tyre->currency_id != $this->company->currency_id
-                            ? $tyre->exchange_amount
-                            : $tyre->total;
-                        }
-                        
-                    }
-                }
-            }elseif ($this->department == "asset") {
-
-                foreach ($this->selectedAsset as $key => $id) {
-
-                    $amount = 0;
-                    $exchange_amount = 0;
-
-                    $asset = Asset::find($id);
-
-                    if ($asset) {
-
-                        $dispatch_item = new DispatchItem;
-                        $dispatch_item->dispatch_id = $dispatch->id;
-                        $dispatch_item->product_id = $asset->product_id;
-                        $dispatch_item->currency_id = $asset->currency_id;
-                        $dispatch_item->asset_id = $id;
-
-                        if (isset($this->weight[$key]) && is_numeric($this->weight[$key]) && 
-                            is_numeric($asset->weight) && $asset->weight > 0) {
-
-                            $dispatch_item->weight = $this->weight[$key];
-                            $ratio = $this->weight[$key] / $asset->weight;
-
-                            if ($asset->currency_id != $this->company->currency_id) {
-                                if (is_numeric($asset->exchange_amount) && is_numeric($asset->total)) {
-                                    $exchange_amount = $ratio * $asset->exchange_amount;
-                                    $amount = $ratio * $asset->total;
-                                }
-                            } else {
-                                if (is_numeric($asset->total)) {
-                                    $amount = $ratio * $asset->total;
-                                }
-                            }
-
-                            $dispatch_item->amount = $amount;
-                            $dispatch_item->exchange_amount = $exchange_amount;
-                        }
-
-                        $dispatch_item->exchange_rate = $asset->exchange_rate;
-                        $dispatch_item->save();
-
-                        if(is_numeric($exchange_amount) || is_numeric($amount)){
-                            $dispatch_total += $asset->currency_id != $this->company->currency_id
-                            ? $exchange_amount
-                            : $amount;
-                        }
-                       
-
-                    }
-                }
-            }
         }elseif ($this->expand == False) {
 
-            if ($this->selectedProduct) {
-
-                foreach ($this->selectedProduct as $key => $productId) {
-
-                    $qty = $this->qty[$key] ?? 0;
-                    if (!$qty || $qty < 1) continue;
-
-                    $product = Product::find($productId);
-                    if (!$product) continue;
-
-                    switch ($this->department) {
-                        case 'inventory':
-                            $items = Inventory::where('product_id', $product->id)
-                                ->orderBy('created_at', 'asc')
-                                ->take($qty)
-                                ->get();
-
-                            foreach ($items as $item) {
-                                $dispatch_item = new DispatchItem;
-                                $dispatch_item->dispatch_id = $dispatch->id;
-                                $dispatch_item->product_id = $product->id;
-                                $dispatch_item->inventory_id = $item->id;
-                                $dispatch_item->currency_id = $item->currency_id;
-                                $dispatch_item->amount = $item->total;
-                                $dispatch_item->exchange_amount = $item->exchange_amount;
-                                $dispatch_item->exchange_rate = $item->exchange_rate;
-                                $dispatch_item->weight = $item->balance;
-                                $dispatch_item->save();
-
-                                if(is_numeric($item->exchange_amount) || is_numeric($item->total)){
-                                    $dispatch_total += $item->currency_id != $this->company->currency_id
-                                    ? $item->exchange_amount
-                                    : $item->total;
-                                }
-                               
-                                
-                            }
-                            break;
-
-                        case 'asset':
-                            $items = Asset::where('product_id', $product->id)
-                                ->orderBy('created_at', 'asc')
-                                ->take($qty)
-                                ->get();
-
-                            foreach ($items as $item) {
-                                $dispatch_item = new DispatchItem;
-                                $dispatch_item->dispatch_id = $dispatch->id;
-                                $dispatch_item->product_id = $product->id;
-                                $dispatch_item->asset_id = $item->id;
-                                $dispatch_item->amount = $item->total;
-                                $dispatch_item->currency_id = $item->currency_id;
-                                $dispatch_item->exchange_amount = $item->exchange_amount;
-                                $dispatch_item->exchange_rate = $item->exchange_rate;
-                                $dispatch_item->weight = $item->balance;
-                                $dispatch_item->save();
-
-                                if(is_numeric($item->exchange_amount) || is_numeric($item->total)){
-                                    $dispatch_total += $item->currency_id != $this->company->currency_id
-                                    ? $item->exchange_amount
-                                    : $item->total;
-                                }
-
-                               
-                            }
-                            break;
-
-                        case 'tyre':
-                            $items = Tyre::where('product_id', $product->id)
-                                ->orderBy('created_at', 'asc')
-                                ->take($qty)
-                                ->get();
-
-                            foreach ($items as $item) {
-                                $dispatch_item = new DispatchItem;
-                                $dispatch_item->dispatch_id = $dispatch->id;
-                                $dispatch_item->product_id = $product->id;
-                                $dispatch_item->tyre_id = $item->id;
-                                $dispatch_item->currency_id = $item->currency_id;
-                                $dispatch_item->amount = $item->total;
-                                $dispatch_item->exchange_amount = $item->exchange_amount;
-                                $dispatch_item->exchange_rate = $item->exchange_rate;
-                                $dispatch_item->save();
-
-                                if(is_numeric($item->exchange_amount) || is_numeric($item->total)){
-                                    $dispatch_total += $item->currency_id != $this->company->currency_id
-                                    ? $item->exchange_amount
-                                    : $item->total;
-                                }   
-
-                               
-                            }
-                            break;
-                    }
-                }
+            if($this->company->valuation_method == "AVCO"){
+                $dispatch_total = $this->ProductAVCO($dispatch);
+            }elseif($this->company->valuation_method == "FIFO"){
+                $dispatch_total = $this->ProductFIFO($dispatch);
             }
+          
         }
 
         $dispatch->total = $dispatch_total;
@@ -591,6 +391,409 @@ class Index extends Component
 
     });
     
+    }
+
+    public function updatedSelectedStore($id){
+        if(!is_null($id)){
+            $store = Store::find($id);
+        }
+    }
+
+    public function showDelete($id){
+        if(!is_null($id)){
+
+             $this->dispatch = Dispatch::find($id);
+             $this->dispatchBrowserEvent('show-dispatchDeleteModal');
+
+        }
+    }
+
+    public function destroy(){
+
+        $dispatch_items = $this->dispatch->dispatch_items;
+        if($dispatch_items){
+            foreach($dispatch_items as $dispatch_item){
+                $dispatch_item->delete();
+            }
+        }
+        $this->dispatch->delete();
+        $this->dispatchBrowserEvent('hide-dispatchDeleteModal');
+
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Dipatch Record Deleted Successfully!!"
+        ]);
+
+    }
+
+    public function InventoryFIFO($dispatch){
+       
+
+        $dispatch_total = 0;
+        if($this->department == "tyre"){
+            $collection_item = $this->selectedTyre;
+        }elseif($this->department == "asset"){
+             $collection_item = $this->selectedAsset;
+        }elseif($this->department == "inventory"){
+             $collection_item = $this->selectedInventory;
+        }
+
+        if ($collection_item) {
+
+            foreach ($collection_item as $key => $collectionId) {
+
+                $requestedQty = (float)($this->qty[$key] ?? 0); // in litres/units to dispatch
+                if ($requestedQty <= 0) {
+                    continue;
+                }
+
+                    if($this->department == "tyre"){
+                       $model = Tyre::find($collectionId);
+                    }elseif($this->department == "asset"){
+                        $model = Asset::find($collectionId);
+                    }elseif($this->department == "inventory"){
+                       $model = Inventory::find($collectionId);
+                    }
+                
+                if (!$model) {
+                    continue;
+                }
+
+              
+               
+                $remainingQty        = $requestedQty;
+                $totalQtyDispatched  = 0.0;
+                $totalLineAmount     = 0.0;
+
+              
+
+                    if ($remainingQty <= 0) {
+                        break; // request satisfied
+                    }
+
+                    // --- 2) Determine how much is available on this row ---
+                    
+                    if ($this->department === 'inventory') {
+                        // Liquids / contents:
+                        // balance = remaining litres, weight = original litres (capacity)
+                        $rowQtyAvailable = (float)$model->balance;
+                        $rowCapacity     = (float)($model->balance); 
+                    } else {
+                        // For assets/tyres etc. you can treat balance as remaining units
+                        $rowQtyAvailable = (float)($model->balance ?: $model->qty);
+                        $rowCapacity     = (float)($rowQtyAvailable);
+                    }
+
+                    if ($rowQtyAvailable <= 0 || $rowCapacity <= 0) {
+                        continue;
+                    }
+
+                    // --- 3) Row cost in company currency ---
+                    $rowCostCompany = $model->currency_id != $this->company->currency_id
+                        ? (float)$model->exchange_amount   // already converted
+                        : (float)$model->total;            // native in company currency
+                   
+                    // Unit cost per litre/unit from THIS row
+                    $unitCost = $rowCostCompany / $rowQtyAvailable;
+                   
+
+                    // --- 4) How much do we take from this row (FIFO) ---
+                    $qtyFromRow = min($remainingQty, $rowQtyAvailable);
+                   
+                    // Amount for this portion
+                    $amountFromRow = $qtyFromRow * $unitCost;
+                    
+                    // --- 5) Create a dispatch line referencing this source row ---
+                    $dispatch_item               = new DispatchItem;
+                    $dispatch_item->dispatch_id  = $dispatch->id;
+                    $dispatch_item->product_id   = $model->product?->id;
+                     if(isset($this->requestedItem[$key])){
+                        $dispatch_item->ticket_request_id  = $this->requestedItem[$key];
+                    }
+                    $dispatch_item->qty          = $qtyFromRow;       // litres/units taken
+                    $dispatch_item->unit_cost   = $unitCost;
+                    $dispatch_item->amount       = $amountFromRow;
+                    $dispatch_item->currency_id  = $this->company->currency_id;
+
+                    // Link to the source row for later authorization reduction
+                   
+                    if($this->department == "tyre"){
+                        $dispatch_item->tyre_id = $model->id;
+                    }elseif($this->department == "asset"){
+                        $dispatch_item->asset_id = $model->id;
+                    }elseif($this->department == "inventory"){
+                       $dispatch_item->inventory_id = $model->id;
+                    }
+
+                    $dispatch_item->save();
+
+                    // --- 6) Track totals on this dispatch ---
+                    $totalQtyDispatched += $qtyFromRow;
+                    $totalLineAmount    += $amountFromRow;
+                    $remainingQty       -= $qtyFromRow;
+                   
+              
+
+                // If nothing could be dispatched, skip
+                if ($totalQtyDispatched <= 0) {
+                    continue;
+                }
+
+                // Add to overall dispatch total
+                 $dispatch_total += $totalLineAmount;
+
+                 return $dispatch_total;
+            }
+        }
+    }
+    public function ProductFIFO($dispatch){
+       
+
+        $dispatch_total = 0;
+
+        if ($this->selectedProduct) {
+
+            foreach ($this->selectedProduct as $key => $productId) {
+
+                $requestedQty = (float)($this->qty[$key] ?? 0); // in litres/units to dispatch
+                if ($requestedQty <= 0) {
+                    continue;
+                }
+
+                $product = Product::find($productId);
+                if (!$product) {
+                    continue;
+                }
+
+                // 1) Get source rows in FIFO order
+                $items = collect();
+
+                switch ($this->department) {
+                    case 'inventory':
+                        $items = Inventory::where('product_id', $product->id)
+                            ->where('status', 1)
+                            ->where('balance', '>', 0)  // use balance as availability
+                            ->orderBy('created_at', 'asc')
+                            ->get();
+                        break;
+
+                    case 'asset':
+                        $items = Asset::where('product_id', $product->id)
+                            ->where('status', 1)
+                            ->where('balance', '>', 0)
+                            ->orderBy('created_at', 'asc')
+                            ->get();
+                        break;
+
+                    case 'tyre':
+                        $items = Tyre::where('product_id', $product->id)
+                            ->where('status', 1)
+                            ->where('balance', '>', 0)
+                            ->orderBy('created_at', 'asc')
+                            ->get();
+                        break;
+                }
+
+                if ($items->isEmpty()) {
+                    continue;
+                }
+               
+                $remainingQty        = $requestedQty;
+                $totalQtyDispatched  = 0.0;
+                $totalLineAmount     = 0.0;
+
+                foreach ($items as $item) {
+
+                    if ($remainingQty <= 0) {
+                        break; // request satisfied
+                    }
+
+                    // --- 2) Determine how much is available on this row ---
+                    
+                    if ($this->department === 'inventory') {
+                        // Liquids / contents:
+                        // balance = remaining litres, weight = original litres (capacity)
+                        $rowQtyAvailable = (float)$item->balance;
+                        $rowCapacity     = (float)($item->balance); 
+                    } else {
+                        // For assets/tyres etc. you can treat balance as remaining units
+                        $rowQtyAvailable = (float)($item->balance ?: $item->qty);
+                        $rowCapacity     = (float)($rowQtyAvailable);
+                    }
+
+                    if ($rowQtyAvailable <= 0 || $rowCapacity <= 0) {
+                        continue;
+                    }
+
+                    // --- 3) Row cost in company currency ---
+                    $rowCostCompany = $item->currency_id != $this->company->currency_id
+                        ? (float)$item->exchange_amount   // already converted
+                        : (float)$item->total;            // native in company currency
+                   
+                    // Unit cost per litre/unit from THIS row
+                    $unitCost = $rowCostCompany / $rowQtyAvailable;
+                   
+
+                    // --- 4) How much do we take from this row (FIFO) ---
+                    $qtyFromRow = min($remainingQty, $rowQtyAvailable);
+                   
+                    // Amount for this portion
+                    $amountFromRow = $qtyFromRow * $unitCost;
+                    
+                    // --- 5) Create a dispatch line referencing this source row ---
+                    $dispatch_item               = new DispatchItem;
+                    $dispatch_item->dispatch_id  = $dispatch->id;
+                    if(isset($this->requestedItem[$key])){
+                        $dispatch_item->ticket_request_id  = $this->requestedItem[$key];
+                    }
+                    $dispatch_item->product_id   = $product?->id;
+                    $dispatch_item->qty          = $qtyFromRow;       // litres/units taken
+                    $dispatch_item->unit_cost   = $unitCost;
+                    $dispatch_item->amount       = $amountFromRow;
+                    $dispatch_item->currency_id  = $this->company->currency_id;
+
+                    // Link to the source row for later authorization reduction
+                    if ($this->department === 'inventory') {
+                        $dispatch_item->inventory_id = $item->id;
+                    } elseif ($this->department === 'asset') {
+                        $dispatch_item->asset_id = $item->id;
+                    } elseif ($this->department === 'tyre') {
+                        $dispatch_item->tyre_id = $item->id;
+                    }
+
+                    $dispatch_item->save();
+
+                    // --- 6) Track totals on this dispatch ---
+                    $totalQtyDispatched += $qtyFromRow;
+                    $totalLineAmount    += $amountFromRow;
+                    $remainingQty       -= $qtyFromRow;
+                   
+                }
+
+                // If nothing could be dispatched, skip
+                if ($totalQtyDispatched <= 0) {
+                    continue;
+                }
+
+                // Add to overall dispatch total
+                 $dispatch_total += $totalLineAmount;
+
+                 return $dispatch_total;
+            }
+        }
+    }
+
+
+    public function ProductAVCO($dispatch){
+
+        $dispatch_total = 0;
+
+           if ($this->selectedProduct) {
+
+                    foreach ($this->selectedProduct as $key => $productId) {
+
+                        $requestedQty = (int)($this->qty[$key] ?? 0); // requested / intended qty
+                        if ($requestedQty < 1) {
+                            continue;
+                        }
+
+                        $product = Product::find($productId);
+                        if (!$product) {
+                            continue;
+                        }
+
+                        $items = collect();
+
+                        switch ($this->department) {
+                            case 'inventory':
+                                $items = Inventory::where('product_id', $product->id)
+                                    ->where('status', 1)
+                                    ->where('balance', '>', 0)
+                                    ->orderBy('created_at', 'asc')
+                                    ->get();
+                                break;
+
+                            case 'asset':
+                                $items = Asset::where('product_id', $product->id)
+                                    ->where('status', 1)
+                                    ->where('balance', '>', 0)
+                                    ->orderBy('created_at', 'asc')
+                                    ->get();
+                                break;
+
+                            case 'tyre':
+                                $items = Tyre::where('product_id', $product->id)
+                                    ->where('status', 1)
+                                    ->orderBy('created_at', 'asc')
+                                    ->get();
+                                break;
+                        }
+
+                        if ($items->isEmpty()) {
+                            continue;
+                        }
+
+                        // 1) Work out total available quantity & total cost in company currency
+                        $totalQtyAvailable    = 0;
+                        $totalCostCompanyCurr = 0.0;
+
+                        foreach ($items as $item) {
+
+                            // how many units does this row represent?
+                            if ($this->department === 'inventory') {
+                                // assume "balance" is the remaining litres/units
+                                $itemQty = (float)$item->balance;
+                            } else {
+                                // asset / tyre: each row = 1 unit
+                                $itemQty = 1.0;
+                            }
+
+                            if ($itemQty <= 0) {
+                                continue;
+                            }
+
+                            // cost of this row in company currency
+                            $rowCostCompany = $item->currency_id != $this->company->currency_id
+                                ? (float)$item->exchange_amount
+                                : (float)$item->total;
+
+                            $totalQtyAvailable    += $itemQty;
+                            $totalCostCompanyCurr += $rowCostCompany;
+                        }
+
+                        if ($totalQtyAvailable <= 0) {
+                            continue;
+                        }
+
+                        // if user asks for more than available, either:
+                        // - cap it, or
+                        // - throw validation error. For now, cap it.
+                        $dispatchQty = min($requestedQty, (int)$totalQtyAvailable);
+
+                        // 2) Weighted average unit cost
+                        $averageUnitCost = $totalCostCompanyCurr / $totalQtyAvailable;
+
+                        // 3) Line total for this dispatch
+                        $lineTotal = $averageUnitCost * $dispatchQty;
+
+                        // 4) Create ONE dispatch line
+                        $dispatch_item = new DispatchItem;
+                        $dispatch_item->dispatch_id  = $dispatch->id;
+                        $dispatch_item->product_id   = $product->id;
+                        $dispatch_item->qty          = $dispatchQty;
+                        $dispatch_item->unit_cost   = $averageUnitCost;
+                        $dispatch_item->amount       = $lineTotal;
+                        $dispatch_item->currency_id  = $this->company->currency_id;
+                        $dispatch_item->save();
+
+                        // 5) Update dispatch total
+                        $dispatch_total += $lineTotal;
+
+                        // ⚠️ NOTE:
+                        // You still need separate logic to reduce Inventory/Asset/Tyre balances
+                        // in FIFO order or however you decide to consume them physically.
+                    }
+                }
     }
 
     public function edit($id){
@@ -626,6 +829,7 @@ class Index extends Component
          $this->dispatchBrowserEvent('show-dispatchEditModal');
 
     }
+
 
     public function update(){
 
@@ -895,7 +1099,58 @@ class Index extends Component
     }
     public function render()
     {
-        $this->dispatches = Dispatch::where('department',$this->department)->get();
-        return view('livewire.dispatches.index');
+            $base = Dispatch::query()->with(['ticket','horse','vehicle','trailer','employee','department','branch'])
+                        ->where('department',$this->department);
+
+            $base->when(filled($this->from) && filled($this->to), function ($q) {
+                    $q->whereDate($this->dispatch_filter, '>=', $this->from)
+                    ->whereDate($this->dispatch_filter, '<=', $this->to);
+                }, function ($q) {
+                    $q->whereMonth($this->dispatch_filter, Carbon::now()->month)
+                    ->whereYear($this->dispatch_filter, Carbon::now()->year);
+                });
+
+               // Search filter (grouped to keep AND/OR logic correct)
+            $base->when(filled($this->search), function ($q) {
+                $term = '%'.$this->search.'%';
+
+                $q->where(function ($qq) use ($term) {
+                    $qq->where('dispatch_number', 'like', $term)
+                    ->orWhere('status', 'like', $term)
+                    ->orWhere('date', 'like', $term)
+                    ->orWhereHas('ticket', function ($sub) use ($term) {
+                        $sub->where('ticket_number', 'like', $term);
+                    })
+                    ->orWhereHas('horse', function ($sub) use ($term) {
+                        $sub->where('registration_number', 'like', $term)
+                        ->orWhere('fleet_number', 'like', $term);
+                    })
+                    ->orWhereHas('store', function ($sub) use ($term) {
+                        $sub->where('name', 'like', $term);
+                    })
+                    ->orWhereHas('vehicle', function ($sub) use ($term) {
+                        $sub->where('registration_number', 'like', $term)
+                        ->orWhere('fleet_number', 'like', $term);
+                    })
+                    ->orWhereHas('trailer', function ($sub) use ($term) {
+                        $sub->where('registration_number', 'like', $term)
+                        ->where('fleet_number', 'like', $term);
+                    })
+                  
+                    ->orWhereHas('employee', function ($sub) use ($term) {
+                        $sub->where(DB::raw("concat(name, ' ', surname)"), 'like', $term);
+                    });
+                });
+            });
+
+            $dispatches = $base
+                ->orderByDesc($this->dispatch_filter)
+                ->paginate(10);
+
+
+       
+        return view('livewire.dispatches.index',[
+            'dispatches' => $dispatches
+        ]);
     }
 }

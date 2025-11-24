@@ -84,6 +84,8 @@
                                   <tr>
                                     <th class="th-sm">Invoice#
                                     </th>
+                                    <th class="th-sm">CreatedBy
+                                    </th>
                                     <th class="th-sm">Customer
                                     </th>
                                     <th class="th-sm">Date
@@ -139,6 +141,7 @@
                                             @endif
                                         </small>
                                     </td>
+                                     <td>{{$invoice->user ? $invoice->user->name : ""}} {{$invoice->user ? $invoice->user->surname : ""}}</td>
                                     <td>
                                         {{$invoice->customer ? $invoice->customer->name : ""}}
                                     </td>

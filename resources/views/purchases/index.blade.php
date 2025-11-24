@@ -38,7 +38,6 @@
 
                         @livewire('purchases.index',['category'=>'asset'])
 
-
                     </div>
 
 

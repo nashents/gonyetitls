@@ -1,32 +1,7 @@
 <div>
-    {{-- @php
-        $departments = Auth::user()->employee->departments;
-        foreach($departments as $department){
-            $department_names[] = $department->name;
-        }
-        $roles = Auth::user()->roles;
-        foreach($roles as $role){
-            $role_names[] = $role->name;
-        }
-        $wsdepartment = App\Models\Department::where('name','Workshop')->first();
-        if (isset($wsdepartment)) {
-            $wsdepartment_head = App\Models\DepartmentHead::where('department_id',$wsdepartment->id)->where('employee_id',Auth::user()->employee->id)->first();
-        }
-        $stdepartment = App\Models\Department::where('name','Workshop')->first();
-        if (isset($stdepartment)) {
-            $stdepartment_head = App\Models\DepartmentHead::where('department_id',$stdepartment->id)->where('employee_id',Auth::user()->employee->id)->first();
-        }
-        $fndepartment = App\Models\Department::where('name','Finance')->first();
-        if (isset($fndepartment)) {
-            $fndepartment_head = App\Models\DepartmentHead::where('department_id',$fndepartment->id)->where('employee_id',Auth::user()->employee->id)->first();
-        }
-    @endphp
-    @if (isset($fndepartment_head) ||  (in_array('Admin', $role_names) && in_array('Finance', $department_names)) || in_array('Super Admin', $role_names))
-        <a href="" data-toggle="modal" data-target="#ticket_expenseModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Expense</a>
-    @endif
+   <a href="" data-toggle="modal" data-target="#ticket_expenseModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Expense</a>
         <br>
         <br>
-        <br> --}}
     <table id="expensesTable" class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
         <thead >
          <tr>

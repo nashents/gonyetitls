@@ -12,6 +12,9 @@ class TicketRequest extends Model implements Auditable
     use \OwenIt\Auditing\Auditable;
     use HasFactory, SoftDeletes;
 
+    public function user(){
+        return $this->belongsTo('App\Models\User');
+    }
     public function ticket(){
         return $this->belongsTo('App\Models\Ticket');
     }

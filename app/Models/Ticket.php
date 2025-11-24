@@ -59,6 +59,9 @@ class Ticket extends Model implements Auditable
     public function tyre_requisitions(){
         return $this->hasMany('App\Models\TyreRequisition');
     }
+    public function ticket_requests(){
+        return $this->hasMany('App\Models\TicketRequest');
+    }
     public function inventory_requisitions(){
         return $this->hasMany('App\Models\InventoryRequisition');
     }

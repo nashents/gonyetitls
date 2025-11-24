@@ -67,12 +67,12 @@ class ExpensesImport implements ToCollection,
 
     public function chunkSize(): int
     {
-        return 50;
+        return 150;
     }
 
     public function batchSize(): int
     {
-        return 50;
+         return 150;
     }
 
     public function limit(): int

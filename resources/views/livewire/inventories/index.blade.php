@@ -26,17 +26,17 @@
                                   <tr>
                                     <th class="th-sm">Product
                                     </th>
-                                    <th class="th-sm">Part/Serial#
-                                    </th>
                                     <th class="th-sm">Location
                                     </th>
-                                    <th class="th-sm">Item Contents
+                                    <th class="th-sm">Qty
+                                    </th>
+                                    <th class="th-sm">Capacity & Bal
                                     </th>
                                     <th class="th-sm">Date
                                     </th>
                                     <th class="th-sm">Ccy
                                     </th>
-                                    <th class="th-sm">Amt
+                                    <th class="th-sm">Rate
                                     </th>
                                     <th class="th-sm">Tax
                                     </th>
@@ -58,13 +58,15 @@
                                         @if ($inventory->product)
                                             {{$inventory->product->brand ? $inventory->product->brand->name : ""}} {{$inventory->product ? $inventory->product->name : ""}}
                                         @endif
+                                        @if ($inventory->product)
+                                            <br>
+                                            {{$inventory->product->identification_number ? "PN#: ".$inventory->product->identification_number : ""}}
+                                        @endif
+                                        @if ($inventory->serial_number)
+                                            <br>
+                                            <small><strong>S#: </strong> {{$inventory->serial_number}}</small>
+                                        @endif
                                     </td>    
-                                    <td>
-                                        {{$inventory->serial_number ? "SN#: ".$inventory->serial_number : ""}}
-                                            @if ($inventory->product)
-                                                 {{$inventory->product->identification_number ? "PN#: ".$inventory->product->identification_number : ""}}
-                                            @endif
-                                       </td>
                                     <td>
                                         @if ($inventory->store)
                                              <strong>Store:</strong>  {{$inventory->store ? $inventory->store->name : ""}}
@@ -88,7 +90,16 @@
                                         @endif
                                        
                                     </td>
-                                    <td> <strong>Content(s): </strong> {{$inventory->weight}} <strong>Bal: </strong> {{$inventory->balance ? $inventory->balance : ""}} {{$inventory->product ? $inventory->product->unit_of_measure : ""}}</td>
+                                    <td>{{$inventory->qty}}</td>
+                                    <td>
+                                        @if ($inventory->weight)
+                                            <strong>Capacity: </strong> {{$inventory->weight}}
+                                        @endif
+                                        @if ($inventory->balance)
+                                            <strong>Bal: </strong> {{$inventory->balance ? $inventory->balance : ""}}  {{$inventory->measurement ? $inventory->measurement : $inventory->product->unit_of_measure}}
+                                        @endif
+                                         
+                                    </td>
                                     <td>
                                         @if ($inventory->purchase_date)
                                             {{Carbon\Carbon::parse($inventory->purchase_date)->format('Y-m-d')}}        
@@ -96,9 +107,7 @@
                                     </td>
                                     <td>{{$inventory->currency ? $inventory->currency->name : ""}}</td>
                                     <td>
-                                        @if ($inventory->amount)
-                                            {{$inventory->currency ? $inventory->currency->symbol : ""}}{{number_format($inventory->amount,2)}}  
-                                        @endif
+                                       {{$inventory->currency ? $inventory->currency->symbol : ""}}{{number_format($inventory->amount ? $inventory->amount : 0,2)}}  
                                     </td>
                                     <td>
                                         {{$inventory->currency ? $inventory->currency->symbol : ""}}{{number_format($inventory->tax_amount ? $inventory->tax_amount : 0,2)}}  
@@ -107,9 +116,7 @@
                                         {{$inventory->currency ? $inventory->currency->symbol : ""}}{{number_format($inventory->cost ? $inventory->cost : 0,2)}}  
                                     </td>
                                     <td>
-                                        @if ($inventory->subtotal_incl)
-                                            {{$inventory->currency ? $inventory->currency->symbol : ""}}{{number_format($inventory->subtotal_incl,2)}}  
-                                        @endif
+                                        {{$inventory->currency ? $inventory->currency->symbol : ""}}{{number_format($inventory->total ? $inventory->total: 0,2)}}
                                         @if (Auth::user()->employee->company->currency_id != $inventory->currency_id)
                                             <br>
                                             <small>

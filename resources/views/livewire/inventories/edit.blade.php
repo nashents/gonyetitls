@@ -67,8 +67,8 @@
                                     @if (Auth::user()->employee->company)
                                         @if ($selectedCurrency != Auth::user()->employee->company->currency_id)
                                         <div class="form-group">
-                                            <label for="customer">Conversion Rate</label>
-                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="exchange_rate"  placeholder="Exchange Rate {{$selected_currency ? "From ".$selected_currency->name : ""}} {{Auth::user()->employee->company->currency ? "To ".Auth::user()->employee->company->currency->name : ""}}" >
+                                            <label for="customer">Conversion Rate<span class="required" style="color: red">*</span></label>
+                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="exchange_rate"  placeholder="Exchange Rate {{$selected_currency ? "From ".$selected_currency->name : ""}} {{Auth::user()->employee->company->currency ? "To ".Auth::user()->employee->company->currency->name : ""}}" required>
                                             @error('exchange_rate') <span class="text-danger error">{{ $message }}</span>@enderror
                                             <small style="color: green">{{$selected_currency ? " 1 ".$selected_currency->name." is how much in" : ""}} {{Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->name." ?" : ""}}</small>
                                             <small>{{$exchange_amount ? "The converted amount is: ".$exchange_amount : ""}}</small>
@@ -101,10 +101,10 @@
                                         <select wire:model.debounce.300ms="selectedProduct" class="form-control" required>
                                             <option value="">Select Product</option>
                                             @foreach ($products as $product)
-                                                <option value="{{$product->id}}"> {{$product->brand ? $product->brand->name : ""}} {{$product->name}} {{$product->identification_number}}</option>
+                                                <option value="{{$product->id}}">  {{$product->name}} {{$product->brand ? $product->brand->name : ""}} {{$product->identification_number}}</option>
                                             @endforeach
                                         </select>
-                                         <small><a href="{{ route('products.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Product</a></small><a href="#" wire:click.prevent="refresh('products')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>  
+                                         <small><a href="{{ route('inventory_products.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Product</a></small><a href="#" wire:click.prevent="refresh('products')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>  
                                         @error('selectedProduct') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 @else   
@@ -113,7 +113,7 @@
                                         <select wire:model.debounce.300ms="selectedPurchaseProduct" class="form-control" required>
                                             <option value="">Select Product</option>
                                             @foreach ($purchase_products as $purchase_product)
-                                                <option value="{{$purchase_product->id}}"> {{$purchase_product->product->brand ? $purchase_product->product->brand->name : ""}} {{$purchase_product->product ? $purchase_product->product->name : ""}} {{$purchase_product->product ? $purchase_product->product->identification_number : ""}}</option>
+                                                <option value="{{$purchase_product->id}}">  {{$purchase_product->product ? $purchase_product->product->name : ""}} {{$purchase_product->product->brand ? $purchase_product->product->brand->name : ""}} {{$purchase_product->product ? $purchase_product->product->identification_number : ""}}</option>
                                             @endforeach
                                         </select>
                                         @error('selectedPurchaseProduct') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -121,14 +121,14 @@
                                 @endif
                                
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="purchase_date">Description</label>
                                     <textarea  class="form-control" wire:model.debounce.300ms="item_description" cols="30" rows="2" ></textarea>
                                     @error('item_description') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-2">
                                 <div class="form-group">
                                     <label for="purchase_date">Item Contents<span class="required" style="color: red">*</span></label>
                                     <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="weight" required>
@@ -136,6 +136,24 @@
                                     <small>Litres, weight, # of pieces or items etc eg 100 Litres or 4 items. Useful for deductions when invoicing / dispatching </small>
                                 </div>
                                 </div>
+                            <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label for="country">UnitOfMeasure<span class="required" style="color: red">*</span></label>
+                                            <select wire:model.debounce.300ms="measurement" class="form-control" required>
+                                                <option value="">Select UOM</option>
+                                                <option value="Cubic">Cubic</option>
+                                                <option value="Each">Each</option>
+                                                <option value="Item(s)">Item(s)</option>
+                                                <option value="Kg(s)">Kg(s)</option>
+                                                <option value="Litre(s)">Litre(s)</option>
+                                                <option value="Metre(s)">Metre(s)</option>
+                                                <option value="Piece(s)">Piece(s)</option>
+                                                <option value="Ton(s)">Ton(s)</option>
+                                                <option value="Unit(s)">Unit(s)</option>
+                                            </select>
+                                            @error('measurement') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
                           
                         </div>
         
@@ -176,7 +194,7 @@
                                         <select wire:model.debounce.300ms="selectedTax"  class="form-control">
                                             <option value="">Select Tax</option>
                                                 @foreach ($tax_accounts as $tax)
-                                                   <option value="{{$tax->id}}">{{$tax->abbreviation}} {{$tax->rate ? $tax->rate."%" : ""}}</option> 
+                                                   <option value="{{$tax->id}}">{{$tax->abbreviation}}</option> 
                                                 @endforeach
                                             </select>
                                             <small><a href="{{ route('taxes.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small> 

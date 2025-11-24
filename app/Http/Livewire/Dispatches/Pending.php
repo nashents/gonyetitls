@@ -5,6 +5,7 @@ namespace App\Http\Livewire\Dispatches;
 use Carbon\Carbon;
 use App\Models\Bill;
 use App\Models\Tyre;
+use App\Models\Asset;
 use App\Models\Account;
 use Livewire\Component;
 use App\Models\Dispatch;
@@ -90,8 +91,9 @@ class Pending extends Component
 
             if ($this->authorize == "approved") {
 
-                    if ($dispatch->department == "inventory" || $dispatch->department == "tyre" ) {
+                    if (in_array($dispatch->department,['inventory','tyre'])) {
 
+                    
                         $account = Account::where('name', 'Repairs & Maintenance')->first();
 
                         $bill = new Bill;
@@ -123,22 +125,22 @@ class Pending extends Component
 
                     }
 
-                    foreach ($dispatch->dispatch_items as $item) {
+                    foreach ($dispatch->dispatch_items as $dispatch_item) {
 
-                        if ($dispatch->department == "inventory" || $dispatch->department == "tyre" ) {
+                        if (in_array($dispatch->department,['inventory','tyre'])) {
 
                             $expense = new BillExpense;
                             $expense->bill_id = $bill->id;
                             $expense->currency_id = $bill->currency_id;
                             $expense->qty = 1;
-                            $expense->amount = $item->amount;
-                            $expense->subtotal = $item->amount;
-                            $expense->subtotal_incl = $item->amount;
-                            $expense->inventory_id = $item->inventory_id;
-                            $expense->tyre_id = $item->tyre_id;
-                            $expense->asset_id = $item->asset_id;
-                            $expense->exchange_amount = $item->exchange_amount;
-                            $expense->exchange_rate = $item->exchange_rate;
+                            $expense->amount = $dispatch_item->amount;
+                            $expense->subtotal = $dispatch_item->amount;
+                            $expense->subtotal_incl = $dispatch_item->amount;
+                            $expense->inventory_id = $dispatch_item->inventory_id;
+                            $expense->tyre_id = $dispatch_item->tyre_id;
+                            $expense->asset_id = $dispatch_item->asset_id;
+                            $expense->exchange_amount = $dispatch_item->exchange_amount;
+                            $expense->exchange_rate = $dispatch_item->exchange_rate;
                             if ($account) {
                                 $expense->account_id = $account->id;
                                 $expense->account_type_id = optional($account->account_type)->id;
@@ -148,40 +150,35 @@ class Pending extends Component
 
                         }
 
-                       
-                        // Inventory updates
-                        if ($item->inventory_id) {
-                            $inventory = Inventory::find($item->inventory_id);
-                            if ($inventory && is_numeric($inventory->balance) && is_numeric($item->weight)) {
-                                $inventory->balance -= $item->weight;
-                                if ($inventory->balance <= 0) $inventory->status = 0;
-                                $inventory->save();
+                            if ($dispatch_item->inventory_id) {
+                                $item = Inventory::find($dispatch_item->inventory_id);
+                            } elseif ($dispatch_item->asset_id) {
+                                $item = Asset::find($dispatch_item->asset_id);
+                            } elseif ($dispatch_item->tyre_id) {
+                                $item = Tyre::find($dispatch_item->tyre_id);
+                            } else {
+                                continue;
                             }
-                        }
 
-                        if ($item->asset_id) {
-                            $asset = Asset::find($item->asset_id);
-                            if ($asset && is_numeric($asset->balance) && is_numeric($item->weight)) {
-                                $asset->balance -= $item->weight;
-                                if ($asset->balance <= 0) $asset->status = 0;
-                                $asset->save();
+                            if (!$item) {
+                                continue;
                             }
-                        }
 
-                        // Tyre status updates
-                        if ($item->tyre_id) {
-                            $tyre = Tyre::find($item->tyre_id);
-                            if ($tyre) {
-                                $tyre->status = 0;
-                                $tyre->save();
+                            // Reduce the balance / contents
+                            $item->balance = max(0, (float)$item->balance - (float)$dispatch_item->qty);
+
+                            if ($item->balance <= 0) {
+                                $item->status = 0;   // optional: mark as exhausted/closed
                             }
-                        }
+
+                            $item->save();
+ 
                     }
                 
                     $this->dispatchBrowserEvent('hide-authorizationModal');
                     $this->dispatchBrowserEvent('alert', [
                         'type' => 'success',
-                        'message' => "Dispatch Approved Successfully"
+                        'message' => "Dispatch Approved & Item(s) Dispatched Successfully"
                     ]);
 
                     if ($this->department == "tyre") {

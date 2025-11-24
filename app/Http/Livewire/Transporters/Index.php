@@ -197,17 +197,7 @@ class Index extends Component
     }
     protected $rules = [
         'name' => 'required|unique:transporters,name,NULL,id,deleted_at,NULL|string|min:2',
-        'email' => 'required|email|unique:users,email,NULL,id,deleted_at,NULL',
-        'phonenumber' => 'required',
-        'worknumber' => 'required',
-        'contact_name.0' => 'required|string|min:2',
-        'contact_surname.0' => 'required|string|min:2',
-        'contact_email.0' => 'required|email',
-        'contact_phonenumber.0' => 'required|string|min:2',
-        'country' => 'required|string|min:2',
-        'city' => 'required|string|min:2',
-        'suburb' => 'required|string|min:2',
-        'street_address' => 'required|string|min:2',
+        'email' => 'nullable|email|unique:transporters,email,NULL,id,deleted_at,NULL',
 
     ];
 

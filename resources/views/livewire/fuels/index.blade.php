@@ -102,6 +102,8 @@
                                     <tr>
                                         <th class="th-sm">Order#
                                         </th>
+                                        <th class="th-sm">CreatedBy
+                                        </th>
                                         <th class="th-sm">Date
                                         </th>
                                         <th class="th-sm">OrderFor
@@ -133,7 +135,7 @@
                                         {{$fuel->order_number}} <br>
                                         <small><strong>CreatedBy: </strong>{{$fuel->user ? $fuel->user->name : ""}} {{$fuel->user ? $fuel->user->surname : ""}}</small>
                                     </td>
-                                     
+                                      <td>{{$fuel->user ? $fuel->user->name : ""}} {{$fuel->user ? $fuel->user->surname : ""}}</td>
                                       <td>
                                         @php
                                         $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
@@ -222,6 +224,7 @@
                                     @elseif ($fuel->fillup == 0)
                                     <tr style="background-color: #FFC107">
                                       <td>{{$fuel->order_number}}</td>
+                                       <td>{{$fuel->user ? $fuel->user->name : ""}} {{$fuel->user ? $fuel->user->surname : ""}}</td>
                                       <td>{{$fuel->user ? $fuel->user->name : ""}} {{$fuel->user ? $fuel->user->surname : ""}}</td>
                                       <td>
                                         @php

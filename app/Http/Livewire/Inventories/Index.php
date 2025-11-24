@@ -100,69 +100,71 @@ class Index extends Component
 
     public function render()
     {
-        if (isset($this->search)) {
-            return view('livewire.inventories.index',[
-                'inventories' => Inventory::query()->with('product','product.brand','currency')
-                ->where('disposed',0)
-                ->where('status',1)
-                ->where('inventory_number','like', '%'.$this->search.'%')
-                ->orWhere('serial_number','like', '%'.$this->search.'%')
-                ->orWhere('part_number','like', '%'.$this->search.'%')
-                ->orWhere('purchase_date','like', '%'.$this->search.'%')
-                ->orWhere('amount','like', '%'.$this->search.'%')
-                ->orWhere('total','like', '%'.$this->search.'%')
-                ->orWhere('subtotal','like', '%'.$this->search.'%')
-                ->orWhereHas('product', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('product.brand', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('product.category', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('product.category_value', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('bin', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%')->orWhere('bin_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('rack', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%')->orWhere('rack_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('vehicle_make', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('currency', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('vehicle_model', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('horse_make', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('horse_model', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('store', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('vendor', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })->paginate(10)
-            ]);
-        }else {
-            return view('livewire.inventories.index',[
-                'inventories' => Inventory::query()->select('inventories.*') // Select all inventory columns
-                ->join('products', 'products.id', '=', 'inventories.product_id') // Join with products table
-                ->with(['product.brand', 'currency']) // Eager load relationships
-                ->where('inventories.disposed', 0)
-                ->where('inventories.status', 1)
-                ->orderBy('created_at', 'desc') // Order by product name
-                ->paginate(10)
-            ]);
+
+        $query = Inventory::query()
+        ->with([
+            'product',
+            'product.brand',
+            'product.category',
+            'product.category_value',
+            'bin',
+            'rack',
+            'store',
+            'vendor',
+            'currency',
+        ])
+        ->where('disposed', 0)
+        ->where('status', 1);
+
+        if (filled($this->search)) {
+            $search = $this->search;
+
+            $query->where(function ($q) use ($search) {
+                $q->where('inventory_number', 'like', "%{$search}%")
+                    ->orWhere('serial_number', 'like', "%{$search}%")
+                    ->orWhere('part_number', 'like', "%{$search}%")
+                    ->orWhere('purchase_date', 'like', "%{$search}%")
+                    ->orWhere('amount', 'like', "%{$search}%")
+                    ->orWhere('total', 'like', "%{$search}%")
+                    ->orWhere('subtotal', 'like', "%{$search}%")
+                    ->orWhereHas('product', function ($q2) use ($search) {
+                        $q2->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('product.brand', function ($q2) use ($search) {
+                        $q2->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('product.category', function ($q2) use ($search) {
+                        $q2->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('product.category_value', function ($q2) use ($search) {
+                        $q2->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('bin', function ($q2) use ($search) {
+                        $q2->where('name', 'like', "%{$search}%")
+                            ->orWhere('bin_number', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('rack', function ($q2) use ($search) {
+                        $q2->where('name', 'like', "%{$search}%")
+                            ->orWhere('rack_number', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('store', function ($q2) use ($search) {
+                        $q2->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('vendor', function ($q2) use ($search) {
+                        $q2->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('currency', function ($q2) use ($search) {
+                        $q2->where('name', 'like', "%{$search}%");
+                    });
+            });
+        } else {
+            // No search: default sort
+            $query->orderByDesc('created_at');
         }
+
+        return view('livewire.inventories.index', [
+            'inventories' => $query->paginate(10),
+        ]);
        
     }
 }

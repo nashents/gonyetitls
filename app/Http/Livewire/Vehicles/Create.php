@@ -44,7 +44,7 @@ class Create extends Component
     public $engine_number;
     public $year;
     public $color;
-    public $no_of_wheels;
+    public $no_of_wheels = 0;
     public $mileage;
     public $hours;
     public $manufacturer;

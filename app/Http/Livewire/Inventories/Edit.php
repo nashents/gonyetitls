@@ -16,7 +16,6 @@ use App\Models\Currency;
 use App\Models\Purchase;
 use App\Models\Inventory;
 use App\Models\BillExpense;
-use App\Models\Measurement;
 use App\Models\ExchangeRate;
 use App\Models\GoodsReceived;
 use Livewire\WithFileUploads;
@@ -52,7 +51,6 @@ class Edit extends Component
     public $vendor_id;
   
     public $purchase_date;
-    public $total;
     public $residual_value;
     public $weight ;
   
@@ -70,6 +68,7 @@ class Edit extends Component
 
     public $products;
     public $selectedProduct ;
+    public $measurement ;
     public $serial_number ;
     public $tax_rate ;
     public $selectedTax ;
@@ -207,6 +206,7 @@ class Edit extends Component
         $this->purchase_date = $inventory->purchase_date;
         $this->qty = $inventory->qty;
         $this->amount = $inventory->amount;
+        $this->measurement = $inventory->measurement;
         $this->cost = $inventory->cost;
         $product = $inventory->product;
         $this->selectedProduct = $inventory->product_id;
@@ -262,20 +262,19 @@ class Edit extends Component
             }
         }
     }
-      public function updatedSelectedPurchaseProduct($id, $key){
+      public function updatedSelectedPurchaseProduct($id){
         if (!is_null($id)) {
             $purchase_product = PurchaseProduct::find($id);
             if (isset($purchase_product)) {
-                $this->selectedProduct[$key] = $purchase_product->product_id;
-                $this->amount[$key] = $purchase_product->amount;
-                $this->item_description[$key] = $purchase_product->product->description;
-                $this->qty[$key] = $purchase_product->qty;
-                $this->weight[$key] = 1;
+                $this->selectedProduct = $purchase_product->product_id;
+                $this->amount = $purchase_product->amount;
+                $this->item_description = $purchase_product->product->description;
+                $this->measurement = $purchase_product->product->unit_of_measure;
                 if($purchase_product->tax_id){
-                    $this->selectedTax[$key] = $purchase_product->tax_id;
+                    $this->selectedTax = $purchase_product->tax_id;
                     $tax = Account::find($purchase_product->tax_id);
                     if (isset($tax)) {
-                        $this->tax_rate[$key] = $tax->rate;
+                        $this->tax_rate = $tax->rate;
                     }
                 }
                 
@@ -290,10 +289,9 @@ class Edit extends Component
             if (isset($product)) {
                 if ($product->price) {
                     $this->amount = $product->price;
-                    $this->item_description = $product->description;
                 }
-                $this->qty = 1;
-                $this->weight = 1;
+                $this->item_description = $product->description;
+                $this->measurement = $product->unit_of_measure;
           
                 if ($product->tax_id) {
                     $this->selectedTax = $product->tax_id;
@@ -341,7 +339,15 @@ class Edit extends Component
             ]);
         }
         elseif($category == "products"){
-            $this->products = Product::orderBy('name','asc')->get();
+            $this->products = Product::with('brand')
+            ->where('department', 'inventory')
+            ->where('status', true)
+            ->where('buy', true)
+            ->get()
+            ->sortBy([
+                ['name', 'asc'],          // first sort by product name
+                ['brand.name', 'asc'],    // then sort by brand name
+            ]);
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Products Refreshed Successfully!!."
@@ -419,9 +425,9 @@ class Edit extends Component
         }
     }
 
-    public function calculateExchangeAmount(){
-        if (($this->total && is_numeric($this->total)) && ($this->exchange_rate && is_numeric($this->exchange_rate)) ) {
-            $this->exchange_amount = $this->exchange_rate * $this->total;
+    public function calculateExchangeAmount($total = null){
+        if (($total && is_numeric($total)) && ($this->exchange_rate && is_numeric($this->exchange_rate)) ) {
+            $this->exchange_amount = $this->exchange_rate * $total;
         }
     }
 
@@ -439,44 +445,43 @@ class Edit extends Component
         $inventory->rack_id = $this->rack_id ?? null;
         $inventory->product_id = $this->selectedProduct ?? null;
         $inventory->currency_id = $this->selectedCurrency ?? null;
+        $inventory->measurement = $this->measurement ?? null;
         $inventory->amount = $this->amount;
         $inventory->cost = $this->cost;
         $inventory->qty = $this->qty;
-
-        $subtotal = 0;
-
-        if (isset($this->cost)) {
-            $subtotal = $this->amount + $this->cost;
-            $inventory->subtotal = $subtotal ;
-        }else{
-            $subtotal = $this->amount;
-            $inventory->subtotal = $subtotal;
-        }
-                        
-    
         $inventory->weight = $this->weight;
         $inventory->balance = $this->weight;
-
         $inventory->tax_rate = $this->tax_rate;
         $inventory->tax_id = $this->selectedTax;
 
+        $subtotal = 0;
+        $subtotal_incl = 0;
+        $total = 0;
+
+        if(isset($this->qty) && is_numeric($this->qty) && isset($this->amount) && is_numeric($this->amount) ){
+            if (isset($this->cost) && is_numeric($this->cost)) {
+                $subtotal = ($this->qty * $this->amount) + $this->cost;
+                $inventory->subtotal = $subtotal ;
+            }else{
+                $subtotal = ($this->qty * $this->amount);
+                $inventory->subtotal = $subtotal;
+            }
+        }
+       
         if (isset($this->tax_rate) && is_numeric($this->tax_rate) && isset($this->selectedTax)) {
-            if (is_numeric($subtotal)) {
                 $tax_amount = ($subtotal * ($this->tax_rate / 100 ));
                 $inventory->tax_amount = $tax_amount;
-                $this->total = $tax_amount + $subtotal;
-                $inventory->subtotal_incl =  $this->total;
-                $inventory->total =  $this->total;
-            }
+                $total = $tax_amount + $subtotal;
+                $inventory->subtotal_incl =  $total;
+                $inventory->total =  $total;
         }else{
-            if (is_numeric($subtotal)) {
-                $inventory->subtotal_incl = $subtotal;
-                $inventory->total = $subtotal;
-            }
-            
+            $total = $subtotal;
+            $inventory->subtotal_incl = $total;
+            $inventory->total = $total;
         }
 
-        $this->calculateExchangeAmount();
+        $this->calculateExchangeAmount($total);
+
         $inventory->exchange_rate = $this->exchange_rate;
         $inventory->exchange_amount = $this->exchange_amount;
        
@@ -596,8 +601,16 @@ class Edit extends Component
 
         
       
-         $this->goods_receiveds = GoodsReceived::where('status',1)->where('department','inventory')->where('created_at', '>=', Carbon::now()->subMonth())->orderBy('created_at','desc')->get();
-        $this->products = Product::with('brand')->orderBy('name','asc')->where('department','inventory')->where('status',True)->where('buy',True)->get()->sortBy('brand.name');
+        $this->goods_receiveds = GoodsReceived::where('status',1)->where('department','inventory')->where('created_at', '>=', Carbon::now()->subMonth())->orderBy('created_at','desc')->get();
+        $this->products = Product::with('brand')
+        ->where('department', 'inventory')
+        ->where('status', true)
+        ->where('buy', true)
+        ->get()
+        ->sortBy([
+            ['name', 'asc'],          // first sort by product name
+            ['brand.name', 'asc'],    // then sort by brand name
+        ]);
         $this->purchases = Purchase::where('department','inventory')->where('status',1)->where('created_at', '>=', Carbon::now()->subMonth())->where('authorization','approved')->orderBy('created_at','desc')->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();
         $this->currencies = Currency::orderBy('name','asc')->get();

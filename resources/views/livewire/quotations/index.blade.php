@@ -66,6 +66,8 @@
 
                                     <th class="th-sm">Quotation#
                                     </th>
+                                    <th class="th-sm">CreatedBy
+                                    </th>
                                     <th class="th-sm">Customer
                                     </th>
                                     <th class="th-sm">Date
@@ -98,6 +100,7 @@
                                         $datetime2 = new DateTime($expiry);
                                     @endphp
                                     <td>{{$quotation->quotation_number}}</td>
+                                    <td>{{$quotation->user ? $quotation->user->name : ""}} {{$quotation->user ? $quotation->user->surname : ""}}</td>
                                     <td>{{$quotation->customer ? $quotation->customer->name : ""}}</td>
                                     <td>
                                        {{$quotation->date}}

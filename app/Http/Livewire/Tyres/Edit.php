@@ -41,7 +41,6 @@ class Edit extends Component
   public $selectedCurrency;
   public $selected_currency;
   public $date;
-  public $total;
   public $purchase_date;
   public $type;
   public $quantity;
@@ -63,6 +62,7 @@ class Edit extends Component
   public $racks;
   public $bins;
   public $selectedProduct ;
+  public $measurement ;
   public $serial_number ;
   public $tax_rate ;
   public $selectedTax ;
@@ -152,7 +152,7 @@ class Edit extends Component
         $this->tyre_id = $id;
         $this->width = $tyre->width;
         $this->type = $tyre->type;
-        $this->qty = $tyre->qty;
+        
         $this->diameter = $tyre->diameter;
         $this->thread_depth = $tyre->thread_depth;
         $this->pressure_psi = $tyre->pressure_psi;
@@ -168,6 +168,7 @@ class Edit extends Component
         $this->tax_rate = $tyre->tax_rate;
         $this->to_bills = $tyre->bill ? True : False;
         $this->selectedProduct = $tyre->product_id;
+        $this->measurement = $tyre->measurement;
         $this->serial_number = $tyre->serial_number;
         $this->status = $tyre->status;
         $this->stores = Store::latest()->get();
@@ -178,9 +179,8 @@ class Edit extends Component
         $this->selectedAccount = $tyre->account_id;
         $this->selectedCurrency = $tyre->currency_id;
         $this->amount = $tyre->amount;
-        $this->qty = $tyre->qty ?? 1;
+       
         $this->cost = $tyre->cost;
-        $this->total = $tyre->total;
         $this->purchase_date = $tyre->purchase_date ? Carbon::parse($tyre->purchase_date)->format('Y-m-d') : Null;
         $this->tyre_number = $tyre->tyre_number;
         $this->condition = $tyre->condition;
@@ -247,20 +247,20 @@ class Edit extends Component
             }
         }
     }
-      public function updatedSelectedPurchaseProduct($id, $key){
+      public function updatedSelectedPurchaseProduct($id){
         if (!is_null($id)) {
             $purchase_product = PurchaseProduct::find($id);
             if (isset($purchase_product)) {
-                $this->selectedProduct[$key] = $purchase_product->product_id;
-                $this->amount[$key] = $purchase_product->amount;
-                $this->item_description[$key] = $purchase_product->product->description;
-                $this->qty[$key] = $purchase_product->qty;
-                $this->weight[$key] = 1;
+                $this->selectedProduct = $purchase_product->product_id;
+                $this->amount = $purchase_product->amount;
+                $this->item_description = $purchase_product->product->description;
+                $this->measurement = $purchase_product->product->unit_of_measure;
+               
                 if($purchase_product->tax_id){
-                    $this->selectedTax[$key] = $purchase_product->tax_id;
+                    $this->selectedTax = $purchase_product->tax_id;
                     $tax = Account::find($purchase_product->tax_id);
                     if (isset($tax)) {
-                        $this->tax_rate[$key] = $tax->rate;
+                        $this->tax_rate = $tax->rate;
                     }
                 }
                 
@@ -290,11 +290,9 @@ class Edit extends Component
         if (isset($product)) {
             if ($product->price) {
                 $this->amount = $product->price;
-                $this->item_description = $product->description;
             }
-            $this->qty= 1;
-           
-      
+            $this->item_description = $product->description;
+            $this->measurement = $product->unit_of_measure; 
             if ($product->tax_id) {
                 $this->selectedTax = $product->tax_id;
                 $tax = Account::find($product->tax_id);
@@ -342,7 +340,15 @@ public function updatedSelectedTax($id){
             ]);
         }
         elseif($category == "products"){
-            $this->products = Product::orderBy('name','asc')->get();
+            $this->products = Product::with('brand')
+            ->where('department', 'tyre')
+            ->where('status', true)
+            ->where('buy', true)
+            ->get()
+            ->sortBy([
+                ['name', 'asc'],          // first sort by product name
+                ['brand.name', 'asc'],    // then sort by brand name
+            ]);
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Products Refreshed Successfully!!."
@@ -397,9 +403,13 @@ public function updatedSelectedTax($id){
         }
     }
 
-      public function update(){
+    public function update(){
 
-    DB::transaction(function () {
+        DB::transaction(function () {
+                $subtotal = 0;
+                $subtotal_incl = 0;
+                $total = 0;
+                $qty = 1;
 
               $tyre = Tyre::find($this->tyre_id);
               $tyre->user_id = Auth::user()->id;
@@ -408,46 +418,38 @@ public function updatedSelectedTax($id){
               
               $tyre->serial_number = $this->serial_number;
               $tyre->type = $this->type;
-              $tyre->qty = $this->qty;
+              $tyre->qty = $qty;
               $tyre->amount = $this->amount;
               $tyre->cost = $this->cost;
-                $subtotal = 0;
-
-                if (isset($this->cost)) {
-                    $subtotal = $this->amount + $this->cost;
-                    $tyre->subtotal = $subtotal ;
-                }else{
-                    $subtotal = $this->amount;
-                    $tyre->subtotal = $subtotal;
-                }
-  
+              $tyre->measurement = $this->measurement;
               $tyre->tax_rate = $this->tax_rate;
               $tyre->tax_id = $this->selectedTax;
 
-              $tax = Account::find($this->selectedTax);
-              if (isset($tax)) {
-                  $this->tax_rate = $tax->rate;
-              }else{
-                  $this->tax_rate = "";
-              }
-             
-                if (isset($this->tax_rate) && is_numeric($this->tax_rate) && isset($this->selectedTax)) {
-                    if (is_numeric($subtotal)) {
-                        $tax_amount = ($subtotal * ($this->tax_rate / 100 ));
-                        $tyre->tax_amount = $tax_amount;
-                        $this->total = $tax_amount + $subtotal;
-                        $tyre->subtotal_incl =  $this->total;
-                        $tyre->total =  $this->total;
-                    }
-                }else{
-                    if (is_numeric($subtotal)) {
-                        $tyre->subtotal_incl = $subtotal;
-                        $tyre->total = $subtotal;
-                    }
-                    
-                }
+               
 
-              $this->calculateExchangeAmount();
+            if(isset($qty) && is_numeric($qty) && isset($this->amount) && is_numeric($this->amount) ){
+            if (isset($this->cost) && is_numeric($this->cost)) {
+                $subtotal = ($qty * $this->amount) + $this->cost;
+                $tyre->subtotal = $subtotal ;
+            }else{
+                $subtotal = ($qty * $this->amount);
+                $tyre->subtotal = $subtotal;
+            }
+            }
+        
+            if (isset($this->tax_rate) && is_numeric($this->tax_rate) && isset($this->selectedTax)) {
+                    $tax_amount = ($subtotal * ($this->tax_rate / 100 ));
+                    $tyre->tax_amount = $tax_amount;
+                    $total = $tax_amount + $subtotal;
+                    $tyre->subtotal_incl =  $total;
+                    $tyre->total =  $total;
+            }else{
+                $total = $subtotal;
+                $tyre->subtotal_incl = $total;
+                $tyre->total = $total;
+            }
+
+        $this->calculateExchangeAmount($total);
 
               $tyre->exchange_rate = $this->exchange_rate;
               $tyre->exchange_amount = $this->exchange_amount;
@@ -580,7 +582,15 @@ public function updatedSelectedTax($id){
 
      
        $this->goods_receiveds = GoodsReceived::where('status',1)->where('department','tyre')->where('created_at', '>=', Carbon::now()->subMonth())->orderBy('created_at','desc')->get();
-         $this->products = Product::with('brand')->orderBy('name','asc')->where('department','tyre')->where('status',True)->where('buy',True)->get()->sortBy('brand.name');
+        $this->products = Product::with('brand')
+        ->where('department', 'tyre')
+        ->where('status', true)
+        ->where('buy', true)
+        ->get()
+        ->sortBy([
+            ['name', 'asc'],          // first sort by product name
+            ['brand.name', 'asc'],    // then sort by brand name
+        ]);
        $this->purchases = Purchase::where('department','tyre')->where('status',1)->where('created_at', '>=', Carbon::now()->subMonth())->where('authorization','approved')->orderBy('created_at','desc')->get();
         return view('livewire.tyres.edit',[
           'purchases' => $this->purchases,

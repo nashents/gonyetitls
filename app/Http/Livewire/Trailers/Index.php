@@ -234,7 +234,7 @@ public function activate($id){
         $trailer->chasis_number = $this->chasis_number;
         $trailer->registration_number = $this->registration_number;
         $trailer->year = $this->year;
-        $trailer->no_of_wheels = $this->no_of_wheels;
+        $trailer->no_of_wheels = $this->no_of_wheels ?? 0;
         $trailer->manufacturer = $this->manufacturer;
         $trailer->gvm = $this->gvm;
         $trailer->nvm = $this->nvm;

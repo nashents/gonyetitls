@@ -27,9 +27,11 @@
                                     </th>
                                     <th class="th-sm">Items
                                     </th>
-                                    <th class="th-sm">Total Items
+                                    <th class="th-sm">Qty
                                     </th>
-                                    <th class="th-sm">Total Value
+                                    <th class="th-sm">Ccy
+                                    </th>
+                                    <th class="th-sm">Total
                                     </th>
                                     <th class="th-sm">Auth
                                     </th>
@@ -93,8 +95,9 @@
                                             @endforeach
                                         @endif
                                     </td>
-                                    <td>{{$dispatch->dispatch_items->count()}}</td>
-                                    <td>{{$dispatch->currency ? $dispatch->currency->name : ""}} {{$dispatch->currency ? $dispatch->currency->symbol : ""}}{{$dispatch->total}}</td>
+                                    <td>{{$dispatch->dispatch_items->sum('qty')}}</td>
+                                    <td>{{$dispatch->currency ? $dispatch->currency->name : ""}}</td>
+                                    <td> {{$dispatch->currency ? $dispatch->currency->symbol : ""}}{{number_format($dispatch->total ? $dispatch->total : 0 , 2)}}</td>
                                     <td><span class="badge bg-{{($dispatch->authorization == 'approved') ? 'success' : (($dispatch->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($dispatch->authorization == 'approved') ? 'approved' : (($dispatch->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">

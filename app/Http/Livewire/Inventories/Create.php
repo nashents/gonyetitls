@@ -25,7 +25,6 @@ use App\Models\Inventory;
 use App\Models\Department;
 use App\Models\VendorType;
 use App\Models\BillExpense;
-use App\Models\Measurement;
 use App\Models\ExchangeRate;
 use App\Models\CategoryValue;
 use App\Models\GoodsReceived;
@@ -65,9 +64,7 @@ class Create extends Component
     public $vendor_id;
   
     public $purchase_date;
-    public $total;
     public $residual_value;
-    public $weight = [];
     public $life;
     public $depreciation_type;
     public $warranty_exp_date;
@@ -81,10 +78,12 @@ class Create extends Component
 
     public $products;
     public $selectedProduct = [];
+    public $measurement = [];
     public $serial_number = [];
     public $tax_rate = [];
     public $selectedTax = [];
     public $qty = [] ;
+    public $weight = [];
     public $item_description = [] ;
     public $amount = [];
     public $cost = [];
@@ -220,7 +219,15 @@ class Create extends Component
             ]);
         }
         elseif($category == "products"){
-            $this->products = Product::orderBy('name','asc')->get();
+           $this->products = Product::with('brand')
+            ->where('department', 'inventory')
+            ->where('status', true)
+            ->where('buy', true)
+            ->get()
+            ->sortBy([
+                ['name', 'asc'],          // first sort by product name
+                ['brand.name', 'asc'],    // then sort by brand name
+            ]);
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Products Refreshed Successfully!!."
@@ -446,9 +453,10 @@ class Create extends Component
             if (isset($product)) {
                 if ($product->price) {
                     $this->amount[$key] = $product->price;
-                    $this->item_description[$key] = $product->description;
                 }
+                $this->item_description[$key] = $product->description;
                 $this->qty[$key] = 1;
+                $this->measurement[$key] = $product->unit_of_measure;
                 $this->weight[$key] = 1;
                 if ($product->tax_id) {
                     $this->selectedTax[$key] = $product->tax_id;
@@ -470,6 +478,7 @@ class Create extends Component
                 $this->selectedProduct[$key] = $purchase_product->product_id;
                 $this->amount[$key] = $purchase_product->amount;
                 $this->item_description[$key] = $purchase_product->product->description;
+                $this->measurement[$key] = $purchase_product->product->unit_of_measure;
                 $this->qty[$key] = $purchase_product->qty;
                 $this->weight[$key] = 1;
                 if($purchase_product->tax_id){
@@ -574,9 +583,9 @@ class Create extends Component
         return $this->selectedGoodsReceived;
     }
 
-    public function calculateExchangeAmount(){
-        if (($this->total && is_numeric($this->total)) && ($this->exchange_rate && is_numeric($this->exchange_rate)) ) {
-            $this->exchange_amount = $this->exchange_rate * $this->total;
+    public function calculateExchangeAmount($total = null){
+        if (($total && is_numeric($total)) && ($this->exchange_rate && is_numeric($this->exchange_rate)) ) {
+            $this->exchange_amount = $this->exchange_rate * $total;
         }
     }
 
@@ -591,8 +600,9 @@ class Create extends Component
             foreach ($this->selectedProduct as $key => $value) {
 
             if (isset($this->qty[$key])) {
+                
     
-                for ($i=0; $i < $this->qty[$key] ; $i++) { 
+                // for ($i=0; $i < $this->qty[$key] ; $i++) { 
                        
                    
                     $inventory = new Inventory;
@@ -601,6 +611,8 @@ class Create extends Component
                     $inventory->currency_id = $this->selectedCurrency ? $this->selectedCurrency : null;
 
                     $subtotal = 0;
+                    $subtotal_incl = 0;
+                    $total = 0;
 
                     if ($this->selectedGoodsReceived) {
                       $inventory->goods_received_id = $this->selectedGoodsReceived;
@@ -624,50 +636,49 @@ class Create extends Component
                     if (isset($this->qty[$key])) {
                         $inventory->qty = $this->qty[$key];
                     }
-                   
-                    if (isset($this->amount[$key])) {
-                         if (isset($this->cost[$key])) {
-                            $subtotal = $this->amount[$key] + $this->cost[$key];
-                            $inventory->subtotal = $subtotal ;
-                        }else{
-                            $subtotal = $this->amount[$key];
-                            $inventory->subtotal = $subtotal;
-                        }
-                        
+                    if (isset($this->measurement[$key])) {
+                        $inventory->measurement = $this->measurement[$key];
                     }
-                  
-                    if (isset($this->weight[$key])) {
+                    if (isset($this->weight[$key]) && isset($this->qty[$key]) && (is_numeric($this->weight[$key]) && is_numeric($this->qty[$key]))    ) {
+                        $balance = $this->weight[$key] * $this->qty[$key];
                         $inventory->weight = $this->weight[$key];
-                        $inventory->balance = $this->weight[$key];
+                        $inventory->balance = $balance;
                     }
-                   
+
                     if (isset($this->tax_rate[$key])) {
                         $inventory->tax_rate = $this->tax_rate[$key];
                     }
                     if (isset($this->selectedTax[$key])) {
                         $inventory->tax_id = $this->selectedTax[$key];
                     }
+
+                     if (isset($this->qty[$key]) && isset($this->amount[$key]) && is_numeric($this->amount[$key]) && is_numeric($this->qty[$key])) {
+                        if (isset($this->cost[$key]) && is_numeric($this->cost[$key])) {
+                            $subtotal = ($this->qty[$key] * $this->amount[$key]) + $this->cost[$key];
+                            $inventory->subtotal = $subtotal ;
+                        }else{
+                            $subtotal =($this->qty[$key] * $this->amount[$key]);
+                            $inventory->subtotal = $subtotal;
+                        }
+                        
+                    }
                     
                     if (isset($this->tax_rate[$key]) && is_numeric($this->tax_rate[$key])) {
 
-                        if (is_numeric($subtotal)) {
                             $tax_amount = ($subtotal * ($this->tax_rate[$key] / 100 ));
                             $inventory->tax_amount = $tax_amount;
-                            $this->total = $tax_amount + $subtotal;
-                            $inventory->subtotal_incl = $this->total;
-                            $inventory->total = $this->total;
-                           
-                        }
+                            $total = $tax_amount + $subtotal;
+                            $inventory->subtotal_incl = $total;
+                            $inventory->total = $total;
 
                     }else{
-                        if (is_numeric($subtotal)) {
-                            $this->total = $subtotal;
-                            $inventory->subtotal_incl =  $this->total;
-                            $inventory->total =  $this->total;
-                        }
+                            $total = $subtotal;
+                            $inventory->subtotal_incl =  $total;
+                            $inventory->total =  $total;
                        
                     }
-                    $this->calculateExchangeAmount();
+
+                    $this->calculateExchangeAmount($total);
 
                     $inventory->exchange_rate = $this->exchange_rate;
                     $inventory->exchange_amount = $this->exchange_amount;
@@ -733,7 +744,7 @@ class Create extends Component
 
                     }
     
-                }
+                // }
     
               }
             }
@@ -771,7 +782,15 @@ class Create extends Component
 
         
      
-        $this->products = Product::with('brand')->orderBy('name','asc')->where('department','inventory')->where('status',True)->where('buy',True)->get()->sortBy('brand.name');
+        $this->products = Product::with('brand')
+        ->where('department', 'inventory')
+        ->where('status', true)
+        ->where('buy', true)
+        ->get()
+        ->sortBy([
+            ['name', 'asc'],          // first sort by product name
+            ['brand.name', 'asc'],    // then sort by brand name
+        ]);
         $this->stores = Store::orderBy('name','asc')->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();
         $this->goods_receiveds = GoodsReceived::where('status',1)->where('department','inventory')->where('created_at', '>=', Carbon::now()->subMonth())->orderBy('created_at','desc')->get();

@@ -38,12 +38,15 @@ class Index extends Component
     protected $queryString = ['search'];
     private $products;
     public $base_currency;
+    public $company;
 
 
     public function mount($category){
         $this->department = $category;
         $this->base_currency = Auth::user()->employee->company->currency;
+        $this->company = Auth::user()->employee->company;
         $this->resetPage();
+        $this->reset(['search']);
     }
 
 
@@ -89,7 +92,7 @@ class Index extends Component
             return null;
         }
 
-        $currency_id = Auth::user()->employee->company->currency_id;
+        $currency_id = $this->company->currency_id;
         $total_value = 0;
 
         $relations = [

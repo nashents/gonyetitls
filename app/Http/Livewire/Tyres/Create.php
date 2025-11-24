@@ -50,7 +50,7 @@ class Create extends Component
     public $selectedCurrency;
     public $selected_currency;
     public $date;
-    public $total;
+    
     public $purchase_date;
     public $type;
     public $quantity;
@@ -69,6 +69,7 @@ class Create extends Component
 
     
     public $selectedProduct = [];
+    public $measurement = [];
     public $serial_number = [];
     public $tax_rate = [];
     public $selectedTax = [];
@@ -259,9 +260,10 @@ class Create extends Component
             $product = Product::find($id);
             if (isset($product)) {
                 if ($product->price) {
-                    $this->amount[$key] = $product->price;
-                    $this->item_description[$key] = $product->description;
+                    $this->amount[$key] = $product->price; 
                 }
+                $this->item_description[$key] = $product->description;
+                $this->measurement[$key] = $product->unit_of_measure;
                 $this->qty[$key] = 1;
                
           
@@ -285,6 +287,7 @@ class Create extends Component
                 $this->selectedProduct[$key] = $purchase_product->product_id;
                 $this->amount[$key] = $purchase_product->amount;
                 $this->item_description[$key] = $purchase_product->product->description;
+                $this->measurement[$key] = $purchase_product->product->unit_of_measure;
                 $this->qty[$key] = $purchase_product->qty;
              
                 if($purchase_product->tax_id){
@@ -422,23 +425,31 @@ class Create extends Component
 
     }
 
-    public function calculateExchangeAmount(){
-        if (($this->total && is_numeric($this->total)) && ($this->exchange_rate && is_numeric($this->exchange_rate)) ) {
-            $this->exchange_amount = $this->exchange_rate * $this->total;
+   public function calculateExchangeAmount($total = null){
+        if (($total && is_numeric($total)) && ($this->exchange_rate && is_numeric($this->exchange_rate)) ) {
+            $this->exchange_amount = $this->exchange_rate * $total;
         }
     }
 
-
       public function store(){
 
-            DB::transaction(function () {
+          DB::transaction(function () {
 
           if (isset($this->selectedProduct)) {
             foreach ($this->selectedProduct as $key => $value) {
+
+                if (!isset($this->qty[$key]) || $this->qty[$key] < 1) {
+                    continue;
+                }
+                for ($i = 0; $i < $this->qty[$key]; $i++) {
+
                 $tyre = new Tyre;
                 $tyre->user_id = Auth::user()->id;
 
                 $subtotal = 0;
+                $subtotal_incl = 0;
+                $total = 0;
+                $qty = 1;
 
                 if ($this->selectedGoodsReceived) {
                     $tyre->goods_received_id = $this->selectedGoodsReceived;
@@ -456,23 +467,16 @@ class Create extends Component
                 if (isset($this->amount[$key])) {
                     $tyre->amount = $this->amount[$key];
                 }
+                if (isset($this->measurement[$key])) {
+                    $tyre->measurement = $this->measurement[$key];
+                }
                 if (isset($this->cost[$key])) {
                     $tyre->cost = $this->cost[$key];
                 }
-                if (isset($this->qty[$key])) {
-                    $tyre->qty = $this->qty[$key];
+                if (isset($qty)) {
+                    $tyre->qty = $qty;
                 }
-               
-                if (isset($this->amount[$key])) {
-                         if (isset($this->cost[$key])) {
-                            $subtotal = $this->amount[$key] + $this->cost[$key];
-                            $tyre->subtotal = $subtotal ;
-                        }else{
-                            $subtotal = $this->amount[$key];
-                            $tyre->subtotal = $subtotal;
-                        }
-                        
-                    }
+
                 if (isset($this->width[$key])) {
                     $tyre->width = $this->width[$key];
                 }
@@ -485,42 +489,45 @@ class Create extends Component
                 if (isset($this->life_span[$key])) {
                     $tyre->life_span = $this->life_span[$key];
                 }
-
                 if (isset($this->diameter[$key])) {
                     $tyre->diameter = $this->diameter[$key];
                 }
                 if (isset( $this->aspect_ratio[$key])) {
                     $tyre->aspect_ratio = $this->aspect_ratio[$key];
                 }
-
                 if (isset($this->tax_rate[$key])) {
                     $tyre->tax_rate = $this->tax_rate[$key];
                 }
                 if (isset($this->selectedTax[$key])) {
                     $tyre->tax_id = $this->selectedTax[$key];
                 }
+               
+                if (isset($qty) && isset($this->amount[$key]) && (is_numeric($this->amount[$key]) && is_numeric($qty))) {
+                    if (isset($this->cost[$key]) && is_numeric($this->cost[$key])) {
+                        $subtotal = ($qty * $this->amount[$key]) + $this->cost[$key];
+                        $tyre->subtotal = $subtotal ;
+                    }else{
+                        $subtotal =($qty * $this->amount[$key]);
+                        $tyre->subtotal = $subtotal;
+                    }
                 
+                }
+            
                 if (isset($this->tax_rate[$key]) && is_numeric($this->tax_rate[$key])) {
 
-                        if (is_numeric($subtotal)) {
-                            $tax_amount = ($subtotal * ($this->tax_rate[$key] / 100 ));
-                            $tyre->tax_amount = $tax_amount;
-                            $this->total = $tax_amount + $subtotal;
-                            $tyre->subtotal_incl = $this->total;
-                            $tyre->total = $this->total;
-                           
-                        }
+                        $tax_amount = ($subtotal * ($this->tax_rate[$key] / 100 ));
+                        $tyre->tax_amount = $tax_amount;
+                        $total = $tax_amount + $subtotal;
+                        $tyre->subtotal_incl = $total;
+                        $tyre->total = $total;
 
-                    }else{
-                        if (is_numeric($subtotal)) {
-                            $this->total = $subtotal;
-                            $tyre->subtotal_incl =  $this->total;
-                            $tyre->total =  $this->total;
-                        }
-                       
-                    }
-
-                  $this->calculateExchangeAmount();
+                }else{
+                        $total = $subtotal;
+                        $tyre->subtotal_incl =  $total;
+                        $tyre->total =  $total;
+                    
+                }
+                $this->calculateExchangeAmount($total);
 
                 $tyre->exchange_rate = $this->exchange_rate;
                 $tyre->exchange_amount = $this->exchange_amount;
@@ -662,7 +669,9 @@ class Create extends Component
                 $tyre = Tyre::find($tyre->id);
                 $tyre->status = 0;
                 $tyre->update();
-                  }
+                }
+
+                }
 
               }
 
@@ -704,7 +713,15 @@ class Create extends Component
             ]);
         }
         elseif($category == "products"){
-            $this->products = Product::orderBy('name','asc')->get();
+           $this->products = Product::with('brand')
+            ->where('department', 'tyre')
+            ->where('status', true)
+            ->where('buy', true)
+            ->get()
+            ->sortBy([
+                ['name', 'asc'],          // first sort by product name
+                ['brand.name', 'asc'],    // then sort by brand name
+            ]);
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Products Refreshed Successfully!!."
@@ -731,7 +748,15 @@ class Create extends Component
 
         
         $this->goods_receiveds = GoodsReceived::where('status',1)->where('department','tyre')->where('created_at', '>=', Carbon::now()->subMonth())->orderBy('created_at','desc')->get();
-        $this->products = Product::with('brand')->orderBy('name','asc')->where('department','tyre')->where('status',True)->where('buy',True)->get()->sortBy('brand.name');
+       $this->products = Product::with('brand')
+        ->where('department', 'tyre')
+        ->where('status', true)
+        ->where('buy', true)
+        ->get()
+        ->sortBy([
+            ['name', 'asc'],          // first sort by product name
+            ['brand.name', 'asc'],    // then sort by brand name
+        ]);
         $this->purchases = Purchase::where('department','tyre')->where('status',1)->where('created_at', '>=', Carbon::now()->subMonth())->where('authorization','approved')->orderBy('created_at','desc')->get();
         return view('livewire.tyres.create',[
             'amount' =>   $this->amount,

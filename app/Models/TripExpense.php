@@ -12,6 +12,9 @@ class TripExpense extends Model implements Auditable
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 
+    public function user(){
+        return $this->belongsTo('App\Models\User');
+    }
     public function trip(){
         return $this->belongsTo('App\Models\Trip');
     }

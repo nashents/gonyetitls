@@ -104,18 +104,24 @@ class InventoriesImport implements ToCollection, SkipsEmptyRows, WithLimit,
 
             $quantity = (int) $row->get('quantity');
             $unitPrice = $row->get('unit_price');
+            $subtotal = 0;
+            if (is_numeric($unitPrice) && is_numeric($quantity)) {
+                $subtotal = $unitPrice * $quantity;
+            }
+          
 
-            for ($i = 0; $i < $quantity; $i++) {
+
+           
                 $inventory = new Inventory;
                 $inventory->fill([
                     'user_id' => Auth::id(),
                     'inventory_number' => $this->generateNumber('I', ++$this->initialInventoryId),
                     'product_id' => $product->id,
                     'amount' => $unitPrice,
-                    'subtotal' => $unitPrice,
-                    'qty' => 1,
-                    'subtotal_incl' => $unitPrice,
-                    'total' => $unitPrice,
+                    'subtotal' => $subtotal,
+                    'qty' => $quantity,
+                    'subtotal_incl' => $subtotal,
+                    'total' => $subtotal,
                     'currency_id' => $currency->id,
                     'rack_id' => $rack->id,
                     'bin_id' => $bin->id,
@@ -125,7 +131,7 @@ class InventoriesImport implements ToCollection, SkipsEmptyRows, WithLimit,
                     'balance' => $row->get('balance') ?: 1,
                     'status' => 1,
                 ])->save();
-            }
+           
         }
     }
 

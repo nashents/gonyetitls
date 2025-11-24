@@ -21,6 +21,9 @@ class Store extends Model implements Auditable
     public function asset_dispatches(){
         return $this->hasMany('App\Models\AssetDispatch');
     }
+     public function dispatches(){
+        return $this->hasMany('App\Models\Dispatch');
+    }
     public function tyre_dispatches(){
         return $this->hasMany('App\Models\TyreDispatch');
     }

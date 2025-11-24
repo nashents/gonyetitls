@@ -10,6 +10,10 @@
         <x-loading/>
         <table id="tripExpensesTable" class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
             <thead >
+                <th class="th-sm">AddedBy
+                </th>
+                <th class="th-sm">Type
+                </th>
                 <th class="th-sm">Type
                 </th>
                 <th class="th-sm">Name
@@ -34,6 +38,9 @@
             <tbody>
                 @forelse ($trip_expenses as $trip_expense)
               <tr>
+                <td>
+                    {{$trip_expense->user ? $trip_expense->user->name : ""}} {{$trip_expense->user ? $trip_expense->user->surname : ""}}
+                </td>
                 <td>
                     @if ($trip_expense->expense)
                         TripExpense
