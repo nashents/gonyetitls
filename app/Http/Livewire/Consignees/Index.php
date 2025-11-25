@@ -8,7 +8,9 @@ use Livewire\Component;
 use App\Models\Document;
 use App\Models\Consignee;
 use Livewire\WithPagination;
+use Maatwebsite\Excel\Excel;
 use Livewire\WithFileUploads;
+use App\Exports\ConsigneesExport;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
@@ -81,6 +83,19 @@ class Index extends Component
     }
 
     
+
+        
+    public function exportConsigneesCSV(Excel $excel){
+
+        return $excel->download(new ConsigneesExport, 'consignees.csv', Excel::CSV);
+    }
+    public function exportConsigneesPDF(Excel $excel){
+
+        return $excel->download(new ConsigneesExport, 'consignees.pdf', Excel::DOMPDF);
+    }
+    public function exportConsigneesExcel(Excel $excel){
+        return $excel->download(new ConsigneesExport, 'consignees.xlsx');
+    }
 
 
 

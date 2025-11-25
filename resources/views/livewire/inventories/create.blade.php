@@ -142,7 +142,7 @@
                                             @error('weight.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             <small>Full capacity per container (e.g. 100L per drum OR 12 Items per carton). Useful for deductions when invoicing / dispatching</small>
                                         </div>
-                                        </div>
+                                    </div>
                                         <div class="col-md-2">
                                             <div class="form-group">
                                                 <label for="country">UnitOfMeasure<span class="required" style="color: red">*</span></label>

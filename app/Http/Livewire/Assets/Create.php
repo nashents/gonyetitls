@@ -590,11 +590,10 @@ class Create extends Component
                         $asset->qty = $this->qty[$key];
                     }
                    
-                   
-                  
-                    if (isset($this->weight[$key])) {
+                   if (isset($this->weight[$key]) && isset($this->qty[$key]) && (is_numeric($this->weight[$key]) && is_numeric($this->qty[$key]))    ) {
+                        $balance = $this->weight[$key] * $this->qty[$key];
                         $asset->weight = $this->weight[$key];
-                        $asset->balance = $this->weight[$key];
+                        $asset->balance = $balance;
                     }
                    
                     if (isset($this->tax_rate[$key])) {

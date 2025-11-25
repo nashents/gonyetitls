@@ -303,7 +303,7 @@ class Create extends Component
         }
     }
 
-          public function goodsReceivedNumber(){
+    public function goodsReceivedNumber(){
 
      if (isset($this->company)) {
             $str = $this->company->name;
@@ -449,7 +449,7 @@ class Create extends Component
                 $subtotal = 0;
                 $subtotal_incl = 0;
                 $total = 0;
-                $qty = 1;
+              
 
                 if ($this->selectedGoodsReceived) {
                     $tyre->goods_received_id = $this->selectedGoodsReceived;
@@ -473,8 +473,10 @@ class Create extends Component
                 if (isset($this->cost[$key])) {
                     $tyre->cost = $this->cost[$key];
                 }
-                if (isset($qty)) {
-                    $tyre->qty = $qty;
+                if (isset($this->qty[$key])) {
+                    $tyre->qty = $this->qty[$key];
+                    $tyre->weight = $this->qty[$key];
+                    $tyre->balance = $this->qty[$key];
                 }
 
                 if (isset($this->width[$key])) {
@@ -502,12 +504,12 @@ class Create extends Component
                     $tyre->tax_id = $this->selectedTax[$key];
                 }
                
-                if (isset($qty) && isset($this->amount[$key]) && (is_numeric($this->amount[$key]) && is_numeric($qty))) {
+                if (isset($this->qty[$key]) && isset($this->amount[$key]) && (is_numeric($this->amount[$key]) && is_numeric($this->qty[$key]))) {
                     if (isset($this->cost[$key]) && is_numeric($this->cost[$key])) {
-                        $subtotal = ($qty * $this->amount[$key]) + $this->cost[$key];
+                        $subtotal = ($this->qty[$key] * $this->amount[$key]) + $this->cost[$key];
                         $tyre->subtotal = $subtotal ;
                     }else{
-                        $subtotal =($qty * $this->amount[$key]);
+                        $subtotal =($this->qty[$key] * $this->amount[$key]);
                         $tyre->subtotal = $subtotal;
                     }
                 

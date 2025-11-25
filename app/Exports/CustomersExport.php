@@ -34,16 +34,23 @@ WithCustomStartCell
         return Customer::query();
     }
     public function map($customer): array{
+
+            $country =  $customer->country ?: "";
+            $city =  $customer->city ?: "";
+            $suburb =  $customer->suburb ?: "";
+            $street_address =  $customer->street_address ?: "";
+            $address = $street_address." ".$suburb." ".$city." ".$country;
+            $vat = $customer->vat_number ?: "";
+            $tin = $customer->tin_number ? " | ".$customer->tin_number : "";
+
+
             return   [
                 $customer->name,
                 $customer->phonenumber,
                 $customer->worknumber,
                 $customer->email,
-                $customer->tin_number." / ".$customer->tin_number,
-                $customer->country,
-                $customer->city,
-                $customer->suburb,
-                $customer->street_address,
+                $vat."".$tin,
+                $address,
                  ];
 
 
@@ -54,11 +61,8 @@ WithCustomStartCell
                 'Phonenumber',
                 'Worknumber',
                 'Email',
-                'VAT/TIN#',
-                'Country',
-                'City',
-                'Suburb',
-                'Street Address',
+                 'VAT|TIN#',
+                'Address',
             ];
 
 

@@ -98,9 +98,9 @@
                                             </div>
                                         </div>
                                 </div>
-                                 <div class="mt-30" style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">
+                                <div class="mt-30" style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">
                                 <div class="row">
-                                    <div class="col-md-5">
+                                    <div class="col-md-4">
                                         @if (is_null($selectedPurchase))
                                             <div class="form-group">
                                                 <label for="country">Product(s)<span class="required" style="color: red">*</span></label>
@@ -135,12 +135,12 @@
                                             @error('item_description.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
                                     </div>
-                                    <div class="col-md-2">
+                                    <div class="col-md-3">
                                         <div class="form-group">
-                                            <label for="purchase_date">Item Contents<span class="required" style="color: red">*</span></label>
-                                            <input type="number" step="any" min="1" class="form-control" wire:model.debounce.300ms="weight.0" required>
+                                            <label for="purchase_date">Container Capacity<span class="required" style="color: red">*</span></label>
+                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="weight.0"  required>
                                             @error('weight.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                            <small>Litres, weight, # of pieces or items etc eg 100 Litres or 4 items. Useful for deductions when invoicing / dispatching </small>
+                                            <small>Full capacity per container (e.g. 100L per drum OR 12 Items per carton). Useful for deductions when invoicing / dispatching</small>
                                         </div>
                                     </div>
                                     <div class="col-md-2">

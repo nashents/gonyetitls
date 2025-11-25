@@ -135,7 +135,7 @@ class Pending extends Component
 
     public function authorizeSelectedRows(){
 
-         $this->validate([
+        $this->validate([
             'authorize' => 'required',
         ]);
 
@@ -166,7 +166,7 @@ class Pending extends Component
                         $inspection->inspection_number = $this->inspectionNumber();
                         $inspection->status = 1;
                         $inspection->save();
-                        $inspection->employees()->attach($this->mechanic_id);
+                        $inspection->employees()->syncWithoutDetaching($this->mechanic_id);
 
                         $ticket = new Ticket;
                         $ticket->user_id = $booking->user_id;
@@ -185,7 +185,7 @@ class Pending extends Component
                         $ticket->station = $booking->station;
                         $ticket->status = 1;
                         $ticket->save();
-                        $ticket->employees()->attach($this->mechanic_id);
+                        $ticket->employees()->syncWithoutDetaching($this->mechanic_id);
 
                         if(isset($booking->horse_id)){
                             $horse = Horse::find($booking->horse_id);
@@ -317,7 +317,7 @@ class Pending extends Component
         $inspection->inspection_number = $this->inspectionNumber();
         $inspection->status = 1;
         $inspection->save();
-        $inspection->employees()->attach($this->mechanic_id);
+        $inspection->employees()->syncWithoutDetaching($this->mechanic_id);
 
         $ticket = new Ticket;
         $ticket->user_id = $booking->user_id;
@@ -336,7 +336,7 @@ class Pending extends Component
         $ticket->station = $booking->station;
         $ticket->status = 1;
         $ticket->save();
-        $ticket->employees()->attach($this->mechanic_id);
+        $ticket->employees()->syncWithoutDetaching($this->mechanic_id);
 
         if(isset($booking->horse_id)){
             $horse = Horse::find($booking->horse_id);

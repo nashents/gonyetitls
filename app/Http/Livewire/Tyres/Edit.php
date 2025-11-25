@@ -66,7 +66,7 @@ class Edit extends Component
   public $serial_number ;
   public $tax_rate ;
   public $selectedTax ;
-  public $qty  ;
+  public $qty;
   public $item_description  ;
   public $amount ;
   public $cost ;
@@ -179,7 +179,7 @@ class Edit extends Component
         $this->selectedAccount = $tyre->account_id;
         $this->selectedCurrency = $tyre->currency_id;
         $this->amount = $tyre->amount;
-       
+        $this->qty = $tyre->qty;
         $this->cost = $tyre->cost;
         $this->purchase_date = $tyre->purchase_date ? Carbon::parse($tyre->purchase_date)->format('Y-m-d') : Null;
         $this->tyre_number = $tyre->tyre_number;
@@ -397,20 +397,19 @@ public function updatedSelectedTax($id){
 
     }
 
-      public function calculateExchangeAmount(){
-        if (($this->total && is_numeric($this->total)) && ($this->exchange_rate && is_numeric($this->exchange_rate)) ) {
-            $this->exchange_amount = $this->exchange_rate * $this->total;
+      public function calculateExchangeAmount($total){
+        if (($total && is_numeric($total)) && ($this->exchange_rate && is_numeric($this->exchange_rate)) ) {
+            $this->exchange_amount = $this->exchange_rate * $total;
         }
     }
 
     public function update(){
 
         DB::transaction(function () {
-                $subtotal = 0;
-                $subtotal_incl = 0;
-                $total = 0;
-                $qty = 1;
 
+              $subtotal = 0;
+              $subtotal_incl = 0;
+              $total = 0;
               $tyre = Tyre::find($this->tyre_id);
               $tyre->user_id = Auth::user()->id;
               $tyre->goods_received_id = $this->selectedGoodsReceived ? $this->selectedGoodsReceived : null;
@@ -418,7 +417,9 @@ public function updatedSelectedTax($id){
               
               $tyre->serial_number = $this->serial_number;
               $tyre->type = $this->type;
-              $tyre->qty = $qty;
+              $tyre->qty = $this->qty;
+              $tyre->weight = $this->qty;
+              $tyre->balance = $this->qty;
               $tyre->amount = $this->amount;
               $tyre->cost = $this->cost;
               $tyre->measurement = $this->measurement;
@@ -427,12 +428,12 @@ public function updatedSelectedTax($id){
 
                
 
-            if(isset($qty) && is_numeric($qty) && isset($this->amount) && is_numeric($this->amount) ){
+            if(isset($this->qty) && is_numeric($this->qty) && isset($this->amount) && is_numeric($this->amount) ){
             if (isset($this->cost) && is_numeric($this->cost)) {
-                $subtotal = ($qty * $this->amount) + $this->cost;
+                $subtotal = ($this->qty * $this->amount) + $this->cost;
                 $tyre->subtotal = $subtotal ;
             }else{
-                $subtotal = ($qty * $this->amount);
+                $subtotal = ($this->qty * $this->amount);
                 $tyre->subtotal = $subtotal;
             }
             }
