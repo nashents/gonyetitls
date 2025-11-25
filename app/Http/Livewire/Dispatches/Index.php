@@ -1083,7 +1083,7 @@ class Index extends Component
 
                 $q->where(function ($qq) use ($term) {
                     $qq->where('dispatch_number', 'like', $term)
-                    ->orWhere('status', 'like', $term)
+                    ->orWhere('authorization', 'like', $term)
                     ->orWhere('date', 'like', $term)
                     ->orWhereHas('ticket', function ($sub) use ($term) {
                         $sub->where('ticket_number', 'like', $term);
@@ -1103,7 +1103,6 @@ class Index extends Component
                         $sub->where('registration_number', 'like', $term)
                         ->where('fleet_number', 'like', $term);
                     })
-                  
                     ->orWhereHas('employee', function ($sub) use ($term) {
                         $sub->where(DB::raw("concat(name, ' ', surname)"), 'like', $term);
                     });

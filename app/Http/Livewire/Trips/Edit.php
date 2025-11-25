@@ -2020,7 +2020,7 @@ class Edit extends Component
                 $fuel->transporter_total = $this->transporter_total;
                 $fuel->profit = $this->fuel_profit;
                 $fuel->odometer = $this->odometer;
-                 $fuel->hours = $this->hours;
+                $fuel->hours = $this->hours;
                 $fuel->category = $this->fuel_category;
                 $fuel->exchange_amount = $this->fuel_exchange_amount;
                 $fuel->exchange_rate = $this->fuel_exchange_rate;

@@ -49,7 +49,13 @@
                                 <a href="#" wire:click="exportDispatchesExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
                                 <a href="#" wire:click="exportDispatchesCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
                                 <a href="#" wire:click="exportDispatchesPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
+                                <br>
+                                <i class="fa fa-info-circle text-primary"
+                                        title="Once a dispatch is approved or rejected, it cannot be edited or deleted. If changes are required, create a new dispatch for the same ticket, provided the ticket is still open."
+                                        style="cursor: pointer;">
+                                </i>
                             </div>
+                            
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
                              <div class="col-md-3" style="float: right; padding-right:0px">
@@ -152,8 +158,11 @@
                                             </button>
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{ route('dispatches.show', $dispatch->id) }}" ><i class="fa fa-eye color-default"></i> View</a></li>
-                                                <li><a href="#"  wire:click="edit({{$dispatch->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
-                                                <li><a href="#" wire:click="showDelete({{$dispatch->id}})"  ><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                                                @if ($dispatch->authorization == "pending" || Auth::user()->is_admin())
+                                                    <li><a href="#"  wire:click="edit({{$dispatch->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                                    <li><a href="#" wire:click="showDelete({{$dispatch->id}})"  ><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                                                @endif
+                                                
                                             </ul>
                                         </div>
                                        

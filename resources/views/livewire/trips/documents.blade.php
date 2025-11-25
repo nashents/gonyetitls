@@ -65,7 +65,7 @@
           </table>
     {{-- </blockquote> --}}
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="documentModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog  mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fa fa-plus"></i> Add Trip Document(s) <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -80,17 +80,17 @@
                                 @error('document_number.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="title">Title<span class="required" style="color: red">*</span></label>
-                            <select  class="form-control"  wire:model.debounce.300ms="title.0" required>
-                                <option value="">Select Title</option>
-                                <option value="POD">POD</option>
-                                <option value="CD3">CD3</option>
-                            </select>
-                            @error('title.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="title">Title<span class="required" style="color: red">*</span></label>
+                                <select  class="form-control"  wire:model.debounce.300ms="title.0" required>
+                                    <option value="">Select Title</option>
+                                    <option value="POD">POD</option>
+                                    <option value="CD3">CD3</option>
+                                </select>
+                                @error('title.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
                         </div>
-                    </div>
                     </div>
                     <div class="row">
                         <div class="col-md-6">
@@ -131,7 +131,7 @@
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-md-5">
+                            <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="file">Upload File<span class="required" style="color: red">*</span></label>
                                     <input type="file" class="form-control"  wire:model.debounce.300ms="file.{{$value}}" id="{{ $rand }}" placeholder="File Upload" required>
@@ -172,7 +172,7 @@
         </div>
     </div>
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="documentEditModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog  mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fa fa-edit"></i> Edit Trip Document<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>

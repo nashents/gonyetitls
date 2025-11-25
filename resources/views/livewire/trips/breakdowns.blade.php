@@ -169,7 +169,7 @@
           </table>
     {{-- </blockquote> --}}
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="breakdownModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="breakdown">
+        <div class="modal-dialog mw-100 w-50" role="breakdown">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fas fa-plus"></i> Add Incident <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -230,7 +230,7 @@
         </div>
     </div>
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="breakdownEditModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="breakdown">
+        <div class="modal-dialog mw-100 w-50" role="breakdown">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fas fa-edit"></i> Edit Incident Details <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -290,7 +290,7 @@
         </div>
     </div>
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="breakdown_assignmentModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="breakdown">
+        <div class="modal-dialog mw-100 w-50" role="breakdown">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fas fa-plus"></i> New Assignment <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -315,11 +315,9 @@
                                     <option value="">Select Horse</option>
                                     @if (!is_null($selectedTransporter))
                                         @foreach ($horses as $horse)
-                                            @if ($trip->horse_id == $horse->id )
-                                            @else 
-                                            <option value="{{ $horse->id }}"> {{$horse->registration_number}} {{$horse->horse_make ? $horse->horse_make->name : ""}} {{$horse->horse_make ? $horse->horse_model->name : ""}}</option>
+                                            @if ($trip->horse_id != $horse->id )
+                                                <option value="{{ $horse->id }}"> {{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}} {{$horse->horse_make ? $horse->horse_make->name : ""}} {{$horse->horse_make ? $horse->horse_model->name : ""}}</option>
                                             @endif
-                                           
                                         @endforeach
                                     @endif
                                 </select>
@@ -360,9 +358,9 @@
                                         @endphp
                                         @if (!is_null($selectedTransporter))
                                             @foreach ($trailers as $trailer)
-                                                @if (in_array($trailer->id, $trip_trailer_ids))
+                                                @if (!empty($trip_trailer_ids) && in_array($trailer->id, $trip_trailer_ids))
                                                 @else  
-                                                <option value="{{ $trailer->id }}">{{$trailer->registration_number}} {{$trailer->make}} {{$trailer->model}}</option>
+                                                <option value="{{ $trailer->id }}">{{$trailer->registration_number}} {{$trailer->fleet_number ? "(".$trailer->fleet_number.")" : ""}} {{$trailer->make}} {{$trailer->model}}</option>
                                                 @endif
                                             @endforeach
                                         @endif
@@ -396,7 +394,7 @@
         </div>
     </div>
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="breakdown_assignmentEditModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="breakdown">
+        <div class="modal-dialog mw-100 w-50" role="breakdown">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fas fa-edit"></i> Edit Assignment <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -420,15 +418,15 @@
                                 <select class="form-control" wire:model.debounce.300ms="horse_id">
                                     <option value="">Select Horse</option>
                                     @if (!is_null($selectedTransporter))
-                                    @if (isset($assignment_horses))
-                                        @foreach ($assignment_horses as $assignment_horse)
-                                            @if ($trip->horse_id == $assignment_horse->id )
-                                            @else 
-                                            <option value="{{ $assignment_horse->id }}"> {{$assignment_horse->registration_number}} {{$assignment_horse->horse_make ? $assignment_horse->horse_make->name : ""}} {{$assignment_horse->horse_model ? $assignment_horse->horse_model->name : ""}}</option>
-                                            @endif
-                                           
-                                        @endforeach
-                                    @endif
+                                        @if (isset($horses))
+                                            @foreach ($horses as $horse)
+                                                @if ($trip->horse_id == $horse->id )
+                                                @else 
+                                                <option value="{{ $horse->id }}"> {{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}} {{$horse->horse_make ? $horse->horse_make->name : ""}} {{$horse->horse_model ? $horse->horse_model->name : ""}}</option>
+                                                @endif
+                                            
+                                            @endforeach
+                                        @endif
                                     @endif
                                 </select>
                                 @error('horse_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -468,7 +466,7 @@
                                         @endphp
                                         @if (!is_null($selectedTransporter))
                                             @foreach ($trailers as $trailer)
-                                                @if (in_array($trailer->id, $trip_trailer_ids))
+                                                @if (!empty($trip_trailer_ids) && in_array($trailer->id, $trip_trailer_ids))
                                                 @else  
                                                 <option value="{{ $trailer->id }}" >{{$trailer->registration_number}} {{$trailer->make}} {{$trailer->model}}</option>
                                                 @endif
