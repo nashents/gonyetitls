@@ -2005,18 +2005,13 @@ class Edit extends Component
                 $fuel = new Fuel;
                 $fuel->user_id = $this->user->id;
                 $fuel->order_number = $this->orderNumber();
-                $fuel->horse_id = $this->selectedHorse ? $this->selectedHorse : Null;
-                $fuel->vehicle_id = $this->selectedVehicle ? $this->selectedVehicle : Null;
-                $fuel->currency_id = $this->selectedFuelCurrency;
+                $fuel->horse_id = Horse::where('id', $this->selectedHorse)->exists() ? $this->selectedHorse : null;
+                $fuel->vehicle_id = Horse::where('id', $this->selectedVehicle)->exists() ? $this->selectedVehicle : null;
+                $fuel->currency_id = Currency::where('id', $this->selectedFuelCurrency)->exists() ? $this->selectedFuelCurrency : null;
                 $fuel->trip_id = $trip->id;
-                if (isset($this->selectedVehicle)) {
-                    $fuel->type = "Vehicle";
-                }elseif(isset($this->selectedHorse)){
-                    $fuel->type = "Horse";
-                }
-                
-                $fuel->driver_id = $this->driver_id ? $this->driver_id : Null;
-                $fuel->container_id = $this->selectedContainer ? $this->selectedContainer : Null;
+                $fuel->type = isset($this->selectedVehicle) ? "Vehicle" : (isset($this->selectedHorse) ? "Horse" : null);
+                $fuel->driver_id = Driver::where('id', $this->driver_id)->exists() ? $this->driver_id : null;
+                $fuel->container_id = Container::where('id', $this->selectedContainer)->exists() ? $this->selectedContainer : null;
                 $fuel->date = $this->date;
                 $fuel->unit_price = $this->unit_price;
                 $fuel->quantity = $this->fuel_quantity;

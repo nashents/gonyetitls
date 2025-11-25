@@ -120,6 +120,7 @@ WithBatchInserts
 
 
        foreach($rows as $row){
+        
             if($row->filter()->isNotEmpty()){
                 
                 $trip_number = $this->tripNumber();

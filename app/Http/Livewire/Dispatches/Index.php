@@ -264,7 +264,7 @@ class Index extends Component
                   $this->qty[$key] = 1;
             }
             $this->inventories = Inventory::where('product_id',$id)->where('status',1)->where('balance','>',0)->orderBy('created_at','asc')->get();
-            $this->tyres = Tyre::where('product_id',$id)->where('status',1)->orderBy('created_at','asc')->get();
+            $this->tyres = Tyre::where('product_id',$id)->where('status',1)->where('balance','>',0)->orderBy('created_at','asc')->get();
             $this->assets = Asset::where('product_id',$id)->where('status',1)->where('balance','>',0)->orderBy('created_at','asc')->get();
             
             $product = Product::find($id);
@@ -426,129 +426,93 @@ class Index extends Component
 
     }
 
-    public function InventoryFIFO($dispatch){
-       
-
+   public function inventoryFIFO($dispatch)
+    {
         $dispatch_total = 0;
 
-        if($this->department == "tyre"){
-            $collection_item = $this->selectedTyre;
-        }elseif($this->department == "asset"){
-             $collection_item = $this->selectedAsset;
-        }elseif($this->department == "inventory"){
-             $collection_item = $this->selectedInventory;
+        // 1) Resolve collection based on department
+        if ($this->department === 'tyre') {
+            $collection = $this->selectedTyre ?? [];
+        } elseif ($this->department === 'asset') {
+            $collection = $this->selectedAsset ?? [];
+        } elseif ($this->department === 'inventory') {
+            $collection = $this->selectedInventory ?? [];
+        } else {
+            return 0; // unknown department
         }
 
-        if ($collection_item) {
+        if (empty($collection)) {
+            return 0;
+        }
 
-            foreach ($collection_item as $key => $collectionId) {
+        foreach ($collection as $key => $collectionId) {
 
-                $requestedQty = (float)($this->qty[$key] ?? 0); // in litres/units to dispatch
-                if ($requestedQty <= 0) {
-                    continue;
-                }
-
-                    if($this->department == "tyre"){
-                       $model = Tyre::find($collectionId);
-                    }elseif($this->department == "asset"){
-                        $model = Asset::find($collectionId);
-                    }elseif($this->department == "inventory"){
-                       $model = Inventory::find($collectionId);
-                    }
-                
-                if (!$model) {
-                    continue;
-                }
-
-              
-               
-                $remainingQty        = $requestedQty;
-                $totalQtyDispatched  = 0.0;
-                $totalLineAmount     = 0.0;
-
-              
-
-                    if ($remainingQty <= 0) {
-                        break; // request satisfied
-                    }
-
-                    // --- 2) Determine how much is available on this row ---
-                    
-                    if ($this->department === 'inventory') {
-                        // Liquids / contents:
-                        // balance = remaining litres, weight = original litres (capacity)
-                        $rowQtyAvailable = (float)$model->balance;
-                        $rowCapacity     = (float)($model->balance); 
-                    } else {
-                        // For assets/tyres etc. you can treat balance as remaining units
-                        $rowQtyAvailable = (float)($model->balance ?: $model->qty);
-                        $rowCapacity     = (float)($rowQtyAvailable);
-                    }
-
-                    if ($rowQtyAvailable <= 0 || $rowCapacity <= 0) {
-                        continue;
-                    }
-
-                    // --- 3) Row cost in company currency ---
-                    $rowCostCompany = $model->currency_id != $this->company->currency_id
-                        ? (float)$model->exchange_amount   // already converted
-                        : (float)$model->total;            // native in company currency
-                   
-                    // Unit cost per litre/unit from THIS row
-                    $unitCost = $rowCostCompany / $rowQtyAvailable;
-                   
-
-                    // --- 4) How much do we take from this row (FIFO) ---
-                    $qtyFromRow = min($remainingQty, $rowQtyAvailable);
-                   
-                    // Amount for this portion
-                    $amountFromRow = $qtyFromRow * $unitCost;
-                    
-                    // --- 5) Create a dispatch line referencing this source row ---
-                    $dispatch_item               = new DispatchItem;
-                    $dispatch_item->dispatch_id  = $dispatch->id;
-                    $dispatch_item->product_id   = $model->product?->id;
-                     if(isset($this->requestedItem[$key])){
-                        $dispatch_item->ticket_request_id  = $this->requestedItem[$key];
-                    }
-                    $dispatch_item->qty          = $qtyFromRow;       // litres/units taken
-                    $dispatch_item->unit_cost   = $unitCost;
-                    $dispatch_item->amount       = $amountFromRow;
-                    $dispatch_item->currency_id  = $this->company->currency_id;
-
-                    // Link to the source row for later authorization reduction
-                   
-                    if($this->department == "tyre"){
-                        $dispatch_item->tyre_id = $model->id;
-                    }elseif($this->department == "asset"){
-                        $dispatch_item->asset_id = $model->id;
-                    }elseif($this->department == "inventory"){
-                       $dispatch_item->inventory_id = $model->id;
-                    }
-
-                    $dispatch_item->save();
-
-                    // --- 6) Track totals on this dispatch ---
-                    $totalQtyDispatched += $qtyFromRow;
-                    $totalLineAmount    += $amountFromRow;
-                    $remainingQty       -= $qtyFromRow;
-                   
-              
-
-                // If nothing could be dispatched, skip
-                if ($totalQtyDispatched <= 0) {
-                    continue;
-                }
-
-                // Add to overall dispatch total
-                 $dispatch_total += $totalLineAmount;
-
-                 return $dispatch_total;
+            $requestedQty = (float)($this->qty[$key] ?? 0);
+            if ($requestedQty <= 0) {
+                continue;
             }
+
+            // 2) Load correct model row
+            if ($this->department === 'tyre') {
+                $model = Tyre::find($collectionId);
+            } elseif ($this->department === 'asset') {
+                $model = Asset::find($collectionId);
+            } else { // inventory
+                $model = Inventory::find($collectionId);
+            }
+
+            if (!$model) {
+                continue;
+            }
+
+            // 3) How much is available on this exact row
+            $rowQtyAvailable = (float)($model->balance);
+            if ($rowQtyAvailable <= 0) {
+                continue;
+            }
+
+
+            // 5) Row cost in company currency
+            $rowCostCompany = $model->currency_id != $this->company->currency_id
+                ? (float)$model->exchange_amount
+                : (float)$model->total;
+
+            $unitCost      = $rowCostCompany / $rowQtyAvailable;
+            $qtyFromRow    = min($requestedQty, $rowQtyAvailable);
+            $amountFromRow = $qtyFromRow * $unitCost;
+
+            // 6) Create dispatch item
+            $dispatch_item               = new DispatchItem;
+            $dispatch_item->dispatch_id  = $dispatch->id;
+            $dispatch_item->product_id   = $model->product?->id;
+
+            if (isset($this->requestedItem[$key])) {
+                $dispatch_item->ticket_request_id = $this->requestedItem[$key];
+            }
+
+            $dispatch_item->qty         = $qtyFromRow;
+            $dispatch_item->unit_cost   = $unitCost;
+            $dispatch_item->amount      = $amountFromRow;
+            $dispatch_item->currency_id = $this->company->currency_id;
+
+            if ($this->department === 'tyre') {
+                $dispatch_item->tyre_id = $model->id;
+            } elseif ($this->department === 'asset') {
+                $dispatch_item->asset_id = $model->id;
+            } else {
+                $dispatch_item->inventory_id = $model->id;
+            }
+
+            $dispatch_item->save();
+
+            // 8) Add to overall dispatch total
+            $dispatch_total += $amountFromRow;
         }
+
+        return $dispatch_total;
     }
 
-    
+
     public function ProductFIFO($dispatch){
        
 
