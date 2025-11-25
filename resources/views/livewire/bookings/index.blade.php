@@ -231,11 +231,30 @@
                                     @if (isset($bookings))
                                     <tbody>
                                         @forelse  ($bookings as $booking)
-                                        
+                                        @php
+                                                $user = Auth::user();
+                                                $employee = $user->employee;
+
+                                                $departments = $employee->departments;
+                                                foreach($departments as $department){
+                                                    $department_names[] = $department->name;
+                                                }
+                                                $roles = $user->roles;
+                                                foreach($roles as $role){
+                                                    $role_names[] = $role->name;
+                                                }
+                                        @endphp 
                                       <tr>
                                         <td><input type="checkbox" wire:model.debounce.300ms="selectedRows" id="{{ $booking->id }}" value="{{ $booking->id }}"></td>
                                         <td>
                                             {{$booking->booking_number}}
+                                            @if ((in_array('Admin', $role_names) && in_array('Workshop', $department_names)) || in_array('Super Admin', $role_names))
+                                                @if ($booking->ticket)
+                                                    <br>
+                                                    <small><strong>Ticket#: </strong><a href="{{route('tickets.show',$booking->ticket->id)}}" target="_blank" style="color: blue">{{$booking->ticket->ticket_number}}</a></small>
+                                                @endif
+                                            @endif
+                                           
                                             <br>
                                             <small><strong>CreatedBy: </strong> {{ucfirst($booking->user ? $booking->user->name : "")}} {{ucfirst($booking->user ? $booking->user->surname : "")}}</small>
                                         </td>

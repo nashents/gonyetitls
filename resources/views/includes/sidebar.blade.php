@@ -1487,15 +1487,16 @@
                             @endphp
                             <a href="#"><i class="fas fa-tasks"></i> <span>Tickets</span> <i class="fas fa-angle-right arrow"></i></a>
                             <ul class="child-nav">
-                                @if ( isset($fndepartment_head) || isset($stdepartment_head) || isset($wsdepartment_head) || (in_array('Admin', $role_names) && in_array('Workshop', $department_names)) || (in_array('Admin', $role_names) && in_array('Stores', $department_names)) || (in_array('Admin', $role_names) && in_array('Finance', $department_names)) || in_array('Super Admin', $role_names))
+                                @if ( isset($stdepartment_head) || isset($wsdepartment_head) || (in_array('Admin', $role_names) && in_array('Workshop', $department_names)) || (in_array('Admin', $role_names) && in_array('Stores', $department_names))  || in_array('Super Admin', $role_names))
                                 <li><a href="{{route('tickets.index')}}" ><i class="fas fa-list "></i> <span>Manage Tickets</span></a></li>
                                 @endif
                                 @if (in_array('Workshop', $department_names))
-                                <li><a href="{{route('tickets.cards', $employee->id)}}" ><i class="fas fa-file-invoice "></i> <span>My Tickets</span>
-                                    @if ($jobCardsCount>0)
-                                   <span class="label label-success ml-5">{{$jobCardsCount}}</span>
-                                   @endif
-                               </a>
+                                <li>
+                                    <a href="{{route('tickets.cards', $employee->id)}}" ><i class="fas fa-file-invoice "></i> <span>My Tickets</span>
+                                        @if ($jobCardsCount>0)
+                                            <span class="label label-success ml-5">{{$jobCardsCount}}</span>
+                                        @endif
+                                    </a>
                                </li>
                                 @endif
                             </ul>
