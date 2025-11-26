@@ -369,11 +369,25 @@ class Index extends Component
     }
     public function render()
     {  
-        $this->vendor_types = VendorType::orderBy('name','asc')->get();
-        $this->vendors = Vendor::latest()->get();
-        return view('livewire.vendors.index',[
-            'vendors' => $this->vendors,
-            'vendor_types' => $this->vendor_types
-        ]);
+            if (filled($this->search)) {
+                    
+                     return view('livewire.vendors.index',[
+                         'vendors' => Vendor::query()->with(['bills'])
+                         ->where('vendor_number','like', '%'.$this->search.'%')
+                         ->orWhere('name','like', '%'.$this->search.'%')
+                         ->orWhere('email','like', '%'.$this->search.'%')
+                         ->orWhere('vat_number','like', '%'.$this->search.'%')
+                         ->orWhere('tin_number','like', '%'.$this->search.'%')
+                        ->orderBy('name','asc')->paginate(10),
+                     ]);
+                 }
+                 else {
+                    
+                     return view('livewire.vendors.index',[
+                        'vendors' => Vendor::query()->with(['bills'])->orderBy('name','asc')->paginate(10),
+                        
+                     ]);
+                   
+                 }
     }
 }

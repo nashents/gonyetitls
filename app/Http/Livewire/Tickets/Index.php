@@ -259,6 +259,7 @@ class Index extends Component
 
     public function getTicketsProperty()
     {
+
         $query = Ticket::query()
             ->with(['booking', 'inspection', 'horse', 'trailer', 'vehicle','service_type']);
 
@@ -336,7 +337,7 @@ class Index extends Component
             })
             ->orWhereHas('booking', function ($q2) use ($search) {
                 $q2->where('booking_number', 'like', "%{$search}%")
-                    ->orWhereHas('employee', function ($q3) use ($search) {
+                    ->orWhereHas('employees', function ($q3) use ($search) {
                         $q3->where(DB::raw("concat(name, ' ', surname)"), 'like', "%{$search}%");
                     });
             });

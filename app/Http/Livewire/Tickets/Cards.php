@@ -37,7 +37,7 @@ class Cards extends Component
         $query = Ticket::query()
             ->with(['booking','inspection','horse','trailer','vehicle'])
             ->whereHas('employees', function ($q) {
-                $q->where('employee_id', $this->mechanic_id);   // 👈 Only tickets for this employee
+                $q->where('id', $this->mechanic_id);   // 👈 Only tickets for this employee
         });
 
         // ✅ Status filter
