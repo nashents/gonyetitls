@@ -806,6 +806,7 @@ class Index extends Component
         $this->horse_id = $dispatch->vehicle_id;
         $this->selectedTicket = $dispatch->ticket_id;
         $this->selectedEmployee = $dispatch->ticket_id;
+        $this->selectedStore = $dispatch->store_id;
         $this->requested_by_id = $dispatch->requested_by_id;
         $this->department = $dispatch->department;
         $this->asset_department_id = $dispatch->department_id;
@@ -817,6 +818,7 @@ class Index extends Component
 
         if($dispatch_items){
             foreach($dispatch_items as $dispatch_item){
+                $this->requestedItem[] = $dispatch_item->ticket_request_id; 
                 $this->selectedInventory[] = $dispatch_item->inventory_id; 
                 $this->selectedProduct[] = $dispatch_item->inventory_id; 
                 $this->selectedTyre[] = $dispatch_item->tyre_id; 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Tickets;
 
+use Carbon\Carbon;
 use App\Models\Ticket;
 use Livewire\Component;
 use App\Models\Employee;
@@ -37,7 +38,7 @@ class Cards extends Component
         $query = Ticket::query()
             ->with(['booking','inspection','horse','trailer','vehicle'])
             ->whereHas('employees', function ($q) {
-                $q->where('id', $this->mechanic_id);   // 👈 Only tickets for this employee
+                $q->where('employees.id', $this->mechanic_id);   // 👈 Only tickets for this employee
         });
 
         // ✅ Status filter
@@ -45,12 +46,16 @@ class Cards extends Component
             $query->where('status', $this->ticket_status);
         }
 
-        // ✅ Date filter
-        if (filled($this->from) && filled($this->to)) {
-            $query->whereBetween('created_at', [$this->from, $this->to]);
+          if (!empty($this->from) && !empty($this->to)) {
+            $from = Carbon::parse($this->from)->startOfDay();
+            $to   = Carbon::parse($this->to)->endOfDay();
+
+            $query->whereBetween('created_at', [$from, $to]);
         } else {
-            $query->whereMonth('created_at', date('m'))
-                ->whereYear('created_at', date('Y'));
+            $query->whereBetween('created_at', [
+                now()->startOfMonth(),
+                now()->endOfMonth(),
+            ]);
         }
 
         // ✅ Search filter
