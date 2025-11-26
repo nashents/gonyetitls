@@ -258,11 +258,16 @@ class Index extends Component
             ->with(['booking', 'inspection', 'horse', 'trailer', 'vehicle','service_type']);
 
              // ✅ Date filter
-        if (!empty($this->from) && !empty($this->to)) {
-            $query->whereBetween('created_at', [$this->from, $this->to]);
+       if (!empty($this->from) && !empty($this->to)) {
+            $from = Carbon::parse($this->from)->startOfDay();
+            $to   = Carbon::parse($this->to)->endOfDay();
+
+            $query->whereBetween('created_at', [$from, $to]);
         } else {
-            $query->whereMonth('created_at', date('m'))
-                ->whereYear('created_at', date('Y'));
+            $query->whereBetween('created_at', [
+                now()->startOfMonth(),
+                now()->endOfMonth(),
+            ]);
         }
 
        if ($this->station_id) {
@@ -274,8 +279,8 @@ class Index extends Component
         if ($this->service_type_id) {
             $query->where('service_type_id', $this->service_type_id);
         }
-        if ($this->employee_id) {
-            $query->whereHas('employees', function ($q) {
+       if ($this->employee_id) {
+            $query->whereHas('booking.employees', function ($q) {
                 $q->where('employees.id', $this->employee_id);
             });
         }

@@ -278,17 +278,17 @@ class Index extends Component
 
                 case 'trailer':
                     $this->search_id = $this->selectedTrailer;
-                    $query->where('horse_id', $this->selectedTrailer);
+                    $query->where('trailer_id', $this->selectedTrailer);
                     break;
 
                 case 'vehicle':
                     $this->search_id = $this->selectedVehicle;
-                    $query->where('horse_id', $this->selectedVehicle);
+                    $query->where('vehicle_id', $this->selectedVehicle);
                     break;
 
                 case 'asset':
                     $this->search_id = $this->selectedAsset;
-                    $query->where('horse_id', $this->selectedAsset);
+                    $query->where('asset_id', $this->selectedAsset);
                     break;
             }
         }

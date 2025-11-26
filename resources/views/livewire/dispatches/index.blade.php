@@ -49,11 +49,8 @@
                                 <a href="#" wire:click="exportDispatchesExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
                                 <a href="#" wire:click="exportDispatchesCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
                                 <a href="#" wire:click="exportDispatchesPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
-                                <br>
-                                <i class="fa fa-info-circle text-primary"
-                                        title="Once a dispatch is approved or rejected, it cannot be edited or deleted. If changes are required, create a new dispatch for the same ticket, provided the ticket is still open."
-                                        style="cursor: pointer;">
-                                </i>
+                               
+                               
                             </div>
                             
                         </div>
