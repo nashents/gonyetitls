@@ -37,9 +37,9 @@ class Cards extends Component
 
         $query = Ticket::query()
             ->with(['booking','inspection','horse','trailer','vehicle'])
-            ->whereHas('employees', function ($q) {
-                $q->where('employees.id', $this->mechanic_id);   // 👈 Only tickets for this employee
-        });
+            ->whereHas('booking.employees', function ($q) {
+                $q->where('employees.id', $this->mechanic_id);
+            });
 
         // ✅ Status filter
         if ($this->ticket_status !== "all") {
@@ -83,7 +83,7 @@ class Cards extends Component
         }
 
         // ✅ Final result with pagination
-        $tickets = $query->orderBy('ticket_number','desc')->paginate(10);
+        $tickets =  $query->orderByDesc('created_at')->paginate(10);
 
         return view('livewire.tickets.cards', [
             'tickets' => $tickets
