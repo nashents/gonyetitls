@@ -55,7 +55,7 @@
                                                                 @foreach ($folder_documents as $document)
                                                                     <tr>
                                                                     <td style="padding-left: 29px;">
-                                                                        <a href="{{asset('myfiles/documents/'.$document->filename)}}"><i class="fa fa-file"></i> {{$document->title}} -  {{$document->filename}}</a> | {{$document->expires_at}} <span class="badge bg-{{$document->status == 1 ? "success" : "danger"}}">{{$document->status == 1 ? "Valid" : "Expired"}}</span> <a href="#" wire:click="edit({{$document->id}})" ><i class="fa fa-edit color-success"></i></a> <a href="#" wire:click="showDocumentDelete({{$document->id}})"><i class="fa fa-trash color-danger"></i></a>
+                                                                        <a href="{{asset('myfiles/documents/'.$document->filename)}}"><i class="fa fa-file"></i> {{$document->title}} -  {{$document->filename}}</a> | {{$document->expires_at}} <span class="badge bg-{{$document->status == 1 ? "success" : "danger"}}">{{$document->status == 1 ? "Valid" : "Expired"}}</span> <i>UploadedBy: </i> {{$document->user ? $document->user->name." ".$document->user->surname : ""}} <a href="#" wire:click="edit({{$document->id}})" ><i class="fa fa-edit color-success"></i></a> <a href="#" wire:click="showDocumentDelete({{$document->id}})"><i class="fa fa-trash color-danger"></i></a>
                                                                     </td>
                                                                     </tr>
                                                                 @endforeach
@@ -81,7 +81,7 @@
                                         @foreach ($uncategorized_documents as $document)
                                         <tr>
                                             <td> 
-                                                <a href="{{asset('myfiles/documents/'.$document->filename)}}"><i class="fa fa-file"></i> {{$document->title}} -  {{$document->filename}}</a> | {{$document->expires_at}} <span class="badge bg-{{$document->status == 1 ? "success" : "danger"}}">{{$document->status == 1 ? "Valid" : "Expired"}}</span> <a href="#" wire:click="edit({{$document->id}})" ><i class="fa fa-edit color-success"></i></a> <a href="#" wire:click="showDocumentDelete({{$document->id}})"><i class="fa fa-trash color-danger"></i></a>
+                                                <a href="{{asset('myfiles/documents/'.$document->filename)}}"><i class="fa fa-file"></i> {{$document->title}} -  {{$document->filename}}</a> | {{$document->expires_at}} <span class="badge bg-{{$document->status == 1 ? "success" : "danger"}}">{{$document->status == 1 ? "Valid" : "Expired"}}</span> <i>UploadedBy: </i> {{$document->user ? $document->user->name." ".$document->user->surname : ""}} <a href="#" wire:click="edit({{$document->id}})" ><i class="fa fa-edit color-success"></i></a> <a href="#" wire:click="showDocumentDelete({{$document->id}})"><i class="fa fa-trash color-danger"></i></a>
                                             </td>
                                         </tr>
                                         @endforeach

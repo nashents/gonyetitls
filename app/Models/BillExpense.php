@@ -18,6 +18,12 @@ class BillExpense extends Model implements Auditable
     public function inventory(){
         return $this->belongsTo('App\Models\Inventory');
     }
+    public function asset(){
+        return $this->belongsTo('App\Models\Asset');
+    }
+    public function tyre(){
+        return $this->belongsTo('App\Models\Tyre');
+    }
     public function product(){
         return $this->belongsTo('App\Models\Product');
     }

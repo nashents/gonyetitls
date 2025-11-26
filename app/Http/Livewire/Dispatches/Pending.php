@@ -9,8 +9,10 @@ use App\Models\Asset;
 use App\Models\Account;
 use Livewire\Component;
 use App\Models\Dispatch;
+use App\Models\Movement;
 use App\Models\Inventory;
 use App\Models\BillExpense;
+use App\Models\TyreAssignment;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
@@ -73,6 +75,62 @@ class Pending extends Component
 
     }
 
+    public function tyreAssignment($dispatch_item){
+
+        $dispatch = $dispatch_item->dispatch;
+        $ticket = $dispatch?->ticket;
+        $horse_id = $ticket?->horse_id;
+        $vehicle_id = $ticket?->vehicle_id;
+        $trailer_id = $ticket?->trailer_id;
+
+        $assignment = new TyreAssignment;
+        $assignment->user_id = Auth::user()->id;
+        $assignment->tyre_id = $dispatch_item->tyre_id;
+      
+        if (isset($horse_id)) {
+            $assignment->type = "Horse";
+            $assignment->horse_id = $horse_id;
+            $assignment->vehicle_id = null;
+            $assignment->trailer_id = null;
+        }elseif (isset($trailer_id)) {
+            $assignment->type = "Trailer";
+            $assignment->trailer_id = $trailer_id;
+            $assignment->horse_id = null;
+            $assignment->vehicle_id = null;
+        }elseif (isset($vehicle_id)) {
+            $assignment->type = "Vehicle";
+            $assignment->vehicle_id = $vehicle_id;
+            $assignment->horse_id = null;
+            $assignment->trailer_id = null;
+        }
+        $assignment->starting_odometer = $ticket?->odometer;
+        $assignment->date_fitted = date('Y-m-d');
+        $assignment->current_mileage = $ticket?->odometer;
+        $assignment->status = 1;
+        $assignment->save();
+
+        $movement = Movement::firstOrNew(['tyre_assignment_id' => $assignment->id]);
+        $movement->user_id = $assignment->user_id;
+        $movement->tyre_id = $assignment->tyre_id;
+        
+        if ($assignment->horse_id) {
+            $movement->location = 'Horse';
+            $movement->horse_id = $assignment->horse_id;
+        } elseif ($assignment->vehicle_id) {
+            $movement->location = 'Vehicle';
+            $movement->vehicle_id = $assignment->vehicle_id;
+        } elseif ($assignment->trailer_id) {
+            $movement->location = 'Trailer';
+            $movement->trailer_id = $assignment->vehicle_id;
+        }
+        
+        $movement->current_mileage = $assignment->current_mileage;
+        $movement->mileage_moved = $assignment->starting_odometer;
+        $movement->date =   $assignment->date_fitted;
+        $movement->save();
+
+    }
+
     public function update()
     {
         DB::transaction(function () {
@@ -125,7 +183,13 @@ class Pending extends Component
 
                     }
 
+                  
+
                     foreach ($dispatch->dispatch_items as $dispatch_item) {
+
+                        if ($dispatch_item->dispatch->department == "tyre") {
+                           $this->tyreAssignment($dispatch_item);
+                        }
 
                         if (in_array($dispatch->department,['inventory','tyre'])) {
 

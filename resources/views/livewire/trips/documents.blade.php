@@ -8,8 +8,10 @@
         <br>
         @endif
         <x-loading/>
-        <table id="documentsTable" class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
+        <table  class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
             <thead >
+                <th class="th-sm">UploadedBy
+                </th>
                 <th class="th-sm">Document#
                 </th>
                 <th class="th-sm">Title
@@ -28,6 +30,7 @@
             <tbody>
                 @forelse ($documents as $document)
               <tr>
+                <td>{{$document->user ? $document->user->name : ""}} {{$document->user ? $document->user->surname : ""}}</td>
                 <td>{{$document->document_number}}</td>
                 <td>{{$document->title}}</td>
                 <td>

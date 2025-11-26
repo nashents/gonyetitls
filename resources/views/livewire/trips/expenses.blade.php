@@ -14,8 +14,6 @@
                 </th>
                 <th class="th-sm">Type
                 </th>
-                <th class="th-sm">Type
-                </th>
                 <th class="th-sm">Name
                 </th>
                 <th class="th-sm">MOP

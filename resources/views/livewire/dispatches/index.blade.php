@@ -50,7 +50,10 @@
                                 <a href="#" wire:click="exportDispatchesCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
                                 <a href="#" wire:click="exportDispatchesPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
                                
-                               
+                               <i class="fa fa-info-circle text-primary" style="margin-right:16px;float: right"
+                                    title="Once a dispatch is approved or rejected, it cannot be edited or deleted. If changes are required, create a new dispatch for the same ticket, provided the ticket is still open."
+                                    style="cursor: pointer;">
+                                </i>
                             </div>
                             
                         </div>
@@ -156,7 +159,7 @@
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{ route('dispatches.show', $dispatch->id) }}" ><i class="fa fa-eye color-default"></i> View</a></li>
                                                 @if ($dispatch->authorization == "pending" || Auth::user()->is_admin())
-                                                    <li><a href="#"  wire:click="edit({{$dispatch->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                                    {{-- <li><a href="#"  wire:click="edit({{$dispatch->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li> --}}
                                                     <li><a href="#" wire:click="showDelete({{$dispatch->id}})"  ><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                                 @endif
                                                 
@@ -382,17 +385,31 @@
                                                         @if(in_array($product->id, $selectedProduct ?? []) && ($selectedProduct[0] ?? null) != $product->id) 
                                                             disabled 
                                                         @endif
-                                                        > {{$product->name}} {{$product->brand ? $product->brand->name : ""}}, {{$product->product_number ? "Code: ".$product->product_number : ""}}, {{$product->identification_number ? "Part/ID#, ".$product->identification_number : ""}} 
-                                                        <strong>    
-                                                        @if ($department == "inventory")
-                                                               {{$product->inventories->where('status',1)->where('balance','>',0)->sum('balance')}} 
-                                                        @elseif($department == "tyre")
-                                                               {{$product->tyres->where('status',1)->where('balance','>',0)->sum('balance')}} 
-                                                        @elseif($department == "asset")
-                                                                {{$product->assets->where('status',1)->where('balance','>',0)->sum('balance')}} 
-                                                        @endif
-                                                        {{$product->unit_of_measure ? $product->unit_of_measure : "Unit(s)"}}
-                                                    </strong>
+                                                        >  {{$product->name}} {{$product->brand ? $product->brand->name : ""}}, {{$product->product_number ? "Inventory#:  ".$product->product_number : ""}}, {{$product->identification_number ? "ID#: ".$product->identification_number : ""}} 
+                                                      
+                                                    @php
+                                                        $relation = match ($department) {
+                                                            'inventory' => 'inventories',
+                                                            'tyre'      => 'tyres',
+                                                            'asset'     => 'assets',
+                                                            default     => null,
+                                                        };
+
+                                                        $count = null;
+
+                                                        if ($relation) {
+                                                            $count = $product->{$relation}()  // 👈 note the () = query, not collection
+                                                                ->where('status', 1)
+                                                                ->where('balance', '>', 0)
+                                                                ->when($selectedStore, fn($q) => $q->where('store_id', $selectedStore))
+                                                                ->sum('balance');
+                                                        }
+                                                    @endphp
+
+                                                    @if(!is_null($count))
+                                                        {{ $count }} {{ $product->unit_of_measure ?: "Unit(s)" }}
+                                                    @endif
+                                                     
                                                     </option>
                                                 @endforeach
                                         </select>
@@ -452,16 +469,28 @@
                                                         @endif
                                                     > 
                                                     {{$product->name}} {{$product->brand ? $product->brand->name : ""}}, {{$product->product_number ? "Code: ".$product->product_number : ""}}, {{$product->identification_number ? "Part/ID#, ".$product->identification_number : ""}} 
-                                                    <strong>    
-                                                        @if ($department == "inventory")
-                                                               {{$product->inventories->where('status',1)->where('balance','>',0)->sum('balance')}} 
-                                                        @elseif($department == "tyre")
-                                                               {{$product->tyres->where('status',1)->where('balance','>',0)->sum('balance')}} 
-                                                        @elseif($department == "asset")
-                                                                {{$product->assets->where('status',1)->where('balance','>',0)->sum('balance')}} 
-                                                        @endif
-                                                        {{$product->unit_of_measure ? $product->unit_of_measure : "Unit(s)"}}
-                                                    </strong>
+                                                           @php
+                                                        $relation = match ($department) {
+                                                            'inventory' => 'inventories',
+                                                            'tyre'      => 'tyres',
+                                                            'asset'     => 'assets',
+                                                            default     => null,
+                                                        };
+
+                                                        $count = null;
+
+                                                        if ($relation) {
+                                                            $count = $product->{$relation}()  // 👈 note the () = query, not collection
+                                                                ->where('status', 1)
+                                                                ->where('balance', '>', 0)
+                                                                ->when($selectedStore, fn($q) => $q->where('store_id', $selectedStore))
+                                                                ->sum('balance');
+                                                        }
+                                                    @endphp
+
+                                                    @if(!is_null($count))
+                                                        {{ $count }} {{ $product->unit_of_measure ?: "Unit(s)" }}
+                                                    @endif
                                                  </option>
                                                 @endforeach                                                       
                                             </select>
@@ -529,14 +558,28 @@
                                             <option value="" selected>Select Products</option>
                                             @foreach ($products as $product)
                                                 <option value="{{$product->id}}"> {{$product->name}} {{$product->brand ? $product->brand->name : ""}}, {{$product->product_number ? "Code: ".$product->product_number : ""}}, {{$product->identification_number ? "Part/ID#, ".$product->identification_number : ""}} 
-                                                      @if ($department == "inventory")
-                                                               {{$product->inventories->where('status',1)->where('balance','>',0)->sum('balance')}} 
-                                                        @elseif($department == "tyre")
-                                                               {{$product->tyres->where('status',1)->where('balance','>',0)->sum('balance')}} 
-                                                        @elseif($department == "asset")
-                                                                {{$product->assets->where('status',1)->where('balance','>',0)->sum('balance')}} 
-                                                        @endif
-                                                        {{$product->unit_of_measure ? $product->unit_of_measure : "Unit(s)"}}
+                                                        @php
+                                                        $relation = match ($department) {
+                                                            'inventory' => 'inventories',
+                                                            'tyre'      => 'tyres',
+                                                            'asset'     => 'assets',
+                                                            default     => null,
+                                                        };
+
+                                                        $count = null;
+
+                                                        if ($relation) {
+                                                            $count = $product->{$relation}()  // 👈 note the () = query, not collection
+                                                                ->where('status', 1)
+                                                                ->where('balance', '>', 0)
+                                                                ->when($selectedStore, fn($q) => $q->where('store_id', $selectedStore))
+                                                                ->sum('balance');
+                                                        }
+                                                    @endphp
+
+                                                    @if(!is_null($count))
+                                                        {{ $count }} {{ $product->unit_of_measure ?: "Unit(s)" }}
+                                                    @endif
                                                 </option>
                                             @endforeach
                                         </select>
@@ -660,14 +703,28 @@
                                                     <option value="" selected>Select Products</option>
                                                     @foreach ($products as $product)
                                                         <option value="{{$product->id}}"> {{$product->name}} {{$product->brand ? $product->brand->name : ""}}, {{$product->product_number ? "Code: ".$product->product_number : ""}}, {{$product->identification_number ? "Part/ID#, ".$product->identification_number : ""}} 
-                                                        @if ($department == "inventory")
-                                                               {{$product->inventories->where('status',1)->where('balance','>',0)->sum('balance')}} 
-                                                        @elseif($department == "tyre")
-                                                               {{$product->tyres->where('status',1)->where('balance','>',0)->sum('balance')}} 
-                                                        @elseif($department == "asset")
-                                                                {{$product->assets->where('status',1)->where('balance','>',0)->sum('balance')}} 
-                                                        @endif
-                                                        {{$product->unit_of_measure ? $product->unit_of_measure : "Unit(s)"}}
+                                                                @php
+                                                                    $relation = match ($department) {
+                                                                        'inventory' => 'inventories',
+                                                                        'tyre'      => 'tyres',
+                                                                        'asset'     => 'assets',
+                                                                        default     => null,
+                                                                    };
+
+                                                                    $count = null;
+
+                                                                    if ($relation) {
+                                                                        $count = $product->{$relation}()  // 👈 note the () = query, not collection
+                                                                            ->where('status', 1)
+                                                                            ->where('balance', '>', 0)
+                                                                            ->when($selectedStore, fn($q) => $q->where('store_id', $selectedStore))
+                                                                            ->sum('balance');
+                                                                    }
+                                                                @endphp
+
+                                                    @if(!is_null($count))
+                                                        {{ $count }} {{ $product->unit_of_measure ?: "Unit(s)" }}
+                                                    @endif
                                                     </option>
                                                     @endforeach
                                                 </select>

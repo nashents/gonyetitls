@@ -96,7 +96,7 @@ class Index extends Component
                 : 'inventories');
 
         $relationFields = [
-            'tyre' => 'tyres:id,product_id,tyre_number,serial_number,total,currency_id,status',
+            'tyre' => 'tyres:id,product_id,tyre_number,serial_number,balance,weight,total,currency_id,status',
             'asset' => 'assets:id,product_id,asset_number,serial_number,balance,weight,total,currency_id,status',
             'inventory' => 'inventories:id,product_id,inventory_number,serial_number,balance,weight,total,currency_id,status',
         ];
@@ -106,10 +106,7 @@ class Index extends Component
             ->where('department', $this->department)
             ->whereHas($relation, function ($q) {
                 $q->where('status', 1);
-
-                if ($this->department !== 'tyre') {
-                    $q->where('balance', '>', 0);
-                }
+                $q->where('balance', '>', 0);
             });
 
         // If search term exists
@@ -171,8 +168,9 @@ class Index extends Component
             ->get();
     }
 
-    public function loadProducts()
+    public function loadProducts($store_id = null)
     {
+
         $map = [
             'asset'     => 'assets',
             'inventory' => 'inventories',
@@ -188,13 +186,14 @@ class Index extends Component
 
         $this->products = Product::with('brand', $relation)
             ->where('department', $this->department)
-            ->whereHas($relation, function ($q) use ($relation) {
-                $q->where('status', 1);
+            ->whereHas($relation, function ($q) use ($relation, $store_id) {
 
-                // Only enforce balance for stock-type departments
-                if (in_array($relation, ['assets', 'inventories'])) {
-                    $q->where('balance', '>', 0);
-                }
+                $q->where('status', 1);
+                $q->where('balance', '>', 0);
+                // Apply store filter ONLY when store_id is present
+                $q->when($store_id, function ($qq) use ($store_id) {
+                    $qq->where('store_id', $store_id);
+                });
             })
             ->orderBy('name', 'asc')
             ->get();
@@ -214,8 +213,6 @@ class Index extends Component
         $this->reset(['searchProduct', 'searchTicket']);
         $this->loadProducts();
        
-       
-     
     }
 
     public function updatedSelectedEmployee($id){
@@ -396,6 +393,7 @@ class Index extends Component
     public function updatedSelectedStore($id){
         if(!is_null($id)){
             $store = Store::find($id);
+            $this->loadProducts($store->id);
         }
     }
 
@@ -410,12 +408,50 @@ class Index extends Component
 
     public function destroy(){
 
+        $bill = $this->dispatch->bill;
+        $bill_expenses = $bill?->bill_expenses;
+        if($bill_expenses){
+            foreach($bill_expenses as $bill_expense){
+                $bill_expense->delete();
+            }
+        }
+        $bill?->delete();
         $dispatch_items = $this->dispatch->dispatch_items;
         if($dispatch_items){
+
             foreach($dispatch_items as $dispatch_item){
+
+                $tyre = $dispatch_item->tyre;
+                $inventory = $dispatch_item->inventory;
+                $asset = $dispatch_item->asset;
+
+                if (isset($tyre)) {
+                    $tyre_assignments = $tyre?->tyre_assignment;
+
+                    if(isset($tyre_assignments)){
+                        foreach($tyre_assignments as $tyre_assignment){
+                            $tyre_assignment->delete();
+                        }
+                    }
+
+                    $tyre->status = 1;
+                    $tyre->balance += $dispatch_item->qty;
+                    $tyre->save();
+                }
+                elseif(isset($inventory)){
+                    $inventory->status = 1;
+                    $inventory->balance += $dispatch_item->qty;
+                    $inventory->save();
+                }
+                elseif(isset($asset)){
+                    $asset->status = 1;
+                    $asset->balance += $dispatch_item->qty;
+                    $asset->save();
+                }
                 $dispatch_item->delete();
             }
         }
+
         $this->dispatch->delete();
         $this->dispatchBrowserEvent('hide-dispatchDeleteModal');
 

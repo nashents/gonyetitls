@@ -276,9 +276,9 @@
                                                                 <th scope="row">Equipment</th>
                                                                 <td>
                                                                     @if ($trip->horse)
-                                                                    Horse | <a href="{{ route('horses.show',$trip->horse->id) }}" style="color:blue">      {{$trip->horse->horse_make ? $trip->horse->horse_make->name : "" }} {{$trip->horse->horse_model ? $trip->horse->horse_model->name : "" }} {{$trip->horse->registration_number}}</a>
+                                                                    Horse | <a href="{{ route('horses.show',$trip->horse->id) }}" style="color:blue">  {{$trip->horse->registration_number}} {{$trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : ""}}    {{$trip->horse->horse_make ? $trip->horse->horse_make->name : "" }} {{$trip->horse->horse_model ? $trip->horse->horse_model->name : "" }} </a>
                                                                     @elseif($trip->vehicle)
-                                                                    Vehicle | <a href="{{ route('vehicles.show',$trip->vehicle->id) }}" style="color:blue">      {{$trip->vehicle->vehicle_make ? $trip->vehicle->vehicle_make->name : "" }} {{$trip->vehicle->vehicle_model ? $trip->vehicle->vehicle_model->name : "" }} {{$trip->vehicle->registration_number}}</a>
+                                                                    Vehicle | <a href="{{ route('vehicles.show',$trip->vehicle->id) }}" style="color:blue"> {{$trip->vehicle->registration_number}} {{$trip->vehicle->fleet_number ? "(".$trip->vehicle->fleet_number.")" : ""}}  {{$trip->vehicle->vehicle_make ? $trip->vehicle->vehicle_make->name : "" }} {{$trip->vehicle->vehicle_model ? $trip->vehicle->vehicle_model->name : "" }} </a>
                                                                     @endif
                                                                 </td>
                                                             </tr>

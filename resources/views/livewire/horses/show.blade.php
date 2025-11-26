@@ -850,6 +850,8 @@
                                         {{ $bill_expense->product->brand ? $bill_expense->product->brand->name : ""}} {{ $bill_expense->product ? $bill_expense->product->name : ""}}
                                     @elseif($bill_expense->inventory)
                                         {{ $bill_expense->inventory->product->brand ? $bill_expense->inventory->product->brand->name : ""}} {{ $bill_expense->inventory->product ? $bill_expense->inventory->product->name : ""}}
+                                    @elseif($bill_expense->tyre)
+                                        {{ $bill_expense->tyre->product->brand ? $bill_expense->tyre->product->brand->name : ""}} {{ $bill_expense->tyre->product ? $bill_expense->tyre->product->name : ""}}
                                     @endif
                                     @if (!$loop->last),@endif
                                 @endforeach

@@ -68,17 +68,22 @@ class Index extends Component
     
     public function mount(){
         $this->resetPage();
-        $this->horses = Horse::where('status',1)->orderby('registration_number')->get();
-        $this->assets = Asset::where('status',1)->get();
-        $this->trailers = Trailer::where('status',1)->orderby('registration_number')->get();
-        $this->vehicles = Vehicle::where('status',1)->orderby('registration_number')->get();
-        $this->stations = Station::where('status',1)->orderby('name')->get();
-        $this->service_types = ServiceType::where('status',1)->orderby('name')->get();
+        $this->horses = Horse::where('status',1)->orderBy('registration_number','asc')->get();
+        $this->assets = Asset::with('product')->where('status',1)->get()->sortBy('product.name');
+        $this->trailers = Trailer::where('status',1)->orderBy('registration_number','asc')->get();
+        $this->vehicles = Vehicle::where('status',1)->orderBy('registration_number','asc')->get();
+        $this->stations = Station::where('status',1)->orderBy('name','asc')->get();
+        $this->service_types = ServiceType::where('status',1)->orderBy('name','asc')->get();
         $this->employees = Employee::query()
-        ->whereHas('departments', fn ($q) => $q->where('departments.name', 'Workshop'))
+        ->whereHas('departments', fn ($q) => 
+            $q->where('departments.name', 'Workshop')
+        )
         ->with('departments:id,name')
+        ->orderBy('name', 'asc')
+        ->orderBy('surname', 'asc')
         ->distinct()
         ->get();
+
       }
 
     public function exportBookingsCSV(Excel $excel){

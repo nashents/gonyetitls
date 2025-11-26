@@ -14,4 +14,7 @@ class TripDocument extends Model implements Auditable
     public function trip(){
         return $this->belongsTo('App\Models\Trip');
     }
+     public function user(){
+        return $this->belongsTo('App\Models\User');
+    }
 }

@@ -50,4 +50,7 @@ class Document extends Model implements Auditable
     public function bill(){
         return $this->belongsTo('App\Models\Bill');
     }
+    public function user(){
+        return $this->belongsTo('App\Models\User');
+    }
 }

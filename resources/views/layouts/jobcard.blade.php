@@ -122,6 +122,20 @@ body { margin: 0; }
   .card { overflow: visible !important; }
 }
 
+@media print {
+  .tbl th, .tbl td {
+    white-space: normal !important;  /* allow wrapping */
+    word-break: break-word !important;
+  }
+
+  /* Balance Labour table better on A4 portrait */
+  .tbl[aria-label="Labour Tasks"] th:nth-child(2),
+  .tbl[aria-label="Labour Tasks"] td:nth-child(2) { width: 28% !important; }
+
+  .tbl[aria-label="Labour Tasks"] th:nth-child(3),
+  .tbl[aria-label="Labour Tasks"] td:nth-child(3) { width: 18% !important; }
+}
+
 
 
 

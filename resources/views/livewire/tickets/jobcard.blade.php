@@ -112,53 +112,53 @@
 
     <!-- ===== Tasks / Labour ===== -->
     <section class="card" style="margin-top:12px;">
-      <h3>Labour / Tasks</h3>
-      <table class="tbl" role="table" aria-label="Labour Tasks">
-        <thead>
-          <tr>
-            <th style="width:38px" class="center">#</th>
-            <th>Task Description</th>
-            <th style="width:150px">Assigned To</th>
-            <th style="width:120px">Start</th>
-            <th style="width:120px">End</th>
-            <th style="width:80px" class="right">Hours</th>
-            <th style="width:90px" class="right">Rate</th>
-            <th style="width:110px" class="right">Amount</th>
-            <th style="width:130px">Remarks</th>
-          </tr>
-        </thead>
-        <tbody data-collection="labour">
-          <tr data-row>
-            <td class="center" data-field="labour.index">1</td>
-            <td data-field="labour.description">{{$booking->description}}</td>
-            <td data-field="labour.assignee">
-                      @if (isset($ticket->booking->employees) && $ticket->booking->employees->count()>0)
-                          @foreach ($ticket->booking->employees as $mechanic)
-                              {{ $mechanic->name }} {{ $mechanic->surname }}, 
-                          @endforeach
-                      @elseif(isset($ticket->booking->vendor))
-                          {{ucfirst($ticket->booking->vendor->name)}}  
-                      @endif
-            </td>
-            <td data-field="labour.start">{{$booking->in_date}} @ {{$booking->in_time}}</td>
-            <td data-field="labour.end">{{$booking->out_date}} {{$booking->out_time ? "@".$booking->out_time : ""}}</td>
-            <td class="right" data-field="labour.hours">{{$booking->service_hours}}</td>
-            <td class="right" data-field="labour.rate">{{$booking->currency ? $booking->currency->symbol : ""}} {{number_format($booking->rate,2)}}</td>
-            <td class="right" data-field="labour.amount">{{$booking->currency ? $booking->currency->symbol : ""}} {{number_format($booking->total,2)}}</td>
-            <td data-field="labour.remarks">{{$booking->remarks}}</td>
-          </tr>
-        </tbody>
-        <tfoot>
-          <tr>
-            <td colspan="5" class="right">Labour Total</td>
-            <td class="right" data-field="totals.labour_hours">{{$booking->service_hours}}</td>
-            <td></td>
-            <td class="right" data-field="totals.labour_amount">{{$booking->currency ? $booking->currency->symbol : ""}} {{number_format($booking->total,2)}}</td>
-            <td></td>
-          </tr>
-        </tfoot>
-      </table>
-    </section>
+  <h3>Labour / Tasks</h3>
+  <table class="tbl" role="table" aria-label="Labour Tasks">
+    <thead>
+      <tr>
+        <th class="center" style="width:4%">#</th>
+        <th style="width:28%">Task Description</th>
+        <th style="width:18%">Assigned To</th>
+        <th style="width:10%">Start</th>
+        <th style="width:10%">End</th>
+        <th class="right" style="width:8%">Hours</th>
+        <th class="right" style="width:8%">Rate</th>
+        <th class="right" style="width:10%">Amount</th>
+        <th style="width:14%">Remarks</th>
+      </tr>
+    </thead>
+    <tbody data-collection="labour">
+      <tr data-row>
+        <td class="center" data-field="labour.index">1</td>
+        <td data-field="labour.description">{{$booking->description}}</td>
+        <td data-field="labour.assignee">
+          @if (isset($ticket->booking->employees) && $ticket->booking->employees->count() > 0)
+              @foreach ($ticket->booking->employees as $mechanic)
+                  {{ $mechanic->name }} {{ $mechanic->surname }}@if(!$loop->last),@endif
+              @endforeach
+          @elseif(isset($ticket->booking->vendor))
+              {{ ucfirst($ticket->booking->vendor->name) }}
+          @endif
+        </td>
+        <td data-field="labour.start">{{$booking->in_date}} @ {{$booking->in_time}}</td>
+        <td data-field="labour.end">{{$booking->out_date}} {{$booking->out_time ? "@".$booking->out_time : ""}}</td>
+        <td class="right" data-field="labour.hours">{{$booking->service_hours}}</td>
+        <td class="right" data-field="labour.rate">{{$booking->currency ? $booking->currency->symbol : ""}} {{number_format($booking->rate,2)}}</td>
+        <td class="right" data-field="labour.amount">{{$booking->currency ? $booking->currency->symbol : ""}} {{number_format($booking->total,2)}}</td>
+        <td data-field="labour.remarks">{{$booking->remarks}}</td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="5" class="right">Labour Total</td>
+        <td class="right" data-field="totals.labour_hours">{{$booking->service_hours}}</td>
+        <td></td>
+        <td class="right" data-field="totals.labour_amount">{{$booking->currency ? $booking->currency->symbol : ""}} {{number_format($booking->total,2)}}</td>
+        <td></td>
+      </tr>
+    </tfoot>
+  </table>
+</section>
 
     <!-- ===== Parts & Materials ===== -->
     @if ($ticket_inventories->count()>0)

@@ -97,6 +97,7 @@ class Documents extends Component
                   }
                   
                   $document = new TripDocument;
+                  $document->user_id = Auth::user()->id;
                   $document->trip_id = $this->trip->id;
                   if(isset($this->title[$key])){
                   $document->title = $this->title[$key];
