@@ -159,7 +159,7 @@
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{ route('dispatches.show', $dispatch->id) }}" ><i class="fa fa-eye color-default"></i> View</a></li>
                                                 @if ($dispatch->authorization == "pending" || Auth::user()->is_admin())
-                                                    <li><a href="#"  wire:click="edit({{$dispatch->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                                    {{-- <li><a href="#"  wire:click="edit({{$dispatch->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li> --}}
                                                     <li><a href="#" wire:click="showDelete({{$dispatch->id}})"  ><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                                 @endif
                                                 

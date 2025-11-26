@@ -382,26 +382,25 @@ class Index extends Component
         
              // sleep(1);
 
-               if (filled($this->search)) {
-                    
-                     return view('livewire.customers.index',[
-                         'customers' => Customer::query()->with(['invoices'])
-                         ->where('customer_number','like', '%'.$this->search.'%')
-                         ->orWhere('name','like', '%'.$this->search.'%')
-                         ->orWhere('email','like', '%'.$this->search.'%')
-                         ->orWhere('vat_number','like', '%'.$this->search.'%')
-                         ->orWhere('tin_number','like', '%'.$this->search.'%')
-                        ->orderBy('name','asc')->paginate(10),
-                     ]);
-                 }
-                 else {
-                    
-                     return view('livewire.customers.index',[
-                        'customers' => Customer::query()->with(['invoices'])->orderBy('name','asc')->paginate(10),
-                        
-                     ]);
-                   
-                 }
+              $query = Customer::query()
+                ->with('invoices')
+                ->orderBy('name', 'asc');
+
+            if (filled($this->search)) {
+                $search = $this->search;
+
+                $query->where(function ($q) use ($search) {
+                    $q->where('customer_number', 'like', "%{$search}%")
+                    ->orWhere('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('vat_number', 'like', "%{$search}%")
+                    ->orWhere('tin_number', 'like', "%{$search}%");
+                });
+            }
+
+            return view('livewire.customers.index', [
+                'customers' => $query->paginate(10),
+            ]);
               
     }
 }

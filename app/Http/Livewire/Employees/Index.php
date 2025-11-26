@@ -156,11 +156,11 @@ class Index extends Component
             foreach ($batch as $e) {
                 $rows[] = [
                     'employee_id'    => $e->id,
-                    'department_id'  => $e->departments->first()?->id ?? null,
-                    'job_title_id'   => JobTitle::where('title',$e->post)->first()?->id ?? null,
-                    'branch_id'      => $e->branch_id ?? null,
-                    'rank_id'        => $e->ranks->first()?->id ?? null,
-                    'grade_id'       => $e->grade_id ?? null,
+                    'department_id'  => $e->departments->first()?->id ?: null,
+                    'job_title_id'   => JobTitle::where('title',$e->post)->first()?->id ?: null,
+                    'branch_id'      => $e->branch_id ?: null,
+                    'rank_id'        => $e->ranks->first()?->id ?: null,
+                    'grade_id'       => $e->grade_id ?: null,
                     // include only if your table has this column:
                     'changed_by' => $e->user_id,
                     'start_date' => $e->start_date,

@@ -10,6 +10,7 @@ use Livewire\Component;
 use App\Models\Currency;
 use App\Models\Document;
 use App\Models\VendorType;
+use Livewire\WithPagination;
 use Maatwebsite\Excel\Excel;
 use Livewire\WithFileUploads;
 use App\Exports\VendorsExport;
@@ -23,8 +24,14 @@ use Illuminate\Support\Facades\Session;
 class Index extends Component
 {
     use WithFileUploads;
+    use WithPagination;
 
-    public $vendors;
+    protected $paginationTheme = 'bootstrap';
+
+    public $search;
+    protected $queryString = ['search'];
+
+    private $vendors;
     public $vendor_types;
     public $contact_name;
     public $contact_surname;
@@ -369,25 +376,24 @@ class Index extends Component
     }
     public function render()
     {  
+           $query = Vendor::query()
+                ->with('bills')
+                ->orderBy('name', 'asc');
+
             if (filled($this->search)) {
-                    
-                     return view('livewire.vendors.index',[
-                         'vendors' => Vendor::query()->with(['bills'])
-                         ->where('vendor_number','like', '%'.$this->search.'%')
-                         ->orWhere('name','like', '%'.$this->search.'%')
-                         ->orWhere('email','like', '%'.$this->search.'%')
-                         ->orWhere('vat_number','like', '%'.$this->search.'%')
-                         ->orWhere('tin_number','like', '%'.$this->search.'%')
-                        ->orderBy('name','asc')->paginate(10),
-                     ]);
-                 }
-                 else {
-                    
-                     return view('livewire.vendors.index',[
-                        'vendors' => Vendor::query()->with(['bills'])->orderBy('name','asc')->paginate(10),
-                        
-                     ]);
-                   
-                 }
+                $search = $this->search;
+
+                $query->where(function ($q) use ($search) {
+                    $q->where('vendor_number', 'like', "%{$search}%")
+                    ->orWhere('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('vat_number', 'like', "%{$search}%")
+                    ->orWhere('tin_number', 'like', "%{$search}%");
+                });
+            }
+
+            return view('livewire.vendors.index', [
+                'vendors' => $query->paginate(10),
+            ]);
     }
 }
