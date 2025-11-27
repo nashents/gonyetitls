@@ -450,7 +450,9 @@ class Edit extends Component
         $inventory->cost = $this->cost;
         $inventory->qty = $this->qty;
         $inventory->weight = $this->weight;
-        $inventory->balance = $this->weight;
+        if(isset($this->qty) && is_numeric($this->qty) && isset($this->weight) && is_numeric($this->weight) ){
+              $inventory->balance = $this->qty * $this->weight ;
+        }
         $inventory->tax_rate = $this->tax_rate;
         $inventory->tax_id = $this->selectedTax;
 

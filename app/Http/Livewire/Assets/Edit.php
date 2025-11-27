@@ -414,7 +414,9 @@ class Edit extends Component
         $asset->measurement = $this->measurement;
         $asset->qty = $this->qty;
         $asset->weight = $this->weight;
-        $asset->balance = $this->weight;
+        if(isset($this->qty) && is_numeric($this->qty) && isset($this->weight) && is_numeric($this->weight) ){
+              $asset->balance = $this->qty * $this->weight ;
+        }
         $asset->tax_rate = $this->tax_rate;
         $asset->tax_id = $this->selectedTax;
 
