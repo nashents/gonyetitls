@@ -42,7 +42,7 @@ class Show extends Component
     public $company;
     public $role_names;
     public $rank_names;
-    public $department_name;
+    public $department_names;
     public $ranks;
     public $roles;
     public $departments;
