@@ -220,7 +220,7 @@ class Show extends Component
                     }
 
         $equipment = null;
-        $this->user = Auth::user()->id;
+        $this->user = Auth::user();
         $this->employee = $this->user->employee;
         $this->company = $this->employee->company;
 
