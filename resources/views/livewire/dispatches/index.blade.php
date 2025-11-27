@@ -275,6 +275,7 @@
                         </div>
                     </div>
                     @if (in_array($department,['inventory','tyre']))
+                    
                         <div class="form-group">
                             <label for="country">Tickets<span class="required" style="color: red">*</span></label>
                             <input type="text" wire:model.debounce.300ms="searchTicket" placeholder="Search tickets by ticket#, booking#, registration#, fleet#, driver..." class="form-control">

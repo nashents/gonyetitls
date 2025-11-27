@@ -61,6 +61,7 @@ class Index extends Component
     public $ticket_requests;
     public $employees;
     public $company;
+    public $all_tickets = False;
     public $max;
     public $max_weight;
     public $description;
@@ -130,8 +131,8 @@ class Index extends Component
         $search = trim($value);
 
         $baseQuery = Ticket::query()
-            ->whereYear('created_at', date('Y'))
-            ->where('status', 1);
+            ->whereYear('created_at', date('Y'));
+            // ->where('status', 1);
 
         if (filled($search)) {
             $baseQuery->where(function ($q) use ($search) {
