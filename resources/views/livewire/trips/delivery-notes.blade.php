@@ -372,16 +372,6 @@
                                 </td>
                             </tr>
                             <tr>
-                                <th style="width: 30%; padding-left:20px;">   Customer Rate @ Offloading</th>
-                                <td>
-                                    @if (isset($delivery_note->offloaded_rate))
-                                    {{ $trip->currency ? $trip->currency->name : "" }} {{ $trip->currency ? $trip->currency->symbol : "" }}{{$delivery_note->offloaded_rate}}
-                                        @else
-                                        No Customer Rate @ Offloading
-                                    @endif
-                                </td>
-                            </tr>
-                            <tr>
                                 <th style="width: 30%; padding-left:20px;">  Customer Freight @ Offloading</th>
                                 <td>
                                     @if (isset($delivery_note->offloaded_freight))

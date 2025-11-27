@@ -137,7 +137,7 @@
                                         @if ($dispatch->dispatch_items)
                                             @foreach ($dispatch->dispatch_items as $dispatch_item)
                                                 @if ($dispatch_item->inventory)
-                                                    {{$dispatch_item->inventory->product ? $dispatch_item->inventory->product->name : ""}} 
+                                                    {{$dispatch_item->inventory->product ? $dispatch_item->inventory->product->name : ""}} @if (!$loop->last),@endif
                                                 @elseif($dispatch_item->asset)
                                                     {{$dispatch_item->asset->product ? $dispatch_item->asset->product->name : ""}}
                                                 @elseif($dispatch_item->tyre)
@@ -676,12 +676,12 @@
                                     <div class="form-group">
                                         <label for="weight">Qty<span class="required" style="color: red">*</span></label>
                                         @if ($max_weight)
-                                            <input type="number" step="any" min="0"  max="{{ $max_weight[0] ?? '' }}"  class="form-control" wire:model.debounce.300ms="weight.0" placeholder="Enter Qty" required>
+                                            <input type="number" step="any" min="0"  max="{{ $max_weight[0] ?? '' }}"  class="form-control" wire:model.debounce.300ms="qty.0" placeholder="Enter Qty" required>
                                         @else
-                                            <input type="number" step="any" min="0"  class="form-control" wire:model.debounce.300ms="weight.0" placeholder="Enter Qty" required>
+                                            <input type="number" step="any" min="0"  class="form-control" wire:model.debounce.300ms="qty.0" placeholder="Enter Qty" required>
                                         @endif
                                        
-                                        @error('weight.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        @error('qty.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
                             
@@ -822,11 +822,11 @@
                                             <div class="form-group">
                                                 <label for="weight">Qty<span class="required" style="color: red">*</span></label>
                                                 @if ($max_weight)
-                                                    <input type="number" step="any" min="0"  max="{{ $max_weight[$value] ?? '' }}"  class="form-control" wire:model.debounce.300ms="weight.{{$value}}" placeholder="Enter Qty" required>
+                                                    <input type="number" step="any" min="0"  max="{{ $max_weight[$value] ?? '' }}"  class="form-control" wire:model.debounce.300ms="qty.{{$value}}" placeholder="Enter Qty" required>
                                                 @else
-                                                    <input type="number" step="any" min="0"  class="form-control" wire:model.debounce.300ms="weight.{{$value}}" placeholder="Enter Qty" required>
+                                                    <input type="number" step="any" min="0"  class="form-control" wire:model.debounce.300ms="qty.{{$value}}" placeholder="Enter Qty" required>
                                                 @endif
-                                                @error('weight.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                @error('qty.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         </div>
                                       
@@ -1304,12 +1304,12 @@
                                     <div class="form-group">
                                         <label for="weight">Qty<span class="required" style="color: red">*</span></label>
                                         @if ($max_weight)
-                                            <input type="number" step="any" min="0"  max="{{ $max_weight[0] ?? '' }}"  class="form-control" wire:model.debounce.300ms="weight.0" placeholder="Enter Qty" required>
+                                            <input type="number" step="any" min="0"  max="{{ $max_weight[0] ?? '' }}"  class="form-control" wire:model.debounce.300ms="qty.0" placeholder="Enter Qty" required>
                                         @else
-                                            <input type="number" step="any" min="0"  class="form-control" wire:model.debounce.300ms="weight.0" placeholder="Enter Qty" required>
+                                            <input type="number" step="any" min="0"  class="form-control" wire:model.debounce.300ms="qty.0" placeholder="Enter Qty" required>
                                         @endif
                                        
-                                        @error('weight.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        @error('qty.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
                             

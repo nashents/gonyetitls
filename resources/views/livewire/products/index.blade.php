@@ -89,9 +89,9 @@
                                         @endphp
 
                                         @if ($totalValue)
-                                            {{ $base_currency->name }} {{ $base_currency->symbol }} {{ number_format($totalValue, 2) }}
+                                            {{ $base_currency->name }} {{ $base_currency->symbol }}{{ number_format($totalValue, 2) }}
                                         @else
-                                            {{ $base_currency->name }} {{ $base_currency->symbol }} 0.00
+                                            {{ $base_currency->name }} {{ $base_currency->symbol }}0.00
                                         @endif
                                     </td>
                                     <td>

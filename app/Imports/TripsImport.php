@@ -163,7 +163,7 @@ WithBatchInserts
 
                 $trip_ref = trim($row->get('trip_reference'));
                 $start_date = $this->parseExcelDate($row->get('start_date'));
-                $end_date = $this->parseExcelDate($row->get('end_date'));
+                $end_date = $this->parseExcelDate($row->get('offloading_date'));
 
                 $driver_name = trim($row->get('driver'));
                 $driver = null;
@@ -318,8 +318,8 @@ WithBatchInserts
                 $delivery_note = new DeliveryNote();
                 $delivery_note->user_id = $user_id;
                 $delivery_note->trip_id = $trip->id;
-                $delivery_note->loaded_date = $start_date;
-                $delivery_note->offloaded_date = $end_date;
+                $delivery_note->loaded_date =  $trip->start_date;
+                $delivery_note->offloaded_date =  $trip->end_date;
                 $delivery_note->loaded_litreage = $trip->litreage;
                 $delivery_note->loaded_litreage_at_20 = $trip->litreage_at_20;
                 $delivery_note->loaded_weight = $trip->weight;

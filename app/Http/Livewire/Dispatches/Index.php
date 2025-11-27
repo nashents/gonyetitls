@@ -241,7 +241,7 @@ class Index extends Component
         if (!is_null($id)) {
             $inventory = Inventory::find($id);
             if ($inventory && $this->expand == True) {
-                $this->weight[$key] = $inventory->balance;
+                $this->qty[$key] = $inventory->balance;
                 $this->max_weight[$key] = $inventory->balance;
             }
         }
@@ -251,7 +251,17 @@ class Index extends Component
         if (!is_null($id)) {
             $asset = Asset::find($id);
             if ($asset && $this->expand == True) {
-                $this->weight[$key] = $asset->balance;
+                $this->qty[$key] = $asset->balance;
+                $this->max_weight[$key] = $asset->balance;
+            }
+        }
+    }
+    public function updatedSelectedTyre($id, $key){
+        if (!is_null($id)) {
+            $tyre = Tyre::find($id);
+            if ($tyre && $this->expand == True) {
+                $this->weight[$key] = $tyre->balance;
+                $this->max_weight[$key] = $tyre->balance;
             }
         }
     }
@@ -368,8 +378,11 @@ class Index extends Component
        
         if ($this->expand == True) {
 
-            $this->InventoryFIFO($dispatch);
-            $this->InventoryAVCO($dispatch);
+            if($this->company->valuation_method == "AVCO"){
+                $dispatch_total = $this->InventoryAVCO($dispatch);
+            }elseif($this->company->valuation_method == "FIFO"){
+                $dispatch_total =  $this->InventoryFIFO($dispatch);
+            }
 
         }elseif ($this->expand == False) {
 
@@ -380,7 +393,7 @@ class Index extends Component
             }
           
         }
-
+        
         $dispatch->total = $dispatch_total;
         $dispatch->save();
 
@@ -426,33 +439,33 @@ class Index extends Component
 
             foreach($dispatch_items as $dispatch_item){
 
-                $tyre = $dispatch_item->tyre;
-                $inventory = $dispatch_item->inventory;
-                $asset = $dispatch_item->asset;
+                // $tyre = $dispatch_item->tyre;
+                // $inventory = $dispatch_item->inventory;
+                // $asset = $dispatch_item->asset;
 
-                if (isset($tyre)) {
-                    $tyre_assignments = $tyre?->tyre_assignment;
+                // if (isset($tyre)) {
+                //     $tyre_assignments = $tyre?->tyre_assignment;
 
-                    if(isset($tyre_assignments)){
-                        foreach($tyre_assignments as $tyre_assignment){
-                            $tyre_assignment->delete();
-                        }
-                    }
+                //     if(isset($tyre_assignments)){
+                //         foreach($tyre_assignments as $tyre_assignment){
+                //             $tyre_assignment->delete();
+                //         }
+                //     }
 
-                    $tyre->status = 1;
-                    $tyre->balance += $dispatch_item->qty;
-                    $tyre->save();
-                }
-                elseif(isset($inventory)){
-                    $inventory->status = 1;
-                    $inventory->balance += $dispatch_item->qty;
-                    $inventory->save();
-                }
-                elseif(isset($asset)){
-                    $asset->status = 1;
-                    $asset->balance += $dispatch_item->qty;
-                    $asset->save();
-                }
+                //     $tyre->status = 1;
+                //     $tyre->balance += $dispatch_item->qty;
+                //     $tyre->save();
+                // }
+                // elseif(isset($inventory)){
+                //     $inventory->status = 1;
+                //     $inventory->balance += $dispatch_item->qty;
+                //     $inventory->save();
+                // }
+                // elseif(isset($asset)){
+                //     $asset->status = 1;
+                //     $asset->balance += $dispatch_item->qty;
+                //     $asset->save();
+                // }
                 $dispatch_item->delete();
             }
         }
@@ -469,6 +482,7 @@ class Index extends Component
 
    public function inventoryFIFO($dispatch)
     {
+      
         $dispatch_total = 0;
 
         // 1) Resolve collection based on department
@@ -482,23 +496,28 @@ class Index extends Component
             return 0; // unknown department
         }
 
+         
+
         if (empty($collection)) {
             return 0;
         }
 
         foreach ($collection as $key => $collectionId) {
 
+    
+
             $requestedQty = (float)($this->qty[$key] ?? 0);
             if ($requestedQty <= 0) {
                 continue;
             }
+         
 
             // 2) Load correct model row
             if ($this->department === 'tyre') {
                 $model = Tyre::find($collectionId);
             } elseif ($this->department === 'asset') {
                 $model = Asset::find($collectionId);
-            } else { // inventory
+            } elseif($this->department === 'inventory') { // inventory
                 $model = Inventory::find($collectionId);
             }
 
@@ -506,21 +525,30 @@ class Index extends Component
                 continue;
             }
 
+          
+
             // 3) How much is available on this exact row
             $rowQtyAvailable = (float)($model->balance);
             if ($rowQtyAvailable <= 0) {
                 continue;
             }
 
+              
 
             // 5) Row cost in company currency
             $rowCostCompany = $model->currency_id != $this->company->currency_id
                 ? (float)$model->exchange_amount
                 : (float)$model->total;
 
+           
+
             $unitCost      = $rowCostCompany / $rowQtyAvailable;
+          
             $qtyFromRow    = min($requestedQty, $rowQtyAvailable);
+              
             $amountFromRow = $qtyFromRow * $unitCost;
+
+           
 
             // 6) Create dispatch item
             $dispatch_item               = new DispatchItem;

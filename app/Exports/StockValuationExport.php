@@ -67,19 +67,27 @@ WithCustomStartCell
 
         $items = $product->$relation;
         $value = $items->where('status', 1)
-                ->where('currency_id', $currency_id)
-                ->filter(function ($item) {
-                    return !is_null($item->total) || !is_null($item->subtotal_incl);
-                })
-                ->map(function ($item) {
-                    return $item->total ?? $item->subtotal_incl ?? 0;
-                })
-                ->sum();
+            ->where('balance', '>', 0)
+            ->where('currency_id', $currency_id)
+            ->filter(fn($item) => !is_null($item->total) || !is_null($item->subtotal_incl))
+            ->map(function ($item) {
+                $amount = $item->amount ?? 0;
+                $qty    = $item->balance ?? 1;   // fallback qty
+                return $amount * $qty;
+            })
+            ->sum();
 
+        // --- DIFFERENT CURRENCY ---
         $value_exchange = $items->where('status', 1)
-                                ->where('currency_id', '!=', $currency_id)
-                                ->whereNotNull('exchange_amount')
-                                ->sum('exchange_amount');
+            ->where('balance', '>', 0)
+            ->where('currency_id', '!=', $currency_id)
+            ->filter(fn($item) => !is_null($item->exchange_amount))
+            ->map(function ($item) {
+                $exchange = $item->exchange_amount ?? 0;
+                $qty      = $item->balance ?? 1;
+                return $exchange * $qty;
+            })
+            ->sum();
 
         if (is_numeric($value) && is_numeric($value_exchange)) {
             $total_value = $value + $value_exchange;
