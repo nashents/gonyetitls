@@ -290,7 +290,7 @@ class Edit extends Component
 
         if ($this->assigned_to == "Mechanic") {
             $booking->employees()->detach();
-            $booking->employees()->sync($this->mechanic_id);
+            $booking->employees()->syncWithoutDetaching($this->mechanic_id);
         }else {
             $booking->employees()->detach();
         }

@@ -149,7 +149,26 @@
                                     <td>{{$dispatch->dispatch_items->sum('qty')}}</td>
                                     <td>{{$dispatch->currency ? $dispatch->currency->name : ""}}</td>
                                     <td> {{$dispatch->currency ? $dispatch->currency->symbol : ""}}{{number_format($dispatch->total ? $dispatch->total : 0 , 2)}}</td>
-                                    <td><span class="badge bg-{{($dispatch->authorization == 'approved') ? 'success' : (($dispatch->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($dispatch->authorization == 'approved') ? 'approved' : (($dispatch->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
+                                    <td>
+                                        <span class="badge bg-{{($dispatch->authorization == 'approved') ? 'success' : (($dispatch->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($dispatch->authorization == 'approved') ? 'approved' : (($dispatch->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
+                                        @php
+                                            $user = App\Models\User::find($dispatch->authorized_by_id);
+                                        @endphp
+                                        <small>
+                                        @if ($user)
+                                            <br>
+                                          <strong>{{$dispatch->authorization == "approved" ? "ApprovedBy" : "RejectedBy"}}:</strong> {{$user->name}} {{$user->surname}}
+                                        @endif
+                                        @if ($dispatch->authorization_date)
+                                            <br>
+                                         <strong>AuthorizedOn:</strong> {{Carbon\Carbon::parse($dispatch->authorization_date)->format('Y-m-d')}}
+                                        @endif
+                                        @if ($dispatch->authorization_comments)
+                                            <br>
+                                         <strong>Comments:</strong> {{$dispatch->authorization_comments}}
+                                        @endif
+                                        </small>
+                                    </td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

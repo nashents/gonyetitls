@@ -107,7 +107,7 @@
                                                 <span class="caret"></span>
                                             </button>
                                             <ul class="dropdown-menu">
-                                               <li><a href="{{route('dispatches.show',$bill->id)}}"  ><i class="fas fa-eye color-default"></i>View</a></li>
+                                               <li><a href="{{route('dispatches.show',$dispatch->id)}}"  ><i class="fas fa-eye color-default"></i>View</a></li>
                                             </ul>
                                         </div>
                                         @include('dispatches.delete')

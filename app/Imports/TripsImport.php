@@ -7,6 +7,7 @@ use App\Models\Trip;
 use App\Models\Cargo;
 use App\Models\Horse;
 use App\Models\Driver;
+use App\Models\Expense;
 use App\Models\Trailer;
 use App\Models\Vehicle;
 use App\Models\Currency;
@@ -14,8 +15,10 @@ use App\Models\Customer;
 use App\Models\Employee;
 use App\Models\TripType;
 use App\Models\Transporter;
+use App\Models\TripExpense;
 use App\Models\DeliveryNote;
 use App\Models\LoadingPoint;
+use App\Models\PaymentMethod;
 use App\Models\OffloadingPoint;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -49,10 +52,12 @@ WithBatchInserts
 
     public $company;
     public $trailer_ids;
+    public $currency;
 
     public function __construct()
     {
         $this->company = Auth::user()->employee->company;
+        $this->currency = $this->company->currency;
     }
 
     public function tripNumber(){
@@ -80,40 +85,52 @@ WithBatchInserts
    
        }
 
-          private function parseExcelDate($value)
-        {
-            if (!isset($value)) {
-                return null;
-            }
-
-            // If it's a numeric Excel date serial
-            if (is_numeric($value)) {
-                try {
-                    return Carbon::instance(
-                        \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($value)
-                    );
-                } catch (\Exception $e) {
-                    return null;
-                }
-            }
-
-            // If it's a string in strict YYYY-MM-DD format
-            if (is_string($value)) {
-                try {
-                    $parsed = Carbon::createFromFormat('Y-m-d', $value);
-                    return $parsed && $parsed->format('Y-m-d') === $value ? $parsed : null;
-                } catch (\Exception $e) {
-                    return null;
-                }
-            }
-
+    private function parseExcelDate($value)
+    {
+        if (!isset($value)) {
             return null;
         }
+
+        // 1️⃣ Numeric Excel serial (same as your current logic)
+        if (is_numeric($value)) {
+            try {
+                return Carbon::instance(
+                    \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($value)
+                );
+            } catch (\Exception $e) {
+                return null;
+            }
+        }
+
+        // 2️⃣ If it's a string, normalize separators
+        if (is_string($value)) {
+
+            // Trim spaces
+            $value = trim($value);
+
+            // Replace ".", "/", "\" with "-"
+            // "2025.01.15" → "2025-01-15"
+            // "2025/01/15" → "2025-01-15"
+            $normalized = preg_replace('/[\.\/\\\\]/', '-', $value);
+
+            // Try parsing YYYY-MM-DD after normalization
+            try {
+                return Carbon::createFromFormat('Y-m-d', $normalized);
+            } catch (\Exception $e) {
+                return null;
+            }
+        }
+
+        return null;
+    }
 
     public function limit(): int
     {
         return 2500; // Import only the first 100 rows
     }
+
+
+   
 
     public function collection(Collection $rows)
     {
@@ -170,6 +187,7 @@ WithBatchInserts
                     }
                 }
 
+
                 $trip = new Trip();
                 $trip->trip_number = $trip_number;
                 $trip->user_id = $user_id;
@@ -206,16 +224,79 @@ WithBatchInserts
                 }
 
                 $trip->turnover = $trip->freight;
-                $trip->cost_of_sales = 0;
-                $trip->net_profit = $trip->turnover;
-                $trip->net_profit_percentage = 100;
-                $trip->markup_percentage = 100;
+                $trip->authorization = "approved";
 
                 $trip->save();
 
                 if (!empty($trailer_ids)) {
                     $trip->trailers()->sync($trailer_ids);
                 }
+
+                $expenseColumn = $row->get('expenses'); // Excel header e.g. "expenses"
+
+                if ($expenseColumn && $trip) {
+
+                    // Normalize comma spacing: "a:1 , b:2" => "a:1,b:2"
+                    $expenseColumn = preg_replace('/\s*,\s*/', ',', $expenseColumn);
+
+                    // Split "name:amount" pairs
+                    $expensePairs = explode(',', $expenseColumn);
+
+                    foreach ($expensePairs as $pair) {
+
+                        if (trim($pair) === '') {
+                            continue;
+                        }
+
+                        // Normalize colon spacing: "fuel : 100" => "fuel:100"
+                        $pair = preg_replace('/\s*:\s*/', ':', $pair);
+
+                        // Split into [name, amount]
+                        [$name, $amount] = array_pad(explode(':', $pair), 2, null);
+
+                        $name   = $name ? trim($name) : null;
+                        $amount = $amount ? trim($amount) : null;
+
+                        // Basic validation
+                        if (!$name || !is_numeric($amount)) {
+                            continue;
+                        }
+
+                        $amount = (float) $amount;
+
+                        // Optional: normalize name (so "Fuel" and "fuel" are treated the same)
+                        // $name = strtolower($name);
+
+                        // 1️⃣ Ensure Expense exists
+                        $expense = Expense::firstOrCreate(
+                            ['name' => $name],
+                            ['active' => 1] // or any other default columns you have
+                        );
+
+                        // 2️⃣ Ensure TripExpense row exists for this trip + expense
+                        $tripExpense = TripExpense::firstOrCreate(
+                            [
+                                'trip_id'    => $trip->id,
+                                'expense_id' => $expense->id,
+                            ],
+                            [
+                                'amount' => 0, // default if it's new
+                                'currency_id' => $this->currency->id, // default if it's new
+                                'user_id' => Auth::user()->id, // default if it's new
+                                'category' => "Self", // default if it's new
+                                'payment_method_id' => PaymentMethod::where('name','Cash')->first()?->id, // default if it's new
+                            ]
+                        );
+
+                        // 3️⃣ Add the amount
+                        $tripExpense->increment('amount', $amount);
+                        // or:
+                        // $tripExpense->amount += $amount;
+                        // $tripExpense->save();
+                    }
+                }
+
+                
 
                 // Save Delivery Note
                 $delivery_note = new DeliveryNote();
@@ -253,6 +334,28 @@ WithBatchInserts
                         }
                     }
                 }
+
+                 $cost_of_sales = $trip->trip_expenses->sum('amount');
+                $trip->cost_of_sales = $cost_of_sales;
+                $turnover = $trip->turnover;
+                
+                if ((is_numeric($cost_of_sales) && $cost_of_sales) > 0 &&  (is_numeric($turnover) && $turnover > 0)) {
+                    $net_profit = $turnover - $cost_of_sales;
+                    $trip->net_profit = $net_profit;
+                
+                    if (is_numeric($net_profit) && $net_profit > 0) {
+                        $trip->markup_percentage = ($net_profit / $cost_of_sales) * 100;
+                        $trip->net_profit_percentage = ($net_profit / $turnover) * 100;
+                    } else {
+                        $trip->markup_percentage = 0;
+                        $trip->net_profit_percentage = 0;
+                    }
+                } else {
+                    $trip->net_profit_percentage = 100;
+                    $trip->markup_percentage = 100;
+                }
+                
+                $trip->update();
 
             }
        }

@@ -37,6 +37,8 @@ class Create extends Component
     public $description;
     public $image;
     public $user_id;
+    public $min = 2;
+    public $max = 10;
 
     public $category_name;
     public $sub_category_name;
@@ -127,7 +129,7 @@ class Create extends Component
         $this->expense_accounts = Account::whereHas('account_type.account_type_group', function($q){
             $q->where('name', 'Expenses');
          })->orderBy('name','asc')->get();
-
+         $this->expense_account_id = $this->expense_accounts->where('name','Uncategorized Expense')->first()?->id;
          $this->tax_accounts = Account::whereHas('account_type', function ($query) {
             return $query->where('name','Sales Taxes');
         })->get();
@@ -160,7 +162,7 @@ class Create extends Component
     }
     protected $rules = [
       
-        'name' => 'required',
+        'name' => 'required|unique:products,name,NULL,id,deleted_at,NULL',
         'unit_of_measure' => 'required',
     ];
 
@@ -279,6 +281,8 @@ class Create extends Component
 
     public function store(){
 
+        $this->validate();
+
         DB::transaction(function () {
 
         if ($this->image) {
@@ -304,6 +308,8 @@ class Create extends Component
         $product->price = $this->buy_price;
         $product->unit_of_measure = $this->unit_of_measure;
         $product->sell_price = $this->sell_price;
+        $product->min = $this->min;
+        $product->max = $this->max;
         $product->sell = $this->sell;
         $product->buy = $this->buy;
         $product->account_id = $this->income_account_id;

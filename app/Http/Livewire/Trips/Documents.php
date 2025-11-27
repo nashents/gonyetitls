@@ -135,7 +135,6 @@ class Documents extends Component
     public function edit($id){
 
         $document = TripDocument::find($id);
-        $this->user_id = $document->user_id;
         $this->trip_id = $document->trip_id;
         $this->title = $document->title;
         $this->document_number = $document->document_number;
@@ -166,6 +165,7 @@ class Documents extends Component
                 }
 
                 $document = TripDocument::find($this->document_id);
+                $document->user_id = Auth::user()->id;
                 $document->trip_id = $this->trip->id;
                 $document->document_number = $this->document_number;
                 $document->title = $this->title;

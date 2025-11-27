@@ -4,7 +4,6 @@
         <div>
             @include('includes.messages')
         </div>
-        
         <!-- /.col-md-3 -->
         <div class="col-md-10 col-md-offset-1">
             <ul class="nav nav-tabs nav-justified" role="tablist">
@@ -102,7 +101,13 @@
                             </tr>
                             <tr>
                                 <th class="w-10 text-center line-height-35">Initial Diagnosis</th>
-                                <td class="w-20 line-height-35">{{$ticket->initial_diagnosis}} <a href="#" wire:click.prevent="showInitialDiagnosis({{$ticket->id}})"><i class="fas fa-edit"></i></a> </td>
+                                <td class="w-20 line-height-35">{{$ticket->initial_diagnosis}} 
+                                    @if (isset($employee_ids) || $ticket->booking->vendor)
+                                        @if ((in_array($employee->id, $employee_ids)) || ($user->id == $ticket->booking->user_id && $ticket->booking->vendor) )
+                                            <a href="#" wire:click.prevent="showInitialDiagnosis({{$ticket->id}})"><i class="fas fa-edit"></i></a>
+                                        @endif
+                                    @endif
+                                 </td>
                             </tr>
                             <tr>
                                 <th class="w-10 text-center line-height-35">Mechanic Comments</th>
@@ -161,11 +166,11 @@
                         <h5 class="underline mt-30">Upload Evidence </h5>
                         <div class="card-header">
                             @if (isset($employee_ids))
-                                @if (in_array(Auth::user()->employee->id, $employee_ids))
+                                @if (in_array($employee->id, $employee_ids))
                                     <a href="" data-toggle="modal" data-target="#attachmentModal" class="btn btn-default"><i class="fa fa-paperclip"></i>Attach Images</a>    
                                 @endif
                             @elseif ($ticket->booking->vendor)
-                                @if (Auth::user()->id == $ticket->booking->user_id)
+                                @if ($user->id == $ticket->booking->user_id)
                                     <a href="" data-toggle="modal" data-target="#attachmentModal" class="btn btn-default"><i class="fa fa-paperclip"></i>Attach Images</a>    
                                 @endif
                             @endif
@@ -191,8 +196,8 @@
                     </div>
           
                     @if (isset($employee_ids) || $ticket->booking->vendor)
-                        @if ((in_array(Auth::user()->employee->id, $employee_ids)) || Auth::user()->id == $ticket->booking->user_id)
-                         
+                        @if ((in_array($employee->id, $employee_ids)) || ($user->id == $ticket->booking->user_id && $ticket->booking->vendor) )
+            
                                 <div class="row">
                                     <div class="col-md-4">
                                         <div class="form-group">

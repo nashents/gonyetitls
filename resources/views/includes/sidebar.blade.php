@@ -1485,14 +1485,14 @@
                             ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
                             ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->where('status',1)->count();
                             @endphp
-                            <a href="#"><i class="fas fa-tasks"></i> <span>Tickets</span> <i class="fas fa-angle-right arrow"></i></a>
+                            <a href="#"><i class="fas fa-file-invoice"></i> <span>Tickets</span> <i class="fas fa-angle-right arrow"></i></a>
                             <ul class="child-nav">
                                 @if ( isset($stdepartment_head) || isset($wsdepartment_head) || (in_array('Admin', $role_names) && in_array('Workshop', $department_names)) || (in_array('Admin', $role_names) && in_array('Stores', $department_names))  || in_array('Super Admin', $role_names))
-                                <li><a href="{{route('tickets.index')}}" ><i class="fas fa-list "></i> <span>Manage Tickets</span></a></li>
+                                <li><a href="{{route('tickets.index')}}" ><i class="fas fa-tasks "></i> <span>Manage Tickets</span></a></li>
                                 @endif
                                 @if (in_array('Workshop', $department_names))
                                 <li>
-                                    <a href="{{route('tickets.cards', $employee->id)}}" ><i class="fas fa-file-invoice "></i> <span>My Tickets</span>
+                                    <a href="{{route('tickets.cards', $employee->id)}}" ><i class="fas fa-tasks "></i> <span>My Tickets</span>
                                         @if ($jobCardsCount>0)
                                             <span class="label label-success ml-5">{{$jobCardsCount}}</span>
                                         @endif
@@ -1509,7 +1509,18 @@
                             @endphp
                             <a href="#"><i class="fas fa-search"></i> <span>Ticket Inspections</span> <i class="fas fa-angle-right arrow"></i></a>
                             <ul class="child-nav">
-                                <li><a href="{{route('inspections.index')}}" ><i class="fas fa-list"></i> <span>Manage Inspections</span>
+                                 @if ( isset($stdepartment_head) || isset($wsdepartment_head) || (in_array('Admin', $role_names) && in_array('Workshop', $department_names)) || (in_array('Admin', $role_names) && in_array('Stores', $department_names))  || in_array('Super Admin', $role_names))
+                                <li><a href="{{route('inspections.index')}}" ><i class="fas fa-tasks "></i> <span>Manage Inspections</span></a></li>
+                                @endif
+                                @if (in_array('Workshop', $department_names))
+                                <li>
+                                    <a href="{{route('inspections.my-inspections', $employee->id)}}" ><i class="fas fa-tasks "></i> <span>My Inspections</span>
+                                        @if ($jobCardsCount>0)
+                                            <span class="label label-success ml-5">{{$jobCardsCount}}</span>
+                                        @endif
+                                    </a>
+                               </li>
+                                @endif
                                     @if ($inspectionsCount>0)
                                     <span class="label label-success ml-5">{{$inspectionsCount}}</span>
                                     @endif</a></li>
@@ -1537,27 +1548,28 @@
                 ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
                 @endphp
 
-                <li class="has-children">
-                    <a href="#"><i class="fas fa-door-open"></i> <span>Gatepass</span> <i class="fas fa-angle-right arrow"></i></a>
-                    <ul class="child-nav">
-                        <li class="{{ request()->routeIs('gate_passes.pending',['department'=>'workshop']) ? 'active' : '' }}"><a href="{{route('gate_passes.pending',['department'=>'workshop'])}}" ><i class="fas fa-clock "></i> <span>Pending Gatepasses</span>
-                            @if ($gate_passesPendingCount>0)
-                            <span class="label label-success ml-5">{{$gate_passesPendingCount}}</span>
-                            @endif
-                        </a></li>
-                        <li class="{{ request()->routeIs('gate_passes.approved',['department'=>'workshop']) ? 'active' : '' }}"><a href="{{route('gate_passes.approved',['department'=>'workshop'])}}" ><i class="fas fa-check "></i> <span>Approved Gatepasses</span>
-                            @if ($gate_passesApprovedCount>0)
-                            <span class="label label-success ml-5">{{$gate_passesApprovedCount}}</span>
-                            @endif
-                        </a></li>
-                        <li class="{{ request()->routeIs('gate_passes.rejected',['department'=>'workshop']) ? 'active' : '' }}"><a href="{{route('gate_passes.rejected',['department'=>'workshop'])}}" ><i class="fas fa-ban "></i> <span>Rejected Gatepasses</span>
-                            @if ($gate_passesRejectedCount>0)
-                            <span class="label label-success ml-5">{{$gate_passesRejectedCount}}</span>
-                            @endif
-                        </a></li>
-                    </ul>
-                </li>
-            
+                    @if (in_array('Admin', $role_names) || in_array('Super Admin', $role_names))
+                        <li class="has-children">
+                            <a href="#"><i class="fas fa-door-open"></i> <span>Gatepass</span> <i class="fas fa-angle-right arrow"></i></a>
+                            <ul class="child-nav">
+                                <li class="{{ request()->routeIs('gate_passes.pending',['department'=>'workshop']) ? 'active' : '' }}"><a href="{{route('gate_passes.pending',['department'=>'workshop'])}}" ><i class="fas fa-clock "></i> <span>Pending Gatepasses</span>
+                                    @if ($gate_passesPendingCount>0)
+                                    <span class="label label-success ml-5">{{$gate_passesPendingCount}}</span>
+                                    @endif
+                                </a></li>
+                                <li class="{{ request()->routeIs('gate_passes.approved',['department'=>'workshop']) ? 'active' : '' }}"><a href="{{route('gate_passes.approved',['department'=>'workshop'])}}" ><i class="fas fa-check "></i> <span>Approved Gatepasses</span>
+                                    @if ($gate_passesApprovedCount>0)
+                                    <span class="label label-success ml-5">{{$gate_passesApprovedCount}}</span>
+                                    @endif
+                                </a></li>
+                                <li class="{{ request()->routeIs('gate_passes.rejected',['department'=>'workshop']) ? 'active' : '' }}"><a href="{{route('gate_passes.rejected',['department'=>'workshop'])}}" ><i class="fas fa-ban "></i> <span>Rejected Gatepasses</span>
+                                    @if ($gate_passesRejectedCount>0)
+                                    <span class="label label-success ml-5">{{$gate_passesRejectedCount}}</span>
+                                    @endif
+                                </a></li>
+                            </ul>
+                        </li>
+                    @endif
                 @endif
                 @if (in_array('Stores', $department_names) || in_array('Super Admin', $role_names))
                 <li class="nav-header">

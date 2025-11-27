@@ -37,6 +37,15 @@ class Show extends Component
     public $inspection_type;
     public $inspection_results;
     public $inspection_type_id;
+    public $user;
+    public $employee;
+    public $company;
+    public $role_names;
+    public $rank_names;
+    public $department_name;
+    public $ranks;
+    public $roles;
+    public $departments;
 
     public $employees;
     public $employee_ids = [];
@@ -56,6 +65,7 @@ class Show extends Component
         $this->timeframe = '';
         $this->image = '';
     }
+
 
 
     public function store($id){
@@ -203,13 +213,29 @@ class Show extends Component
     public function mount($id){
 
         $this->ticket_id = $id;
-        $this->ticket = Ticket::find($id);
-        $this->employees = $this->ticket->employees;
+        $this->ticket = Ticket::with(['booking'])->find($id);
+        $this->employees = $this->ticket->booking->employees;
                     foreach ($this->employees as $employee) {
                         $this->employee_ids[] = $employee->id;
                     }
 
         $equipment = null;
+        $this->user = Auth::user()->id;
+        $this->employee = $this->user->employee;
+        $this->company = $this->employee->company;
+
+        $this->departments = $this->employee->departments;
+        foreach($this->departments as $department){
+            $this->department_names[] = $department->name;
+        }
+        $this->roles = $this->user->roles;
+        foreach($this->roles as $role){
+            $this->role_names[] = $role->name;
+        }
+        $this->ranks = $employee->ranks;
+        foreach($this->ranks as $rank){
+            $this->rank_names[] = $rank->name;
+        }
         $this->equipment = "";
 
         if ($this->ticket->horse) {

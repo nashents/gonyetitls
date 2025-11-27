@@ -475,6 +475,7 @@ Route::resource('locations','LocationController');
 Route::resource('job_types','JobTypeController');
 Route::resource('tyre_products','TyreProductController');
 Route::get('tickets/{id}/cards','TicketController@cards')->name('tickets.cards');
+Route::get('inspections/{id}/my-inspections','InspectionController@myInspections')->name('inspections.my-inspections');
 Route::resource('qualifications','QualificationController');
 Route::resource('employees','EmployeeController');
 Route::resource('training_plans','TrainingPlanController');

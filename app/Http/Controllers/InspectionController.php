@@ -18,6 +18,14 @@ class InspectionController extends Controller
     {
         return view('inspections.index');
     }
+    public function myInspections($id)
+    {   
+        return view('inspections.myinspections')->with(
+            [
+                'id' => $id
+            ]
+        );
+    }
 
     /**
      * Show the form for creating a new resource.

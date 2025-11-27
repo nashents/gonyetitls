@@ -59,7 +59,7 @@
                                 </div>
                             </div>
                             <div class="row">
-                                <div class="col-md-3">
+                                <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="name">Name<span class="required" style="color: red">*</span></label>
                                     <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Product Name, Model etc" required>
@@ -91,17 +91,17 @@
                                         @error('unit_of_measure') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
-                                 <div class="col-md-2">
+                                <div class="col-md-2">
                                     <div class="form-group">
-                                        <label for="name">Minimum Qty</label>
-                                        <input type="text" class="form-control" wire:model.debounce.300ms="min" placeholder="Minimum qty levekl" >
+                                        <label for="name">Minimum Qty<span class="required" style="color: red">*</span></label>
+                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="min" placeholder="Min Inventory Level" required>
                                         @error('min') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
-                                 <div class="col-md-2">
+                                <div class="col-md-2">
                                     <div class="form-group">
-                                        <label for="name">Maximum Qty Level</label>
-                                        <input type="text" class="form-control" wire:model.debounce.300ms="max" placeholder="Min inve" >
+                                        <label for="name">Maximum Qty Level<span class="required" style="color: red">*</span></label>
+                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="max" placeholder="Max Inventory Level" required>
                                         @error('max') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>

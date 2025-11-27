@@ -43,5 +43,7 @@ class TripExpense extends Model implements Auditable
         'expense_id',
         'trip_id',
         'amount',
+        'payment_method_id',
+        'category',
     ];
 }

@@ -2283,7 +2283,7 @@
                     <br>
                     4) Make sure to all dates in your excel file esp the start_date.
                     <br>
-                    5) Lets limit to 500 Trips per upload.
+                    5) Lets limit to 2500 Trips per upload.
                 </small>
                 <br>
                 <div class="form-group">

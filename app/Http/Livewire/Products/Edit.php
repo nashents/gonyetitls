@@ -29,6 +29,8 @@ class Edit extends Component
     public $brand_id;
     public $status;
     public $name;
+    public $min;
+    public $max;
     public $department;
     public $model;
     public $serial_number;
@@ -87,6 +89,8 @@ class Edit extends Component
         $this->identification_number = $product->identification_number;
         $this->department = $product->department;
         $this->brand_id = $product->brand_id;
+        $this->min = $product->min;
+        $this->max = $product->max;
         $this->manufacturer = $product->manufacturer;
         $this->description = $product->description;
         $this->previous_image = $product->filename;
@@ -160,6 +164,8 @@ class Edit extends Component
         $product->category_value_id = $this->selectedCategoryValue;
         $product->brand_id = $this->brand_id;
         $product->name = $this->name;
+        $product->min = $this->min;
+        $product->max = $this->max;
         $product->price = $this->buy_price;
         $product->sell_price = $this->sell_price;
         $product->sell = $this->sell;

@@ -27,7 +27,9 @@ use Livewire\Component;
 use App\Models\CashFlow;
 use App\Models\Currency;
 use App\Models\Customer;
+use App\Models\Dispatch;
 use App\Models\Employee;
+use App\Models\Purchase;
 use App\Models\Recovery;
 use App\Models\Breakdown;
 use App\Models\Checklist;
@@ -90,6 +92,11 @@ class Index extends Component
     public $fuel_supplier_count ;
     public $fuel_order_count ;
     public $transport_order_count ;
+    public $inventory_purchases_count ;
+    public $inventory_dispatches_count ;
+    public $workshop_inspection_count ;
+    public $my_inspections_count ;
+    public $my_tickets_count ;
     public $recent_employees ;
     public $containers ;
     public $allocations ;
@@ -908,8 +915,17 @@ class Index extends Component
         $this->service_count = Service::all()->count();
         $this->inventory_count = Inventory::where('disposed',0)->where('status',1)->get()->count();
         $this->product_count = Product::where('buy',True)->where('department','inventory')->where('status',1)->get()->count();
+        $this->inventory_dispatches_count = Dispatch::whereYear('date',date('Y'))->where('department','inventory')->get()->count();
+        $this->inventory_purchases_count = Purchase::whereYear('date',date('Y'))->where('department','inventory')->get()->count();
         $this->booking_count = Booking::where('authorization','approved')->whereYear('created_at', date('Y'))->count();
         $this->ticket_count = Ticket::whereYear('created_at', date('Y'))->count();
+        $this->workshop_inspection_count = Inspection::whereYear('created_at', date('Y'))->count();
+        $this->my_tickets_count = Ticket::with('booking')->whereHas('booking.employees', function ($q) {
+                    $q->where('employees.id',$this->employee->id);
+                })->whereYear('created_at', date('Y'))->count();
+        $this->my_inspections_count = Inspection::with('booking')->whereHas('booking.employees', function ($q) {
+                    $q->where('employees.id',$this->employee->id);
+                })->whereYear('created_at', date('Y'))->count();
         $this->fuel_supplier_count = Container::all()->count();
         $this->fuel_order_count = Fuel::whereYear('created_at', date('Y'))->count();
         $this->transport_order_count = TransportOrder::whereYear('created_at', date('Y'))->count();

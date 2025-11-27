@@ -48,7 +48,7 @@
                                 </div>
                                 <table  class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                     <thead >
-                                        <th class="th-sm">Inspection#
+                                        <th class="th-sm">Inspection# 
                                         </th>
                                         <th class="th-sm">Booking#
                                         </th>
@@ -72,7 +72,7 @@
                                         @forelse ($inspections as $inspection)
                                       <tr>
                                         <td>
-                                            {{$inspection->inspection_number}}
+                                            {{$inspection->inspection_number}} 
                                             <br>
                                             <small><strong>CreatedOn:</strong> {{Carbon\Carbon::parse($inspection->created_at)->format('d M Y')}}</small>
                                         </td>

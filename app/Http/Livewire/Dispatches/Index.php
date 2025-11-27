@@ -324,13 +324,16 @@ class Index extends Component
 
     
     private function resetInputFields(){
-        $this->date = '';
-        $this->requested_by_id = '';
-        $this->selectedEmployee = '';
-        $this->branch_id = '';
-        $this->asset_department_id = '';
+        $this->date = Null;
+        $this->requested_by_id = Null;
+        $this->selectedEmployee = Null;
+        $this->branch_id = Null;
+        $this->selectedStore = Null;
+        $this->asset_department_id = Null;
         $this->selectedInventory = [];
+        $this->selectedTicket = Null;
         $this->searchTicket = [] ;
+        $this->searchProduct = [] ;
     }
 
     public function store(){
@@ -360,6 +363,7 @@ class Index extends Component
         $dispatch->currency_id = $this->company->currency_id ?: null;
         $dispatch->description = $this->description;
         $dispatch->date = $this->date;
+        $dispatch->expand = $this->expand;
         $dispatch->save();
        
         if ($this->expand == True) {
@@ -553,9 +557,11 @@ class Index extends Component
     public function ProductFIFO($dispatch){
        
 
-        $dispatch_total = 0;
+        $dispatch_total = 0.0;
 
-        if ($this->selectedProduct) {
+        if (empty($this->selectedProduct)) {
+            return 0.0;
+        }
 
             foreach ($this->selectedProduct as $key => $productId) {
 
@@ -682,9 +688,11 @@ class Index extends Component
                 // Add to overall dispatch total
                  $dispatch_total += $totalLineAmount;
 
-                 return $dispatch_total;
+                
             }
-        }
+
+        return $dispatch_total;
+    
     }
 
 

@@ -275,7 +275,7 @@
             @endif
             @endif
           
-        @if (in_array('Workshop', $department_names) || in_array('Stores', $department_names) || in_array('Super Admin', $role_names))
+        @if (in_array('Stores', $department_names) || in_array('Super Admin', $role_names))
             <div class="row">
                 <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
                     <a class="dashboard-stat bg-primary" href="{{route('tyres.index')}}">
@@ -283,49 +283,87 @@
                         <span class="name">Tyres</span>
                         <span class="bg-icon"><i class="fas fa-ring"></i></span>
                     </a>
-
                 </div>
                 <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
-
                 <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
                     <a class="dashboard-stat bg-danger" href="{{route('inventory_products.index')}}">
                         <span class="number counter">{{$product_count}}</span>
                         <span class="name">Inventory Products</span>
                         <span class="bg-icon"><i class="fas fa-warehouse"></i></span>
                     </a>
-                    <!-- /.dashboard-stat -->
-
-
-                    <!-- /.src-code -->
                 </div>
-                <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
-
                 <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-warning" href="{{route('bookings.index')}}">
-                        <span class="number counter">{{$booking_count}}</span>
-                        <span class="name">Bookings</span>
-                        <span class="bg-icon"><i class="fas fa-edit"></i></span>
+                    <a class="dashboard-stat bg-warning" href="{{route('inventory_purchases.index')}}">
+                        <span class="number counter">{{$inventory_purchases_count}}</span>
+                        <span class="name">Inventory POs</span>
+                        <span class="bg-icon"><i class="fas fa-list"></i></span>
                     </a>
                     <!-- /.dashboard-stat -->
-
-
                     <!-- /.src-code -->
                 </div>
-                <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
-
                 <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-success" href="{{route('tickets.index')}}">
-                        <span class="number counter">{{$ticket_count}}</span>
-                        <span class="name">Tickets</span>
-                        <span class="bg-icon"><i class="fas fa-tasks"></i></span>
+                    <a class="dashboard-stat bg-success" href="{{route('inventory_dispatches.index')}}">
+                        <span class="number counter">{{$inventory_dispatches_count}}</span>
+                        <span class="name">Inventory Dispatches</span>
+                        <span class="bg-icon"><i class="fas fa-list"></i></span>
                     </a>
-
+                    <!-- /.dashboard-stat -->
                     <!-- /.src-code -->
                 </div>
-                <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
+            </div>
+            
+            @endif
 
+            @if (in_array('Workshop', $department_names) || in_array('Super Admin', $role_names))
+            <div class="row">
+                @if ((in_array('Workshop', $department_names) && in_array('Admin', $role_names)) || in_array('Super Admin', $role_names))
+                    <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                        <a class="dashboard-stat bg-primary" href="{{route('bookings.index')}}">
+                            <span class="number counter">{{$booking_count}}</span>
+                            <span class="name">Bookings</span>
+                            <span class="bg-icon"><i class="fas fa-edit"></i></span>
+                        </a>
+                        <!-- /.dashboard-stat -->
+                        <!-- /.src-code -->
+                    </div>
+                <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
+                    <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                        <a class="dashboard-stat bg-danger" href="{{route('tickets.index')}}">
+                            <span class="number counter">{{$ticket_count}}</span>
+                            <span class="name">Tickets</span>
+                            <span class="bg-icon"><i class="fas fa-tasks"></i></span>
+                        </a>
+                        <!-- /.src-code -->
+                    </div>
+                    <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                        <a class="dashboard-stat bg-warning" href="{{route('inspections.index')}}">
+                            <span class="number counter">{{$inspection_count}}</span>
+                            <span class="name">Inspections</span>
+                            <span class="bg-icon"><i class="fas fa-tasks"></i></span>
+                        </a>
+                        <!-- /.src-code -->
+                    </div>
+                @else
+                    <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                        <a class="dashboard-stat bg-primary" href="{{route('tickets.cards', Auth::user()->employee->id)}}">
+                            <span class="number counter">{{$my_tickets_count}}</span>
+                            <span class="name">My Tickets</span>
+                            <span class="bg-icon"><i class="fas fa-file"></i></span>
+                        </a>
+                        <!-- /.src-code -->
+                    </div>
+                    <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                        <a class="dashboard-stat bg-danger" href="{{route('inspections.my-inspections', Auth::user()->employee->id)}}">
+                            <span class="number counter">{{$my_inspections_count}}</span>
+                            <span class="name">My Inspections</span>
+                            <span class="bg-icon"><i class="fas fa-search"></i></span>
+                        </a>
+                        <!-- /.src-code -->
+                    </div>
+                @endif
             </div>
             @endif
+
           
         </div>
         <!-- /.container-fluid -->

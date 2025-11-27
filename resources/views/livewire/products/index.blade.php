@@ -63,7 +63,15 @@
                                     @forelse ($products as $product)
                                   <tr>
                                     <td>{{$product->product_number}}</td>
-                                    <td>{{$product->name}} {{$product->model}} {{$product->brand ? "(".$product->brand->name.")" : ""}}</td>
+                                    <td>
+                                        {{$product->name}} {{$product->model}} {{$product->brand ? "(".$product->brand->name.")" : ""}}
+                                        <small>
+                                            <br>
+                                            <strong>Min Stock Level</strong> {{number_format($product->min ? $product->min : 0)}}
+                                            <br>
+                                            <strong>Max Stock Level</strong> {{number_format($product->max ? $product->max : 0)}}
+                                        </small>
+                                    </td>
                                     <td>{{$product->identification_number}}</td>
                                     <td>
                                         @if ($department == "tyre")
