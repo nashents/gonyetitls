@@ -139,6 +139,22 @@ WithBatchInserts
        foreach($rows as $row){
         
             if($row->filter()->isNotEmpty()){
+
+                            // Clean whitespace
+                $row = $row->map(fn($v) => is_string($v) ? trim($v) : $v);
+
+                // Skip Excel lookup rows (Trip Status / Trip Type dropdown source)
+                $nonEmpty = $row->filter(fn($v) => $v !== null && $v !== '')->count();
+
+                // real trip rows always have more data than 2 columns
+                if ($nonEmpty <= 2) {
+                    continue;
+                }
+
+                // Also require a key field to exist
+                if (!$row->get('horse_registration_number') && !$row->get('customer')) {
+                    continue;
+                }
                 
                 $trip_number = $this->tripNumber();
                 $user_id = Auth::id();
