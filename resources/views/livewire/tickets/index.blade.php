@@ -238,7 +238,9 @@
                                            <td>
                                             @if (isset($ticket->booking->employees) && $ticket->booking->employees->count()>0)
                                                 @foreach ($ticket->booking->employees as $mechanic)
-                                                    {{ $mechanic->name }} {{ $mechanic->surname }}
+                                                     @if (Auth::user()->is_admin())
+                                                        {{$mechanic->employee_number}}
+                                                    @endif{{ $mechanic->name }} {{ $mechanic->surname }}
                                                     <br>
                                                 @endforeach
                                             @elseif(isset($ticket->booking->vendor))

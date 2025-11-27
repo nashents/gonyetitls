@@ -262,12 +262,15 @@
                                         <td>
                                             @if (isset($booking->employees) && $booking->employees->count()>0)
                                                 @foreach ($booking->employees as $mechanic)
-                                                    {{ $mechanic->name }} {{ $mechanic->surname }}
+                                                    @if (Auth::user()->is_admin())
+                                                        {{$mechanic->employee_number}}
+                                                    @endif {{ $mechanic->name }} {{ $mechanic->surname }}
                                                     <br>
                                                 @endforeach
                                             @elseif(isset($booking->vendor))
                                                 {{ucfirst($booking->vendor->name)}}  
                                             @endif
+                                          
                                         </td>
                                         <td>
                                             @if (isset($booking->horse))
