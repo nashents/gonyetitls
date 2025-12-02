@@ -1270,16 +1270,55 @@ class Create extends Component
     private function syncRelations($trip)
     {
         if ($this->with_trailer && !empty($this->trailer_id)) {
-            $trip->trailers()->sync($this->trailer_id);
+
+                $ids = is_array($this->trailer_id)
+                ? $this->trailer_id
+                : [$this->trailer_id];
+
+                // Keep only valid IDs that exist in DB
+                $validTrailerIds = Trailer::whereIn('id', $ids)->pluck('id')->toArray();
+
+                if (!empty($validTrailerIds)) {
+                    $trip->trailers()->sync($validTrailerIds);
+                }
         }
         if (!empty($this->selectedBorder)) {
-            $trip->borders()->sync($this->selectedBorder);
+             $ids = is_array($this->selectedBorder)
+                ? $this->selectedBorder
+                : [$this->selectedBorder];
+
+                // Keep only valid IDs that exist in DB
+                $validBorderIds = Border::whereIn('id', $ids)->pluck('id')->toArray();
+
+                if (!empty($validBorderIds)) {
+                    $trip->borders()->sync($validBorderIds);
+                }
+
         }
         if (!empty($this->clearing_agent_id)) {
-            $trip->clearing_agents()->sync($this->clearing_agent_id);
+             $ids = is_array($this->clearing_agent_id)
+                ? $this->clearing_agent_id
+                : [$this->clearing_agent_id];
+
+                // Keep only valid IDs that exist in DB
+                $validCAsIds = ClearingAgent::whereIn('id', $ids)->pluck('id')->toArray();
+
+                if (!empty($validCAsIds)) {
+                    $trip->clearing_agents()->sync($validCAsIds);
+                }
         }
         if (!empty($this->truck_stop_id)) {
-            $trip->truck_stops()->sync($this->truck_stop_id);
+            
+                $ids = is_array($this->truck_stop_id)
+                ? $this->truck_stop_id
+                : [$this->truck_stop_id];
+
+                // Keep only valid IDs that exist in DB
+                $validTSsIds = TruckStop::whereIn('id', $ids)->pluck('id')->toArray();
+
+                if (!empty($validTSsIds)) {
+                    $trip->truck_stops()->sync($validTSsIds);
+                }
         }
     }
 
