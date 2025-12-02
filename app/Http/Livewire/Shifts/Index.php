@@ -66,6 +66,7 @@ class Index extends Component
     public $arrive_location_time;
     public $depart_location_time;
     public $arrive_workshop_time;
+    public $selectedStatus = "Offloaded";
     public $type;
     public $for;
     public $date;
@@ -510,6 +511,7 @@ class Index extends Component
 
       public function updatedSearchDriver()
         {
+         
             $term = trim((string) $this->searchDriver);
 
             $query = Driver::query()

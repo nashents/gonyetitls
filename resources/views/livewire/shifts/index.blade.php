@@ -56,6 +56,7 @@
                                     <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search Shifts...">
                                 </div>
                             </div>
+
                             <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
@@ -394,7 +395,7 @@
                                     <label for="horse"><a href="{{ route('horses.index') }}" target="_blank" style="color: blue">Horse(s)</a><span class="required" style="color: red">*</span></label>
                                     <input type="checkbox" wire:model.debounce.300ms="all_horses"   class="line-style" />
                                     <label for="one" class="radio-label">Select from all horses</label>
-                                    <input type="text" wire:model.lazy="searchHorse" placeholder="Search with reg..." class="form-control">
+                                    <input type="text" wire:model.debounce.300ms="searchHorse" placeholder="Search with reg..." class="form-control">
                                     <select class="form-control" wire:model.debounce.300ms="selectedHorse"  required size="4">
                                         <option value="">Select Horse </option>
                                         @if (!is_null($selectedTransporter))
@@ -412,7 +413,7 @@
                                     <label for="horse"><a href="{{ route('vehicles.index') }}" target="_blank" style="color: blue">Vehicle(s)</a><span class="required" style="color: red">*</span></label>
                                     <input type="checkbox" wire:model.debounce.300ms="all_vehicles"   class="line-style" />
                                     <label for="one" class="radio-label">Select from all vehicles</label>
-                                    <input type="text" wire:model.lazy="searchVehicle" placeholder="Search with reg..." class="form-control">
+                                    <input type="text" wire:model.debounce.300ms="searchVehicle" placeholder="Search with reg..." class="form-control">
                                     <select class="form-control" wire:model.debounce.300ms="selectedVehicle"  required size="4">
                                         <option value="">Select Vehicle </option>
                                         @if (!is_null($selectedTransporter))
@@ -432,7 +433,7 @@
                                 <label for="driver"><a href="{{ route('drivers.index') }}" target="_blank" style="color: blue">Driver(s)</a><span class="required" style="color: red">*</span></label> 
                                 <input type="checkbox" wire:model.debounce.300ms="all_drivers"   class="line-style" />
                                 <label for="one" class="radio-label">Select from all drivers</label>
-                                <input type="text" wire:model.lazy="searchDriver" placeholder="Search with name..." class="form-control" >
+                                <input type="text" wire:model.debounce.300ms="searchDriver" placeholder="Search with names..." class="form-control" >
                                 <select class="form-control" wire:model.debounce.300ms="driver_id" required size="4">
                                     <option value="">Select Driver</option>
                                     @if (!is_null($selectedTransporter))
