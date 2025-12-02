@@ -20,6 +20,7 @@
         <link rel="stylesheet" href="{{asset('css/icheck/skins/line/red.css')}}" >
         <link rel="stylesheet" href="{{asset('css/icheck/skins/line/green.css')}}" >
         <link rel="stylesheet" href="{{asset('css/bootstrap-tour/bootstrap-tour.css')}}" >
+          <link rel="stylesheet" href="{{asset('css/font-awesome.min.css')}}" media="screen" >
         <script src="https://kit.fontawesome.com/0154e08647.js" crossorigin="anonymous"></script>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 

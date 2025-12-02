@@ -15,6 +15,9 @@ class TicketExpense extends Model implements Auditable
     public function ticket(){
         return $this->belongsTo('App\Models\Ticket');
     }
+    public function payment_method(){
+        return $this->belongsTo('App\Models\PaymentMethod');
+    }
     public function currency(){
         return $this->belongsTo('App\Models\Currency');
     }

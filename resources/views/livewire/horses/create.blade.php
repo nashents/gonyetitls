@@ -247,15 +247,15 @@
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
-                                            <label for="model">Fuel Consumption (Empty)</label>
-                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="fuel_consumption_empty_standard" placeholder="Standard fuel consumption of horse when empty" >
+                                            <label for="model">Standard Fuel Consumption Empty (<i>Km/L</i>) </label>
+                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="fuel_consumption_empty_standard" placeholder="Fuel consumption of horse when empty Kilo per Litre" >
                                             @error('fuel_consumption_empty_standard') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
-                                            <label for="model">Fuel Consumption (Loaded)</label>
-                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="fuel_consumption_loaded_standard" placeholder="Standard fuel consumption of horse when loaded" >
+                                            <label for="model">Standard Fuel Consumption Loaded (<i>Km/L</i>) </label>
+                                            <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="fuel_consumption_loaded_standard" placeholder="Fuel consumption of horse when loaded Kilo per Litre" >
                                             @error('fuel_consumption_loaded_standard') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>

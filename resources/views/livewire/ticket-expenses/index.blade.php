@@ -1,13 +1,15 @@
 <div>
-   <a href="" data-toggle="modal" data-target="#ticket_expenseModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Expense</a>
+   {{-- <a href="" data-toggle="modal" data-target="#ticket_expenseModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Expense</a>
         <br>
-        <br>
+        <br> --}}
     <table id="expensesTable" class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
         <thead >
          <tr>
             <th class="th-sm">Vendor
             </th>
             <th class="th-sm">Item
+            </th>
+            <th class="th-sm">MOP
             </th>
             <th class="th-sm">Ccy
             </th>
@@ -35,6 +37,7 @@
                 <td>
                     {{$ticket_expense->product ? $ticket_expense->product->product_number : ""}} {{$ticket_expense->product ? $ticket_expense->product->name : ""}}
                 </td>  
+                <td>{{$ticket_expense->payment_method ? $ticket_expense->payment_method->name : ""}}</td>
                 <td>{{$ticket_expense->currency ? $ticket_expense->currency->name : ""}}</td>
                 <td>{{$ticket_expense->qty}}</td>
                 <td>{{$ticket_expense->currency ? $ticket_expense->currency->symbol : ""}}{{number_format($ticket_expense->amount,2)}}</td>
@@ -162,7 +165,7 @@
                                 @error('selectedProduct') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <div class="form-group">
                                 <label for="subheading">Expense Accounts<span class="required" style="color: red">*</span></label>
                                 <select wire:model.debounce.300ms="selectedAccount" class="form-control" required>
@@ -182,6 +185,18 @@
                                 @error('description') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
+                         <div class="col-md-2">
+                                <div class="form-group">
+                                <label for="country">Payment Methods</label>
+                                <select wire:model.debounce.300ms="payment_method_id"  class="form-control"  >
+                                    <option value="">Select Payment Method</option>
+                                    @foreach ($payment_methods as $payment_method)
+                                    <option value="{{ $payment_method->id }}">{{ $payment_method->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('payment_method_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
                         <div class="col-md-1">
                             <div class="form-group">
                                 <label for="name">Qty<span class="required" style="color: red">*</span></label>
@@ -197,13 +212,13 @@
                             </div>
                         </div>
 
-                        <div class="col-md-2">
+                        <div class="col-md-1">
                             <div class="form-group">
                                 <label for="subheading">Taxes</label>
                                 <select wire:model.debounce.300ms="selectedTax"  class="form-control">
                                     <option value="">Select Tax</option>
                                         @foreach ($tax_accounts as $tax)
-                                           <option value="{{$tax->id}}">{{$tax->abbreviation}} {{$tax->rate ? $tax->rate."%" : ""}}</option> 
+                                           <option value="{{$tax->id}}">{{$tax->abbreviation}} </option> 
                                         @endforeach
                                     </select>
                                     <small><a href="{{ route('taxes.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small> 
@@ -327,7 +342,7 @@
                                 @error('selectedProduct') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <div class="form-group">
                                 <label for="subheading">Expense Accounts<span class="required" style="color: red">*</span></label>
                                 <select wire:model.debounce.300ms="selectedAccount" class="form-control" required>
@@ -347,6 +362,18 @@
                                 @error('description') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
+                         <div class="col-md-2">
+                                <div class="form-group">
+                                <label for="country">Payment Methods</label>
+                                <select wire:model.debounce.300ms="payment_method_id"  class="form-control"  >
+                                    <option value="">Select Payment Method</option>
+                                    @foreach ($payment_methods as $payment_method)
+                                    <option value="{{ $payment_method->id }}">{{ $payment_method->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('payment_method_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
                         <div class="col-md-1">
                             <div class="form-group">
                                 <label for="name">Qty<span class="required" style="color: red">*</span></label>
@@ -362,13 +389,13 @@
                             </div>
                         </div>
 
-                        <div class="col-md-2">
+                        <div class="col-md-1">
                             <div class="form-group">
                                 <label for="subheading">Taxes</label>
                                 <select wire:model.debounce.300ms="selectedTax"  class="form-control">
                                     <option value="">Select Tax</option>
                                         @foreach ($tax_accounts as $tax)
-                                           <option value="{{$tax->id}}">{{$tax->abbreviation}} {{$tax->rate ? $tax->rate."%" : ""}}</option> 
+                                           <option value="{{$tax->id}}">{{$tax->abbreviation}}</option> 
                                         @endforeach
                                     </select>
                                     <small><a href="{{ route('taxes.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small> 

@@ -8,7 +8,7 @@
     @endif
 @endsection
 @section('title')
-    Inventory |@if (Auth::user()->employee->company)
+    Inventory | @if (Auth::user()->employee->company)
     {{Auth::user()->employee->company->name}}
     @elseif (Auth::user()->company)
     {{Auth::user()->company->name}}

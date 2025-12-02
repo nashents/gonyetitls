@@ -8,14 +8,18 @@ use App\Models\Asset;
 use App\Models\Store;
 use App\Models\Branch;
 use App\Models\Ticket;
+use App\Models\Vendor;
+use App\Models\Account;
 use App\Models\Product;
 use Livewire\Component;
+use App\Models\Currency;
 use App\Models\Dispatch;
 use App\Models\Employee;
 use App\Models\Inventory;
 use App\Models\Department;
 use App\Models\DispatchItem;
 use Livewire\WithPagination;
+use App\Models\PaymentMethod;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -28,16 +32,22 @@ class Index extends Component
     public $search;
     public $from;
     public $to;
-
+    protected $queryString = ['searchProduct','searchTicket','search'];
+    public $dispatch_filter = "created_at";
+    public $vendors;
+    public $vendor_id;
+    public $currencies;
+    public $currency_id;
     public $searchProduct;
     public $searchTicket;
-    protected $queryString = ['searchProduct','searchTicket','search'];
+
     private $dispatches;
     public $department;
-    public $dispatch_filter = "created_at";
+ 
     public $all_departments;
     public $asset_department_id;
     public $horse_id;
+    public $dispatch_for = "inventory";
     public $trailer_id;
     public $vehicle_id;
     public $dispatch_id;
@@ -54,24 +64,45 @@ class Index extends Component
     public $selectedInventory = [];
     public $selectedAsset = [];
     public $products;
+    public $amount = [];
     public $qty = [];
     public $weight = [];
+    public $selectedExpenseProduct = [];
     public $selectedProduct = [];
     public $requestedItem = [];
     public $ticket_requests;
     public $employees;
     public $company;
     public $all_tickets = False;
+    public $exchange_amount;
+    public $exchange_rate;
     public $max;
     public $max_weight;
     public $description;
     public $selectedEmployee;
     public $requested_by_id;
-    public $currency_id;
+    public $all_products;
     public $date;
     public $stores;
     public $selectedStore;
     public $expand = False;
+
+    public $payment_methods;
+    public $payment_method_id;
+
+    public $item_name;
+    public $item_description;
+    public $item_price;
+    public $tax_id;
+    public $tax;
+    public $accounts;
+    public $selectedAccount;
+    public $tax_accounts;
+    public $selectedTax = [];
+    public $tax_rate = [];
+    public $expense_account_id;
+    public $sell = False;
+    public $buy = True;
 
     public $inputs = [];
     public $i = 1;
@@ -87,6 +118,35 @@ class Index extends Component
     public function remove($i)
     {
         unset($this->inputs[$i]);
+    }
+
+    public $expenses_inputs = [];
+    public $e = 1;
+    public $f = 1;
+
+    public function addExpense($e)
+    {
+        $e = $e + 1;
+        $this->e = $e;
+        $this->expenses_inputs[] = $e;
+    }
+
+       private function resetExpenseInputFields(){
+        $this->selectedExpenseProduct = [];
+        $this->selectedTax = '';
+        $this->qty = [];
+        $this->currency_id = '';
+        $this->item_name = '';
+        $this->vendor_id = '';
+        $this->item_price = '';
+        $this->tax_id = '';
+        $this->sell = True;
+        $this->buy = False;
+    }
+
+    public function removeExpense($e)
+    {
+        unset($this->expenses_inputs[$e]);
     }
 
     public function updatedSearchProduct($value)
@@ -131,7 +191,7 @@ class Index extends Component
         $search = trim($value);
 
         $baseQuery = Ticket::query()
-            ->whereYear('created_at', date('Y'));
+            ->whereYear('in_date', date('Y'));
             // ->where('status', 1);
 
         if (filled($search)) {
@@ -185,20 +245,22 @@ class Index extends Component
             $this->products = collect();
             return;
         }
-
-        $this->products = Product::with('brand', $relation)
-            ->where('department', $this->department)
-            ->whereHas($relation, function ($q) use ($relation, $store_id) {
-
-                $q->where('status', 1);
-                $q->where('balance', '>', 0);
-                // Apply store filter ONLY when store_id is present
-                $q->when($store_id, function ($qq) use ($store_id) {
+       
+        $this->products = Product::with(['brand', $relation])
+        ->where('status', 1)
+        ->where('department', $this->department)
+        ->when($this->dispatch_for === 'inventory', function ($query) use ($relation, $store_id) {
+            $query->whereHas($relation, function ($q) use ($store_id) {
+                $q->where('status', 1)
+                ->where('balance', '>', 0)
+                ->when($store_id, function ($qq) use ($store_id) {
                     $qq->where('store_id', $store_id);
                 });
-            })
-            ->orderBy('name', 'asc')
-            ->get();
+            });
+        })
+        ->orderBy('name', 'asc')
+        ->get();
+       
     }
 
     public function mount($department){
@@ -207,14 +269,40 @@ class Index extends Component
         $this->assets = collect();
         $this->department = $department;
         $this->company = Auth::user()->employee->company;
+        $this->currencies = collect();
+        $this->payment_methods = PaymentMethod::orderBy('name','asc')->get();
+        $this->tax_accounts = collect();
+        $this->accounts = collect();
+        $this->vendors = collect();
         $this->employees = Employee::where('status',1)->where('archive',0)->orderBy('name','asc')->orderBy('surname','asc')->get();
-        $this->tickets = Ticket::whereYear('created_at',date('Y'))->where('status',1)->orderBy('created_at','desc')->get();
-        $this->all_departments = Department::orderBy('name','asc')->get();
+        $this->tickets = Ticket::query()->with(['booking','service_type','horse','vehicle','trailer'])->whereYear('in_date',date('Y'))->where('status',1)->orderBy('in_date','desc')->get();
+       
         $this->stores = Store::orderBy('name','asc')->get();
-        $this->branches = Branch::orderBy('name','asc')->get();
+       
         $this->reset(['searchProduct', 'searchTicket']);
         $this->loadProducts();
+        if ($this->department == "asset") {
+            $this->branches = Branch::orderBy('name','asc')->get();
+             $this->all_departments = Department::orderBy('name','asc')->get();
+        }
        
+       
+    }
+
+    public function updatedDispatchFor($value){
+        if(!is_null($value)){
+            if($value == "expenses"){
+                $this->currencies = Currency::orderBy('name','asc')->get();
+                $this->vendors = Vendor::orderBy('name','asc')->get();
+                $this->tax_accounts = Account::whereHas('account_type', function ($query) {
+                        return $query->where('name','Sales Taxes');
+                    })->orderBy('name','asc')->get();
+                $this->accounts = Account::whereHas('account_type.account_type_group', function ($query) {
+                    return $query->where('name','Expenses');
+                })->orderBy('name','asc')->get();
+            }
+            
+        }
     }
 
     public function updatedSelectedEmployee($id){
@@ -291,6 +379,34 @@ class Index extends Component
         }
     }
 
+        public function updatedSelectedExpenseProduct($id , $key){
+            
+        if (!is_null($id) && !is_null($key)) {
+            $product = Product::find($id);
+            if (isset($product)) {
+                if ($product->price) {
+                    $this->amount[$key] = $product->price;
+                }
+                if ($product->description) {
+                    $this->description[$key] = $product->description;
+                }
+                if ($product->expense_account_id) {
+                    $this->selectedAccount[$key] = $product->expense_account_id;
+                }
+                $this->qty[$key] = 1;
+                if ($product->tax_id) {
+                    $this->selectedTax[$key] = $product->tax_id;
+                    $tax = Account::find($product->tax_id);
+                    if (isset($tax)) {
+                        $this->tax_rate[$key] = $tax->rate;
+                    }
+                    
+                }  
+            }
+           
+        }
+    }
+
      public function dispatchNumber(){
 
         if (isset(Auth::user()->company)) {
@@ -333,18 +449,43 @@ class Index extends Component
         'date' => 'required',
     ];
 
+      public function updatedSelectedTax($id, $key){
+        if(!is_null($id) && !is_null($key)){
+            $tax = Account::find($id);
+            if (isset($tax)) {
+                $this->tax_rate[$key] = $tax->rate;
+            }
+           
+        }
+    }
     
     private function resetInputFields(){
         $this->date = Null;
+        $this->vendor_id = Null;
         $this->requested_by_id = Null;
         $this->selectedEmployee = Null;
         $this->branch_id = Null;
         $this->selectedStore = Null;
         $this->asset_department_id = Null;
+        $this->selectedExpenseProduct = [];
+        $this->selectedProduct = [];
+        $this->qty = [];
+        $this->amount = [];
+        $this->selectedTax = [];
+        $this->tax_rate = [];
         $this->selectedInventory = [];
         $this->selectedTicket = Null;
         $this->searchTicket = [] ;
         $this->searchProduct = [] ;
+        $this->dispatch_for = "inventory" ;
+    }
+
+     public function calculateExchangeAmount($total = null){
+        $exchange_amount = 0;
+        if (($total && is_numeric($total)) && ($this->exchange_rate && is_numeric($this->exchange_rate)) ) {
+            $exchange_amount = $this->exchange_rate * $total;
+        }
+        return $exchange_amount;
     }
 
     public function store(){
@@ -369,31 +510,101 @@ class Index extends Component
         $dispatch->employee_id = $this->selectedEmployee ?: null;
         $dispatch->requested_by_id = $this->requested_by_id ?: null;
         $dispatch->department = $this->department;
+        $dispatch->dispatch_for = $this->dispatch_for;
         $dispatch->department_id = $this->asset_department_id ?: null;
         $dispatch->branch_id = $this->branch_id ?: null;
-        $dispatch->currency_id = $this->company->currency_id ?: null;
+        $dispatch->vendor_id = $this->vendor_id ?: null;
+        $dispatch->currency_id = $this->currency_id ?: $this->company->currency_id;
         $dispatch->description = $this->description;
         $dispatch->date = $this->date;
         $dispatch->expand = $this->expand;
         $dispatch->save();
-       
-        if ($this->expand == True) {
 
-            if($this->company->valuation_method == "AVCO"){
-                $dispatch_total = $this->InventoryAVCO($dispatch);
-            }elseif($this->company->valuation_method == "FIFO"){
-                $dispatch_total =  $this->InventoryFIFO($dispatch);
+        if ($this->dispatch_for == "inventory") {
+
+            if ($this->expand == True) {
+                if($this->company->valuation_method == "AVCO"){
+                    $dispatch_total = $this->InventoryAVCO($dispatch);
+                }elseif($this->company->valuation_method == "FIFO"){
+                    $dispatch_total =  $this->InventoryFIFO($dispatch);
+                }
+            }elseif ($this->expand == False) {
+                if($this->company->valuation_method == "AVCO"){
+                    $dispatch_total = $this->ProductAVCO($dispatch);
+                }elseif($this->company->valuation_method == "FIFO"){
+                    $dispatch_total = $this->ProductFIFO($dispatch);
+                }
             }
 
-        }elseif ($this->expand == False) {
+        }elseif($this->dispatch_for == "expenses"){
 
-            if($this->company->valuation_method == "AVCO"){
-                $dispatch_total = $this->ProductAVCO($dispatch);
-            }elseif($this->company->valuation_method == "FIFO"){
-                $dispatch_total = $this->ProductFIFO($dispatch);
+        
+
+            if (isset($this->selectedExpenseProduct)) {
+              
+                foreach($this->selectedExpenseProduct as $key => $id){
+
+
+                    
+                    $item_subtotal = 0;
+                    $item_subtotal_incl = 0;
+
+                    $currency_id = $this->currency_id ?: Null;
+                    $payment_method_id = $this->payment_method_id[$key] ?? Null;
+                    $product_id = $this->selectedExpenseProduct[$key] ?? Null;
+                    $qty = $this->qty[$key] ?? Null;
+                    $amount = $this->amount[$key] ?? Null;
+                    $tax_rate = $this->tax_rate[$key] ?? Null;
+                    $tax_id = $this->selectedTax[$key] ?? Null;
+
+                  
+
+                $dispatch_item = new  DispatchItem;
+                $dispatch_item->dispatch_id =  $dispatch->id;
+                $dispatch_item->currency_id =  $currency_id;
+                $dispatch_item->payment_method_id =  $payment_method_id;
+                $dispatch_item->product_id =  $product_id;
+                $dispatch_item->qty =  $qty;
+                $dispatch_item->unit_cost =  $amount;
+                $dispatch_item->tax_rate = $tax_rate;
+                $dispatch_item->tax_id = $tax_id;
+    
+                 if (is_numeric($amount) && is_numeric($qty ) ) {
+                    $item_subtotal = $amount*$qty;
+                    $dispatch_item->subtotal = $item_subtotal;
+                }
+    
+                if (is_numeric($tax_rate)) {
+    
+                    $item_tax_amount = ($item_subtotal * ($tax_rate / 100 ));
+                    $dispatch_item->tax_amount =  $item_tax_amount;
+                    $tax_amount = $tax_amount + $item_tax_amount;
+                    $item_subtotal_incl = $item_tax_amount + $item_subtotal;
+                    $dispatch_item->subtotal_incl =  $item_subtotal_incl;
+                    $dispatch_item->amount =  $item_subtotal_incl;
+
+                }else{
+                    $item_subtotal_incl = $item_subtotal;
+                    $dispatch_item->subtotal_incl = $item_subtotal_incl;
+                    $dispatch_item->amount =  $item_subtotal_incl;
+                }
+
+
+               
+                $exchange_amount = $this->calculateExchangeAmount($item_subtotal_incl);
+                $dispatch_item->exchange_rate = $this->exchange_rate;
+                $dispatch_item->exchange_amount =  $exchange_amount;
+                $dispatch_item->save();
+
+                $dispatch_total += $currency_id != $this->company->currency_id ? $exchange_amount : $item_subtotal_incl;
+
+                }
+
             }
-          
+
         }
+       
+        
         
         $dispatch->total = $dispatch_total;
         $dispatch->save();
@@ -422,6 +633,55 @@ class Index extends Component
              $this->dispatch = Dispatch::find($id);
              $this->dispatchBrowserEvent('show-dispatchDeleteModal');
 
+        }
+    }
+
+    public function refresh($category){
+
+        if($category == "products"){
+
+            $store_id = $this->selectedStore;
+
+                    $map = [
+                'asset'     => 'assets',
+                'inventory' => 'inventories',
+                'tyre'      => 'tyres',
+            ];
+
+            $relation = $map[$this->department] ?? null;
+
+            if (! $relation) {
+                $this->products = collect();
+                return;
+            }
+        
+            $this->products = Product::with(['brand', $relation])
+            ->where('status', 1)
+            ->where('department', $this->department)
+            ->when($this->dispatch_for === 'inventory', function ($query) use ($relation, $store_id) {
+                $query->whereHas($relation, function ($q) use ($store_id) {
+                    $q->where('status', 1)
+                    ->where('balance', '>', 0)
+                    ->when($store_id, function ($qq) use ($store_id) {
+                        $qq->where('store_id', $store_id);
+                    });
+                });
+            })
+            ->orderBy('name', 'asc')
+            ->get();
+            
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Products Refreshed Successfully!!."
+            ]);
+
+        }
+        elseif($category == ""){
+           
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Bank Accounts Refreshed Successfully!!."
+            ]);
         }
     }
 
@@ -909,6 +1169,7 @@ class Index extends Component
     }
     public function render()
     {
+
             $base = Dispatch::query()->with(['ticket','horse','vehicle','trailer','employee','department','branch'])
                         ->where('department',$this->department);
 

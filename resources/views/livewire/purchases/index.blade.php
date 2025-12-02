@@ -124,8 +124,14 @@
                                         <td>
                                             @foreach ($purchase->purchase_products as $purchase_product )
                                                 @if ($purchase_product->product)
-                                                        {{$purchase_product->product ? $purchase_product->product->name : ""}} {{$purchase_product->product->brand ? $purchase_product->product->brand->name : ""}} ({{$purchase_product->qty}}) <br>
+                                                        {{$purchase_product->product ? $purchase_product->product->name : ""}} {{$purchase_product->product->brand ? $purchase_product->product->brand->name : ""}}
+                                                         {{$purchase_product->qty ? "(".$purchase_product->qty.")" : ""}}
+                                                            @if ($purchase_product->amount)
+                                                                @ {{ $purchase_product->currency ? $purchase_product->currency->name : ""}} {{ $purchase_product->currency ? $purchase_product->currency->symbol : ""}}{{ number_format($purchase_product->amount,2)}}
+                                                            @endif
+                                                         {{$purchase_product->payment_method ? $purchase_product->payment_method->name : ""}}@if (!$loop->last),@endif  <br>
                                                 @endif
+                                                   
                                             @endforeach
                                             
                                             @if ($purchase->description)
@@ -196,7 +202,7 @@
                                                          <li><a href="" wire:click.prevent="markSent({{$purchase->id}})"  ><i class="fas fa-check color-secondary"></i> Mark as sent</a></li>
                                                     @endif
                                                     @endif
-                                                    @if ($purchase->authorization != "approved")
+                                                    @if ($purchase->authorization != "approved" || Auth::user()->is_admin())
                                                     <li><a href="#"  wire:click="edit({{$purchase->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
                                                     <li><a href="#" data-toggle="modal" data-target="#purchaseDeleteModal{{ $purchase->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                                     @endif
@@ -242,7 +248,7 @@
         <!-- /.container-fluid -->
     </section>
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="purchaseModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog mw-100 w-50" role="document">
+        <div class="modal-dialog mw-100 w-70" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fas fa-plus"></i> Create Purchase Order <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -398,6 +404,18 @@
                             </div>
                         </div>
                         <div class="col-md-2">
+                                <div class="form-group">
+                                <label for="country">Payment Methods</label>
+                                <select wire:model.debounce.300ms="payment_method_id.0"  class="form-control"  >
+                                    <option value="">Select Payment Method</option>
+                                    @foreach ($payment_methods as $payment_method)
+                                    <option value="{{ $payment_method->id }}">{{ $payment_method->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('payment_method_id.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-1">
                             <div class="form-group">
                                 <label for="Product">Qty<span class="required" style="color: red">*</span></label>
                                 <input type="number" step="any" min="1" class="form-control" wire:model.debounce.300ms="qty.0"  required>
@@ -411,13 +429,13 @@
                                 @error('amount.0') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <div class="form-group">
                                 <label for="subheading">Taxes</label>
                                 <select wire:model.debounce.300ms="selectedTax.{{$value}}"  class="form-control">
                                     <option value="">Select Tax</option>
                                         @foreach ($tax_accounts as $tax)
-                                           <option value="{{$tax->id}}">{{$tax->abbreviation}} {{$tax->rate ? $tax->rate."%" : ""}}</option> 
+                                           <option value="{{$tax->id}}">{{$tax->abbreviation}}</option> 
                                         @endforeach
                                     </select>
                                     <small><a href="{{ route('taxes.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small> 
@@ -443,6 +461,18 @@
                             </div>
                             <div class="col-md-2">
                                 <div class="form-group">
+                                <label for="country">Payment Methods</label>
+                                <select wire:model.debounce.300ms="payment_method_id.0"  class="form-control"  >
+                                    <option value="">Select Payment Method</option>
+                                    @foreach ($payment_methods as $payment_method)
+                                    <option value="{{ $payment_method->id }}">{{ $payment_method->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('payment_method_id.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                            <div class="col-md-1">
+                                <div class="form-group">
                                     <label for="Product">Qty<span class="required" style="color: red">*</span></label>
                                     <input type="number" step="any" min="1" class="form-control" wire:model.debounce.300ms="qty.{{$value}}"  required>
                                     @error('qty.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
@@ -461,7 +491,7 @@
                                     <select wire:model.debounce.300ms="selectedTax.{{$value}}"  class="form-control">
                                         <option value="">Select Tax</option>
                                             @foreach ($tax_accounts as $tax)
-                                               <option value="{{$tax->id}}">{{$tax->abbreviation}} {{$tax->rate ? $tax->rate."%" : ""}}</option> 
+                                               <option value="{{$tax->id}}">{{$tax->abbreviation}}</option> 
                                             @endforeach
                                         </select>
                                         <small><a href="{{ route('taxes.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small> 
@@ -584,7 +614,7 @@
     </div>
 
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="purchaseEditModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog mw-100 w-50" role="document">
+        <div class="modal-dialog mw-100 w-70" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fas fa-edit"></i> Edit Purchase Order <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -720,7 +750,7 @@
                         <h5 class="underline mt-n">Select products</h5>
                         @foreach ($purchase_order_products as $key => $value)
                         <div class="row">
-                            <div class="col-md-5">
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="title">Products<span class="required" style="color: red">*</span></label>
                                     <select wire:model.debounce.300ms="selectedCurrentProduct.{{$key}}" class="form-control" required>
@@ -733,6 +763,18 @@
                                     @error('selectedCurrentProduct.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
                                 </div>
                             </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                <label for="country">Payment Methods</label>
+                                <select wire:model.debounce.300ms="current_payment_method_id.{{$key}}"  class="form-control"  >
+                                    <option value="">Select Payment Method</option>
+                                    @foreach ($payment_methods as $payment_method)
+                                    <option value="{{ $payment_method->id }}">{{ $payment_method->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('current_payment_method_id.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
                             <div class="col-md-1">
                                 <div class="form-group">
                                     <label for="Product">Qty<span class="required" style="color: red">*</span></label>
@@ -747,13 +789,13 @@
                                     @error('current_amount.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
                                 </div>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-2">
                                 <div class="form-group">
                                     <label for="subheading">Taxes</label>
                                     <select wire:model.debounce.300ms="selectedCurrentTax.{{$key}}"  class="form-control">
                                         <option value="">Select Tax</option>
                                             @foreach ($tax_accounts as $tax)
-                                               <option value="{{$tax->id}}">{{$tax->abbreviation}} {{$tax->rate ? $tax->rate."%" : ""}}</option> 
+                                               <option value="{{$tax->id}}">{{$tax->abbreviation}} </option> 
                                             @endforeach
                                         </select>
                                         <small><a href="{{ route('taxes.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small> 
@@ -784,7 +826,19 @@
                                         @error('selectedProduct.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>
                                 </div>
-                                <div class="col-md-2">
+                                 <div class="col-md-2">
+                                        <div class="form-group">
+                                        <label for="country">Payment Methods</label>
+                                        <select wire:model.debounce.300ms="payment_method_id.{{$value}}"  class="form-control"  >
+                                            <option value="">Select Payment Method</option>
+                                            @foreach ($payment_methods as $payment_method)
+                                            <option value="{{ $payment_method->id }}">{{ $payment_method->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('payment_method_id.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                                <div class="col-md-1">
                                     <div class="form-group">
                                         <label for="Product">Qty<span class="required" style="color: red">*</span></label>
                                         <input type="number" step="any" min="1" class="form-control" wire:model.debounce.300ms="qty.{{$value}}"  required>
@@ -804,7 +858,7 @@
                                         <select wire:model.debounce.300ms="selectedTax.{{$value}}"  class="form-control">
                                             <option value="">Select Tax</option>
                                                 @foreach ($tax_accounts as $tax)
-                                                   <option value="{{$tax->id}}">{{$tax->abbreviation}} {{$tax->rate ? $tax->rate."%" : ""}}</option> 
+                                                   <option value="{{$tax->id}}">{{$tax->abbreviation}} </option> 
                                                 @endforeach
                                             </select>
                                             <small><a href="{{ route('taxes.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small> 

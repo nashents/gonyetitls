@@ -21,6 +21,7 @@ use App\Models\Notification;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Excel;
 use App\Models\CategoryValue;
+use App\Models\PaymentMethod;
 use Livewire\WithFileUploads;
 use App\Models\PurchaseProduct;
 use App\Exports\PurchasesExport;
@@ -66,6 +67,7 @@ class Index extends Component
     public $expenses;
     public $expense_id;
 
+    public $payment_methods;
     public $vendor_id;
     public $vendors;
     public $vendor_types;
@@ -103,12 +105,14 @@ class Index extends Component
 
     public $products;
     public $selectedProduct = [];
+    public $payment_method_id = [];
     public $selectedCurrentProduct = [];
     public $tax_accounts;
     public $selectedTax = [];
     public $selectedCurrentTax = [];
     public $qty = [];
     public $current_qty = [];
+    public $current_payment_method_id = [];
     public $amount  = [];
     public $current_amount = [];
     public $total;
@@ -278,6 +282,7 @@ class Index extends Component
             $this->department = $category;
             $this->products = Product::orderBy('name','asc')->where('department', $this->department)->where('status',True)->where('buy',True)->get();
             $this->vendor_types = VendorType::latest()->get();
+            $this->payment_methods = PaymentMethod::orderBy('name','asc')->get();
             $this->account_types = AccountType::orderBy('name','asc')->get();
             $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
                 return $query->where('name','Expenses');
@@ -447,6 +452,9 @@ class Index extends Component
             if (isset($this->qty[$key])) {
                 $purchase_product->qty = $this->qty[$key];
             }
+            if (isset($this->payment_method_id[$key])) {
+                $purchase_product->payment_method_id = $this->payment_method_id[$key];
+            }
             if (isset($this->amount[$key])) {
                 $purchase_product->amount = $this->amount[$key];
             }
@@ -591,6 +599,7 @@ class Index extends Component
             foreach($this->purchase_order_products as $purchase_product){
                 $this->selectedCurrentProduct[] = $purchase_product->product_id; 
                 $this->current_qty[] = $purchase_product->qty; 
+                $this->current_payment_method_id[] = $purchase_product->payment_method_id; 
                 $this->current_amount[] = $purchase_product->amount; 
                 $this->selectedCurrentTax[] = $purchase_product->tax_id; 
                 $this->current_tax_rate[] = $purchase_product->tax_rate; 
@@ -646,6 +655,9 @@ class Index extends Component
             
             if (isset($this->current_amount[$key])) {
                 $purchase_product->amount = $this->current_amount[$key];
+            }
+            if (isset($this->current_payment_method_id[$key])) {
+                $purchase_product->payment_method_id = $this->current_payment_method_id[$key];
             }
             if (isset($this->current_tax_rate[$key])) {
                 $purchase_product->tax_rate = $this->current_tax_rate[$key];
@@ -710,6 +722,9 @@ class Index extends Component
                 }
                 if (isset($this->amount[$key])) {
                     $purchase_product->amount = $this->amount[$key];
+                }
+                if (isset($this->payment_method_id[$key])) {
+                    $purchase_product->payment_method_id = $this->payment_method_id[$key];
                 }
                 if (isset($this->tax_rate[$key])) {
                     $purchase_product->tax_rate = $this->tax_rate[$key];

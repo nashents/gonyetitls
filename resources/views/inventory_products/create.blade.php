@@ -35,8 +35,8 @@
                                 <div class="col-md-6">
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fas fa-home"></i> Home</a></li>
-            							<li><a href="{{route('inventory_products.index')}}"><i class="fas fa-list"></i> Products</a></li>
-            							<li class="active"> <i class="fas fa-plus"></i> Create Product</li>
+            							<li><a href="{{route('inventory_products.index')}}"><i class="fas fa-list"></i> Inventory Products</a></li>
+            							<li class="active"> <i class="fas fa-plus"></i> Create Inventory Product</li>
             						</ul>
                                 </div>
                                 <!-- /.col-md-6 -->

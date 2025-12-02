@@ -17,6 +17,9 @@ class PurchaseProduct extends Model implements Auditable
     public function product(){
         return $this->belongsTo('App\Models\Product');
     }
+    public function payment_method(){
+        return $this->belongsTo('App\Models\PaymentMethod');
+    }
 
     public function purchase_product_documents(){
         return $this->hasMany('App\Models\PurchaseProductDocument');

@@ -12,6 +12,9 @@ class Vendor extends Model implements Auditable
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 
+    public function dispatches(){
+        return $this->hasMany('App\Models\Dispatch');
+    }
     public function workshop_services(){
         return $this->hasMany('App\Models\WorkshopService');
     }

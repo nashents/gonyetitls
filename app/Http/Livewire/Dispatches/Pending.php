@@ -12,14 +12,24 @@ use App\Models\Dispatch;
 use App\Models\Movement;
 use App\Models\Inventory;
 use App\Models\BillExpense;
+use Livewire\WithPagination;
+use App\Models\TicketExpense;
 use App\Models\TyreAssignment;
+use App\Models\TicketInventory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
 class Pending extends Component
 {
 
-    public $dispatches;
+    use WithPagination;
+    protected $paginationTheme = 'bootstrap';
+    public $search;
+    public $from;
+    public $to;
+    protected $queryString = ['search'];
+    public $dispatch_filter = "created_at";
+    private $dispatches;
     public $dispatch;
     public $dispatch_id;
     public $company;
@@ -31,7 +41,7 @@ class Pending extends Component
     public function mount($department){
         $this->department = $department;
         $this->company = Auth::user()->employee->company;
-        $this->dispatches  = Dispatch::where('department',$department)->where('authorization','pending')->get();
+      
     }
 
     public function authorize($id){
@@ -131,6 +141,45 @@ class Pending extends Component
 
     }
 
+
+    public function createTicketInventory($dispatch_item){
+        $dispatch = $dispatch_item->dispatch;
+        $ticket_inventory = new  TicketInventory;
+        $ticket_inventory->ticket_id = $dispatch->ticket_id ?? null;
+        $ticket_inventory->product_id = $dispatch_item->product_id ?? null;
+        $ticket_inventory->inventory_id =  $dispatch_item->inventory_id ?? null;
+        $ticket_inventory->tyre_id =  $dispatch_item->tyre_id ?? null;
+        $ticket_inventory->vehicle_id = $dispatch->vehicle_id ?? null;
+        $ticket_inventory->horse_id = $dispatch->horse_id ?? null;
+        $ticket_inventory->trailer_id = $dispatch_item->dispatch->trailer_id ?? null;
+        $ticket_inventory->qty =  $dispatch_item->qty;
+        $ticket_inventory->currency_id = $dispatch_item->currency_id ?? null;
+        $ticket_inventory->amount =  $dispatch_item->amount;
+        $ticket_inventory->exchange_amount = $dispatch_item->exchange_amount;
+        $ticket_inventory->exchange_rate = $dispatch_item->exchange_rate;
+        $ticket_inventory->save();
+    }
+
+    public function createTicketExpense($dispatch_item){
+        $dispatch = $dispatch_item->dispatch;
+        $ticket_expense = new  TicketExpense;
+        $ticket_expense->ticket_id = $dispatch->ticket_id;
+        $ticket_expense->currency_id =  $dispatch_item->currency_id;
+        $ticket_expense->payment_method_id =  $dispatch_item->payment_method_id;
+        $ticket_expense->vendor_id =  $dispatch->vendor_id;
+        $ticket_expense->product_id =  $dispatch_item->product_id;
+        $ticket_expense->qty =  $dispatch_item->qty;
+        $ticket_expense->amount =  $dispatch_item->amount;
+        $ticket_expense->tax_rate = $dispatch_item->tax_rate;
+        $ticket_expense->tax_id = $dispatch_item->tax_id;
+        $ticket_expense->subtotal = $dispatch_item->subtotal;
+        $ticket_expense->subtotal_incl = $dispatch_item->subtotal_incl;
+        $ticket_expense->exchange_rate = $dispatch_item->exchange_rate;
+        $ticket_expense->exchange_amount = $dispatch_item->exchange_amount;
+        $ticket_expense->save();
+                    
+    }
+
     public function update()
     {
         DB::transaction(function () {
@@ -149,9 +198,6 @@ class Pending extends Component
 
             if ($this->authorize == "approved") {
 
-                    if (in_array($dispatch->department,['inventory','tyre'])) {
-
-                    
                         $account = Account::where('name', 'Repairs & Maintenance')->first();
 
                         $bill = new Bill;
@@ -164,6 +210,7 @@ class Pending extends Component
                         $bill->department_id = $dispatch->department_id;
                         $bill->trailer_id = $dispatch->trailer_id;
                         $bill->vehicle_id = $dispatch->vehicle_id;
+                        $bill->vendor_id = $dispatch->vendor_id;
                         $bill->horse_id = $dispatch->horse_id;
                         $bill->bill_date = $dispatch->date;
                         $bill->currency_id = $dispatch->currency_id;
@@ -181,15 +228,19 @@ class Pending extends Component
                         $bill->balance = $dispatch->total;
                         $bill->save();
 
-                    }
-
-                  
 
                     foreach ($dispatch->dispatch_items as $dispatch_item) {
 
                         if ($dispatch_item->dispatch->department == "tyre") {
                            $this->tyreAssignment($dispatch_item);
                         }
+                        if ($dispatch->dispatch_for == "inventory") {
+                            $this->createTicketInventory($dispatch_item);
+                        }elseif($dispatch->dispatch_for == "expenses"){
+                            $this->createTicketExpense($dispatch_item);
+                        }
+                       
+                        
 
                         if (in_array($dispatch->department,['inventory','tyre'])) {
 
@@ -276,6 +327,56 @@ class Pending extends Component
 
     public function render()
     {
-        return view('livewire.dispatches.pending');
+        $base = Dispatch::query()->with(['ticket','horse','vehicle','trailer','employee','department','branch'])
+                    ->where('department',$this->department)
+                    ->where('authorization','pending');
+
+            $base->when(filled($this->from) && filled($this->to), function ($q) {
+                    $q->whereDate($this->dispatch_filter, '>=', $this->from)
+                    ->whereDate($this->dispatch_filter, '<=', $this->to);
+                }, function ($q) {
+                    $q->whereMonth($this->dispatch_filter, Carbon::now()->month)
+                    ->whereYear($this->dispatch_filter, Carbon::now()->year);
+                });
+
+               // Search filter (grouped to keep AND/OR logic correct)
+            $base->when(filled($this->search), function ($q) {
+                $term = '%'.$this->search.'%';
+
+                $q->where(function ($qq) use ($term) {
+                    $qq->where('dispatch_number', 'like', $term)
+                    ->orWhere('authorization', 'like', $term)
+                    ->orWhere('date', 'like', $term)
+                    ->orWhereHas('ticket', function ($sub) use ($term) {
+                        $sub->where('ticket_number', 'like', $term);
+                    })
+                    ->orWhereHas('horse', function ($sub) use ($term) {
+                        $sub->where('registration_number', 'like', $term)
+                        ->orWhere('fleet_number', 'like', $term);
+                    })
+                    ->orWhereHas('store', function ($sub) use ($term) {
+                        $sub->where('name', 'like', $term);
+                    })
+                    ->orWhereHas('vehicle', function ($sub) use ($term) {
+                        $sub->where('registration_number', 'like', $term)
+                        ->orWhere('fleet_number', 'like', $term);
+                    })
+                    ->orWhereHas('trailer', function ($sub) use ($term) {
+                        $sub->where('registration_number', 'like', $term)
+                        ->where('fleet_number', 'like', $term);
+                    })
+                    ->orWhereHas('employee', function ($sub) use ($term) {
+                        $sub->where(DB::raw("concat(name, ' ', surname)"), 'like', $term);
+                    });
+                });
+            });
+
+            $dispatches = $base
+                ->orderByDesc($this->dispatch_filter)
+                ->paginate(10);
+
+        return view('livewire.dispatches.pending',[
+        'dispatches' => $dispatches
+        ]);
     }
 }

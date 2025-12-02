@@ -23,6 +23,13 @@
                                 <th class="w-10 text-center line-height-35">CreatedBy</th>
                                 <td class="w-20 line-height-35">{{$dispatch->user ? $dispatch->user->name : ""}} {{$dispatch->user ? $dispatch->user->surname : ""}} </td>
                             </tr>
+                            @if ($dispatch->vendor)
+                                <tr>
+                                    <th class="w-10 text-center line-height-35">Vendor</th>
+                                    <td class="w-20 line-height-35">{{$dispatch->vendor ? $dispatch->vendor->name : ""}}</td>
+                                </tr>
+                            @endif
+                          
                             <tr>
                                 <th class="w-10 text-center line-height-35">Date</th>
                                 <td class="w-20 line-height-35">{{$dispatch->date}}</td>
@@ -69,12 +76,16 @@
                                 </td>
                             </tr>
                             <tr>
-                                <th class="w-10 text-center line-height-35">Total Items</th>
+                                <th class="w-10 text-center line-height-35">Qty</th>
                                 <td class="w-20 line-height-35">{{$dispatch->dispatch_items->count()}}</td>
+                            </tr>
+                             <tr>
+                                <th class="w-10 text-center line-height-35">Currency</th>
+                                <td class="w-20 line-height-35">{{$dispatch->currency ? $dispatch->currency->name : ""}}</td>
                             </tr>
                             <tr>
                                 <th class="w-10 text-center line-height-35">Total Value</th>
-                                <td class="w-20 line-height-35">{{$dispatch->currency ? $dispatch->currency->name : ""}} {{$dispatch->currency ? $dispatch->currency->symbol : ""}}{{$dispatch->total}}</td>
+                                <td class="w-20 line-height-35"> {{$dispatch->currency ? $dispatch->currency->symbol : ""}}{{$dispatch->total}}</td>
                             </tr>
                             <tr>
                                 <th class="w-10 text-center line-height-35">Authorization</th>

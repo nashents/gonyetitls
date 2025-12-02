@@ -315,6 +315,8 @@
             @endif
 
             @if (in_array('Workshop', $department_names) || in_array('Super Admin', $role_names))
+
+            <br>
             <div class="row">
                 @if ((in_array('Workshop', $department_names) && in_array('Admin', $role_names)) || in_array('Super Admin', $role_names))
                     <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">

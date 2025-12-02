@@ -31,11 +31,11 @@
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
                                         @if ($dispatch->department == "inventory")
-                                            <li><a href="{{route('inventory_dispatches.index')}}"><i class="fa fa-list"></i> Dispatches</a></li>
+                                            <li><a href="{{route('inventory_dispatches.index')}}"><i class="fa fa-list"></i> Inventory Dispatches</a></li>
                                         @elseif($dispatch->department == "tyre")
-                                            <li><a href="{{route('tyre_dispatches.index')}}"><i class="fa fa-list"></i> Dispatches</a></li>
+                                            <li><a href="{{route('tyre_dispatches.index')}}"><i class="fa fa-list"></i> Tyre Dispatches</a></li>
                                         @elseif($dispatch->department == "asset")
-                                            <li><a href="{{route('asset_dispatches.index')}}"><i class="fa fa-list"></i> Dispatches</a></li>
+                                            <li><a href="{{route('asset_dispatches.index')}}"><i class="fa fa-list"></i> Asset Dispatches</a></li>
                                         @endif
             							
             							<li class="active"> <i class="fas fa-eye"></i> Dispatch Details</li>

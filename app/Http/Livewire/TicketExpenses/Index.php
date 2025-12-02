@@ -10,6 +10,7 @@ use App\Models\Product;
 use Livewire\Component;
 use App\Models\Currency;
 use App\Models\BillExpense;
+use App\Models\PaymentMethod;
 use App\Models\TicketExpense;
 use Illuminate\Support\Facades\Auth;
 
@@ -24,6 +25,8 @@ class Index extends Component
     public $selectedProduct;
     public $currencies;
     public $currency_id;
+    public $payment_methods;
+    public $payment_method_id;
     public $expenses;
     public $bill_expense;
     public $selectedExpense;
@@ -57,6 +60,7 @@ class Index extends Component
     public $description;
     public $total;
     public $bill_total;
+    public $subtotal_incl;
     public $tax_rate;
     public $tax_amount;
     public $total_tax_amount;
@@ -97,8 +101,10 @@ class Index extends Component
     public function mount($ticket){
         $this->company = Auth::user()->employee->company;
         $this->ticket = $ticket;
-        $this->currencies = Currency::all();
+
+        $this->currencies = Currency::orderBy('name','asc')->get();
         $this->products = Product::where('buy',True)->orderBy('name','asc')->get();
+        $this->payment_methods = PaymentMethod::orderBy('name','asc')->get();
         $this->tax_accounts = Account::whereHas('account_type', function ($query) {
             return $query->where('name','Sales Taxes');
         })->orderBy('name','asc')->get();
@@ -249,10 +255,12 @@ class Index extends Component
         // try{
 
         if (isset($this->selectedProduct)) {
+            
                 $ticket_expense = new  TicketExpense;
                 $ticket_expense->ticket_id = $this->ticket->id;
                 $ticket_expense->account_id =  $this->selectedAccount;
                 $ticket_expense->currency_id =  $this->currency_id;
+                $ticket_expense->payment_method_id =  $this->payment_method_id;
                 $ticket_expense->vendor_id =  $this->vendor_id;
                 $ticket_expense->product_id =  $this->selectedProduct;
                 $ticket_expense->qty =  $this->qty;
@@ -388,6 +396,7 @@ class Index extends Component
         
         $this->vendor_id = $ticket_expense->vendor_id;
         $this->selectedProduct = $ticket_expense->product_id;
+        $this->payment_method_id = $ticket_expense->payment_method_id;
         $this->selectedAccount = $ticket_expense->account_id;
         $this->qty = $ticket_expense->qty;
         $this->amount = $ticket_expense->amount;
@@ -415,6 +424,7 @@ class Index extends Component
                 $ticket_expense->ticket_id = $this->ticket->id;
                 $ticket_expense->account_id =  $this->selectedAccount;
                 $ticket_expense->currency_id =  $this->currency_id;
+                $ticket_expense->payment_method_id =  $this->payment_method_id;
                 $ticket_expense->vendor_id =  $this->vendor_id;
                 $ticket_expense->product_id =  $this->selectedProduct;
                 $ticket_expense->qty =  $this->qty;

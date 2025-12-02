@@ -19,6 +19,7 @@ use App\Models\ExchangeRate;
 use App\Models\Notification;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Excel;
+use App\Models\PaymentMethod;
 use App\Models\RequisitionItem;
 use App\Exports\RequisitionExport;
 use Illuminate\Support\Facades\DB;
@@ -62,6 +63,7 @@ class Index extends Component
     public $requisition_id;
     public $employees;
     public $employee;
+    public $payment_methods;
     public $employee_id;
     public $departments;
     public $department;
@@ -80,6 +82,7 @@ class Index extends Component
     public $selectedProduct = [];
     public $selectedCurrency = [];
     public $selected_currency = [];
+    public $payment_method_id = [];
     public $exchange_rate = [];
     public $exchange_amount = [];
     public $expense_id = [];
@@ -90,6 +93,7 @@ class Index extends Component
     public $current_selectedProduct = [];
     public $current_selectedCurrency = [];
     public $current_selected_currency = [];
+    public $current_payment_method_id = [];
     public $current_exchange_rate = [];
     public $current_exchange_amount = [];
     public $current_expense_id = [];
@@ -232,6 +236,7 @@ class Index extends Component
                     $this->expense_id[$index] = $trip_expense->expense_id;
                     $this->allowance_id[$index] = $trip_expense->allowance_id;
                     $this->selectedCurrency[$index] = $trip_expense->currency_id;
+                    $this->payment_method_id[$index] = $trip_expense->payment_method_id;
                     $this->selected_currency[$index] = $trip_expense->currency;
                     $this->amount[$index] = $trip_expense->amount;
                     $this->qty[$index] = 1;
@@ -264,10 +269,45 @@ class Index extends Component
                     $this->selectedProduct[$index] = $purchase_product->product_id;
                     $this->selectedCurrency[$index] = $purchase->currency_id;
                     $this->selected_currency[$index] = $purchase->currency;
-                    $this->amount[$index] = $purchase_product->amount;
+                    $this->payment_method_id[$index] = $purchase_product->payment_method_id;
+                    $this->amount[$index] = $purchase_product->subtotal_incl ?? $purchase_product->subtotal;;
                     $this->qty[$index] = 1;
                     $this->exchange_rate[$index] = $purchase_product->exchange_rate;
                     $this->exchange_amount[$index] = $purchase_product->exchange_amount;
+
+                    $index++;
+                }
+
+                $this->i = $index - 1;
+            }
+        }
+    }
+
+    public function updatedSelectedBooking($id)
+    {   
+        if (!is_null($id)) {
+        
+            $booking = Booking::with('ticket')->find($id);
+            $ticket = $booking?->ticket;
+         
+            if ($ticket && $ticket->ticket_expenses) {
+
+                $this->reset(['inputs', 'selectedCurrency', 'selected_currency', 'payment_method_id', 'amount', 'qty', 'exchange_rate', 'exchange_amount']);
+
+                $index = 0;
+
+                foreach ($ticket->ticket_expenses as $ticket_expense) {
+                    
+                    $this->inputs[] = $index;
+
+                    $this->selectedProduct[$index] = $ticket_expense->product_id;
+                    $this->selectedCurrency[$index] = $ticket_expense->currency_id;
+                    $this->payment_method_id[$index] = $ticket_expense->payment_method_id;
+                    $this->selected_currency[$index] = $ticket_expense->currency;
+                    $this->amount[$index] = $ticket_expense->subtotal_incl ?? $ticket_expense->subtotal;
+                    $this->qty[$index] = 1;
+                    $this->exchange_rate[$index] = $ticket_expense->exchange_rate;
+                    $this->exchange_amount[$index] = $ticket_expense->exchange_amount;
 
                     $index++;
                 }
@@ -353,6 +393,7 @@ class Index extends Component
         $this->requisition_filter = "created_at";
         $this->employees = Employee::where('archive', 0)->where('status',1)->orderBy('surname','asc')->get()->sortBy('name');
         $this->departments = Department::orderBy('name','asc')->get();
+        $this->payment_methods = PaymentMethod::orderBy('name','asc')->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name','Expenses');
@@ -544,6 +585,7 @@ class Index extends Component
                 $product_id = $this->selectedProduct[$key] ?? Null;
                 $expense_id = $this->expense_id[$key] ?? Null;
                 $allowance_id = $this->allowance_id[$key] ?? Null;
+                $payment_method_id = $this->payment_method_id[$key] ?? Null;
                 $qty = $this->qty[$key] ?? 0;
                 $amount = $this->amount[$key] ?? 0;
                 $currency_id = $this->selectedCurrency[$key] ?? 0;
@@ -553,6 +595,7 @@ class Index extends Component
                 $requisition_item->allowance_id = $allowance_id;
                 $requisition_item->product_id = $product_id;
                 $requisition_item->expense_id = $expense_id;
+                $requisition_item->payment_method_id = $payment_method_id;
                 $requisition_item->qty = $qty;
                 $requisition_item->amount = $amount;
                 $requisition_item->currency_id = $currency_id;
@@ -669,6 +712,7 @@ class Index extends Component
                     $this->current_expense_id[$key] = $requisition_item->expense_id;
                     $this->current_allowance_id[$key] = $requisition_item->allowance_id;
                     $this->current_selectedProduct[$key] = $requisition_item->product_id;
+                    $this->current_payment_method_id[$key] = $requisition_item->payment_method_id;
                     $this->current_selectedCurrency[$key] = $requisition_item->currency_id;
                     $this->current_selected_currency[$key] = $requisition_item->currency;
                     $this->current_amount[$key] = $requisition_item->amount;
@@ -711,6 +755,7 @@ class Index extends Component
                 $expense_id = $this->current_expense_id[$key] ?? Null;
                 $allowance_id = $this->current_allowance_id[$key] ?? Null;
                 $product_id = $this->current_selectedProduct[$key] ?? Null;
+                $payment_method_id = $this->current_payment_method_id[$key] ?? Null;
                 $qty = $this->current_qty[$key] ?? 0;
                 $amount = $this->current_amount[$key] ?? 0;
                 $currency_id = $this->current_selectedCurrency[$key] ?? 0;
@@ -720,6 +765,7 @@ class Index extends Component
                 $requisition_item->expense_id = $expense_id;
                 $requisition_item->allowance_id = $allowance_id;
                 $requisition_item->product_id = $product_id;
+                $requisition_item->payment_method_id = $payment_method_id;
                 $requisition_item->qty = $qty;
                 $requisition_item->amount = $amount;
                 $requisition_item->currency_id = $currency_id;
@@ -760,7 +806,7 @@ class Index extends Component
                 $product_id = $this->selectedProduct[$key] ?? Null;
                 $expense_id = $this->expense_id[$key] ?? Null;
                 $allowance_id = $this->allowance_id[$key] ?? Null;
-                
+                $payment_method_id = $this->payment_method_id[$key] ?? Null;
                 $qty = $this->qty[$key] ?? 0;
                 $amount = $this->amount[$key] ?? 0;
                 $currency_id = $this->selectedCurrency[$key] ?? 0;
@@ -768,6 +814,7 @@ class Index extends Component
                 $exchange_amount = $this->exchange_amount[$key] ?? 0;
 
                 $requisition_item->allowance_id = $allowance_id;
+                $requisition_item->payment_method_id = $payment_method_id;
                 $requisition_item->product_id = $product_id;
                 $requisition_item->expense_id = $expense_id;
                 $requisition_item->qty = $qty;
@@ -839,91 +886,108 @@ class Index extends Component
 
         if($this->requisition_for == 'Trip'){
 
-        
+            $tripQuery = Trip::query()
+                    ->select('id', 'trip_number', 'trip_ref','start_date', 'customer_id', 'driver_id', 'horse_id', 'from', 'to', 'loading_point_id', 'offloading_point_id')
+                    ->with([
+                        'customer:id,name',
+                        'driver',
+                        'horse:id,registration_number,fleet_number',
+                        'loading_point:id,name',
+                        'offloading_point:id,name'
+                    ])
+                    ->whereYear('start_date', date('Y'))
+                    ->where('authorization', 'approved')
+                    ->where('trip_status', '!=', 'Cancelled');
 
             if (filled($this->searchTrip)) {
-                $this->trips = Trip::query()->with(['customer:id,name',
-                'horse:id,registration_number,fleet_number',
-                'loading_point:id,name',
-                'offloading_point:id,name'])
-                ->whereYear('start_date',date('Y'))
-                ->where('authorization','approved')
-                ->where('trip_status','!=','Cancelled')
-                ->where('trip_number', 'like', '%'.$this->searchTrip.'%')
-                ->orWhere('trip_ref', 'like', '%'.$this->searchTrip.'%')
-                ->orWhereHas('horse', function ($query) {
-                    return $query->where('registration_number', 'like', '%'.$this->searchTrip.'%');
-                })
-                ->orderBy('id','desc')->get();
-            }else{
-                $this->trips =  Trip::select('id', 'trip_number', 'trip_ref','start_date', 'customer_id', 'driver_id', 'horse_id', 'from', 'to', 'loading_point_id', 'offloading_point_id')
-                ->with([
-                    'customer:id,name',
-                    'driver',
-                    'horse:id,registration_number,fleet_number',
-                    'loading_point:id,name',
-                    'offloading_point:id,name'
-                ])
-                ->whereYear('start_date',date('Y'))
-                ->where('authorization','approved')
-                ->where('trip_status','!=','Cancelled')
+                $term = '%'.$this->searchTrip.'%';
+
+                $tripQuery->where(function ($q) use ($term) {
+                    $q->where('trip_number', 'like', $term)
+                    ->orWhere('trip_ref', 'like', $term)
+                    ->orWhereHas('horse', function ($qq) use ($term) {
+                        $qq->where('registration_number', 'like', $term);
+                    });
+                });
+            }
+
+            $this->trips = $tripQuery
                 ->orderBy('id', 'desc')
                 ->get();
-            }
+
         }elseif($this->requisition_for == 'Booking'){
            
-               
-                if (filled($this->searchBooking)) {
-                    $this->bookings = Booking::query()->with([
-                    'horse:id,registration_number',
-                    'trailer:id,registration_number',
-                    'vehicle:id,registration_number',
-                    'employee:id,name,surname'])
-                    ->whereYear('in_date',date('Y'))
-                    ->where('authorization','approved')
-                    ->where('status',True)
-                    ->where('booking_number', 'like', '%'.$this->searchBooking.'%')
-                    ->orWhereHas('service_type', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->searchBooking.'%');
-                    })
-                    ->orWhereHas('horse', function ($query) {
-                        return $query->where('registration_number', 'like', '%'.$this->searchBooking.'%');
-                    })
-                    ->orWhereHas('trailer', function ($query) {
-                        return $query->where('registration_number', 'like', '%'.$this->searchBooking.'%');
-                    })
-                    ->orWhereHas('vehicle', function ($query) {
-                        return $query->where('registration_number', 'like', '%'.$this->searchBooking.'%');
-                    })
-                    ->orWhereHas('employee', function ($query) {
-                        return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->searchBooking.'%');
-                    })
-                    ->orderBy('id','desc')->get();
-                }else{
-                    $this->bookings = Booking::whereYear('in_date',date('Y'))->where('authorization','approved')->where('status',True)->orderBy('id','desc')->get();
-                }
-            
+            $bookingQuery = Booking::query()
+            ->with([
+                'ticket',
+                'horse:id,registration_number,fleet_number',
+                'trailer:id,registration_number,fleet_number',
+                'vehicle:id,registration_number,fleet_number',
+                'employees:id,name,surname',
+                'employee:id,name,surname',
+            ])
+            ->whereYear('in_date', date('Y'))
+            ->where('authorization', 'approved')
+            ->where('status', true);
+
+        if (filled($this->searchBooking)) {
+
+            $term = '%'.$this->searchBooking.'%';
+
+            $bookingQuery->where(function ($q) use ($term) {
+                $q->where('booking_number', 'like', $term)
+                ->orWhereHas('ticket', function ($qq) use ($term) {
+                    $qq->where('ticket_number', 'like', $term);
+                })
+                ->orWhereHas('service_type', function ($qq) use ($term) {
+                    $qq->where('name', 'like', $term);
+                })
+                ->orWhereHas('horse', function ($qq) use ($term) {
+                    $qq->where('registration_number', 'like', $term);
+                })
+                ->orWhereHas('trailer', function ($qq) use ($term) {
+                    $qq->where('registration_number', 'like', $term);
+                })
+                ->orWhereHas('vehicle', function ($qq) use ($term) {
+                    $qq->where('registration_number', 'like', $term);
+                })
+                ->orWhereHas('employee', function ($qq) use ($term) {
+                    $qq->where(DB::raw("concat(name, ' ', surname)"), 'like', $term);
+                });
+            });
+        }
+
+        $this->bookings = $bookingQuery
+            ->orderBy('id', 'desc')
+            ->get(); 
+
         }elseif($this->requisition_for == 'Purchase'){
            
-           
-              if (filled($this->searchPurchase)) {
-                    $this->purchases = Purchase::query()->with(['vendor','currency'])
-                    ->whereYear('date',date('Y'))
-                    ->where('authorization','approved')
-                    ->where('status',True)
-                    ->where('purchase_number', 'like', '%'.$this->searchPurchase.'%')
-                    ->orWhere('date', 'like', '%'.$this->searchPurchase.'%')
-                    ->orWhere('total', 'like', '%'.$this->searchPurchase.'%')
-                    ->orWhereHas('vendor', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->searchPurchase.'%');
-                    })
-                    ->orWhereHas('currency', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->searchPurchase.'%');
-                    })
-                    ->orderBy('id','desc')->get();
-            }else{
-                $this->purchases = Purchase::whereYear('date',date('Y'))->where('authorization','approved')->where('status',True)->orderBy('id','desc')->get();
-            }
+               $purchaseQuery = Purchase::query()
+                    ->with(['vendor', 'currency'])
+                    ->whereYear('date', date('Y'))
+                    ->where('authorization', 'approved')
+                    ->where('status', true);
+
+                if (filled($this->searchPurchase)) {
+                    $term = '%'.$this->searchPurchase.'%';
+
+                    $purchaseQuery->where(function ($q) use ($term) {
+                        $q->where('purchase_number', 'like', $term)
+                        ->orWhere('date', 'like', $term)
+                        ->orWhere('total', 'like', $term)
+                        ->orWhereHas('vendor', function ($qq) use ($term) {
+                            $qq->where('name', 'like', $term);
+                        })
+                        ->orWhereHas('currency', function ($qq) use ($term) {
+                            $qq->where('name', 'like', $term);
+                        });
+                    });
+                }
+
+                $this->purchases = $purchaseQuery
+                    ->orderBy('id', 'desc')
+                    ->get();
             
         }
 

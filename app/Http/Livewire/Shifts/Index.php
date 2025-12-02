@@ -329,7 +329,15 @@ class Index extends Component
         $this->trip_type = TripType::where('name','Local')->first();
         $this->customers = Customer::orderBy('name','asc')->get();
         $this->selectedCurrency = 1;
-        $this->drivers = Driver::all();
+        $this->drivers = Driver::query()
+                        ->with('employee')
+                        ->join('employees', 'employees.id', '=', 'drivers.employee_id')
+                        ->where('employees.archive',0)
+                        ->where('employees.status',1)
+                        ->orderBy('employees.name', 'asc')
+                        ->orderBy('employees.surname', 'asc')
+                        ->select('drivers.*') // important!
+                        ->get();
         $this->horses = Horse::orderBy('registration_number','asc')->get();
         $this->cargos = Cargo::orderBy('name','asc')->get();
         $this->transporters = Transporter::with('vehicles:id,registration_number','vehicles.vehicle_make:id,name','vehicles.vehicle_model:id,name','horses:id,registration_number','horses.horse_make:id,name','horses.horse_model:id,name','cargos:id,name','trailers:id,registration_number,make,model','drivers:id','drivers.employee:id,name,surname')->where('authorization','approved')->orderBy('name','asc')->get();
@@ -395,16 +403,26 @@ class Index extends Component
         
         elseif($category == 'drivers'){
             if (isset($this->selectedStatus) && ($this->selectedStatus == "Scheduled" || $this->selectedStatus == "Offloaded" || $this->selectedStatus == "Cancelled") ) {
-                $this->drivers = Driver::query()->with('employee:id,name,surname')->where('transporter_id',$this->selectedTransporter)
-                ->withAggregate('employee','name')
-                ->where('archive',0)
-                ->orderBy('employee_name','asc')->get();
+                 $this->drivers = Driver::query()
+                        ->with('employee')
+                        ->join('employees', 'employees.id', '=', 'drivers.employee_id')
+                        ->where('employees.archive',0)
+                        ->orderBy('employees.name', 'asc')
+                        ->orderBy('employees.surname', 'asc')
+                        ->select('drivers.*') // important!
+                        ->get();
             }else{
-                $this->drivers = Driver::query()->with('employee:id,name,surname')->where('transporter_id',$this->selectedTransporter)
-                ->withAggregate('employee','name')
-                ->where('status', 1)
-                ->where('archive',0)
-                ->orderBy('employee_name','asc')->get();
+                 $this->drivers = Driver::query()
+                        ->with('employee')
+                        ->join('employees', 'employees.id', '=', 'drivers.employee_id')
+                         ->where('drivers.transporter_id',$this->selectedTransporter)
+                         ->where('employees.archive',0)
+                        ->where('employees.status',1)
+                        ->orderBy('employees.name', 'asc')
+                        ->orderBy('employees.surname', 'asc')
+                        ->select('drivers.*') // important!
+                        ->get();
+              
             }
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
@@ -685,10 +703,15 @@ class Index extends Component
                 $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('transporter_id',$id)
                 ->where('archive',0)
                 ->orderBy('registration_number','asc')->get();
-                $this->drivers = Driver::query()->with('employee:id,name,surname')->where('transporter_id',$id)
-                ->withAggregate('employee','name')
-                ->where('archive',0)
-                ->orderBy('employee_name','asc')->get();
+                 $this->drivers = Driver::query()
+                        ->with('employee')
+                        ->join('employees', 'employees.id', '=', 'drivers.employee_id')
+                         ->where('drivers.transporter_id',$id)
+                        ->where('employees.archive',0)
+                        ->orderBy('employees.name', 'asc')
+                        ->orderBy('employees.surname', 'asc')
+                        ->select('drivers.*') // important!
+                        ->get();
             }else{
                 $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$id)
                 ->where('status', 1)
@@ -700,11 +723,16 @@ class Index extends Component
                 ->where('service',0)
                 ->where('archive',0)
                 ->orderBy('registration_number','asc')->get();
-                $this->drivers = Driver::query()->with('employee:id,name,surname')->where('transporter_id',$id)
-                ->withAggregate('employee','name')
-                ->where('status', 1)
-                ->where('archive',0)
-                ->orderBy('employee_name','asc')->get();
+                $this->drivers = Driver::query()
+                        ->with('employee')
+                        ->join('employees', 'employees.id', '=', 'drivers.employee_id')
+                          ->where('drivers.transporter_id',$id)
+                        ->where('employees.archive',0)
+                        ->where('employees.status',1)
+                        ->orderBy('employees.name', 'asc')
+                        ->orderBy('employees.surname', 'asc')
+                        ->select('drivers.*') // important!
+                        ->get();
             }
      
           
