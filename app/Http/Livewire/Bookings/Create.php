@@ -38,6 +38,7 @@ class Create extends Component
     public $assigned_to = "Mechanic";
     public $horses;
     public $selectedAsset;
+    public $transaction_type = "expense";
     public $assets;
     public $selectedHorse;
     public $vehicles;
@@ -235,6 +236,7 @@ class Create extends Component
         $booking->user_id = Auth::user()->id;
         $booking->assigned_to = $this->assigned_to;
         $booking->breakdown_id = $this->breakdown_id;
+        $booking->transaction_type = $this->transaction_type;
 
         $booking->vendor_id = $this->assigned_to === "Vendor" ? ($this->vendor_id ?: null) : null;
 
@@ -248,24 +250,38 @@ class Create extends Component
        
 
         switch ($this->type) {
-            case "Horse":
-                $booking->odometer = $this->mileage;
-                $booking->hours = $this->hours;
-                $booking->horse_id = $this->selectedHorse ?: null;
-                break;
-            case "Trailer":
-                $booking->odometer = $this->mileage;
-                $booking->trailer_id = $this->selectedTrailer ?: null;
-                break;
-            case "Vehicle":
-                $booking->odometer = $this->mileage;
-                $booking->hours = $this->hours;
-                $booking->vehicle_id = $this->selectedVehicle ?: null;
-                break;
-            case "Asset":
-                $booking->asset_id = $this->selectedAsset ?: null;
-                break;
-        }
+
+        case "Horse":
+            $model = Horse::find($this->selectedHorse);
+
+            $booking->odometer       = $this->mileage;
+            $booking->hours          = $this->hours;
+            $booking->horse_id       = $model?->id;
+            $booking->transporter_id = $model?->transporter_id;
+            break;
+
+        case "Trailer":
+            $model = Trailer::find($this->selectedTrailer);
+
+            $booking->odometer       = $this->mileage;
+            $booking->trailer_id     = $model?->id;
+            $booking->transporter_id = $model?->transporter_id;
+            break;
+
+        case "Vehicle":
+            $model = Vehicle::find($this->selectedVehicle);
+
+            $booking->odometer       = $this->mileage;
+            $booking->hours          = $this->hours;
+            $booking->vehicle_id     = $model?->id;
+            $booking->transporter_id = $model?->transporter_id;
+            break;
+
+        case "Asset":
+            $booking->asset_id = $this->selectedAsset ?: null;
+            break;
+            
+    }
      
         $booking->employee_id = $this->employee_id ? $this->employee_id : Null;
       

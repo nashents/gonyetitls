@@ -13,6 +13,9 @@ class Transporter extends Model implements Auditable
 
     use \OwenIt\Auditing\Auditable;
 
+    public function bookings(){
+        return $this->hasMany('App\Models\Booking');
+    }
     public function trips(){
         return $this->hasMany('App\Models\Trip');
     }

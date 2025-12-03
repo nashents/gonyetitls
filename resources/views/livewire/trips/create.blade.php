@@ -63,7 +63,6 @@
                                     </div>
                                 
                                     <!-- Trip Reference -->
-
                                    
                                     <div class="col-md-3">
                                         <div class="form-group">
@@ -1138,7 +1137,7 @@
                                             <input type="number" step="any" class="form-control" wire:model.debounce.300ms="trip_fuel" placeholder="Trip Fuel Qty">
                                             @error('trip_fuel') <span class="text-danger error">{{ $message }}</span>@enderror
                                             @if ($horse_selected)
-                                                <small> <a href="{{ route('horses.show',$horse_selected->id) }}" target="_blank" style="color: blue">Horse {{ $horse_selected->registration_number }}</a> Fuel Tank Balance: {{ $fuel_balance }} Litres</small>
+                                                <small> <a href="{{ route('horses.show',$horse_selected->id) }}" target="_blank" style="color: blue">Horse {{ $horse_selected->registration_number }}</a> Fuel Tank Balance: {{ $fuel_balance ? $fuel_balance : "$fuel_balance" }} </small>
                                             @endif
                                             <br>
                                             @if (isset($fuel_balance) && isset($trip_fuel))

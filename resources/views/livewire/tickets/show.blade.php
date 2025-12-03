@@ -254,7 +254,7 @@
                                     
                                 </td>
                             </tr>
-                            <hr>
+                          
                         </tbody>
                     </table>
                     <table id="inspection_resultsTable" class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">

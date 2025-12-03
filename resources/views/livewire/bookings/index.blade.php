@@ -167,11 +167,7 @@
                                     <a href="#" wire:click="exportBookingsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a> 
                                     <br>
                                     <br>
-                                   
                                 </div>
-
-                       
-
                                 <div class="col-md-5" style="float: right; padding-right:2px">
                                     <div class="form-group">
                                         <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search Bookings...">
@@ -273,14 +269,17 @@
                                           
                                         </td>
                                         <td>
-                                            @if (isset($booking->horse))
-                                                Horse |  {{$booking->horse->registration_number}} {{$booking->horse->fleet_number ? "(".$booking->horse->fleet_number.")" : ""}}
+                                                @if (!is_null($booking->transporter_id))
+                                                    <strong>Transporter: </strong>{{$booking->transporter ? $booking->transporter->name : ""}} 
+                                                @endif
+                                                @if (isset($booking->horse))
+                                                    <strong>Horse: </strong>{{$booking->horse->registration_number}} {{$booking->horse->fleet_number ? "(".$booking->horse->fleet_number.")" : ""}}
                                                 @elseif(isset($booking->vehicle))
-                                                Vehicle |  {{$booking->vehicle->registration_number}} {{$booking->vehicle->fleet_number ? "(".$booking->vehicle->fleet_number.")" : ""}}
+                                                    <strong>Vehicle: </strong>{{$booking->vehicle->registration_number}} {{$booking->vehicle->fleet_number ? "(".$booking->vehicle->fleet_number.")" : ""}}
                                                 @elseif(isset($booking->asset))
-                                                Asset | {{$booking->asset->product->brand ? $booking->asset->product->brand->name : ""}} {{ucfirst($booking->asset->product ? $booking->asset->product->name : "")}}  {{$booking->asset->serial_number}}
+                                                    <strong>Asset: </strong> {{$booking->asset->product->brand ? $booking->asset->product->brand->name : ""}} {{ucfirst($booking->asset->product ? $booking->asset->product->name : "")}}  {{$booking->asset->serial_number}}
                                                 @elseif(isset($booking->trailer))
-                                                Trailer | {{$booking->trailer->registration_number}} {{$booking->trailer->fleet_number ? "(".$booking->trailer->fleet_number.")" : ""}} 
+                                                <strong>Trailer: </strong>{{$booking->trailer->registration_number}} {{$booking->trailer->fleet_number ? "(".$booking->trailer->fleet_number.")" : ""}} 
                                             @endif
                                         </td>
                                          <td>
@@ -290,10 +289,11 @@
                                             <strong>Out: </strong> {{$booking ? $booking->workshop_out_date : ""}} {{$booking ? $booking->workshop_out_time : ""}} <br>
                                         </td>
                                         <td>
-                                            <strong>
-                                                Job Type: 
-                                            </strong>{{ucfirst($booking->service_type ? $booking->service_type->name : "")}} <br>
-                                            {{Str::limit($booking->description,100,'...')}}</td>
+                                            @if ($booking->transaction_type)
+                                                <strong>Txn Type: </strong>{{ucfirst($booking->transaction_type)}} <br>
+                                            @endif 
+                                            <strong>Job Type: </strong>{{ucfirst($booking->service_type ? $booking->service_type->name : "")}} <br>
+                                            <strong>Reason: </strong>{{Str::limit($booking->description,100,'...')}}</td>
                                         <td>{{ optional(\App\Models\Station::find($booking->station_id))->name ?? $booking->station }}</td>
                                         <td><span class="badge bg-{{($booking->authorization == 'approved') ? 'success' : (($booking->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($booking->authorization == 'approved') ? 'approved' : (($booking->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
                                         <td><span class="badge bg-{{$booking->status == 1 ? "warning" : "success"}}">{{$booking->status == 1 ? "Open" : "Closed"}}</span></td>

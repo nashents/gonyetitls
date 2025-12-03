@@ -27,6 +27,12 @@ class InspectionController extends Controller
         );
     }
 
+    public function preview(Inspection $inspection){
+        return view('inspections.preview')->with([
+            'inspection' => $inspection,
+          ]);
+    }
+
     /**
      * Show the form for creating a new resource.
      *

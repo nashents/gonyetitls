@@ -304,11 +304,15 @@ class Index extends Component
 
             $query->where(function ($q) use ($term) {
                 $q->where('booking_number', 'like', $term)
+                ->orWhere('transaction_type', 'like', $term)
                 ->orWhereHas('employees', function ($qq) use ($term) {
                     $qq->where(DB::raw("concat(name, ' ', surname)"), 'like', $term);
                 })
                 ->orWhereHas('ticket', function ($qq) use ($term) {
                     $qq->where('ticket_number', 'like', $term);
+                })
+                ->orWhereHas('transporter', function ($qq) use ($term) {
+                    $qq->where('name', 'like', $term);
                 })
                 ->orWhereHas('station', function ($qq) use ($term) {
                     $qq->where('name', 'like', $term);

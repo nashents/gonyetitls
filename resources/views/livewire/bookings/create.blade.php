@@ -9,19 +9,31 @@
                         <div class="panel-body">
 
                             <form wire:submit.prevent="store()" class="p-20" enctype="multipart/form-data">
-                                <h5 class="underline mt-30">Booking For ?</h5>
-                                <div class="mb-10">
-                                    <input type="radio" wire:model.debounce.300ms="type" value="Asset"  class="line-style"  />
-                                    <label for="one" class="radio-label">Asset</label>
-                                    <input type="radio" wire:model.debounce.300ms="type" value="Horse"  class="line-style"  />
-                                    <label for="one" class="radio-label">Horse</label>
-                                    <input type="radio" wire:model.debounce.300ms="type" value="Trailer"  class="line-style"  />
-                                    <label for="one" class="radio-label">Trailer</label>
-                                    <input type="radio" wire:model.debounce.300ms="type" value="Vehicle"  class="line-style" />
-                                    <label for="one" class="radio-label">Vehicle</label>
-                                </div>      
-                                <hr>
-                             
+                                <h5 class="underline mt-30 mb-30">Create Workshop Booking</h5>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label for="exampleInputEmail13">Transaction Type<span class="required" style="color: red">*</span></label>
+                                        <div class="mb-10">
+                                            <input type="radio" wire:model.debounce.300ms="transaction_type" value="expense"  class="line-style"  required/>
+                                            <label for="one" class="radio-label">Expense</label>
+                                            <input type="radio" wire:model.debounce.300ms="transaction_type" value="income"  class="line-style"  required/>
+                                            <label for="one" class="radio-label">Income</label>
+                                        </div>     
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="exampleInputEmail13">Booking For<span class="required" style="color: red">*</span></label>
+                                        <div class="mb-10">
+                                            <input type="radio" wire:model.debounce.300ms="type" value="Asset"  class="line-style"  required/>
+                                            <label for="one" class="radio-label">Asset</label>
+                                            <input type="radio" wire:model.debounce.300ms="type" value="Horse"  class="line-style"  required/>
+                                            <label for="one" class="radio-label">Horse</label>
+                                            <input type="radio" wire:model.debounce.300ms="type" value="Trailer"  class="line-style"  required/>
+                                            <label for="one" class="radio-label">Trailer</label>
+                                            <input type="radio" wire:model.debounce.300ms="type" value="Vehicle"  class="line-style" required/>
+                                            <label for="one" class="radio-label">Vehicle</label>
+                                        </div>     
+                                    </div>
+                                </div>
                                 <div class="row">
                                     <div class="col-md-4">
                                         @if ($type == "Horse")

@@ -121,8 +121,7 @@
                                                     @if ($inspection->status == 1)
                                                      <li><a href="{{route('inspections.show', $inspection->id)}}"><i class="fa fa-search color-default"></i>Inspect</a></li>
                                                     @endif
-                                                   
-                                                    {{-- <li><a href="{{route('inspections.edit', $inspection->id)}}"><i class="fa fa-edit color-success"></i> Edit</a></li> --}}
+                                                    <li><a href="{{route('inspections.preview', $inspection->id)}}"><i class="fa fa-file color-success"></i> Preview</a></li>
                                                     {{-- <li><a href="#" data-toggle="modal" data-target="#inspectionDeleteModal{{$inspection->id}}"><i class="fa fa-trash color-danger"></i>Delete</a></li> --}}
                                                 </ul>
                                             </div>

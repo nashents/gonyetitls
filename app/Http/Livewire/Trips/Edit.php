@@ -233,6 +233,8 @@ class Edit extends Component
     public $total_expenses;
     public $commission_id;
 
+    public $trip_fuel_locked = false;
+
     public $distance;
     public $duration;
     public $selectedStatus;
@@ -445,26 +447,37 @@ class Edit extends Component
 
         $distance = null;
         if (is_numeric($this->starting_mileage) && is_numeric($this->ending_mileage)) {
-            $distance = $this->ending_mileage - $this->starting_mileage;
+            $distance = (float) $this->ending_mileage - (float) $this->starting_mileage;
         } else {
-            $distance = $this->distance ?? 0;
+            $distance = (float) ($this->distance ?? 0);
+        }
+
+        // Protect against negative mileage
+        if ($distance < 0) {
+            $distance = 0;
         }
 
         $hours_distance = null;
         if (is_numeric($this->starting_hours) && is_numeric($this->ending_hours)) {
-            $hours_distance = $this->ending_hours - $this->starting_hours;
+            $hours_distance = (float) $this->ending_hours - (float) $this->starting_hours;
+            if ($hours_distance < 0) {
+                $hours_distance = 0;
+            }
         }
 
+       // 3) Total fuel used (L)
         $total_fuel = $fuels && $fuels->count() > 0
-        ? $fuels->sum(fn($fuel) => (float) $fuel->quantity)
-        : (float) ($this->trip_fuel ?? 0);
+            ? (float) $fuels->sum(fn($fuel) => (float) $fuel->quantity)
+            : (float) ($this->trip_fuel ?? 0);
 
-        if (is_numeric($distance) && $distance > 0 && $total_fuel > 0) {
-            $trip->fuel_consumption_mileage = $distance / $total_fuel;
+        // 4) km per litre
+        if ($distance > 0 && $total_fuel > 0) {
+            $trip->fuel_consumption_mileage = $distance / $total_fuel;   // km/L
         }
 
-        if (is_numeric($hours_distance) && $hours_distance > 0 && $total_fuel > 0) {
-            $trip->fuel_consumption_hours = $hours_distance / $total_fuel;
+        // 5) hours per litre (if that’s what you want)
+        if (!is_null($hours_distance) && $hours_distance > 0 && $total_fuel > 0) {
+            $trip->fuel_consumption_hours = $hours_distance / $total_fuel; // h/L
         }
 
         $trip->save();
@@ -2670,9 +2683,7 @@ class Edit extends Component
             $this->calculateFuelAmount();
         }
 
-         public function updatedTripFuel(){
-        $this->calculateFuelTotal();
-    }
+       
 
         public function calculateFuelTotal(){
 
@@ -2990,17 +3001,32 @@ class Edit extends Component
             return $destination;
         }
 
+    public function updatedTripFuel($value){
+        $this->calculateFuelTotal();
+         // If the user touches this field, stop auto-calculation
+        if ($value !== null && $value !== '') {
+            $this->trip_fuel_locked = true;
+        } else {
+            // Optional: if they clear it, go back to auto mode
+            $this->trip_fuel_locked = false;
+        }
+    }
+
+
       public function render()
       {
 
-        
-        if ($this->distance && is_numeric($this->distance)) {
-            $consumption = $this->with_cargos 
-                ? $this->fuel_consumption_loaded_standard 
-                : $this->fuel_consumption_empty_standard;
+       if (!$this->trip_fuel_locked) { // only when NOT manually overridden
 
-            if ($consumption && is_numeric($consumption)) {
-                $this->trip_fuel = $this->distance * $consumption;
+            if ($this->distance && is_numeric($this->distance)) {
+                $consumption = $this->with_cargos
+                    ? $this->fuel_consumption_loaded_standard   // km/L
+                    : $this->fuel_consumption_empty_standard;   // km/L
+
+                if ($consumption && is_numeric($consumption) && $consumption > 0) {
+                    // km / (km per litre) = litres
+                    $this->trip_fuel = $this->distance / $consumption;
+                }
             }
         }
     

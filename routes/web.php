@@ -198,6 +198,7 @@ Route::get('creditors/report','VendorController@creditorsReports')->name('credit
 Route::get('trips/deleted','TripController@deleted')->name('trips.deleted');
 Route::get('trips/{trip}/trip-sheet','TripController@preview')->name('trips.trip_sheet');
 Route::get('trips/{trip}/manifest','TripController@manifest')->name('trips.manifest');
+Route::get('inspections/{inspection}/preview','InspectionController@preview')->name('inspections.preview');
 Route::get('trips/{trip}/print','TripController@print')->name('trips.print');
 
 Route::get('trips/{from?}/{to?}/{trip_filter?}/summary','TripController@rangeSummary')->name('trips.summary.range');

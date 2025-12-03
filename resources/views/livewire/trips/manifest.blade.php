@@ -101,9 +101,18 @@
       <div class="card">
         <h3>Route</h3>
         <div class="kv">
-          <div class="k">Origin</div><div class="v" data-field="route.origin">{{$from->country ? $from->country->name : ""}} {{$from->city}}</div>
+          <div class="k">Origin</div><div class="v" data-field="route.origin">
+            @if ($from)
+                 {{$from->country ? $from->country->name : ""}} {{$from->city}}
+            @endif
+           
+          </div>
           <div class="k">Loading Point</div><div class="v" data-field="route.origin">{{$trip->loading_point ? $trip->loading_point->name : ""}}</div>
-          <div class="k">Destination</div><div class="v" data-field="route.destination">{{$to->country ? $to->country->name : ""}} {{$to->city}}</div>
+          <div class="k">Destination</div><div class="v" data-field="route.destination">
+            @if ($to)
+                 {{$to->country ? $to->country->name : ""}} {{$to->city}}      
+            @endif
+          </div>
           <div class="k">Offloading Point</div><div class="v" data-field="route.destination">{{$trip->offloading_point ? $trip->offloading_point->name : ""}}</div>
           <div class="k">Border(s) (if any)</div><div class="v" data-field="route.border">
             @foreach ($trip->borders as $border)
