@@ -14,7 +14,7 @@ class AddUuidToHorsesTable extends Migration
     public function up()
     {
         Schema::table('horses', function (Blueprint $table) {
-           $table->string('custom_ref', 16)->nullable()->index();
+           $table->text('custom_ref')->nullable();
         });
     }
 

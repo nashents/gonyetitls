@@ -26,7 +26,7 @@ class AddUuidToVendorsTable extends Migration
     public function down()
     {
         Schema::table('vendors', function (Blueprint $table) {
-            $table->string('custom_ref', 16)->unique()->index();
+            $table->dropColumn('custom_ref');
         });
     }
 }
