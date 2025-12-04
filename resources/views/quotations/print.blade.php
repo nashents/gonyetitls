@@ -112,13 +112,22 @@ Quotation Print |@if (Auth::user()->employee->company)
                                     <div class="date" style="padding-bottom: 3px"><strong>Currency:</strong> {{$quotation->currency ? $quotation->currency->name : ""}}</div>
                                 </div>
                             </div>
-                            <table>
+                            <table class="table table-bordered quotation-table">
+                                <colgroup>
+                                  <col class="col-hs" style="width: 8%">
+                                    <col class="col-description" style="width: 40%">
+                                    <col class="col-qty" style="width: 8%">
+                                    <col class="col-unit" style="width: 11%">
+                                    <col class="col-total-excl" style="width: 11%">
+                                    <col class="col-vat" style="width: 11%">
+                                    <col class="col-total-incl" style="width: 11%">
+                                </colgroup>
                                 <thead>
                                     <tr>
-                                        <th class="text-left"> <strong>HS Code</strong></th>
-                                        <th class="text-left"> <strong>Description</strong></th>
-                                        <th class="text-center"> <strong>Qty</strong></th>
-                                        <th class="text-center"><strong>Unit Price</th> 
+                                        <th class="text-left"><strong>HS Code</strong></th>
+                                        <th class="text-left"><strong>Description</strong></th>
+                                        <th class="text-center"><strong>Qty</strong></th>
+                                        <th class="text-center"><strong>Unit Price</strong></th>
                                         <th class="text-center"><strong>Total(Excl)</strong></th>
                                         <th class="text-center"><strong>VAT Amount</strong></th>
                                         <th class="text-center"><strong>Total(Incl)</strong></th>
@@ -267,10 +276,11 @@ Quotation Print |@if (Auth::user()->employee->company)
                                    
                         </main>
                         <center> 
-                            <footer style=" position:fixed; bottom: 0px; left: 0px; right: 0px; ">
+                           <footer class="print-footer" style="text-align: center; margin-top: 20px;">
                                 {{$quotation->footer}}
                                 <br>
-                                <strong style="font-size: 18px;">Powered By</strong> <img src="{{asset('images/basilmark-logo.png')}}" alt="" style="width: 20%; height:20%">    
+                                <strong style="font-size: 18px;">Powered By</strong>
+                                <img src="{{asset('images/basilmark-logo.png')}}" alt="" style="width: 20%; height:20%">
                             </footer>
                         </center>  
                     </div>
@@ -284,8 +294,10 @@ Quotation Print |@if (Auth::user()->employee->company)
 @endsection
 
 @section('extra-js')
-<script>
-  window.addEventListener("load", window.print());
-</script>
+   <script>
+        window.addEventListener("load", function () {
+            window.print();
+        });
+    </script>
 @endsection
 

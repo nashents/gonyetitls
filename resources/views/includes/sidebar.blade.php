@@ -1548,7 +1548,7 @@
                 ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
                 @endphp
 
-                    @if (in_array('Admin', $role_names) || in_array('Super Admin', $role_names))
+                @if (in_array('Admin', $role_names) || in_array('Super Admin', $role_names))
                         <li class="has-children">
                             <a href="#"><i class="fas fa-door-open"></i> <span>Gatepass</span> <i class="fas fa-angle-right arrow"></i></a>
                             <ul class="child-nav">

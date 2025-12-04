@@ -1,10 +1,13 @@
 <div>
+    <div id="print-area">
     <div id="invoice">
         <x-loading/>
         <div class="toolbar hidden-print">
             <div class="text-end">
                 <button type="button" onclick="goBack()" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-arrow-left" style="color: black"></i> Back</button>
-                <a href="{{route('quotations.print',$quotation->id)}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-print" style="color: black"></i> Print</a>
+                <a href="javascript:void(0)" onclick="printSection()" class="btn btn-default border-primary btn-wide btn-rounded">
+                    <i class="fa fa-print" style="color: black"></i> Print
+                </a>
                 <a href="{{route('quotations.pdf', $quotation->id)}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-file-pdf-o" style="color: red"></i> Export as PDF</a>
             </div>
             <hr>
@@ -100,19 +103,28 @@
                             <div class="date" style="padding-bottom: 3px"><strong>Currency:</strong> {{$quotation->currency ? $quotation->currency->name : ""}}</div>
                         </div>
                     </div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th class="text-left"> <strong>HS Code</strong></th>
-                                <th class="text-left"> <strong>Description</strong></th>
-                                <th class="text-center"> <strong>Qty</strong></th>
-                                <th class="text-center"><strong>Unit Price</th> 
-                                <th class="text-center"><strong>Total(Excl)</strong></th>
-                                <th class="text-center"><strong>VAT Amount</strong></th>
-                                <th class="text-center"><strong>Total(Incl)</strong></th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                       <table class="table table-bordered quotation-table">
+                                <colgroup>
+                                    <col class="col-hs" style="width: 8%">
+                                    <col class="col-description" style="width: 40%">
+                                    <col class="col-qty" style="width: 8%">
+                                    <col class="col-unit" style="width: 11%">
+                                    <col class="col-total-excl" style="width: 11%">
+                                    <col class="col-vat" style="width: 11%">
+                                    <col class="col-total-incl" style="width: 11%">
+                                </colgroup>
+                                <thead>
+                                    <tr>
+                                        <th class="text-left"><strong>HS Code</strong></th>
+                                        <th class="text-left"><strong>Description</strong></th>
+                                        <th class="text-center"><strong>Qty</strong></th>
+                                        <th class="text-center"><strong>Unit Price</strong></th>
+                                        <th class="text-center"><strong>Total(Excl)</strong></th>
+                                        <th class="text-center"><strong>VAT Amount</strong></th>
+                                        <th class="text-center"><strong>Total(Incl)</strong></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
                            
                             @foreach ($quotation->quotation_items as $item)
                             <tr>
@@ -258,5 +270,6 @@
             <!--DO NOT DELETE THIS div. IT is responsible for showing footer always at the bottom-->
             <div></div>
         </div>
+    </div>
     </div>
 </div>

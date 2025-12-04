@@ -6,6 +6,33 @@ Quotation Preview |@if (Auth::user()->employee->company)
 {{Auth::user()->company->name}}
 @endif
 @endsection
+@section('extra-css')
+<style>
+    /* Hide everything except #print-area when printing */
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+
+        #print-area, 
+        #print-area * {
+            visibility: visible;
+        }
+
+        #print-area {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+        }
+
+        /* Hide toolbar/buttons on print */
+        .hidden-print {
+            display: none !important;
+        }
+    }
+</style>
+@endsection
 @section('content')
 <div class="container">
     <div class="card">
@@ -16,6 +43,13 @@ Quotation Preview |@if (Auth::user()->employee->company)
         </div>
     </div>
 </div>
+@endsection
+@section('extra-js')
+<script>
+    function printSection() {
+        window.print();
+    }
+</script>
 @endsection
     
  

@@ -10,10 +10,10 @@
   <link rel="stylesheet" href="{{asset('css/font-awesome.min.css')}}" media="screen" > --}}
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
   <script src="https://kit.fontawesome.com/0154e08647.js" crossorigin="anonymous"></script>
- @if (Auth::user()->employee->company)
-    <link rel="shortcut icon" type = "image/png" href="{!! asset('images/uploads/'.Auth::user()->employee->company->logo)!!}">
+    @if (Auth::user()->employee->company)
+        <link rel="shortcut icon" type = "image/png" href="{!! asset('images/uploads/'.Auth::user()->employee->company->logo)!!}">
     @elseif (Auth::user()->company)
-    <link rel="shortcut icon" type = "image/png" href="{!! asset('images/uploads/'.Auth::user()->company->logo)!!}">
+        <link rel="shortcut icon" type = "image/png" href="{!! asset('images/uploads/'.Auth::user()->company->logo)!!}">
     @endif
     {{-- <link rel="stylesheet" href="{{asset('css/layout.css')}}"> --}}
     <style>
@@ -26,6 +26,116 @@
         .table-bordered td {
         border: 1px solid #000;   /* borders for each cell */
         }
+    </style>
+    <style>
+    /* General table styling overrides for this print page */
+    .quotation-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: auto; /* Let browser size columns naturally */
+    }
+
+    .quotation-table th,
+    .quotation-table td {
+        padding: 4px 6px;
+        vertical-align: top;
+    }
+
+    /* Make description wrap, but keep numeric columns compact */
+    .quotation-table .col-description {
+        white-space: normal;
+        word-wrap: break-word;
+        word-break: break-word;
+    }
+
+    .quotation-table .col-hs,
+    .quotation-table .col-qty,
+    .quotation-table .col-unit,
+    .quotation-table .col-total-excl,
+    .quotation-table .col-vat,
+    .quotation-table .col-total-incl {
+        white-space: nowrap;
+    }
+
+   /* Remove borders everywhere in the table */
+.quotation-table,
+.quotation-table td,
+.quotation-table th {
+    border: none !important;
+}
+
+/* Footer rows ONLY: add borders back */
+.quotation-table tfoot td,
+.quotation-table tfoot th {
+    border-top: 1px solid #000 !important;
+    border-bottom: 1px solid #000 !important;
+    font-weight: bold;
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+
+/* Make footer totals stand out slightly more */
+.quotation-table tfoot tr:not(:last-child) td {
+    border-bottom: 1px solid #000 !important;
+}
+
+/* Description wrapping stays clean */
+.quotation-table .col-description {
+    white-space: normal;
+    word-break: break-word;
+}
+
+    /* Try to keep rows together on one page when printing */
+    @media print {
+        body {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .invoice.overflow-auto {
+            overflow: visible !important; /* Stop clipping content on print */
+        }
+
+        .quotation-table tr,
+        .quotation-table td,
+        .quotation-table th {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+        }
+
+        thead { 
+            display: table-header-group; 
+        }
+
+        tfoot { 
+            display: table-footer-group; 
+        }
+
+        /* Let the page use space properly */
+        @page {
+            margin: 15mm;
+        }
+
+        /* Footer: let it flow naturally instead of fixed to avoid overlap */
+        .print-footer {
+            position: static !important;
+        }
+    }
+
+    @media print {
+    body * {
+        visibility: hidden;
+    }
+    #print-area, #print-area * {
+        visibility: visible;
+    }
+    #print-area {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+}
 </style>
     @yield('extra-css')
     @include('includes.css')
@@ -35,15 +145,13 @@
 <body>
 
     @yield('content')
-<script>
-    function goBack() {
-      window.history.back();
-    }
+    <script>
+        function goBack() {
+        window.history.back();
+        }
     </script>
     @yield('extra-js')
     <script src="//cdn.jsdelivr.net/npm/sweetalert2@10"></script>
-
-
     <script>
         const Toast = Swal.mixin({
             toast: true,
@@ -65,10 +173,23 @@
             })
         })
     </script>
-        @yield('timeout-js')
-            <script src="{{asset('js/jquery/jquery-2.2.4.min.js')}}"></script>
-        <script src="{{asset('js/jquery-ui/jquery-ui.min.js')}}"></script>
-        <script src="{{asset('js/bootstrap/bootstrap.min.js')}}"></script>
+    {{-- <script>
+        function printSection(sectionId) {
+            let printContent = document.getElementById(sectionId).innerHTML;
+            let originalContent = document.body.innerHTML;
+
+            document.body.innerHTML = printContent;
+            window.print();
+            document.body.innerHTML = originalContent;
+
+            // Reload scripts for safety
+            window.location.reload();
+        }
+    </script> --}}
+    @yield('timeout-js')
+    <script src="{{asset('js/jquery/jquery-2.2.4.min.js')}}"></script>
+    <script src="{{asset('js/jquery-ui/jquery-ui.min.js')}}"></script>
+    <script src="{{asset('js/bootstrap/bootstrap.min.js')}}"></script>
     @livewireScripts
 </body>
 </html>
