@@ -8,24 +8,18 @@
 @endif
 @endsection
 @section('title')
-Invoice Preview |@if (Auth::user()->employee->company)
-{{Auth::user()->employee->company->name}}
-@elseif (Auth::user()->company)
-{{Auth::user()->company->name}}
-@endif
+Invoice Preview | {{Auth::user()->employee->company->name}}
 @endsection
-@section('content')
 
-<div class="container">
-    <div class="card">
-        <div class="card-body">
-            @livewire('invoices.preview', [
-                'invoice' => $invoice,
-                'company' => $company,
-                'invoice_items' => $invoice_items,])
+@section('content')
+    <div class="container">
+        <div class="card">
+            <div class="card-body">
+                @livewire('invoices.preview', [
+                    'invoice' => $invoice,
+                    'company' => $company,
+                    'invoice_items' => $invoice_items,])
+            </div>
         </div>
     </div>
-</div>
-
-
 @endsection

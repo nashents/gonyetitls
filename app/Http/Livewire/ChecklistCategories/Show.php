@@ -27,6 +27,7 @@ class Show extends Component
     public $category_checklist_id;
     public $checklist_category;
     public $checklist_category_id;
+    public $updated = False;
 
 
     public $inputs = [];
@@ -46,8 +47,8 @@ class Show extends Component
     }
 
     private function resetInputFields(){
-        $this->checklist_sub_category_id = "" ;
-        $this->checklist_item_id = "" ;
+        $this->checklist_sub_category_id = $this->updated == False ?  []  : "" ;
+        $this->checklist_item_id = $this->updated == False ?  []  : "";
     }
 
 
@@ -82,7 +83,7 @@ class Show extends Component
     }
 
     public function store(){
-        
+        $this->updated = False;
         $typeName = optional(\App\Models\ChecklistCategory::find($this->checklist_category_id))->name ?? 'this checklist';
         
         $this->validate([
@@ -152,6 +153,7 @@ class Show extends Component
         $this->checklist_sub_category_id = $category_checklist->checklist_sub_category_id;
         $this->checklist_item_id = $category_checklist->checklist_item_id;
         $this->category_checklist_id = $category_checklist->id;
+        $this->updated = True;
         $this->dispatchBrowserEvent('show-category_checklistEditModal');
     }
 

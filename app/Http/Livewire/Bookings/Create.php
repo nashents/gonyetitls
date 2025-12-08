@@ -41,6 +41,7 @@ class Create extends Component
     public $transaction_type = "expense";
     public $assets;
     public $selectedHorse;
+    public $selected_equipment;
     public $vehicles;
     public $selectedVehicle;
     public $vendors;
@@ -49,6 +50,7 @@ class Create extends Component
     public $mechanic_id;
     public $employees;
     public $employee_id;
+    public $existing_bookings;
     
     public $breakdowns;
     public $breakdown_id;
@@ -129,14 +131,27 @@ class Create extends Component
     public function updatedSelectedHorse($id){
         if (!is_null($id)) {
            $horse = Horse::find($id);
+           $this->selected_equipment = Horse::with('bookings')->find($id);
+           $this->existing_bookings = $this->selected_equipment->bookings->where('status', 1)->sortByDesc('in_date');
            $this->mileage = $horse ? $horse->mileage : "";
            $this->hours = $horse ? $horse->hours : "";
+        }
+
+    }
+    public function updatedSelectedAsset($id){
+        if (!is_null($id)) {
+            $asset = Asset::find($id);
+            $this->selected_equipment = Asset::with('bookings')->find($id);
+            $this->existing_bookings = $this->selected_equipment->bookings->where('status', 1)->sortByDesc('in_date');
+          
         }
 
     }
     public function updatedSelectedTrailer($id){
         if (!is_null($id)) {
            $trailer = Trailer::find($id);
+            $this->selected_equipment = Trailer::with('bookings')->find($id);
+             $this->existing_bookings = $this->selected_equipment->bookings->where('status', 1)->sortByDesc('in_date');
            $this->mileage = $trailer ? $trailer->mileage : "";
           
         }
@@ -145,6 +160,8 @@ class Create extends Component
     public function updatedSelectedVehicle($id){
         if (!is_null($id)) {
            $vehicle = Vehicle::find($id);
+            $this->selected_equipment = Vehicle::with('bookings')->find($id);
+             $this->existing_bookings = $this->selected_equipment->bookings->where('status', 1)->sortByDesc('in_date');
            $this->mileage = $vehicle ? $vehicle->mileage : "";
            $this->hours = $vehicle ? $vehicle->hours : "";
         }

@@ -1512,30 +1512,11 @@ class Edit extends Component
 
         }
 
-         $this->income_accounts = Account::whereHas('account_type.account_type_group', function($q){
-            $q->where('name', 'Income');
-         })->orderBy('name','asc')->get();
-        $this->tax_accounts = Account::whereHas('account_type', function ($query) {
-            return $query->where('name','Sales Taxes');
-        })->orderBy('name','asc')->get();
-        $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
-            return $query->where('name','Expenses');
-        })->orderBy('name','asc')->get();
-       
-        $this->inventories = Inventory::with('product.brand')->where('status',1)->get()->sortBy('product.brand.name');
-        $this->currencies = Currency::orderBy('name','asc')->get();
-        $this->customers = Customer::orderBy('name','asc')->get();
-        $this->products = Product::where('sell',True)->orderBy('name','asc')->get();
 
-    
         $this->invoice_items = InvoiceItem::where('invoice_id',$this->invoice_id)->get();
 
         
         return view('livewire.invoices.edit',[
-            'customers' => $this->customers,
-            'currencies' => $this->currencies,
-            'products' => $this->products,
-            'inventories' => $this->inventories,
             'trips' => $this->trips,
             'invoice_items' => $this->invoice_items,
         ]);

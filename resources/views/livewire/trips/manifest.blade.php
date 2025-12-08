@@ -38,8 +38,7 @@
         <dl class="meta-grid">
           <dt>Manifest #</dt><dd class="mono" data-field="manifest.number">{{$trip->manifest_number}}</dd>
           <dt>Date</dt><dd data-field="manifest.date">{{$trip->start_date}}</dd>
-          <dt>Trip #</dt><dd class="mono" data-field="trip.number">{{$trip->trip_number}}</dd>
-          <dt>Reference</dt><dd class="mono" data-field="reference">{{$trip->trip_ref}}</dd>
+          <dt>Trip #</dt><dd class="mono" data-field="trip.number">{{$trip->trip_number}} {{$trip->trip_ref ? "/".$trip->trip_ref : ""}}</dd>
           <dt>Currency</dt><dd data-field="currency">{{$trip->currency ? $trip->currency->name : ""}}</dd>
           <dt>Manifest Created By:</dt><dd data-field="currency">{{$trip->user ? $trip->user->name : ""}} {{$trip->user ? $trip->user->surname : ""}}</dd>
         </dl>
@@ -74,18 +73,20 @@
         <h3>Transporter & Vehicle</h3>
         <div class="kv">
           <div class="k">Transporter</div><div class="v" data-field="carrier.name">{{$trip->transporter ? $trip->transporter->name : ""}}</div>
-          <div class="k">Horse Reg #</div><div class="v" data-field="vehicle.horse_reg">
+          <div class="k">Horse | Trailer(s)</div><div class="v" data-field="vehicle.horse_reg">
             @if ($trip->horse)
                 {{$trip->horse ? $trip->horse->registration_number : ""}}
             @elseif($trip->vehicle)
                 {{$trip->vehicle ? $trip->vehicle->registration_number : ""}}
+            @endif 
+            @if ($trip->trailers)
+                |   @foreach ($trip->trailers as $trailer)
+                        {{$trailer->registration_number}}@if(!$loop->last), @endif 
+                    @endforeach
             @endif
+             
            </div>
-          <div class="k">Trailer(s)</div><div class="v" data-field="vehicle.trailers">
-            @foreach ($trip->trailers as $trailer)
-                {{$trailer->registration_number}}@if(!$loop->last), @endif 
-            @endforeach
-          </div>
+         
            @if ($trip->driver)
           <div class="k">Driver</div><div class="v" data-field="driver.name">
                

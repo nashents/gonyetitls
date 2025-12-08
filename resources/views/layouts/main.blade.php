@@ -28,115 +28,180 @@
         }
     </style>
     <style>
-    /* General table styling overrides for this print page */
-    .quotation-table {
-        width: 100%;
-        border-collapse: collapse;
-        table-layout: auto; /* Let browser size columns naturally */
+            /* General table styling overrides for this print page */
+            .invoice-table {
+                width: 100%;
+                border-collapse: collapse;
+                table-layout: auto; /* Let browser size columns naturally */
+            }
+
+            .invoice-table th,
+            .invoice-table td {
+                padding: 4px 6px;
+                vertical-align: top;
+            }
+
+            /* Make description wrap, but keep numeric columns compact */
+            .invoice-table .col-description {
+                white-space: normal;
+                word-wrap: break-word;
+                word-break: break-word;
+            }
+
+            .invoice-table .col-hs,
+            .invoice-table .col-qty,
+            .invoice-table .col-unit,
+            .invoice-table .col-total-excl,
+            .invoice-table .col-vat,
+            .invoice-table .col-total-incl {
+                white-space: nowrap;
+            }
+
+        /* Remove borders everywhere in the table */
+            .invoice-table,
+            .invoice-table td,
+            .invoice-table th {
+                border: none !important;
+            }
+
+            /* Footer rows ONLY: add borders back */
+            .invoice-table tfoot td,
+            .invoice-table tfoot th {
+                border-top: 0.5px  #000 !important;
+                border-bottom: 0.5px solid #000 !important;
+                font-weight: bold;
+                padding-top: 6px;
+                padding-bottom: 6px;
+            }
+
+            /* Make footer totals stand out slightly more */
+            .invoice-table tfoot tr:not(:last-child) td {
+                border-bottom: 1px solid #000 !important;
+            }
+
+            /* Description wrapping stays clean */
+            .invoice-table .col-description {
+                white-space: normal;
+                word-break: break-word;
+            }
+
+            /* Try to keep rows together on one page when printing */
+            @media print {
+                body {
+                    -webkit-print-color-adjust: exact;
+                    print-color-adjust: exact;
+                }
+
+                .invoice.overflow-auto {
+                    overflow: visible !important; /* Stop clipping content on print */
+                }
+
+                .invoice-table tr,
+                .invoice-table td,
+                .invoice-table th {
+                    page-break-inside: avoid !important;
+                    break-inside: avoid !important;
+                }
+
+                thead { 
+                    display: table-header-group; 
+                }
+
+                tfoot { 
+                    display: table-footer-group; 
+                }
+
+                /* Let the page use space properly */
+                @page {
+                    margin: 15mm;
+                }
+
+                /* Footer: let it flow naturally instead of fixed to avoid overlap */
+                .print-footer {
+                    position: static !important;
+                }
+            }
+
+            @media print {
+            body * {
+                visibility: hidden;
+            }
+            #print-area, #print-area * {
+                visibility: visible;
+            }
+            #print-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+        }
+    </style>
+
+    <style>
+        /* Hide everything except #print-area when printing */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+
+            #print-area, 
+            #print-area * {
+                visibility: visible;
+            }
+
+            #print-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+
+            /* Hide toolbar/buttons on print */
+            .hidden-print {
+                display: none !important;
+            }
+        }
+    </style>
+
+    <style>
+@media print {
+
+    /* Keep original background colors when printing */
+    html, body {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
     }
 
-    .quotation-table th,
-    .quotation-table td {
-        padding: 4px 6px;
-        vertical-align: top;
+    /* Force table header and shaded rows to keep colors */
+    .invoice-table thead th,
+    .invoice-table tfoot td,
+    .invoice-table tfoot th,
+    .invoice-table tbody tr.shaded-row {
+        background-color: inherit !important;
     }
 
-    /* Make description wrap, but keep numeric columns compact */
-    .quotation-table .col-description {
-        white-space: normal;
-        word-wrap: break-word;
-        word-break: break-word;
+    /* Keep your borderless / soft border design */
+    .invoice-table,
+    .invoice-table th,
+    .invoice-table td {
+        border: none !important;       /* Prevent Chrome from adding black borders */
     }
 
-    .quotation-table .col-hs,
-    .quotation-table .col-qty,
-    .quotation-table .col-unit,
-    .quotation-table .col-total-excl,
-    .quotation-table .col-vat,
-    .quotation-table .col-total-incl {
-        white-space: nowrap;
+    /* Remove toolbar when printing */
+    .hidden-print {
+        display: none !important;
     }
 
-   /* Remove borders everywhere in the table */
-.quotation-table,
-.quotation-table td,
-.quotation-table th {
-    border: none !important;
-}
-
-/* Footer rows ONLY: add borders back */
-.quotation-table tfoot td,
-.quotation-table tfoot th {
-    border-top: 1px solid #000 !important;
-    border-bottom: 1px solid #000 !important;
-    font-weight: bold;
-    padding-top: 6px;
-    padding-bottom: 6px;
-}
-
-/* Make footer totals stand out slightly more */
-.quotation-table tfoot tr:not(:last-child) td {
-    border-bottom: 1px solid #000 !important;
-}
-
-/* Description wrapping stays clean */
-.quotation-table .col-description {
-    white-space: normal;
-    word-break: break-word;
-}
-
-    /* Try to keep rows together on one page when printing */
-    @media print {
-        body {
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-        }
-
-        .invoice.overflow-auto {
-            overflow: visible !important; /* Stop clipping content on print */
-        }
-
-        .quotation-table tr,
-        .quotation-table td,
-        .quotation-table th {
-            page-break-inside: avoid !important;
-            break-inside: avoid !important;
-        }
-
-        thead { 
-            display: table-header-group; 
-        }
-
-        tfoot { 
-            display: table-footer-group; 
-        }
-
-        /* Let the page use space properly */
-        @page {
-            margin: 15mm;
-        }
-
-        /* Footer: let it flow naturally instead of fixed to avoid overlap */
-        .print-footer {
-            position: static !important;
-        }
-    }
-
-    @media print {
-    body * {
-        visibility: hidden;
-    }
-    #print-area, #print-area * {
-        visibility: visible;
-    }
-    #print-area {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
+    /* Footer must stay borderless */
+    footer, footer * {
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
     }
 }
 </style>
+
     @yield('extra-css')
     @include('includes.css')
     @livewireStyles
@@ -186,6 +251,11 @@
             window.location.reload();
         }
     </script> --}}
+    <script>
+        function printSection() {
+            window.print();
+        }
+    </script>
     @yield('timeout-js')
     <script src="{{asset('js/jquery/jquery-2.2.4.min.js')}}"></script>
     <script src="{{asset('js/jquery-ui/jquery-ui.min.js')}}"></script>

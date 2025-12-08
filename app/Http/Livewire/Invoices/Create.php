@@ -92,7 +92,6 @@ class Create extends Component
     public $tax_amount;
     public $total_tax_amount;
     public $measurements;
-    public $invoice_amount = 0;
     public $invoice_sub_amount = 0;
     public $turnover = 0;
     public $invoice_total_amount = 0;
@@ -438,11 +437,13 @@ class Create extends Component
         $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name','Expenses');
         })->orderBy('name','asc')->get();
+
+        
         $this->inventories = Inventory::with('product.brand')->where('status',1)->get()->sortBy('product.brand.name');
         $this->income_account_id = Account::where('name','Sales')->first()->id;
      
         $this->bank_accounts = collect();
-        $this->products = Product::where('sell',True)->orderBy('name','asc')->get();
+        $this->products = Product::where('sell',True)->where('status',True)->orderBy('name','asc')->get();
 
 
         $this->currencies = Currency::orderBy('name','asc')->get();
@@ -580,11 +581,7 @@ class Create extends Component
            
             
         }
-
-        // if(isset($this->amount[$key])){
-        //     $this->invoice_amount = $this->invoice_amount + $this->amount[$key];
-        // }
-       
+   
     }
 
 
@@ -1223,6 +1220,7 @@ class Create extends Component
     public function updatedSelectedCurrency($id){
         if (!is_null($id)) {
             $this->selected_currency = Currency::find($id);
+            $this->invoice_currency = $this->selectedCurrency;
             $this->bank_accounts = BankAccount::where('currency_id',$id)->where('company_id',$this->company->id)->orderBy('name','asc')->get();
             if($id != $this->company->currency_id){
                 $predefined_exchange_rate = ExchangeRate::where('currency_id', $id)
@@ -1306,11 +1304,13 @@ class Create extends Component
 
     }
 
+   
+
 
     public function render()
     {
 
-        $this->invoice_currency = $this->selectedCurrency;
+      
 
         if ((isset($this->exchange_rate) && $this->exchange_rate > 0)  &&  ( isset($this->total) && $this->total > 0 )) {
 
@@ -1318,30 +1318,8 @@ class Create extends Component
 
         }
 
-        $this->income_accounts = Account::whereHas('account_type.account_type_group', function($q){
-            $q->where('name', 'Income');
-         })->orderBy('name','asc')->get();
-        $this->tax_accounts = Account::whereHas('account_type', function ($query) {
-            return $query->where('name','Sales Taxes');
-        })->orderBy('name','asc')->get();
-        $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
-            return $query->where('name','Expenses');
-        })->orderBy('name','asc')->get();
-       
-        $this->inventories = Inventory::with('product.brand')->where('status',1)->get()->sortBy('product.brand.name');
-        $this->currencies = Currency::orderBy('name','asc')->get();
-        $this->customers = Customer::orderBy('name','asc')->get();
-        $this->products = Product::where('sell',True)->orderBy('name','asc')->get();
-       
         return view('livewire.invoices.create',[
             'trips' => $this->trips,
-            'trip_id' => $this->trip_id,
-            'invoice_amount' =>$this->invoice_amount,
-            'customers' => $this->customers,
-            'currencies' => $this->currencies,
-            'products' => $this->products,
-            'inventories' => $this->inventories,
-           
         ]);
 
 
