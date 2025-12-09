@@ -538,14 +538,11 @@ class Index extends Component
 
         }elseif($this->dispatch_for == "expenses"){
 
-        
-
             if (isset($this->selectedExpenseProduct)) {
               
                 foreach($this->selectedExpenseProduct as $key => $id){
 
-
-                    
+                    $dispatch_total = 0;
                     $item_subtotal = 0;
                     $item_subtotal_incl = 0;
 

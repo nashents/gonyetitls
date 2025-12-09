@@ -63,7 +63,11 @@
                            
                             <tr>
                                 <th class="w-10 text-center line-height-35">Destination</th>
-                                <td class="w-20 line-height-35">{{$incident->destination->country ? $incident->destination->country->name : ""}} {{$incident->destination->city}}</td>
+                                <td class="w-20 line-height-35">
+                                    @if ($incident->destination)
+                                        {{$incident->destination->country ? $incident->destination->country->name : ""}} {{$incident->destination->city}}
+                                    @endif
+                                </td>
                             </tr>
                        
                             <tr>

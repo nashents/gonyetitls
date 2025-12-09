@@ -128,7 +128,9 @@
                                                 @endif
                                             </label>
                                             @foreach ($existing_bookings as $booking)
-                                                <a href="{{route('bookings.show',$booking->id)}}" target="_blank" style="color: blue"><strong>Booking#:</strong> {{$booking->booking_number}}  {{$booking->ticket ? "Ticket#: ".$booking->ticket->ticket_number : ""}} {{$booking->service_type ? "Job: ".$booking->service_type->name : ""}} <strong>Date:</strong> {{$booking->in_date}}</a>@if(!$loop->last), @endif
+                                                <small>
+                                                    <a href="{{route('bookings.show',$booking->id)}}" target="_blank" style="color: blue"><strong>Booking#:</strong> {{$booking->booking_number}}  {{$booking->ticket ? "Ticket#: ".$booking->ticket->ticket_number : ""}} <strong>Job: </strong>{{$booking->service_type ? $booking->service_type->name : ""}} <strong>Date:</strong> {{$booking->in_date}} <strong>Reason: </strong> {{$booking->description}}</a>@if(!$loop->last), @endif <br>
+                                                </small>
                                             @endforeach
                                         </div>   
                                 @endif

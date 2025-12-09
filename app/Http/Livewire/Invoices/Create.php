@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\Cargo;
 use App\Models\Count;
 use App\Models\Account;
+use App\Models\Booking;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Product;
@@ -23,6 +24,7 @@ use App\Models\Destination;
 use App\Models\InvoiceItem;
 use App\Models\InvoiceTrip;
 use App\Models\Measurement;
+use App\Models\Transporter;
 use App\Models\Denomination;
 use App\Models\ExchangeRate;
 use App\Models\InvoiceCount;
@@ -41,8 +43,9 @@ use Illuminate\Support\Facades\Session;
 
 class Create extends Component
 {
-    public $search;
-    protected $queryString = ['search'];
+    public $searchBooking;
+    public $searchTrip;
+    protected $queryString = ['searchTrip','searchBooking'];
     public $from;
     public $to;
 
@@ -53,6 +56,8 @@ class Create extends Component
     public $fiscalize_invoice;
     public $reason;
     public $trip_filter;
+    public $invoice_to = "Customer";
+    public $booking_filter;
 
     public $products;
     public $inventory_products;
@@ -69,14 +74,19 @@ class Create extends Component
     public $invoice_id;
     public $initials;
     public $customers;
+    public $transporters;
+    public $selectedTransporter;
+    public $source = "Generic";
     public $from_trips = false;
     public $exchange_rate;
     public $from_inventory = false;
+    public $from_bookings = false;
     public $record_payment = false;
     public $exchange_amount;
     public $trip;
     public $invoice_trip;
     public $trip_id;
+    public $selectedBooking;
     public $selectedCustomer;
     public $bank_accounts;
     public $bank_account_id;
@@ -267,6 +277,14 @@ class Create extends Component
 
     }
 
+    public function updatedInvoiceTo($value){
+        if(!is_null($value)){
+            if($value == "Transporter"){
+                $this->source = "Booking";
+                $this->selectedCurrency = Auth::user()->employee->company->currency_id;
+            }
+        }
+    }
 
     public function storeBankAccount(){
         try{
@@ -361,7 +379,6 @@ class Create extends Component
         $customer = Customer::find($id);
         $this->initials = $customer?->initials;
         $this->invoice_number = $this->invoiceNumber();
-     
     
     }
 
@@ -379,7 +396,15 @@ class Create extends Component
                     $this->initials = $words[0][0];
                 }
             }
-            $invoice = Invoice::where('customer_id', $this->selectedCustomer)->orderBy('id', 'desc')->get()->first();
+
+            if($this->invoice_to == "Customer"){
+                 $invoice = Invoice::where('customer_id', $this->selectedCustomer)->orderBy('id', 'desc')->get()->first();
+            }elseif($this->invoice_to == "Transporter"){
+                 $invoice = Invoice::where('transporter_id', $this->selectedTransporter)->orderBy('id', 'desc')->get()->first();
+            }
+           
+
+           
     
             if (!$invoice) {
                 $this->number = 1;
@@ -421,6 +446,7 @@ class Create extends Component
     public function mount(){
 
         $this->trip_filter = "created_at";
+        $this->booking_filter = "created_at";
         $this->company = Auth::user()->employee->company;
 
         $this->accounts = Account::where('account_type_id',1)->latest()->get();
@@ -449,6 +475,7 @@ class Create extends Component
         $this->currencies = Currency::orderBy('name','asc')->get();
       
         $this->customers = Customer::orderBy('name','asc')->get();
+        $this->transporters = Transporter::orderBy('name','asc')->get();
         if (Auth::user()->employee->company) {
             $this->memo = Auth::user()->employee->company->invoice_memo;
             $this->footer = Auth::user()->employee->company->invoice_footer;
@@ -584,120 +611,196 @@ class Create extends Component
    
     }
 
+     public function updatedSelectedBooking($id, $key){
+      
+        if (!is_null($id)) {
+            
+            $booking = Booking::find($id);
+            $ticket = $booking?->ticket;
 
+            if (!$booking || !$ticket) {
+                return ;
+            }
+            $dispatches = $ticket?->dispatches;
+            $this->amount[$key] = $dispatches?->sum('total');
+            $this->description[$key] = $this->setBookingDescription($id); 
+            $this->qty[$key] = 1; 
+            $this->selectedAccount[$key] =  $this->income_account_id;
+           
+            
+        }
+   
+    }
+
+
+    public function setBookingDescription($id)
+    {
+        $booking = Booking::with([
+            'ticket.dispatches.dispatch_items.inventory.product',
+            'ticket.dispatches.dispatch_items.asset.product',
+            'ticket.dispatches.dispatch_items.product',
+            'ticket.dispatches.dispatch_items.tyre.product',
+            'ticket.dispatches.dispatch_items.currency',
+        ])->find($id);
+
+        if (! $booking || ! $booking->ticket) {
+            return '';
+        }
+
+        $parts = [];
+
+        foreach ($booking->ticket->dispatches as $dispatch) {
+
+            foreach ($dispatch->dispatch_items as $dispatch_item) {
+
+                $name = null;
+
+                if ($dispatch_item->inventory?->product) {
+                    $name = $dispatch_item->inventory->product->name;
+                } elseif ($dispatch_item->asset?->product) {
+                    $name = $dispatch_item->asset->product->name;
+                } elseif ($dispatch_item->product) {
+                    $name = $dispatch_item->product->name;
+                } elseif ($dispatch_item->tyre?->product) {
+                    $name = $dispatch_item->tyre->product->name;
+                }
+
+                if (! $name) {
+                    continue; // skip items without a proper name
+                }
+
+                $qty = $dispatch_item->qty ?? 0;
+
+                $currencyName   = $dispatch_item->currency?->name   ?? '';
+                $currencySymbol = $dispatch_item->currency?->symbol ?? '';
+                $unit_cost          = number_format($dispatch_item->unit_cost ?? 0, 2);
+
+                // Build: Name x Qty (CurrencyName CurrencySymbolTotal)
+                $parts[] = "{$name} x {$qty} ({$currencyName} {$currencySymbol}{$unit_cost})";
+            }
+        }
+
+        return implode(', ', $parts);
+    }
   
     
 
-    public function setDescription($id){
-
+    public function setDescription($id)
+    {
         $trip = Trip::find($id);
-                
-        $cargo = $trip->cargo;
-        $weight = $trip->weight.'tons' ;
-        $cargo_name = $cargo ? $cargo->name : "";
 
-        if (isset($cargo)) {
-            if ($trip->cargo->type == "Solid") {
-                $cargo_measurement = $trip->quantity.' '. $trip->measurement;
-            }else {
-                $cargo_measurement =  $trip->litreage_at_20.' '. $trip->measurement;
-            }
-            
-        }else{
-            $cargo_measurement = "";
+        if (! $trip) {
+            return '';
         }
-      
-      
 
-        if ($trip->horse) {
-            $regnumber = $trip->horse ? $trip->horse->registration_number : "";
-        }elseif ($trip->vehicle) {
-            $regnumber = $trip->vehicle ? $trip->vehicle->registration_number : "";
-        }else{
-            $regnumber = "";
+        $cargo      = $trip->cargo;
+        $cargoName  = $cargo?->name ?? '';
+        $cargoType  = $cargo?->type ?? null;
+        $measurement = $trip->measurement ?? '';
+
+        // Weight with unit
+        $weightText = $trip->weight
+            ? $trip->weight . ' tons'
+            : '';
+
+        // Quantity / litreage text
+        $quantityText = ($trip->quantity && $measurement)
+            ? $trip->quantity . ' ' . $measurement
+            : '';
+
+        $litreageText = ($trip->litreage_at_20 && $measurement)
+            ? $trip->litreage_at_20 . ' ' . $measurement
+            : '';
+
+        // Cargo description based on type
+        if ($cargoType === 'Solid') {
+            $cargoDescription = trim("{$cargoName} {$weightText} {$quantityText}");
+        } elseif ($cargoType === 'Liquid') {
+            $cargoDescription = trim("{$cargoName} {$weightText} {$litreageText}");
+        } else {
+            $cargoDescription = '';
         }
-        
-        $origin = Destination::find($trip->from);
-        $origin_city = $origin ? $origin->city : "";
-        $destination = Destination::find($trip->to);
-        $destination_city = $destination ? $destination->city : "";
-        $symbol =  $trip->currency ? $trip->currency->symbol : "";
 
-     
+        // Registration number (horse first, then vehicle)
+        $regNumber = $trip->horse?->registration_number
+            ?? $trip->vehicle?->registration_number
+            ?? '';
+
+        // Origin / destination
+        $originCity      = Destination::find($trip->from)?->city ?? '';
+        $destinationCity = Destination::find($trip->to)?->city ?? '';
+
+        $lp = $trip->loading_point?->name ?? '';
+        $op = $trip->offloading_point?->name ?? '';
+
+        $from = trim("{$originCity} {$lp}");
+        $to   = trim("{$destinationCity} {$op}");
+
+        $route = $from && $to
+            ? "{$from} to {$to}"
+            : trim($from . ' ' . $to);
+
+        // Freight calculation: formula + variables
+        $symbol    = $trip->currency?->symbol ?? '';
+        $formula   = '';
+        $variables = '';
 
         if ($trip->freight_calculation) {
-            
-            if ($trip->freight_calculation == "flat_rate") {
-               $formula = "R";
-               $variables =  $symbol.$trip->rate;
-            }
-            elseif($trip->freight_calculation == "rate_weight"){
-               
-                if ($trip->cargo) {
-                    if ($trip->cargo->type == "Solid") {
-                        $formula = "R*W";
-                        $variables = $symbol.$trip->rate.'*'.$trip->weight;
-                    }elseif ($trip->cargo->type == "Liquid") {
-                        $formula = "R*L";
-                        $variables = $symbol.$trip->rate.'*'.$trip->litreage_at_20;
+            switch ($trip->freight_calculation) {
+                case 'flat_rate':
+                    $formula   = 'R';
+                    $variables = $symbol . $trip->rate;
+                    break;
+
+                case 'rate_weight':
+                    if ($cargoType === 'Solid') {
+                        $formula   = 'R*W';
+                        $variables = $symbol . $trip->rate . '*' . $trip->weight;
+                    } elseif ($cargoType === 'Liquid') {
+                        $formula   = 'R*L';
+                        $variables = $symbol . $trip->rate . '*' . $trip->litreage_at_20;
                     }
-                }else{
-                    $formula = "";
-                    $variables = "";
-                }
-              
-            }
-            elseif($trip->freight_calculation == "rate_distance"){
-                $formula = "R*D";
-                $variables = $symbol.$trip->rate.'*'.$trip->distance;
-            }
-            elseif($trip->freight_calculation == "rate_weight_distance"){
-                if ($trip->cargo) {
-                    if ($trip->cargo->type == "Solid") {
-                        $formula = "R*W*D";
-                        $variables = $symbol.$trip->rate.'*'.$trip->weight.'*'.$trip->distance;
-                    }elseif ($trip->cargo->type == "Liquid") {
-                        $formula = "R*L*D";
-                        $variables = $symbol.$trip->rate.'*'.$trip->litreage_at_20.'*'.$trip->distance;
+                    break;
+
+                case 'rate_distance':
+                    $formula   = 'R*D';
+                    $variables = $symbol . $trip->rate . '*' . $trip->distance;
+                    break;
+
+                case 'rate_weight_distance':
+                    if ($cargoType === 'Solid') {
+                        $formula   = 'R*W*D';
+                        $variables = $symbol . $trip->rate . '*' . $trip->weight . '*' . $trip->distance;
+                    } elseif ($cargoType === 'Liquid') {
+                        $formula   = 'R*L*D';
+                        $variables = $symbol . $trip->rate . '*' . $trip->litreage_at_20 . '*' . $trip->distance;
                     }
-                }else{
-                    $formula = "";
-                    $variables = "";
-                }
-            }else {
-                $formula = "";
-                $variables = "";
+                    break;
             }
-        }else{
-            $formula = "";
-            $variables = "";
         }
-        
-        $lp = $trip->loading_point ? $trip->loading_point->name : "";
-        $op = $trip->offloading_point ? $trip->offloading_point->name : "";
-        $from = $origin_city.' '.$lp ;
-        $to = $destination_city.' '.$op ;
-        $rate = $trip->rate;
-        $quantity = $trip->quantity.' '.$trip->measurement;
-        $litreage = $trip->litreage_at_20.' '.$trip->measurement;
-        $trip_number = $trip->trip_number;
-        $document = TripDocument::where('trip_id',$trip->id)->where('title','POD')->get()->first();
-        $pod_number = $document ? $document->document_number : "";
-      
 
-        if (isset($cargo) && $cargo->type == "Solid") {
-            $cargo_description = $cargo_name .' '.$weight.' '. $quantity;
-        }elseif (isset($cargo) && $cargo->type == "Liquid") {
-            $cargo_description =  $cargo_name.' '.$weight .' '. $litreage;
-        }else {
-            $cargo_description = "";
-        }
-       
-        $load_details = $cargo_description .' '.$formula .' '.$variables;
+        $formulaBlock = trim(
+            ($formula ? $formula : '') .
+            ($formula && $variables ? ' ' : '') .
+            ($variables ?: '')
+        );
 
-       $trip_details = $load_details .' '.  $from .' to '.  $to .' '.  $regnumber.' '.$pod_number;
+        // POD document
+        $document   = TripDocument::where('trip_id', $trip->id)
+                        ->where('title', 'POD')
+                        ->first();
+        $podNumber  = $document?->document_number ?? '';
 
-        return  $trip_details;
+        // Build the final description from meaningful chunks
+        $segments = array_filter([
+            $cargoDescription,
+            $formulaBlock,
+            $route,
+            $regNumber,
+            $podNumber,
+        ]);
+
+        return implode(' ', $segments);
     }
 
    
@@ -860,295 +963,265 @@ class Create extends Component
 
         DB::transaction(function () {
 
-            $invoice = new Invoice;
-            $invoice->user_id = Auth::user()->id;
-            $invoice->company_id = $this->company_id;
-            $invoice->currency_id = $this->selectedCurrency;
-            $invoice->fiscalize = $this->fiscalize_invoice;
-            $invoice->customer_id = $this->selectedCustomer;
-            $invoice->invoice_number = $this->invoice_number;
-            $invoice->number = $this->number;
-            $invoice->account_id = $this->income_account_id;
-            $invoice->date = $this->date;
-            $invoice->expiry = $this->expiry;
-            $invoice->invoicing_values = $this->values;
-            $invoice->purchase_order_number = $this->purchase_order_number;
-            $invoice->sales_order_number = $this->sales_order_number;
-            $invoice->pat_number = $this->pat_number;
-            $invoice->memo = $this->memo;
-            $invoice->footer = $this->footer;
-            $invoice->from_inventory = $this->from_inventory;
-            $invoice->from_trips = $this->from_trips;
-            $invoice->save();
-            
-            $validAccounts = BankAccount::whereIn('id', (array) $this->bank_account_id)->pluck('id')->toArray();
-            if (!empty($validAccounts)) {
-                $invoice->bank_accounts()->sync($validAccounts);
-            }
-            $this->invoice_id = $invoice->id;
-
-            $discount_account = Account::where('name','Sales Discounts')->first();
-
-        if ($this->is_discount == True) {
-            $discount = new Discount;
-            $discount->user_id = Auth::user()->id;
-            $discount->invoice_id = $invoice->id;
-            $discount->account_id = $discount_account ? $discount_account->id : "";
-            $discount->name = 'Discount';
-            $discount->description = $this->discount_description;
-            $discount->unit = $this->discount_unit;
-            $discount->amount = $this->discount_amount;
-            $discount->save();
-        }
-
-        if ($this->from_trips == true) {
-     
-            foreach($this->selectedTrip as $key => $value){
-               
-                $invoice_item = new InvoiceItem;
-                $invoice_item->invoice_id = $invoice->id;
-                if (isset($this->selectedAccount[$key])) {
-                    $invoice_item->account_id = $this->selectedAccount[$key];
-                }
-                if (isset($this->selectedTrip[$key])) {
-                    $invoice_item->trip_id = $this->selectedTrip[$key];
-                }
-                if (isset($this->qty[$key])) {
-                    $invoice_item->qty = $this->qty[$key];
-                }
-                if (isset($this->amount[$key])) {
-                    $invoice_item->amount = $this->amount[$key];
-                }
-                if (isset($this->description[$key])) {
-                    $invoice_item->description = $this->description[$key];
-                }
-                if (isset($this->tax_rate[$key])) {
-                    $invoice_item->tax_rate = $this->tax_rate[$key];
-                }
-                if (isset($this->hs_code[$key])) {
-                    $invoice_item->hs_code = $this->hs_code[$key];
-                }
-                if (isset($this->selectedTax[$key])) {
-                    $invoice_item->tax_id = $this->selectedTax[$key];
-                }
-                 if ((isset($this->amount[$key]) && is_numeric($this->amount[$key])) && ( isset($this->qty[$key]) && is_numeric($this->qty[$key]) ) ) {
-
-                    $item_subtotal = $this->amount[$key]*$this->qty[$key];
-                    $invoice_item->subtotal = $item_subtotal;
-                    $this->subtotal = $this->subtotal + $item_subtotal;
-
-                }
-                if ((isset($this->tax_rate[$key]) && is_numeric($this->tax_rate[$key])) && isset($this->selectedTax[$key])) {
-
-                    $item_tax_amount = ($item_subtotal * ($this->tax_rate[$key] / 100 ));
-                    $invoice_item->tax_amount =  $item_tax_amount;
-                    $this->tax_amount = $this->tax_amount + $item_tax_amount;
-                    $item_subtotal_incl = $item_tax_amount + $item_subtotal;
-                    $invoice_item->subtotal_incl =  $item_subtotal_incl;
-                    $this->total =  $this->total + $item_subtotal_incl;
-
-                }else{
-                    $item_subtotal_incl = $item_subtotal;
-                    $invoice_item->subtotal_incl = $item_subtotal_incl;
-                    $this->total =  $this->total + $item_subtotal_incl;
-                }
+                $invoice = new Invoice;
+                $invoice->user_id = Auth::user()->id;
+                $invoice->company_id = $this->company_id ?? Null;
+                $invoice->currency_id = $this->selectedCurrency ?? Null;
+                $invoice->fiscalize = $this->fiscalize_invoice;
+                $invoice->customer_id = $this->selectedCustomer ?? Null;
+                $invoice->transporter_id = $this->selectedTransporter ?? Null;
+                $invoice->invoice_number = $this->invoice_number;
+                $invoice->number = $this->number;
+                $invoice->invoice_to = $this->invoice_to;
+                $invoice->account_id = $this->income_account_id;
+                $invoice->date = $this->date;
+                $invoice->expiry = $this->expiry;
+                $invoice->invoicing_values = $this->values;
+                $invoice->purchase_order_number = $this->purchase_order_number;
+                $invoice->sales_order_number = $this->sales_order_number;
+                $invoice->pat_number = $this->pat_number;
+                $invoice->source = $this->source;
+                $invoice->memo = $this->memo;
+                $invoice->footer = $this->footer;
+                $invoice->from_inventory = $this->from_inventory;
+                $invoice->from_trips = $this->from_trips;
+                $invoice->save();
                 
-                if ((isset($this->exchange_rate) && is_numeric($this->exchange_rate))) {
-                    $invoice_item->exchange_rate = $this->exchange_rate;
-                    $invoice_item->exchange_amount = $this->exchange_rate * $item_subtotal_incl ;
-                 }
-                $invoice_item->save();
-            }
-
-            if (isset($discount)) {
-                if($this->discount_unit == "currency"){
-                    $this->total = $this->total - $this->discount_amount;
-                }elseif($this->discount_unit == "percentage"){
-                    if ((is_numeric($this->discount_amount) && $this->discount_amount > 0) && ( is_numeric($this->total) && $this->total > 0)) {
-                        $discount_amount = ($this->discount_amount/100)*$this->total;
-                        $this->total = $this->total - $discount_amount;
-                    }
+                $validAccounts = BankAccount::whereIn('id', (array) $this->bank_account_id)->pluck('id')->toArray();
+                if (!empty($validAccounts)) {
+                    $invoice->bank_accounts()->sync($validAccounts);
                 }
+                $this->invoice_id = $invoice->id;
+
+                $discount_account = Account::where('name','Sales Discounts')->first();
+
+            if ($this->is_discount == True) {
+                $discount = new Discount;
+                $discount->user_id = Auth::user()->id;
+                $discount->invoice_id = $invoice->id;
+                $discount->account_id = $discount_account ? $discount_account->id : "";
+                $discount->name = 'Discount';
+                $discount->description = $this->discount_description;
+                $discount->unit = $this->discount_unit;
+                $discount->amount = $this->discount_amount;
+                $discount->save();
             }
 
-
-            $invoice = Invoice::find($invoice->id);
-            $invoice->tax_amount =  $this->tax_amount;
-            $invoice->subtotal = $this->subtotal;
-            $invoice->total = $this->total;
-            $invoice->exchange_rate = $this->exchange_rate;
-            $invoice->exchange_amount = $this->exchange_amount;
-            $invoice->balance = $this->total;
-            $invoice->update();
+            if ($this->source == "Trip") {
             
-    }elseif ($this->from_trips == false) {
+                    foreach($this->selectedTrip as $key => $value){
 
-        if (isset($this->from_inventory) && $this->from_inventory == false) {
-
-            foreach($this->selectedProduct as $key => $value){
-               
-                $invoice_item = new InvoiceItem;
-                $invoice_item->invoice_id = $invoice->id;
-                if (isset($this->selectedAccount[$key])) {
-                    $invoice_item->account_id = $this->selectedAccount[$key];
-                }
-                if (isset($this->selectedProduct[$key])) {
-                    $invoice_item->product_id = $this->selectedProduct[$key];
-                }
-                if (isset($this->qty[$key])) {
-                    $invoice_item->qty = $this->qty[$key];
-                }
-                if (isset($this->amount[$key])) {
-                    $invoice_item->amount = $this->amount[$key];
-                }
-                if (isset($this->description[$key])) {
-                    $invoice_item->description = $this->description[$key];
-                }
-                if (isset($this->tax_rate[$key])) {
-                    $invoice_item->tax_rate = $this->tax_rate[$key];
-                }
-                if (isset($this->hs_code[$key])) {
-                    $invoice_item->hs_code = $this->hs_code[$key];
-                }
-                if (isset($this->selectedTax[$key])) {
-                    $invoice_item->tax_id = $this->selectedTax[$key];
-                }
-                 if ((isset($this->amount[$key]) && is_numeric($this->amount[$key])) && ( isset($this->qty[$key]) && is_numeric($this->qty[$key]) ) ) {
-
-                    $item_subtotal = $this->amount[$key]*$this->qty[$key];
-                    $invoice_item->subtotal = $item_subtotal;
-                    $this->subtotal = $this->subtotal + $item_subtotal;
-
-                }
-                if (isset($this->tax_rate[$key]) && is_numeric($this->tax_rate[$key])) {
-
-                    $item_tax_amount = ($item_subtotal * ($this->tax_rate[$key] / 100 ));
-                    $invoice_item->tax_amount =  $item_tax_amount;
-                    $this->tax_amount = $this->tax_amount + $item_tax_amount;
-                    $item_subtotal_incl = $item_tax_amount + $item_subtotal;
-                    $invoice_item->subtotal_incl =  $item_subtotal_incl;
-                    $this->total =  $this->total + $item_subtotal_incl;
-
-                }else{
-                    $item_subtotal_incl = $item_subtotal;
-                    $invoice_item->subtotal_incl = $item_subtotal_incl;
-                    $this->total =  $this->total + $item_subtotal_incl;
-                }
+                        if ($this->invoice_to == "Customer") {
                 
-                if ((isset($this->exchange_rate) && is_numeric($this->exchange_rate))) {
-                    $invoice_item->exchange_rate = $this->exchange_rate;
-                    $invoice_item->exchange_amount = $this->exchange_rate * $item_subtotal_incl ;
-                 }
-                $invoice_item->save();
-            }
+                            $invoice_item = new InvoiceItem;
+                            $invoice_item->invoice_id = $invoice->id;
+                            if (isset($this->selectedAccount[$key])) {
+                                $invoice_item->account_id = $this->selectedAccount[$key];
+                            }
+                            if (isset($this->selectedTrip[$key])) {
+                                $invoice_item->trip_id = $this->selectedTrip[$key];
+                            }
+                            if (isset($this->qty[$key])) {
+                                $invoice_item->qty = $this->qty[$key];
+                            }
+                            if (isset($this->amount[$key])) {
+                                $invoice_item->amount = $this->amount[$key];
+                            }
+                            if (isset($this->description[$key])) {
+                                $invoice_item->description = $this->description[$key];
+                            }
+                            if (isset($this->tax_rate[$key])) {
+                                $invoice_item->tax_rate = $this->tax_rate[$key];
+                            }
+                            if (isset($this->hs_code[$key])) {
+                                $invoice_item->hs_code = $this->hs_code[$key];
+                            }
+                            if (isset($this->selectedTax[$key])) {
+                                $invoice_item->tax_id = $this->selectedTax[$key];
+                            }
+                            if ((isset($this->amount[$key]) && is_numeric($this->amount[$key])) && ( isset($this->qty[$key]) && is_numeric($this->qty[$key]) ) ) {
 
-            if (isset($discount)) {
-                if($this->discount_unit == "currency"){
-                    $this->total = $this->total - $this->discount_amount;
-                }elseif($this->discount_unit == "percentage"){
-                    if ((is_numeric($this->discount_amount) && $this->discount_amount > 0) && ( is_numeric($this->total) && $this->total > 0)) {
-                        $discount_amount = ($this->discount_amount/100)*$this->total;
-                        $this->total = $this->total - $discount_amount;
+                                $item_subtotal = $this->amount[$key]*$this->qty[$key];
+                                $invoice_item->subtotal = $item_subtotal;
+                                $this->subtotal = $this->subtotal + $item_subtotal;
+
+                            }
+                            if ((isset($this->tax_rate[$key]) && is_numeric($this->tax_rate[$key])) && isset($this->selectedTax[$key])) {
+
+                                $item_tax_amount = ($item_subtotal * ($this->tax_rate[$key] / 100 ));
+                                $invoice_item->tax_amount =  $item_tax_amount;
+                                $this->tax_amount = $this->tax_amount + $item_tax_amount;
+                                $item_subtotal_incl = $item_tax_amount + $item_subtotal;
+                                $invoice_item->subtotal_incl =  $item_subtotal_incl;
+                                $this->total =  $this->total + $item_subtotal_incl;
+
+                            }else{
+                                $item_subtotal_incl = $item_subtotal;
+                                $invoice_item->subtotal_incl = $item_subtotal_incl;
+                                $this->total =  $this->total + $item_subtotal_incl;
+                            }
+                            
+                            if ((isset($this->exchange_rate) && is_numeric($this->exchange_rate))) {
+                                $invoice_item->exchange_rate = $this->exchange_rate;
+                                $invoice_item->exchange_amount = $this->exchange_rate * $item_subtotal_incl ;
+                            }
+                            $invoice_item->save();
+                    
+                            
+                        }
+
                     }
-                   
+                    
+            }elseif ($this->source == "Generic") {
+
+                foreach($this->selectedProduct as $key => $value){
+                    
+                    $invoice_item = new InvoiceItem;
+                    $invoice_item->invoice_id = $invoice->id;
+                    if (isset($this->selectedAccount[$key])) {
+                        $invoice_item->account_id = $this->selectedAccount[$key];
+                    }
+                    if (isset($this->selectedProduct[$key])) {
+                        $invoice_item->product_id = $this->selectedProduct[$key];
+                    }
+                    if (isset($this->qty[$key])) {
+                        $invoice_item->qty = $this->qty[$key];
+                    }
+                    if (isset($this->amount[$key])) {
+                        $invoice_item->amount = $this->amount[$key];
+                    }
+                    if (isset($this->description[$key])) {
+                        $invoice_item->description = $this->description[$key];
+                    }
+                    if (isset($this->tax_rate[$key])) {
+                        $invoice_item->tax_rate = $this->tax_rate[$key];
+                    }
+                    if (isset($this->hs_code[$key])) {
+                        $invoice_item->hs_code = $this->hs_code[$key];
+                    }
+                    if (isset($this->selectedTax[$key])) {
+                        $invoice_item->tax_id = $this->selectedTax[$key];
+                    }
+                    if ((isset($this->amount[$key]) && is_numeric($this->amount[$key])) && ( isset($this->qty[$key]) && is_numeric($this->qty[$key]) ) ) {
+
+                        $item_subtotal = $this->amount[$key]*$this->qty[$key];
+                        $invoice_item->subtotal = $item_subtotal;
+                        $this->subtotal = $this->subtotal + $item_subtotal;
+
+                    }
+                    if (isset($this->tax_rate[$key]) && is_numeric($this->tax_rate[$key])) {
+
+                        $item_tax_amount = ($item_subtotal * ($this->tax_rate[$key] / 100 ));
+                        $invoice_item->tax_amount =  $item_tax_amount;
+                        $this->tax_amount = $this->tax_amount + $item_tax_amount;
+                        $item_subtotal_incl = $item_tax_amount + $item_subtotal;
+                        $invoice_item->subtotal_incl =  $item_subtotal_incl;
+                        $this->total =  $this->total + $item_subtotal_incl;
+
+                    }else{
+                        $item_subtotal_incl = $item_subtotal;
+                        $invoice_item->subtotal_incl = $item_subtotal_incl;
+                        $this->total =  $this->total + $item_subtotal_incl;
+                    }
+                    
+                    if ((isset($this->exchange_rate) && is_numeric($this->exchange_rate))) {
+                        $invoice_item->exchange_rate = $this->exchange_rate;
+                        $invoice_item->exchange_amount = $this->exchange_rate * $item_subtotal_incl ;
+                    }
+                    $invoice_item->save();
                 }
-            }
 
-            $invoice = Invoice::find($invoice->id);
-            $invoice->tax_amount =  $this->tax_amount;
-            $invoice->subtotal = $this->subtotal;
-            $invoice->total = $this->total;
-            $invoice->exchange_rate = $this->exchange_rate;
-            $invoice->exchange_amount = $this->exchange_amount;
-            $invoice->balance = $this->total;
-            $invoice->update();
+            }elseif ($this->source == "Inventory") {
 
- 
+                foreach($this->selectedInventory as $key => $value){
+                    $invoice_item = new InvoiceItem;
+                    $invoice_item->invoice_id = $invoice->id;
+                    if($this->selectedInventory[$key]){
+                        $inventory = Inventory::find($this->selectedInventory[$key]);
+                        $product = $inventory->product;
+                        $invoice_item->product_id = $product->id;
+                        $invoice_item->inventory_id = $this->selectedInventory[$key];
+                    }
 
-        }elseif (isset($this->from_inventory) && $this->from_inventory == true) {
+                    if (isset($this->qty[$key])) {
+                        $invoice_item->qty = $this->qty[$key];
+                    }
+                    if (isset($this->weight[$key])) {
+                        $invoice_item->weight = $this->weight[$key];
+                    }
+                    if (isset($this->measurement[$key])) {
+                        $invoice_item->measurement = $this->measurement[$key];
+                    }
+                    if (isset($this->tax_rate[$key])) {
+                        $invoice_item->tax_rate = $this->tax_rate[$key];
+                    }
+                    if (isset($this->hs_code[$key])) {
+                        $invoice_item->hs_code = $this->hs_code[$key];
+                    }
+                    if (isset($this->selectedTax[$key])) {
+                        $invoice_item->tax_id = $this->selectedTax[$key];
+                    }
+                    if (isset($this->amount[$key])) {
+                        $invoice_item->amount = $this->amount[$key];
+                    }
+                    if (isset($this->description[$key])) {
+                        $invoice_item->description = $this->description[$key];
+                    }
+                    if ((isset($this->amount[$key]) && is_numeric($this->amount[$key])) && ( isset($this->qty[$key]) && is_numeric($this->qty[$key]) ) ) {
 
-            foreach($this->selectedInventory as $key => $value){
-                $invoice_item = new InvoiceItem;
-                $invoice_item->invoice_id = $invoice->id;
-                if($this->selectedInventory[$key]){
+                        $item_subtotal = $this->amount[$key]*$this->qty[$key];
+                        $invoice_item->subtotal = $item_subtotal;
+                        $this->subtotal = $this->subtotal + $item_subtotal;
+        
+                    }
+                    if (isset($this->tax_rate[$key]) && is_numeric($this->tax_rate[$key])) {
+        
+                        $item_tax_amount = ($item_subtotal * ($this->tax_rate[$key] / 100 ));
+                        $invoice_item->tax_amount =  $item_tax_amount;
+                        $this->tax_amount = $this->tax_amount + $item_tax_amount;
+                        $item_subtotal_incl = $item_tax_amount + $item_subtotal;
+                        $invoice_item->subtotal_incl =  $item_subtotal_incl;
+                        $this->total =  $this->total + $item_subtotal_incl;
+        
+                    }else{
+                        $item_subtotal_incl = $item_subtotal;
+                        $invoice_item->subtotal_incl = $item_subtotal_incl;
+                        $this->total =  $this->total + $item_subtotal_incl;
+                    }
+                
+                    $invoice_item->save();
+
+                
+                    $dispatch = new InventoryDispatch;
+                    $dispatch->user_id = Auth::user()->id;
+                    $dispatch->inventory_id = $this->selectedInventory[$key];
+                    $dispatch->invoice_id = $invoice->id;
+                    $dispatch->issue_date = $invoice->date;
+                    $dispatch->weight = $this->weight[$key];
+                    $dispatch->measurment = $this->measurement[$key];
+                    $dispatch->save();
+                    
+            
                     $inventory = Inventory::find($this->selectedInventory[$key]);
-                    $product = $inventory->product;
-                    $invoice_item->product_id = $product->id;
-                    $invoice_item->inventory_id = $this->selectedInventory[$key];
-                }
-
-                if (isset($this->qty[$key])) {
-                    $invoice_item->qty = $this->qty[$key];
-                }
-                if (isset($this->weight[$key])) {
-                    $invoice_item->weight = $this->weight[$key];
-                }
-                if (isset($this->measurement[$key])) {
-                    $invoice_item->measurement = $this->measurement[$key];
-                }
-                if (isset($this->tax_rate[$key])) {
-                    $invoice_item->tax_rate = $this->tax_rate[$key];
-                }
-                if (isset($this->hs_code[$key])) {
-                    $invoice_item->hs_code = $this->hs_code[$key];
-                }
-                if (isset($this->selectedTax[$key])) {
-                    $invoice_item->tax_id = $this->selectedTax[$key];
-                }
-                if (isset($this->amount[$key])) {
-                    $invoice_item->amount = $this->amount[$key];
-                }
-                if (isset($this->description[$key])) {
-                    $invoice_item->description = $this->description[$key];
-                }
-                if ((isset($this->amount[$key]) && is_numeric($this->amount[$key])) && ( isset($this->qty[$key]) && is_numeric($this->qty[$key]) ) ) {
-
-                    $item_subtotal = $this->amount[$key]*$this->qty[$key];
-                    $invoice_item->subtotal = $item_subtotal;
-                    $this->subtotal = $this->subtotal + $item_subtotal;
-    
-                }
-                if (isset($this->tax_rate[$key]) && is_numeric($this->tax_rate[$key])) {
-    
-                    $item_tax_amount = ($item_subtotal * ($this->tax_rate[$key] / 100 ));
-                    $invoice_item->tax_amount =  $item_tax_amount;
-                    $this->tax_amount = $this->tax_amount + $item_tax_amount;
-                    $item_subtotal_incl = $item_tax_amount + $item_subtotal;
-                    $invoice_item->subtotal_incl =  $item_subtotal_incl;
-                    $this->total =  $this->total + $item_subtotal_incl;
-    
-                }else{
-                    $item_subtotal_incl = $item_subtotal;
-                    $invoice_item->subtotal_incl = $item_subtotal_incl;
-                    $this->total =  $this->total + $item_subtotal_incl;
-                }
             
-                $invoice_item->save();
-
-            
-                $dispatch = new InventoryDispatch;
-                $dispatch->user_id = Auth::user()->id;
-                $dispatch->inventory_id = $this->selectedInventory[$key];
-                $dispatch->invoice_id = $invoice->id;
-                $dispatch->issue_date = $invoice->date;
-                $dispatch->weight = $this->weight[$key];
-                $dispatch->measurment = $this->measurement[$key];
-                $dispatch->save();
-                
-        
-                $inventory = Inventory::find($this->selectedInventory[$key]);
-        
-                if ((isset($inventory->balance) && is_numeric($inventory->balance) && $inventory->balance > 0) && (isset($this->weight[$key]) && is_numeric($this->weight[$key]) && $this->weight[$key] > 0)) {
-                    $inventory->balance = $inventory->balance - $this->weight[$key];
-                    if ($inventory->balance <= 0) {
-                        $inventory->status = 0;
+                    if ((isset($inventory->balance) && is_numeric($inventory->balance) && $inventory->balance > 0) && (isset($this->weight[$key]) && is_numeric($this->weight[$key]) && $this->weight[$key] > 0)) {
+                        $inventory->balance = $inventory->balance - $this->weight[$key];
+                        if ($inventory->balance <= 0) {
+                            $inventory->status = 0;
+                        }
+                        $inventory->update();
                     }
-                    $inventory->update();
+
                 }
+
+               
+
+                
+
 
             }
 
-          
+
 
             if (isset($discount)) {
                 if($this->discount_unit == "currency"){
@@ -1158,9 +1231,9 @@ class Create extends Component
                         $discount_amount = ($this->discount_amount/100)*$this->total;
                         $this->total = $this->total - $discount_amount;
                     }
-                   
                 }
             }
+           
 
             $invoice = Invoice::find($invoice->id);
             $invoice->tax_amount =  $this->tax_amount;
@@ -1171,43 +1244,30 @@ class Create extends Component
             $invoice->balance = $this->total;
             $invoice->update();
 
-
-        }
-       
-    }
-
-    $notifications = Notification::where('when','before')->where('category','Invoice Authorization')->where('status',1)->get();
-       
+           
         
-        if ($notifications->isNotEmpty()) {
-            foreach ($notifications as $notification) {
-                if($notification && isset($notification->category)){
-                   $email = $notification->email ?? $notification->employee->email ?? null;
-                if($email){
-                    Mail::to($email)->send(new PendingNotificationEmails($this->company, $notification, $invoice));
-                }
+            $notifications = Notification::where('when','before')->where('category','Invoice Authorization')->where('status',1)->get();
+
+            if ($notifications->isNotEmpty()) {
+                foreach ($notifications as $notification) {
+                    if($notification && isset($notification->category)){
+                    $email = $notification->email ?? $notification->employee->email ?? null;
+                    if($email){
+                        Mail::to($email)->send(new PendingNotificationEmails($this->company, $notification, $invoice));
+                    }
+                    }
                 }
             }
-        }
 
 
-        $this->dispatchBrowserEvent('alert',[
-            'type'=>'success',
-            'message'=>"Invoice Created Successfully!!"
-        ]);
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Invoice Created Successfully!!"
+            ]);
 
-        return redirect()->route('invoices.index');
+            return redirect()->route('invoices.index');
 
-        
-        //     }
-        //     catch(\Exception $e){
-        //     // Set Flash Message
-        //     $this->dispatchBrowserEvent('alert',[
-        //         'type'=>'error',
-        //         'message'=>"Something went wrong while creating invoice!!"
-        //     ]);
-        // }
-    });
+        });
     
     }
 
@@ -1245,6 +1305,15 @@ class Create extends Component
             ]);
 
         }
+        elseif($category == "transporters"){
+
+            $this->transporters = Transporter::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Transporters Refreshed Successfully!!."
+            ]);
+
+        }
         elseif($category == "bank_accounts"){
             $this->bank_accounts = BankAccount::where('currency_id',$this->selectedCurrency)->where('company_id',$this->company->id)->orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert',[
@@ -1278,8 +1347,8 @@ class Create extends Component
                 $query->where('customer_id', $this->selectedCustomer);
             }
 
-            if (filled($this->search)) {
-            $term = '%'.$this->search.'%';
+            if (filled($this->searchTrip)) {
+            $term = '%'.$this->searchTrip.'%';
 
             $query->where(function ($q) use ($term) {
                 $q->where('trip_number', 'like', $term)
@@ -1304,6 +1373,69 @@ class Create extends Component
 
     }
 
+    public function updatedSource($value){
+            if(!$value){
+                return;
+            }
+            if($value == "Trip"){
+                $this->from_trips = True;
+            }elseif($value == "Inventory"){
+                 $this->from_inventory = True;
+            }
+    }
+ 
+    public function getBookingsProperty(){
+
+            $query = Booking::query()
+            ->with('transporter','horse','trailer','vehicle','asset','service_type','ticket')
+            ->where('authorization','approved')
+            ->where('transaction_type','income')
+            ->where('status', 0);
+            if($this->invoice_to == "Transporter"){
+                $query->where('transporter_id', $this->selectedTransporter);
+            }
+
+                 // Date window
+            if ($this->from && $this->to ) {
+                $from = Carbon::parse($this->from)->startOfDay();
+                $to   = Carbon::parse($this->to)->endOfDay();
+                $query->whereBetween($this->booking_filter, [$from, $to]);
+            } else {
+                $query->whereBetween($this->booking_filter, [
+                    now()->startOfMonth(),
+                    now()->endOfMonth(),
+                ]);
+            }
+
+           
+
+            if (filled($this->searchBooking)) {
+            $term = '%'.$this->searchBooking.'%';
+
+            $query->where(function ($q) use ($term) {
+                $q->where('booking_number', 'like', $term)
+                ->orWhere('in_date', 'like', $term)
+                ->orWhere('turnover', 'like', $term)
+                ->orWhere('freight', 'like', $term)
+                ->orWhereHas('horse', function ($qq) use ($term) {
+                return $qq->where('registration_number', 'like', $term)
+                        ->where('fleet_number', 'like', $term);
+                })
+                ->orWhereHas('trailer', function ($qq) use ($term) {
+                return $qq->where('registration_number', 'like', $term)
+                        ->where('fleet_number', 'like', $term);
+                })
+                ->orWhereHas('vehicle', function ($qq) use ($term)  {
+                return $qq->where('registration_number', 'like', $term)
+                            ->where('fleet_number', 'like', $term);
+                });
+            });
+        }
+
+         return $query->orderByDesc($this->booking_filter)->get();
+
+    }
+
    
 
 
@@ -1320,6 +1452,7 @@ class Create extends Component
 
         return view('livewire.invoices.create',[
             'trips' => $this->trips,
+            'bookings' => $this->bookings,
         ]);
 
 

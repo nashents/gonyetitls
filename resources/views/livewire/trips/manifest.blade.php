@@ -6,6 +6,119 @@
     }
     </style>
 @endsection
+@section('extra-css')
+<style>
+  :root {
+    --accent: {{$company->color}};
+  }
+
+  /* Force A4 page + tighter margins */
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+
+  @media print {
+    /* Remove default browser margins */
+    html, body {
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Hide buttons / toolbars */
+    .action-bar,
+    .hidden-print {
+      display: none !important;
+    }
+
+    /* Main manifest container */
+    .manifest {
+      width: 190mm;              /* inside A4 minus margins */
+      margin: 0 auto;
+      padding: 0;
+      box-sizing: border-box;
+      font-size: 11px;           /* tighten text */
+      line-height: 1.2;
+    }
+
+    /* Keep big logical blocks on same page */
+    .manifest__header,
+    .grid-2,
+    .items,
+    .signatures,
+    .manifest__footer,
+    .block-keep {
+      page-break-inside: avoid;
+    }
+
+    /* Headings a bit smaller for print */
+    .manifest h1 {
+      font-size: 16px;
+      margin: 0 0 6px;
+    }
+
+    .manifest h3 {
+      font-size: 12px;
+      margin: 4px 0;
+    }
+
+    /* Cards & grids – reduce padding/gaps */
+    .card {
+      padding: 4px 6px;
+      margin-bottom: 4px;
+    }
+
+    .grid-2 {
+      gap: 6px;
+    }
+
+    /* Key-value pairs tighter */
+    .kv .k,
+    .kv .v {
+      padding: 1px 0;
+    }
+
+    /* Table – compact mode */
+    .tbl {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10px;
+    }
+
+    .tbl th,
+    .tbl td {
+      padding: 2px 3px;
+    }
+
+    .tbl th {
+      font-weight: 600;
+    }
+
+    /* Signatures – keep compact */
+    .signatures {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .sig {
+      min-height: 40px;
+    }
+
+    .sig .label {
+      font-size: 10px;
+      margin-bottom: 3px;
+    }
+
+    /* Footer compact */
+    .manifest__footer {
+      margin-top: 6px;
+      font-size: 10px;
+    }
+  }
+</style>
+@endsection
     <div class="action-bar">
       <button class="btn" onclick="window.history.back()">
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>

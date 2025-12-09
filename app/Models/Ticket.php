@@ -50,6 +50,9 @@ class Ticket extends Model implements Auditable
         return $this->hasMany('App\Models\TyreAssignment');
     }
     
+    public function dispatches(){
+        return $this->hasMany('App\Models\Dispatch');
+    }
     public function inventory_dispatches(){
         return $this->hasMany('App\Models\InventoryDispatch');
     }

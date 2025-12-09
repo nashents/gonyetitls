@@ -132,18 +132,17 @@ class Create extends Component
         if (!is_null($id)) {
            $horse = Horse::find($id);
            $this->selected_equipment = Horse::with('bookings')->find($id);
-           $this->existing_bookings = $this->selected_equipment->bookings->where('status', 1)->sortByDesc('in_date');
+           $this->existing_bookings = $this->selected_equipment->bookings->where('status', 1)->take(5)->sortByDesc('in_date');
            $this->mileage = $horse ? $horse->mileage : "";
            $this->hours = $horse ? $horse->hours : "";
         }
-
     }
+
     public function updatedSelectedAsset($id){
         if (!is_null($id)) {
             $asset = Asset::find($id);
             $this->selected_equipment = Asset::with('bookings')->find($id);
-            $this->existing_bookings = $this->selected_equipment->bookings->where('status', 1)->sortByDesc('in_date');
-          
+            $this->existing_bookings = $this->selected_equipment->bookings->where('status', 1)->take(5)->sortByDesc('in_date');
         }
 
     }
@@ -151,9 +150,8 @@ class Create extends Component
         if (!is_null($id)) {
            $trailer = Trailer::find($id);
             $this->selected_equipment = Trailer::with('bookings')->find($id);
-             $this->existing_bookings = $this->selected_equipment->bookings->where('status', 1)->sortByDesc('in_date');
+             $this->existing_bookings = $this->selected_equipment->bookings->where('status', 1)->take(5)->sortByDesc('in_date');
            $this->mileage = $trailer ? $trailer->mileage : "";
-          
         }
 
     }
@@ -161,7 +159,7 @@ class Create extends Component
         if (!is_null($id)) {
            $vehicle = Vehicle::find($id);
             $this->selected_equipment = Vehicle::with('bookings')->find($id);
-             $this->existing_bookings = $this->selected_equipment->bookings->where('status', 1)->sortByDesc('in_date');
+             $this->existing_bookings = $this->selected_equipment->bookings->where('status', 1)->take(5)->sortByDesc('in_date');
            $this->mileage = $vehicle ? $vehicle->mileage : "";
            $this->hours = $vehicle ? $vehicle->hours : "";
         }
@@ -179,7 +177,6 @@ class Create extends Component
                 }elseif($this->type == "Trailer" && $this->selectedTrailer){
                     $this->breakdowns = Breakdown::where('driver_id',$driver->id)->where('trailer_id', $this->selectedTrailer)->whereYear('date',date('Y'))->where('status',True)->orderBy('created_at','desc')->get();
                 }
-                
             }
         }
         
