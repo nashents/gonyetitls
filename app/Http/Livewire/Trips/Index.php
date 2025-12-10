@@ -111,6 +111,8 @@ class Index extends Component
     public $subtotal;
     public $total = 0;
 
+    public $totalsByCurrency;
+    public $trips_currencies;
     public $clearing_agent;
     public $boarder;
     public $route;
@@ -1156,9 +1158,20 @@ class Index extends Component
             $trips->orderBy($this->trip_filter, 'desc');
         }
 
+        $this->totalsByCurrency = $trips
+        ->whereNotNull('freight')
+        ->filter(fn ($trip) => $trip->freight !== '')
+        ->groupBy('currency_id')
+        ->map(fn ($group) => $group->sum('freight'));
+
+        // Pull only currencies that actually exist in your trips:
+        $this->trips_currencies = \App\Models\Currency::whereIn('id', $this->totalsByCurrency->keys())->get();
+
         return view('livewire.trips.index', [
             'trips' => $trips->paginate(10),
-            'trip_filter' => $this->trip_filter
+            'trip_filter' => $this->trip_filter,
+            'totalsByCurrency' => $this->totalsByCurrency,
+            'trips_currencies' => $this->trips_currencies
         ]);
     
     }

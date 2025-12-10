@@ -34,39 +34,27 @@
                                         <center><strong>Total Trips!</strong> {{ $trips->total() }}</center>
                                         @if ($company->rates_managed_by_finance == 1)
                                             @if (in_array('Finance', $department_names) ||  in_array('Super Admin', $role_names))
-                                                @php
-                                                    foreach ($trips as $trip) {
-                                                        $selected_trips_ids[] = $trip->currency_id;
-                                                    }
-                                                    $currencies = App\Models\Currency::all();
-                                                @endphp
                                                 @foreach ($currencies as $currency)
-                                                    @if (isset($selected_trips_ids))
-                                                        @if (in_array($currency->id, $selected_trips_ids))
-                                                            @php
-                                                                $total_revenue = $trips->where('currency_id',$currency->id)->where('freight','!=',Null)->where('freight','!=','')->sum('freight');
-                                                            @endphp
-                                                            <center><strong>Total Revenue {{ $currency->name }} :</strong> {{ $currency->symbol }}{{ number_format($total_revenue ? $total_revenue : 0 ,2)}}</center>
-                                                        @endif
-                                                    @endif
+                                                    @php
+                                                        $total_revenue = $totalsByCurrency[$currency->id] ?? 0;
+                                                    @endphp
+
+                                                    <center>
+                                                        <strong>Total Revenue {{ $currency->name }} :</strong>
+                                                        {{ $currency->symbol }}{{ number_format($total_revenue, 2) }}
+                                                    </center>
                                                 @endforeach
                                             @endif
                                         @else
-                                            @php
-                                                foreach ($trips as $trip) {
-                                                    $selected_trips_ids[] = $trip->currency_id;
-                                                }
-                                                $currencies = App\Models\Currency::all();
-                                            @endphp
-                                            @foreach ($currencies as $currency)
-                                                @if (isset($selected_trips_ids))
-                                                    @if (in_array($currency->id, $selected_trips_ids))
-                                                    @php
-                                                        $total_revenue = $trips->where('currency_id',$currency->id)->where('freight','!=',Null)->where('freight','!=','')->sum('freight');
-                                                    @endphp
-                                                    <center><strong>Total Revenue {{ $currency->name }} :</strong> {{ $currency->symbol }}{{ number_format($total_revenue ? $total_revenue : 0,2) }}</center>
-                                                    @endif
-                                                @endif
+                                           @foreach ($currencies as $currency)
+                                                @php
+                                                    $total_revenue = $totalsByCurrency[$currency->id] ?? 0;
+                                                @endphp
+
+                                                <center>
+                                                    <strong>Total Revenue {{ $currency->name }} :</strong>
+                                                    {{ $currency->symbol }}{{ number_format($total_revenue, 2) }}
+                                                </center>
                                             @endforeach
                                         @endif
                                         
