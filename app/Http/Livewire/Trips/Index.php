@@ -1157,8 +1157,8 @@ class Index extends Component
 
             $trips->orderBy($this->trip_filter, 'desc');
         }
-
-        $this->totalsByCurrency = $trips
+        $all_trips = $trips->get();
+        $this->totalsByCurrency = $all_trips
         ->whereNotNull('freight')
         ->filter(fn ($trip) => $trip->freight !== '')
         ->groupBy('currency_id')

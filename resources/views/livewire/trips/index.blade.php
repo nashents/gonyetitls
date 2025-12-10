@@ -34,7 +34,7 @@
                                         <center><strong>Total Trips!</strong> {{ $trips->total() }}</center>
                                         @if ($company->rates_managed_by_finance == 1)
                                             @if (in_array('Finance', $department_names) ||  in_array('Super Admin', $role_names))
-                                                @foreach ($currencies as $currency)
+                                                @foreach ($trips_currencies as $currency)
                                                     @php
                                                         $total_revenue = $totalsByCurrency[$currency->id] ?? 0;
                                                     @endphp
@@ -46,7 +46,7 @@
                                                 @endforeach
                                             @endif
                                         @else
-                                           @foreach ($currencies as $currency)
+                                           @foreach ($trips_currencies as $currency)
                                                 @php
                                                     $total_revenue = $totalsByCurrency[$currency->id] ?? 0;
                                                 @endphp
