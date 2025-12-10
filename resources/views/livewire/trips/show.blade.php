@@ -722,7 +722,7 @@
                                                                                 <th scope="row"> Cost Of Sales</th>
                                                                                 <td>
                                                                                     @if ($trip->cost_of_sales)
-                                                                                        {{$default_currency->name}} {{$default_currency->symbol}}{{number_format($trip->cost_of_sales,2)}}
+                                                                                        {{$default_currency?->name}} {{$default_currency?->symbol}}{{number_format($trip->cost_of_sales,2)}}
                                                                                     @endif
                                                                                 </td>
                                                                             </tr>
@@ -740,7 +740,7 @@
                                                                                 <th scope="row"> Net Profit</th>
                                                                                 <td>
                                                                                     @if ($trip->net_profit)
-                                                                                    {{$default_currency->name}} {{$default_currency->symbol}}{{number_format($trip->net_profit,2)}}
+                                                                                    {{$default_currency?->name}} {{$default_currency?->symbol}}{{number_format($trip->net_profit,2)}}
                                                                                     @endif
                                                                                 </td>
                                                                             </tr>
@@ -885,7 +885,7 @@
                                                                             <th scope="row"> Cost Of Sales</th>
                                                                             <td>
                                                                                 @if ($trip->cost_of_sales)
-                                                                                    {{$default_currency->name}} {{$default_currency->symbol}}{{number_format($trip->cost_of_sales,2)}}
+                                                                                    {{$default_currency?->name}} {{$default_currency?->symbol}}{{number_format($trip->cost_of_sales,2)}}
                                                                                 @endif
                                                                             </td>
                                                                         </tr>
@@ -903,7 +903,7 @@
                                                                             <th scope="row"> Net Profit</th>
                                                                             <td>
                                                                                 @if ($trip->net_profit)
-                                                                                {{$default_currency->name}} {{$default_currency->symbol}}{{number_format($trip->net_profit,2)}}
+                                                                                {{$default_currency?->name}} {{$default_currency?->symbol}}{{number_format($trip->net_profit,2)}}
                                                                                 @endif
                                                                             </td>
                                                                         </tr>

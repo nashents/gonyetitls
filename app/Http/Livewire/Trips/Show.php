@@ -212,6 +212,7 @@ class Show extends Component
    
 
     private function initializeUserDetails() {
+        
         $this->user = Auth::user();
         $this->employee = $this->user->employee;
         $this->company = $this->employee->company;
@@ -292,6 +293,7 @@ class Show extends Component
 
 
     public function mount($id){
+
         $this->initializeUserDetails();
         $this->initializeTrip($id);
         $this->calculateActualDistance();

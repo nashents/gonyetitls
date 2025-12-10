@@ -16,8 +16,11 @@ class Tyre extends Model implements Auditable
     public function driver(){
         return $this->belongsTo('App\Models\Driver');
     }
+      public function transfer_items(){
+        return $this->hasMany('App\Models\TransferItem');
+    }
       public function bill_expenses(){
-        return $this->HasMany('App\Models\BillExpense');
+        return $this->hasMany('App\Models\BillExpense');
     }
      public function checklist_results(){
         return $this->hasMany('App\Models\ChecklistResult');

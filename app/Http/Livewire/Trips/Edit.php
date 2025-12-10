@@ -1103,8 +1103,8 @@ class Edit extends Component
          $this->ending_hours = $this->trip->ending_hours;
          $this->exchange_rate = $this->trip->exchange_rate;
          $this->exchange_customer_freight = $this->trip->exchange_customer_freight;
-         $this->exchange_transporter_freight = $this->trip->exchange_customer_turnover;
-         $this->exchange_customer_turnover = $this->trip->exchange_rate;
+         $this->exchange_transporter_freight = $this->trip->exchange_transporter_freight;
+         $this->exchange_rate = $this->trip->exchange_rate;
          $this->exchange_transporter_cost_of_sales = $this->trip->exchange_transporter_cost_of_sales;
          $this->loading_point_id = $this->trip->loading_point_id;
          $this->offloading_point_id = $this->trip->offloading_point_id;
@@ -1461,14 +1461,14 @@ class Edit extends Component
     private function recalculateExpenses($trip_id){
 
         $trip = Trip::find($trip_id);
-        $this->trip_expenses = TripExpense::where('trip_id', $trip_id)->get();
+        $trip_expenses = TripExpense::where('trip_id', $trip_id)->get();
         
         $this->total_transporter_expenses = 0;
         $this->total_customer_expenses = 0;
         $this->total_expenses = 0;
         
-        if ($this->trip_expenses->isNotEmpty()) {
-            foreach ($this->trip_expenses as $expense) {
+        if ($trip_expenses->isNotEmpty()) {
+            foreach ($trip_expenses as $expense) {
                 $use_amount = ($expense->currency_id == Auth::user()->employee->company->currency_id) 
                     ? $expense->amount 
                     : $expense->exchange_amount;
@@ -1659,8 +1659,8 @@ class Edit extends Component
           $trip->exchange_rate = $this->exchange_rate;
           $trip->exchange_customer_freight = $this->exchange_customer_freight;
           $trip->exchange_transporter_freight = $this->exchange_transporter_freight;
-          $trip->turnover = $this->freight;
-          $this->turnover = $this->freight;
+          $this->turnover = $this->company->id ==  $this->selectedCurrency ? $this->freight : $this->exchange_customer_freight;
+          $trip->turnover = $this->turnover;
           $trip->trip_status = $this->selectedStatus;
           $trip->trip_status_date = $this->start_date;
           $trip->stops = $this->stops;

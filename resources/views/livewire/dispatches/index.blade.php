@@ -699,8 +699,8 @@
                                 <div class="col-md-1">
                                     <div class="form-group">
                                         <label for="weight">Qty<span class="required" style="color: red">*</span></label>
-                                        @if ($max_weight)
-                                            <input type="number" step="any" min="0"  max="{{ $max_weight[0] ?? '' }}"  class="form-control" wire:model.debounce.300ms="qty.0" placeholder="Enter Qty" required>
+                                        @if ($max)
+                                            <input type="number" step="any" min="0"  max="{{ $max[0] ?? '' }}"  class="form-control" wire:model.debounce.300ms="qty.0" placeholder="Enter Qty" required>
                                         @else
                                             <input type="number" step="any" min="0"  class="form-control" wire:model.debounce.300ms="qty.0" placeholder="Enter Qty" required>
                                         @endif
@@ -845,8 +845,8 @@
                                          <div class="col-md-1">
                                             <div class="form-group">
                                                 <label for="weight">Qty<span class="required" style="color: red">*</span></label>
-                                                @if ($max_weight)
-                                                    <input type="number" step="any" min="0"  max="{{ $max_weight[$value] ?? '' }}"  class="form-control" wire:model.debounce.300ms="qty.{{$value}}" placeholder="Enter Qty" required>
+                                                @if ($max)
+                                                    <input type="number" step="any" min="0"  max="{{ $max[$value] ?? '' }}"  class="form-control" wire:model.debounce.300ms="qty.{{$value}}" placeholder="Enter Qty" required>
                                                 @else
                                                     <input type="number" step="any" min="0"  class="form-control" wire:model.debounce.300ms="qty.{{$value}}" placeholder="Enter Qty" required>
                                                 @endif

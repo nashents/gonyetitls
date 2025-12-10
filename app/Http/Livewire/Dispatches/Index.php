@@ -331,7 +331,7 @@ class Index extends Component
             $inventory = Inventory::find($id);
             if ($inventory && $this->expand == True) {
                 $this->qty[$key] = $inventory->balance;
-                $this->max_weight[$key] = $inventory->balance;
+                $this->max[$key] = $inventory->balance;
             }
         }
          
@@ -341,7 +341,7 @@ class Index extends Component
             $asset = Asset::find($id);
             if ($asset && $this->expand == True) {
                 $this->qty[$key] = $asset->balance;
-                $this->max_weight[$key] = $asset->balance;
+                $this->max[$key] = $asset->balance;
             }
         }
     }
@@ -350,7 +350,7 @@ class Index extends Component
             $tyre = Tyre::find($id);
             if ($tyre && $this->expand == True) {
                 $this->weight[$key] = $tyre->balance;
-                $this->max_weight[$key] = $tyre->balance;
+                $this->max[$key] = $tyre->balance;
             }
         }
     }

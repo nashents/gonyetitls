@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Transfers;
 
+use App\Models\Tyre;
 use App\Models\Store;
 use App\Models\Product;
 use Livewire\Component;
@@ -9,6 +10,7 @@ use App\Models\Transfer;
 use App\Models\Inventory;
 use App\Models\TransferItem;
 use Livewire\WithPagination;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
 class Index extends Component
@@ -31,6 +33,11 @@ class Index extends Component
     public $stores;
     public $products;
     public $selectedProduct;
+    public $inventories;
+    public $selectedInventory;
+    public $tyres;
+    public $selectedTyre;
+    public $qty;
     public $max;
     public $department;
 
@@ -55,6 +62,8 @@ class Index extends Component
         $this->department = $department;
         $this->stores = Store::orderBy('name','asc')->where('status',1)->get();
         $this->products = collect();
+        $this->tyres = collect();
+        $this->inventories = collect();
         $this->resetPage();
         $this->search = "";
         $this->searchInventory = "";
@@ -99,9 +108,39 @@ class Index extends Component
 
     public function updatedselectedProduct($id, $key){
         if (!is_null($id) && !is_null($key) ) {
+        
+            $product = Product::find($id);
+            $this->inventories = Inventory::where('product_id',$id)->where('status',1)->where('balance','>',0)->orderBy('created_at','asc')->get();
+            $this->tyres = Tyre::where('product_id',$id)->where('status',1)->where('balance','>',0)->orderBy('created_at','asc')->get();
+        
+            if ($product && $this->department == "inventory") {
+                $this->max[$key] = $product->inventories->where('status',1)->where('balance','>',0)->sum('balance');
+            }elseif ($product && $this->department == "tyre") {
+                $this->max[$key] = $product->tyres->where('status',1)->sum('balance');
+            }
+
+
+        }
+    }
+
+     public function updatedSelectedInventory($id, $key){
+        if (!is_null($id)) {
             $inventory = Inventory::find($id);
-            $this->max[$key] = $inventory->balance;
-            $this->qty[$key] = 1;
+            if ($inventory) {
+                $this->qty[$key] = $inventory->balance;
+                $this->max[$key] = $inventory->balance;
+            }
+        }
+         
+    }
+  
+    public function updatedSelectedTyre($id, $key){
+        if (!is_null($id)) {
+            $tyre = Tyre::find($id);
+            if ($tyre) {
+                $this->qty[$key] = $tyre->balance;
+                $this->max[$key] = $tyre->balance;
+            }
         }
     }
 
@@ -163,6 +202,8 @@ class Index extends Component
 
     public function store(){
 
+        DB::transaction(function () {
+
             $transfer = new Transfer;
             $transfer->user_id = Auth::user()->id;
             $transfer->transfer_number = $this->transferNumber();
@@ -173,25 +214,36 @@ class Index extends Component
             $transfer->authorization = "pending";
             $transfer->save();
 
-        if (isset($this->selectedProduct)) {
-            foreach ($this->selectedProduct as $key => $value) {
-              
-                $transfer_item = new TransferItem;
-                $transfer_item->transfer_id = $transfer->id;
+            if (isset($this->selectedInventory)) {
+                foreach ($this->selectedInventory as $key => $value) {
+                
+                    $transfer_item = new TransferItem;
+                    $transfer_item->transfer_id = $transfer->id;
 
-                if (isset($this->selectedProduct[$key])) {
-                    $transfer_item->product_id = $this->selectedProduct[$key];
+                    if (isset($this->selectedProduct[$key])) {
+                        $transfer_item->product_id = $this->selectedProduct[$key];
+                    }
+                    if (isset($this->selectedInventory[$key])) {
+                        $transfer_item->inventory_id = $this->selectedInventory[$key];
+                    }
+                    if (isset($this->selectedTyre[$key])) {
+                        $transfer_item->tyre_id = $this->selectedTyre[$key];
+                    }
+                    if (isset($this->qty[$key])) {
+                        $transfer_item->qty = $this->qty[$key];
+                    }
+                    $transfer_item->save();   
                 }
-                $transfer_item->save();   
             }
-        }
 
-        $this->transferBrowserEvent('hide-transferModal');
-        $this->resetInputFields();
-        $this->transferBrowserEvent('alert',[
-            'type'=>'success',
-            'message'=>"Item(s) Transfered Successfully!!"
-        ]);
+            $this->dispatchBrowserEvent('hide-transferModal');
+            $this->resetInputFields();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Item(s) Transfered Successfully!!"
+            ]);
+
+        });
     
     }
 
@@ -214,8 +266,8 @@ class Index extends Component
 
        
 
-        $this->transferBrowserEvent('hide-reverseModal');
-        $this->transferBrowserEvent('alert',[
+        $this->dispatchBrowserEvent('hide-reverseModal');
+        $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
             'message'=>"Item Transfer Reversed Successfully!!"
         ]);
@@ -234,7 +286,7 @@ class Index extends Component
         $this->old_transfer = Transfer::find($id);
         $this->old_transfer_id = $id;
         $this->selectedProduct = $this->old_transfer->inventory->id;
-        $this->transferBrowserEvent('show-reverseModal');
+        $this->dispatchBrowserEvent('show-reverseModal');
 
     }
    

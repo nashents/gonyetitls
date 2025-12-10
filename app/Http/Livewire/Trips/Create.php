@@ -11,7 +11,6 @@ use App\Models\Agent;
 use App\Models\Cargo;
 use App\Models\Horse;
 use App\Models\Route;
-use App\Models\Shift;
 use App\Models\TopUp;
 use App\Models\Border;
 use App\Models\Broker;
@@ -77,9 +76,6 @@ class Create extends Component
     public $haulage_type;
     public $trip_types;
     public $selectedTripType;
-    public $shifts;
-    public $shift = False;
-    public $selectedShift;
     public $trip_type_name;
     public $trip_ref;
     public $trip_groups;
@@ -743,66 +739,7 @@ class Create extends Component
         }
     }
 
-    public function updatedSelectedShift($id){
 
-        if(!is_null($id)){
-            $shift = Shift::find($id);
-            if($shift){
-               
-                $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$shift->transporter_id)
-                ->where('archive',0)
-                ->orderBy('registration_number','asc')->get();
-                $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('transporter_id',$shift->transporter_id)
-                ->where('archive',0)
-                ->orderBy('registration_number','asc')->get();
-                $this->trailers = Trailer::where('transporter_id',$shift->transporter_id)
-                ->where('archive',0)
-                ->orderBy('registration_number','asc')->get();
-                $this->drivers = Driver::query()->with('employee:id,name,surname')->where('transporter_id',$shift->transporter_id)
-                ->withAggregate('employee','name')
-                ->where('archive',0)
-                ->orderBy('employee_name','asc')->get();
-
-                $transporter = Transporter::find($shift->transporter_id);
-                $this->cargos = $transporter->cargos->sortBy('name');
-                $this->selectedStatus = "Offloaded";
-                $trip_type = TripType::where('name','Local')->first();
-                $this->selectedTripType = $trip_type ? $trip_type->id : Null;
-                $this->trip_type_name =  $trip_type->name;
-                $this->with_trailer = True;
-                $this->timelines = True;
-
-                $this->selectedTransporter = $shift->transporter_id;
-                if($shift->horse_id){
-                    $horse = $shift->horse;
-                    $cluster = $horse->cluster;
-                    if($cluster){
-                        foreach($cluster->trailers as $trailer){
-                            $this->trailer_id[] = $trailer->id;
-                        }
-                    }
-                    $this->selectedHorse = $shift->horse_id;
-                    $this->mode_of_transport = "Horse";
-                }elseif($shift->vehicle_id){
-                    $this->mode_of_transport = "Vehicle";
-                    $this->selectedHorse = $shift->vehicle_id;
-                }
-                $this->driver_id = $shift->driver_id;
-              
-                $this->selectedCurrency = $shift->currency_id;
-                $this->start_date = Carbon::parse($shift->date . ' ' . $shift->shift_start_time)
-                    ->format('Y-m-d\TH:i');
-
-                $this->end_date = Carbon::parse($shift->date . ' ' . $shift->shift_end_time)
-                    ->format('Y-m-d\TH:i');
-                $this->customer_id = $shift->customer_id;
-                $this->selectedCargo = $shift->cargo_id;
-            }
-           
-
-        }
-       
-    }
 
     public function updatedSelectedBroker($id)
     {
@@ -1026,7 +963,7 @@ class Create extends Component
                                     ->get();
         $this->company = Company::with('currency')->find($this->employee->company_id);
         $this->exchange_rates = ExchangeRate::all();
-        $this->shifts = Shift::where('for','Trips')->where('status','1')->latest()->get();
+       
         $this->liquid_measurements = Measurement::where('cargo_type','Liquid')->orderBy('name','asc')->get();
         $this->solid_measurements = Measurement::where('cargo_type','Solid')->orderBy('name','asc')->get();  
         $this->emptyrun_destination = False;
@@ -1195,15 +1132,15 @@ class Create extends Component
     private function recalculateExpenses($trip_id){
 
         $trip = Trip::find($trip_id);
-        $this->trip_expenses = TripExpense::where('trip_id', $trip_id)->get();
+        $trip_expenses = TripExpense::where('trip_id', $trip_id)->get();
         
         $this->total_transporter_expenses = 0;
         $this->total_customer_expenses = 0;
         $this->total_expenses = 0;
         
-        if ($this->trip_expenses->isNotEmpty()) {
+        if ($trip_expenses->isNotEmpty()) {
 
-            foreach ($this->trip_expenses as $expense) {
+            foreach ($trip_expenses as $expense) {
                 
                 $use_amount = ($expense->currency_id == Auth::user()->employee->company->currency_id) 
                     ? $expense->amount 
@@ -1407,8 +1344,6 @@ class Create extends Component
                 $trip->calculation_measurement = $this->calculation_measurement;
                 $trip->currency_id = $this->selectedCurrency ?: null;
                 $trip->cd3_number = $this->cd3_number;
-                $trip->shift_id = $this->selectedShift ?: null;
-                $trip->shift = $this->shift;
                 $trip->notes = $this->notes;
                 $trip->arrive_loading_point = $this->arrive_lp;
                 $trip->depart_loading_point = $this->depart_lp;
@@ -1448,8 +1383,9 @@ class Create extends Component
                 $trip->exchange_rate = $this->exchange_rate;
                 $trip->exchange_customer_freight = $this->exchange_customer_freight;
                 $trip->exchange_transporter_freight = $this->exchange_transporter_freight;
-                $trip->turnover = $this->freight;
-                $this->turnover = $this->freight;
+                $this->turnover = $this->company->id ==  $this->selectedCurrency ? $this->freight : $this->exchange_customer_freight;
+                $trip->turnover = $this->turnover;
+              
                
                 $trip->trip_status = $this->selectedStatus;
                 $trip->trip_status_date = $this->start_date;
@@ -1697,7 +1633,8 @@ class Create extends Component
                     }
                 }
   
-                if($this->shift == False){
+             
+
                     if ($this->fuel_order) {
                         $fuel_fillup = $trip->fuels->where('fillup', 1)->first();
                         $container = Container::find($this->selectedContainer);
@@ -1755,10 +1692,11 @@ class Create extends Component
                     
                         $trip_expense->save();
                     }
-                }
+              
                 
 
                 if ($this->trip_expenses && $this->expense_id) {
+
                     foreach ($this->expense_id as $key => $value) {
                 
                         $trip_expense = new TripExpense;
@@ -2372,13 +2310,7 @@ class Create extends Component
                 'message'=>"Trip Tracking Groups Refreshed Successfully!!."
             ]);
         }
-        elseif($category == "shifts"){
-            $this->shifts = Shift::where('for','Trips')->where('status',1)->latest()->get();
-            $this->dispatchBrowserEvent('alert',[
-                'type'=>'success',
-                'message'=>"Shifts Refreshed Successfully!!."
-            ]);
-        }
+       
         elseif($category == "borders"){
             $this->borders = Border::with('clearing_agents:id,name')->orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert',[
