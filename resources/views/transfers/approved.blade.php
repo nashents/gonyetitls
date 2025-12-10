@@ -1,5 +1,4 @@
 @extends('layouts.app')
-@section('content')
 
 @section('extra-css')
     @if (Auth::user()->employee->company)
@@ -9,7 +8,7 @@
     @endif
 @endsection
 @section('title')
-    Invoices | @if (Auth::user()->employee->company)
+    Transfers | @if (Auth::user()->employee->company)
     {{Auth::user()->employee->company->name}}
     @elseif (Auth::user()->company)
     {{Auth::user()->company->name}}
@@ -20,7 +19,8 @@
 <body class="top-navbar-fixed">
 @endsection
 
-            
+@section('content')
+
 
                     <div class="main-page">
                         <div class="container-fluid">
@@ -32,20 +32,24 @@
                                 <div class="col-md-6">
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
-                                        <li><a href="{{route('invoices.index')}}"><i class="fa fa-list"></i> All Invoices</a></li>
-            							<li class="active"> <i class="fa fa-check"></i> Approved Invoices</li>
+                                        <li><a href="{{route('transfers.index')}}"><i class="fa fa-list"></i> All Transfers</a></li>
+            							<li class="active"> <i class="fa fa-check"></i> Approved Transfers</li>
             						</ul>
                                 </div>
+                                <!-- /.col-md-6 -->
+
                             </div>
                             <!-- /.row -->
                         </div>
+                        <!-- /.container-fluid -->
 
-                        @livewire('invoices.approved')
-
+                        @livewire('transfers.approved')
+                        <!-- /.section -->
 
                     </div>
+                    <!-- /.main-page -->
 
-
+        <!-- ========== PAGE JS FILES ========== -->
 
 
 @endsection
@@ -53,8 +57,7 @@
 @section('extra-js')
     <script>
     $(document).ready( function () {
-        $('#invoicesTable').DataTable();
+        $('#transfersTable').DataTable();
     } );
     </script>
 @endsection
-

@@ -3,9 +3,11 @@
 namespace App\Http\Livewire\Transfers;
 
 use App\Models\Store;
+use App\Models\Product;
 use Livewire\Component;
 use App\Models\Transfer;
 use App\Models\Inventory;
+use App\Models\TransferItem;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
 
@@ -27,27 +29,118 @@ class Index extends Component
     public $selectedStore;
     public $to_store_id;
     public $stores;
-    public $inventories;
-    public $inventory_id;
+    public $products;
+    public $selectedProduct;
+    public $max;
+    public $department;
+
+    public $inputs = [];
+    public $i = 1;
+    public $n = 1;
+
+    public function add($i)
+    {
+        $i = $i + 1;
+        $this->i = $i;
+        $this->inputs[] = $i;
+    }
+
+    public function remove($i)
+    {
+        unset($this->inputs[$i]);
+    }
     
 
-    public function mount(){
+    public function mount($department = Null){
+        $this->department = $department;
         $this->stores = Store::orderBy('name','asc')->where('status',1)->get();
-        $this->inventories = collect();
+        $this->products = collect();
         $this->resetPage();
         $this->search = "";
         $this->searchInventory = "";
+        $this->department = "inventory";
     
     }
 
+       public function transferNumber(){
 
-    public function updatedSelectedStore($id){
-
-        if (!is_null($id)) {
-             $this->inventories = Inventory::with('product')->where('store_id',$id)->where('status',1)->where('disposed',0)->get()->sortBy('product.name');
+        if (isset(Auth::user()->company)) {
+            $str = Auth::user()->company->name;
+            $words = explode(' ', $str);
+            if (isset($words[1][0])) {
+                $initials = $words[0][0].$words[1][0];
+            }else {
+                $initials = $words[0][0];
+            }
+        }elseif (isset(Auth::user()->employee->company)) {
+            $str = Auth::user()->employee->company->name;
+            $words = explode(' ', $str);
+            if (isset($words[1][0])) {
+                $initials = $words[0][0].$words[1][0];
+            }else {
+                $initials = $words[0][0];
+            }
         }
 
+        $transfer = Transfer::latest()->orderBy('id','desc')->first();
+
+        if (!$transfer) {
+            $transfer_number =  $initials .'D'. str_pad(1, 5, "0", STR_PAD_LEFT);
+        }else {
+            $number = $transfer->id + 1;
+            $transfer_number =  $initials .'D'. str_pad($number, 5, "0", STR_PAD_LEFT);
+        }
+
+        return  $transfer_number;
+
+
     }
+
+
+    public function updatedselectedProduct($id, $key){
+        if (!is_null($id) && !is_null($key) ) {
+            $inventory = Inventory::find($id);
+            $this->max[$key] = $inventory->balance;
+            $this->qty[$key] = 1;
+        }
+    }
+
+    public function updatedSelectedStore($id){
+        if(!is_null($id)){
+            $store = Store::find($id);
+            $this->loadProducts($store->id);
+        }
+    }
+
+    public function loadProducts($store_id = null)
+    {
+        $map = [
+            'asset'     => 'assets',
+            'inventory' => 'inventories',
+            'tyre'      => 'tyres',
+        ];
+
+        $relation = $map[$this->department] ?? null;
+
+        if (! $relation) {
+            $this->products = collect();
+            return;
+        }
+
+        $this->products = Product::with(['brand', $relation])
+            ->where('status', 1)
+            ->where('department', $this->department)
+            ->whereHas($relation, function ($q) use ($store_id) {
+                $q->where('status', 1)
+                ->where('balance', '>', 0)
+                ->when(!is_null($store_id), function ($qq) use ($store_id) {
+                    $qq->where('store_id', $store_id);
+                });
+            })
+            ->orderBy('name', 'asc')
+            ->get();
+    }
+
 
 
 
@@ -70,34 +163,34 @@ class Index extends Component
 
     public function store(){
 
-        if (isset($this->inventory_id)) {
-            foreach ($this->inventory_id as $key => $value) {
-                $transfer = new Transfer;
-                $transfer->user_id = Auth::user()->id;
-                if (isset($this->inventory_id[$key])) {
-                    $transfer->inventory_id = $this->inventory_id[$key];
-                }
-                $transfer->from = $this->selectedStore;
-                $transfer->to = $this->to_store_id;
-                $transfer->date = $this->date;
-                $transfer->comments = $this->comments;
-                $transfer->save();
-        
-                if (isset($this->inventory_id[$key])) {
-                    $inventory = Inventory::find($this->inventory_id[$key]);
-                    $inventory->store_id = $this->to;
-                    $inventory->update();
-                }
+            $transfer = new Transfer;
+            $transfer->user_id = Auth::user()->id;
+            $transfer->transfer_number = $this->transferNumber();
+            $transfer->from = $this->selectedStore;
+            $transfer->to = $this->to_store_id;
+            $transfer->date = $this->date;
+            $transfer->comments = $this->comments;
+            $transfer->authorization = "pending";
+            $transfer->save();
 
-               
+        if (isset($this->selectedProduct)) {
+            foreach ($this->selectedProduct as $key => $value) {
+              
+                $transfer_item = new TransferItem;
+                $transfer_item->transfer_id = $transfer->id;
+
+                if (isset($this->selectedProduct[$key])) {
+                    $transfer_item->product_id = $this->selectedProduct[$key];
+                }
+                $transfer_item->save();   
             }
         }
 
-        $this->dispatchBrowserEvent('hide-transferModal');
+        $this->transferBrowserEvent('hide-transferModal');
         $this->resetInputFields();
-        $this->dispatchBrowserEvent('alert',[
+        $this->transferBrowserEvent('alert',[
             'type'=>'success',
-            'message'=>"Item Transfered Successfully!!"
+            'message'=>"Item(s) Transfered Successfully!!"
         ]);
     
     }
@@ -110,7 +203,7 @@ class Index extends Component
                 $transfer->inventory_id = $this->old_transfer->inventory_id;
                 $transfer->from = $this->old_transfer->to;
                 $transfer->to = $this->old_transfer->from;
-                $transfer->date = date();
+                $transfer->date = date('Y-m-d');
                 $transfer->comments = 'reversal';
                 $transfer->reversal = 1;
                 $transfer->save();
@@ -121,8 +214,8 @@ class Index extends Component
 
        
 
-        $this->dispatchBrowserEvent('hide-reverseModal');
-        $this->dispatchBrowserEvent('alert',[
+        $this->transferBrowserEvent('hide-reverseModal');
+        $this->transferBrowserEvent('alert',[
             'type'=>'success',
             'message'=>"Item Transfer Reversed Successfully!!"
         ]);
@@ -140,8 +233,8 @@ class Index extends Component
 
         $this->old_transfer = Transfer::find($id);
         $this->old_transfer_id = $id;
-        $this->inventory_id = $this->old_transfer->inventory->id;
-        $this->dispatchBrowserEvent('show-reverseModal');
+        $this->selectedProduct = $this->old_transfer->inventory->id;
+        $this->transferBrowserEvent('show-reverseModal');
 
     }
    
@@ -152,19 +245,7 @@ class Index extends Component
 
     public function render()
     {
-        if (isset($this->searchInventory) && isset($this->selectedStore)) {
-            $this->inventories = Inventory::query()->with('product')->where('store_id', $this->selectedStore)->where('inventory_number', 'like', '%'.$this->searchInventory.'%')
-            ->orWhere('serial_number', 'like', '%'.$this->searchInventory.'%')
-            ->orWhereHas('product', function ($query) {
-                return $query->where('name', 'like', '%'.$this->searchInventory.'%');
-            })
-            ->orWhereHas('product', function ($query) {
-                return $query->where('identification_number', 'like', '%'.$this->searchInventory.'%');
-            })
-            ->orWhereHas('product.brand', function ($query) {
-                return $query->where('name', 'like', '%'.$this->searchInventory.'%');
-            })->get()->sortBy('product.name');
-        }
+      
 
         if (isset($this->from) && isset($this->to)) {
             if (isset($this->search)) {

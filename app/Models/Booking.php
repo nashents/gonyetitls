@@ -22,6 +22,9 @@ class Booking extends Model implements Auditable
     public function requisitions(){
         return $this->hasMany('App\Models\Requisition');
     }
+    public function invoice_items(){
+        return $this->hasMany('App\Models\InvoiceItem');
+    }
     public function employees(){
         return $this->belongsToMany('App\Models\Employee');
     }

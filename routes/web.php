@@ -77,6 +77,7 @@ Route::get('inventory_dispatches/approved','InventoryDispatchController@approved
 Route::get('inventory_dispatches/rejected','InventoryDispatchController@rejected')->name('inventory_dispatches.rejected');
 Route::get('inventory_dispatches/pending','InventoryDispatchController@pending')->name('inventory_dispatches.pending');
 
+
 Route::get('asset_dispatches/approved','AssetDispatchController@approved')->name('asset_dispatches.approved');
 Route::get('asset_dispatches/rejected','AssetDispatchController@rejected')->name('asset_dispatches.rejected');
 Route::get('asset_dispatches/pending','AssetDispatchController@pending')->name('asset_dispatches.pending');
@@ -414,6 +415,11 @@ Route::get('bookings/delete','BookingController@deleted')->name('bookings.delete
 Route::get('bookings/authorization/pending','BookingController@pending')->name('bookings.pending');
 Route::get('bookings/authorization/approved','BookingController@approved')->name('bookings.approved');
 Route::get('bookings/authorization/rejected','BookingController@rejected')->name('bookings.rejected');
+
+Route::get('transfers/authorization/pending','TransferController@pending')->name('transfers.pending');
+Route::get('transfers/authorization/approved','TransferController@approved')->name('transfers.approved');
+Route::get('transfers/authorization/rejected','TransferController@rejected')->name('transfers.rejected');
+
 
 Route::get('fuel-top-ups/authorization/pending','TopUpController@pending')->name('top_ups.pending');
 Route::get('fuel-top-ups/authorization/approved','TopUpController@approved')->name('top_ups.approved');

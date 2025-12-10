@@ -44,7 +44,7 @@
                                     </th>
                                     <th class="th-sm">Invoice#
                                     </th>
-                                    <th class="th-sm">Customer
+                                    <th class="th-sm">InvoiceTo
                                     </th>
                                     <th class="th-sm">Date
                                     </th>
@@ -78,7 +78,11 @@
                                     <td><input type="checkbox" wire:model.debounce.300ms="selectedRows" id="{{ $invoice->id }}" value="{{ $invoice->id }}"></td>
                                     <td>{{$invoice->invoice_number}}</td>
                                     <td>
-                                        {{$invoice->customer ? $invoice->customer->name : ""}}
+                                        @if ($invoice->customer)
+                                            {{$invoice->customer->name}}
+                                        @elseif($invoice->transporter)
+                                            {{$invoice->transporter->name}}
+                                        @endif
                                     </td>
                                     <td>{{$invoice->date}}</td>
                                     <td><span class="label label-{{$now <= $expiry_date ? 'success' : 'danger' }}">{{$invoice->expiry}}</span></td>

@@ -35,7 +35,7 @@ class CreateDispatchesTable extends Migration
             $table->foreign('trailer_id')->references('id')->on('trailers')->onDelete('cascade');
             $table->bigInteger('currency_id')->unsigned()->nullable();
             $table->foreign('currency_id')->references('id')->on('currencies')->onDelete('cascade');
-            $table->string('dispatch_number')->default('pending');
+            $table->string('dispatch_number')->nullable();
             $table->bigInteger('authorized_by_id')->unsigned()->nullable();
             $table->foreign('authorized_by_id')->references('id')->on('users')->onDelete('cascade');
             $table->string('authorization')->default('pending');

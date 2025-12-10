@@ -15,6 +15,9 @@ class InvoiceItem extends Model implements Auditable
     public function invoice(){
         return $this->belongsTo('App\Models\Invoice');
     }
+    public function booking(){
+        return $this->belongsTo('App\Models\Booking');
+    }
     public function tax(){
         return $this->belongsTo('App\Models\Tax');
     }

@@ -17,6 +17,19 @@ class TransferController extends Controller
     {
         return view('transfers.index');
     }
+        public function pending()
+    {
+        return view('transfers.pending');
+    }
+    public function approved()
+    {
+        return view('transfers.approved');
+    }
+    public function rejected()
+    {
+        return view('transfers.rejected');
+    }
+
 
     /**
      * Show the form for creating a new resource.

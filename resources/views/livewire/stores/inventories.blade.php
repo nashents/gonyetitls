@@ -1,20 +1,23 @@
 <div>
     <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
         <thead>
-          <tr>
-            <th class="th-sm">Inventory#
+            <th class="th-sm">Product
+            </th>
+            <th class="th-sm">Qty
+            </th>
+            <th class="th-sm">Capacity & Bal
             </th>
             <th class="th-sm">Date
             </th>
-            <th class="th-sm">Product
+            <th class="th-sm">Ccy
             </th>
-            <th class="th-sm">ID#s
+            <th class="th-sm">Rate
             </th>
-            <th class="th-sm">Item Contents
+            <th class="th-sm">Tax
             </th>
-            <th class="th-sm">Currency
+            <th class="th-sm">Cost
             </th>
-            <th class="th-sm">Price
+            <th class="th-sm">Total
             </th>
             <th class="th-sm">Status
             </th>
@@ -26,15 +29,40 @@
         <tbody>
             @forelse ($inventories as $inventory)
           <tr>
-            <td>{{$inventory->inventory_number}}</td>
-            <td>{{$inventory->purchase_date}}</td>
             <td>{{$inventory->product->brand ? $inventory->product->brand->name : ""}} {{$inventory->product ? $inventory->product->name : ""}}</td>
-            <td>{{$inventory->serial_number ? "SN#: ".$inventory->serial_number : ""}} {{$inventory->part_number ? "PN#: ".$inventory->part_number : ""}}</td>
-            <td>{{$inventory->weight}} {{$inventory->measurement}} {{$inventory->balance ? "Bal: ".$inventory->balance." ".$inventory->measurement : ""}}</td>
+            <td>{{$inventory->qty}}</td>
+            <td>
+                @if ($inventory->weight)
+                    <strong>Capacity: </strong> {{$inventory->weight}}
+                @endif
+                @if ($inventory->balance)
+                    <strong>Bal: </strong> {{$inventory->balance ? $inventory->balance : ""}}  {{$inventory->measurement ? $inventory->measurement : $inventory->product->unit_of_measure}}
+                @endif
+                    
+            </td>
+            <td>
+                @if ($inventory->purchase_date)
+                    {{Carbon\Carbon::parse($inventory->purchase_date)->format('Y-m-d')}}        
+                @endif
+            </td>
             <td>{{$inventory->currency ? $inventory->currency->name : ""}}</td>
             <td>
-                @if ($inventory->rate)
-                    {{$inventory->currency ? $inventory->currency->symbol : ""}}{{number_format($inventory->rate,2)}}  
+                {{$inventory->currency ? $inventory->currency->symbol : ""}}{{number_format($inventory->amount ? $inventory->amount : 0,2)}}  
+            </td>
+            <td>
+                {{$inventory->currency ? $inventory->currency->symbol : ""}}{{number_format($inventory->tax_amount ? $inventory->tax_amount : 0,2)}}  
+            </td>
+            <td>
+                {{$inventory->currency ? $inventory->currency->symbol : ""}}{{number_format($inventory->cost ? $inventory->cost : 0,2)}}  
+            </td>
+            <td>
+                {{$inventory->currency ? $inventory->currency->symbol : ""}}{{number_format($inventory->total ? $inventory->total: 0,2)}}
+                @if (Auth::user()->employee->company->currency_id != $inventory->currency_id)
+                    <br>
+                    <small>
+                        <strong>Exc Rate:</strong> {{number_format($inventory->exchange_rate,2)}} <br>
+                        <strong>Exc Total:</strong> {{Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->name : ""}} {{Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->symbol : ""}}{{number_format($inventory->exchange_amount,2)}}
+                    </small>
                 @endif
             </td>
             <td><span class="badge bg-{{$inventory->status == 1 ? "success" : "danger"}}">{{$inventory->status == 1 ? "Instore" : "Out Of stock"}}</span></td>
@@ -46,7 +74,6 @@
                     </button>
                     <ul class="dropdown-menu">
                         <li><a href="{{route('inventories.show',$inventory->id )}}"  ><i class="fa fa-eye color-default"></i> View</a></li>
-                        <li><a href="#" wire:click="showTransfer({{$inventory->id}})"  ><i class="fa fa-exchange color-success"></i> Transfer</a></li>
                     </ul>
                 </div>
                 @include('inventories.delete')

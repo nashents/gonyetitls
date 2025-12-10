@@ -1072,7 +1072,68 @@ class Create extends Component
 
                     }
                     
-            }elseif ($this->source == "Generic") {
+            }elseif ($this->source == "Booking") {
+            
+                    foreach($this->selectedBooking as $key => $value){
+
+                            $invoice_item = new InvoiceItem;
+                            $invoice_item->invoice_id = $invoice->id;
+                            if (isset($this->selectedAccount[$key])) {
+                                $invoice_item->account_id = $this->selectedAccount[$key];
+                            }
+                            if (isset($this->selectedBooking[$key])) {
+                                $invoice_item->booking_id = $this->selectedBooking[$key];
+                            }
+                            if (isset($this->qty[$key])) {
+                                $invoice_item->qty = $this->qty[$key];
+                            }
+                            if (isset($this->amount[$key])) {
+                                $invoice_item->amount = $this->amount[$key];
+                            }
+                            if (isset($this->description[$key])) {
+                                $invoice_item->description = $this->description[$key];
+                            }
+                            if (isset($this->tax_rate[$key])) {
+                                $invoice_item->tax_rate = $this->tax_rate[$key];
+                            }
+                            if (isset($this->hs_code[$key])) {
+                                $invoice_item->hs_code = $this->hs_code[$key];
+                            }
+                            if (isset($this->selectedTax[$key])) {
+                                $invoice_item->tax_id = $this->selectedTax[$key];
+                            }
+                            if ((isset($this->amount[$key]) && is_numeric($this->amount[$key])) && ( isset($this->qty[$key]) && is_numeric($this->qty[$key]) ) ) {
+
+                                $item_subtotal = $this->amount[$key]*$this->qty[$key];
+                                $invoice_item->subtotal = $item_subtotal;
+                                $this->subtotal = $this->subtotal + $item_subtotal;
+
+                            }
+                            if ((isset($this->tax_rate[$key]) && is_numeric($this->tax_rate[$key])) && isset($this->selectedTax[$key])) {
+
+                                $item_tax_amount = ($item_subtotal * ($this->tax_rate[$key] / 100 ));
+                                $invoice_item->tax_amount =  $item_tax_amount;
+                                $this->tax_amount = $this->tax_amount + $item_tax_amount;
+                                $item_subtotal_incl = $item_tax_amount + $item_subtotal;
+                                $invoice_item->subtotal_incl =  $item_subtotal_incl;
+                                $this->total =  $this->total + $item_subtotal_incl;
+
+                            }else{
+                                $item_subtotal_incl = $item_subtotal;
+                                $invoice_item->subtotal_incl = $item_subtotal_incl;
+                                $this->total =  $this->total + $item_subtotal_incl;
+                            }
+                            
+                            if ((isset($this->exchange_rate) && is_numeric($this->exchange_rate))) {
+                                $invoice_item->exchange_rate = $this->exchange_rate;
+                                $invoice_item->exchange_amount = $this->exchange_rate * $item_subtotal_incl ;
+                            }
+                            $invoice_item->save();
+                
+                    }
+                    
+            }
+            elseif ($this->source == "Generic") {
 
                 foreach($this->selectedProduct as $key => $value){
                     

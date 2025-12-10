@@ -86,7 +86,7 @@
                                     </th>
                                     <th class="th-sm">CreatedBy
                                     </th>
-                                    <th class="th-sm">Customer
+                                    <th class="th-sm">InvoiceTo
                                     </th>
                                     <th class="th-sm">Date
                                     </th>
@@ -143,7 +143,11 @@
                                     </td>
                                      <td>{{$invoice->user ? $invoice->user->name : ""}} {{$invoice->user ? $invoice->user->surname : ""}}</td>
                                     <td>
-                                        {{$invoice->customer ? $invoice->customer->name : ""}}
+                                        @if ($invoice->customer)
+                                            {{$invoice->customer->name}}
+                                        @elseif($invoice->transporter)
+                                            {{$invoice->transporter->name}}
+                                        @endif
                                     </td>
                                     <td>{{$invoice->date}}</td>
                                     <td><span class="label label-{{$now < $expiry_date ? 'success' : 'danger' }}">{{$invoice->expiry}}</span></td>

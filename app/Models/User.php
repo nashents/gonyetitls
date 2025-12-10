@@ -58,6 +58,9 @@ class User extends Authenticatable implements Auditable
 
     }
     
+    public function stores(){
+        return $this->hasMany('App\Models\Store');
+    }
     public function trip_documents(){
         return $this->hasMany('App\Models\TripDocument');
     }

@@ -12,6 +12,9 @@ class Store extends Model implements Auditable
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 
+    public function user(){
+        return $this->belongsTo('App\Models\User');
+    }
     public function inventories(){
         return $this->hasMany('App\Models\Inventory');
     }

@@ -1584,14 +1584,48 @@
                         <li class="{{ request()->routeIs('brands.index') ? 'active' : '' }}"><a href="{{route('brands.index')}}"><i class="fas fa-list "></i> <span> Brands</span></a></li>
                         <li class="{{ request()->routeIs('categories.index') ? 'active' : '' }}"><a href="{{route('categories.index')}}" ><i class="fas fa-list "></i> <span> Categories</span></a></li>
                         <li class="{{ request()->routeIs('racks.index') ? 'active' : '' }}"><a href="{{route('racks.index')}}"><i class="fas fa-list "></i> <span> Racks</span></a></li>
+                        <li class="{{ request()->routeIs('stores.index') ? 'active' : '' }}"><a href="{{route('stores.index')}}" ><i class="fas fa-list "></i> <span>Stores</span></a></li>
                     </ul>
                 </li>
                 @endif
                 <li class="has-children">
-                    <a href="#"><i class="fas fa-building"></i> <span>Stores</span> <i class="fas fa-angle-right arrow"></i></a>
+                     @php
+                        $transfersPendingCount = App\Models\Transfer::where('authorization','pending')
+                        ->where('department','inventory')
+                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
+                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
+                        // ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
+                        $transfersApprovedCount = App\Models\Transfer::where('authorization','approved')
+                        ->where('department','inventory')
+                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
+                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
+                        $transfersRejectedCount = App\Models\Transfer::where('authorization','rejected')
+                        ->where('department','inventory')
+                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
+                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
+                        $transfersDeletedCount = App\Models\Transfer::onlyTrashed()
+                        ->where('department','inventory')
+                        ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
+                    @endphp
+                    <a href="#"><i class="fas fa-exchange"></i> <span>Inventory Transfers</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
-                        <li class="{{ request()->routeIs('stores.index') ? 'active' : '' }}"><a href="{{route('stores.index')}}" ><i class="fas fa-list "></i> <span>Manage Stores</span></a></li>
-                        <li class="{{ request()->routeIs('transfers.index') ? 'active' : '' }}"><a href="{{route('transfers.index')}}" ><i class="fa fa-exchange "></i> <span>Manage Transfers</span></a></li>
+                        
+                        <li class="{{ request()->routeIs('transfers.index') ? 'active' : '' }}"><a href="{{route('transfers.index',['department'=>"inventory"])}}" ><i class="fas fa-list "></i> <span>Manage Transfers</span></a></li>
+                        <li class="{{ request()->routeIs('transfers.pending') ? 'active' : '' }}"><a href="{{route('transfers.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Transfers</span>
+                            @if ($transfersPendingCount>0)
+                                <span class="label label-success ml-5">{{$transfersPendingCount}}</span>
+                            @endif
+                        </a></li>
+                        <li class="{{ request()->routeIs('transfers.approved') ? 'active' : '' }}"><a href="{{route('transfers.approved')}}" ><i class="fas fa-check "></i> <span>Approved Transfers</span>
+                            @if ($transfersApprovedCount>0)
+                                <span class="label label-success ml-5">{{$transfersApprovedCount}}</span>
+                            @endif
+                        </a></li>
+                        <li class="{{ request()->routeIs('transfers.rejected') ? 'active' : '' }}"><a href="{{route('transfers.rejected')}}" ><i class="fas fa-ban "></i> <span>Rejected Transfers</span>
+                            @if ($transfersRejectedCount>0)
+                                <span class="label label-success ml-5">{{$transfersRejectedCount}}</span>
+                            @endif
+                        </a></li>
                     </ul>
                 </li>
                 <li class="has-children {{ request()->routeIs('inventory_products.*') ? 'active' : '' }}" >
@@ -1717,6 +1751,46 @@
                 </li>
                 <li class="nav-header">
                     <span class="">Tyre Management</span>
+                </li>
+                  <li class="has-children">
+                     @php
+                        $transfersPendingCount = App\Models\Transfer::where('authorization','pending')
+                        ->where('department','tyre')
+                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
+                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
+                        // ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
+                        $transfersApprovedCount = App\Models\Transfer::where('authorization','approved')
+                        ->where('department','tyre')
+                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
+                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
+                        $transfersRejectedCount = App\Models\Transfer::where('authorization','rejected')
+                        ->where('department','tyre')
+                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
+                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
+                        $transfersDeletedCount = App\Models\Transfer::onlyTrashed()
+                        ->where('department','tyre')
+                        ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
+                    @endphp
+                    <a href="#"><i class="fas fa-exchange"></i> <span>Tyre Transfers</span> <i class="fas fa-angle-right arrow"></i></a>
+                    <ul class="child-nav">
+                        
+                        <li class="{{ request()->routeIs('transfers.index') ? 'active' : '' }}"><a href="{{route('transfers.index',['department'=>"tyre"])}}" ><i class="fas fa-list "></i> <span>Manage Transfers</span></a></li>
+                        <li class="{{ request()->routeIs('transfers.pending') ? 'active' : '' }}"><a href="{{route('transfers.pending',['department'=>"tyre"])}}" ><i class="fas fa-clock "></i> <span>Pending Transfers</span>
+                            @if ($transfersPendingCount>0)
+                                <span class="label label-success ml-5">{{$transfersPendingCount}}</span>
+                            @endif
+                        </a></li>
+                        <li class="{{ request()->routeIs('transfers.approved') ? 'active' : '' }}"><a href="{{route('transfers.approved',['department'=>"tyre"])}}" ><i class="fas fa-check "></i> <span>Approved Transfers</span>
+                            @if ($transfersApprovedCount>0)
+                                <span class="label label-success ml-5">{{$transfersApprovedCount}}</span>
+                            @endif
+                        </a></li>
+                        <li class="{{ request()->routeIs('transfers.rejected') ? 'active' : '' }}"><a href="{{route('transfers.rejected',['department'=>"tyre"])}}" ><i class="fas fa-ban "></i> <span>Rejected Transfers</span>
+                            @if ($transfersRejectedCount>0)
+                                <span class="label label-success ml-5">{{$transfersRejectedCount}}</span>
+                            @endif
+                        </a></li>
+                    </ul>
                 </li>
                 <li class="has-children {{ request()->routeIs('tyre_products.*') ? 'active' : '' }}" >
                     <a href="#"><i class="fas fa-boxes"></i> <span>Products</span> <i class="fas fa-angle-right arrow"></i></a>

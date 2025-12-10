@@ -239,7 +239,11 @@
                                                 <small><strong>{{$trip->haulage_type}}</strong></small>
                                             @endif
                                         </td>
-                                        <td>  {{ $trip->user->employee ? $trip->user->employee->name : "" }} {{ $trip->user->employee ? $trip->user->employee->surname : "" }}</td>
+                                        <td>
+                                            {{ $trip->user?->name}} {{ $trip->user?->surname}}
+                                            <br>
+                                            <small>CreatedOn: {{$trip->created_at}}</small>
+                                        </td>
                                         <td>
                                             @php
                                             $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
@@ -452,7 +456,10 @@
                                                 <small><strong>{{$trip->haulage_type}}</strong></small>
                                             @endif
                                         </td>
-                                        <td>  {{ $trip->user->employee ? $trip->user->employee->name : "" }} {{ $trip->user->employee ? $trip->user->employee->surname : "" }}</td>
+                                        <td>  {{ $trip->user?->name}} {{ $trip->user?->surname}}
+                                             <br>
+                                            <small>CreatedOn: {{$trip->created_at}}</small>
+                                        </td>
                                         <td>
                                             @php
                                             $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
@@ -658,7 +665,10 @@
                                                 <small><strong>{{$trip->haulage_type}}</strong></small>
                                             @endif
                                         </td>
-                                        <td>  {{ $trip->user->employee ? $trip->user->employee->name : "" }} {{ $trip->user->employee ? $trip->user->employee->surname : "" }}</td>
+                                        <td>  {{ $trip->user?->name}} {{ $trip->user?->surname}}
+                                             <br>
+                                            <small>CreatedOn: {{$trip->created_at}}</small>
+                                        </td>
                                         <td>
                                             @php
                                             $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
@@ -863,7 +873,10 @@
                                                 <small><strong>{{$trip->haulage_type}}</strong></small>
                                             @endif
                                         </td>
-                                    <td>  {{ $trip->user->employee ? $trip->user->employee->name : "" }} {{ $trip->user->employee ? $trip->user->employee->surname : "" }}</td>
+                                    <td>  {{ $trip->user?->name}} {{ $trip->user?->surname}}
+                                         <br>
+                                            <small>CreatedOn: {{$trip->created_at}}</small>
+                                    </td>
                                     <td>
                                         @php
                                         $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
@@ -1068,7 +1081,10 @@
                                                 <small><strong>{{$trip->haulage_type}}</strong></small>
                                             @endif
                                         </td>
-                                        <td>  {{ $trip->user->employee ? $trip->user->employee->name : "" }} {{ $trip->user->employee ? $trip->user->employee->surname : "" }}</td>
+                                        <td>  {{ $trip->user?->name}} {{ $trip->user?->surname}}
+                                             <br>
+                                            <small>CreatedOn: {{$trip->created_at}}</small>
+                                        </td>
                                         <td>
                                             @php
                                             $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
@@ -1273,7 +1289,10 @@
                                                 <small><strong>{{$trip->haulage_type}}</strong></small>
                                             @endif
                                         </td>
-                                        <td>  {{ $trip->user->employee ? $trip->user->employee->name : "" }} {{ $trip->user->employee ? $trip->user->employee->surname : "" }}</td>
+                                        <td>  {{ $trip->user?->name}} {{ $trip->user?->surname}}
+                                             <br>
+                                            <small>CreatedOn: {{$trip->created_at}}</small>
+                                        </td>
                                         <td>
                                             @php
                                                 $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
@@ -1476,7 +1495,10 @@
                                                 <small><strong>{{$trip->haulage_type}}</strong></small>
                                             @endif
                                         </td>
-                                        <td>  {{ $trip->user->employee ? $trip->user->employee->name : "" }} {{ $trip->user->employee ? $trip->user->employee->surname : "" }}</td>
+                                        <td>  {{ $trip->user?->name}} {{ $trip->user?->surname}}
+                                             <br>
+                                            <small>CreatedOn: {{$trip->created_at}}</small>
+                                        </td>
                                         <td>
                                             @php
                                             $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
@@ -1679,7 +1701,10 @@
                                                 <small><strong>{{$trip->haulage_type}}</strong></small>
                                             @endif
                                         </td>
-                                        <td>  {{ $trip->user->employee ? $trip->user->employee->name : "" }} {{ $trip->user->employee ? $trip->user->employee->surname : "" }}</td>
+                                        <td>  {{ $trip->user?->name}} {{ $trip->user?->surname}}
+                                             <br>
+                                            <small>CreatedOn: {{$trip->created_at}}</small>
+                                        </td>
                                         <td>
                                             @php
                                             $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
@@ -1885,7 +1910,10 @@
                                                 <small><strong>{{$trip->haulage_type}}</strong></small>
                                             @endif
                                         </td>
-                                        <td>  {{ $trip->user->employee ? $trip->user->employee->name : "" }} {{ $trip->user->employee ? $trip->user->employee->surname : "" }}</td>
+                                        <td>  {{ $trip->user?->name}} {{ $trip->user?->surname}}
+                                             <br>
+                                            <small>CreatedOn: {{$trip->created_at}}</small>
+                                        </td>
                                         <td>
                                             @php
                                             $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';

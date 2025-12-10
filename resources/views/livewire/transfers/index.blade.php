@@ -54,9 +54,7 @@
                             <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
-                                    <th class="th-sm">#
-                                    </th>
-                                    <th class="th-sm">Item
+                                    <th class="th-sm">Transfer#
                                     </th>
                                     <th class="th-sm">From
                                     </th>
@@ -66,6 +64,8 @@
                                     </th>
                                     <th class="th-sm">Comments
                                     </th>
+                                    <th class="th-sm">Item(s)
+                                    </th>
                                     <th class="th-sm">Action
                                     </th>
                                   </tr>
@@ -74,7 +74,15 @@
                                 <tbody>
                                     @forelse ($transfers as $transfer)
                                   <tr>
-                                    <td>{{$transfer->id}}</td>
+                                    <td>{{$transfer->transfer_number}}</td>
+                                    @php
+                                        $from = App\Models\Store::find($transfer->from);
+                                        $to = App\Models\Store::find($transfer->to);
+                                    @endphp
+                                    <td>{{$from?->name}}</td>
+                                    <td>{{$to?->name}}</td>
+                                    <td>{{$transfer->date }}</td>
+                                    <td>{{$transfer->comments }}</td>
                                     <td>
                                         @if ($transfer->inventory)
                                             @php
@@ -90,14 +98,6 @@
                                            {{$tyre->tyre_number}} {{$tyre->product->brand ? $tyre->product->brand->name : ""}} {{$tyre->product ? $tyre->product->name : ""}} {{$tyre->serial_number}} ({{$tyre->width}} / {{$tyre->aspect_ratio}} R {{$tyre->diameter}} )
                                         @endif
                                     </td>
-                                    @php
-                                        $from = App\Models\Store::find($transfer->from);
-                                        $to = App\Models\Store::find($transfer->to);
-                                    @endphp
-                                    <td>{{$from ? $from->name : "" }}</td>
-                                    <td>{{$to ? $to->name : "" }}</td>
-                                    <td>{{$transfer->date }}</td>
-                                    <td>{{$transfer->comments }}</td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -106,10 +106,8 @@
                                             </button>
                                             <ul class="dropdown-menu">
                                                 @if ($transfer->reversal == 0)
-                                                <li><a href="#" wire:click="showReverse({{$transfer->id}})"  ><i class="fas fa-refresh color-default"></i> Reverse</a></li>
+                                                    <li><a href="#" wire:click="showReverse({{$transfer->id}})"  ><i class="fas fa-refresh color-default"></i> Reverse</a></li>
                                                 @endif
-                                               
-                                                
                                             </ul>
                                         </div>
                                        
@@ -119,7 +117,7 @@
                                   <tr>
                                     <td colspan="7">
                                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
-                                            No transfers found ....
+                                            No Transfers Found ....
                                         </div>
                                        
                                     </td>
@@ -177,7 +175,7 @@
                 <form wire:submit.prevent="store()" >
                 <div class="modal-body">
                     <div class="row">
-                        <div class="col-md-3">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label for="name">From Store<span class="required" style="color: red">*</span></label>
                                 <select class="form-control" wire:model.debounce.300ms="selectedStore" required>
@@ -189,25 +187,7 @@
                                 @error('selectedStore') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
-                        <div class="col-md-9">
-                            <div class="form-group">
-                                <label for="name">Inventory Items<span class="required" style="color: red">*</span></label>
-                                <small style="color:red">*You can multi select items by clicking ctrl and selecting multiple items</small>
-                                <input type="text" wire:model.debounce.300ms="searchInventory" placeholder="Search inventory..." class="form-control">
-                                <select class="form-control" wire:model.debounce.300ms="inventory_id" required multiple>
-                                        <option value="">Select Item</option>
-                                        @foreach ($inventories as $inventory)
-                                            <option value="{{$inventory->id}}">{{$inventory->inventory_number}} {{$inventory->product->brand ? $inventory->product->brand->name : ""}} {{$inventory->product ? $inventory->product->name : ""}} {{$inventory->serial_number ? "(".$inventory->serial_number.")" : ""}}</option>
-                                        @endforeach
-                                </select>
-                                @error('inventory_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
-                        </div>
-                       
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-3">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label for="name">To Store<span class="required" style="color: red">*</span></label>
                                 <select class="form-control" wire:model.debounce.300ms="to_store_id" required>
@@ -224,7 +204,9 @@
                                 @error('to_store_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
-                        <div class="col-md-3">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label for="name">Date<span class="required" style="color: red">*</span></label>
                                 <input type="date" class="form-control" wire:model.debounce.300ms="date" placeholder="Enter Date" required>
@@ -233,13 +215,137 @@
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="name">Comments</label>
-                                <textarea  class="form-control" wire:model.debounce.300ms="comments" cols="30" rows="4"></textarea>
+                                <label for="name">Reason for transfer<span class="required" style="color: red">*</span></label>
+                                <textarea  class="form-control" wire:model.debounce.300ms="comments" cols="30" rows="2" placeholder="Specific " required></textarea>
                                 @error('comments') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
                     </div>
-                    
+                    <div class="row">
+                        <div class="col-md-10">
+                            <div class="form-group">
+                            <label for="horse">Products<span class="required" style="color: red">*</span></label>
+                            <input type="text" wire:model.debounce.300ms="searchProduct" placeholder="Search products by name, brand name, ID/Model/Part#,..." class="form-control" >
+                            <select wire:model.debounce.300ms="selectedProduct.0" class="form-control" required size="4">
+                                    <option value="" disabled>Select Products</option>
+                                    @foreach ($products as $product)
+                                        <option value="{{$product->id}}"
+                                            @if(in_array($product->id, $selectedProduct ?? []) && ($selectedProduct[0] ?? null) != $product->id) 
+                                                disabled 
+                                            @endif
+                                            >  {{$product->name}} {{$product->brand ? $product->brand->name : ""}}, {{$product->product_number ? "Inventory#:  ".$product->product_number : ""}}, {{$product->identification_number ? "ID#: ".$product->identification_number : ""}} 
+                                            
+                                        @php
+                                            $relation = match ($department) {
+                                                'inventory' => 'inventories',
+                                                'tyre'      => 'tyres',
+                                                'asset'     => 'assets',
+                                                default     => null,
+                                            };
+
+                                            $count = null;
+
+                                            if ($relation) {
+                                                $count = $product->{$relation}()  // 👈 note the () = query, not collection
+                                                    ->where('status', 1)
+                                                    ->where('balance', '>', 0)
+                                                    ->when($selectedStore, fn($q) => $q->where('store_id', $selectedStore))
+                                                    ->sum('balance');
+                                            }
+                                        @endphp
+
+                                        @if(!is_null($count))
+                                            {{ $count }} {{ $product->unit_of_measure ?: "Unit(s)" }}
+                                        @endif
+                                            
+                                        </option>
+                                    @endforeach
+                            </select>
+                            @error('selectedProduct.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label for="purchase_date">Qty<span class="required" style="color: red">*</span></label>
+                                @if ($max)
+                                    <input type="number" step="any" min="0"  max="{{ $max[0] ?? '' }}"  class="form-control" wire:model.debounce.300ms="qty.0" placeholder="Qty" required>
+                                @else
+                                    <input type="number" step="any" min="0"  class="form-control" wire:model.debounce.300ms="qty.0" placeholder="Qty" required>
+                                @endif
+                                @error('qty.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                       
+                    </div>
+                    @foreach ($inputs as $key => $value)
+                        <div class="row">
+                            <div class="col-md-9">
+                                <div class="form-group">
+                                    <label for="horse">Products<span class="required" style="color: red">*</span></label>
+                                    <input type="text" wire:model.debounce.300ms="searchProduct" placeholder="Search products by name, brand name, ID/Model/Part#,..." class="form-control" >
+                                    <select wire:model.debounce.300ms="selectedProduct.{{$value}}" class="form-control" required size="4">
+                                            <option value="" disabled>Select Products</option>
+                                            @foreach ($products as $product)
+                                                <option value="{{$product->id}}"
+                                                    @if(in_array($product->id, $selectedProduct ?? []) && ($selectedProduct[0] ?? null) != $product->id) 
+                                                        disabled 
+                                                    @endif
+                                                    >  {{$product->name}} {{$product->brand ? $product->brand->name : ""}}, {{$product->product_number ? "Inventory#:  ".$product->product_number : ""}}, {{$product->identification_number ? "ID#: ".$product->identification_number : ""}} 
+                                                    
+                                                @php
+                                                    $relation = match ($department) {
+                                                        'inventory' => 'inventories',
+                                                        'tyre'      => 'tyres',
+                                                        'asset'     => 'assets',
+                                                        default     => null,
+                                                    };
+
+                                                    $count = null;
+
+                                                    if ($relation) {
+                                                        $count = $product->{$relation}()  // 👈 note the () = query, not collection
+                                                            ->where('status', 1)
+                                                            ->where('balance', '>', 0)
+                                                            ->when($selectedStore, fn($q) => $q->where('store_id', $selectedStore))
+                                                            ->sum('balance');
+                                                    }
+                                                @endphp
+
+                                                @if(!is_null($count))
+                                                    {{ $count }} {{ $product->unit_of_measure ?: "Unit(s)" }}
+                                                @endif
+                                                    
+                                                </option>
+                                            @endforeach
+                                    </select>
+                                    @error('selectedProduct.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label for="purchase_date">Qty<span class="required" style="color: red">*</span></label>
+                                    @if ($max)
+                                        <input type="number" step="any" min="0"  max="{{ $max[0] ?? '' }}"  class="form-control" wire:model.debounce.300ms="qty.{{$value}}" placeholder="Qty" required>
+                                    @else
+                                        <input type="number" step="any" min="0"  class="form-control" wire:model.debounce.300ms="qty.0" placeholder="Qty" required>
+                                    @endif
+                                    @error('qty.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-1">
+                                <div class="form-group">
+                                    <button class="btn btn-danger btn-rounded xs" style="margin-top:23px"  wire:click.prevent="remove({{$key}})"> <i class="fa fa-times"></i></button>
+                                </div>
+                            </div>
+                        </div> 
+                    @endforeach
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <button class="btn btn-success btn-rounded" style="float: right" wire:click.prevent="add({{$i}})"> <i class="fa fa-plus"></i> Item</button>
+                            </div>
+                        </div>
+                    </div>  
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">

@@ -9,7 +9,7 @@
     @endif
 @endsection
 @section('title')
-    Invoices |@if (Auth::user()->employee->company)
+    Invoices | @if (Auth::user()->employee->company)
     {{Auth::user()->employee->company->name}}
     @elseif (Auth::user()->company)
     {{Auth::user()->company->name}}

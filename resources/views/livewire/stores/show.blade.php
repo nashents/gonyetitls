@@ -15,28 +15,24 @@
             <div class="tab-content bg-white p-15">
                 <div role="tabpanel" class="tab-pane active" id="basic">
                     <table class="table table-striped">
-
                         <tbody class="text-center line-height-35 ">
-
                             <tr>
                                 <th class="w-10 text-center line-height-35">CreatedBy</th>
-                                <td class="w-20 line-height-35">{{$store->user ? $store->user->name : ""}} {{$store->user ? $store->user->surname : ""}} </td>
+                                <td class="w-20 line-height-35">{{$store->user ? $store->user->name : ""}} {{$store->user ? $store->user->surname : ""}}</td>
                             </tr>
                             <tr>
                                 <th class="w-10 text-center line-height-35">Name</th>
-                                <td class="w-20 line-height-35">{{$store->type}}</td>
+                                <td class="w-20 line-height-35">{{$store->name}}</td>
                             </tr>
                           
-                                <tr>
-                                    <th class="w-10 text-center line-height-35">Address</th>
-                                    <td class="w-20 line-height-35">{{$store->street_address}} {{$store->suburb}} {{$store->city}} {{$store->country}}</td>
-                                </tr>
-                                <tr>
-                                    <th class="w-10 text-center line-height-35">Status</th>
-                                    <td class="w-20 line-height-35"><span class="badge bg-{{$store->status == 1 ? "success" : "danger"}}">{{$store->status == 1 ? "Active" : "Inactive"}}</span></td>
-                                </tr>
-                               
-                             
+                            <tr>
+                                <th class="w-10 text-center line-height-35">Address</th>
+                                <td class="w-20 line-height-35">{{$store->street_address}} {{$store->suburb}} {{$store->city}} {{$store->country}}</td>
+                            </tr>
+                            <tr>
+                                <th class="w-10 text-center line-height-35">Status</th>
+                                <td class="w-20 line-height-35"><span class="badge bg-{{$store->status == 1 ? "success" : "danger"}}">{{$store->status == 1 ? "Active" : "Inactive"}}</span></td>
+                            </tr> 
                         </tbody>
                     </table>
                 </div>
