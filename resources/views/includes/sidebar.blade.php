@@ -1610,18 +1610,18 @@
                     <a href="#"><i class="fas fa-exchange"></i> <span>Inventory Transfers</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
                         
-                        <li class="{{ request()->routeIs('transfers.index') ? 'active' : '' }}"><a href="{{route('transfers.index',['department'=>"inventory"])}}" ><i class="fas fa-list "></i> <span>Manage Transfers</span></a></li>
-                        <li class="{{ request()->routeIs('transfers.pending') ? 'active' : '' }}"><a href="{{route('transfers.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Transfers</span>
+                        <li class="{{ request()->routeIs('inventory_transfers.index') ? 'active' : '' }}"><a href="{{route('inventory_transfers.index')}}" ><i class="fas fa-list "></i> <span>Manage Transfers</span></a></li>
+                        <li class="{{ request()->routeIs('inventory_transfers.pending') ? 'active' : '' }}"><a href="{{route('inventory_transfers.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Transfers</span>
                             @if ($transfersPendingCount>0)
                                 <span class="label label-success ml-5">{{$transfersPendingCount}}</span>
                             @endif
                         </a></li>
-                        <li class="{{ request()->routeIs('transfers.approved') ? 'active' : '' }}"><a href="{{route('transfers.approved')}}" ><i class="fas fa-check "></i> <span>Approved Transfers</span>
+                        <li class="{{ request()->routeIs('inventory_transfers.approved') ? 'active' : '' }}"><a href="{{route('inventory_transfers.approved')}}" ><i class="fas fa-check "></i> <span>Approved Transfers</span>
                             @if ($transfersApprovedCount>0)
                                 <span class="label label-success ml-5">{{$transfersApprovedCount}}</span>
                             @endif
                         </a></li>
-                        <li class="{{ request()->routeIs('transfers.rejected') ? 'active' : '' }}"><a href="{{route('transfers.rejected')}}" ><i class="fas fa-ban "></i> <span>Rejected Transfers</span>
+                        <li class="{{ request()->routeIs('inventory_transfers.rejected') ? 'active' : '' }}"><a href="{{route('inventory_transfers.rejected')}}" ><i class="fas fa-ban "></i> <span>Rejected Transfers</span>
                             @if ($transfersRejectedCount>0)
                                 <span class="label label-success ml-5">{{$transfersRejectedCount}}</span>
                             @endif
@@ -1754,40 +1754,40 @@
                 </li>
                   <li class="has-children">
                      @php
-                        $transfersPendingCount = App\Models\Transfer::where('authorization','pending')
+                        $tyre_transfersPendingCount = App\Models\Transfer::where('authorization','pending')
                         ->where('department','tyre')
                         ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
                         ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
                         // ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                        $transfersApprovedCount = App\Models\Transfer::where('authorization','approved')
+                        $tyre_transfersApprovedCount = App\Models\Transfer::where('authorization','approved')
                         ->where('department','tyre')
                         ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
                         ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        $transfersRejectedCount = App\Models\Transfer::where('authorization','rejected')
+                        $tyre_transfersRejectedCount = App\Models\Transfer::where('authorization','rejected')
                         ->where('department','tyre')
                         ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
                         ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        $transfersDeletedCount = App\Models\Transfer::onlyTrashed()
+                        $tyre_transfersDeletedCount = App\Models\Transfer::onlyTrashed()
                         ->where('department','tyre')
                         ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
                     @endphp
                     <a href="#"><i class="fas fa-exchange"></i> <span>Tyre Transfers</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
                         
-                        <li class="{{ request()->routeIs('transfers.index') ? 'active' : '' }}"><a href="{{route('transfers.index',['department'=>"tyre"])}}" ><i class="fas fa-list "></i> <span>Manage Transfers</span></a></li>
-                        <li class="{{ request()->routeIs('transfers.pending') ? 'active' : '' }}"><a href="{{route('transfers.pending',['department'=>"tyre"])}}" ><i class="fas fa-clock "></i> <span>Pending Transfers</span>
-                            @if ($transfersPendingCount>0)
-                                <span class="label label-success ml-5">{{$transfersPendingCount}}</span>
+                        <li class="{{ request()->routeIs('tyre_transfers.index') ? 'active' : '' }}"><a href="{{route('tyre_transfers.index')}}" ><i class="fas fa-list "></i> <span>Manage Transfers</span></a></li>
+                        <li class="{{ request()->routeIs('tyre_transfers.pending') ? 'active' : '' }}"><a href="{{route('tyre_transfers.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Transfers</span>
+                            @if ($tyre_transfersPendingCount>0)
+                                <span class="label label-success ml-5">{{$tyre_transfersPendingCount}}</span>
                             @endif
                         </a></li>
-                        <li class="{{ request()->routeIs('transfers.approved') ? 'active' : '' }}"><a href="{{route('transfers.approved',['department'=>"tyre"])}}" ><i class="fas fa-check "></i> <span>Approved Transfers</span>
-                            @if ($transfersApprovedCount>0)
-                                <span class="label label-success ml-5">{{$transfersApprovedCount}}</span>
+                        <li class="{{ request()->routeIs('tyre_transfers.approved') ? 'active' : '' }}"><a href="{{route('tyre_transfers.approved')}}" ><i class="fas fa-check "></i> <span>Approved Transfers</span>
+                            @if ($tyre_transfersApprovedCount>0)
+                                <span class="label label-success ml-5">{{$tyre_transfersApprovedCount}}</span>
                             @endif
                         </a></li>
-                        <li class="{{ request()->routeIs('transfers.rejected') ? 'active' : '' }}"><a href="{{route('transfers.rejected',['department'=>"tyre"])}}" ><i class="fas fa-ban "></i> <span>Rejected Transfers</span>
-                            @if ($transfersRejectedCount>0)
-                                <span class="label label-success ml-5">{{$transfersRejectedCount}}</span>
+                        <li class="{{ request()->routeIs('tyre_transfers.rejected') ? 'active' : '' }}"><a href="{{route('tyre_transfers.rejected')}}" ><i class="fas fa-ban "></i> <span>Rejected Transfers</span>
+                            @if ($tyre_transfersRejectedCount>0)
+                                <span class="label label-success ml-5">{{$tyre_transfersRejectedCount}}</span>
                             @endif
                         </a></li>
                     </ul>

@@ -20,12 +20,14 @@ use App\Models\Currency;
 use App\Models\Document;
 use App\Models\Employee;
 use App\Models\Purchase;
+use App\Models\Transfer;
 use App\Models\Attribute;
 use App\Models\Inventory;
 use App\Models\Department;
 use App\Models\VendorType;
 use App\Models\BillExpense;
 use App\Models\ExchangeRate;
+use App\Models\TransferItem;
 use App\Models\CategoryValue;
 use App\Models\GoodsReceived;
 use Livewire\WithFileUploads;
@@ -54,6 +56,10 @@ class Create extends Component
     public $goods_receiveds;
     public $selectedGoodsReceived;
     public $purchase_products;
+    public $transfer_items;
+    public $transfers;
+    public $selectedTransfer;
+    public $selectedTransferProduct;
     public $currencies;
     public $exchange_rate;
     public $exchange_amount;
@@ -91,6 +97,7 @@ class Create extends Component
     public $tax_id;
     public $tax;
     public $tax_accounts;
+    public $source = "Purchase";
   
     public $income_accounts;
     public $expense_accounts;
@@ -446,6 +453,17 @@ class Create extends Component
             }
         }
     }
+    public function updatedSelectedTransfer($id)
+    {
+        if (!is_null($id) ) {
+            $transfer = Transfer::find($id);
+            if(isset($transfer)){
+                $this->store_id = $transfer->to;
+                $this->selectedAccount = $transfer->account_id;
+                $this->transfer_items = $transfer->transfer_items;
+            }
+        }
+    }
 
     public function updatedSelectedProduct($id, $key){
         if (!is_null($id)) {
@@ -489,6 +507,31 @@ class Create extends Component
                     }
                 }
                 
+            }
+           
+        }
+    }
+
+    public function updatedSelectedTransferItem($id, $key){
+        if (!is_null($id)) {
+            $transfer_item = TransferItem::find($id);
+            if (isset($transfer_item)) {
+                $this->selectedProduct[$key] = $transfer_item->product_id;
+                $this->amount[$key] = $transfer_item->amount;
+                $this->item_description[$key] = $transfer_item->product->description;
+                $this->measurement[$key] = $transfer_item->product->unit_of_measure;
+                $this->qty[$key] = $transfer_item->qty;
+                $this->weight[$key] = 1;
+
+                if($transfer_item->tax_id){
+                    $this->selectedTax[$key] = $transfer_item->tax_id;
+                    $tax = Account::find($transfer_item->tax_id);
+                    if (isset($tax)) {
+                        $this->tax_rate[$key] = $tax->rate;
+                    }
+                }
+
+
             }
            
         }
@@ -795,11 +838,13 @@ class Create extends Component
         $this->vendors = Vendor::orderBy('name','asc')->get();
         $this->goods_receiveds = GoodsReceived::where('status',1)->where('department','inventory')->where('created_at', '>=', Carbon::now()->subMonth())->orderBy('created_at','desc')->get();
         $this->purchases = Purchase::where('department','inventory')->where('status',1)->where('created_at', '>=', Carbon::now()->subMonth())->where('authorization','approved')->orderBy('created_at','desc')->get();
+        $this->transfers = Transfer::where('department','inventory')->where('status',1)->where('authorization','approved')->orderBy('created_at','desc')->get();
         return view('livewire.inventories.create',[
             'products' => $this->products,
             'stores' => $this->stores,
             'vendors' => $this->vendors,
             'purchases' => $this->purchases,
+            'transfers' => $this->transfers,
           
         ]);
     }

@@ -174,9 +174,11 @@
                                 <label for="title">Currency<span class="required" style="color: red">*</span></label>
                              <select class="form-control" wire:model.debounce.300ms="currency_id" disabled>
                                 <option value="">Select Currency</option>
-                                @foreach ($currencies as $currency)
-                                    <option value="{{ $currency->id }}">{{ $currency->name }}</option>
-                                @endforeach
+                                @if ($currencies)
+                                    @foreach ($currencies as $currency)
+                                        <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>                                      
+                                    @endforeach
+                                @endif
                              </select>
                                 @error('currency_id') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
@@ -222,9 +224,11 @@
                                 <label for="title">Currency<span class="required" style="color: red">*</span></label>
                              <select class="form-control" wire:model.debounce.300ms="currency_id" disabled>
                                 <option value="">Select Currency</option>
-                                @foreach ($currencies as $currency)
-                                    <option value="{{ $currency->id }}">{{ $currency->name }}</option>
-                                @endforeach
+                                @if ($currencies)
+                                    @foreach ($currencies as $currency)
+                                        <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>                                      
+                                    @endforeach
+                                @endif
                              </select>
                                 @error('currency_id') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
@@ -393,9 +397,11 @@
                                 <label for="title">Currency<span class="required" style="color: red">*</span></label>
                              <select class="form-control" wire:model.debounce.300ms="currency_id" disabled>
                                 <option value="">Select Currency</option>
-                                @foreach ($currencies as $currency)
-                                    <option value="{{ $currency->id }}">{{ $currency->name }}</option>
-                                @endforeach
+                                @if ($currencies)
+                                    @foreach ($currencies as $currency)
+                                        <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>                                      
+                                    @endforeach
+                                @endif
                              </select>
                                 @error('currency_id') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
@@ -441,9 +447,11 @@
                                 <label for="title">Currency<span class="required" style="color: red">*</span></label>
                              <select class="form-control" wire:model.debounce.300ms="currency_id" disabled>
                                 <option value="">Select Currency</option>
-                                @foreach ($currencies as $currency)
-                                    <option value="{{ $currency->id }}">{{ $currency->name }}</option>
-                                @endforeach
+                                 @if ($currencies)
+                                    @foreach ($currencies as $currency)
+                                        <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>                                      
+                                    @endforeach
+                                @endif
                              </select>
                                 @error('currency_id') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
@@ -640,9 +648,11 @@
                                 <label for="title">Currency<span class="required" style="color: red">*</span></label>
                              <select class="form-control" wire:model.debounce.300ms="currency_id" disabled>
                                 <option value="">Select Currency</option>
-                                @foreach ($currencies as $currency)
-                                    <option value="{{ $currency->id }}">{{ $currency->name }}</option>
-                                @endforeach
+                                 @if ($currencies)
+                                    @foreach ($currencies as $currency)
+                                        <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>                                      
+                                    @endforeach
+                                @endif
                              </select>
                                 @error('currency_id') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
@@ -688,9 +698,12 @@
                                 <label for="title">Currency<span class="required" style="color: red">*</span></label>
                              <select class="form-control" wire:model.debounce.300ms="currency_id" disabled>
                                 <option value="">Select Currency</option>
-                                @foreach ($currencies as $currency)
-                                    <option value="{{ $currency->id }}">{{ $currency->name }}</option>
-                                @endforeach
+                                @if ($currencies)
+                                    @foreach ($currencies as $currency)
+                                        <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>                                      
+                                    @endforeach
+                                @endif
+                              
                              </select>
                                 @error('currency_id') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>

@@ -22,7 +22,6 @@
 @section('content')
 
 
-
                     <div class="main-page">
                         <div class="container-fluid">
                             <div class="row page-title-div">
@@ -34,7 +33,7 @@
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
                                         <li><a href="{{route('inventory_transfers.index')}}"><i class="fa fa-list"></i> All Inventory Transfers</a></li>
-            							<li class="active"> <i class="fa fa-clock-o"></i> Pending Inventory Transfers</li>
+            							<li class="active"> <i class="fa fa-check"></i> Approved Inventory Transfers</li>
             						</ul>
                                 </div>
                                 <!-- /.col-md-6 -->
@@ -44,12 +43,11 @@
                         </div>
                         <!-- /.container-fluid -->
 
-                        @livewire('transfers.pending',['department' => "inventory"])
+                        @livewire('transfers.approved',['department' => "inventory"])
                         <!-- /.section -->
 
                     </div>
                     <!-- /.main-page -->
-
 
         <!-- ========== PAGE JS FILES ========== -->
 

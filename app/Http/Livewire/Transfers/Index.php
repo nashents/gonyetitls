@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Transfers;
 
+use Carbon\Carbon;
 use App\Models\Tyre;
 use App\Models\Store;
 use App\Models\Product;
@@ -12,6 +13,7 @@ use App\Models\TransferItem;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\Eloquent\Builder;
 
 class Index extends Component
 {
@@ -58,7 +60,7 @@ class Index extends Component
     }
     
 
-    public function mount($department = Null){
+    public function mount($department){
         $this->department = $department;
         $this->stores = Store::orderBy('name','asc')->where('status',1)->get();
         $this->products = collect();
@@ -67,7 +69,6 @@ class Index extends Component
         $this->resetPage();
         $this->search = "";
         $this->searchInventory = "";
-        $this->department = "inventory";
     
     }
 
@@ -209,6 +210,7 @@ class Index extends Component
             $transfer->transfer_number = $this->transferNumber();
             $transfer->from = $this->selectedStore;
             $transfer->to = $this->to_store_id;
+            $transfer->department = $this->department;
             $transfer->date = $this->date;
             $transfer->comments = $this->comments;
             $transfer->authorization = "pending";
@@ -298,78 +300,54 @@ class Index extends Component
     public function render()
     {
       
+         $from   = filled($this->from) ? Carbon::parse($this->from)->startOfDay() : null;
+            $to     = filled($this->to)   ? Carbon::parse($this->to)->endOfDay()   : null;
+            $search = trim((string) ($this->search ?? ''));
 
-        if (isset($this->from) && isset($this->to)) {
-            if (isset($this->search)) {
-                return view('livewire.transfers.index',[
-                    'transfers' => Transfer::whereBetween('created_at',[$this->from, $this->to])
-                    ->where('date', 'like', '%'.$this->search.'%')
-                    ->orWhere('comments', 'like', '%'.$this->search.'%')
-                    ->orWhereHas('inventory', function ($query) {
-                        return $query->where('inventory_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('inventory', function ($query) {
-                        return $query->where('serial_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('inventory.product', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('inventory.product.brand', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orderBy('created_at','desc')->paginate(10)
-                ]);
-            }else{
-                return view('livewire.transfers.index',[
-                    'transfers' => Transfer::whereBetween('created_at',[$this->from, $this->to])->orderBy('created_at','desc')->paginate(10)
-                ]);
-            }
-           
-        } elseif (isset($this->search)) {
-            return view('livewire.transfers.index',[
-                'transfers' => Transfer::where('date', 'like', '%'.$this->search.'%')
-                ->orWhere('comments', 'like', '%'.$this->search.'%')
-                ->orWhereHas('inventory', function ($query) {
-                    return $query->where('inventory_number', 'like', '%'.$this->search.'%');
+            $query = Transfer::query()
+                ->with([
+                    'inventory.product.brand',
+                    'tyre.product.brand',
+                ])
+                ->when($from && $to, fn (Builder $q) => $q->whereBetween('created_at', [$from, $to]))
+                ->when(!($from && $to), fn (Builder $q) => $q->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year))
+                ->when($search !== '', function (Builder $q) use ($search) {
+                    // IMPORTANT: group OR conditions so they don't break your date filters
+                    $q->where(function (Builder $qq) use ($search) {
+                        $like = "%{$search}%";
+
+                        $qq->where('date', 'like', $like)
+                        ->orWhere('comments', 'like', $like)
+
+                        ->orWhereHas('inventory', function (Builder $inv) use ($like) {
+                            $inv->where(function (Builder $i) use ($like) {
+                                $i->where('inventory_number', 'like', $like)
+                                    ->orWhere('serial_number', 'like', $like);
+                            });
+                        })
+
+                        ->orWhereHas('inventory.product', fn (Builder $p) => $p->where('name', 'like', $like))
+                        ->orWhereHas('inventory.product.brand', fn (Builder $b) => $b->where('name', 'like', $like))
+
+                        ->orWhereHas('tyre', function (Builder $t) use ($like) {
+                            $t->where(function (Builder $tt) use ($like) {
+                                $tt->where('tyre_number', 'like', $like)
+                                    ->orWhere('width', 'like', $like)
+                                    ->orWhere('diameter', 'like', $like)
+                                    ->orWhere('aspect_ratio', 'like', $like)
+                                    ->orWhere('serial_number', 'like', $like);
+                            });
+                        })
+
+                        ->orWhereHas('tyre.product', fn (Builder $p) => $p->where('name', 'like', $like))
+                        ->orWhereHas('tyre.product.brand', fn (Builder $b) => $b->where('name', 'like', $like));
+                    });
                 })
-                ->orWhereHas('inventory', function ($query) {
-                    return $query->where('serial_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('inventory.product', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('inventory.product.brand', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('tyre', function ($query) {
-                    return $query->where('tyre_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('tyre', function ($query) {
-                    return $query->where('width', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('tyre', function ($query) {
-                    return $query->where('diameter', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('tyre', function ($query) {
-                    return $query->where('aspect_ratio', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('tyre', function ($query) {
-                    return $query->where('serial_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('tyre.product', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('tyre.product.brand', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orderBy('created_at','desc')->paginate(10)
+                ->orderByDesc('created_at');
+
+            return view('livewire.transfers.index', [
+                'transfers' => $query->paginate(10),
             ]);
-        }
-        else{
-            return view('livewire.transfers.index',[
-                'transfers' => Transfer::whereMonth('created_at',date('m'))->whereYear('created_at',date('Y'))->orderBy('created_at','desc')->paginate(10)
-            ]);
-        }
        
     }
 }

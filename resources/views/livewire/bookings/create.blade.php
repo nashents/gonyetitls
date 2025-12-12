@@ -134,7 +134,7 @@
                                             @endforeach
                                         </div>   
                                 @endif
-                                 <label for="exampleInputEmail13">Assigned To<span class="required" style="color: red">*</span></label>
+                                    <label for="exampleInputEmail13">Assigned To<span class="required" style="color: red">*</span></label>
                                     <div class="mb-10">
                                         <input type="radio" wire:model.debounce.300ms="assigned_to" value="Mechanic"  class="line-style"  />
                                         <label for="one" class="radio-label">Mechanic</label>

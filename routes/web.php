@@ -78,6 +78,14 @@ Route::get('inventory_dispatches/rejected','InventoryDispatchController@rejected
 Route::get('inventory_dispatches/pending','InventoryDispatchController@pending')->name('inventory_dispatches.pending');
 
 
+Route::get('inventory_transfers/approved','InventoryTransferController@approved')->name('inventory_transfers.approved');
+Route::get('inventory_transfers/rejected','InventoryTransferController@rejected')->name('inventory_transfers.rejected');
+Route::get('inventory_transfers/pending','InventoryTransferController@pending')->name('inventory_transfers.pending');
+
+Route::get('tyre_transfers/approved','TyreTransferController@approved')->name('tyre_transfers.approved');
+Route::get('tyre_transfers/rejected','TyreTransferController@rejected')->name('tyre_transfers.rejected');
+Route::get('tyre_transfers/pending','TyreTransferController@pending')->name('tyre_transfers.pending');
+
 Route::get('asset_dispatches/approved','AssetDispatchController@approved')->name('asset_dispatches.approved');
 Route::get('asset_dispatches/rejected','AssetDispatchController@rejected')->name('asset_dispatches.rejected');
 Route::get('asset_dispatches/pending','AssetDispatchController@pending')->name('asset_dispatches.pending');
@@ -471,6 +479,8 @@ Route::resource('clusters','ClusterController');
 Route::resource('teams','TeamController');
 Route::resource('bins','BinController');
 Route::resource('claims','ClaimController');
+Route::resource('inventory_transfers','InventoryTransferController');
+Route::resource('tyre_transfers','TyreTransferController');
 Route::resource('goods_receiveds','GoodsReceivedController');
 Route::resource('racks','RackController');
 Route::resource('dependants','DependantController');

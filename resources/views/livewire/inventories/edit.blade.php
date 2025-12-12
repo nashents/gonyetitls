@@ -222,8 +222,8 @@
                                         </div>
                                         <div class="col-md-3">
                                             <div class="form-group">
-                                                <label for="country">Stores</label>
-                                               <select wire:model.debounce.300ms="store_id" class="form-control">
+                                                <label for="country">Stores<span class="required" style="color: red">*</span></label>
+                                               <select wire:model.debounce.300ms="store_id" class="form-control" {{$source == "Transfer" ? "disabled" : ""}} required>
                                                    <option value="">Select Store</option>
                                                  @foreach ($stores as $store)
                                                     <option value="{{$store->id}}">{{$store->name}}</option>

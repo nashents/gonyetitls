@@ -22,6 +22,7 @@ class Pending extends Component
 
     use WithPagination;
 
+    
     protected $paginationTheme = 'bootstrap';
 
     public $search;

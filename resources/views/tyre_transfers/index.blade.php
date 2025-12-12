@@ -1,4 +1,5 @@
 @extends('layouts.app')
+@section('content')
 
 @section('extra-css')
     @if (Auth::user()->employee->company)
@@ -19,9 +20,7 @@
 <body class="top-navbar-fixed">
 @endsection
 
-@section('content')
-
-
+         
 
                     <div class="main-page">
                         <div class="container-fluid">
@@ -33,25 +32,17 @@
                                 <div class="col-md-6">
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
-                                        <li><a href="{{route('inventory_transfers.index')}}"><i class="fa fa-list"></i> All Inventory Transfers</a></li>
-            							<li class="active"> <i class="fa fa-clock-o"></i> Pending Inventory Transfers</li>
+            							<li class="active"> <i class="fa fa-list"></i>Tyre Transfers</li>
             						</ul>
                                 </div>
-                                <!-- /.col-md-6 -->
-
                             </div>
                             <!-- /.row -->
                         </div>
-                        <!-- /.container-fluid -->
 
-                        @livewire('transfers.pending',['department' => "inventory"])
-                        <!-- /.section -->
+                        @livewire('transfers.index',['department' => "tyre"])
+
 
                     </div>
-                    <!-- /.main-page -->
-
-
-        <!-- ========== PAGE JS FILES ========== -->
 
 
 @endsection
@@ -63,3 +54,4 @@
     } );
     </script>
 @endsection
+

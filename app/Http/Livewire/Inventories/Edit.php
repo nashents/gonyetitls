@@ -14,9 +14,11 @@ use App\Models\Product;
 use Livewire\Component;
 use App\Models\Currency;
 use App\Models\Purchase;
+use App\Models\Transfer;
 use App\Models\Inventory;
 use App\Models\BillExpense;
 use App\Models\ExchangeRate;
+use App\Models\TransferItem;
 use App\Models\GoodsReceived;
 use Livewire\WithFileUploads;
 use App\Models\PurchaseProduct;
@@ -49,6 +51,10 @@ class Edit extends Component
     public $vendor_types;
     public $vendors;
     public $vendor_id;
+    public $transfer_items;
+    public $transfers;
+    public $selectedTransfer;
+    public $selectedTransferProduct;
   
     public $purchase_date;
     public $residual_value;
@@ -278,6 +284,43 @@ class Edit extends Component
                     }
                 }
                 
+            }
+           
+        }
+    }
+
+     public function updatedSelectedTransfer($id)
+    {
+        if (!is_null($id) ) {
+            $transfer = Transfer::find($id);
+            if(isset($transfer)){
+                $this->store_id = $transfer->to;
+                $this->selectedAccount = $transfer->account_id;
+                $this->transfer_items = $transfer->transfer_items;
+            }
+        }
+    }
+
+     public function updatedSelectedTransferItem($id){
+        if (!is_null($id)) {
+            $transfer_item = TransferItem::find($id);
+            if (isset($transfer_item)) {
+                $this->selectedProduct = $transfer_item->product_id;
+                $this->amount = $transfer_item->amount;
+                $this->item_description = $transfer_item->product->description;
+                $this->measurement = $transfer_item->product->unit_of_measure;
+                $this->qty = $transfer_item->qty;
+                $this->weight = 1;
+
+                if($transfer_item->tax_id){
+                    $this->selectedTax = $transfer_item->tax_id;
+                    $tax = Account::find($transfer_item->tax_id);
+                    if (isset($tax)) {
+                        $this->tax_rate = $tax->rate;
+                    }
+                }
+
+
             }
            
         }
@@ -617,12 +660,14 @@ class Edit extends Component
         $this->vendors = Vendor::orderBy('name','asc')->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->stores = Store::orderBy('name','asc')->get();
+         $this->transfers = Transfer::where('department','inventory')->where('status',1)->where('authorization','approved')->orderBy('created_at','desc')->get();
         return view('livewire.inventories.edit',[
             'products' => $this->products,
             'purchases' => $this->purchases,
             'vendors' => $this->vendors,
             'currencies' => $this->currencies,
             'stores' => $this->stores,
+            'transfers' => $this->transfers,
            
         ]);
     }
