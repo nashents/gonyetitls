@@ -660,9 +660,10 @@ class Index extends Component
         // $this->encoded_driver_names = implode(', ', $this->driver_names);
 
 
-        $this->top_drivers = Driver::query()
+      $this->top_drivers = Driver::query()
         ->select([
             'drivers.id',
+            'drivers.employee_id', // ✅ required for ->employee relationship
             DB::raw('COUNT(trips.id) as trips_count'),
             DB::raw("
                 COALESCE(SUM(
@@ -681,8 +682,8 @@ class Index extends Component
         ->where('trips.trip_status', 'Offloaded')
         ->where('trips.authorization', 'approved')
         ->whereNull('trips.deleted_at')
-        ->with(['employee:id,employee_number,name,surname']) // adjust relation if needed
-        ->groupBy('drivers.id')
+        ->with(['employee:id,employee_number,name,surname'])
+        ->groupBy('drivers.id', 'drivers.employee_id') // ✅ include it here too
         ->orderByDesc('trips_count')
         ->limit(5)
         ->get();

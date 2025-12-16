@@ -533,11 +533,11 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach ($top_drivers as $row)
+                            @foreach ($top_drivers as $driver)
                             <tr>
-                                <td>{{ $row->employee?->employee_number }}</td>
-                                <td>{{ trim(($row->employee?->name ?? '').' '.($row->employee?->surname ?? '')) }}</td>
-                                <td>{{ $row->trips_count }} Trips</td>
+                                <td>{{ $driver->employee?->employee_number }}</td>
+                                <td>{{ trim(($driver->employee?->name ?? '').' '.($driver->employee?->surname ?? '')) }}</td>
+                                <td>{{ $driver->trips_count }} Trips</td>
                                 <td>
                                 @if($company_currency)
                                     {{ $company_currency->name }} {{ $company_currency->symbol }}{{ number_format($row->total_revenue, 2) }}
@@ -588,9 +588,9 @@
                                     {{ $horse->fleet_number ? '(' . $horse->fleet_number . ')' : '' }}
                                     </td>
 
-                                    <td>{{ $horse->trips_count ? $horse->trips_count . ' Trips' : '' }}</td>
+                                    <td>{{ $horse->trips_count ? $horse->trips_count . ' Trip(s)' : '' }}</td>
 
-                                    <td>{{ $horse->fuel_usage ? number_format($horse->fuel_usage, 2) . ' Litres' : '' }}</td>
+                                    <td>{{ $horse->fuel_usage ? number_format($horse->fuel_usage, 2) . ' Litre(s)' : '' }}</td>
 
                                     <td>
                                     @if($company_currency && $horse->total_revenue)
