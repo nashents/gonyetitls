@@ -165,6 +165,7 @@ return [
         OwenIt\Auditing\AuditingServiceProvider::class,
         Stevebauman\Location\LocationServiceProvider::class,
         Davcpas1234\LaravelPdfViewer\LaravelPdfViewerServiceProvider::class,
+        App\Providers\ViewServiceProvider::class,
      
 
         /*

@@ -15,6 +15,9 @@ class TransferItem extends Model implements Auditable
     public function transfer(){
         return $this->belongsTo('App\Models\Transfer');
     }
+    public function product(){
+        return $this->belongsTo('App\Models\Product');
+    }
     public function inventory(){
         return $this->belongsTo('App\Models\Inventory');
     }

@@ -35,22 +35,24 @@ class Pending extends Component
     public $authorize;
     public $comments;
 
-        public function authorize($id){
+    public function authorize($id){
         $transfer = Transfer::find($id);
         $this->transfer_id = $transfer->id;
         $this->transfer = $transfer;
         $this->dispatchBrowserEvent('show-authorizationModal');
-      }
+    }
 
-    
+    public function mount($department){
+        $this->department = $department;
+    }
 
       public function update(){
 
-         $this->validate([
+        $this->validate([
             'authorize' => 'required',
         ]);
 
-      DB::transaction(function () {
+        DB::transaction(function () {
 
 
         $transfer = Transfer::find($this->transfer_id);
@@ -71,23 +73,26 @@ class Pending extends Component
         if ($this->authorize == "approved") {
 
             $transfer_items = $transfer->transfer_items;
-            foreach ($transfer_items as $transfer_item) {
-                if ($this->department == "inventory") {
-                    $inventory = Inventory::find($transfer_item->inventory_id);
-                    $inventory->balance -= $transfer_item->qty;
-                    if ($inventory->balance <= 0) {
-                        $inventory->status = 0;
+            if ($transfer_items) {
+                foreach ($transfer_items as $transfer_item) {
+                    if ($this->department == "inventory") {
+                        $inventory = Inventory::find($transfer_item->inventory_id);
+                        $inventory->balance -= $transfer_item->qty;
+                        if ($inventory->balance <= 0) {
+                            $inventory->status = 0;
+                        }
+                        $inventory->save();
+                    }elseif ($this->department == "tyre") {
+                        $tyre = Tyre::find($transfer_item->tyre_id);
+                        $tyre->balance -= $transfer_item->qty;
+                        if ($tyre->balance <= 0) {
+                            $tyre->status = 0;
+                        }
+                        $tyre->save();
                     }
-                    $inventory->save();
-                }elseif ($this->department == "tyre") {
-                    $tyre = Tyre::find($transfer_item->tyre_id);
-                    $tyre->balance -= $transfer_item->qty;
-                    if ($tyre->balance <= 0) {
-                        $tyre->status = 0;
-                    }
-                    $tyre->save();
                 }
             }
+            
 
             $this->dispatchBrowserEvent('hide-transferAuthorizationModal');
             $this->dispatchBrowserEvent('alert',[

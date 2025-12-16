@@ -24,4 +24,7 @@ class TripDestination extends Model implements Auditable
     public function offloading_point(){
         return $this->belongsTo('App\Models\OffloadingPoint');
     }
+     public function user(){
+        return $this->belongsTo('App\Models\User');
+    }
 }

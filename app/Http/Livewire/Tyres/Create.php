@@ -19,10 +19,12 @@ use Livewire\Component;
 use App\Models\Currency;
 use App\Models\Movement;
 use App\Models\Purchase;
+use App\Models\Transfer;
 use App\Models\TyreCount;
 use App\Models\TyreDetail;
 use App\Models\BillExpense;
 use App\Models\ExchangeRate;
+use App\Models\TransferItem;
 use App\Models\TyreDispatch;
 use App\Models\TyreDocument;
 use App\Models\GoodsReceived;
@@ -47,9 +49,15 @@ class Create extends Component
     public $goods_receiveds;
     public $selectedGoodsReceived;
     public $selectedPurchaseProduct;
+    public $transfer_items;
+    public $transfers;
+    public $selectedTransfer;
+    public $selectedTransferItem;
+    public $source = "Purchase";
     public $selectedCurrency;
     public $selected_currency;
     public $date;
+    public $weight;
     
     public $purchase_date;
     public $type;
@@ -425,6 +433,58 @@ class Create extends Component
 
     }
 
+        public function updatedSelectedTransfer($id)
+    {
+        if (!is_null($id) ) {
+            $transfer = Transfer::find($id);
+            if(isset($transfer)){
+                $this->store_id = $transfer->to;
+                $this->selectedAccount = $transfer->account_id;
+                $this->transfer_items = $transfer->transfer_items;
+            }
+        }
+    }
+
+    public function updatedSelectedTransferItem($id, $key){
+        if (!is_null($id)) {
+            $transfer_item = TransferItem::find($id);
+            if (isset($transfer_item)) {
+                $this->selectedProduct[$key] = $transfer_item->product_id;
+                $this->amount[$key] = $transfer_item->amount;
+                $this->item_description[$key] = $transfer_item->product->description;
+                $this->measurement[$key] = $transfer_item->product->unit_of_measure;
+                if($this->department == "inventory"){
+                      $this->serial_number[$key] = $transfer_item->inventory->serial_number;
+                       $this->amount[$key] = $transfer_item->inventory->amount;
+                        $this->weight[$key] = $transfer_item->inventory->weight;
+                        $this->selectedCurrency = $transfer_item->inventory->currency_id;
+                        $this->vendor_id = $transfer_item->inventory->vendor_id;
+                }elseif($this->department == "tyre"){
+                      $this->serial_number[$key] = $transfer_item->tyre->serial_number;
+                       $this->amount[$key] = $transfer_item->tyre->amount;
+                        $this->weight[$key] = $transfer_item->tyre->weight;
+                         $this->selectedCurrency = $transfer_item->tyre->currency_id;
+                        $this->vendor_id = $transfer_item->tyre->vendor_id;
+                }
+              
+               
+                $this->qty[$key] = $transfer_item->qty;
+               
+
+                if($transfer_item->tax_id){
+                    $this->selectedTax[$key] = $transfer_item->tax_id;
+                    $tax = Account::find($transfer_item->tax_id);
+                    if (isset($tax)) {
+                        $this->tax_rate[$key] = $tax->rate;
+                    }
+                }
+
+
+            }
+           
+        }
+    }
+
    public function calculateExchangeAmount($total = null){
         if (($total && is_numeric($total)) && ($this->exchange_rate && is_numeric($this->exchange_rate)) ) {
             $this->exchange_amount = $this->exchange_rate * $total;
@@ -759,11 +819,13 @@ class Create extends Component
             ['name', 'asc'],          // first sort by product name
             ['brand.name', 'asc'],    // then sort by brand name
         ]);
+          $this->transfers = Transfer::where('department','tyre')->where('status',1)->where('authorization','approved')->orderBy('created_at','desc')->get();
         $this->purchases = Purchase::where('department','tyre')->where('status',1)->where('created_at', '>=', Carbon::now()->subMonth())->where('authorization','approved')->orderBy('created_at','desc')->get();
         return view('livewire.tyres.create',[
             'amount' =>   $this->amount,
             'purchases' => $this->purchases,
-            'products' => $this->products
+            'products' => $this->products,
+            'transfers' => $this->transfers
         ]);
     }
 }

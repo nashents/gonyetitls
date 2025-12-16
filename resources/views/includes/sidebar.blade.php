@@ -1,41 +1,4 @@
-
-  
-    @php
-        $user = Auth::user();
-        $employee = $user->employee;
-
-        $departments = $employee->departments;
-        foreach($departments as $department){
-            $department_names[] = $department->name;
-        }
-        $roles = $user->roles;
-        foreach($roles as $role){
-            $role_names[] = $role->name;
-        }
-        $ranks = $employee->ranks;
-        foreach($ranks as $rank){
-            $rank_names[] = $rank->name;
-        }
-        $myAllocationCount = App\Models\Allocation::where('employee_id',$employee->id)
-                                                ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                                                ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-        $hseq_department = App\Models\Department::where('name','HSEQ')->first();
-        $wsdepartment = App\Models\Department::where('name','Workshop')->first();
-        if (isset($wsdepartment)) {
-            $wsdepartment_head = App\Models\DepartmentHead::where('department_id',$wsdepartment->id)->where('employee_id',$employee->id)->first();
-        }
-        $stdepartment = App\Models\Department::where('name','Workshop')->first();
-        if (isset($stdepartment)) {
-            $stdepartment_head = App\Models\DepartmentHead::where('department_id',$stdepartment->id)->where('employee_id',$employee->id)->first();
-        }
-        $fndepartment = App\Models\Department::where('name','Finance')->first();
-        if (isset($fndepartment)) {
-            $fndepartment_head = App\Models\DepartmentHead::where('department_id',$fndepartment->id)->where('employee_id',$employee->id)->first();
-        }
-    @endphp
-  
-    
-    @if ($employee)
+  @if ($employee)
         <style>
             .bg-black-300 {
             background-color: {{$employee->company->color}};
@@ -90,7 +53,7 @@
                 </li>
            
               
-                @if (in_array('Admin', $role_names) || in_array('Super Admin', $role_names))
+                @if ($isAdmin || $isSuperAdmin)
                     @if ($user->is_admin())
                     <li class="has-children {{ request()->routeIs('companies.index') ? 'active' : '' }}">
                         <a href="#"><i class="fas fa-building"></i> <span>Companies</span> <i class="fas fa-angle-right arrow"></i></a>
@@ -105,13 +68,13 @@
                 <li class="{{ request()->routeIs('reminders.index') ? 'active' : '' }}"><a href="{{route('reminders.index')}}" ><i class="fas fa-bell"></i><span> Reminders</span></a></li>
 
                
-                {{-- @if (in_array('Human Resources', $department_names) || in_array('Transport & Logistics', $department_names) || in_array('Super Admin', $role_names)) --}}
+                {{-- @if (in_array('Human Resources', $department_names) || in_array('Transport & Logistics', $department_names) || $isSuperAdmin) --}}
                 <li class="nav-header">
                     <span class="">Human Resource</span>
                 </li>
                 {{-- @endif --}}
-                @if (in_array('Human Resources', $department_names) || in_array('Super Admin', $role_names))
-                @if ((in_array('Admin', $role_names) && in_array('Human Resources', $department_names)) || in_array('Super Admin', $role_names))
+                @if (in_array('Human Resources', $department_names) || $isSuperAdmin)
+                @if (($isAdmin && in_array('Human Resources', $department_names)) || $isSuperAdmin)
                 <li class="has-children">
                     <a href="#"><i class="fas fa-cog"></i> <span>Master</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav"> 
@@ -165,7 +128,7 @@
                     <a href="{{route('department_heads.index')}}"><i class="fas fa-user-plus"></i> <span>Head of Departments</span> </a>
                 </li>
                 @endif
-                @if (in_array('Transport & Logistics', $department_names) || in_array('Human Resources', $department_names) || in_array('Super Admin', $role_names))
+                @if (in_array('Transport & Logistics', $department_names) || in_array('Human Resources', $department_names) || $isSuperAdmin)
                 <li class="has-children {{ request()->routeIs('drivers.*') ? 'active' : '' }}">
                     <a href="#"><i class="fas fa-users"></i> <span>Drivers</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
@@ -202,7 +165,7 @@
                         <li><a href="{{route('leaves.index')}}"><i class="fas fa-plus "></i> <span>Apply for leave</span></a></li>
                         <li><a href="{{route('leaves.myteam')}}"><i class="fas fa-users "></i> <span>My Team</span></a></li>
 
-                        @if (isset($department_head) || (in_array('Admin', $role_names) && in_array('Human Resources', $department_names)) || (in_array('Management', $rank_names) && in_array('Human Resources', $department_names)) || in_array('Super Admin', $role_names))
+                        @if (isset($department_head) || ($isAdmin && in_array('Human Resources', $department_names)) || (in_array('Management', $rank_names) && in_array('Human Resources', $department_names)) || $isSuperAdmin)
                         <li><a href="{{route('leaves.manage')}}"><i class="fas fa-list "></i> <span>Manage Applications</span></a></li>
                         <li><a href="{{route('leaves.pending')}}"><i class="fas fa-clock "></i> <span>Pending Applications</span>
                             @if ($leavesPendingCount>0)
@@ -235,7 +198,7 @@
                     <span class="">Salaries & Payroll</span>
                 </li>
 
-                 @if ((in_array('Admin', $role_names) && in_array('Human Resources', $department_names)) || in_array('Super Admin', $role_names))
+                 @if (($isAdmin && in_array('Human Resources', $department_names)) || $isSuperAdmin)
               
                 <li class="has-children">
                     <a href="#"><i class="fas fa-cog"></i> <span>Master</span> <i class="fas fa-angle-right arrow"></i></a>
@@ -275,7 +238,7 @@
                     <a href="#"><i class="fas fa-credit-card"></i> <span>Loans</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
                         <li><a href="{{route('loans.myloans')}}"><i class="fas fa-arrow-right "></i> <span>My Applications</span></a></li>
-                        @if (isset($department_head) || (in_array('Management', $rank_names) && in_array('Human Resources', $department_names)) || (in_array('Management', $rank_names) && in_array('Finance', $department_names)) || in_array('Super Admin', $role_names))
+                        @if (isset($department_head) || (in_array('Management', $rank_names) && in_array('Human Resources', $department_names)) || (in_array('Management', $rank_names) && in_array('Finance', $department_names)) || $isSuperAdmin)
                         <li><a href="{{route('loans.index')}}"><i class="fas fa-list "></i> <span>Manage Loans</span></a></li>
                         <li><a href="{{route('loans.pending')}}"><i class="fas fa-clock "></i> <span>Pending Loans</span>
                             @if ($loansPendingCount>0)
@@ -295,7 +258,7 @@
                         @endif
                     </ul>
                 </li>
-                 @if ((in_array('Admin', $role_names) && in_array('Human Resources', $department_names)) || in_array('Super Admin', $role_names))
+                 @if (($isAdmin && in_array('Human Resources', $department_names)) || $isSuperAdmin)
                 <li class="has-children {{ request()->routeIs('salaries.*') ? 'active' : '' }}" >
                     <a href="#"><i class="fas fa-donate"></i> <span>Salaries</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
@@ -325,7 +288,7 @@
                     <a href="#"><i class="fas fa-file"></i> <span>Payroll</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
                         <li><a href="{{route('payrolls.index')}}"><i class="fas fa-list "></i> <span>Manage Payrolls</span></a></li>
-                        @if (isset($department_head) || ((in_array('Management', $rank_names) || in_array('Admin', $role_names)) && in_array('Human Resources', $department_names)) || in_array('Super Admin', $role_names))
+                        @if (isset($department_head) || ((in_array('Management', $rank_names) || $isAdmin) && in_array('Human Resources', $department_names)) || $isSuperAdmin)
                         <li><a href="{{route('payrolls.pending')}}"><i class="fas fa-clock "></i> <span>Pending Payrolls</span>
                             @if ($payrollsPendingCount>0)
                             <span class="label label-success ml-5">{{$payrollsPendingCount}}</span>
@@ -350,11 +313,11 @@
 
                
 
-                @if (in_array('Finance', $department_names) || in_array('Super Admin', $role_names))
+                @if (in_array('Finance', $department_names) || $isSuperAdmin)
                     <li class="nav-header">
                         <span class="">Sales & Payments</span>
                     </li>
-                    @if ((in_array('Admin', $role_names) && in_array('Finance', $department_names)) && (in_array('Admin', $role_names) && in_array('Human Resources', $department_names)) || in_array('Super Admin', $role_names))
+                    @if (($isAdmin && in_array('Finance', $department_names)) && ($isAdmin && in_array('Human Resources', $department_names)) || $isSuperAdmin)
                         <li class="has-children">
                             <a href="#"><i class="fas fa-cog"></i> <span>Master</span> <i class="fas fa-angle-right arrow"></i></a>
                             <ul class="child-nav"> 
@@ -407,7 +370,7 @@
                             <ul class="child-nav">
                                 <li><a href="{{route('invoices.create')}}" ><i class="fas fa-plus "></i> <span>Create Invoice</span></a></li>
                                 <li><a href="{{route('invoices.index')}}" ><i class="fas fa-list "></i> <span>Manage Invoices</span></a></li>
-                                @if (isset($department_head)  || ((in_array('Management', $rank_names) || in_array('Admin', $role_names)) && in_array('Finance', $department_names)) || in_array('Super Admin', $role_names))
+                                @if (isset($department_head)  || ((in_array('Management', $rank_names) || $isAdmin) && in_array('Finance', $department_names)) || $isSuperAdmin)
                                 <li><a href="{{route('invoices.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Invoices</span>
                                     @if ($invoicesPendingCount>0)
                                     <span class="label label-success ml-5">{{$invoicesPendingCount}}</span>
@@ -443,7 +406,7 @@
                             <ul class="child-nav">
                                 <li><a href="{{route('credit_notes.create')}}" ><i class="fas fa-plus "></i> <span>Create</span></a></li>
                                 <li><a href="{{route('credit_notes.index')}}" ><i class="fas fa-list "></i> <span>Manage C Notes</span></a></li>
-                                @if (isset($department_head)  || (in_array('Management', $rank_names) && in_array('Finance', $department_names)) || in_array('Super Admin', $role_names))
+                                @if (isset($department_head)  || (in_array('Management', $rank_names) && in_array('Finance', $department_names)) || $isSuperAdmin)
                                 <li><a href="{{route('credit_notes.pending')}}" ><i class="fas fa-clock "></i> <span>Pending C Notes</span>
                                     @if ($credit_notesPendingCount>0)
                                     <span class="label label-success ml-5">{{$credit_notesPendingCount}}</span>
@@ -486,7 +449,7 @@
                 <li class="nav-header">
                     <span class="">Purchases</span>
                 </li>
-                @if (in_array('Finance', $department_names) || in_array('Super Admin', $role_names))
+                @if (in_array('Finance', $department_names) || $isSuperAdmin)
                 @php
                 $billsPendingCount = App\Models\Bill::where('authorization','pending')
                 ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
@@ -510,7 +473,7 @@
                     <ul class="child-nav">
                         <li><a href="{{route('bills.create')}}" ><i class="fas fa-plus "></i> <span>Create Bill</span></a></li>
                         <li><a href="{{route('bills.index')}}"><i class="fas fa-list "></i> <span>Manage Bills</span></a></li>
-                        @if (isset($department_head)  || (in_array('Management', $rank_names) && in_array('Finance', $department_names)) || in_array('Super Admin', $role_names))
+                        @if (isset($department_head)  || (in_array('Management', $rank_names) && in_array('Finance', $department_names)) || $isSuperAdmin)
                         <li><a href="{{route('bills.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Bills</span>
                             @if ($billsPendingCount>0)
                             <span class="label label-success ml-5">{{$billsPendingCount}}</span>
@@ -563,7 +526,7 @@
                     <a href="#"><i class="fas fa-hand-holding-usd"></i> <span>Requisitions</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
                         <li><a href="{{route('requisitions.index')}}" ><i class="fas fa-list "></i> <span>Manage Requisitions</span></a></li>
-                        @if (in_array('Management', $rank_names)  || isset($department_head)  || in_array('Super Admin', $role_names) || in_array('Super Admin', $role_names))
+                        @if (in_array('Management', $rank_names)  || isset($department_head)  || $isSuperAdmin || $isSuperAdmin)
                         <li><a href="{{route('requisitions.pending')}}"><i class="fas fa-clock "></i> <span>Pending Requisitions</span>
                             @if ($requisitionsPendingCount>0)
                             <span class="label label-success ml-5">{{$requisitionsPendingCount}}</span>
@@ -583,7 +546,7 @@
                     </ul>
                 </li>
 
-                @if (in_array('Finance', $department_names) || in_array('Super Admin', $role_names))
+                @if (in_array('Finance', $department_names) || $isSuperAdmin)
                 <li class="nav-header">
                     <span class="">Accounting</span>
                 </li>
@@ -603,7 +566,7 @@
                 @endif
 
                 
-                      @if (in_array('Super Admin', $role_names)  || (in_array('Finance', $department_names)))
+                      @if ($isSuperAdmin  || (in_array('Finance', $department_names)))
                 <li class="nav-header">
                     <span class="">Asset Management</span>
                 </li>
@@ -649,7 +612,7 @@
                     <a href="#"><i class="fas fa-hand-holding-usd"></i> <span>Purchase Orders</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
                         <li><a href="{{route('purchases.index')}}" ><i class="fas fa-list "></i> <span>Manage Orders</span></a></li>
-                        @if (isset($department_head)  || (in_array('Management', $rank_names) && in_array('Finance', $department_names)) || in_array('Super Admin', $role_names))
+                        @if (isset($department_head)  || (in_array('Management', $rank_names) && in_array('Finance', $department_names)) || $isSuperAdmin)
                         <li>
                             <a href="{{route('purchases.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Orders</span>
                                 @if ($purchasesPendingCount>0)
@@ -714,7 +677,7 @@
                     <a href="#"><i class="fas fa-list"></i> <span>Dispatches (Assets) </span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
                         <li><a href="{{route('asset_dispatches.index')}}" ><i class="fas fa-list "></i> <span>Manage Dispatches</span></a></li>
-                        @if (in_array('Management', $rank_names) || in_array('Admin', $role_names) || in_array('Super Admin', $role_names))
+                        @if (in_array('Management', $rank_names) || $isAdmin || $isSuperAdmin)
                         <li>
                             <a href="{{route('asset_dispatches.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Dispatches</span>
                                 @if ($dispatchesPendingCount>0)
@@ -742,12 +705,12 @@
                 @endif
 
         
-                @if (in_array('HSEQ', $department_names) || in_array('Super Admin', $role_names))
+                @if (in_array('HSEQ', $department_names) || $isSuperAdmin)
                 
                 <li class="nav-header">
                     <span class="">SHEQ</span>
                 </li>
-                @if ((in_array('Admin', $role_names) && in_array('HSEQ', $department_names)) || in_array('Super Admin', $role_names))
+                @if (($isAdmin && in_array('HSEQ', $department_names)) || $isSuperAdmin)
                 <li class="has-children">
                     <a href="#"><i class="fas fa-cog"></i> <span>Master</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav"> 
@@ -814,7 +777,7 @@
 
                 @endif
 
-                  @if (in_array('Security', $department_names) || in_array('Super Admin', $role_names))
+                  @if (in_array('Security', $department_names) || $isSuperAdmin)
                 
                 <li class="nav-header">
                     <span class="">General Access</span>
@@ -879,13 +842,13 @@
 
          
                
-                    @if (in_array('Transport & Logistics', $department_names) || in_array('Workshop', $department_names) || in_array('Super Admin', $role_names))
+                    @if (in_array('Transport & Logistics', $department_names) || in_array('Workshop', $department_names) || $isSuperAdmin)
                   
                     @if (!$user->driver)
                     <li class="nav-header">
                         <span class="">Fleet Management</span>
                     </li>
-                    @if (in_array('Admin', $role_names) || in_array('Super Admin', $role_names))
+                    @if ($isAdmin || $isSuperAdmin)
                     <li class="has-children">
                         <a href="#"><i class="fas fa-cog"></i> <span>Master</span> <i class="fas fa-angle-right arrow"></i></a>
                         <ul class="child-nav">
@@ -957,7 +920,7 @@
                     <li class="nav-header">
                         <span class="">Fuel Management</span>
                     </li>
-                    @if (in_array('Transport & Logistics', $department_names) || in_array('Super Admin', $role_names))
+                    @if (in_array('Transport & Logistics', $department_names) || $isSuperAdmin)
                     @if (!$user->driver)
                     @php
                     $top_upsPendingCount = App\Models\TopUp::where('authorization','pending')
@@ -985,7 +948,7 @@
                             <a href="#"><span>Fuel Stations TopUps</span> <i class="fas fa-angle-right arrow"></i></a>
                             <ul class="child-nav">
                                 <li><a href="{{route('top_ups.index')}}" ><i class="fas fa-list "></i> <span>Fuel Top Ups</span></a></li>
-                                @if ((in_array('Transport & Logistics', $department_names) && in_array('Admin', $role_names)) || in_array('Super Admin', $role_names))
+                                @if ((in_array('Transport & Logistics', $department_names) && $isAdmin) || $isSuperAdmin)
                                 <li>
                                     <a href="{{route('top_ups.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Top Ups</span>
                                         @if ($top_upsPendingCount>0)
@@ -1030,13 +993,13 @@
                         $department_head = App\Models\DepartmentHead::where('department_id',$department->id)->where('employee_id',$employee->id)->first();
                     }
                  @endphp
-                @if (in_array('Transport & Logistics', $department_names) || in_array('Super Admin', $role_names))
+                @if (in_array('Transport & Logistics', $department_names) || $isSuperAdmin)
                     @if (!$user->driver)
                         <li class="has-children {{ request()->routeIs('fuels.*') ? 'active' : '' }}" >
                             <a href="#"><span>Fuel Orders</span> <i class="fas fa-angle-right arrow"></i></a>
                             <ul class="child-nav">
                                 <li><a href="{{route('fuels.index')}}" ><i class="fas fa-list "></i> <span>Manage Fuel Orders</span></a></li>
-                                @if ((in_array('Management', $rank_names) && in_array('Transport & Logistics', $department_names)) || isset($department_head)  || in_array('Super Admin', $role_names))
+                                @if ((in_array('Management', $rank_names) && in_array('Transport & Logistics', $department_names)) || isset($department_head)  || $isSuperAdmin)
                                 <li><a href="{{route('fuels.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Fuel Orders</span>
                                 @if ($fuelsPendingCount>0)
                                 <span class="label label-success ml-5">{{$fuelsPendingCount}}</span>
@@ -1071,7 +1034,7 @@
                             <span class="label label-success ml-5">{{$myAllocationCount}}</span>
                             @endif
                         </a></li>
-                        @if ((in_array('Transport & Logistics', $department_names) && in_array('Admin', $role_names)) || (in_array('Transport & Logistcs', $role_names) && in_array('HOD', $rank_names)) || in_array('Super Admin', $role_names))
+                        @if ((in_array('Transport & Logistics', $department_names) && $isAdmin) || (in_array('Transport & Logistcs', $role_names) && in_array('HOD', $rank_names)) || $isSuperAdmin)
                             <li><a href="{{route('allocations.index')}}" ><i class="fas fa-list "></i> <span>Manage Allocation</span></a></li>
                         @endif
                     </ul>
@@ -1097,7 +1060,7 @@
                     <ul class="child-nav">
                         <li><a href="{{route('fuel_requests.myrequests',$employee->id)}}" ><i class="fas fa-arrow-right "></i> <span>My Requests</span></a></li>
                         
-                        @if ( (in_array('Transport & Logistics', $department_names) && in_array('Management', $rank_names)) || isset($department_head) || in_array('Super Admin', $role_names) || (in_array('Transport & Logistics', $department_names) && in_array('Admin', $role_names)))
+                        @if ( (in_array('Transport & Logistics', $department_names) && in_array('Management', $rank_names)) || isset($department_head) || $isSuperAdmin || (in_array('Transport & Logistics', $department_names) && $isAdmin))
                         <li><a href="{{route('fuel_requests.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Requests</span>
                             @if ($fuelRequesitionPendingCount>0)
                             <span class="label label-success ml-5">{{$fuelRequesitionPendingCount}}</span>
@@ -1117,7 +1080,7 @@
                     </ul>
                 </li>
                 
-                    @if (in_array('Finance', $department_names) || in_array('Transport & Logistics', $department_names) || in_array('Super Admin', $role_names))
+                    @if (in_array('Finance', $department_names) || in_array('Transport & Logistics', $department_names) || $isSuperAdmin)
                     <li class="nav-header">
                         <span class="">Trip Management</span>
                         </li>
@@ -1152,7 +1115,7 @@
                         }
                         @endphp
                   
-                    @if ((in_array('Admin', $role_names) && in_array('Transport & Logistics', $department_names)) || in_array('Super Admin', $role_names))
+                    @if (($isAdmin && in_array('Transport & Logistics', $department_names)) || $isSuperAdmin)
                     
                     <li class="has-children">
                         <a href="#"><i class="fas fa-cog"></i> <span>Master</span> <i class="fas fa-angle-right arrow"></i></a>
@@ -1173,10 +1136,10 @@
                             <li class="{{ request()->routeIs('provinces.index') ? 'active' : '' }}"><a href="{{route('provinces.index')}}"><i class="fas fa-globe-africa"></i> <span>Provinces</span> </a></li>
                             <li class="{{ request()->routeIs('works.index') ? 'active' : '' }}"><a href="{{route('works.index')}}" ><i class="fas fa-list"></i> <span>Rehandling Jobs</span></a></li>
                             <li class="{{ request()->routeIs('routes.index') ? 'active' : '' }}"><a href="{{route('routes.index')}}" ><i class="fas fa-road"></i> <span>Road Routes</span></a></li>
-                            @if (in_array('Super Admin', $role_names))
+                            @if ($isSuperAdmin)
                                 <li class="{{ request()->routeIs('teams.index') ? 'active' : '' }}"><a href="{{route('teams.index')}}" ><i class="fas fa-users"></i> <span>Teams</span></a></li>
                             @endif
-                            @if (in_array('Finance', $department_names) || in_array('Super Admin', $role_names))
+                            @if (in_array('Finance', $department_names) || $isSuperAdmin)
                                 <li class="{{ request()->routeIs('rates.index') ? 'active' : '' }}"><a href="{{route('rates.index')}}"><i class="fas fa-list"></i> <span>Trip Rates</span></a></li>  
                             @endif
                             <li class="{{ request()->routeIs('trip_types.index') ? 'active' : '' }}"><a href="{{route('trip_types.index')}}"><i class="fas fa-road"></i> <span>Trip Types</span> </a></li>
@@ -1185,7 +1148,7 @@
                         </ul>
                     </li>
                     @endif
-                    @if ($employee->vehicle_assignment || in_array('Super Admin', $role_names))
+                    @if ($employee->vehicle_assignment || $isSuperAdmin)
                         <li><a href="{{route('logs.index')}}"><i class="fas fa-book"></i> <span>Log Book</span></a></li>
                     @endif
                   
@@ -1194,7 +1157,7 @@
                         <a href="#"><i class="fas fa-truck"></i> <span>Transporters</span> <i class="fas fa-angle-right arrow"></i></a>
                         <ul class="child-nav">
                             <li><a href="{{route('transporters.index')}}" ><i class="fas fa-list "></i> <span>Manage Transporters</span></a></li>
-                            @if (((in_array('Admin', $role_names) || in_array('Management', $rank_names)) && in_array('Transport & Logistics', $department_names)) || isset($department_head) || in_array('Super Admin', $role_names))
+                            @if ((($isAdmin || in_array('Management', $rank_names)) && in_array('Transport & Logistics', $department_names)) || isset($department_head) || $isSuperAdmin)
                             <li><a href="{{route('transporters.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Transporters</span>
                                 @if ($transportersPendingCount>0)
                                 <span class="label label-success ml-5">{{$transportersPendingCount}}</span>
@@ -1238,7 +1201,7 @@
                         <a href="#"><i class="fas fa-clock"></i> <span>Shifts</span> <i class="fas fa-angle-right arrow"></i></a>
                         <ul class="child-nav">
                             <li><a href="{{route('shifts.index')}}" ><i class="fas fa-list "></i> <span>Manage Shifts</span></a></li>          
-                            {{-- @if (in_array('Management', $rank_names) || isset($department_head) || in_array('Super Admin', $role_names))
+                            {{-- @if (in_array('Management', $rank_names) || isset($department_head) || $isSuperAdmin)
                                 <li><a href="{{route('shifts.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Shifts</span>
                                     @if ($shiftsPendingCount>0)
                                         <span class="label label-success ml-5">{{$shiftsPendingCount}}</span>
@@ -1261,7 +1224,7 @@
                     @endif
                     @endif
                    
-                    @if (in_array('Finance', $department_names) || in_array('Transport & Logistics', $department_names) || in_array('Super Admin', $role_names))
+                    @if (in_array('Finance', $department_names) || in_array('Transport & Logistics', $department_names) || $isSuperAdmin)
                     @if (!$user->driver)
                     <li class="has-children {{ request()->routeIs('trips.*') ? 'active' : '' }} " >
                         <a href="#"><i class="fas fa-road"></i> <span>Trips</span> <i class="fas fa-angle-right arrow"></i></a>
@@ -1290,7 +1253,7 @@
                    
                  
                         
-                    @if (in_array('Management', $rank_names) || isset($department_head) || in_array('Super Admin', $role_names))
+                    @if (in_array('Management', $rank_names) || isset($department_head) || $isSuperAdmin)
                     
                     <li><a href="{{route('trips.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Trips</span>
                     @if ($tripsPendingCount>0)
@@ -1379,7 +1342,7 @@
                         <ul class="child-nav">
                             <li><a href="{{route('recoveries.create')}}" ><i class="fas fa-plus "></i> <span>Create Recovery</span></a></li>
                             <li><a href="{{route('recoveries.index')}}" ><i class="fas fa-list "></i> <span>Manage Recoveries</span></a></li>
-                            @if (in_array('Management', $rank_names) || isset($department_head) || in_array('Super Admin', $role_names))
+                            @if (in_array('Management', $rank_names) || isset($department_head) || $isSuperAdmin)
                             <li><a href="{{route('recoveries.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Recoveries</span>
                                 @if ($recoveriesPendingCount>0)
                                 <span class="label label-success ml-5">{{$recoveriesPendingCount}}</span>
@@ -1406,12 +1369,12 @@
 
 
                        
-                 @if (in_array('Finance', $department_names) || in_array('Workshop', $department_names) || in_array('Stores', $department_names) || in_array('Super Admin', $role_names))
+                 @if (in_array('Finance', $department_names) || in_array('Workshop', $department_names) || in_array('Stores', $department_names) || $isSuperAdmin)
                  <li class="nav-header">
                     <span class="">Workshop Management</span>
                  </li>
 
-                @if ( isset($wsdepartment_head) || (in_array('Admin', $role_names) && in_array('Workshop', $department_names)) || in_array('Super Admin', $role_names))
+                @if ( isset($wsdepartment_head) || ($isAdmin && in_array('Workshop', $department_names)) || $isSuperAdmin)
                 <li class="has-children">
                     <a href="#"><i class="fas fa-cog"></i> <span>Master</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
@@ -1452,7 +1415,7 @@
                                 <li><a href="{{route('bookings.create')}}" ><i class="fas fa-plus "></i> <span>Create Booking</span></a></li>
                                 <li><a href="{{route('bookings.index')}}" ><i class="fas fa-list "></i> <span>Manage Bookings</span></a></li>
                                 
-                                @if (in_array('Management', $rank_names) || isset($wsdepartment_head) || (in_array('Admin', $role_names) && in_array('Workshop', $department_names)) || in_array('Super Admin', $role_names))
+                                @if (in_array('Management', $rank_names) || isset($wsdepartment_head) || ($isAdmin && in_array('Workshop', $department_names)) || $isSuperAdmin)
                                 <li>
                                     <a href="{{route('bookings.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Bookings</span>
                                         @if ($bookingsPendingCount>0)
@@ -1487,7 +1450,7 @@
                             @endphp
                             <a href="#"><i class="fas fa-file-invoice"></i> <span>Tickets</span> <i class="fas fa-angle-right arrow"></i></a>
                             <ul class="child-nav">
-                                @if ( isset($stdepartment_head) || isset($wsdepartment_head) || (in_array('Admin', $role_names) && in_array('Workshop', $department_names)) || (in_array('Admin', $role_names) && in_array('Stores', $department_names))  || in_array('Super Admin', $role_names))
+                                @if ( isset($stdepartment_head) || isset($wsdepartment_head) || ($isAdmin && in_array('Workshop', $department_names)) || ($isAdmin && in_array('Stores', $department_names))  || $isSuperAdmin)
                                 <li><a href="{{route('tickets.index')}}" ><i class="fas fa-tasks "></i> <span>Manage Tickets</span></a></li>
                                 @endif
                                 @if (in_array('Workshop', $department_names))
@@ -1509,7 +1472,7 @@
                             @endphp
                             <a href="#"><i class="fas fa-search"></i> <span>Ticket Inspections</span> <i class="fas fa-angle-right arrow"></i></a>
                             <ul class="child-nav">
-                                 @if ( isset($stdepartment_head) || isset($wsdepartment_head) || (in_array('Admin', $role_names) && in_array('Workshop', $department_names)) || (in_array('Admin', $role_names) && in_array('Stores', $department_names))  || in_array('Super Admin', $role_names))
+                                 @if ( isset($stdepartment_head) || isset($wsdepartment_head) || ($isAdmin && in_array('Workshop', $department_names)) || ($isAdmin && in_array('Stores', $department_names))  || $isSuperAdmin)
                                 <li><a href="{{route('inspections.index')}}" ><i class="fas fa-tasks "></i> <span>Manage Inspections</span></a></li>
                                 @endif
                                 @if (in_array('Workshop', $department_names))
@@ -1548,7 +1511,7 @@
                 ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
                 @endphp
 
-                @if (in_array('Admin', $role_names) || in_array('Super Admin', $role_names))
+                @if ($isAdmin || $isSuperAdmin)
                         <li class="has-children">
                             <a href="#"><i class="fas fa-door-open"></i> <span>Gatepass</span> <i class="fas fa-angle-right arrow"></i></a>
                             <ul class="child-nav">
@@ -1571,11 +1534,11 @@
                         </li>
                     @endif
                 @endif
-                @if (in_array('Stores', $department_names) || in_array('Super Admin', $role_names))
+                @if (in_array('Stores', $department_names) || $isSuperAdmin)
                 <li class="nav-header">
                     <span class="">Stores & Inventory Management</span>
                 </li>
-                 @if ( isset($stdepartment_head) || (in_array('Admin', $role_names) && in_array('Stores', $department_names)) || in_array('Super Admin', $role_names))
+                 @if ( isset($stdepartment_head) || ($isAdmin && in_array('Stores', $department_names)) || $isSuperAdmin)
                   <li class="has-children">
                     <a href="#"><i class="fas fa-cog"></i> <span>Master</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
@@ -1658,7 +1621,7 @@
                     <a href="#"><i class="fas fa-hand-holding-usd"></i> <span>Purchase Orders</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
                         <li><a href="{{route('inventory_purchases.index')}}" ><i class="fas fa-list "></i> <span>Manage Orders</span></a></li>
-                        @if (in_array('Management', $rank_names) || isset($wsdepartment_head) || isset($stdepartment_head) || in_array('Super Admin', $role_names))
+                        @if (in_array('Management', $rank_names) || isset($wsdepartment_head) || isset($stdepartment_head) || $isSuperAdmin)
                         <li>
                             <a href="{{route('inventory_purchases.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Orders</span>
                                 @if ($purchasesPendingCount>0)
@@ -1724,7 +1687,7 @@
                     <a href="#"><i class="fas fa-list"></i> <span>Dispatches (Inventory) </span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
                         <li><a href="{{route('inventory_dispatches.index')}}" ><i class="fas fa-list "></i> <span>Manage Dispatches</span></a></li>
-                        @if (in_array('Management', $rank_names) || in_array('Admin', $role_names) || in_array('Super Admin', $role_names))
+                        @if (in_array('Management', $rank_names) || $isAdmin || $isSuperAdmin)
                         <li>
                             <a href="{{route('inventory_dispatches.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Dispatches</span>
                                 @if ($dispatchesPendingCount>0)
@@ -1822,7 +1785,7 @@
                     <a href="#"><i class="fas fa-hand-holding-usd"></i> <span>Purchase Orders</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
                         <li><a href="{{route('tyre_purchases.index')}}" ><i class="fas fa-list "></i> <span>Manage Orders</span></a></li>
-                        @if (in_array('Management', $rank_names) || isset($wsdepartment_head) || isset($stdepartment_head) || in_array('Super Admin', $role_names))
+                        @if (in_array('Management', $rank_names) || isset($wsdepartment_head) || isset($stdepartment_head) || $isSuperAdmin)
                         <li>
                             <a href="{{route('tyre_purchases.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Orders</span>
                                 @if ($purchasesPendingCount>0)
@@ -1888,7 +1851,7 @@
                         <ul class="child-nav">
                             <li><a href="{{route('retreads.create')}}" ><i class="fas fa-plus "></i> <span>Create Retread</span></a></li>
                             <li><a href="{{route('retreads.index')}}"><i class="fas fa-list "></i> <span>Manage Retread</span></a></li>
-                            @if (in_array('Management', $rank_names) || isset($wsdepartment_head) || isset($stdepartment_head) || in_array('Super Admin', $role_names))
+                            @if (in_array('Management', $rank_names) || isset($wsdepartment_head) || isset($stdepartment_head) || $isSuperAdmin)
                             <li>
                                 <a href="{{route('retreads.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Retreads</span>
                                     @if ($retreadsPendingCount>0)
@@ -1935,7 +1898,7 @@
                     <a href="#"><i class="fas fa-list"></i> <span>Dispatches (Tyres) </span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
                         <li><a href="{{route('tyre_dispatches.index')}}" ><i class="fas fa-list "></i> <span>Manage Dispatches</span></a></li>
-                        @if (in_array('Management', $rank_names) || in_array('Admin', $role_names) || in_array('Super Admin', $role_names))
+                        @if (in_array('Management', $rank_names) || $isAdmin || $isSuperAdmin)
                         <li>
                             <a href="{{route('tyre_dispatches.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Dispatches</span>
                                 @if ($dispatchesPendingCount>0)
@@ -1964,7 +1927,7 @@
                 @endif
               
                       
-                @if (in_array('Management', $rank_names) || in_array('Directors', $rank_names)|| in_array('Super Admin', $role_names))
+                @if (in_array('Management', $rank_names) || in_array('Directors', $rank_names)|| $isSuperAdmin)
                     <li class="nav-header">
                         <span class="">Business Settings</span>
                     </li>
@@ -1997,7 +1960,7 @@
                 <li class="{{ request()->routeIs('profile',$user->id) ? 'active' : '' }}">
                     <a href="{{route('profile',$user->id)}}"><i class="fas fa-user"></i> <span>My Profile</span> </a>
                 </li>
-                @if (in_array('Super Admin', $role_names))
+                @if ($isSuperAdmin)
                 <li  class="{{ request()->routeIs('audits.all') ? 'active' : '' }}">
                     <a href="{{route('audits.all')}}"><i class="fas fa-history"></i> <span>Audits</span> </a>
                 </li>

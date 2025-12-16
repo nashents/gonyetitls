@@ -10,19 +10,21 @@
         {{-- <x-loading/> --}}
         <table id="trip_locationsTable" class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
             <thead >
+                <th class="th-sm">AddedBy
+                </th>
                 <th class="th-sm">Country
                 </th>
                 <th class="th-sm">City
                 </th>
                 <th class="th-sm">Suburb
                 </th>
-                <th class="th-sm">Street Address
+                <th class="th-sm">Address
                 </th>
                 <th class="th-sm">Description
                 </th>
                 <th class="th-sm">Updated@
                 </th>
-                <th class="th-sm">Location Pin
+                <th class="th-sm">Pin
                 </th>
                 @if (Auth::user()->category == "employee" || Auth::user()->category == "driver" || Auth::user()->category == "admin")
                 <th class="th-sm">Actions
@@ -34,6 +36,11 @@
             <tbody>
                 @forelse ($trip_locations as $trip_location)
               <tr>
+                <td>
+                    {{$trip_location->user ? $trip_location->user->name : ""}} {{$trip_location->user ? $trip_location->user->surname : ""}}
+                    <br>
+                    <small><strong>AddedOn: </strong> {{ date('d M, Y', strtotime($trip_location->created_at)) }}</small>
+                </td>
                 <td>{{$trip_location->country ? $trip_location->country->name : ""}}</td>
                 <td>{{$trip_location->city}}</td>
                 <td>{{$trip_location->suburb}}</td>
@@ -49,8 +56,10 @@
                             <span class="caret"></span>
                         </button>
                         <ul class="dropdown-menu">
+                             @if ($trip_location->user_id == Auth::user()->id)
                             <li><a href="#" wire:click="edit({{$trip_location->id}})"><i class="fa fa-edit color-success"></i> Edit</a></li>
                             <li><a href="#" data-toggle="modal" data-target="#trip_locationDeleteModal{{$trip_location->id}}"><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                            @endif
                         </ul>
                     </div>
                     @include('trip_locations.delete')
@@ -60,7 +69,7 @@
             </tr>
             @empty
             <tr>
-                <td colspan="8">
+                <td colspan="9">
                     <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                         No Location Updates ....
                     </div>

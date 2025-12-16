@@ -14,24 +14,10 @@
                             <br>
                             <div class="row">
                                 <div class="col-md-4 col-md-offset-4">
-                                    <div class="alert-info" role="alert">
-                                        @php
-                                        $employee_department = $employee->departments->first();
-                 
-                                        $departments = $employee->departments;
-                                        foreach($departments as $department){
-                                            $department_names[] = $department->name;
-                                        }
-                                        $roles = $user->roles;
-                                        foreach($roles as $role){
-                                            $role_names[] = $role->name;
-                                        }
-                                        $ranks = $employee->ranks;
-                                        foreach($ranks as $rank){
-                                            $rank_names[] = $rank->name;
-                                        }
-                                    @endphp
-                                        <center><strong>Total Trips!</strong> {{ $trips->total() }}</center>
+
+                                    <div class="alert-info" role="alert" style="border-radius: 5px;">
+                                   
+                                        <center><strong>Total Trips: </strong> {{ $trips->total() }}</center>
                                         @if ($company->rates_managed_by_finance == 1)
                                             @if (in_array('Finance', $department_names) ||  in_array('Super Admin', $role_names))
                                                 @foreach ($trips_currencies as $currency)
@@ -40,7 +26,7 @@
                                                     @endphp
 
                                                     <center>
-                                                        <strong>Total Revenue {{ $currency->name }} :</strong>
+                                                        <strong>Total Revenue {{ $currency->name }}: </strong>
                                                         {{ $currency->symbol }}{{ number_format($total_revenue, 2) }}
                                                     </center>
                                                 @endforeach
@@ -52,11 +38,21 @@
                                                 @endphp
 
                                                 <center>
-                                                    <strong>Total Revenue {{ $currency->name }} :</strong>
+                                                    <strong>Total Revenue {{ $currency->name }}: </strong>
                                                     {{ $currency->symbol }}{{ number_format($total_revenue, 2) }}
                                                 </center>
                                             @endforeach
                                         @endif
+                                        @foreach ($expense_currencies as $currency)
+                                            @php
+                                                $total_expenses = $expenseTotalsByCurrency[$currency->id] ?? 0;
+                                            @endphp
+
+                                            <center>
+                                                <strong>Total Expenses {{ $currency->name }}: </strong>
+                                                {{ $currency->symbol }}{{ number_format($total_expenses, 2) }}
+                                            </center>
+                                        @endforeach
                                         
                                     </div>
                                     <!-- /.alert alert-info -->

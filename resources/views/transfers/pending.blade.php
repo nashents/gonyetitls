@@ -33,8 +33,13 @@
                                 <div class="col-md-6">
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
-                                        <li><a href="{{route('inventory_transfers.index')}}"><i class="fa fa-list"></i> All Inventory Transfers</a></li>
-            							<li class="active"> <i class="fa fa-clock-o"></i> Pending Inventory Transfers</li>
+                                       @if ($department == "tyre")
+                                            <li><a href="{{route('tyre_transfers.index')}}"><i class="fa fa-list"></i> All Tyre Transfers</a></li>
+                                            <li class="active"> <i class="fa fa-check"></i> Pending Tyre Transfers</li>
+                                        @elseif ($department == "inventory")
+                                            <li><a href="{{route('inventory_transfers.index')}}"><i class="fa fa-list"></i> All Inventory Transfers</a></li>
+                                            <li class="active"> <i class="fa fa-check"></i> Pending Inventory Transfers</li>
+                                        @endif
             						</ul>
                                 </div>
                                 <!-- /.col-md-6 -->

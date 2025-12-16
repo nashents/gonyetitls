@@ -3,7 +3,7 @@
         <x-loading/>
         <div class="container-fluid">
             <div class="row">
-                <div class="col-md-10 col-md-offset-1">
+                <div class="col-md-12 ">
 
                     <div class="panel">
                         <div class="panel-heading">
@@ -14,8 +14,12 @@
                         <div class="panel-body">
                             <form wire:submit.prevent="update()" >
                                  <div class="form-group">
-                                    <label for="country">Goods Received Vouchers</label>
-                                    <select wire:model.debounce.300ms="selectedGoodsReceived" class="form-control" disabled>
+                                    <label for="country">Goods Received Vouchers
+                                         @if (!is_null($selectedPurchase) || !is_null($selectedTransfer) )
+                                                <span class="required" style="color: red">*</span>
+                                            @endif
+                                    </label>
+                                    <select wire:model.debounce.300ms="selectedGoodsReceived" class="form-control" {{!is_null($selectedPurchase) || !is_null($selectedTransfer) ? "required" : "" }} disabled>
                                         <option value="">Select GRV</option>
                                         @foreach ($goods_receiveds as $goods_received)
                                         <option value="{{$goods_received->id}}">GRV#: {{$goods_received->goods_received_number}} Receiveing Date: {{$goods_received->date}} ReceivedBy: {{$goods_received->employee ? $goods_received->employee->name : ""}} {{$goods_received->employee ? $goods_received->employee->surname : ""}} Vendor: {{$goods_received->vendor ? $goods_received->vendor->name : ""}} {{$goods_received->delivery_number ? "Delivery#: ".$goods_received->delivery_number : ""}} {{$goods_received->delivery_date ? "Delivery Date: ".$goods_received->delivery_date : ""}} {{$goods_received->driver_name ? "Driver Name: ".$goods_received->driver_name : ""}} </option>
@@ -25,19 +29,58 @@
                                     @error('selectedGoodsReceived') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                                 <div class="row">
-                                    <div class="col-md-3">
-                                        <div class="form-group">
-                                            <label for="country">Purchase Orders</label>
-                                            <select wire:model.debounce.300ms="selectedPurchase" class="form-control" disabled>
-                                                <option value="">Select Purchase Order</option>
-                                                @foreach ($purchases as $purchase)
-                                               <option value="{{$purchase->id}}">{{$purchase->purchase_number}} | {{ $purchase->date }} | {{$purchase->vendor ? $purchase->vendor->name : ""}} | {{ $purchase->currency ? $purchase->currency->name : "" }} {{ $purchase->currency ? $purchase->currency->symbol : "" }}{{number_format($purchase->total,2)}}</option>
-                                                @endforeach
-                                            </select>
-                                            <small><a href="{{ route('tyre_purchases.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Purchase Order</a></small> 
-                                            @error('selectedPurchase') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                        </div>
+                                                                <div class="col-md-3">
+                                        <label for="exampleInputEmail13">Select source of items<span class="required" style="color: red">*</span></label>
+                                            <div class="mb-10">
+                                                <input type="radio" wire:model.debounce.300ms="source" value="Purchase"  class="line-style"  />
+                                                <label for="one" class="radio-label">Purchase Order</label>
+                                                <input type="radio" wire:model.debounce.300ms="source" value="Transfer"  class="line-style"  />
+                                                <label for="one" class="radio-label">Store Transfer Order</label>
+                                            </div>   
+                                            <div class="form-group">
+                                            @if ($source == "Purchase")
+                                                <label for="country">Purchase Orders</label>
+                                                <select wire:model.debounce.300ms="selectedPurchase" class="form-control" >
+                                                    <option value="">Select Purchase Order</option>
+                                                    @foreach ($purchases as $purchase)
+                                                    @if ($purchase->inventories && $purchase->inventories->count() > 0)
+                                                        <option value="{{$purchase->id}}" style="color: orange">{{$purchase->purchase_number}} | {{ $purchase->date }} | {{$purchase->vendor ? $purchase->vendor->name : ""}} | {{ $purchase->currency ? $purchase->currency->name : "" }} {{ $purchase->currency ? $purchase->currency->symbol : "" }}{{number_format($purchase->total,2)}}</option>
+                                                    @else
+                                                        <option value="{{$purchase->id}}">{{$purchase->purchase_number}} | {{ $purchase->date }} | {{$purchase->vendor ? $purchase->vendor->name : ""}} | {{ $purchase->currency ? $purchase->currency->name : "" }} {{ $purchase->currency ? $purchase->currency->symbol : "" }}{{number_format($purchase->total,2)}}</option>
+                                                    @endif
+                                                
+                                                    @endforeach
+                                                </select>
+                                                <small>  <a href="{{ route('inventory_purchases.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Purchase Order</a></small> 
+                                                <br>
+                                                <small style="color: green">NB: All fully / partially received purchase orders will appear in orange</small>
+                                                @error('selectedPurchase') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            @elseif($source == "Transfer")
+                                                <label for="country">Transfer Orders</label>
+                                                <select wire:model.debounce.300ms="selectedTransfer" class="form-control" >
+                                                    <option value="">Select Transfer Order</option>
+                                                    @foreach ($transfers as $transfer)
+                                                    @php
+
+                                                        $from_store = App\Models\Store::find($transfer->from);
+                                                        $to_store = App\Models\Store::find($transfer->to);
+
+                                                    @endphp
+                                                    @if ($transfer->inventories && $transfer->inventories->count() > 0)
+                                                        <option value="{{$transfer->id}}" style="color: orange">{{$transfer->purchase_number}} | {{ $purchase->date }} | {{$purchase->vendor ? $purchase->vendor->name : ""}} | {{ $purchase->currency ? $purchase->currency->name : "" }} {{ $purchase->currency ? $purchase->currency->symbol : "" }}{{number_format($purchase->total,2)}}</option>
+                                                    @else
+                                                        <option value="{{$transfer->id}}">{{$transfer->transfer_number}} {{ $transfer->date }} From {{$from_store?->name}} To {{$to_store?->name}} </option>
+                                                    @endif
+                                                
+                                                    @endforeach
+                                                </select>
+                                                <small>  <a href="{{ route('inventory_purchases.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Purchase Order</a></small> 
+                                                <br>
+                                                <small style="color: green">NB: All fully / partially received purchase orders will appear in orange</small>
+                                                @error('selectedPurchase') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            @endif
                                     </div>
+                                        </div>
                                     <div class="col-md-3">
                                         <div class="form-group">
                                             <label for="country">Vendors</label>
@@ -254,8 +297,8 @@
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label for="country">Stores</label>
-                                       <select wire:model.debounce.300ms="store_id" class="form-control">
+                                        <label for="country">Stores<span class="required" style="color: red">*</span></label>
+                                       <select wire:model.debounce.300ms="store_id" class="form-control" {{$source == "Transfer" ? "disabled" : ""}} required>
                                            <option value="">Select Store</option>
                                          @foreach ($stores as $store)
                                             <option value="{{$store->id}}">{{$store->name}}</option>

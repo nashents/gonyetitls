@@ -11,6 +11,8 @@
         <table id="breakdownsTable" class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
             <caption>Incidents Table</caption>
             <thead >
+                <th class="th-sm">AddedBy
+                </th>
                 <th class="th-sm">Incident#
                 </th>
                 <th class="th-sm">Transporter
@@ -40,6 +42,11 @@
                 @forelse ($breakdowns as $breakdown)
             
               <tr>
+                <td>
+                    {{$breakdown->user ? $breakdown->user->name : ""}} {{$breakdown->user ? $breakdown->user->surname : ""}} 
+                    <br>
+                    <small><strong>AddedBy: </strong>{{ date('d M, Y', strtotime($breakdown->created_at)) }}</small>
+                </td>
                 <td>{{$breakdown->breakdown_number}}</td>
                 <td>{{$breakdown->transporter ? $breakdown->transporter->name : ""}}</td>
                 <td>
@@ -66,8 +73,10 @@
                         </button>
                         <ul class="dropdown-menu">
                             <li><a href="#" wire:click="showAssignment({{$breakdown->id}})"><i class="fa fa-plus color-success"></i> Assign</a></li>
+                             @if ($breakdown->user_id == Auth::user()->id)
                             <li><a href="#" wire:click="edit({{$breakdown->id}})"><i class="fa fa-edit color-success"></i> Edit</a></li>
                             <li><a href="#" data-toggle="modal" data-target="#breakdownDeleteModal{{$breakdown->id}}"><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                            @endif
                         </ul>
                     </div>
                     @include('breakdowns.delete')
@@ -92,6 +101,9 @@
         <table id="assignmentsTable" class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
             <caption>Assignments Table</caption>
             <thead >
+                 
+                <th class="th-sm">AssignedBy
+                </th>
                 <th class="th-sm">Incident#
                 </th>
                 <th class="th-sm">Transporter
@@ -118,8 +130,13 @@
             <tbody>
                 @forelse ($breakdown_assignments as $breakdown_assignment)
               <tr>
-                <td>{{$breakdown_assignment->breakdown ? $breakdown->breakdown_number : ""}}</td>
-                <td>{{$breakdown_assignment->transporter ? $breakdown->transporter->name : ""}}</td>
+                <td>
+                    {{$breakdown_assignment->user ? $breakdown_assignment->user->name : ""}} {{$breakdown_assignment->user ? $breakdown_assignment->user->surname : ""}} 
+                    <br>
+                    <small><strong>AssignedOn: </strong>{{ date('d M, Y', strtotime($breakdown_assignment->created_at)) }}</small>
+                </td>
+                <td>{{$breakdown_assignment->breakdown ? $breakdown_assignment->breakdown->breakdown_number : ""}}</td>
+                <td>{{$breakdown_assignment->transporter ? $breakdown_assignment->transporter->name : ""}}</td>
                 <td>
                     @if ($breakdown_assignment->horse )
                         {{$breakdown_assignment->horse ? $breakdown_assignment->horse->registration_number : ""}} {{$breakdown_assignment->horse->horse_make ? $breakdown_assignment->horse->horse_make->name : ""}} {{$breakdown_assignment->horse->horse_model ? $breakdown_assignment->horse->horse_model->name : ""}}
@@ -146,8 +163,10 @@
                             <span class="caret"></span>
                         </button>
                         <ul class="dropdown-menu">
+                            @if ($breakdown_assignment->user_id == Auth::user()->id)
                             <li><a href="#" wire:click="editAssignment({{$breakdown_assignment->id}})"><i class="fa fa-edit color-success"></i> Edit</a></li>
                             <li><a href="#" data-toggle="modal" data-target="#breakdown_assignmentDeleteModal{{$breakdown_assignment->id}}"><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                            @endif
                         </ul>
                     </div>
                     @include('breakdowns.assignments_delete')

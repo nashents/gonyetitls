@@ -522,51 +522,30 @@
                         <div class="panel-title">
                             <h5>Top 5 records</h5>
                         </div>
+                      
                         <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Employee#</th>
-                                    <th>Fullname</th>
-                                    <th>Total Trips</th>
-                                    <th>Total Revenue</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($top_drivers as $top_driver)
-                                <tr>
-                                    @php
-                                        $driver = App\Models\Driver::find($top_driver->id);
-                                        $currency = Auth::user()->employee->company->currency;
-                                        if (isset($currency)) {
-                                            $default_currency_trips_freight = App\Models\Trip::where('driver_id', $driver->id)->whereMonth('created_at', now()->month)->where('currency_id',$currency->id )->where('freight','!=','')->where('freight','!=', Null)->sum('freight');
-                                            $other_currency_trips_freight = App\Models\Trip::where('driver_id', $driver->id)->whereMonth('created_at', now()->month)->where('currency_id','!=',$currency->id )->where('exchange_customer_freight','!=','')->where('exchange_customer_freight','!=', Null)->sum('exchange_customer_freight');
-                                            $total_freight = $other_currency_trips_freight +  $default_currency_trips_freight;
-                                           
-                                        }else {
-                                            $total_freight = "";
-                                        }
-                                      
-                                    @endphp
-                                    <td>
-                                      
-                                        @if (isset($driver))
-                                        {{$driver->employee ? $driver->employee->employee_number : ""}}
-                                        @endif
-                                    </td>
-                                    <td>
-                                        @if (isset($driver))
-                                        {{$driver->employee ? $driver->employee->name : ""}} {{$driver->employee ? $driver->employee->surname : ""}}
-                                        @endif
-                                    </td>
-                                    <td>{{$top_driver->trips_count ? $top_driver->trips_count." Trips" : "" }}</td>
-                                    <td>
-                                        @if ($total_freight)
-                                        {{Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->name : ""}} {{Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->symbol : ""}}{{number_format($total_freight,2)}}        
-                                        @endif
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </tbody>
+                        <thead>
+                            <tr>
+                            <th>Employee#</th>
+                            <th>Fullname</th>
+                            <th>Total Trips</th>
+                            <th>Total Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($top_drivers as $row)
+                            <tr>
+                                <td>{{ $row->employee?->employee_number }}</td>
+                                <td>{{ trim(($row->employee?->name ?? '').' '.($row->employee?->surname ?? '')) }}</td>
+                                <td>{{ $row->trips_count }} Trips</td>
+                                <td>
+                                @if($company_currency)
+                                    {{ $company_currency->name }} {{ $company_currency->symbol }}{{ number_format($row->total_revenue, 2) }}
+                                @endif
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
                         </table>
                     </div>
                     <!-- /.panel-body -->
@@ -590,53 +569,38 @@
                         <table class="table table-striped">
                             <thead>
                                 <tr>
-                                    <th>Horse#</th>
-                                    <th>HRN</th>
-                                    <th>Total Trips</th>
-                                    <th>Fuel Usage</th>
-                                    <th>Total Revenue</th>
+                                <th>Horse#</th>
+                                <th>HRN</th>
+                                <th>Total Trips</th>
+                                <th>Fuel Usage</th>
+                                <th>Total Revenue</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($top_horses as $top_horse)
+                                @foreach ($top_horses as $horse)
                                 <tr>
-                                    @php
-                                        $horse = App\Models\Horse::find($top_horse->id);
-                                        $total_fuel = App\Models\Fuel::where('horse_id',$horse->id)->whereMonth('created_at', now()->month)->where('quantity','!=',"")->where('quantity','!=',Null)->where('trip_id','!=',"")->where('trip_id','!=',Null)->sum('quantity');
-                                        
-                                        $currency = Auth::user()->employee->company->currency;
-                                        if (isset($currency)) {
-                                            $default_currency_trips_freight = App\Models\Trip::where('horse_id', $horse->id)->whereMonth('created_at', now()->month)->where('currency_id',$currency->id )->where('freight','!=','')->where('freight','!=', Null)->sum('freight');
-                                            $other_currency_trips_freight = App\Models\Trip::where('horse_id', $horse->id)->whereMonth('created_at', now()->month)->where('currency_id','!=',$currency->id )->where('exchange_customer_freight','!=','')->where('exchange_customer_freight','!=', Null)->sum('exchange_customer_freight');
-                                            $total_freight = $other_currency_trips_freight +  $default_currency_trips_freight;
-                                           
-                                        }else {
-                                            $total_freight = "";
-                                        }
-                                    @endphp
+                                    <td>{{ $horse->horse_number ?? '' }}</td>
+
                                     <td>
-                                        @if (isset($horse))
-                                        {{$horse->horse_number ? $horse->horse_number : ""}}
-                                        @endif
+                                    {{ $horse->horse_make?->name ?? '' }}
+                                    {{ $horse->horse_model?->name ?? '' }}
+                                    {{ $horse->registration_number ?? '' }}
+                                    {{ $horse->fleet_number ? '(' . $horse->fleet_number . ')' : '' }}
                                     </td>
+
+                                    <td>{{ $horse->trips_count ? $horse->trips_count . ' Trips' : '' }}</td>
+
+                                    <td>{{ $horse->fuel_usage ? number_format($horse->fuel_usage, 2) . ' Litres' : '' }}</td>
+
                                     <td>
-                                        @if (isset($horse))
-                                        {{$horse->horse_make ? $horse->horse_make->name : ""}} {{$horse->horse_model ? $horse->horse_model->name : ""}} {{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}}  
-                                        @endif
-                                    </td>
-                                    <td>{{$top_horse->trips_count ? $top_horse->trips_count." Trips" : "" }}</td>
-                                    <td>
-                                        {{$total_fuel ? $total_fuel." Litres" : ""}}
-                                    </td>
-                                    <td>
-                                        @if ($total_freight)
-                                        {{Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->name : ""}} {{Auth::user()->employee->company->currency ? Auth::user()->employee->company->currency->symbol : ""}}{{number_format($total_freight,2)}}        
-                                        @endif
+                                    @if($company_currency && $horse->total_revenue)
+                                        {{ $company_currency->name }} {{ $company_currency->symbol }}{{ number_format($horse->total_revenue, 2) }}
+                                    @endif
                                     </td>
                                 </tr>
                                 @endforeach
                             </tbody>
-                        </table>
+                            </table>
                     </div>
                     <!-- /.panel-body -->
 

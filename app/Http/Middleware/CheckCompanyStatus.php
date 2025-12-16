@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use Closure;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class CheckCompanyStatus
@@ -16,14 +17,15 @@ class CheckCompanyStatus
      */
     public function handle(Request $request, Closure $next)
     {
-        $user = auth()->user();
+        $auth_user = auth()->user();
+        $user = User::with('employee.company')->find($auth_user?->id);
 
         if ($user) {
 
             // Optional: update last activity
             // if the column exists on users table
-            // $user->last_activity_at = now();
-            // $user->saveQuietly();
+            $user->last_activity_at = now();
+            $user->saveQuietly();
 
             // Skip if needed (e.g. super admin)
             if (in_array($user->category, ['employee', 'driver', 'admin'])) {

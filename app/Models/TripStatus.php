@@ -10,4 +10,10 @@ class TripStatus extends Model implements Auditable
 {
     use \OwenIt\Auditing\Auditable;
     use HasFactory;
+     public function user(){
+        return $this->belongsTo('App\Models\User');
+    }
+     public function trip(){
+        return $this->belongsTo('App\Models\Trip');
+    }
 }

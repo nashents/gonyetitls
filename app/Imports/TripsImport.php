@@ -286,7 +286,12 @@ WithBatchInserts
                         // 1️⃣ Ensure Expense exists
                         $expense = Expense::firstOrCreate(
                             ['name' => $name],
-                            ['active' => 1] // or any other default columns you have
+                            [
+                                'status' => 1,
+                                'account_id' => 30,
+                                'type' => 'Direct',
+                                'user_id' => Auth::user()->id,
+                            ] 
                         );
 
                         // 2️⃣ Ensure TripExpense row exists for this trip + expense

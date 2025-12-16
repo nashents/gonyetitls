@@ -111,7 +111,9 @@ class Index extends Component
     public $subtotal;
     public $total = 0;
 
+    public $expenseTotalsByCurrency;
     public $totalsByCurrency;
+    public $expense_currencies;
     public $trips_currencies;
     public $clearing_agent;
     public $boarder;
@@ -182,6 +184,7 @@ class Index extends Component
     public $transporter_offloaded_freight;
     public $transporter_loaded_rate;
     public $transporter_loaded_freight;
+    public $employee_department;
 
     public $role_names = [];
     public $department_names = [];
@@ -285,11 +288,13 @@ class Index extends Component
     
     
     public function mount(){
+           
         $this->resetPage();
         $this->trip_filter = "created_at";
         $this->countries = Country::orderBy('name','asc')->get();
         $this->user = Auth::user();
         $this->employee = $this->user->employee;
+        $this->employee_department = $this->employee->departments->first();
         $this->company = $this->employee->company;
          foreach($this->employee->departments as $department) {
             $this->department_names[] = $department->name;
@@ -1157,6 +1162,7 @@ class Index extends Component
 
             $trips->orderBy($this->trip_filter, 'desc');
         }
+
         $all_trips = $trips->get();
         $this->totalsByCurrency = $all_trips
         ->whereNotNull('freight')
@@ -1167,12 +1173,31 @@ class Index extends Component
         // Pull only currencies that actually exist in your trips:
         $this->trips_currencies = \App\Models\Currency::whereIn('id', $this->totalsByCurrency->keys())->get();
 
-        return view('livewire.trips.index', [
-            'trips' => $trips->paginate(10),
-            'trip_filter' => $this->trip_filter,
-            'totalsByCurrency' => $this->totalsByCurrency,
-            'trips_currencies' => $this->trips_currencies
-        ]);
-    
+       
+
+        $trip_with_expenses = $trips->get();
+   
+        // Make sure expenses are loaded (avoid N+1)
+        $trip_with_expenses->load('trip_expenses');
+
+        $all_expenses = $trip_with_expenses->flatMap(fn ($trip) => $trip->trip_expenses);
+
+        $this->expenseTotalsByCurrency = $all_expenses
+            ->filter(fn ($e) => !is_null($e->amount) && $e->amount !== '')
+            ->groupBy('currency_id')
+            ->map(fn ($group) => $group->sum(fn ($e) => (float) $e->amount));
+
+        // Pull only currencies that actually exist in those expenses:
+        $this->expense_currencies = \App\Models\Currency::whereIn('id', $this->expenseTotalsByCurrency->keys())->get();
+
+            return view('livewire.trips.index', [
+                'trips' => $trips->paginate(10),
+                'trip_filter' => $this->trip_filter,
+                'totalsByCurrency' => $this->totalsByCurrency,
+                'trips_currencies' => $this->trips_currencies,
+                'expenseTotalsByCurrency' => $this->expenseTotalsByCurrency,
+                'expense_currencies' => $this->expense_currencies
+            ]);
+        
     }
 }

@@ -41,6 +41,7 @@ class Edit extends Component
     public $rack_id;
     public $purchases;
     public $selectedPurchase;
+    public $selectedPurchaseProduct;
     public $purchase_order;
     public $purchase_products;
     public $currencies;
@@ -54,7 +55,7 @@ class Edit extends Component
     public $transfer_items;
     public $transfers;
     public $selectedTransfer;
-    public $selectedTransferProduct;
+    public $selectedTransferItem;
   
     public $purchase_date;
     public $residual_value;
@@ -289,7 +290,7 @@ class Edit extends Component
         }
     }
 
-     public function updatedSelectedTransfer($id)
+    public function updatedSelectedTransfer($id)
     {
         if (!is_null($id) ) {
             $transfer = Transfer::find($id);
@@ -301,7 +302,7 @@ class Edit extends Component
         }
     }
 
-     public function updatedSelectedTransferItem($id){
+    public function updatedSelectedTransferItem($id){
         if (!is_null($id)) {
             $transfer_item = TransferItem::find($id);
             if (isset($transfer_item)) {
@@ -309,8 +310,23 @@ class Edit extends Component
                 $this->amount = $transfer_item->amount;
                 $this->item_description = $transfer_item->product->description;
                 $this->measurement = $transfer_item->product->unit_of_measure;
+                if($this->department == "inventory"){
+                      $this->serial_number = $transfer_item->inventory->serial_number;
+                       $this->amount = $transfer_item->inventory->amount;
+                        $this->weight = $transfer_item->inventory->weight;
+                        $this->selectedCurrency = $transfer_item->inventory->currency_id;
+                        $this->vendor_id = $transfer_item->inventory->vendor_id;
+                }elseif($this->department == "tyre"){
+                      $this->serial_number = $transfer_item->tyre->serial_number;
+                       $this->amount = $transfer_item->tyre->amount;
+                        $this->weight = $transfer_item->tyre->weight;
+                         $this->selectedCurrency = $transfer_item->tyre->currency_id;
+                        $this->vendor_id = $transfer_item->tyre->vendor_id;
+                }
+              
+               
                 $this->qty = $transfer_item->qty;
-                $this->weight = 1;
+               
 
                 if($transfer_item->tax_id){
                     $this->selectedTax = $transfer_item->tax_id;

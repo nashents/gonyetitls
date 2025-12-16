@@ -30,7 +30,11 @@
             <tbody>
                 @forelse ($documents as $document)
               <tr>
-                <td>{{$document->user ? $document->user->name : ""}} {{$document->user ? $document->user->surname : ""}}</td>
+                <td>
+                    {{$document->user ? $document->user->name : ""}} {{$document->user ? $document->user->surname : ""}}
+                    <br>
+                    <small><strong>UploadedOn: </strong> {{ date('d M, Y', strtotime($document->created_at)) }}</small>
+                </td>
                 <td>{{$document->document_number}}</td>
                 <td>{{$document->title}}</td>
                 <td>
@@ -45,8 +49,10 @@
                             <span class="caret"></span>
                         </button>
                         <ul class="dropdown-menu">
+                             @if ($document->user_id == Auth::user()->id)
                             <li><a href="#" wire:click="edit({{$document->id}})"><i class="fa fa-edit color-success"></i> Edit</a></li>
                             <li><a href="#" data-toggle="modal" data-target="#documentDeleteModal{{$document->id}}"><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                            @endif
                         </ul>
                     </div>
                     @include('trips.documents.delete')

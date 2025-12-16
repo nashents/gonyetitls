@@ -306,6 +306,8 @@ class Index extends Component
     public $expenses_2024;
     public $expenses_2025;
 
+    public $company_currency;
+
 
 
 
@@ -321,6 +323,7 @@ class Index extends Component
         $this->employee = $this->user->employee;
         $this->driver = $this->employee->driver;
         $this->company = $this->employee->company;
+        $this->company_currency = $this->company->currency;
 
         if (isset($this->company->currency)) {
             $this->selectedCurrency = $this->company->currency->id;
@@ -657,26 +660,94 @@ class Index extends Component
         // $this->encoded_driver_names = implode(', ', $this->driver_names);
 
 
-        $this->top_drivers = Driver::select('drivers.id', DB::raw('COUNT(trips.id) as trips_count'))
+        $this->top_drivers = Driver::query()
+        ->select([
+            'drivers.id',
+            DB::raw('COUNT(trips.id) as trips_count'),
+            DB::raw("
+                COALESCE(SUM(
+                    CASE
+                        WHEN trips.currency_id = {$this->company_currency->id}
+                            THEN NULLIF(trips.freight, '') + 0
+                        ELSE
+                            NULLIF(trips.exchange_customer_freight, '') + 0
+                    END
+                ), 0) as total_revenue
+            "),
+        ])
         ->join('trips', 'drivers.id', '=', 'trips.driver_id')
-        ->whereYear('trips.start_date', date('Y'))
+        ->whereYear('trips.start_date', now()->year)
         ->whereMonth('trips.start_date', now()->month)
         ->where('trips.trip_status', 'Offloaded')
-        ->where('trips.deleted_at', Null)
-        ->where('trips.authorization','approved')
+        ->where('trips.authorization', 'approved')
+        ->whereNull('trips.deleted_at')
+        ->with(['employee:id,employee_number,name,surname']) // adjust relation if needed
         ->groupBy('drivers.id')
         ->orderByDesc('trips_count')
         ->limit(5)
         ->get();
-     
-        $this->top_horses = Horse::select('horses.id', DB::raw('COUNT(trips.id) as trips_count'))
+        
+        $this->top_horses = Horse::query()
+        ->select([
+            'horses.id',
+            'horses.horse_number',
+            'horses.registration_number',
+            'horses.fleet_number',
+            'horses.horse_make_id',
+            'horses.horse_model_id',
+
+            DB::raw('COUNT(DISTINCT trips.id) as trips_count'),
+
+            // Fuel usage for the same month (only where trip_id is present)
+            DB::raw("
+                COALESCE(SUM(DISTINCT
+                    CASE
+                        WHEN fuels.id IS NOT NULL
+                            AND fuels.trip_id IS NOT NULL
+                            AND fuels.trip_id != ''
+                            AND fuels.quantity IS NOT NULL
+                            AND fuels.quantity != ''
+                        THEN fuels.quantity + 0
+                        ELSE 0
+                    END
+                ), 0) as fuel_usage
+            "),
+
+            // Revenue using your rule: default currency uses freight, other uses exchange_customer_freight
+            DB::raw("
+                COALESCE(SUM(
+                    CASE
+                        WHEN trips.currency_id = {$this->company_currency->id}
+                            THEN NULLIF(trips.freight, '') + 0
+                        ELSE
+                            NULLIF(trips.exchange_customer_freight, '') + 0
+                    END
+                ), 0) as total_revenue
+            "),
+        ])
         ->join('trips', 'horses.id', '=', 'trips.horse_id')
-        ->whereYear('trips.start_date', date('Y'))
+        ->leftJoin('fuels', function ($join) {
+            $join->on('fuels.horse_id', '=', 'horses.id')
+                ->whereMonth('fuels.date', now()->month)
+                ->whereYear('fuels.date', now()->year);
+        })
+        ->whereYear('trips.start_date', now()->year)
         ->whereMonth('trips.start_date', now()->month)
         ->where('trips.trip_status', 'Offloaded')
-        ->where('trips.deleted_at', Null)
-        ->where('trips.authorization','approved')
-        ->groupBy('horses.id')
+        ->where('trips.authorization', 'approved')
+        ->whereNull('trips.deleted_at')
+        ->with([
+            'horse_make:id,name',
+            'horse_model:id,name',
+        ])
+        ->groupBy(
+            'horses.id',
+            'horses.horse_number',
+            'horses.registration_number',
+            'horses.fleet_number',
+            'horses.horse_make_id',
+            'horses.horse_model_id'
+        )
         ->orderByDesc('trips_count')
         ->limit(5)
         ->get();

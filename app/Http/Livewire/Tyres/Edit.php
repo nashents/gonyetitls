@@ -15,9 +15,11 @@ use App\Models\Vehicle;
 use Livewire\Component;
 use App\Models\Currency;
 use App\Models\Purchase;
+use App\Models\Transfer;
 use App\Models\TyreDetail;
 use App\Models\BillExpense;
 use App\Models\ExchangeRate;
+use App\Models\TransferItem;
 use App\Models\GoodsReceived;
 use Livewire\WithFileUploads;
 use App\Models\PurchaseProduct;
@@ -51,6 +53,12 @@ class Edit extends Component
   public $warranty_exp_date;
   public $purchase_products;
   public $selectedPurchase;
+  public $selectedPurchaseProduct;
+    public $transfer_items;
+    public $transfers;
+    public $selectedTransfer;
+    public $selectedTransferItem;
+    public $source = "Purchase";
   public $purchases;
   public $description;
   public $company;
@@ -74,6 +82,7 @@ class Edit extends Component
   public $tax_id;
   public $tax;
   public $tax_accounts;
+  public $weight;
 
   public $income_accounts;
   public $expense_accounts;
@@ -264,6 +273,58 @@ class Edit extends Component
                     }
                 }
                 
+            }
+           
+        }
+    }
+
+        public function updatedSelectedTransfer($id)
+    {
+        if (!is_null($id) ) {
+            $transfer = Transfer::find($id);
+            if(isset($transfer)){
+                $this->store_id = $transfer->to;
+                $this->selectedAccount = $transfer->account_id;
+                $this->transfer_items = $transfer->transfer_items;
+            }
+        }
+    }
+
+    public function updatedSelectedTransferItem($id){
+        if (!is_null($id)) {
+            $transfer_item = TransferItem::find($id);
+            if (isset($transfer_item)) {
+                $this->selectedProduct= $transfer_item->product_id;
+                $this->amount = $transfer_item->amount;
+                $this->item_description = $transfer_item->product->description;
+                $this->measurement = $transfer_item->product->unit_of_measure;
+                if($this->department == "inventory"){
+                      $this->serial_number = $transfer_item->inventory->serial_number;
+                       $this->amount = $transfer_item->inventory->amount;
+                        $this->weight = $transfer_item->inventory->weight;
+                        $this->selectedCurrency = $transfer_item->inventory->currency_id;
+                        $this->vendor_id = $transfer_item->inventory->vendor_id;
+                }elseif($this->department == "tyre"){
+                      $this->serial_number = $transfer_item->tyre->serial_number;
+                       $this->amount = $transfer_item->tyre->amount;
+                        $this->weight = $transfer_item->tyre->weight;
+                         $this->selectedCurrency = $transfer_item->tyre->currency_id;
+                        $this->vendor_id = $transfer_item->tyre->vendor_id;
+                }
+              
+               
+                $this->qty= $transfer_item->qty;
+               
+
+                if($transfer_item->tax_id){
+                    $this->selectedTax = $transfer_item->tax_id;
+                    $tax = Account::find($transfer_item->tax_id);
+                    if (isset($tax)) {
+                        $this->tax_rate = $tax->rate;
+                    }
+                }
+
+
             }
            
         }
@@ -592,9 +653,11 @@ public function updatedSelectedTax($id){
             ['name', 'asc'],          // first sort by product name
             ['brand.name', 'asc'],    // then sort by brand name
         ]);
+         $this->transfers = Transfer::where('department','tyre')->where('status',1)->where('authorization','approved')->orderBy('created_at','desc')->get();
        $this->purchases = Purchase::where('department','tyre')->where('status',1)->where('created_at', '>=', Carbon::now()->subMonth())->where('authorization','approved')->orderBy('created_at','desc')->get();
         return view('livewire.tyres.edit',[
           'purchases' => $this->purchases,
+          'transfers' => $this->transfers,
           
         ]);
     }

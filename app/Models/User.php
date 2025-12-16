@@ -76,6 +76,18 @@ class User extends Authenticatable implements Auditable
      public function ticket_requests(){
         return $this->hasMany('App\Models\TicketRequest');
     }
+     public function trip_statuses(){
+        return $this->hasMany('App\Models\TripStatus');
+    }
+     public function trip_destinations(){
+        return $this->hasMany('App\Models\TripDestination');
+    }
+     public function breakdowns(){
+        return $this->hasMany('App\Models\Breakdown');
+    }
+     public function breakdown_assignments(){
+        return $this->hasMany('App\Models\BreakdownAssignment');
+    }
     public function earnings(){
         return $this->hasMany('App\Models\Earning');
     }

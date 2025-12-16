@@ -38,6 +38,8 @@
               <tr>
                 <td>
                     {{$trip_expense->user ? $trip_expense->user->name : ""}} {{$trip_expense->user ? $trip_expense->user->surname : ""}}
+                    <br>
+                    <small><strong>AddedOn: </strong> {{ date('d M, Y', strtotime($trip_expense->created_at)) }}</small>
                 </td>
                 <td>
                     @if ($trip_expense->expense)
@@ -75,10 +77,13 @@
                             <span class="caret"></span>
                         </button>
                         <ul class="dropdown-menu">
-                            @if (!$trip_expense->fuel)
-                            <li><a href="#" wire:click="edit({{$trip_expense->id}})"><i class="fa fa-edit color-success"></i> Edit</a></li>
+                            @if ($trip_expense->user_id == Auth::user()->id)
+                                @if (!$trip_expense->fuel)
+                                    <li><a href="#" wire:click="edit({{$trip_expense->id}})"><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                @endif
+                                    <li><a href="#" wire:click="showDelete({{$trip_expense->id}})"><i class="fa fa-trash color-danger"></i>Delete</a></li>
                             @endif
-                            <li><a href="#" wire:click="showDelete({{$trip_expense->id}})"><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                            
                         </ul>
                     </div>
                     @include('trips.expenses.delete')
@@ -88,7 +93,7 @@
             </tr>
             @empty
             <tr>
-                <td colspan="6">
+                <td colspan="9">
                     <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                         No Trip Expenses Captured....
                     </div>

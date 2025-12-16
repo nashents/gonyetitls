@@ -18,6 +18,9 @@ class BreakdownAssignment extends Model implements Auditable
     public function breakdown(){
         return $this->belongsTo('App\Models\Breakdown');
     }
+     public function user(){
+        return $this->belongsTo('App\Models\User');
+    }
     public function transporter(){
         return $this->belongsTo('App\Models\Transporter');
     }

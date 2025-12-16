@@ -59,7 +59,8 @@ class Create extends Component
     public $transfer_items;
     public $transfers;
     public $selectedTransfer;
-    public $selectedTransferProduct;
+    public $selectedTransferItem;
+     public $source = "Purchase";
     public $currencies;
     public $exchange_rate;
     public $exchange_amount;
@@ -97,7 +98,7 @@ class Create extends Component
     public $tax_id;
     public $tax;
     public $tax_accounts;
-    public $source = "Purchase";
+   
   
     public $income_accounts;
     public $expense_accounts;
@@ -453,17 +454,7 @@ class Create extends Component
             }
         }
     }
-    public function updatedSelectedTransfer($id)
-    {
-        if (!is_null($id) ) {
-            $transfer = Transfer::find($id);
-            if(isset($transfer)){
-                $this->store_id = $transfer->to;
-                $this->selectedAccount = $transfer->account_id;
-                $this->transfer_items = $transfer->transfer_items;
-            }
-        }
-    }
+   
 
     public function updatedSelectedProduct($id, $key){
         if (!is_null($id)) {
@@ -512,6 +503,18 @@ class Create extends Component
         }
     }
 
+     public function updatedSelectedTransfer($id)
+    {
+        if (!is_null($id) ) {
+            $transfer = Transfer::find($id);
+            if(isset($transfer)){
+                $this->store_id = $transfer->to;
+                $this->selectedAccount = $transfer->account_id;
+                $this->transfer_items = $transfer->transfer_items;
+            }
+        }
+    }
+
     public function updatedSelectedTransferItem($id, $key){
         if (!is_null($id)) {
             $transfer_item = TransferItem::find($id);
@@ -520,8 +523,23 @@ class Create extends Component
                 $this->amount[$key] = $transfer_item->amount;
                 $this->item_description[$key] = $transfer_item->product->description;
                 $this->measurement[$key] = $transfer_item->product->unit_of_measure;
+                if($this->department == "inventory"){
+                      $this->serial_number[$key] = $transfer_item->inventory->serial_number;
+                       $this->amount[$key] = $transfer_item->inventory->amount;
+                        $this->weight[$key] = $transfer_item->inventory->weight;
+                        $this->selectedCurrency = $transfer_item->inventory->currency_id;
+                        $this->vendor_id = $transfer_item->inventory->vendor_id;
+                }elseif($this->department == "tyre"){
+                      $this->serial_number[$key] = $transfer_item->tyre->serial_number;
+                       $this->amount[$key] = $transfer_item->tyre->amount;
+                        $this->weight[$key] = $transfer_item->tyre->weight;
+                         $this->selectedCurrency = $transfer_item->tyre->currency_id;
+                        $this->vendor_id = $transfer_item->tyre->vendor_id;
+                }
+              
+               
                 $this->qty[$key] = $transfer_item->qty;
-                $this->weight[$key] = 1;
+               
 
                 if($transfer_item->tax_id){
                     $this->selectedTax[$key] = $transfer_item->tax_id;

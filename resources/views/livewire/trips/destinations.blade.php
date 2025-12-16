@@ -10,6 +10,8 @@
         {{-- <x-loading/> --}}
         <table id="trip_destinationsTable" class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
             <thead >
+                <th class="th-sm">AddedBy
+                </th>
                 <th class="th-sm">Offloading Date
                 </th>
                 <th class="th-sm">Destination
@@ -39,6 +41,11 @@
             <tbody>
                 @forelse ($trip_destinations as $trip_destination)
               <tr>
+                <td>
+                    {{ $trip_destination->user ? $trip_destination->user->name : '' }} {{ $trip_destination->user ? $trip_destination->user->surname : '' }}
+                    <br>
+                    <small><strong>AddedOn: </strong> {{ date('d M, Y', strtotime($trip_destination->created_at)) }}</small>
+                </td>
                 <td>{{$trip_destination->offloading_date}}</td>
                 <td>
                     @if ($trip_destination->destination)
@@ -84,8 +91,10 @@
                             <span class="caret"></span>
                         </button>
                         <ul class="dropdown-menu">
+                             @if ($trip_destination->user_id == Auth::user()->id)
                             <li><a href="#" wire:click="edit({{$trip_destination->id}})"><i class="fa fa-edit color-success"></i> Edit</a></li>
                             <li><a href="#" data-toggle="modal" data-target="#trip_destinationDeleteModal{{$trip_destination->id}}"><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                            @endif
                         </ul>
                     </div>
                     @include('trips.destinations.delete')
@@ -96,7 +105,7 @@
             
             @empty
             <tr>
-                <td colspan="10">
+                <td colspan="11">
                     <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                         No Offloading Points Found ....
                     </div>
