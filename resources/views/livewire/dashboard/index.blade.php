@@ -540,7 +540,7 @@
                                 <td>{{ $driver->trips_count }} Trips</td>
                                 <td>
                                 @if($company_currency)
-                                    {{ $company_currency->name }} {{ $company_currency->symbol }}{{ number_format($row->total_revenue, 2) }}
+                                    {{ $company_currency->name }} {{ $company_currency->symbol }}{{ number_format($driver->total_revenue, 2) }}
                                 @endif
                                 </td>
                             </tr>
