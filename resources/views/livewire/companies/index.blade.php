@@ -118,8 +118,8 @@
                 <div class="row">
                     <div class="col-md-4">
                         <div class="form-group">
-                            <label for="exampleInputEmail1">Currencies</label>
-                            <select wire:model.debounce.300ms="license_currency_id" class="form-control" >
+                            <label for="exampleInputEmail1">Currencies<span class="required" style="color: red">*</span></label>
+                            <select wire:model.debounce.300ms="license_currency_id" class="form-control" required>
                                 <option value="">Select Currency</option>
                                 @foreach ($currencies as $currency)
                                 <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
@@ -131,9 +131,9 @@
                     </div>
                     <div class="col-md-4">
                         <div class="form-group">
-                            <label for="exampleInputEmail1">Plan</label>
+                            <label for="exampleInputEmail1">Plan<span class="required" style="color: red">*</span></label>
                             @if (Auth::user()->is_admin() && $selectedType == "Transporter")
-                            <select wire:model.debounce.300ms="selectedPlan" class="form-control" >
+                            <select wire:model.debounce.300ms="selectedPlan" class="form-control" required>
                                 <option value="">Select Plan</option>
                                 <option value="10">0 - 10</option> 
                                 <option value="25">11 - 25</option>
@@ -166,8 +166,8 @@
                     </div>
                     <div class="col-md-4">
                         <div class="form-group">
-                            <label for="email">License Fee</label>
-                           <input type="number" step="any" wire:model.debounce.300ms="fee" class="form-control" placeholder="Enter License Fee">
+                            <label for="email">License Fee<span class="required" style="color: red">*</span></label>
+                           <input type="number" step="any" wire:model.debounce.300ms="fee" class="form-control" placeholder="Enter License Fee" required>
                             @error('fee') <span class="error" style="color:red">{{ $message }}</span> @enderror
                         </div>
                     </div>
@@ -202,7 +202,7 @@
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="email">ERP URL</label>
+                            <label for="email">ERP URL<span class="required" style="color: red">*</span></label>
                             <input type="text" class="form-control"  wire:model.debounce.300ms="website" placeholder="ERP URL eg http://www.erp.gonyetilts.co.zw" >
                             @error('website') <span class="error" style="color:red">{{ $message }}</span> @enderror
                         </div>
@@ -326,8 +326,8 @@
                     <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="exampleInputEmail1">Currencies</label>
-                                <select wire:model.debounce.300ms="license_currency_id" class="form-control" >
+                                <label for="exampleInputEmail1">Currencies<span class="required" style="color: red">*</span></label>
+                                <select wire:model.debounce.300ms="license_currency_id" class="form-control" required>
                                     <option value="">Select Currency</option>
                                     @foreach ($currencies as $currency)
                                     <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
@@ -339,9 +339,9 @@
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="exampleInputEmail1">Plan</label>
+                                <label for="exampleInputEmail1">Plan<span class="required" style="color: red">*</span></label>
                                 @if (Auth::user()->is_admin() && $selectedType == "Transporter")
-                                <select wire:model.debounce.300ms="selectedPlan" class="form-control" >
+                                <select wire:model.debounce.300ms="selectedPlan" class="form-control" required>
                                     <option value="">Select Plan</option>
                                     <option value="10">0 - 10</option> 
                                     <option value="25">11 - 25</option>
@@ -355,7 +355,7 @@
                                     <option value="201">200></option>
                                 </select>
                                 @else   
-                                <select wire:model.debounce.300ms="selectedPlan" class="form-control"  disabled>
+                                <select wire:model.debounce.300ms="selectedPlan" class="form-control" required disabled>
                                     <option value="">Select Plan</option>
                                     <option value="10">0 - 10</option> 
                                     <option value="25">11 - 25</option>
@@ -374,8 +374,8 @@
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="email">License Fee</label>
-                               <input type="number" step="any" wire:model.debounce.300ms="fee" class="form-control" placeholder="Enter License Fee">
+                                <label for="email">License Fee<span class="required" style="color: red">*</span></label>
+                               <input type="number" step="any" wire:model.debounce.300ms="fee" class="form-control" placeholder="Enter License Fee" required>
                                 @error('fee') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -410,7 +410,7 @@
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="email">ERP URL</label>
+                                <label for="email">ERP URL<span class="required" style="color: red">*</span></label>
                                 <input type="text" class="form-control"  wire:model.debounce.300ms="website" placeholder="ERP URL eg http://www.erp.gonyetilts.co.zw" >
                                 @error('website') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>

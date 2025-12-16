@@ -319,6 +319,7 @@ class Index extends Component
         // $currentMonth = Carbon::now();
         // $this->current_month = $currentMonth->month;
         // $this->monthName = Carbon::createFromFormat('m', 6)->format('M');
+
         $this->user = Auth::user();
         $this->employee = $this->user->employee;
         $this->driver = $this->employee->driver;
@@ -659,7 +660,7 @@ class Index extends Component
         $this->encoded_driver_names = json_encode($this->driver_names);
         // $this->encoded_driver_names = implode(', ', $this->driver_names);
 
-
+    $currencyId = $this->company_currency?->id ?? 2;
       $this->top_drivers = Driver::query()
         ->select([
             'drivers.id',
@@ -668,7 +669,7 @@ class Index extends Component
             DB::raw("
                 COALESCE(SUM(
                     CASE
-                        WHEN trips.currency_id = {$this->company_currency->id}
+                        WHEN trips.currency_id = {$currencyId}
                             THEN NULLIF(trips.freight, '') + 0
                         ELSE
                             NULLIF(trips.exchange_customer_freight, '') + 0
@@ -718,7 +719,7 @@ class Index extends Component
             DB::raw("
                 COALESCE(SUM(
                     CASE
-                        WHEN trips.currency_id = {$this->company_currency->id}
+                        WHEN trips.currency_id = {$currencyId}
                             THEN NULLIF(trips.freight, '') + 0
                         ELSE
                             NULLIF(trips.exchange_customer_freight, '') + 0

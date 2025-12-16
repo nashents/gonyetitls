@@ -455,29 +455,29 @@
                         @if (isset($fndepartment_head)  || ($isManagement && $inFinance) || $isSuperAdmin)
                         <li>
                             <a href="{{route('purchases.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Orders</span>
-                                @if ($purchasesPendingCount>0)
-                                <span class="label label-success ml-5">{{$purchasesPendingCount}}</span>
+                                @if ($asset_purchasesPendingCount>0)
+                                <span class="label label-success ml-5">{{$asset_purchasesPendingCount}}</span>
                                 @endif
                             </a>
                         </li>
                         <li>
                             <a href="{{route('purchases.approved')}}" ><i class="fas fa-check "></i> <span>Approved Orders</span>
-                                @if ($purchasesApprovedCount>0)
-                                <span class="label label-success ml-5">{{$purchasesApprovedCount}}</span>
+                                @if ($asset_purchasesApprovedCount>0)
+                                <span class="label label-success ml-5">{{$asset_purchasesApprovedCount}}</span>
                                 @endif
                             </a>
                         </li>
                         <li>
                             <a href="{{route('purchases.rejected')}}" ><i class="fas fa-ban "></i> <span>Rejected Orders</span>
-                                @if ($purchasesRejectedCount>0)
-                                <span class="label label-success ml-5">{{$purchasesRejectedCount}}</span>
+                                @if ($asset_purchasesRejectedCount>0)
+                                <span class="label label-success ml-5">{{$asset_purchasesRejectedCount}}</span>
                                 @endif
                             </a>
                         </li>
                         <li>
                             <a href="{{route('purchases.deleted')}}" ><i class="fas fa-trash "></i> <span>Deleted Orders</span>
-                                @if ($purchasesDeletedCount>0)
-                                <span class="label label-success ml-5">{{$purchasesDeletedCount}}</span>
+                                @if ($asset_purchasesDeletedCount>0)
+                                <span class="label label-success ml-5">{{$asset_purchasesDeletedCount}}</span>
                                 @endif
                             </a>
                         </li>
@@ -505,22 +505,22 @@
                         @if ($isManagement || $isAdmin || $isSuperAdmin)
                         <li>
                             <a href="{{route('asset_dispatches.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Dispatches</span>
-                                @if ($dispatchesPendingCount>0)
-                                <span class="label label-success ml-5">{{$dispatchesPendingCount}}</span>
+                                @if ($asset_dispatchesPendingCount>0)
+                                <span class="label label-success ml-5">{{$asset_dispatchesPendingCount}}</span>
                                 @endif
                             </a>
                         </li>
                         <li>
                             <a href="{{route('asset_dispatches.approved')}}" ><i class="fas fa-check "></i> <span>Approved Dispatches</span>
-                                @if ($dispatchesApprovedCount>0)
-                                <span class="label label-success ml-5">{{$dispatchesApprovedCount}}</span>
+                                @if ($asset_dispatchesApprovedCount>0)
+                                <span class="label label-success ml-5">{{$asset_dispatchesApprovedCount}}</span>
                                 @endif
                             </a>
                         </li>
                         <li>
                             <a href="{{route('asset_dispatches.rejected')}}" ><i class="fas fa-ban "></i> <span>Rejected Dispatches</span>
-                                @if ($dispatchesRejectedCount>0)
-                                <span class="label label-success ml-5">{{$dispatchesRejectedCount}}</span>
+                                @if ($asset_dispatchesRejectedCount>0)
+                                <span class="label label-success ml-5">{{$asset_dispatchesRejectedCount}}</span>
                                 @endif
                             </a>
                         </li>
@@ -988,18 +988,18 @@
                         <a href="#"><i class="fas fa-door-open"></i> <span>Gatepass</span> <i class="fas fa-angle-right arrow"></i></a>
                         <ul class="child-nav">
                             <li class="{{ request()->routeIs('gate_passes.pending',['department'=>'logistics']) ? 'active' : '' }}"><a href="{{route('gate_passes.pending',['department'=>'logistics'])}}" ><i class="fas fa-clock "></i> <span>Pending Gatepasses</span>
-                                @if ($gate_passesPendingCount>0)
-                                <span class="label label-success ml-5">{{$gate_passesPendingCount}}</span>
+                                @if ($logistics_gate_passesPendingCount>0)
+                                <span class="label label-success ml-5">{{$logistics_gate_passesPendingCount}}</span>
                                 @endif
                             </a></li>
                             <li class="{{ request()->routeIs('gate_passes.approved',['department'=>'logistics']) ? 'active' : '' }}"><a href="{{route('gate_passes.approved',['department'=>'logistics'])}}" ><i class="fas fa-check "></i> <span>Approved Gatepasses</span>
-                                @if ($gate_passesApprovedCount>0)
-                                <span class="label label-success ml-5">{{$gate_passesApprovedCount}}</span>
+                                @if ($logistics_gate_passesApprovedCount>0)
+                                <span class="label label-success ml-5">{{$logistics_gate_passesApprovedCount}}</span>
                                 @endif
                             </a></li>
                             <li class="{{ request()->routeIs('gate_passes.rejected',['department'=>'logistics']) ? 'active' : '' }}"><a href="{{route('gate_passes.rejected',['department'=>'logistics'])}}" ><i class="fas fa-ban "></i> <span>Rejected Gatepasses</span>
-                                @if ($gate_passesRejectedCount>0)
-                                <span class="label label-success ml-5">{{$gate_passesRejectedCount}}</span>
+                                @if ($logistics_gate_passesRejectedCount>0)
+                                <span class="label label-success ml-5">{{$logistics_gate_passesRejectedCount}}</span>
                                 @endif
                             </a></li>
                         </ul>
@@ -1163,18 +1163,18 @@
                             <a href="#"><i class="fas fa-door-open"></i> <span>Gatepass</span> <i class="fas fa-angle-right arrow"></i></a>
                             <ul class="child-nav">
                                 <li class="{{ request()->routeIs('gate_passes.pending',['department'=>'workshop']) ? 'active' : '' }}"><a href="{{route('gate_passes.pending',['department'=>'workshop'])}}" ><i class="fas fa-clock "></i> <span>Pending Gatepasses</span>
-                                    @if ($gate_passesPendingCount>0)
-                                    <span class="label label-success ml-5">{{$gate_passesPendingCount}}</span>
+                                    @if ($workshop_gate_passesPendingCount>0)
+                                    <span class="label label-success ml-5">{{$workshop_gate_passesPendingCount}}</span>
                                     @endif
                                 </a></li>
                                 <li class="{{ request()->routeIs('gate_passes.approved',['department'=>'workshop']) ? 'active' : '' }}"><a href="{{route('gate_passes.approved',['department'=>'workshop'])}}" ><i class="fas fa-check "></i> <span>Approved Gatepasses</span>
-                                    @if ($gate_passesApprovedCount>0)
-                                    <span class="label label-success ml-5">{{$gate_passesApprovedCount}}</span>
+                                    @if ($workshop_gate_passesApprovedCount>0)
+                                    <span class="label label-success ml-5">{{$workshop_gate_passesApprovedCount}}</span>
                                     @endif
                                 </a></li>
                                 <li class="{{ request()->routeIs('gate_passes.rejected',['department'=>'workshop']) ? 'active' : '' }}"><a href="{{route('gate_passes.rejected',['department'=>'workshop'])}}" ><i class="fas fa-ban "></i> <span>Rejected Gatepasses</span>
-                                    @if ($gate_passesRejectedCount>0)
-                                    <span class="label label-success ml-5">{{$gate_passesRejectedCount}}</span>
+                                    @if ($workshop_gate_passesRejectedCount>0)
+                                    <span class="label label-success ml-5">{{$workshop_gate_passesRejectedCount}}</span>
                                     @endif
                                 </a></li>
                             </ul>
@@ -1205,18 +1205,18 @@
                         
                         <li class="{{ request()->routeIs('inventory_transfers.index') ? 'active' : '' }}"><a href="{{route('inventory_transfers.index')}}" ><i class="fas fa-list "></i> <span>Manage Transfers</span></a></li>
                         <li class="{{ request()->routeIs('inventory_transfers.pending') ? 'active' : '' }}"><a href="{{route('inventory_transfers.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Transfers</span>
-                            @if ($transfersPendingCount>0)
-                                <span class="label label-success ml-5">{{$transfersPendingCount}}</span>
+                            @if ($inventory_transfersPendingCount>0)
+                                <span class="label label-success ml-5">{{$inventory_transfersPendingCount}}</span>
                             @endif
                         </a></li>
                         <li class="{{ request()->routeIs('inventory_transfers.approved') ? 'active' : '' }}"><a href="{{route('inventory_transfers.approved')}}" ><i class="fas fa-check "></i> <span>Approved Transfers</span>
-                            @if ($transfersApprovedCount>0)
-                                <span class="label label-success ml-5">{{$transfersApprovedCount}}</span>
+                            @if ($inventory_transfersApprovedCount>0)
+                                <span class="label label-success ml-5">{{$inventory_transfersApprovedCount}}</span>
                             @endif
                         </a></li>
                         <li class="{{ request()->routeIs('inventory_transfers.rejected') ? 'active' : '' }}"><a href="{{route('inventory_transfers.rejected')}}" ><i class="fas fa-ban "></i> <span>Rejected Transfers</span>
-                            @if ($transfersRejectedCount>0)
-                                <span class="label label-success ml-5">{{$transfersRejectedCount}}</span>
+                            @if ($inventory_transfersRejectedCount>0)
+                                <span class="label label-success ml-5">{{$inventory_transfersRejectedCount}}</span>
                             @endif
                         </a></li>
                     </ul>
@@ -1237,29 +1237,29 @@
                         @if ($isManagement || isset($wsdepartment_head) || isset($stdepartment_head) || $isSuperAdmin)
                         <li>
                             <a href="{{route('inventory_purchases.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Orders</span>
-                                @if ($purchasesPendingCount>0)
-                                <span class="label label-success ml-5">{{$purchasesPendingCount}}</span>
+                                @if ($inventory_purchasesPendingCount>0)
+                                <span class="label label-success ml-5">{{$inventory_purchasesPendingCount}}</span>
                                 @endif
                             </a>
                         </li>
                         <li>
                             <a href="{{route('inventory_purchases.approved')}}" ><i class="fas fa-check "></i> <span>Approved Orders</span>
-                                @if ($purchasesApprovedCount>0)
-                                <span class="label label-success ml-5">{{$purchasesApprovedCount}}</span>
+                                @if ($inventory_purchasesApprovedCount>0)
+                                <span class="label label-success ml-5">{{$inventory_purchasesApprovedCount}}</span>
                                 @endif
                             </a>
                         </li>
                         <li>
                             <a href="{{route('inventory_purchases.rejected')}}" ><i class="fas fa-ban "></i> <span>Rejected Orders</span>
-                                @if ($purchasesRejectedCount>0)
-                                <span class="label label-success ml-5">{{$purchasesRejectedCount}}</span>
+                                @if ($inventory_purchasesRejectedCount>0)
+                                <span class="label label-success ml-5">{{$inventory_purchasesRejectedCount}}</span>
                                 @endif
                             </a>
                         </li>
                         <li>
                             <a href="{{route('inventory_purchases.deleted')}}" ><i class="fas fa-trash "></i> <span>Deleted Orders</span>
-                                @if ($purchasesDeletedCount>0)
-                                <span class="label label-success ml-5">{{$purchasesDeletedCount}}</span>
+                                @if ($inventory_purchasesDeletedCount>0)
+                                <span class="label label-success ml-5">{{$inventory_purchasesDeletedCount}}</span>
                                 @endif
                             </a>
                         </li>
@@ -1288,22 +1288,22 @@
                         @if ($isManagement || $isAdmin || $isSuperAdmin)
                         <li>
                             <a href="{{route('inventory_dispatches.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Dispatches</span>
-                                @if ($dispatchesPendingCount>0)
-                                <span class="label label-success ml-5">{{$dispatchesPendingCount}}</span>
+                                @if ($inventory_dispatchesPendingCount>0)
+                                <span class="label label-success ml-5">{{$inventory_dispatchesPendingCount}}</span>
                                 @endif
                             </a>
                         </li>
                         <li>
                             <a href="{{route('inventory_dispatches.approved')}}" ><i class="fas fa-check "></i> <span>Approved Dispatches</span>
-                                @if ($dispatchesApprovedCount>0)
-                                <span class="label label-success ml-5">{{$dispatchesApprovedCount}}</span>
+                                @if ($inventory_dispatchesApprovedCount>0)
+                                <span class="label label-success ml-5">{{$inventory_dispatchesApprovedCount}}</span>
                                 @endif
                             </a>
                         </li>
                         <li>
                             <a href="{{route('inventory_dispatches.rejected')}}" ><i class="fas fa-ban "></i> <span>Rejected Dispatches</span>
-                                @if ($dispatchesRejectedCount>0)
-                                <span class="label label-success ml-5">{{$dispatchesRejectedCount}}</span>
+                                @if ($inventory_dispatchesRejectedCount>0)
+                                <span class="label label-success ml-5">{{$inventory_dispatchesRejectedCount}}</span>
                                 @endif
                             </a>
                         </li>
@@ -1352,29 +1352,29 @@
                         @if ($isManagement || isset($wsdepartment_head) || isset($stdepartment_head) || $isSuperAdmin)
                         <li>
                             <a href="{{route('tyre_purchases.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Orders</span>
-                                @if ($purchasesPendingCount>0)
-                                <span class="label label-success ml-5">{{$purchasesPendingCount}}</span>
+                                @if ($tyre_purchasesPendingCount>0)
+                                <span class="label label-success ml-5">{{$tyre_purchasesPendingCount}}</span>
                                 @endif
                             </a>
                         </li>
                         <li>
                             <a href="{{route('tyre_purchases.approved')}}" ><i class="fas fa-check "></i> <span>Approved Orders</span>
-                                @if ($purchasesApprovedCount>0)
-                                <span class="label label-success ml-5">{{$purchasesApprovedCount}}</span>
+                                @if ($tyre_purchasesApprovedCount>0)
+                                <span class="label label-success ml-5">{{$tyre_purchasesApprovedCount}}</span>
                                 @endif
                             </a>
                         </li>
                         <li>
                             <a href="{{route('tyre_purchases.rejected')}}" ><i class="fas fa-ban "></i> <span>Rejected Orders</span>
-                                @if ($purchasesRejectedCount>0)
-                                <span class="label label-success ml-5">{{$purchasesRejectedCount}}</span>
+                                @if ($tyre_purchasesRejectedCount>0)
+                                <span class="label label-success ml-5">{{$tyre_purchasesRejectedCount}}</span>
                                 @endif
                             </a>
                         </li>
                         <li>
                             <a href="{{route('tyre_purchases.deleted')}}" ><i class="fas fa-trash "></i> <span>Deleted Orders</span>
-                                @if ($purchasesDeletedCount>0)
-                                <span class="label label-success ml-5">{{$purchasesDeletedCount}}</span>
+                                @if ($tyre_purchasesDeletedCount>0)
+                                <span class="label label-success ml-5">{{$tyre_purchasesDeletedCount}}</span>
                                 @endif
                             </a>
                         </li>
@@ -1437,22 +1437,22 @@
                         @if ($isManagement || $isAdmin || $isSuperAdmin)
                         <li>
                             <a href="{{route('tyre_dispatches.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Dispatches</span>
-                                @if ($dispatchesPendingCount>0)
-                                <span class="label label-success ml-5">{{$dispatchesPendingCount}}</span>
+                                @if ($tyre_dispatchesPendingCount>0)
+                                <span class="label label-success ml-5">{{$tyre_dispatchesPendingCount}}</span>
                                 @endif
                             </a>
                         </li>
                         <li>
                             <a href="{{route('tyre_dispatches.approved')}}" ><i class="fas fa-check "></i> <span>Approved Dispatches</span>
-                                @if ($dispatchesApprovedCount>0)
-                                <span class="label label-success ml-5">{{$dispatchesApprovedCount}}</span>
+                                @if ($tyre_dispatchesApprovedCount>0)
+                                <span class="label label-success ml-5">{{$tyre_dispatchesApprovedCount}}</span>
                                 @endif
                             </a>
                         </li>
                         <li>
                             <a href="{{route('tyre_dispatches.rejected')}}" ><i class="fas fa-ban "></i> <span>Rejected Dispatches</span>
-                                @if ($dispatchesRejectedCount>0)
-                                <span class="label label-success ml-5">{{$dispatchesRejectedCount}}</span>
+                                @if ($tyre_dispatchesRejectedCount>0)
+                                <span class="label label-success ml-5">{{$tyre_dispatchesRejectedCount}}</span>
                                 @endif
                             </a>
                         </li>
