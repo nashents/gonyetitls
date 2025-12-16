@@ -537,7 +537,7 @@
                             <tr>
                                 <td>{{ $driver->employee?->employee_number }}</td>
                                 <td>{{ trim(($driver->employee?->name ?? '').' '.($driver->employee?->surname ?? '')) }}</td>
-                                <td>{{ $driver->trips_count }} Trips</td>
+                                <td>{{ $driver->trips_count ? $driver->trips_count . ' Trip(s)' : '' }}</td>
                                 <td>
                                 @if($company_currency)
                                     {{ $company_currency->name }} {{ $company_currency->symbol }}{{ number_format($driver->total_revenue, 2) }}

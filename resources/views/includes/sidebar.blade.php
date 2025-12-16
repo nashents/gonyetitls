@@ -1,34 +1,10 @@
-  @if ($employee)
-        <style>
-            .bg-black-300 {
-            background-color: {{$employee->company->color}};
-            }
-        </style>
-    @elseif($user->company)
-        <style>
-            .bg-black-300 {
-            background-color: {{$user->company->color}};
-            }
-        </style>
-    @elseif($user->transporter)
-        <style>
-            .bg-black-300 {
-            background-color: {{$user->transporter->company->color}};
-            }
-        </style>
-    @elseif($user->customer)
-        <style>
-            .bg-black-300 {
-            background-color: {{$user->customer->company->color}};
-            }
-        </style>
-    @elseif($user->agent)
-        <style>
-            .bg-black-300 {
-            background-color: {{$user->agent->company->color}};
-            }
-        </style>
-    @endif
+@if($companyColor)
+    <style>
+        .bg-black-300 {
+            background-color: {{ $companyColor }};
+        }
+    </style>
+@endif
 
    
 
@@ -68,13 +44,13 @@
                 <li class="{{ request()->routeIs('reminders.index') ? 'active' : '' }}"><a href="{{route('reminders.index')}}" ><i class="fas fa-bell"></i><span> Reminders</span></a></li>
 
                
-                {{-- @if (in_array('Human Resources', $department_names) || in_array('Transport & Logistics', $department_names) || $isSuperAdmin) --}}
+                {{-- @if ($inHR || $inTransport || $isSuperAdmin) --}}
                 <li class="nav-header">
                     <span class="">Human Resource</span>
                 </li>
                 {{-- @endif --}}
-                @if (in_array('Human Resources', $department_names) || $isSuperAdmin)
-                @if (($isAdmin && in_array('Human Resources', $department_names)) || $isSuperAdmin)
+                @if ($inHR || $isSuperAdmin)
+                @if (($isAdmin && $inHR) || $isSuperAdmin)
                 <li class="has-children">
                     <a href="#"><i class="fas fa-cog"></i> <span>Master</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav"> 
@@ -128,7 +104,7 @@
                     <a href="{{route('department_heads.index')}}"><i class="fas fa-user-plus"></i> <span>Head of Departments</span> </a>
                 </li>
                 @endif
-                @if (in_array('Transport & Logistics', $department_names) || in_array('Human Resources', $department_names) || $isSuperAdmin)
+                @if ($inTransport || $inHR || $isSuperAdmin)
                 <li class="has-children {{ request()->routeIs('drivers.*') ? 'active' : '' }}">
                     <a href="#"><i class="fas fa-users"></i> <span>Drivers</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
@@ -139,33 +115,14 @@
                     </ul>
                 </li>
                 @endif
-              
-
-                @php
-                $leavesPendingCount = App\Models\Leave::where('status','pending')
-                ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                // ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                $leavesApprovedCount = App\Models\Leave::where('status','approved')
-                ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                $leavesRejectedCount = App\Models\Leave::where('status','rejected')
-                ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                $leavesDeletedCount = App\Models\Leave::onlyTrashed()
-                ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                $department = App\Models\Department::where('name','Human Resources')->first();
-                        if (isset($department)) {
-                            $department_head = App\Models\DepartmentHead::where('employee_id',$employee->id)->first();
-                        }
-                @endphp
+            
                 <li class="has-children {{ request()->routeIs('leaves.*') ? 'active' : '' }}">
                     <a href="#"><i class="fas fa-calendar"></i> <span>Leave Management</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
                         <li><a href="{{route('leaves.index')}}"><i class="fas fa-plus "></i> <span>Apply for leave</span></a></li>
                         <li><a href="{{route('leaves.myteam')}}"><i class="fas fa-users "></i> <span>My Team</span></a></li>
 
-                        @if (isset($department_head) || ($isAdmin && in_array('Human Resources', $department_names)) || (in_array('Management', $rank_names) && in_array('Human Resources', $department_names)) || $isSuperAdmin)
+                        @if (isset($hrdepartment_head) || ($isAdmin && $inHR) || ($isManagement && $inHR) || $isSuperAdmin)
                         <li><a href="{{route('leaves.manage')}}"><i class="fas fa-list "></i> <span>Manage Applications</span></a></li>
                         <li><a href="{{route('leaves.pending')}}"><i class="fas fa-clock "></i> <span>Pending Applications</span>
                             @if ($leavesPendingCount>0)
@@ -198,7 +155,7 @@
                     <span class="">Salaries & Payroll</span>
                 </li>
 
-                 @if (($isAdmin && in_array('Human Resources', $department_names)) || $isSuperAdmin)
+                 @if (($isAdmin && $inHR) || $isSuperAdmin)
               
                 <li class="has-children">
                     <a href="#"><i class="fas fa-cog"></i> <span>Master</span> <i class="fas fa-angle-right arrow"></i></a>
@@ -207,30 +164,13 @@
                         <li class="{{ request()->routeIs('deductions.index') ? 'active' : '' }}"><a href="{{route('deductions.index')}}"><i class="fas fa-list"></i> <span>Deductions</span></a></li>
                         <li class="{{ request()->routeIs('earnings.index') ? 'active' : '' }}"><a href="{{route('earnings.index')}}"><i class="fas fa-list"></i> <span>Earnings</span></a></li>
                         <li class="{{ request()->routeIs('loan_types.index') ? 'active' : '' }}"><a href="{{route('loan_types.index')}}"><i class="fas fa-list"></i> <span>Loan Type</span></a></li>
-                        @if (Auth::user()->is_admin())
+                        @if ($is_admin)
                             <li class="{{ request()->routeIs('tax_brackets.index') ? 'active' : '' }}"><a href="{{route('tax_brackets.index')}}"><i class="fas fa-list"></i> <span>Tax Table</span></a></li>
                         @endif
                     </ul>
                 </li>
                @endif
-                @php
-                $loansPendingCount = App\Models\Loan::where('authorization','pending')
-                ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                $loansApprovedCount = App\Models\Loan::where('authorization','approved')
-                ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                $loansRejectedCount = App\Models\Loan::where('authorization','rejected')
-                ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                $loansDeletedCount = App\Models\Loan::onlyTrashed()
-                ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-
-                $department = App\Models\Department::where('name','Finance')->first();
-                        if (isset($department)) {
-                            $department_head = App\Models\DepartmentHead::where('department_id',$department->id)->where('employee_id',$employee->id)->first();
-                        }
-                @endphp
+               
                  <li class="{{ request()->routeIs('payslips.index') ? 'active' : '' }}">
                     <a href="{{route('payslips.index')}}"><i class="fas fa-file"></i> <span>My Payslip</span> </a>
                 </li>
@@ -238,7 +178,7 @@
                     <a href="#"><i class="fas fa-credit-card"></i> <span>Loans</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
                         <li><a href="{{route('loans.myloans')}}"><i class="fas fa-arrow-right "></i> <span>My Applications</span></a></li>
-                        @if (isset($department_head) || (in_array('Management', $rank_names) && in_array('Human Resources', $department_names)) || (in_array('Management', $rank_names) && in_array('Finance', $department_names)) || $isSuperAdmin)
+                        @if (isset($fndepartment_head) || ($isManagement && $inHR) || ($isManagement && $inFinance) || $isSuperAdmin)
                         <li><a href="{{route('loans.index')}}"><i class="fas fa-list "></i> <span>Manage Loans</span></a></li>
                         <li><a href="{{route('loans.pending')}}"><i class="fas fa-clock "></i> <span>Pending Loans</span>
                             @if ($loansPendingCount>0)
@@ -258,7 +198,7 @@
                         @endif
                     </ul>
                 </li>
-                 @if (($isAdmin && in_array('Human Resources', $department_names)) || $isSuperAdmin)
+                 @if (($isAdmin && $inHR) || $isSuperAdmin)
                 <li class="has-children {{ request()->routeIs('salaries.*') ? 'active' : '' }}" >
                     <a href="#"><i class="fas fa-donate"></i> <span>Salaries</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
@@ -266,29 +206,12 @@
                         <li><a href="{{route('salaries.index')}}"><i class="fas fa-list "></i> <span>Manage Salaries</span></a></li>
                     </ul>
                 </li>
-                @php
-                $payrollsPendingCount = App\Models\Payroll::where('authorization','pending')
-                ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                $payrollsApprovedCount = App\Models\Payroll::where('authorization','approved')
-                ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                $payrollsRejectedCount = App\Models\Payroll::where('authorization','rejected')
-                ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                $payrollsDeletedCount = App\Models\Payroll::onlyTrashed()
-                ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-
-                $department = App\Models\Department::where('name','Human Resources')->first();
-                        if (isset($department)) {
-                            $department_head = App\Models\DepartmentHead::where('department_id',$department->id)->where('employee_id',$employee->id)->first();
-                        }
-                @endphp
+                
                 <li class="has-children {{ request()->routeIs('payrolls.*') ? 'active' : '' }}" >
                     <a href="#"><i class="fas fa-file"></i> <span>Payroll</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
                         <li><a href="{{route('payrolls.index')}}"><i class="fas fa-list "></i> <span>Manage Payrolls</span></a></li>
-                        @if (isset($department_head) || ((in_array('Management', $rank_names) || $isAdmin) && in_array('Human Resources', $department_names)) || $isSuperAdmin)
+                        @if (isset($hrdepartment_head) || (($isManagement || $isAdmin) && $inHR) || $isSuperAdmin)
                         <li><a href="{{route('payrolls.pending')}}"><i class="fas fa-clock "></i> <span>Pending Payrolls</span>
                             @if ($payrollsPendingCount>0)
                             <span class="label label-success ml-5">{{$payrollsPendingCount}}</span>
@@ -313,11 +236,11 @@
 
                
 
-                @if (in_array('Finance', $department_names) || $isSuperAdmin)
+                @if ($inFinance || $isSuperAdmin)
                     <li class="nav-header">
                         <span class="">Sales & Payments</span>
                     </li>
-                    @if (($isAdmin && in_array('Finance', $department_names)) && ($isAdmin && in_array('Human Resources', $department_names)) || $isSuperAdmin)
+                    @if (($isAdmin && $inFinance) && ($isAdmin && $inHR) || $isSuperAdmin)
                         <li class="has-children">
                             <a href="#"><i class="fas fa-cog"></i> <span>Master</span> <i class="fas fa-angle-right arrow"></i></a>
                             <ul class="child-nav"> 
@@ -335,42 +258,13 @@
                                 <li><a href="{{route('quotations.index')}}" ><i class="fas fa-list "></i> <span>Manage Quotations</span></a></li>
                             </ul>
                         </li>
-                        @php
-                        $invoicesPendingCount = App\Models\Invoice::where('authorization','pending')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        // ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                        $invoicesApprovedCount = App\Models\Invoice::where('authorization','approved')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        $invoicesRejectedCount = App\Models\Invoice::where('authorization','rejected')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        $invoicesDeletedCount = App\Models\Invoice::onlyTrashed()
-                        ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                        $credit_notesPendingCount = App\Models\CreditNote::where('authorization','pending')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        // ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                        $credit_notesApprovedCount = App\Models\CreditNote::where('authorization','approved')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        $credit_notesRejectedCount = App\Models\CreditNote::where('authorization','rejected')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        $credit_notesDeletedCount = App\Models\CreditNote::onlyTrashed()
-                        ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                        $department = App\Models\Department::where('name','Finance')->first();
-                                if (isset($department)) {
-                                    $department_head = App\Models\DepartmentHead::where('department_id',$department->id)->where('employee_id',$employee->id)->first();
-                                }
-                        @endphp
+                       
                         <li class="has-children {{ request()->routeIs('invoices.*') ? 'active' : '' }}" >
                             <a href="#"><i class="fas fa-file-invoice-dollar"></i> <span>Invoices</span> <i class="fas fa-angle-right arrow"></i></a>
                             <ul class="child-nav">
                                 <li><a href="{{route('invoices.create')}}" ><i class="fas fa-plus "></i> <span>Create Invoice</span></a></li>
                                 <li><a href="{{route('invoices.index')}}" ><i class="fas fa-list "></i> <span>Manage Invoices</span></a></li>
-                                @if (isset($department_head)  || ((in_array('Management', $rank_names) || $isAdmin) && in_array('Finance', $department_names)) || $isSuperAdmin)
+                                @if (isset($fndepartment_head)  || (($isManagement || $isAdmin) && $inFinance) || $isSuperAdmin)
                                 <li><a href="{{route('invoices.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Invoices</span>
                                     @if ($invoicesPendingCount>0)
                                     <span class="label label-success ml-5">{{$invoicesPendingCount}}</span>
@@ -406,7 +300,7 @@
                             <ul class="child-nav">
                                 <li><a href="{{route('credit_notes.create')}}" ><i class="fas fa-plus "></i> <span>Create</span></a></li>
                                 <li><a href="{{route('credit_notes.index')}}" ><i class="fas fa-list "></i> <span>Manage C Notes</span></a></li>
-                                @if (isset($department_head)  || (in_array('Management', $rank_names) && in_array('Finance', $department_names)) || $isSuperAdmin)
+                                @if (isset($fndepartment_head)  || ($isManagement && $inFinance) || $isSuperAdmin)
                                 <li><a href="{{route('credit_notes.pending')}}" ><i class="fas fa-clock "></i> <span>Pending C Notes</span>
                                     @if ($credit_notesPendingCount>0)
                                     <span class="label label-success ml-5">{{$credit_notesPendingCount}}</span>
@@ -449,31 +343,13 @@
                 <li class="nav-header">
                     <span class="">Purchases</span>
                 </li>
-                @if (in_array('Finance', $department_names) || $isSuperAdmin)
-                @php
-                $billsPendingCount = App\Models\Bill::where('authorization','pending')
-                ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                // ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                $billsApprovedCount = App\Models\Bill::where('authorization','approved')
-                ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                $billsRejectedCount = App\Models\Bill::where('authorization','rejected')
-                ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                $billsDeletedCount = App\Models\Bill::onlyTrashed()
-                ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                $department = App\Models\Department::where('name','Finance')->first();
-                        if (isset($department)) {
-                            $department_head = App\Models\DepartmentHead::where('department_id',$department->id)->where('employee_id',$employee->id)->first();
-                        }
-                @endphp
+                @if ($inFinance || $isSuperAdmin)
                 <li class="has-children {{ request()->routeIs('bills.*') ? 'active' : '' }}" >
                     <a href="#"><i class="fas fa-th-list"></i> <span>Bills</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
                         <li><a href="{{route('bills.create')}}" ><i class="fas fa-plus "></i> <span>Create Bill</span></a></li>
                         <li><a href="{{route('bills.index')}}"><i class="fas fa-list "></i> <span>Manage Bills</span></a></li>
-                        @if (isset($department_head)  || (in_array('Management', $rank_names) && in_array('Finance', $department_names)) || $isSuperAdmin)
+                        @if (isset($fndepartment_head)  || ($isManagement && $inFinance) || $isSuperAdmin)
                         <li><a href="{{route('bills.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Bills</span>
                             @if ($billsPendingCount>0)
                             <span class="label label-success ml-5">{{$billsPendingCount}}</span>
@@ -507,26 +383,11 @@
                 <li class="{{ request()->routeIs('vendors.index') ? 'active' : '' }}"><a href="{{route('vendors.index')}}"><i class="fas fa-user-friends"></i> <span>Vendors</span></a></li>
                 @endif
              
-                @php
-                $requisitionsPendingCount = App\Models\Requisition::where('authorization','pending')
-                ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                // ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                $requisitionsApprovedCount = App\Models\Requisition::where('authorization','approved')
-                ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                $requisitionsRejectedCount = App\Models\Requisition::where('authorization','rejected')
-                ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                $requisitionsDeletedCount = App\Models\Requisition::onlyTrashed()
-                ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                $department_head = App\Models\DepartmentHead::where('employee_id',$employee->id)->first();
-                @endphp
                 <li class="has-children {{ request()->routeIs('requisitions.*') ? 'active' : '' }}" >
                     <a href="#"><i class="fas fa-hand-holding-usd"></i> <span>Requisitions</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
                         <li><a href="{{route('requisitions.index')}}" ><i class="fas fa-list "></i> <span>Manage Requisitions</span></a></li>
-                        @if (in_array('Management', $rank_names)  || isset($department_head)  || $isSuperAdmin || $isSuperAdmin)
+                        @if ($isManagement  || isset($fndepartment_head)  || $isSuperAdmin || $isSuperAdmin)
                         <li><a href="{{route('requisitions.pending')}}"><i class="fas fa-clock "></i> <span>Pending Requisitions</span>
                             @if ($requisitionsPendingCount>0)
                             <span class="label label-success ml-5">{{$requisitionsPendingCount}}</span>
@@ -546,7 +407,7 @@
                     </ul>
                 </li>
 
-                @if (in_array('Finance', $department_names) || $isSuperAdmin)
+                @if ($inFinance || $isSuperAdmin)
                 <li class="nav-header">
                     <span class="">Accounting</span>
                 </li>
@@ -556,7 +417,7 @@
                     <ul class="child-nav">
                         {{-- <li><a href="{{route('account_types.index')}}" ><i class="fas fa-list "></i> <span>Account Types</span></a></li> --}}
                         <li><a href="{{route('accounts.index')}}"><i class="fas fa-list "></i> <span> Manage Accounts</span></a></li>
-                        @if (Auth::user()->is_admin())
+                        @if ($is_admin)
                              <li><a href="{{route('accounts.tax')}}"><i class="fas fa-list "></i> <span> Manage Sales Taxes</span></a></li>
                         @endif
                     </ul>
@@ -566,7 +427,7 @@
                 @endif
 
                 
-                      @if ($isSuperAdmin  || (in_array('Finance', $department_names)))
+                @if ($isSuperAdmin  || $inFinance)
                 <li class="nav-header">
                     <span class="">Asset Management</span>
                 </li>
@@ -587,32 +448,11 @@
                     </ul>
                 </li>
                 <li class="has-children {{ request()->routeIs('purchases.index') ? 'active' : '' }}" >
-                    @php
-                        $purchasesPendingCount = App\Models\Purchase::where('authorization','pending')
-                        ->where('department','asset')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        // ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                        $purchasesApprovedCount = App\Models\Purchase::where('authorization','approved')
-                        ->where('department','asset')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        $purchasesRejectedCount = App\Models\Purchase::where('authorization','rejected')
-                        ->where('department','asset')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        $purchasesDeletedCount = App\Models\Purchase::onlyTrashed()
-                        ->where('department','asset')
-                        ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                        $department = App\Models\Department::where('name','Finance')->first();
-                    if (isset($department)) {
-                        $department_head = App\Models\DepartmentHead::where('department_id',$department->id)->where('employee_id',$employee->id)->first();
-                    }
-                    @endphp
+                   
                     <a href="#"><i class="fas fa-hand-holding-usd"></i> <span>Purchase Orders</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
                         <li><a href="{{route('purchases.index')}}" ><i class="fas fa-list "></i> <span>Manage Orders</span></a></li>
-                        @if (isset($department_head)  || (in_array('Management', $rank_names) && in_array('Finance', $department_names)) || $isSuperAdmin)
+                        @if (isset($fndepartment_head)  || ($isManagement && $inFinance) || $isSuperAdmin)
                         <li>
                             <a href="{{route('purchases.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Orders</span>
                                 @if ($purchasesPendingCount>0)
@@ -658,26 +498,11 @@
                     </ul>
                 </li>
                  <li class="has-children {{ request()->routeIs('asset_dispatches.*') ? 'active' : '' }}">
-                    @php
-                        $dispatchesPendingCount = App\Models\Dispatch::where('authorization','pending')
-                        ->where('department','asset')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        // ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                        $dispatchesApprovedCount = App\Models\Dispatch::where('authorization','approved')
-                        ->where('department','asset')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        $dispatchesRejectedCount = App\Models\Dispatch::where('authorization','rejected')
-                        ->where('department','asset')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                       
-                    @endphp
+                  
                     <a href="#"><i class="fas fa-list"></i> <span>Dispatches (Assets) </span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
                         <li><a href="{{route('asset_dispatches.index')}}" ><i class="fas fa-list "></i> <span>Manage Dispatches</span></a></li>
-                        @if (in_array('Management', $rank_names) || $isAdmin || $isSuperAdmin)
+                        @if ($isManagement || $isAdmin || $isSuperAdmin)
                         <li>
                             <a href="{{route('asset_dispatches.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Dispatches</span>
                                 @if ($dispatchesPendingCount>0)
@@ -782,26 +607,7 @@
                 <li class="nav-header">
                     <span class="">General Access</span>
                 </li>
-                @php
-                $gate_passesPendingCount = App\Models\GatePass::where('authorization','pending')
-                ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                // ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                $gate_passesApprovedCount = App\Models\GatePass::where('authorization','approved')
-                ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                $gate_passesRejectedCount = App\Models\GatePass::where('authorization','rejected')
-                ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                $tl_department = App\Models\Department::where('name','Transport & Logistics')->first();
-                        if (isset($tl_department)) {
-                            $tl_department_head = App\Models\DepartmentHead::where('department_id',$tl_department->id)->where('employee_id',$employee->id)->first();
-                        }
-                $ws_department = App\Models\Department::where('name','Transport & Logistics')->first();
-                        if (isset($ws_department)) {
-                            $ws_department_head = App\Models\DepartmentHead::where('department_id',$ws_department->id)->where('employee_id',$employee->id)->first();
-                        }
-                @endphp
+               
                 <li class="has-children {{ request()->routeIs('gate_passes.*') ? 'active' : '' }}">
                     <a href="#"><i class="fas fa-door-open"></i> <span>Gatepass</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
@@ -842,7 +648,7 @@
 
          
                
-                    @if (in_array('Transport & Logistics', $department_names) || in_array('Workshop', $department_names) || $isSuperAdmin)
+                    @if ($inTransport || in_array('Workshop', $department_names) || $isSuperAdmin)
                   
                     @if (!$user->driver)
                     <li class="nav-header">
@@ -920,23 +726,9 @@
                     <li class="nav-header">
                         <span class="">Fuel Management</span>
                     </li>
-                    @if (in_array('Transport & Logistics', $department_names) || $isSuperAdmin)
+                    @if ($inTransport || $isSuperAdmin)
                     @if (!$user->driver)
-                    @php
-                    $top_upsPendingCount = App\Models\TopUp::where('authorization','pending')
-                    ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                    ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                    $top_upsApprovedCount = App\Models\TopUp::where('authorization','approved')
-                    ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                    ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                    $top_upsRejectedCount = App\Models\TopUp::where('authorization','rejected')
-                    ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                    ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                    $department = App\Models\Department::where('name','Transport & Logistics')->first();
-                    if (isset($department)) {
-                        $department_head = App\Models\DepartmentHead::where('department_id',$department->id)->where('employee_id',$employee->id)->first();
-                    }
-                 @endphp
+                   
                         <li class="has-children {{ request()->routeIs('containers.index') ? 'active' : '' }}" >
                             <a href="#"><span>Fueling Stations</span> <i class="fas fa-angle-right arrow"></i></a>
                             <ul class="child-nav">
@@ -948,7 +740,7 @@
                             <a href="#"><span>Fuel Stations TopUps</span> <i class="fas fa-angle-right arrow"></i></a>
                             <ul class="child-nav">
                                 <li><a href="{{route('top_ups.index')}}" ><i class="fas fa-list "></i> <span>Fuel Top Ups</span></a></li>
-                                @if ((in_array('Transport & Logistics', $department_names) && $isAdmin) || $isSuperAdmin)
+                                @if (($inTransport && $isAdmin) || $isSuperAdmin)
                                 <li>
                                     <a href="{{route('top_ups.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Top Ups</span>
                                         @if ($top_upsPendingCount>0)
@@ -975,31 +767,14 @@
                         </li>
                     @endif
                 @endif
-                @php
-                    $fuelsPendingCount = App\Models\Fuel::where('authorization','pending')
-                    ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                    ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                    $fuelsApprovedCount = App\Models\Fuel::where('authorization','approved')
-                    ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                    ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                    $fuelsRejectedCount = App\Models\Fuel::where('authorization','rejected')
-                    ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                    ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                    $fuelsDelectedCount = App\Models\Fuel::onlyTrashed()
-                    ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                    ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                    $department = App\Models\Department::where('name','Transport & Logistics')->first();
-                    if (isset($department)) {
-                        $department_head = App\Models\DepartmentHead::where('department_id',$department->id)->where('employee_id',$employee->id)->first();
-                    }
-                 @endphp
-                @if (in_array('Transport & Logistics', $department_names) || $isSuperAdmin)
+              
+                @if ($inTransport || $isSuperAdmin)
                     @if (!$user->driver)
                         <li class="has-children {{ request()->routeIs('fuels.*') ? 'active' : '' }}" >
                             <a href="#"><span>Fuel Orders</span> <i class="fas fa-angle-right arrow"></i></a>
                             <ul class="child-nav">
                                 <li><a href="{{route('fuels.index')}}" ><i class="fas fa-list "></i> <span>Manage Fuel Orders</span></a></li>
-                                @if ((in_array('Management', $rank_names) && in_array('Transport & Logistics', $department_names)) || isset($department_head)  || $isSuperAdmin)
+                                @if (($isManagement && $inTransport) || isset($tldepartment_head)  || $isSuperAdmin)
                                 <li><a href="{{route('fuels.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Fuel Orders</span>
                                 @if ($fuelsPendingCount>0)
                                 <span class="label label-success ml-5">{{$fuelsPendingCount}}</span>
@@ -1034,33 +809,18 @@
                             <span class="label label-success ml-5">{{$myAllocationCount}}</span>
                             @endif
                         </a></li>
-                        @if ((in_array('Transport & Logistics', $department_names) && $isAdmin) || (in_array('Transport & Logistcs', $role_names) && in_array('HOD', $rank_names)) || $isSuperAdmin)
+                        @if (($inTransport && $isAdmin) || (in_array('Transport & Logistcs', $role_names) && in_array('HOD', $rank_names)) || $isSuperAdmin)
                             <li><a href="{{route('allocations.index')}}" ><i class="fas fa-list "></i> <span>Manage Allocation</span></a></li>
                         @endif
                     </ul>
                 </li>
-                @php
-                $fuelRequesitionPendingCount = App\Models\FuelRequest::where('status','pending')
-                ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                $fuelRequesitionApprovedCount = App\Models\FuelRequest::where('status','approved')
-                ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-               //  ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-               //  ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                $fuelRequesitionRejectedCount = App\Models\FuelRequest::where('status','rejected')
-                ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                $fuelRequesitionDelectedCount = App\Models\FuelRequest::onlyTrashed()
-                ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                $department = App\Models\Department::where('name','Transport & Logistics')->first();
-                if (isset($department)) {
-                    $department_head = App\Models\DepartmentHead::where('department_id',$department->id)->where('employee_id',$employee->id)->first();
-                }
-                @endphp
+               
                 <li class="has-children {{ request()->routeIs('fuel_requests.*') ? 'active' : '' }}" >
                     <a href="#"><span>Fuel Requisitions</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
                         <li><a href="{{route('fuel_requests.myrequests',$employee->id)}}" ><i class="fas fa-arrow-right "></i> <span>My Requests</span></a></li>
                         
-                        @if ( (in_array('Transport & Logistics', $department_names) && in_array('Management', $rank_names)) || isset($department_head) || $isSuperAdmin || (in_array('Transport & Logistics', $department_names) && $isAdmin))
+                        @if ( ($inTransport && $isManagement) || isset($tldepartment_head) || $isSuperAdmin || ($inTransport && $isAdmin))
                         <li><a href="{{route('fuel_requests.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Requests</span>
                             @if ($fuelRequesitionPendingCount>0)
                             <span class="label label-success ml-5">{{$fuelRequesitionPendingCount}}</span>
@@ -1080,42 +840,14 @@
                     </ul>
                 </li>
                 
-                    @if (in_array('Finance', $department_names) || in_array('Transport & Logistics', $department_names) || $isSuperAdmin)
+                    @if ($inFinance || $inTransport || $isSuperAdmin)
                     <li class="nav-header">
                         <span class="">Trip Management</span>
                         </li>
                 
-                    @php
-                        $tripPendingCount = App\Models\Trip::where('authorization','pending')
-                        ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                        $tripApprovedCount = App\Models\Trip::where('authorization','approved')
-                        ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                       //  ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                       //  ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        $tripCount = App\Models\Trip::where('authorization','rejected')
-                        ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                        $tripCount = App\Models\Trip::onlyTrashed()
-                        ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-
-                        $transportersPendingCount = App\Models\Transporter::where('authorization','pending')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        // ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                        $transportersApprovedCount = App\Models\Transporter::where('authorization','approved')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        $transportersRejectedCount = App\Models\Transporter::where('authorization','rejected')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        $transportersDeletedCount = App\Models\Transporter::onlyTrashed()
-                        ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                        $department = App\Models\Department::where('name','Transport & Logistics')->first();
-                        if (isset($department)) {
-                            $department_head = App\Models\DepartmentHead::where('department_id',$department->id)->where('employee_id',$employee->id)->first();
-                        }
-                        @endphp
                   
-                    @if (($isAdmin && in_array('Transport & Logistics', $department_names)) || $isSuperAdmin)
+                  
+                    @if (($isAdmin && $inTransport) || $isSuperAdmin)
                     
                     <li class="has-children">
                         <a href="#"><i class="fas fa-cog"></i> <span>Master</span> <i class="fas fa-angle-right arrow"></i></a>
@@ -1139,7 +871,7 @@
                             @if ($isSuperAdmin)
                                 <li class="{{ request()->routeIs('teams.index') ? 'active' : '' }}"><a href="{{route('teams.index')}}" ><i class="fas fa-users"></i> <span>Teams</span></a></li>
                             @endif
-                            @if (in_array('Finance', $department_names) || $isSuperAdmin)
+                            @if ($inFinance || $isSuperAdmin)
                                 <li class="{{ request()->routeIs('rates.index') ? 'active' : '' }}"><a href="{{route('rates.index')}}"><i class="fas fa-list"></i> <span>Trip Rates</span></a></li>  
                             @endif
                             <li class="{{ request()->routeIs('trip_types.index') ? 'active' : '' }}"><a href="{{route('trip_types.index')}}"><i class="fas fa-road"></i> <span>Trip Types</span> </a></li>
@@ -1157,7 +889,7 @@
                         <a href="#"><i class="fas fa-truck"></i> <span>Transporters</span> <i class="fas fa-angle-right arrow"></i></a>
                         <ul class="child-nav">
                             <li><a href="{{route('transporters.index')}}" ><i class="fas fa-list "></i> <span>Manage Transporters</span></a></li>
-                            @if ((($isAdmin || in_array('Management', $rank_names)) && in_array('Transport & Logistics', $department_names)) || isset($department_head) || $isSuperAdmin)
+                            @if ((($isAdmin || $isManagement) && $inTransport) || isset($tldepartment_head) || $isSuperAdmin)
                             <li><a href="{{route('transporters.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Transporters</span>
                                 @if ($transportersPendingCount>0)
                                 <span class="label label-success ml-5">{{$transportersPendingCount}}</span>
@@ -1182,26 +914,12 @@
                             <li><a href="{{route('rehandlings.index')}}" ><i class="fas fa-list "></i> <span>Manage Worksheets</span></a></li>
                         </ul>
                     </li> --}}
-                      @php
-                        $shiftsPendingCount = App\Models\Shift::where('authorization','pending')
-                        ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                        $shiftsApprovedCount = App\Models\Shift::where('authorization','approved')
-                        ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                        //  ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        //  ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        $shiftsRejectedCount = App\Models\Shift::where('authorization','rejected')
-                        ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                        $department = App\Models\Department::where('name','Transport & Logistics')->first();
-                        if (isset($department)) {
-                            $department_head = App\Models\DepartmentHead::where('department_id',$department->id)->where('employee_id',$employee->id)->first();
-                        }
-                       
-                    @endphp
+                  
                     <li class="has-children {{ request()->routeIs('shifts.*') ? 'active' : '' }}">
                         <a href="#"><i class="fas fa-clock"></i> <span>Shifts</span> <i class="fas fa-angle-right arrow"></i></a>
                         <ul class="child-nav">
                             <li><a href="{{route('shifts.index')}}" ><i class="fas fa-list "></i> <span>Manage Shifts</span></a></li>          
-                            {{-- @if (in_array('Management', $rank_names) || isset($department_head) || $isSuperAdmin)
+                            {{-- @if ($isManagement || isset($tldepartment_head) || $isSuperAdmin)
                                 <li><a href="{{route('shifts.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Shifts</span>
                                     @if ($shiftsPendingCount>0)
                                         <span class="label label-success ml-5">{{$shiftsPendingCount}}</span>
@@ -1224,36 +942,18 @@
                     @endif
                     @endif
                    
-                    @if (in_array('Finance', $department_names) || in_array('Transport & Logistics', $department_names) || $isSuperAdmin)
+                    @if ($inFinance || $inTransport || $isSuperAdmin)
                     @if (!$user->driver)
                     <li class="has-children {{ request()->routeIs('trips.*') ? 'active' : '' }} " >
                         <a href="#"><i class="fas fa-road"></i> <span>Trips</span> <i class="fas fa-angle-right arrow"></i></a>
                         <ul class="child-nav">
-                    @php
-                        $tripsPendingCount = App\Models\Trip::where('authorization','pending')
-                        ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                        $tripsApprovedCount = App\Models\Trip::where('authorization','approved')
-                        ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                        //  ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        //  ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        $tripsRejectedCount = App\Models\Trip::where('authorization','rejected')
-                        ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                        $transportOrdersCount = App\Models\TransportOrder::whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                        $tripsDelectedCount = App\Models\Trip::onlyTrashed()
-                        ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                        $department = App\Models\Department::where('name','Transport & Logistics')->first();
-                        if (isset($department)) {
-                            $department_head = App\Models\DepartmentHead::where('department_id',$department->id)->where('employee_id',$employee->id)->first();
-                        }
-                       
-                    @endphp
-                     
+                   
                     <li><a href="{{route('trips.create')}}" ><i class="fas fa-plus "></i> <span>Create Trip</span></a></li>
                     <li><a href="{{route('trips.index')}}" ><i class="fas fa-list "></i> <span>Manage Trips</span></a></li>
                    
                  
                         
-                    @if (in_array('Management', $rank_names) || isset($department_head) || $isSuperAdmin)
+                    @if ($isManagement || isset($tldepartment_head) || $isSuperAdmin)
                     
                     <li><a href="{{route('trips.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Trips</span>
                     @if ($tripsPendingCount>0)
@@ -1282,18 +982,7 @@
                         </ul>
                     </li>
                     @endif
-                    @php
-                    $gate_passesPendingCount = App\Models\GatePass::where('logistics_authorization','pending')
-                    ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                    ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                    // ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                    $gate_passesApprovedCount = App\Models\GatePass::where('logistics_authorization','approved')
-                    ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                    ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                    $gate_passesRejectedCount = App\Models\GatePass::where('logistics_authorization','rejected')
-                    ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                    ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                    @endphp
+                  
                      @if (!$user->driver)
                     <li class="has-children"  >
                         <a href="#"><i class="fas fa-door-open"></i> <span>Gatepass</span> <i class="fas fa-angle-right arrow"></i></a>
@@ -1318,31 +1007,14 @@
                     @endif
                     @if (!$user->driver)
                    
-                    @php
-                    $recoveriesPendingCount = App\Models\Recovery::where('authorization','pending')
-                    ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                    ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                    // ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                    $recoveriesApprovedCount = App\Models\Recovery::where('authorization','approved')
-                    ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                    ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                    $recoveriesRejectedCount = App\Models\Recovery::where('authorization','rejected')
-                    ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                    ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                    $recoveriesDeletedCount = App\Models\Recovery::onlyTrashed()
-                    ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                    $department = App\Models\Department::where('name','Transport & Logistics')->first();
-                        if (isset($department)) {
-                            $department_head = App\Models\DepartmentHead::where('department_id',$department->id)->where('employee_id',$employee->id)->first();
-                        }
-                    @endphp
+                   
                    
                     <li class="has-children {{ request()->routeIs('recoveries.*') ? 'active' : '' }}" >
                         <a href="#"><i class="fas fa-hand-holding-usd"></i> <span>Recoveries</span> <i class="fas fa-angle-right arrow"></i></a>
                         <ul class="child-nav">
                             <li><a href="{{route('recoveries.create')}}" ><i class="fas fa-plus "></i> <span>Create Recovery</span></a></li>
                             <li><a href="{{route('recoveries.index')}}" ><i class="fas fa-list "></i> <span>Manage Recoveries</span></a></li>
-                            @if (in_array('Management', $rank_names) || isset($department_head) || $isSuperAdmin)
+                            @if ($isManagement || isset($tldepartment_head) || $isSuperAdmin)
                             <li><a href="{{route('recoveries.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Recoveries</span>
                                 @if ($recoveriesPendingCount>0)
                                 <span class="label label-success ml-5">{{$recoveriesPendingCount}}</span>
@@ -1369,7 +1041,7 @@
 
 
                        
-                 @if (in_array('Finance', $department_names) || in_array('Workshop', $department_names) || in_array('Stores', $department_names) || $isSuperAdmin)
+                 @if ($inFinance || in_array('Workshop', $department_names) || in_array('Stores', $department_names) || $isSuperAdmin)
                  <li class="nav-header">
                     <span class="">Workshop Management</span>
                  </li>
@@ -1395,27 +1067,13 @@
 
                 @endif
 
-                    @php
-                        $bookingsPendingCount = App\Models\Booking::where('authorization','pending')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        // ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                        $bookingsApprovedCount = App\Models\Booking::where('authorization','approved')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        $bookingsRejectedCount = App\Models\Booking::where('authorization','rejected')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        $bookingsDeletedCount = App\Models\Booking::onlyTrashed()
-                        ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                    @endphp
                           <li class="has-children {{ request()->routeIs('bookings.*') ? 'active' : '' }}" >
                             <a href="#"><i class="fas fa-tasks"></i> <span>Bookings</span> <i class="fas fa-angle-right arrow"></i></a>
                             <ul class="child-nav">
                                 <li><a href="{{route('bookings.create')}}" ><i class="fas fa-plus "></i> <span>Create Booking</span></a></li>
                                 <li><a href="{{route('bookings.index')}}" ><i class="fas fa-list "></i> <span>Manage Bookings</span></a></li>
                                 
-                                @if (in_array('Management', $rank_names) || isset($wsdepartment_head) || ($isAdmin && in_array('Workshop', $department_names)) || $isSuperAdmin)
+                                @if ($isManagement || isset($wsdepartment_head) || ($isAdmin && in_array('Workshop', $department_names)) || $isSuperAdmin)
                                 <li>
                                     <a href="{{route('bookings.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Bookings</span>
                                         @if ($bookingsPendingCount>0)
@@ -1498,18 +1156,7 @@
                    </ul>
                 </li> --}}
 
-                @php
-                $gate_passesPendingCount = App\Models\GatePass::where('workshop_authorization','pending')
-                ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                // ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                $gate_passesApprovedCount = App\Models\GatePass::where('workshop_authorization','approved')
-                ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                $gate_passesRejectedCount = App\Models\GatePass::where('workshop_authorization','rejected')
-                ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                @endphp
+               
 
                 @if ($isAdmin || $isSuperAdmin)
                         <li class="has-children">
@@ -1552,24 +1199,7 @@
                 </li>
                 @endif
                 <li class="has-children">
-                     @php
-                        $transfersPendingCount = App\Models\Transfer::where('authorization','pending')
-                        ->where('department','inventory')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        // ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                        $transfersApprovedCount = App\Models\Transfer::where('authorization','approved')
-                        ->where('department','inventory')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        $transfersRejectedCount = App\Models\Transfer::where('authorization','rejected')
-                        ->where('department','inventory')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        $transfersDeletedCount = App\Models\Transfer::onlyTrashed()
-                        ->where('department','inventory')
-                        ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                    @endphp
+                    
                     <a href="#"><i class="fas fa-exchange"></i> <span>Inventory Transfers</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
                         
@@ -1600,28 +1230,11 @@
                     </ul>
                 </li>
                 <li class="has-children {{ request()->routeIs('inventory_purchases.*') ? 'active' : '' }}">
-                    @php
-                        $purchasesPendingCount = App\Models\Purchase::where('authorization','pending')
-                        ->where('department','inventory')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        // ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                        $purchasesApprovedCount = App\Models\Purchase::where('authorization','approved')
-                        ->where('department','inventory')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        $purchasesRejectedCount = App\Models\Purchase::where('authorization','rejected')
-                        ->where('department','inventory')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        $purchasesDeletedCount = App\Models\Purchase::onlyTrashed()
-                        ->where('department','inventory')
-                        ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                    @endphp
+                  
                     <a href="#"><i class="fas fa-hand-holding-usd"></i> <span>Purchase Orders</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
                         <li><a href="{{route('inventory_purchases.index')}}" ><i class="fas fa-list "></i> <span>Manage Orders</span></a></li>
-                        @if (in_array('Management', $rank_names) || isset($wsdepartment_head) || isset($stdepartment_head) || $isSuperAdmin)
+                        @if ($isManagement || isset($wsdepartment_head) || isset($stdepartment_head) || $isSuperAdmin)
                         <li>
                             <a href="{{route('inventory_purchases.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Orders</span>
                                 @if ($purchasesPendingCount>0)
@@ -1668,26 +1281,11 @@
                     </ul>
                 </li>
                 <li class="has-children {{ request()->routeIs('inventory_dispatches.*') ? 'active' : '' }}">
-                    @php
-                        $dispatchesPendingCount = App\Models\Dispatch::where('authorization','pending')
-                        ->where('department','inventory')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        // ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                        $dispatchesApprovedCount = App\Models\Dispatch::where('authorization','approved')
-                        ->where('department','inventory')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        $dispatchesRejectedCount = App\Models\Dispatch::where('authorization','rejected')
-                        ->where('department','inventory')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                       
-                    @endphp
+                   
                     <a href="#"><i class="fas fa-list"></i> <span>Dispatches (Inventory) </span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
                         <li><a href="{{route('inventory_dispatches.index')}}" ><i class="fas fa-list "></i> <span>Manage Dispatches</span></a></li>
-                        @if (in_array('Management', $rank_names) || $isAdmin || $isSuperAdmin)
+                        @if ($isManagement || $isAdmin || $isSuperAdmin)
                         <li>
                             <a href="{{route('inventory_dispatches.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Dispatches</span>
                                 @if ($dispatchesPendingCount>0)
@@ -1716,24 +1314,7 @@
                     <span class="">Tyre Management</span>
                 </li>
                   <li class="has-children">
-                     @php
-                        $tyre_transfersPendingCount = App\Models\Transfer::where('authorization','pending')
-                        ->where('department','tyre')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        // ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                        $tyre_transfersApprovedCount = App\Models\Transfer::where('authorization','approved')
-                        ->where('department','tyre')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        $tyre_transfersRejectedCount = App\Models\Transfer::where('authorization','rejected')
-                        ->where('department','tyre')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        $tyre_transfersDeletedCount = App\Models\Transfer::onlyTrashed()
-                        ->where('department','tyre')
-                        ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                    @endphp
+                  
                     <a href="#"><i class="fas fa-exchange"></i> <span>Tyre Transfers</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
                         
@@ -1764,28 +1345,11 @@
                     </ul>
                 </li>
                 <li class="has-children {{ request()->routeIs('tyre_purchases.*') ? 'active' : '' }}" >
-                    @php
-                        $purchasesPendingCount = App\Models\Purchase::where('authorization','pending')
-                        ->where('department','tyre')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        // ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                        $purchasesApprovedCount = App\Models\Purchase::where('authorization','approved')
-                        ->where('department','tyre')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        $purchasesRejectedCount = App\Models\Purchase::where('authorization','rejected')
-                        ->where('department','tyre')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        $purchasesDeletedCount = App\Models\Purchase::onlyTrashed()
-                        ->where('department','tyre')
-                        ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                    @endphp
+                   
                     <a href="#"><i class="fas fa-hand-holding-usd"></i> <span>Purchase Orders</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
                         <li><a href="{{route('tyre_purchases.index')}}" ><i class="fas fa-list "></i> <span>Manage Orders</span></a></li>
-                        @if (in_array('Management', $rank_names) || isset($wsdepartment_head) || isset($stdepartment_head) || $isSuperAdmin)
+                        @if ($isManagement || isset($wsdepartment_head) || isset($stdepartment_head) || $isSuperAdmin)
                         <li>
                             <a href="{{route('tyre_purchases.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Orders</span>
                                 @if ($purchasesPendingCount>0)
@@ -1832,26 +1396,13 @@
                             <li ><a href="{{route('disposes.index')}}"><i class="fas fa-list "></i> <span>Disposed Items</span></a></li>
                         </ul>
                     </li>
-                    @php
-                    $retreadsPendingCount = App\Models\Retread::where('authorization','pending')
-                    ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                    ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                    // ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                    $retreadsApprovedCount = App\Models\Retread::where('authorization','approved')
-                    ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                    ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                    $retreadsRejectedCount = App\Models\Retread::where('authorization','rejected')
-                    ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                    ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                    $retreadsDeletedCount = App\Models\Retread::onlyTrashed()
-                    ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                    @endphp
+                  
                     <li class="has-children {{ request()->routeIs('retreads.*') ? 'active' : '' }}" >
                         <a href="#"><i class="fas fa-th-list"></i> <span>Retreads</span> <i class="fas fa-angle-right arrow"></i></a>
                         <ul class="child-nav">
                             <li><a href="{{route('retreads.create')}}" ><i class="fas fa-plus "></i> <span>Create Retread</span></a></li>
                             <li><a href="{{route('retreads.index')}}"><i class="fas fa-list "></i> <span>Manage Retread</span></a></li>
-                            @if (in_array('Management', $rank_names) || isset($wsdepartment_head) || isset($stdepartment_head) || $isSuperAdmin)
+                            @if ($isManagement || isset($wsdepartment_head) || isset($stdepartment_head) || $isSuperAdmin)
                             <li>
                                 <a href="{{route('retreads.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Retreads</span>
                                     @if ($retreadsPendingCount>0)
@@ -1879,26 +1430,11 @@
                     </li>
 
                        <li class="has-children {{ request()->routeIs('tyre_dispatches.*') ? 'active' : '' }}">
-                    @php
-                        $dispatchesPendingCount = App\Models\Dispatch::where('authorization','pending')
-                        ->where('department','tyre')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        // ->whereDate('created_at', \Carbon\Carbon::today())->get()->count();
-                        $dispatchesApprovedCount = App\Models\Dispatch::where('authorization','approved')
-                        ->where('department','tyre')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                        $dispatchesRejectedCount = App\Models\Dispatch::where('authorization','rejected')
-                        ->where('department','tyre')
-                        ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                        ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->get()->count();
-                       
-                    @endphp
+                 
                     <a href="#"><i class="fas fa-list"></i> <span>Dispatches (Tyres) </span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
                         <li><a href="{{route('tyre_dispatches.index')}}" ><i class="fas fa-list "></i> <span>Manage Dispatches</span></a></li>
-                        @if (in_array('Management', $rank_names) || $isAdmin || $isSuperAdmin)
+                        @if ($isManagement || $isAdmin || $isSuperAdmin)
                         <li>
                             <a href="{{route('tyre_dispatches.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Dispatches</span>
                                 @if ($dispatchesPendingCount>0)
@@ -1927,7 +1463,7 @@
                 @endif
               
                       
-                @if (in_array('Management', $rank_names) || in_array('Directors', $rank_names)|| $isSuperAdmin)
+                @if ($isManagement || in_array('Directors', $rank_names)|| $isSuperAdmin)
                     <li class="nav-header">
                         <span class="">Business Settings</span>
                     </li>
