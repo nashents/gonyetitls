@@ -171,7 +171,14 @@
                                         <td>
                                            <span class="badge bg-{{$purchase->is_sent == True ? 'success' :  'primary' }}">{{ $purchase->is_sent == True ? "Sent" : "Not Sent" }}</span>
                                         </td>
-                                        <td><span class="badge bg-{{($purchase->authorization == 'approved') ? 'success' : (($purchase->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($purchase->authorization == 'approved') ? 'approved' : (($purchase->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
+                                        <td>
+                                            @if(blank($purchase->authorization))
+                                                <span class="badge bg-secondary">&nbsp;</span>
+                                            @else
+                                                <span class="badge bg-{{$purchase->authorization === 'approved' ? 'success' : ($purchase->authorization === 'rejected' ? 'danger' : 'warning') }}">
+                                                    {{ $purchase->authorization }}
+                                                </span>
+                                            @endif 
                                             @php
                                                 $user = App\Models\User::find($purchase->authorized_by_id);
                                             @endphp

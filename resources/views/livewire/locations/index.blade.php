@@ -152,22 +152,22 @@
                         <center> <small style="color: red"><a href="https://www.google.com/maps" target="_blank">Click me to go on Google Maps</a></small></center>
                     </div>
                     <div class="form-group">
-                        <label for="description">Google Maps Location Pin<span class="required" style="color: red">*</span></label>
-                        <input type="text" class="form-control" wire:model.debounce.300ms="location" placeholder="Copy and Paste Loading Point Location Pin from Google Maps" required>
+                        <label for="description">Google Maps Location Pin</label>
+                        <input type="text" class="form-control" wire:model.debounce.300ms="location" placeholder="Copy and Paste Loading Point Location Pin from Google Maps">
                         @error('location') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="description">Latitude<span class="required" style="color: red">*</span></label>
-                                <input type="text" class="form-control" wire:model.debounce.300ms="lat" placeholder="Enter Latitude" required disabled>
+                                <label for="description">Latitude</label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="lat" placeholder="Enter Latitude"  disabled>
                                 @error('lat') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="description">Longitude<span class="required" style="color: red">*</span></label>
-                                <input type="text" class="form-control" wire:model.debounce.300ms="long" placeholder="Enter Longitude" required disabled>
+                                <label for="description">Longitude</label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="long" placeholder="Enter Longitude" disabled>
                                 @error('long') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -208,22 +208,22 @@
                         <center> <small style="color: red"><a href="https://www.google.com/maps" target="_blank">Click me to go on Google Maps</a></small></center>
                     </div>
                     <div class="form-group">
-                        <label for="description">Google Maps Location Pin<span class="required" style="color: red">*</span></label>
-                        <input type="text" class="form-control" wire:model.debounce.300ms="location" placeholder="Copy and Paste Loading Point Location Pin from Google Maps" required>
+                        <label for="description">Google Maps Location Pin</label>
+                        <input type="text" class="form-control" wire:model.debounce.300ms="location" placeholder="Copy and Paste Loading Point Location Pin from Google Maps" >
                         @error('location') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="description">Latitude<span class="required" style="color: red">*</span></label>
-                                <input type="text" class="form-control" wire:model.debounce.300ms="lat" placeholder="Enter Latitude" required disabled>
+                                <label for="description">Latitude</label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="lat" placeholder="Enter Latitude"  disabled>
                                 @error('lat') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="description">Longitude<span class="required" style="color: red">*</span></label>
-                                <input type="text" class="form-control" wire:model.debounce.300ms="long" placeholder="Enter Longitude" required disabled>
+                                <label for="description">Longitude</label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="long" placeholder="Enter Longitude"  disabled>
                                 @error('long') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>

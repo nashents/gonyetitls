@@ -767,100 +767,13 @@
                     </div>
 
                     <h5 class="underline mt-30">Rehandling Work</h5>
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="name">Start Time<span class="required" style="color: red">*</span></label>
-                                <input type="time" class="form-control" wire:model.debounce.300ms="start_time.0" placeholder="Enter Start Time" required/>
-                                @error('start_time.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="name">Open Hours<span class="required" style="color: red">*</span></label>
-                                <input type="text" class="form-control" wire:model.debounce.300ms="open_hours.0" placeholder="Enter Open Engine Hours" required/>
-                                @error('open_hours.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="name">Open Mileage</label>
-                                <input type="number" step="any" class="form-control" wire:model.debounce.300ms="open_mileage.0" placeholder="Enter Open Mileage"/>
-                                @error('open_mileage.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                              <div class="form-group">
-                                <label for="name">Work Descriptions<span class="required" style="color: red">*</span></label>
-                                <select class="form-control" wire:model.debounce.300ms="work_id.0" required>
-                                    <option value="">Select Work/Job</option>
-                                    @foreach ($works as $work)
-                                        <option value="{{$work->id}}">{{$work->description}}</option>
-                                    @endforeach
-                                </select>
-                                @error('work_id.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                <small><a href="{{ route('works.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Work</a></small> <a href="#" wire:click.prevent="refresh('works')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                              <div class="form-group">
-                                <label for="name">Locations / Work Sites<span class="required" style="color: red">*</span></label>
-                                <select class="form-control" wire:model.debounce.300ms="location_id.0" required>
-                                    <option value="">Select Site</option>
-                                    @foreach ($locations as $location)
-                                        <option value="{{$location->id}}">{{$location->name}}</option>
-                                    @endforeach
-                                </select>
-                                @error('location_id.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                <small><a href="{{ route('locations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Location / WorkSite</a></small> <a href="#" wire:click.prevent="refresh('locations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
-                            </div>
-                        </div>
-                    </div>
-               
-                    <div class="row">
-                         <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="name">Close Time</label>
-                                <input type="time" class="form-control" wire:model.debounce.300ms="stop_time.0" placeholder="Enter Close Time" />
-                                @error('stop_time.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
-                        </div>
-                         <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="name">Close Hours</label>
-                                <input type="text" class="form-control" wire:model.debounce.300ms="close_hours.0" placeholder="Enter Close Engine Hours" />
-                                @error('close_hours.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
-                        </div>
-                         <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="name">Close Mileage</label>
-                                <input type="number" step="any" class="form-control" wire:model.debounce.300ms="close_mileage.0" placeholder="Enter Close Mileage" />
-                                @error('close_mileage.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
-                        </div> 
-                    </div>
-                    <div class="row">
-                         <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="weight">Weight(t)</label>
-                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="weight.0" placeholder="Weight" >
-                                @error('weight.0') <span class="text-danger error">{{ $message }}</span>@enderror
-                            </div>
-                        </div>
-                         <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="name">Freight</label>
-                                <input type="number" step="any" class="form-control" wire:model.debounce.300ms="freight.0" placeholder="Enter Work Freight" />
-                                @error('freight.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
-                        </div> 
-                    </div>
-                    <br>  
-
+                    @php
+                        $i = 1;
+                    @endphp
+                 
                     @foreach ($inputs as $key => $value)
+                    <div class="mt-30" style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">
+                    <label for="">Work {{$i++}}</label>
                     <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
@@ -945,17 +858,18 @@
                          <div class="col-md-6">
                             <div class="form-group">
                                 <label for="weight">Weight(t)</label>
-                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="weight.{{$value}}" placeholder="Weight" >
+                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="weight.{{$value}}" placeholder="Weight per load" >
                                 @error('weight.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
                         </div>
                          <div class="col-md-6">
                             <div class="form-group">
-                                <label for="name">Freight</label>
-                                <input type="number" step="any" class="form-control" wire:model.debounce.300ms="freight.{{$value}}" placeholder="Enter Work Freight" />
-                                @error('freight.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                <label for="name">Loads</label>
+                                <input type="number" step="any" class="form-control" wire:model.debounce.300ms="loads.{{$value}}" placeholder="Enter Work Loads" />
+                                @error('loads.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div> 
+                    </div>
                     </div>
                     <br>   
                     @endforeach
