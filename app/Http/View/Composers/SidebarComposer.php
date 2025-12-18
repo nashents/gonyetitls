@@ -112,6 +112,7 @@ class SidebarComposer
         $inHR              = in_array('Human Resources', $department_names);
         $inFinance         = in_array('Finance', $department_names);
         $inHSEQ            = in_array('HSEQ', $department_names);
+        $inSecurity            = in_array('Security', $department_names);
         $inTransport       = in_array('Transport & Logistics', $department_names);
 
        
@@ -486,6 +487,7 @@ class SidebarComposer
             'hrDeptHead'          => $hrDeptHead,
             'inTransport'          => $inTransport,
             'inHSEQ'          => $inHSEQ,
+            'inSecurity'          => $inSecurity,
             'inFinance'          => $inFinance,
             'inHR'          => $inHR,
             'isAdmin'          => $isAdmin,

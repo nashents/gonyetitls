@@ -1,11 +1,12 @@
 <div>
+    <div id="print-area">
     <div id="invoice">
         <x-loading/>
         <div class="toolbar hidden-print">
             <div class="text-end">
                 <button type="button" onclick="goBack()" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-arrow-left" style="color:black"></i> Back</button>
                 {{-- <a href="#" wire:click="sendEmail({{$credit_note->id}})" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-envelope" style="color:red"></i> Send</a> --}}
-                <a href="{{route('credit_notes.print',$credit_note->id)}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-print" style="color:black"></i> Print</a>
+               <a href="javascript:void(0)" onclick="printSection()" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-print" style="color: black"></i> Print</a>
                 <a href="{{route('credit_notes.pdf', $credit_note->id)}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-file-pdf-o" style="color:red"></i> Export as PDF</a>
             </div>
             <hr>
@@ -246,5 +247,6 @@
             <!--DO NOT DELETE THIS div. IT is responsible for showing footer always at the bottom-->
             <div></div>
         </div>
+    </div>
     </div>
 </div>

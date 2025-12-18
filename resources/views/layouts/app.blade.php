@@ -4306,6 +4306,39 @@ window.addEventListener('hide-imageModal', event => {
         }
     });
 </script>
+    <script>
+(function () {
+  const sidebar = document.getElementById('sidebar');
+  if (!sidebar) return;
+
+  const key = 'sidebar.scrollTop';
+
+  // Restore scroll
+  const saved = localStorage.getItem(key);
+  if (saved !== null) sidebar.scrollTop = parseInt(saved, 10) || 0;
+
+  // Save scroll (throttled)
+  let t = null;
+  sidebar.addEventListener('scroll', function () {
+    if (t) return;
+    t = setTimeout(function () {
+      localStorage.setItem(key, String(sidebar.scrollTop));
+      t = null;
+    }, 150);
+  });
+})();
+
+</script>
+<script>
+    document.querySelectorAll('#sidebar li.active').forEach(activeLi => {
+  const parentGroup = activeLi.closest('li.has-children[data-menu-key]');
+  if (parentGroup) {
+    parentGroup.classList.add('open');
+    const child = parentGroup.querySelector('.child-nav');
+    if (child) child.style.display = 'block';
+  }
+});
+</script>
     
     </body>
 </html>

@@ -11,11 +11,12 @@
 <div class="container">
     <div class="card">
         <div class="card-body">
+             <div id="print-area">
             <div id="invoice">
                 <div class="toolbar hidden-print">
                     <div class="text-end">
                         <button type="button" onclick="goBack()" class="btn btn-default" ><i class="fa fa-arrow-left"></i> Back</button>
-                        <a href="{{route('fuels.print',$fuel->id)}}" class="btn btn-dark"><i class="fa fa-print"></i> Print</a>
+                        <a href="javascript:void(0)" onclick="printSection()" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-print" style="color: black"></i> Print</a>
                     </div>
                     <hr>
                 </div>
@@ -180,6 +181,7 @@
                     <div></div>
                 </div>
             </div>
+        </div>
         </div>
     </div>
 </div>
