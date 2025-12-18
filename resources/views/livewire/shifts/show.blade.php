@@ -49,9 +49,9 @@
                                 <th class="w-10 text-center line-height-35">Equipment</th>
                                 <td class="w-20 line-height-35">
                                     @if ($shift->horse)
-                                        {{ucfirst($shift->horse->horse_make ? $shift->horse->horse_make->name : "")}} {{ucfirst($shift->horse->horse_model ? $shift->horse->horse_model->name : "")}} ({{ucfirst($shift->horse ? $shift->horse->registration_number : "")}})     
+                                        {{$shift->horse ? $shift->horse->registration_number : ""}}  {{$shift->horse->fleet_number ? "(".$shift->horse->fleet_number.")" : ""}}    
                                     @elseif($shift->vehicle)
-                                       {{ucfirst($shift->vehicle->vehicle_make ? $shift->vehicle->vehicle_make->name : "")}} {{ucfirst($shift->vehicle->vehicle_model ? $shift->vehicle->vehicle_model->name : "")}} ({{ucfirst($shift->vehicle ? $shift->vehicle->registration_number : "")}})     
+                                       {{$shift->vehicle ? $shift->vehicle->registration_number : ""}}  {{$shift->vehicle->fleet_number ? "(".$shift->vehicle->fleet_number.")" : ""}}    
                                     @endif
                                 </td>
                             </tr>

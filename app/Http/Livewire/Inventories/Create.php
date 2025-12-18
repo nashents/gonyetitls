@@ -60,7 +60,7 @@ class Create extends Component
     public $transfers;
     public $selectedTransfer;
     public $selectedTransferItem;
-     public $source = "Purchase";
+    public $source = "Purchase";
     public $currencies;
     public $exchange_rate;
     public $exchange_amount;
@@ -684,6 +684,9 @@ class Create extends Component
                     if (isset($this->selectedProduct[$key])) {
                         $inventory->product_id = $this->selectedProduct[$key];
                     }
+                    if (isset($this->selectedPurchaseProduct[$key])) {
+                        $inventory->purchase_product_id = $this->selectedPurchaseProduct[$key];
+                    }
                   
                     if (isset($this->serial_number[$key])) {
                         $inventory->serial_number = $this->serial_number[$key];
@@ -751,7 +754,18 @@ class Create extends Component
                     $inventory->depreciation_type = $this->depreciation_type;
                     $inventory->purchase_date = $this->purchase_date;
                     $inventory->purchase_type = $this->purchase_type;
-                    $inventory->purchase_id = $this->selectedPurchase ? $this->selectedPurchase : null;
+
+                    $inventory->purchase_id = null;
+                    $inventory->transfer_id = null;
+
+                    if ($this->source === 'Purchase') {
+                        $inventory->purchase_id = $this->selectedPurchase;
+                    }
+
+                    if ($this->source === 'Transfer') {
+                        $inventory->transfer_id = $this->selectedTransfer;
+                    }
+                    
                     $inventory->condition = $this->condition;
                     $inventory->inventory_number = $this->inventoryNumber();
                     $inventory->warranty_exp_date = $this->warranty_exp_date;

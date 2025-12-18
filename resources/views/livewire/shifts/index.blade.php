@@ -118,7 +118,7 @@
                                         @if ($shift->horse)
                                               <strong>Horse:</strong>  {{$shift->horse->registration_number}} {{$shift->horse->fleet_number ? "(".$shift->horse->fleet_number.")" : ""}} <br>
                                         @elseif($shift->vehicle)
-                                               <strong>Vehicle:</strong> {{$shift->horse->registration_number}} <br>
+                                               <strong>Vehicle:</strong> {{$shift->vehicle->registration_number}} {{$shift->vehicle->fleet_number ? "(".$shift->vehicle->fleet_number.")" : ""}} <br>
                                         @endif
                                        @if ($shift->loading_points->isNotEmpty() && $shift->loading_points->count()>0)
                                             <strong>Loading Points: </strong>
@@ -452,8 +452,8 @@
                         <div class="row">
                          <div class="col-md-3">
                              <div class="form-group">
-                                <label for="name">Cargos<span class="required" style="color: red">*</span></label>
-                                <select class="form-control" wire:model.debounce.300ms="selectedCargo" required>
+                                <label for="name">Cargos</label>
+                                <select class="form-control" wire:model.debounce.300ms="selectedCargo" >
                                     <option value="">Select Cargo</option>
                                     @foreach ($cargos as $cargo)
                                         <option value="{{$cargo->id}}">{{$cargo->name}}</option>
@@ -845,9 +845,9 @@
                     <div class="row">
                          <div class="col-md-6">
                             <div class="form-group">
-                                <label for="name">Weight</label>
-                                <input type="time" class="form-control" wire:model.debounce.300ms="weight.0" placeholder="Enter Work Weight" />
-                                @error('weight.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                <label for="weight">Weight(t)</label>
+                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="weight.0" placeholder="Weight" >
+                                @error('weight.0') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
                         </div>
                          <div class="col-md-6">
@@ -944,9 +944,9 @@
                       <div class="row">
                          <div class="col-md-6">
                             <div class="form-group">
-                                <label for="name">Weight</label>
-                                <input type="time" class="form-control" wire:model.debounce.300ms="weight.{{$value}}" placeholder="Enter Work Weight" />
-                                @error('weight.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                <label for="weight">Weight(t)</label>
+                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="weight.{{$value}}" placeholder="Weight" >
+                                @error('weight.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
                         </div>
                          <div class="col-md-6">
@@ -1267,7 +1267,7 @@
                     <div class="row">
                          <div class="col-md-3">
                              <div class="form-group">
-                                <label for="name">Cargos<span class="required" style="color: red">*</span></label>
+                                <label for="name">Cargos</label>
                                 <select class="form-control" wire:model.debounce.300ms="cargo_id">
                                     <option value="">Select Cargo</option>
                                     @foreach ($cargos as $cargo)

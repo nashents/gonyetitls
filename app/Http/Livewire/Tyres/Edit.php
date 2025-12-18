@@ -184,9 +184,10 @@ class Edit extends Component
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();
         $this->store_id =  $tyre->store_id;
-        $this->vendor_id = $tyre->vendor_id;
+      
         $this->selectedAccount = $tyre->account_id;
-        $this->selectedCurrency = $tyre->currency_id;
+        $this->selectedPurchaseProduct = $tyre->purchase_product_id;
+      
         $this->amount = $tyre->amount;
         $this->qty = $tyre->qty;
         $this->cost = $tyre->cost;
@@ -199,15 +200,20 @@ class Edit extends Component
         $this->purchase_type = $tyre->purchase_type;
         $this->depreciation_type = $tyre->depreciation_type;
         $this->description = $tyre->description;
+       
+        $this->selectedGoodsReceived = $tyre->goods_received_id;
+        $this->exchange_rate = $tyre->exchange_rate;
+        $this->source = $tyre->purchase_id ? "Purchase" : ($tyre->transfer_id ? "Transfer" : "");
+        $this->selectedTransfer = $tyre->transfer_id;
         $this->selectedPurchase = $tyre->purchase_id;
-         $this->selectedGoodsReceived = $tyre->goods_received_id;
-         $this->exchange_rate = $tyre->exchange_rate;
         if ($this->selectedPurchase) {
           $this->vendor_id = Purchase::find($this->selectedPurchase)->vendor->id;
           $this->selectedCurrency = Purchase::find($this->selectedPurchase)->currency->id;
           $this->purchase_products = Purchase::find($this->selectedPurchase)->purchase_products;
-           
           $this->selected_currency = Currency::find($this->selectedCurrency);
+        }else{
+            $this->vendor_id = $tyre->vendor_id;
+            $this->selectedCurrency = $tyre->currency_id;
         }
        
 
@@ -475,7 +481,7 @@ public function updatedSelectedTax($id){
               $tyre->user_id = Auth::user()->id;
               $tyre->goods_received_id = $this->selectedGoodsReceived ? $this->selectedGoodsReceived : null;
               $tyre->product_id = $this->selectedProduct;
-              
+              $tyre->purchase_product_id = $this->selectedPurchaseProduct;
               $tyre->serial_number = $this->serial_number;
               $tyre->type = $this->type;
               $tyre->qty = $this->qty;
@@ -526,14 +532,24 @@ public function updatedSelectedTax($id){
               $tyre->tyre_number = $this->tyre_number;
               $tyre->currency_id = $this->selectedCurrency;
               $tyre->store_id = $this->store_id;
-              $tyre->purchase_id = $this->selectedPurchase;
               $tyre->vendor_id = $this->vendor_id;
               $tyre->condition = $this->condition;
               $tyre->description = $this->description;
               $tyre->depreciation_type = $this->depreciation_type;
               $tyre->purchase_date = $this->purchase_date;
               $tyre->purchase_type = $this->purchase_type;
-              $tyre->purchase_id = $this->selectedPurchase ? $this->selectedPurchase : null;
+
+              $tyre->purchase_id = null;
+              $tyre->transfer_id = null;
+
+              if ($this->source === 'Purchase') {
+                $tyre->purchase_id = $this->selectedPurchase;
+              }
+
+              if ($this->source === 'Transfer') {
+                $tyre->transfer_id = $this->selectedTransfer;
+              }
+              
               $tyre->warranty_exp_date = $this->warranty_exp_date;
               $tyre->life = $this->life;
               $tyre->residual_value = $this->residual_value;

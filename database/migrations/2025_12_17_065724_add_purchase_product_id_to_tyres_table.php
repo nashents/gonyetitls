@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateInventoryTransfersTable extends Migration
+class AddPurchaseProductIdToTyresTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,9 +13,8 @@ class CreateInventoryTransfersTable extends Migration
      */
     public function up()
     {
-        Schema::create('inventory_transfers', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
+        Schema::table('tyres', function (Blueprint $table) {
+            $table->bigInteger('purchase_product_id')->nullable()->unsigned();
         });
     }
 
@@ -26,6 +25,8 @@ class CreateInventoryTransfersTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('inventory_transfers');
+        Schema::table('tyres', function (Blueprint $table) {
+            $table->dropColumn('purchase_product_id');
+        });
     }
 }

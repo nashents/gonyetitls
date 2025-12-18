@@ -45,6 +45,7 @@ class Edit extends Component
     public $purchase_order;
     public $purchase_products;
     public $currencies;
+    public $source;
     public $exchange_rate;
     public $exchange_amount;
     public $selectedCurrency;
@@ -204,8 +205,8 @@ class Edit extends Component
          $this->tax_accounts = Account::whereHas('account_type', function ($query) {
             return $query->where('name','Sales Taxes');
         })->orderBy('name','asc')->get();
-        $this->vendor_id = $inventory->vendor_id;
-        $this->selectedCurrency = $inventory->currency_id;
+      
+       
         $this->balance = $inventory->balance;
         $this->stores = Store::latest()->get();
       
@@ -216,6 +217,7 @@ class Edit extends Component
         $this->measurement = $inventory->measurement;
         $this->cost = $inventory->cost;
         $product = $inventory->product;
+        $this->selectedPurchaseProduct = $inventory->purchase_product_id;
         $this->selectedProduct = $inventory->product_id;
         $this->selectedAccount = $inventory->account_id;
         $this->item_description = $product->description;
@@ -224,6 +226,7 @@ class Edit extends Component
 
         $this->weight = $inventory->weight;
        
+        $this->source = $inventory->purchase_id ? "Purchase" : ($inventory->transfer_id ? "Transfer" : "");
         $this->store_id = $inventory->store_id;
         $this->bin_id = $inventory->bin_id;
         $this->rack_id = $inventory->rack_id;
@@ -243,7 +246,16 @@ class Edit extends Component
         $this->part_number = $inventory->part_number;
         $this->serial_number = $inventory->serial_number;
         $this->selectedGoodsReceived = $inventory->goods_received_id;
+        $this->selectedTransfer = $inventory->transfer_id;
         $this->selectedPurchase = $inventory->purchase_id;
+        if ($this->selectedPurchase) {
+          $this->vendor_id = Purchase::find($this->selectedPurchase)->vendor->id;
+          $this->selectedCurrency = Purchase::find($this->selectedPurchase)->currency->id;
+          $this->selected_currency = Currency::find($this->selectedCurrency);
+        }else{
+            $this->vendor_id = $inventory->vendor_id;
+            $this->selectedCurrency = $inventory->currency_id;
+        }
         $this->exchange_rate = $inventory->exchange_rate;
         $this->purchase_order = Purchase::find($inventory->purchase_id);
         if (isset($this->purchase_order)) {
@@ -503,6 +515,7 @@ class Edit extends Component
         $inventory->bin_id = $this->bin_id ?? null;
         $inventory->rack_id = $this->rack_id ?? null;
         $inventory->product_id = $this->selectedProduct ?? null;
+        $inventory->purchase_product_id = $this->selectedPurchaseProduct ?? null;
         $inventory->currency_id = $this->selectedCurrency ?? null;
         $inventory->measurement = $this->measurement ?? null;
         $inventory->amount = $this->amount;
@@ -551,7 +564,17 @@ class Edit extends Component
         $inventory->depreciation_type = $this->depreciation_type;
         $inventory->purchase_date = $this->purchase_date;
         $inventory->purchase_type = $this->purchase_type;
-        $inventory->purchase_id = $this->selectedPurchase ? $this->selectedPurchase : null;
+
+        $inventory->purchase_id = null;
+        $inventory->transfer_id = null;
+
+        if ($this->source === 'Purchase') {
+            $inventory->purchase_id = $this->selectedPurchase;
+        }
+
+        if ($this->source === 'Transfer') {
+            $inventory->transfer_id = $this->selectedTransfer;
+        }
         $inventory->condition = $this->condition;
         $inventory->serial_number = $this->serial_number;
         $inventory->warranty_exp_date = $this->warranty_exp_date;

@@ -126,7 +126,7 @@
                                   </tr>
                                   @empty
                                   <tr>
-                                    <td colspan="7">
+                                    <td colspan="9">
                                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                             No Products Found ....
                                         </div>

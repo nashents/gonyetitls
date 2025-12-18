@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class AddDefaultTransporterIdToShiftsTable extends Migration
+class AddPurchaseProductIdToInventoriesTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,8 +13,8 @@ class AddDefaultTransporterIdToShiftsTable extends Migration
      */
     public function up()
     {
-        Schema::table('shifts', function (Blueprint $table) {
-            //
+        Schema::table('inventories', function (Blueprint $table) {
+             $table->bigInteger('purchase_product_id')->nullable()->unsigned();
         });
     }
 
@@ -25,8 +25,8 @@ class AddDefaultTransporterIdToShiftsTable extends Migration
      */
     public function down()
     {
-        Schema::table('shifts', function (Blueprint $table) {
-            //
+        Schema::table('inventories', function (Blueprint $table) {
+            $table->dropColumn('purchase_product_id');
         });
     }
 }

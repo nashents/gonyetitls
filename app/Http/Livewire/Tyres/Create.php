@@ -311,6 +311,58 @@ class Create extends Component
         }
     }
 
+        public function updatedSelectedTransfer($id)
+    {
+        if (!is_null($id) ) {
+            $transfer = Transfer::find($id);
+            if(isset($transfer)){
+                $this->store_id = $transfer->to;
+                $this->selectedAccount = $transfer->account_id;
+                $this->transfer_items = $transfer->transfer_items;
+            }
+        }
+    }
+
+    public function updatedSelectedTransferItem($id, $key){
+        if (!is_null($id)) {
+            $transfer_item = TransferItem::find($id);
+            if (isset($transfer_item)) {
+                $this->selectedProduct[$key] = $transfer_item->product_id;
+                $this->amount[$key] = $transfer_item->amount;
+                $this->item_description[$key] = $transfer_item->product->description;
+                $this->measurement[$key] = $transfer_item->product->unit_of_measure;
+                if($this->department == "inventory"){
+                      $this->serial_number[$key] = $transfer_item->inventory->serial_number;
+                       $this->amount[$key] = $transfer_item->inventory->amount;
+                        $this->weight[$key] = $transfer_item->inventory->weight;
+                        $this->selectedCurrency = $transfer_item->inventory->currency_id;
+                        $this->vendor_id = $transfer_item->inventory->vendor_id;
+                }elseif($this->department == "tyre"){
+                      $this->serial_number[$key] = $transfer_item->tyre->serial_number;
+                       $this->amount[$key] = $transfer_item->tyre->amount;
+                        $this->weight[$key] = $transfer_item->tyre->weight;
+                         $this->selectedCurrency = $transfer_item->tyre->currency_id;
+                        $this->vendor_id = $transfer_item->tyre->vendor_id;
+                }
+              
+               
+                $this->qty[$key] = $transfer_item->qty;
+               
+
+                if($transfer_item->tax_id){
+                    $this->selectedTax[$key] = $transfer_item->tax_id;
+                    $tax = Account::find($transfer_item->tax_id);
+                    if (isset($tax)) {
+                        $this->tax_rate[$key] = $tax->rate;
+                    }
+                }
+
+
+            }
+           
+        }
+    }
+
     public function goodsReceivedNumber(){
 
      if (isset($this->company)) {
@@ -433,57 +485,7 @@ class Create extends Component
 
     }
 
-        public function updatedSelectedTransfer($id)
-    {
-        if (!is_null($id) ) {
-            $transfer = Transfer::find($id);
-            if(isset($transfer)){
-                $this->store_id = $transfer->to;
-                $this->selectedAccount = $transfer->account_id;
-                $this->transfer_items = $transfer->transfer_items;
-            }
-        }
-    }
-
-    public function updatedSelectedTransferItem($id, $key){
-        if (!is_null($id)) {
-            $transfer_item = TransferItem::find($id);
-            if (isset($transfer_item)) {
-                $this->selectedProduct[$key] = $transfer_item->product_id;
-                $this->amount[$key] = $transfer_item->amount;
-                $this->item_description[$key] = $transfer_item->product->description;
-                $this->measurement[$key] = $transfer_item->product->unit_of_measure;
-                if($this->department == "inventory"){
-                      $this->serial_number[$key] = $transfer_item->inventory->serial_number;
-                       $this->amount[$key] = $transfer_item->inventory->amount;
-                        $this->weight[$key] = $transfer_item->inventory->weight;
-                        $this->selectedCurrency = $transfer_item->inventory->currency_id;
-                        $this->vendor_id = $transfer_item->inventory->vendor_id;
-                }elseif($this->department == "tyre"){
-                      $this->serial_number[$key] = $transfer_item->tyre->serial_number;
-                       $this->amount[$key] = $transfer_item->tyre->amount;
-                        $this->weight[$key] = $transfer_item->tyre->weight;
-                         $this->selectedCurrency = $transfer_item->tyre->currency_id;
-                        $this->vendor_id = $transfer_item->tyre->vendor_id;
-                }
-              
-               
-                $this->qty[$key] = $transfer_item->qty;
-               
-
-                if($transfer_item->tax_id){
-                    $this->selectedTax[$key] = $transfer_item->tax_id;
-                    $tax = Account::find($transfer_item->tax_id);
-                    if (isset($tax)) {
-                        $this->tax_rate[$key] = $tax->rate;
-                    }
-                }
-
-
-            }
-           
-        }
-    }
+    
 
    public function calculateExchangeAmount($total = null){
         if (($total && is_numeric($total)) && ($this->exchange_rate && is_numeric($this->exchange_rate)) ) {
@@ -520,6 +522,9 @@ class Create extends Component
                 }
                 $tyre->product_id = $this->selectedProduct[$key];
                 $tyre->account_id = $this->selectedAccount;
+                if (isset($this->selectedPurchaseProduct[$key])) {
+                    $tyre->purchase_product_id = $this->selectedPurchaseProduct[$key];
+                }
                 if (isset($this->serial_number[$key])) {
                     $tyre->serial_number = $this->serial_number[$key];
                 }
@@ -597,14 +602,23 @@ class Create extends Component
                 $tyre->tyre_number = $this->tyreNumber();
                 $tyre->currency_id = $this->selectedCurrency;
                 $tyre->store_id = $this->store_id;
-                $tyre->purchase_id = $this->selectedPurchase;
                 $tyre->vendor_id = $this->vendor_id;
                 $tyre->condition = $this->condition;
                 $tyre->description = $this->description;
                 $tyre->depreciation_type = $this->depreciation_type;
                 $tyre->purchase_date = $this->purchase_date;
                 $tyre->purchase_type = $this->purchase_type;
-                $tyre->purchase_id = $this->selectedPurchase ? $this->selectedPurchase : null;
+                $tyre->purchase_id = null;
+                $tyre->transfer_id = null;
+
+                if ($this->source === 'Purchase') {
+                    $tyre->purchase_id = $this->selectedPurchase;
+                }
+
+                if ($this->source === 'Transfer') {
+                    $tyre->transfer_id = $this->selectedTransfer;
+                }
+                    
                 $tyre->warranty_exp_date = $this->warranty_exp_date;
                 $tyre->life = $this->life;
                 $tyre->residual_value = $this->residual_value;

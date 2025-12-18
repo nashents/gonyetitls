@@ -573,6 +573,9 @@ class Create extends Component
                     if (isset($this->selectedProduct[$key])) {
                         $asset->product_id = $this->selectedProduct[$key];
                     }
+                    if (isset($this->selectedPurchaseProduct[$key])) {
+                        $asset->purchase_product_id = $this->selectedPurchaseProduct[$key];
+                    }
                   
                     if (isset($this->serial_number[$key])) {
                         $asset->serial_number = $this->serial_number[$key];

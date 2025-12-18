@@ -74,6 +74,7 @@ class Edit extends Component
     public $products;
     public $measurement ;
     public $selectedProduct ;
+    public $selectedPurchaseProduct ;
     public $serial_number ;
     public $tax_rate ;
     public $selectedTax ;
@@ -173,6 +174,7 @@ class Edit extends Component
         $this->vendor_id = $asset->vendor_id;
         $this->selectedCurrency = $asset->currency_id;
         $this->selectedProduct = $asset->product_id;
+        $this->selectedPurchaseProduct = $asset->purchase_product_id;
         $this->selectedAccount = $asset->account_id;
         $this->purchase_date = $asset->purchase_date;
         $this->selectedPurchase = $asset->purchase_id;
@@ -408,6 +410,7 @@ class Edit extends Component
         $asset->bin_id = $this->bin_id ?? null;
         $asset->rack_id = $this->rack_id ?? null;
         $asset->product_id = $this->selectedProduct ?? null;
+        $asset->purchase_product_id = $this->selectedPurchaseProduct ?? null;
         $asset->currency_id = $this->selectedCurrency ?? null;
         $asset->amount = $this->amount;
         $asset->cost = $this->cost;

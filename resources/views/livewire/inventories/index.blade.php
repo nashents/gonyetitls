@@ -57,11 +57,12 @@
                                     <td>
                                         @if ($inventory->product)
                                             {{$inventory->product->brand ? $inventory->product->brand->name : ""}} {{$inventory->product ? $inventory->product->name : ""}}
-                                        @endif
-                                        @if ($inventory->product)
+                                            @if ($inventory->product->identification_number)
                                             <br>
-                                            {{$inventory->product->identification_number ? "PN#: ".$inventory->product->identification_number : ""}}
+                                            {{$inventory->product->identification_number ? "ID#: ".$inventory->product->identification_number : ""}}
+                                            @endif
                                         @endif
+                                      
                                         @if ($inventory->serial_number)
                                             <br>
                                             <small><strong>S#: </strong> {{$inventory->serial_number}}</small>
