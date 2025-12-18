@@ -189,7 +189,6 @@
                                                 </button>
                                                 <ul class="dropdown-menu">
                                                    <li><a href="{{route('payments.show', $payment->id)}}"><i class="fas fa-eye color-default"></i>View</a></li>
-                                                    
                                                    @if ($payment->receipt)
                                                    <li><a href="{{route('receipts.preview',$payment->receipt->id)}}"  ><i class="fas fa-receipt color-primary"></i> Receipt</a></li>
                                                    @endif    

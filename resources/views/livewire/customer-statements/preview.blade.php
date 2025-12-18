@@ -1,16 +1,18 @@
 <div>
+    <div id="print-area">
     <div id="invoice">
         <x-loading/>
         <div class="toolbar hidden-print">
             <div class="text-end">
                 <button type="button" onclick="goBack()" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-arrow-left" style="color:black"></i> Back</button>
+                <a href="javascript:void(0)" onclick="printSection()" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-print" style="color: black"></i> Print</a>
                 {{-- <a href="#" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-envelope" style="color:red"></i> Send</a> --}}
                 @if (isset($selectedCustomer) && (isset($selectedType) && $selectedType == "Outstanding Invoices"))
-                <a href="{{route('customer_statements.print.outstanding',['selectedCustomer' => $selectedCustomer, 'selectedType' => $selectedType])}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-print" style="color:black"></i> Print</a>
+                {{-- <a href="{{route('customer_statements.print.outstanding',['selectedCustomer' => $selectedCustomer, 'selectedType' => $selectedType])}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-print" style="color:black"></i> Print</a> --}}
                 <a href="{{route('customer_statements.pdf.outstanding',['selectedCustomer' => $selectedCustomer, 'selectedType' => $selectedType])}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-file-pdf-o" style="color:red"></i> Export as PDF</a>
                 <a href="{{route('customer_statements.email.outstanding',['selectedCustomer' => $selectedCustomer, 'selectedType' => $selectedType])}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-envelope" style="color:red"></i> Send Email</a>
                 @elseif(isset($selectedCustomer) && (isset($selectedType) && $selectedType == "Account Activity") && isset($from) && isset($to))  
-                <a href="{{route('customer_statements.print.account',['selectedCustomer' => $selectedCustomer, 'selectedType' => $selectedType, 'from' => $from, 'to' => $to])}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-print" style="color:black"></i> Print</a>
+                {{-- <a href="{{route('customer_statements.print.account',['selectedCustomer' => $selectedCustomer, 'selectedType' => $selectedType, 'from' => $from, 'to' => $to])}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-print" style="color:black"></i> Print</a> --}}
                 <a href="{{route('customer_statements.pdf.account',['selectedCustomer' => $selectedCustomer, 'selectedType' => $selectedType, 'from' => $from, 'to' => $to])}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-file-pdf-o" style="color:red"></i> Export as PDF</a>
                 <a href="{{route('customer_statements.email.account',['selectedCustomer' => $selectedCustomer, 'selectedType' => $selectedType, 'from' => $from, 'to' => $to])}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-envelope" style="color:red"></i> Send Email</a>
                 @endif
@@ -373,5 +375,6 @@
             <!--DO NOT DELETE THIS div. IT is responsible for showing footer always at the bottom-->
             <div></div>
         </div>
+    </div>
     </div>
 </div>
