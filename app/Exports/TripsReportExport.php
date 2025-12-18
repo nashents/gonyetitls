@@ -49,6 +49,9 @@ WithCustomStartCell
     protected float $sumTurnover = 0.0;
     protected float $sumCogs = 0.0;
     protected float $sumNet = 0.0;
+    protected float $totalRevenueBase = 0.0;   // Turnover (base currency)
+    protected float $totalExpensesBase = 0.0;  // Cost of Sales (base currency)
+    protected float $totalNetProfitBase = 0.0;
     public $department_names;
     public $role_names;
     public $user;
@@ -76,6 +79,15 @@ WithCustomStartCell
             }
 
             $base = $this->query();
+
+            $money = (clone $base)->selectRaw("
+                SUM(COALESCE(trips.turnover,0))      as total_revenue_base,
+                SUM(COALESCE(trips.cost_of_sales,0)) as total_expenses_base
+            ")->first();
+
+            $this->totalRevenueBase  = (float) ($money->total_revenue_base ?? 0);
+            $this->totalExpensesBase = (float) ($money->total_expenses_base ?? 0);
+            $this->totalNetProfitBase = $this->totalRevenueBase - $this->totalExpensesBase;
 
             // Totals
             $this->totalTrips = (clone $base)->count();
@@ -607,7 +619,7 @@ WithCustomStartCell
 
           
                 return   [
-                    $trip->trip_number ,
+                    $trip->trip_number . ($trip->trip_ref ? " / " . $trip->trip_ref : ""),
                     $start_date,
                     $loading_date,
                     $offloading_date,
@@ -689,7 +701,7 @@ WithCustomStartCell
 
     public function headings(): array{
             return[
-                'Trip#',
+                'Trip#/Ref',
                 'Date Booked',
                 'Date Loaded',
                 'Date Offloaded',
@@ -804,13 +816,28 @@ WithCustomStartCell
 
                 // 2) Summary under the logo starting at row 7
                 $row = 7;
-                $sheet->setCellValue("A{$row}", 'Trips Summary');
+                $sheet->setCellValue("C{$row}", 'Trips Summary');
                 $sheet->mergeCells("A{$row}:BX{$row}");
                 $sheet->getStyle("A{$row}")->applyFromArray(['font' => ['bold' => true, 'size' => 14]]);
                 $row++;
 
+                $baseSymbol = optional($this->company->currency)->symbol ?? '';
+
                 // C:D block (labels/values)
                 $sheet->setCellValue("C{$row}", 'Total Trips');        $sheet->setCellValue("D{$row}", $this->totalTrips); $row++;
+                if($this->company->rates_managed_by_finance == True){
+                    if (in_array('Finance', $this->department_names) || in_array('Super Admin', $this->role_names) ){
+                        $sheet->setCellValue("C{$row}", 'Total Revenue');$sheet->setCellValue("D{$row}",  $baseSymbol . number_format($this->totalRevenueBase, 2));$row++;
+                        $sheet->setCellValue("C{$row}", 'Total Expenses');$sheet->setCellValue("D{$row}", $baseSymbol . number_format($this->totalExpensesBase, 2));$row++;
+                        $sheet->setCellValue("C{$row}", 'Net Profit');$sheet->setCellValue("D{$row}", $baseSymbol . number_format($this->totalNetProfitBase, 2));$row++;
+                    }
+                }else{
+                    $sheet->setCellValue("C{$row}", 'Total Revenue');$sheet->setCellValue("D{$row}",  $baseSymbol . number_format($this->totalRevenueBase, 2));$row++;
+                    $sheet->setCellValue("C{$row}", 'Total Expenses');$sheet->setCellValue("D{$row}", $baseSymbol . number_format($this->totalExpensesBase, 2));$row++;
+                    $sheet->setCellValue("C{$row}", 'Net Profit');$sheet->setCellValue("D{$row}", $baseSymbol . number_format($this->totalNetProfitBase, 2));$row++;
+                }
+                
+               
                 $sheet->setCellValue("C{$row}", 'By Status');          $sheet->setCellValue("D{$row}", $statusLine);       $row++;
                 $sheet->setCellValue("C{$row}", 'Avg Trip Duration');  $sheet->setCellValue("D{$row}", $avgTrip);          $row++;
                 $sheet->setCellValue("C{$row}", 'By Asset Type');      

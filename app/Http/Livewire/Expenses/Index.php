@@ -101,7 +101,12 @@ class Index extends Component
     }
 
     public function store(){
+        
+         $this->validate();
+
         try{
+
+       
         $expense = new Expense;
         $expense->user_id = Auth::user()->id;
         $expense->account_id = $this->account_id;

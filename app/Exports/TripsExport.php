@@ -509,7 +509,7 @@ WithCustomStartCell
             }
 
                 return   [
-                    $trip->trip_number ,
+                    $trip->trip_number . ($trip->trip_ref ? " / " . $trip->trip_ref : ""),
                     $start_date,
                     $loading_date,
                     $offloading_date,

@@ -514,7 +514,7 @@ WithCustomStartCell
             $fuel_amount = $trip->fuels->where('amount','!=','')->where('amount','!=',Null)->sum('amount');
 
                 return   [
-                    $trip->trip_number ,
+                    $trip->trip_number . ($trip->trip_ref ? " / " . $trip->trip_ref : ""),
                     $trip->transporter ? $trip->transporter->name : "",
                     $horse_full_details,
                     $trailer_list,

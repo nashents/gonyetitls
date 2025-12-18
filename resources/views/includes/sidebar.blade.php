@@ -19,7 +19,7 @@
                 <li class="nav-header"><span class="">Main Category</span></li>
                 <li class="{{ request()->routeIs('dashboard.index') ? 'active' : '' }}"><a  href="{{route('dashboard.index')}}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span> </a></li>
                 @if ($isAdmin || $isSuperAdmin)
-                    @if ($user->is_admin())
+                    @if ($is_admin)
                         <li class="has-children {{ request()->routeIs('companies.index') ? 'active' : '' }}">
                             <a href="javascript:void(0)"><i class="fas fa-building"></i> <span>Companies</span> <i class="fas fa-angle-right arrow"></i></a>
                             <ul class="child-nav {{ request()->routeIs('companies.index') ? 'show' : '' }}">
@@ -41,7 +41,7 @@
                                 <li class="{{ request()->routeIs('branches.index') ? 'active' : '' }}">
                                     <a href="{{route('branches.index')}}"><i class="fas fa-list"></i> <span>Branches</span> </a>
                                 </li>
-                                @if ($user->is_admin())
+                                @if ($is_admin)
                                     <li class="{{ request()->routeIs('departments.index') ? 'active' : '' }}">
                                         <a href="{{route('departments.index')}}"><i class="fas fa-list"></i> <span>Departments</span> </a>
                                     </li>
@@ -814,267 +814,207 @@
                                 @endif  
                             </ul>
                         </li>
-                        {{-- <li class="has-children {{ request()->routeIs('rehandlings.*') ? 'active' : '' }}">
-                            <a href="javascript:void(0)"><i class="fas fa-list"></i> <span>ReHandling</span> <i class="fas fa-angle-right arrow"></i></a>
-                            <ul class="child-nav">
-                                <li><a href="{{route('rehandlings.index')}}" ><i class="fas fa-list "></i> <span>Manage Worksheets</span></a></li>
-                            </ul>
-                        </li> --}}
                         <li class="has-children {{ request()->routeIs('shifts.*') ? 'active' : '' }}">
                             <a href="javascript:void(0)"><i class="fas fa-clock"></i> <span>Shifts</span> <i class="fas fa-angle-right arrow"></i></a>
                             <ul class="child-nav">
                                 <li><a href="{{route('shifts.index')}}" ><i class="fas fa-list "></i> <span>Manage Shifts</span></a></li>          
-                                {{-- @if ($isManagement || isset($tldepartment_head) || $isSuperAdmin)
-                                    <li><a href="{{route('shifts.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Shifts</span>
-                                        @if ($shiftsPendingCount>0)
-                                            <span class="label label-success ml-5">{{$shiftsPendingCount}}</span>
-                                        @endif
-                                    </a></li>
-                                    <li><a href="{{route('shifts.approved')}}" ><i class="fas fa-check "></i> <span>Approved Shifts</span>
-                                        @if ($shiftsApprovedCount>0)
-                                            <span class="label label-success ml-5">{{$shiftsApprovedCount}}</span>
-                                        @endif
-                                    </a></li>
-                                    <li><a href="{{route('shifts.rejected')}}" ><i class="fas fa-ban "></i> <span>Rejected Shifts</span>
-                                        @if ($shiftsRejectedCount>0)
-                                            <span class="label label-success ml-5">{{$shiftsRejectedCount}}</span>
-                                        @endif
-                                    </a></li>
-                                @endif --}}
                                 <li><a href="{{route('shifts.reports')}}" ><i class="fas fa-line-chart"></i> <span>Shifts Reports</span></a></li>
                             </ul>
                         </li>
                     @endif
-                    @endif
-                   
-                    @if ($inFinance || $inTransport || $isSuperAdmin)
-                    @if (!$user->driver)
                     <li class="has-children {{ request()->routeIs('trips.*') ? 'active' : '' }} " >
                         <a href="javascript:void(0)"><i class="fas fa-road"></i> <span>Trips</span> <i class="fas fa-angle-right arrow"></i></a>
                         <ul class="child-nav">
-                   
-                    <li><a href="{{route('trips.create')}}" ><i class="fas fa-plus "></i> <span>Create Trip</span></a></li>
-                    <li><a href="{{route('trips.index')}}" ><i class="fas fa-list "></i> <span>Manage Trips</span></a></li>
-                   
-                 
-                        
-                    @if ($isManagement || isset($tldepartment_head) || $isSuperAdmin)
-                    
-                    <li><a href="{{route('trips.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Trips</span>
-                    @if ($tripsPendingCount>0)
-                    <span class="label label-success ml-5">{{$tripsPendingCount}}</span>
-                    @endif
-                    </a></li>
-                    <li><a href="{{route('trips.approved')}}" ><i class="fas fa-check "></i> <span>Approved Trips</span>
-                        @if ($tripsApprovedCount>0)
-                        <span class="label label-success ml-5">{{$tripsApprovedCount}}</span>
-                        @endif
-                    </a></li>
-                    <li><a href="{{route('trips.rejected')}}" ><i class="fas fa-ban "></i> <span>Rejected Trips</span>
-                        @if ($tripsRejectedCount>0)
-                        <span class="label label-success ml-5">{{$tripsRejectedCount}}</span>
-                        @endif
-                    </a></li>
-                    <li><a href="{{route('trips.deleted')}}" ><i class="fas fa-trash "></i> <span>Deleted Trips</span>
-                    @if ($tripsDelectedCount>0)
-                    <span class="label label-success ml-5">{{$tripsDelectedCount}}</span>
-                    @endif
-                    </a></li>
-                    @endif
-                
-                    
-                    <li class="{{ request()->routeIs('trip_groups.index') ? 'active' : '' }}"><a href="{{route('trip_groups.index')}}" ><i class="fas fa-list"></i> <span>Tracking Groups</span></a></li> 
-                        </ul>
-                    </li>
-                    @endif
-                  
-                     @if (!$user->driver)
-                    <li class="has-children"  >
-                        <a href="javascript:void(0)"><i class="fas fa-door-open"></i> <span>Gatepass</span> <i class="fas fa-angle-right arrow"></i></a>
-                        <ul class="child-nav">
-                            <li class="{{ request()->routeIs('gate_passes.pending',['department'=>'logistics']) ? 'active' : '' }}"><a href="{{route('gate_passes.pending',['department'=>'logistics'])}}" ><i class="fas fa-clock "></i> <span>Pending Gatepasses</span>
-                                @if ($logistics_gate_passesPendingCount>0)
-                                <span class="label label-success ml-5">{{$logistics_gate_passesPendingCount}}</span>
-                                @endif
-                            </a></li>
-                            <li class="{{ request()->routeIs('gate_passes.approved',['department'=>'logistics']) ? 'active' : '' }}"><a href="{{route('gate_passes.approved',['department'=>'logistics'])}}" ><i class="fas fa-check "></i> <span>Approved Gatepasses</span>
-                                @if ($logistics_gate_passesApprovedCount>0)
-                                <span class="label label-success ml-5">{{$logistics_gate_passesApprovedCount}}</span>
-                                @endif
-                            </a></li>
-                            <li class="{{ request()->routeIs('gate_passes.rejected',['department'=>'logistics']) ? 'active' : '' }}"><a href="{{route('gate_passes.rejected',['department'=>'logistics'])}}" ><i class="fas fa-ban "></i> <span>Rejected Gatepasses</span>
-                                @if ($logistics_gate_passesRejectedCount>0)
-                                <span class="label label-success ml-5">{{$logistics_gate_passesRejectedCount}}</span>
-                                @endif
-                            </a></li>
-                        </ul>
-                    </li>
-                    @endif
-                    @if (!$user->driver)
-                   
-                   
-                   
-                    <li class="has-children {{ request()->routeIs('recoveries.*') ? 'active' : '' }}" >
-                        <a href="javascript:void(0)"><i class="fas fa-hand-holding-usd"></i> <span>Recoveries</span> <i class="fas fa-angle-right arrow"></i></a>
-                        <ul class="child-nav">
-                            <li><a href="{{route('recoveries.create')}}" ><i class="fas fa-plus "></i> <span>Create Recovery</span></a></li>
-                            <li><a href="{{route('recoveries.index')}}" ><i class="fas fa-list "></i> <span>Manage Recoveries</span></a></li>
+                            <li><a href="{{route('trips.create')}}" ><i class="fas fa-plus "></i> <span>Create Trip</span></a></li>
+                            <li><a href="{{route('trips.index')}}" ><i class="fas fa-list "></i> <span>Manage Trips</span></a></li>
                             @if ($isManagement || isset($tldepartment_head) || $isSuperAdmin)
-                            <li><a href="{{route('recoveries.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Recoveries</span>
-                                @if ($recoveriesPendingCount>0)
-                                <span class="label label-success ml-5">{{$recoveriesPendingCount}}</span>
-                                @endif
-                                </a></li>
-                                <li><a href="{{route('recoveries.approved')}}" ><i class="fas fa-check "></i> <span>Approved Recoveries</span>
-                                    @if ($recoveriesApprovedCount>0)
-                                    <span class="label label-success ml-5">{{$recoveriesApprovedCount}}</span>
+                                <li>
+                                    <a href="{{route('trips.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Trips</span>
+                                    @if ($tripsPendingCount>0)
+                                        <span class="label label-success ml-5">{{$tripsPendingCount}}</span>
                                     @endif
-                                </a></li>
-                                <li><a href="{{route('recoveries.rejected')}}" ><i class="fas fa-ban "></i> <span>Rejected Recoveries</span>
-                                    @if ($recoveriesRejectedCount>0)
-                                    <span class="label label-success ml-5">{{$recoveriesRejectedCount}}</span>
-                                    @endif
-                                </a></li>
-                                @endif
-                         
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{{route('trips.approved')}}" ><i class="fas fa-check "></i> <span>Approved Trips</span>
+                                        @if ($tripsApprovedCount>0)
+                                            <span class="label label-success ml-5">{{$tripsApprovedCount}}</span>
+                                        @endif
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{{route('trips.rejected')}}" ><i class="fas fa-ban "></i> <span>Rejected Trips</span>
+                                        @if ($tripsRejectedCount>0)
+                                            <span class="label label-success ml-5">{{$tripsRejectedCount}}</span>
+                                        @endif
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{{route('trips.deleted')}}" ><i class="fas fa-trash "></i> <span>Deleted Trips</span>
+                                        @if ($tripsDelectedCount>0)
+                                            <span class="label label-success ml-5">{{$tripsDelectedCount}}</span>
+                                        @endif
+                                    </a>
+                                </li>
+                            @endif
+                            <li class="{{ request()->routeIs('trip_groups.index') ? 'active' : '' }}"><a href="{{route('trip_groups.index')}}" ><i class="fas fa-list"></i> <span>Tracking Groups</span></a></li> 
                         </ul>
                     </li>
-                   
-                    @endif
-               
-                    @endif
-
-
-                       
-                 @if ($inFinance || in_array('Workshop', $department_names) || in_array('Stores', $department_names) || $isSuperAdmin)
-                 <li class="nav-header">
-                    <span class="">Workshop Management</span>
-                 </li>
-
-                @if ( isset($wsdepartment_head) || ($isAdmin && in_array('Workshop', $department_names)) || $isSuperAdmin)
-                <li class="has-children">
-                    <a href="javascript:void(0)"><i class="fas fa-cog"></i> <span>Master</span> <i class="fas fa-angle-right arrow"></i></a>
-                    <ul class="child-nav">
-                        <li class="{{ request()->routeIs('service_types.index') ? 'active' : '' }}">
-                            <a href="{{route('service_types.index')}}"><i class="fas fa-list"></i> <span>Job Types</span> </a>
-                        </li>
-                        <li class="{{ request()->routeIs('inspection_groups.index') ? 'active' : '' }}">
-                            <a href="{{route('inspection_groups.index')}}"><i class="fas fa-list"></i> <span> Inspection Item Groups</span> </a>
-                        </li>
-                        <li class="{{ request()->routeIs('inspection_types.index') ? 'active' : '' }}">
-                            <a href="{{route('inspection_types.index')}}"><i class="fas fa-list"></i> <span>Inspection Items</span> </a>
-                        </li>
-                        <li class="{{ request()->routeIs('stations.index') ? 'active' : '' }}">
-                            <a href="{{route('stations.index')}}"><i class="fas fa-list"></i> <span>Workshop Stations</span> </a>
-                        </li>
-                    </ul>
-                </li>
-
-                @endif
-
-                          <li class="has-children {{ request()->routeIs('bookings.*') ? 'active' : '' }}" >
-                            <a href="javascript:void(0)"><i class="fas fa-tasks"></i> <span>Bookings</span> <i class="fas fa-angle-right arrow"></i></a>
+                    @if (!$user->driver)
+                        <li class="has-children"  >
+                            <a href="javascript:void(0)"><i class="fas fa-door-open"></i> <span>Gatepass</span> <i class="fas fa-angle-right arrow"></i></a>
                             <ul class="child-nav">
-                                <li><a href="{{route('bookings.create')}}" ><i class="fas fa-plus "></i> <span>Create Booking</span></a></li>
-                                <li><a href="{{route('bookings.index')}}" ><i class="fas fa-list "></i> <span>Manage Bookings</span></a></li>
-                                
-                                @if ($isManagement || isset($wsdepartment_head) || ($isAdmin && in_array('Workshop', $department_names)) || $isSuperAdmin)
-                                <li>
-                                    <a href="{{route('bookings.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Bookings</span>
-                                        @if ($bookingsPendingCount>0)
-                                        <span class="label label-success ml-5">{{$bookingsPendingCount}}</span>
-                                        @endif
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="{{route('bookings.approved')}}" ><i class="fas fa-check "></i> <span>Approved Bookings</span>
-                                        @if ($bookingsApprovedCount>0)
-                                        <span class="label label-success ml-5">{{$bookingsApprovedCount}}</span>
-                                        @endif
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="{{route('bookings.rejected')}}" ><i class="fas fa-ban"></i> <span>Rejected Bookings</span>
-                                        @if ($bookingsRejectedCount>0)
-                                        <span class="label label-success ml-5">{{$bookingsRejectedCount}}</span>
-                                        @endif
-                                    </a>
-                                </li>
-                               
-                                @endif
+                                <li class="{{ request()->routeIs('gate_passes.pending',['department'=>'logistics']) ? 'active' : '' }}"><a href="{{route('gate_passes.pending',['department'=>'logistics'])}}" ><i class="fas fa-clock "></i> <span>Pending Gatepasses</span>
+                                    @if ($logistics_gate_passesPendingCount>0)
+                                    <span class="label label-success ml-5">{{$logistics_gate_passesPendingCount}}</span>
+                                    @endif
+                                </a></li>
+                                <li class="{{ request()->routeIs('gate_passes.approved',['department'=>'logistics']) ? 'active' : '' }}"><a href="{{route('gate_passes.approved',['department'=>'logistics'])}}" ><i class="fas fa-check "></i> <span>Approved Gatepasses</span>
+                                    @if ($logistics_gate_passesApprovedCount>0)
+                                    <span class="label label-success ml-5">{{$logistics_gate_passesApprovedCount}}</span>
+                                    @endif
+                                </a></li>
+                                <li class="{{ request()->routeIs('gate_passes.rejected',['department'=>'logistics']) ? 'active' : '' }}"><a href="{{route('gate_passes.rejected',['department'=>'logistics'])}}" ><i class="fas fa-ban "></i> <span>Rejected Gatepasses</span>
+                                    @if ($logistics_gate_passesRejectedCount>0)
+                                    <span class="label label-success ml-5">{{$logistics_gate_passesRejectedCount}}</span>
+                                    @endif
+                                </a></li>
                             </ul>
-
                         </li>
-                              <li class="has-children {{ request()->routeIs('tickets.index') ? 'active' : '' }}" >
-                            @php
-                            $jobCardsCount = $employee->tickets
-                            ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                            ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->where('status',1)->count();
-                            @endphp
-                            <a href="javascript:void(0)"><i class="fas fa-file-invoice"></i> <span>Tickets</span> <i class="fas fa-angle-right arrow"></i></a>
+                        <li class="has-children {{ request()->routeIs('recoveries.*') ? 'active' : '' }}" >
+                            <a href="javascript:void(0)"><i class="fas fa-hand-holding-usd"></i> <span>Recoveries</span> <i class="fas fa-angle-right arrow"></i></a>
                             <ul class="child-nav">
-                                @if ( isset($stdepartment_head) || isset($wsdepartment_head) || ($isAdmin && in_array('Workshop', $department_names)) || ($isAdmin && in_array('Stores', $department_names))  || $isSuperAdmin)
-                                <li><a href="{{route('tickets.index')}}" ><i class="fas fa-tasks "></i> <span>Manage Tickets</span></a></li>
-                                @endif
-                                @if (in_array('Workshop', $department_names))
-                                <li>
-                                    <a href="{{route('tickets.cards', $employee->id)}}" ><i class="fas fa-tasks "></i> <span>My Tickets</span>
-                                        @if ($jobCardsCount>0)
-                                            <span class="label label-success ml-5">{{$jobCardsCount}}</span>
+                                <li><a href="{{route('recoveries.create')}}" ><i class="fas fa-plus "></i> <span>Create Recovery</span></a></li>
+                                <li><a href="{{route('recoveries.index')}}" ><i class="fas fa-list "></i> <span>Manage Recoveries</span></a></li>
+                                @if ($isManagement || isset($tldepartment_head) || $isSuperAdmin)
+                                    <li>
+                                        <a href="{{route('recoveries.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Recoveries</span>
+                                            @if ($recoveriesPendingCount>0)
+                                                <span class="label label-success ml-5">{{$recoveriesPendingCount}}</span>
+                                            @endif
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{{route('recoveries.approved')}}" ><i class="fas fa-check "></i> <span>Approved Recoveries</span>
+                                            @if ($recoveriesApprovedCount>0)
+                                                <span class="label label-success ml-5">{{$recoveriesApprovedCount}}</span>
+                                            @endif
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{{route('recoveries.rejected')}}" ><i class="fas fa-ban "></i> <span>Rejected Recoveries</span>
+                                        @if ($recoveriesRejectedCount>0)
+                                            <span class="label label-success ml-5">{{$recoveriesRejectedCount}}</span>
                                         @endif
-                                    </a>
-                               </li>
+                                        </a>
+                                    </li>
                                 @endif
                             </ul>
                         </li>
-                        <li class="has-children {{ request()->routeIs('inspections.index') ? 'active' : '' }}" >
-                            @php
-                            $inspectionsCount = $employee->inspections
-                            ->where('created_at', '>', \Carbon\Carbon::now()->startOfWeek())
-                            ->where('created_at', '<', \Carbon\Carbon::now()->endOfWeek())->where('status',1)->count();
-                            @endphp
-                            <a href="javascript:void(0)"><i class="fas fa-search"></i> <span>Ticket Inspections</span> <i class="fas fa-angle-right arrow"></i></a>
+                    @endif
+                @endif       
+                @if ($inFinance || in_array('Workshop', $department_names) || in_array('Stores', $department_names) || $isSuperAdmin)
+                    <li class="nav-header"><span class="">Workshop Management</span></li>
+                    @if ( isset($wsdepartment_head) || ($isAdmin && in_array('Workshop', $department_names)) || $isSuperAdmin)
+                        <li class="has-children">
+                            <a href="javascript:void(0)"><i class="fas fa-cog"></i> <span>Master</span> <i class="fas fa-angle-right arrow"></i></a>
                             <ul class="child-nav">
-                                 @if ( isset($stdepartment_head) || isset($wsdepartment_head) || ($isAdmin && in_array('Workshop', $department_names)) || ($isAdmin && in_array('Stores', $department_names))  || $isSuperAdmin)
+                                <li class="{{ request()->routeIs('service_types.index') ? 'active' : '' }}">
+                                    <a href="{{route('service_types.index')}}"><i class="fas fa-list"></i> <span>Job Types</span> </a>
+                                </li>
+                                <li class="{{ request()->routeIs('inspection_groups.index') ? 'active' : '' }}">
+                                    <a href="{{route('inspection_groups.index')}}"><i class="fas fa-list"></i> <span> Inspection Item Groups</span> </a>
+                                </li>
+                                <li class="{{ request()->routeIs('inspection_types.index') ? 'active' : '' }}">
+                                    <a href="{{route('inspection_types.index')}}"><i class="fas fa-list"></i> <span>Inspection Items</span> </a>
+                                </li>
+                                <li class="{{ request()->routeIs('stations.index') ? 'active' : '' }}">
+                                    <a href="{{route('stations.index')}}"><i class="fas fa-list"></i> <span>Workshop Stations</span> </a>
+                                </li>
+                            </ul>
+                        </li>
+                    @endif
+
+                    <li class="has-children {{ request()->routeIs('bookings.*') ? 'active' : '' }}" >
+                        <a href="javascript:void(0)"><i class="fas fa-tasks"></i> <span>Bookings</span> <i class="fas fa-angle-right arrow"></i></a>
+                        <ul class="child-nav">
+                            <li><a href="{{route('bookings.create')}}" ><i class="fas fa-plus "></i> <span>Create Booking</span></a></li>
+                            <li><a href="{{route('bookings.index')}}" ><i class="fas fa-list "></i> <span>Manage Bookings</span></a></li>
+                            
+                            @if ($isManagement || isset($wsdepartment_head) || ($isAdmin && in_array('Workshop', $department_names)) || $isSuperAdmin)
+                            <li>
+                                <a href="{{route('bookings.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Bookings</span>
+                                    @if ($bookingsPendingCount>0)
+                                    <span class="label label-success ml-5">{{$bookingsPendingCount}}</span>
+                                    @endif
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{route('bookings.approved')}}" ><i class="fas fa-check "></i> <span>Approved Bookings</span>
+                                    @if ($bookingsApprovedCount>0)
+                                    <span class="label label-success ml-5">{{$bookingsApprovedCount}}</span>
+                                    @endif
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{route('bookings.rejected')}}" ><i class="fas fa-ban"></i> <span>Rejected Bookings</span>
+                                    @if ($bookingsRejectedCount>0)
+                                    <span class="label label-success ml-5">{{$bookingsRejectedCount}}</span>
+                                    @endif
+                                </a>
+                            </li>
+                            @endif
+                        </ul>
+                    </li>
+                    <li class="has-children {{ request()->routeIs('tickets.index') ? 'active' : '' }}" >
+                        <a href="javascript:void(0)"><i class="fas fa-file-invoice"></i> <span>Tickets</span> <i class="fas fa-angle-right arrow"></i></a>
+                        <ul class="child-nav">
+                            @if ( isset($stdepartment_head) || isset($wsdepartment_head) || ($isAdmin && in_array('Workshop', $department_names)) || ($isAdmin && in_array('Stores', $department_names))  || $isSuperAdmin)
+                            <li><a href="{{route('tickets.index')}}" ><i class="fas fa-tasks "></i> <span>Manage Tickets</span></a></li>
+                            @endif
+                            @if (in_array('Workshop', $department_names))
+                            <li>
+                                <a href="{{route('tickets.cards', $employee->id)}}" ><i class="fas fa-tasks "></i> <span>My Tickets</span>
+                                    @if ($jobCardsCount>0)
+                                        <span class="label label-success ml-5">{{$jobCardsCount}}</span>
+                                    @endif
+                                </a>
+                            </li>
+                            @endif
+                        </ul>
+                    </li>
+                    <li class="has-children {{ request()->routeIs('inspections.index') ? 'active' : '' }}" >
+                        <a href="javascript:void(0)"><i class="fas fa-search"></i> <span>Ticket Inspections</span> <i class="fas fa-angle-right arrow"></i></a>
+                        <ul class="child-nav">
+                            @if ( isset($stdepartment_head) || isset($wsdepartment_head) || ($isAdmin && in_array('Workshop', $department_names)) || ($isAdmin && in_array('Stores', $department_names))  || $isSuperAdmin)
                                 <li><a href="{{route('inspections.index')}}" ><i class="fas fa-tasks "></i> <span>Manage Inspections</span></a></li>
-                                @endif
-                                @if (in_array('Workshop', $department_names))
+                            @endif
+                            @if (in_array('Workshop', $department_names))
                                 <li>
                                     <a href="{{route('inspections.my-inspections', $employee->id)}}" ><i class="fas fa-tasks "></i> <span>My Inspections</span>
-                                        @if ($jobCardsCount>0)
-                                            <span class="label label-success ml-5">{{$jobCardsCount}}</span>
+                                        @if ($inspectionsCount>0)
+                                            <span class="label label-success ml-5">{{$inspectionsCount}}</span>
                                         @endif
                                     </a>
-                               </li>
-                                @endif
-                                    @if ($inspectionsCount>0)
-                                    <span class="label label-success ml-5">{{$inspectionsCount}}</span>
-                                    @endif</a></li>
-                            </ul>
-                        </li>
-
-                {{-- <li class="has-children">
-                    <a href="javascript:void(0)"><i class="fas fa-parking"></i> <span>Workshop Services</span> <i class="fas fa-angle-right arrow"></i></a>
-                   <ul class="child-nav"> 
-                    <li><a href="{{route('workshop_services.index')}}" ><i class="fas fa-list "></i> <span>Manage Services</span></a></li>
-                    <li><a href="{{route('rate_cards.index')}}" ><i class="fas fa-list "></i> <span>Manage Rates</span></a></li>
-                   </ul>
-                </li> --}}
-
-               
-
-                @if ($isAdmin || $isSuperAdmin)
+                                </li>
+                            @endif
+                            
+                        </ul>
+                    </li>
+                    @if ($isAdmin || $isSuperAdmin)
                         <li class="has-children">
                             <a href="javascript:void(0)"><i class="fas fa-door-open"></i> <span>Gatepass</span> <i class="fas fa-angle-right arrow"></i></a>
                             <ul class="child-nav">
-                                <li class="{{ request()->routeIs('gate_passes.pending',['department'=>'workshop']) ? 'active' : '' }}"><a href="{{route('gate_passes.pending',['department'=>'workshop'])}}" ><i class="fas fa-clock "></i> <span>Pending Gatepasses</span>
-                                    @if ($workshop_gate_passesPendingCount>0)
-                                    <span class="label label-success ml-5">{{$workshop_gate_passesPendingCount}}</span>
-                                    @endif
-                                </a></li>
+                                <li class="{{ request()->routeIs('gate_passes.pending',['department'=>'workshop']) ? 'active' : '' }}">
+                                    <a href="{{route('gate_passes.pending',['department'=>'workshop'])}}" ><i class="fas fa-clock "></i> <span>Pending Gatepasses</span>
+                                        @if ($workshop_gate_passesPendingCount>0)
+                                            <span class="label label-success ml-5">{{$workshop_gate_passesPendingCount}}</span>
+                                        @endif
+                                    </a>
+                                </li>
                                 <li class="{{ request()->routeIs('gate_passes.approved',['department'=>'workshop']) ? 'active' : '' }}"><a href="{{route('gate_passes.approved',['department'=>'workshop'])}}" ><i class="fas fa-check "></i> <span>Approved Gatepasses</span>
                                     @if ($workshop_gate_passesApprovedCount>0)
-                                    <span class="label label-success ml-5">{{$workshop_gate_passesApprovedCount}}</span>
+                                        <span class="label label-success ml-5">{{$workshop_gate_passesApprovedCount}}</span>
                                     @endif
                                 </a></li>
                                 <li class="{{ request()->routeIs('gate_passes.rejected',['department'=>'workshop']) ? 'active' : '' }}"><a href="{{route('gate_passes.rejected',['department'=>'workshop'])}}" ><i class="fas fa-ban "></i> <span>Rejected Gatepasses</span>
@@ -1087,205 +1027,198 @@
                     @endif
                 @endif
                 @if (in_array('Stores', $department_names) || $isSuperAdmin)
-                <li class="nav-header">
-                    <span class="">Stores & Inventory Management</span>
-                </li>
-                 @if ( isset($stdepartment_head) || ($isAdmin && in_array('Stores', $department_names)) || $isSuperAdmin)
-                  <li class="has-children">
-                    <a href="javascript:void(0)"><i class="fas fa-cog"></i> <span>Master</span> <i class="fas fa-angle-right arrow"></i></a>
-                    <ul class="child-nav">
-                        <li class="{{ request()->routeIs('attributes.index') ? 'active' : '' }}" ><a href="{{route('attributes.index')}}"><i class="fas fa-list "></i> <span> Attributes</span></a></li>
-                        <li class="{{ request()->routeIs('bins.index') ? 'active' : '' }}"><a href="{{route('bins.index')}}"><i class="fas fa-list "></i> <span> Bins</span></a></li>
-                        <li class="{{ request()->routeIs('brands.index') ? 'active' : '' }}"><a href="{{route('brands.index')}}"><i class="fas fa-list "></i> <span> Brands</span></a></li>
-                        <li class="{{ request()->routeIs('categories.index') ? 'active' : '' }}"><a href="{{route('categories.index')}}" ><i class="fas fa-list "></i> <span> Categories</span></a></li>
-                        <li class="{{ request()->routeIs('racks.index') ? 'active' : '' }}"><a href="{{route('racks.index')}}"><i class="fas fa-list "></i> <span> Racks</span></a></li>
-                        <li class="{{ request()->routeIs('stores.index') ? 'active' : '' }}"><a href="{{route('stores.index')}}" ><i class="fas fa-list "></i> <span>Stores</span></a></li>
-                    </ul>
-                </li>
-                @endif
-                <li class="has-children">
-                    
-                    <a href="javascript:void(0)"><i class="fas fa-exchange"></i> <span>Inventory Transfers</span> <i class="fas fa-angle-right arrow"></i></a>
-                    <ul class="child-nav">
-                        
-                        <li class="{{ request()->routeIs('inventory_transfers.index') ? 'active' : '' }}"><a href="{{route('inventory_transfers.index')}}" ><i class="fas fa-list "></i> <span>Manage Transfers</span></a></li>
-                        <li class="{{ request()->routeIs('inventory_transfers.pending') ? 'active' : '' }}"><a href="{{route('inventory_transfers.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Transfers</span>
-                            @if ($inventory_transfersPendingCount>0)
-                                <span class="label label-success ml-5">{{$inventory_transfersPendingCount}}</span>
-                            @endif
-                        </a></li>
-                        <li class="{{ request()->routeIs('inventory_transfers.approved') ? 'active' : '' }}"><a href="{{route('inventory_transfers.approved')}}" ><i class="fas fa-check "></i> <span>Approved Transfers</span>
-                            @if ($inventory_transfersApprovedCount>0)
-                                <span class="label label-success ml-5">{{$inventory_transfersApprovedCount}}</span>
-                            @endif
-                        </a></li>
-                        <li class="{{ request()->routeIs('inventory_transfers.rejected') ? 'active' : '' }}"><a href="{{route('inventory_transfers.rejected')}}" ><i class="fas fa-ban "></i> <span>Rejected Transfers</span>
-                            @if ($inventory_transfersRejectedCount>0)
-                                <span class="label label-success ml-5">{{$inventory_transfersRejectedCount}}</span>
-                            @endif
-                        </a></li>
-                    </ul>
-                </li>
-                <li class="has-children {{ request()->routeIs('inventory_products.*') ? 'active' : '' }}" >
-                    <a href="javascript:void(0)"><i class="fas fa-boxes"></i> <span>Products</span> <i class="fas fa-angle-right arrow"></i></a>
-                    <ul class="child-nav">
+                    <li class="nav-header"><span class="">Stores & Inventory Management</span></li>
+                    @if ( isset($stdepartment_head) || ($isAdmin && in_array('Stores', $department_names)) || $isSuperAdmin)
+                        <li class="has-children">
+                            <a href="javascript:void(0)"><i class="fas fa-cog"></i> <span>Master</span> <i class="fas fa-angle-right arrow"></i></a>
+                            <ul class="child-nav">
+                                <li class="{{ request()->routeIs('attributes.index') ? 'active' : '' }}" ><a href="{{route('attributes.index')}}"><i class="fas fa-list "></i> <span> Attributes</span></a></li>
+                                <li class="{{ request()->routeIs('bins.index') ? 'active' : '' }}"><a href="{{route('bins.index')}}"><i class="fas fa-list "></i> <span> Bins</span></a></li>
+                                <li class="{{ request()->routeIs('brands.index') ? 'active' : '' }}"><a href="{{route('brands.index')}}"><i class="fas fa-list "></i> <span> Brands</span></a></li>
+                                <li class="{{ request()->routeIs('categories.index') ? 'active' : '' }}"><a href="{{route('categories.index')}}" ><i class="fas fa-list "></i> <span> Categories</span></a></li>
+                                <li class="{{ request()->routeIs('racks.index') ? 'active' : '' }}"><a href="{{route('racks.index')}}"><i class="fas fa-list "></i> <span> Racks</span></a></li>
+                                <li class="{{ request()->routeIs('stores.index') ? 'active' : '' }}"><a href="{{route('stores.index')}}" ><i class="fas fa-list "></i> <span>Stores</span></a></li>
+                            </ul>
+                        </li>
+                    @endif
+                    <li class="has-children">
+                        <a href="javascript:void(0)"><i class="fas fa-exchange"></i> <span>Inventory Transfers</span> <i class="fas fa-angle-right arrow"></i></a>
+                        <ul class="child-nav">
+                            <li class="{{ request()->routeIs('inventory_transfers.index') ? 'active' : '' }}"><a href="{{route('inventory_transfers.index')}}" ><i class="fas fa-list "></i> <span>Manage Transfers</span></a></li>
+                            <li class="{{ request()->routeIs('inventory_transfers.pending') ? 'active' : '' }}"><a href="{{route('inventory_transfers.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Transfers</span>
+                                @if ($inventory_transfersPendingCount>0)
+                                    <span class="label label-success ml-5">{{$inventory_transfersPendingCount}}</span>
+                                @endif
+                            </a></li>
+                            <li class="{{ request()->routeIs('inventory_transfers.approved') ? 'active' : '' }}"><a href="{{route('inventory_transfers.approved')}}" ><i class="fas fa-check "></i> <span>Approved Transfers</span>
+                                @if ($inventory_transfersApprovedCount>0)
+                                    <span class="label label-success ml-5">{{$inventory_transfersApprovedCount}}</span>
+                                @endif
+                            </a></li>
+                            <li class="{{ request()->routeIs('inventory_transfers.rejected') ? 'active' : '' }}"><a href="{{route('inventory_transfers.rejected')}}" ><i class="fas fa-ban "></i> <span>Rejected Transfers</span>
+                                @if ($inventory_transfersRejectedCount>0)
+                                    <span class="label label-success ml-5">{{$inventory_transfersRejectedCount}}</span>
+                                @endif
+                            </a></li>
+                        </ul>
+                    </li>
+                    <li class="has-children {{ request()->routeIs('inventory_products.*') ? 'active' : '' }}" >
+                        <a href="javascript:void(0)"><i class="fas fa-boxes"></i> <span>Products</span> <i class="fas fa-angle-right arrow"></i></a>
+                        <ul class="child-nav">
 
-                        <li><a href="{{route('inventory_products.create')}}" ><i class="fas fa-plus "></i> <span>Create Product</span></a></li>
-                        <li><a href="{{route('inventory_products.index')}}"><i class="fas fa-list "></i> <span>Manage Products</span></a></li>
-                    </ul>
-                </li>
-                <li class="has-children {{ request()->routeIs('inventory_purchases.*') ? 'active' : '' }}">
-                  
-                    <a href="javascript:void(0)"><i class="fas fa-hand-holding-usd"></i> <span>Purchase Orders</span> <i class="fas fa-angle-right arrow"></i></a>
-                    <ul class="child-nav">
-                        <li><a href="{{route('inventory_purchases.index')}}" ><i class="fas fa-list "></i> <span>Manage Orders</span></a></li>
-                        @if ($isManagement || isset($wsdepartment_head) || isset($stdepartment_head) || $isSuperAdmin)
-                        <li>
-                            <a href="{{route('inventory_purchases.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Orders</span>
-                                @if ($inventory_purchasesPendingCount>0)
-                                <span class="label label-success ml-5">{{$inventory_purchasesPendingCount}}</span>
-                                @endif
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{route('inventory_purchases.approved')}}" ><i class="fas fa-check "></i> <span>Approved Orders</span>
-                                @if ($inventory_purchasesApprovedCount>0)
-                                <span class="label label-success ml-5">{{$inventory_purchasesApprovedCount}}</span>
-                                @endif
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{route('inventory_purchases.rejected')}}" ><i class="fas fa-ban "></i> <span>Rejected Orders</span>
-                                @if ($inventory_purchasesRejectedCount>0)
-                                <span class="label label-success ml-5">{{$inventory_purchasesRejectedCount}}</span>
-                                @endif
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{route('inventory_purchases.deleted')}}" ><i class="fas fa-trash "></i> <span>Deleted Orders</span>
-                                @if ($inventory_purchasesDeletedCount>0)
-                                <span class="label label-success ml-5">{{$inventory_purchasesDeletedCount}}</span>
-                                @endif
-                            </a>
-                        </li>
-                        @endif
-                    </ul>
-                </li>
-                <li class="has-children" {{ request()->routeIs('goods_receiveds.index') ? 'active' : '' }}>
-                    <a href="javascript:void(0)"><i class="fas fa-th-list"></i> <span>GRV (Inventory)</span> <i class="fas fa-angle-right arrow"></i></a>
-                    <ul class="child-nav">
-                        <li ><a href="{{route('goods_receiveds.index')}}"><i class="fas fa-list "></i> <span>Manage Inventory GRVs</span></a></li>
-                    </ul>
-                </li>
-                <li class="has-children" {{ request()->routeIs('inventories.*') ? 'active' : '' }}>
-                    <a href="javascript:void(0)"><i class="fas fa-th-list"></i> <span>Inventory</span> <i class="fas fa-angle-right arrow"></i></a>
-                    <ul class="child-nav">
-                        <li ><a href="{{route('inventories.create')}}" ><i class="fas fa-plus "></i> <span>Create Inventory</span></a></li>
-                        <li ><a href="{{route('inventories.index')}}"><i class="fas fa-list "></i> <span>Manage Inventory</span></a></li>
-                        <li > <a href="{{route('disposes.index')}}"><i class="fas fa-list "></i> <span>Disposed Items</span></a></li>
-                    </ul>
-                </li>
-                <li class="has-children {{ request()->routeIs('inventory_dispatches.*') ? 'active' : '' }}">
-                   
-                    <a href="javascript:void(0)"><i class="fas fa-list"></i> <span>Dispatches (Inventory) </span> <i class="fas fa-angle-right arrow"></i></a>
-                    <ul class="child-nav">
-                        <li><a href="{{route('inventory_dispatches.index')}}" ><i class="fas fa-list "></i> <span>Manage Dispatches</span></a></li>
-                        @if ($isManagement || $isAdmin || $isSuperAdmin)
-                        <li>
-                            <a href="{{route('inventory_dispatches.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Dispatches</span>
-                                @if ($inventory_dispatchesPendingCount>0)
-                                <span class="label label-success ml-5">{{$inventory_dispatchesPendingCount}}</span>
-                                @endif
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{route('inventory_dispatches.approved')}}" ><i class="fas fa-check "></i> <span>Approved Dispatches</span>
-                                @if ($inventory_dispatchesApprovedCount>0)
-                                <span class="label label-success ml-5">{{$inventory_dispatchesApprovedCount}}</span>
-                                @endif
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{route('inventory_dispatches.rejected')}}" ><i class="fas fa-ban "></i> <span>Rejected Dispatches</span>
-                                @if ($inventory_dispatchesRejectedCount>0)
-                                <span class="label label-success ml-5">{{$inventory_dispatchesRejectedCount}}</span>
-                                @endif
-                            </a>
-                        </li>
-                        @endif
-                    </ul>
-                </li>
-                <li class="nav-header">
-                    <span class="">Tyre Management</span>
-                </li>
-                  <li class="has-children">
-                  
-                    <a href="javascript:void(0)"><i class="fas fa-exchange"></i> <span>Tyre Transfers</span> <i class="fas fa-angle-right arrow"></i></a>
-                    <ul class="child-nav">
-                        
-                        <li class="{{ request()->routeIs('tyre_transfers.index') ? 'active' : '' }}"><a href="{{route('tyre_transfers.index')}}" ><i class="fas fa-list "></i> <span>Manage Transfers</span></a></li>
-                        <li class="{{ request()->routeIs('tyre_transfers.pending') ? 'active' : '' }}"><a href="{{route('tyre_transfers.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Transfers</span>
-                            @if ($tyre_transfersPendingCount>0)
-                                <span class="label label-success ml-5">{{$tyre_transfersPendingCount}}</span>
+                            <li><a href="{{route('inventory_products.create')}}" ><i class="fas fa-plus "></i> <span>Create Product</span></a></li>
+                            <li><a href="{{route('inventory_products.index')}}"><i class="fas fa-list "></i> <span>Manage Products</span></a></li>
+                        </ul>
+                    </li>
+                    <li class="has-children {{ request()->routeIs('inventory_purchases.*') ? 'active' : '' }}">
+                        <a href="javascript:void(0)"><i class="fas fa-hand-holding-usd"></i> <span>Purchase Orders</span> <i class="fas fa-angle-right arrow"></i></a>
+                        <ul class="child-nav">
+                            <li><a href="{{route('inventory_purchases.index')}}" ><i class="fas fa-list "></i> <span>Manage Orders</span></a></li>
+                            @if ($isManagement || isset($wsdepartment_head) || isset($stdepartment_head) || $isSuperAdmin)
+                            <li>
+                                <a href="{{route('inventory_purchases.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Orders</span>
+                                    @if ($inventory_purchasesPendingCount>0)
+                                    <span class="label label-success ml-5">{{$inventory_purchasesPendingCount}}</span>
+                                    @endif
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{route('inventory_purchases.approved')}}" ><i class="fas fa-check "></i> <span>Approved Orders</span>
+                                    @if ($inventory_purchasesApprovedCount>0)
+                                    <span class="label label-success ml-5">{{$inventory_purchasesApprovedCount}}</span>
+                                    @endif
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{route('inventory_purchases.rejected')}}" ><i class="fas fa-ban "></i> <span>Rejected Orders</span>
+                                    @if ($inventory_purchasesRejectedCount>0)
+                                    <span class="label label-success ml-5">{{$inventory_purchasesRejectedCount}}</span>
+                                    @endif
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{route('inventory_purchases.deleted')}}" ><i class="fas fa-trash "></i> <span>Deleted Orders</span>
+                                    @if ($inventory_purchasesDeletedCount>0)
+                                    <span class="label label-success ml-5">{{$inventory_purchasesDeletedCount}}</span>
+                                    @endif
+                                </a>
+                            </li>
                             @endif
-                        </a></li>
-                        <li class="{{ request()->routeIs('tyre_transfers.approved') ? 'active' : '' }}"><a href="{{route('tyre_transfers.approved')}}" ><i class="fas fa-check "></i> <span>Approved Transfers</span>
-                            @if ($tyre_transfersApprovedCount>0)
-                                <span class="label label-success ml-5">{{$tyre_transfersApprovedCount}}</span>
+                        </ul>
+                    </li>
+                    <li class="has-children" {{ request()->routeIs('goods_receiveds.index') ? 'active' : '' }}>
+                        <a href="javascript:void(0)"><i class="fas fa-th-list"></i> <span>GRV (Inventory)</span> <i class="fas fa-angle-right arrow"></i></a>
+                        <ul class="child-nav">
+                            <li ><a href="{{route('goods_receiveds.index')}}"><i class="fas fa-list "></i> <span>Manage Inventory GRVs</span></a></li>
+                        </ul>
+                    </li>
+                    <li class="has-children" {{ request()->routeIs('inventories.*') ? 'active' : '' }}>
+                        <a href="javascript:void(0)"><i class="fas fa-th-list"></i> <span>Inventory</span> <i class="fas fa-angle-right arrow"></i></a>
+                        <ul class="child-nav">
+                            <li ><a href="{{route('inventories.create')}}" ><i class="fas fa-plus "></i> <span>Create Inventory</span></a></li>
+                            <li ><a href="{{route('inventories.index')}}"><i class="fas fa-list "></i> <span>Manage Inventory</span></a></li>
+                            <li > <a href="{{route('disposes.index')}}"><i class="fas fa-list "></i> <span>Disposed Items</span></a></li>
+                        </ul>
+                    </li>
+                    <li class="has-children {{ request()->routeIs('inventory_dispatches.*') ? 'active' : '' }}">
+                        <a href="javascript:void(0)"><i class="fas fa-list"></i> <span>Dispatches (Inventory) </span> <i class="fas fa-angle-right arrow"></i></a>
+                        <ul class="child-nav">
+                            <li><a href="{{route('inventory_dispatches.index')}}" ><i class="fas fa-list "></i> <span>Manage Dispatches</span></a></li>
+                            @if ($isManagement || $isAdmin || $isSuperAdmin)
+                            <li>
+                                <a href="{{route('inventory_dispatches.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Dispatches</span>
+                                    @if ($inventory_dispatchesPendingCount>0)
+                                    <span class="label label-success ml-5">{{$inventory_dispatchesPendingCount}}</span>
+                                    @endif
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{route('inventory_dispatches.approved')}}" ><i class="fas fa-check "></i> <span>Approved Dispatches</span>
+                                    @if ($inventory_dispatchesApprovedCount>0)
+                                    <span class="label label-success ml-5">{{$inventory_dispatchesApprovedCount}}</span>
+                                    @endif
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{route('inventory_dispatches.rejected')}}" ><i class="fas fa-ban "></i> <span>Rejected Dispatches</span>
+                                    @if ($inventory_dispatchesRejectedCount>0)
+                                    <span class="label label-success ml-5">{{$inventory_dispatchesRejectedCount}}</span>
+                                    @endif
+                                </a>
+                            </li>
                             @endif
-                        </a></li>
-                        <li class="{{ request()->routeIs('tyre_transfers.rejected') ? 'active' : '' }}"><a href="{{route('tyre_transfers.rejected')}}" ><i class="fas fa-ban "></i> <span>Rejected Transfers</span>
-                            @if ($tyre_transfersRejectedCount>0)
-                                <span class="label label-success ml-5">{{$tyre_transfersRejectedCount}}</span>
+                        </ul>
+                    </li>
+                    <li class="nav-header">
+                        <span class="">Tyre Management</span>
+                    </li>
+                    <li class="has-children">
+                        <a href="javascript:void(0)"><i class="fas fa-exchange"></i> <span>Tyre Transfers</span> <i class="fas fa-angle-right arrow"></i></a>
+                        <ul class="child-nav">
+                            <li class="{{ request()->routeIs('tyre_transfers.index') ? 'active' : '' }}"><a href="{{route('tyre_transfers.index')}}" ><i class="fas fa-list "></i> <span>Manage Transfers</span></a></li>
+                            <li class="{{ request()->routeIs('tyre_transfers.pending') ? 'active' : '' }}"><a href="{{route('tyre_transfers.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Transfers</span>
+                                @if ($tyre_transfersPendingCount>0)
+                                    <span class="label label-success ml-5">{{$tyre_transfersPendingCount}}</span>
+                                @endif
+                                </a>
+                            </li>
+                            <li class="{{ request()->routeIs('tyre_transfers.approved') ? 'active' : '' }}"><a href="{{route('tyre_transfers.approved')}}" ><i class="fas fa-check "></i> <span>Approved Transfers</span>
+                                @if ($tyre_transfersApprovedCount>0)
+                                    <span class="label label-success ml-5">{{$tyre_transfersApprovedCount}}</span>
+                                @endif
+                                </a>
+                            </li>
+                            <li class="{{ request()->routeIs('tyre_transfers.rejected') ? 'active' : '' }}"><a href="{{route('tyre_transfers.rejected')}}" ><i class="fas fa-ban "></i> <span>Rejected Transfers</span>
+                                @if ($tyre_transfersRejectedCount>0)
+                                    <span class="label label-success ml-5">{{$tyre_transfersRejectedCount}}</span>
+                                @endif
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="has-children {{ request()->routeIs('tyre_products.*') ? 'active' : '' }}" >
+                        <a href="javascript:void(0)"><i class="fas fa-boxes"></i> <span>Products</span> <i class="fas fa-angle-right arrow"></i></a>
+                        <ul class="child-nav">
+                            <li><a href="{{route('tyre_products.create')}}" ><i class="fas fa-plus "></i> <span>Create Product</span></a></li>
+                            <li><a href="{{route('tyre_products.index')}}"><i class="fas fa-list "></i> <span>Manage Products</span></a></li>
+                        </ul>
+                    </li>
+                    <li class="has-children {{ request()->routeIs('tyre_purchases.*') ? 'active' : '' }}" >
+                        <a href="javascript:void(0)"><i class="fas fa-hand-holding-usd"></i> <span>Purchase Orders</span> <i class="fas fa-angle-right arrow"></i></a>
+                        <ul class="child-nav">
+                            <li><a href="{{route('tyre_purchases.index')}}" ><i class="fas fa-list "></i> <span>Manage Orders</span></a></li>
+                            @if ($isManagement || isset($wsdepartment_head) || isset($stdepartment_head) || $isSuperAdmin)
+                            <li>
+                                <a href="{{route('tyre_purchases.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Orders</span>
+                                    @if ($tyre_purchasesPendingCount>0)
+                                    <span class="label label-success ml-5">{{$tyre_purchasesPendingCount}}</span>
+                                    @endif
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{route('tyre_purchases.approved')}}" ><i class="fas fa-check "></i> <span>Approved Orders</span>
+                                    @if ($tyre_purchasesApprovedCount>0)
+                                    <span class="label label-success ml-5">{{$tyre_purchasesApprovedCount}}</span>
+                                    @endif
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{route('tyre_purchases.rejected')}}" ><i class="fas fa-ban "></i> <span>Rejected Orders</span>
+                                    @if ($tyre_purchasesRejectedCount>0)
+                                    <span class="label label-success ml-5">{{$tyre_purchasesRejectedCount}}</span>
+                                    @endif
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{route('tyre_purchases.deleted')}}" ><i class="fas fa-trash "></i> <span>Deleted Orders</span>
+                                    @if ($tyre_purchasesDeletedCount>0)
+                                    <span class="label label-success ml-5">{{$tyre_purchasesDeletedCount}}</span>
+                                    @endif
+                                </a>
+                            </li>
                             @endif
-                        </a></li>
-                    </ul>
-                </li>
-                <li class="has-children {{ request()->routeIs('tyre_products.*') ? 'active' : '' }}" >
-                    <a href="javascript:void(0)"><i class="fas fa-boxes"></i> <span>Products</span> <i class="fas fa-angle-right arrow"></i></a>
-                    <ul class="child-nav">
-
-                        <li><a href="{{route('tyre_products.create')}}" ><i class="fas fa-plus "></i> <span>Create Product</span></a></li>
-                        <li><a href="{{route('tyre_products.index')}}"><i class="fas fa-list "></i> <span>Manage Products</span></a></li>
-                    </ul>
-                </li>
-                <li class="has-children {{ request()->routeIs('tyre_purchases.*') ? 'active' : '' }}" >
-                   
-                    <a href="javascript:void(0)"><i class="fas fa-hand-holding-usd"></i> <span>Purchase Orders</span> <i class="fas fa-angle-right arrow"></i></a>
-                    <ul class="child-nav">
-                        <li><a href="{{route('tyre_purchases.index')}}" ><i class="fas fa-list "></i> <span>Manage Orders</span></a></li>
-                        @if ($isManagement || isset($wsdepartment_head) || isset($stdepartment_head) || $isSuperAdmin)
-                        <li>
-                            <a href="{{route('tyre_purchases.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Orders</span>
-                                @if ($tyre_purchasesPendingCount>0)
-                                <span class="label label-success ml-5">{{$tyre_purchasesPendingCount}}</span>
-                                @endif
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{route('tyre_purchases.approved')}}" ><i class="fas fa-check "></i> <span>Approved Orders</span>
-                                @if ($tyre_purchasesApprovedCount>0)
-                                <span class="label label-success ml-5">{{$tyre_purchasesApprovedCount}}</span>
-                                @endif
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{route('tyre_purchases.rejected')}}" ><i class="fas fa-ban "></i> <span>Rejected Orders</span>
-                                @if ($tyre_purchasesRejectedCount>0)
-                                <span class="label label-success ml-5">{{$tyre_purchasesRejectedCount}}</span>
-                                @endif
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{route('tyre_purchases.deleted')}}" ><i class="fas fa-trash "></i> <span>Deleted Orders</span>
-                                @if ($tyre_purchasesDeletedCount>0)
-                                <span class="label label-success ml-5">{{$tyre_purchasesDeletedCount}}</span>
-                                @endif
-                            </a>
-                        </li>
-                        @endif
-                    </ul>
-                </li>
+                        </ul>
+                    </li>
                     <li class="has-children" {{ request()->routeIs('goods_receiveds.tyres') ? 'active' : '' }}>
                         <a href="javascript:void(0)"><i class="fas fa-th-list"></i> <span>GRV (Tyres)</span> <i class="fas fa-angle-right arrow"></i></a>
                         <ul class="child-nav">
@@ -1301,7 +1234,6 @@
                             <li ><a href="{{route('disposes.index')}}"><i class="fas fa-list "></i> <span>Disposed Items</span></a></li>
                         </ul>
                     </li>
-                  
                     <li class="has-children {{ request()->routeIs('retreads.*') ? 'active' : '' }}" >
                         <a href="javascript:void(0)"><i class="fas fa-th-list"></i> <span>Retreads</span> <i class="fas fa-angle-right arrow"></i></a>
                         <ul class="child-nav">
@@ -1329,54 +1261,44 @@
                                     @endif
                                 </a>
                             </li>
-                           
                             @endif
                         </ul>
                     </li>
-
-                <li class="has-children {{ request()->routeIs('tyre_dispatches.*') ? 'active' : '' }}">
-                 
-                    <a href="javascript:void(0)"><i class="fas fa-list"></i> <span>Dispatches (Tyres) </span> <i class="fas fa-angle-right arrow"></i></a>
-                    <ul class="child-nav">
-                        <li><a href="{{route('tyre_dispatches.index')}}" ><i class="fas fa-list "></i> <span>Manage Dispatches</span></a></li>
-                        @if ($isManagement || $isAdmin || $isSuperAdmin)
-                        <li>
-                            <a href="{{route('tyre_dispatches.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Dispatches</span>
-                                @if ($tyre_dispatchesPendingCount>0)
-                                <span class="label label-success ml-5">{{$tyre_dispatchesPendingCount}}</span>
-                                @endif
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{route('tyre_dispatches.approved')}}" ><i class="fas fa-check "></i> <span>Approved Dispatches</span>
-                                @if ($tyre_dispatchesApprovedCount>0)
-                                <span class="label label-success ml-5">{{$tyre_dispatchesApprovedCount}}</span>
-                                @endif
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{route('tyre_dispatches.rejected')}}" ><i class="fas fa-ban "></i> <span>Rejected Dispatches</span>
-                                @if ($tyre_dispatchesRejectedCount>0)
-                                <span class="label label-success ml-5">{{$tyre_dispatchesRejectedCount}}</span>
-                                @endif
-                            </a>
-                        </li>
-                        @endif
-                    </ul>
-                </li>
-              
-                @endif
-              
-                      
+                    <li class="has-children {{ request()->routeIs('tyre_dispatches.*') ? 'active' : '' }}">
+                        <a href="javascript:void(0)"><i class="fas fa-list"></i> <span>Dispatches (Tyres) </span> <i class="fas fa-angle-right arrow"></i></a>
+                        <ul class="child-nav">
+                            <li><a href="{{route('tyre_dispatches.index')}}" ><i class="fas fa-list "></i> <span>Manage Dispatches</span></a></li>
+                            @if ($isManagement || $isAdmin || $isSuperAdmin)
+                            <li>
+                                <a href="{{route('tyre_dispatches.pending')}}" ><i class="fas fa-clock "></i> <span>Pending Dispatches</span>
+                                    @if ($tyre_dispatchesPendingCount>0)
+                                    <span class="label label-success ml-5">{{$tyre_dispatchesPendingCount}}</span>
+                                    @endif
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{route('tyre_dispatches.approved')}}" ><i class="fas fa-check "></i> <span>Approved Dispatches</span>
+                                    @if ($tyre_dispatchesApprovedCount>0)
+                                    <span class="label label-success ml-5">{{$tyre_dispatchesApprovedCount}}</span>
+                                    @endif
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{route('tyre_dispatches.rejected')}}" ><i class="fas fa-ban "></i> <span>Rejected Dispatches</span>
+                                    @if ($tyre_dispatchesRejectedCount>0)
+                                    <span class="label label-success ml-5">{{$tyre_dispatchesRejectedCount}}</span>
+                                    @endif
+                                </a>
+                            </li>
+                            @endif
+                        </ul>
+                    </li>
+                @endif  
                 @if ($isManagement || in_array('Directors', $rank_names)|| $isSuperAdmin)
                     <li class="nav-header">
                         <span class="">Business Settings</span>
                     </li>
-                @php
-                    $companies = App\Models\Company::where('type','!=','admin')->get();
-                    $admin_company = App\Models\Company::where('type','admin')->get()->first();
-                @endphp
-                @if ($user->is_admin())
+                @if ($is_admin)
                     <li  class="{{ request()->routeIs('company-profile',$admin_company->id) ? 'active' : '' }}">
                         <a href="{{route('company-profile',$admin_company->id)}}"><i class="fas fa-cog"></i><span> {{ $admin_company->name }}</span> </a>
                     </li>
@@ -1388,13 +1310,10 @@
                         </li>
                     @endforeach
                 @endif
-
-                
                 <li class="{{ request()->routeIs('companies.index') ? 'active' : '' }}">
                     <a href="{{route('companies.index')}}"><i class="fas fa-plus-circle"></i> <span>Create new business</span> </a>
                 </li>
                 @endif
-                
                 <li class="nav-header">
                     <span class="">Profile Settings</span>
                 </li>

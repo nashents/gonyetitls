@@ -8,7 +8,7 @@ use Carbon\Carbon;
 use  App\Models\{
     Allocation, Department, DepartmentHead, Leave, Loan,
     Payroll, Invoice, CreditNote, Bill, Requisition, TopUp,User,Purchase, Dispatch,
-    GatePass, Fuel, FuelRequest, Trip, Transporter, Shift, TransportOrder, Recovery, Booking, Transfer, Retread
+    GatePass, Fuel, FuelRequest, Trip, Transporter, Shift, TransportOrder, Recovery, Booking, Transfer, Retread, Customer, Agent, Company
     // ... add all models you need here
 };
 
@@ -107,6 +107,7 @@ class SidebarComposer
         // ... same pattern for Finance, HSEQ, etc.
 
         $isManagement      = in_array('Management', $rank_names);
+        $isDirector      = in_array('Directors', $rank_names);
         $isSuperAdmin      = in_array('Super Admin', $role_names);
         $isAdmin           = in_array('Admin', $role_names);
         $inHR              = in_array('Human Resources', $department_names);
@@ -471,11 +472,24 @@ class SidebarComposer
         ->where('created_at', '>', Carbon::now()->startOfWeek())
         ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
 
+        $jobCardsCount = $employee->tickets
+                                ->where('created_at', '>', Carbon::now()->startOfWeek())
+                                ->where('created_at', '<', Carbon::now()->endOfWeek())->where('status',1)->count();
+        $inspectionsCount = $employee->inspections
+                            ->where('created_at', '>', Carbon::now()->startOfWeek())
+                            ->where('created_at', '<', Carbon::now()->endOfWeek())->where('status',1)->count();
+        $companies = Company::where('type','!=','admin')->get();
+        $admin_company = Company::where('type','admin')->get()->first();
 
         $view->with([
             'user'         => $user,
             'employee'     => $employee,
             'department_names'     => $department_names,
+            'companies'     => $companies,
+            'isDirector'     => $isDirector,
+            'admin_company'     => $admin_company,
+            'jobCardsCount'     => $jobCardsCount,
+            'inspectionsCount'     => $inspectionsCount,
             'role_names'           => $role_names,
             'rank_names'           => $rank_names,
             'myAllocationCount'   => $myAllocationCount,
