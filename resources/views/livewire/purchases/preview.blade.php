@@ -1,10 +1,11 @@
 <div>
+<div id="print-area">
     <div id="invoice">
         <x-loading/>
         <div class="toolbar hidden-print">
             <div class="text-end">
                 <button type="button" onclick="goBack()" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-arrow-left" style="color:black"></i> Back</button>
-                <a href="{{route('purchases.print',$purchase->id)}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-print" style="color:black"></i> Print</a>
+               <a href="javascript:void(0)" onclick="printSection()" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-print" style="color: black"></i> Print</a>
                 <a href="{{route('purchases.pdf', $purchase->id)}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-file-pdf-o" style="color:red"></i> Export as PDF</a>
             </div>
             <hr>
@@ -215,4 +216,6 @@
             <div></div>
         </div>
     </div>
+</div>
+
 </div>

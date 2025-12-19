@@ -31,7 +31,7 @@
                                     </div>
                                     <!-- /input-group -->
                                 </div>
-                                <div class="col-lg-2" style="margin-right: 7px">
+                                <div class="col-lg-2" >
                                     <div class="input-group">
                                         <span class="input-group-addon">
                                     From
@@ -40,7 +40,7 @@
                                     </div>
                                     <!-- /input-group -->
                                 </div>
-                                <div class="col-lg-2" style="margin-left: 7px">
+                                <div class="col-lg-2">
                                     <div class="input-group">
                                         <span class="input-group-addon">
                                     To

@@ -66,7 +66,7 @@ class Reports extends Component
         $this->loading_points = LoadingPoint::orderBy('name','asc')->get();
         $this->offloading_points = OffloadingPoint::orderBy('name','asc')->get();
         $this->horses = Horse::orderBy('registration_number','asc')->get();
-        $this->vehicle = Vehicle::orderBy('registration_number','asc')->get();
+        $this->vehicles = Vehicle::orderBy('registration_number','asc')->get();
         $this->drivers = Driver::with('employee')->get()->sortBy('driver.employee.name');
         $this->employees = Employee::orderBy('name','asc')->orderBy('surname','asc')->get();
 
@@ -136,6 +136,8 @@ class Reports extends Component
         $durationFormatted = sprintf('%02dH: %02dM: %02dS', $hours, $minutes, $seconds);
         return $durationFormatted;
     }
+
+   
 
     public function render()
     {

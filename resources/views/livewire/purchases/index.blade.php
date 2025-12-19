@@ -203,7 +203,7 @@
                                                 </button>
                                                 <ul class="dropdown-menu">
                                                     <li><a href="{{route('purchases.show',$purchase->id)}}" ><i class="fa fa-eye color-default"></i> View</a></li>
-                                                    @if ($purchase->authorization == "approved")
+                                                    @if ($purchase->authorization == "approved" || $purchase->authorization == "rejected")
                                                     <li><a href="{{route('purchases.preview',$purchase->id)}}"  ><i class="fas fa-file-invoice color-primary"></i> Preview</a></li>
                                                     @if ($purchase->is_sent == False)
                                                          <li><a href="" wire:click.prevent="markSent({{$purchase->id}})"  ><i class="fas fa-check color-secondary"></i> Mark as sent</a></li>

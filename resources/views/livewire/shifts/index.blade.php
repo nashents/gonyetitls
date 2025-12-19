@@ -6,40 +6,236 @@
                 <div class="col-md-12">
                     <div class="panel">
                         <div class="panel-heading">
-                                <div class="panel-title">
+                            <div class="panel-title">
                                 <div class="row">
-                                        <div class="col-lg-3">
-                                            <div class="input-group">
-                                                <span class="input-group-addon">
-                                                Filter By
-                                                </span>
-                                                <select wire:model.debounce.300ms="shift_filter" class="form-control" aria-label="..." >
-                                                    <option value="created_at">Shift Created At</option>
-                                                    <option value="date">Shift Date</option>
-                                                </select>
-                                            </div>
-                                            <!-- /input-group -->
+                                   
+                                    <div class="col-lg-3">
+                                        <div class="input-group">
+                                            <span class="input-group-addon">
+                                            Filter By
+                                            </span>
+                                            <select wire:model.debounce.300ms="shift_filter" class="form-control" aria-label="..." >
+                                                <option value="created_at">Shift Created At</option>
+                                                <option value="date">Shift Date</option>
+                                            </select>
                                         </div>
-                             
-                                        <div class="col-lg-2" style="margin-right: 7px; margin-left:-15px;">
-                                            <div class="input-group">
-                                                <span class="input-group-addon">
+                                        <!-- /input-group -->
+                                    </div>
+                                    <div class="col-lg-3">
+                                        <div class="input-group">
+                                            <span class="input-group-addon">
+                                                From
+                                            </span>
+                                            <input type="datetime-local" wire:model.debounce.300ms="from"  class="form-control" aria-label="...">
+                                        </div>
+                                        <!-- /input-group -->
+                                    </div>
+                                    <div class="col-lg-3">
+                                        <div class="input-group">
+                                            <span class="input-group-addon">
+                                                To
+                                            </span>
+                                            <input type="datetime-local" wire:model.debounce.300ms="to"  class="form-control" aria-label="...">
+                                        </div>
+                                    </div>
+                                     <div class="col-md-3">
+                                        <div class="input-group">
+                                            <span class="input-group-addon">
+                                                Shift
+                                            </span>
+                                            <select wire:model.debounce.300ms="shift_type" class="form-control" aria-label="..." >
+                                                <option value="">Select Shift</option>
+                                                <option value="Morning">Morning</option>
+                                                <option value="Night">Night</option>
+                                            </select> 
+                                        </div>
+                                        <!-- /input-group -->
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    
+                                    <div class="col-md-3">
+                                        <div class="input-group">
+                                            <span class="input-group-addon">
+                                        Transporters
+                                        </span>
+                                        <select wire:model.debounce.300ms="transporter_id" class="form-control" aria-label="..." >
+                                            <option value="">Select Transporter</option>
+                                            @foreach ($transporters as $transporter)
+                                                    <option value="{{ $transporter->id }}"  >{{ ucfirst($transporter->name) }}</option>
+                                            @endforeach
+                                        </select>
+                                            
+                                        </div>
+                                        <!-- /input-group -->
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="input-group">
+                                            <span class="input-group-addon">
+                                        Horses
+                                        </span>
+                                        <select wire:model.debounce.300ms="horse_id" class="form-control" aria-label="..." >
+                                            <option value="">Select Horse</option>
+                                            @foreach ($horses as $horse)
+                                                <option value="{{ $horse->id }}"  >{{ $horse->fleet_number ? "(".$horse->fleet_number.")" : "" }} {{ $horse->registration_number }}  </option>
+                                            @endforeach
+                                        </select>
+                                        </div>
+                                        <!-- /input-group -->
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="input-group">
+                                            <span class="input-group-addon">
+                                        Vehicles
+                                        </span>
+                                        <select wire:model.debounce.300ms="vehicle_id" class="form-control" aria-label="..." >
+                                            <option value="">Select Vehicle</option>
+                                            @foreach ($vehicles as $vehicle)
+                                                <option value="{{ $vehicle->id }}"  >{{ $vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : "" }} {{ $vehicle->registration_number }}  </option>
+                                            @endforeach
+                                        </select>
+                                        </div>
+                                        <!-- /input-group -->
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="input-group">
+                                            <span class="input-group-addon">
+                                        Drivers
+                                        </span>
+                                        <select wire:model.debounce.300ms="driver_id" class="form-control" aria-label="..." >
+                                            <option value="">Select Driver</option>
+                                            @foreach ($drivers as $driver)
+                                                <option value="{{ $driver->id }}"  >{{ ucfirst($driver->employee ? $driver->employee->name : " employee") }} {{ ucfirst($driver->employee ? $driver->employee->surname : "") }}</option>
+                                            @endforeach
+                                        </select>
+                                            
+                                        </div>
+                                        <!-- /input-group -->
+                                    </div>
+                                   
+                                </div>
+                                <div class="row">
+                                     <div class="col-md-3">
+                                        <div class="input-group ">
+                                            <span class="input-group-addon">
+                                                Haulage Type
+                                            </span>
+                                            <select wire:model.debounce.300ms="haulage_type" class="form-control  " aria-label="..." >
+                                               <option value="">Select Option</option>
+                                               <option value="long_haul">Long Haul</option>
+                                               <option value="short_haul">Short Haul</option>
+                                            </select>
+                                        </div>
+                                        <!-- /input-group -->
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="input-group">
+                                            <span class="input-group-addon">
+                                                Customers
+                                            </span>
+                                            <select wire:model.debounce.300ms="customer_id" class="form-control" aria-label="..." >
+                                                <option value="">Select Customer</option>
+                                                @foreach ($customers as $customer)
+                                                    <option value="{{ $customer->id }}" >{{ ucfirst($customer->name) }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <!-- /input-group -->
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="input-group ">
+                                            <span class="input-group-addon">
+                                        Cargos
+                                        </span>
+                                        <select wire:model.debounce.300ms="cargo_id" class="form-control  " aria-label="..." >
+                                            <option value="">Select Cargo</option>
+                                            @foreach ($cargos as $cargo)
+                                                <option value="{{ $cargo->id }}"  >{{ ucfirst($cargo->name) }}</option>
+                                                @endforeach
+                                        </select>
+                                            
+                                        </div>
+                                        <!-- /input-group -->
+                                    </div>
+                                     <div class="col-md-3">
+                                        <div class="input-group ">
+                                            <span class="input-group-addon">
+                                                CreatedBy
+                                            </span>
+                                            <select wire:model.debounce.300ms="user_id" class="form-control  " aria-label="..." >
+                                                <option value="">Select Employee</option>
+                                                @foreach ($users as $user)
+                                                    <option value="{{ $user->id }}">{{ $user->name }} {{ $user->surname }}</option> 
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <!-- /input-group -->
+                                    </div>
+                                
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="input-group ">
+                                            <span class="input-group-addon">
                                         From
                                         </span>
-                                        <input type="date" wire:model.debounce.300ms="from"  class="form-control" aria-label="...">
-                                            </div>
-                                            <!-- /input-group -->
+                                        <select wire:model.debounce.300ms="from_destination" class="form-control  " aria-label="..." >
+                                            <option value="">Select Option</option>
+                                            @foreach ($destinations as $destination)
+                                                    <option value="{{ $destination->id }}"  > {{ $destination->country ? $destination->country->name : "" }} {{ $destination->city }}</option>
+                                            @endforeach
+                                        </select>
+                                            
                                         </div>
-                                        <div class="col-lg-2" style="margin-left: 7px">
-                                            <div class="input-group">
-                                                <span class="input-group-addon">
+                                        <!-- /input-group -->
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="input-group ">
+                                            <span class="input-group-addon">
                                         To
                                         </span>
-                                        <input type="date" wire:model.debounce.300ms="to"  class="form-control" aria-label="...">
-                                            </div>
-                                            <!-- /input-group -->
+                                         <select wire:model.debounce.300ms="to_destination" class="form-control  " aria-label="..." >
+                                            <option value="">Select Option</option>
+                                            @foreach ($destinations as $destination)
+                                                    <option value="{{ $destination->id }}"  > {{ $destination->country ? $destination->country->name : "" }} {{ $destination->city }}</option>
+                                            @endforeach
+                                        </select>
+                                            
                                         </div>
+                                        <!-- /input-group -->
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="input-group ">
+                                            <span class="input-group-addon">
+                                        LPs
+                                        </span>
+                                        <select wire:model.debounce.300ms="loading_point_id" class="form-control  " aria-label="..." >
+                                            <option value="">Select Loading Point</option>
+                                            @foreach ($loading_points as $loading_point)
+                                                    <option value="{{ $loading_point->id }}"  > {{ $loading_point->name }}</option>
+                                            @endforeach
+                                        </select>
+                                            
+                                        </div>
+                                        <!-- /input-group -->
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="input-group ">
+                                            <span class="input-group-addon">
+                                        OPs
+                                        </span>
+                                        <select wire:model.debounce.300ms="offloading_point_id" class="form-control  " aria-label="..." >
+                                            <option value="">Select Offloading Point</option>
+                                            @foreach ($offloading_points as $offloading_point)
+                                                    <option value="{{ $offloading_point->id }}"  > {{ $offloading_point->name }}</option>
+                                            @endforeach
+                                        </select>
+                                            
+                                        </div>
+                                        <!-- /input-group -->
+                                    </div>
                                 </div>
+                               
                             </div>
                             <div class="panel-title">
                                 <a href="" data-toggle="modal" data-target="#shiftModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Shift</a>
@@ -472,14 +668,14 @@
                          <div class="col-md-3">
                             <div class="form-group">
                                 <label for="name">Duty Start Time</label>
-                                <input type="time" class="form-control" wire:model.debounce.300ms="shift_start_time" placeholder="Enter Shift Start Time"/>
+                                <input type="datetime-local" class="form-control" wire:model.debounce.300ms="shift_start_time" placeholder="Enter Shift Start Time"/>
                                 @error('shift_start_time') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
                          <div class="col-md-3">
                             <div class="form-group">
                                 <label for="name">Duty Close Time</label>
-                                <input type="time" class="form-control" wire:model.debounce.300ms="shift_end_time" placeholder="Enter Shift End Time" />
+                                <input type="datetime-local" class="form-control" wire:model.debounce.300ms="shift_end_time" placeholder="Enter Shift End Time" />
                                 @error('shift_end_time') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>

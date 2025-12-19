@@ -31,8 +31,8 @@
                                 <div class="col-md-6">
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
-            							<li><a href="{{route('tyre_purchases.index')}}"><i class="fa fa-list"></i> All Purchase Orders</a></li>
-            							<li class="active"> <i class="fa fa-clock-o"></i>Pending Purchase Orders</li>
+            							<li><a href="{{route('tyre_purchases.index')}}"><i class="fa fa-list"></i> All Tyre Purchase Orders</a></li>
+            							<li class="active"> <i class="fa fa-clock-o"></i>Pending Tyre Purchase Orders</li>
             						</ul>
                                 </div>
                             </div>
