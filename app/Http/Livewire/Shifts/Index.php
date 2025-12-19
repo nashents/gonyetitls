@@ -349,7 +349,7 @@ class Index extends Component
         $this->team_id =  $this->team?->id;
         $this->liquid_measurements = Measurement::where('cargo_type','Liquid')->orderBy('name','asc')->get();
         $this->solid_measurements = Measurement::where('cargo_type','Solid')->orderBy('name','asc')->get();  
-        $this->users = User::where('category','employee')->where('active',0)->orderBy('name','asc')->orderBy('surname','asc')->get();
+        $this->users = User::where('category','employee')->where('active',1)->orderBy('name','asc')->orderBy('surname','asc')->get();
         $this->destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
        
         $this->trip_type = TripType::where('name','Local')->first();
