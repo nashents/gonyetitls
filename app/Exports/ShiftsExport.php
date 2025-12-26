@@ -7,6 +7,7 @@ use App\Models\Shift;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Events\AfterSheet;
+use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\WithEvents;
@@ -36,112 +37,209 @@ WithCustomStartCell
     public $shift_filter;
     public $search;
     public $totals;
+    public $filters;
+    public $totalNightSeconds = 0;
+    public $totalDaySeconds   = 0;
    
 
-    public function __construct($from, $to, $shift_filter, $search)
+    public function __construct($from, $to, $shift_filter, $search, $filters)
     {
             $this->from = $from;
             $this->to = $to;
             $this->shift_filter = $shift_filter;
             $this->search = $search; 
+            $this->filters = $filters;
+            
+            $base = $this->query();
 
-            $query = $this->query();
+            // Pull only what we need for summary + the relationship aggregates
+            $summaryRows = (clone $base)
+                ->withCount('trips')              // gives trips_count
+                ->withSum('trips', 'weight')      // gives trips_sum_weight (Laravel default alias)
+                ->get([
+                    'id',
+                    'shift_start_time',
+                    'shift_end_time',
+                    'actual_mileage',
+                    'total_fuel',
+                    'fuel_consumption_mileage',
+                ]);
 
-            // Clone the query for clean execution
-            $this->totals = (clone $query)->selectRaw('
-                SUM(total_loads) as total_loads,
-                SUM(total_fuel) as total_fuel,
-                AVG(fuel_consumption_mileage) as avg_fuel_consumption_mileage,
-                AVG(fuel_consumption_hours) as avg_fuel_consumption_hours,
-                SUM(total_weight) as total_weight,
-                SUM(actual_mileage) as total_distance,
-                COUNT(*) as shift_count
-            ')->first();
+            $shiftCount = $summaryRows->count();
+
+            $this->totals = (object) [
+                'shift_count' => $shiftCount,
+                'total_loads' => (float) $summaryRows->sum('trips_count'),
+                'total_weight' => (float) $summaryRows->sum('trips_sum_weight'),
+                'total_distance' => (float) $summaryRows->sum(function ($s) {
+                    return (float) ($s->actual_mileage ?? 0);
+                }),
+                'total_fuel' => (float) $summaryRows->sum(function ($s) {
+                    return (float) ($s->total_fuel ?? 0);
+                }),
+                'avg_fuel_consumption_mileage' => $shiftCount
+                    ? (float) round($summaryRows->avg(function ($s) {
+                        return is_numeric($s->fuel_consumption_mileage) ? (float) $s->fuel_consumption_mileage : null;
+                    }) ?? 0, 2)
+                    : 0,
+            ];
+
+            // Night hours: 21:00 -> 04:00
+            // Day hours:   05:00 -> 20:00
+            foreach ($summaryRows as $s) {
+                if (empty($s->shift_start_time) || empty($s->shift_end_time)) {
+                    continue;
+                }
+
+                $start = Carbon::parse($s->shift_start_time);
+                $end   = Carbon::parse($s->shift_end_time);
+
+                // If end is before start, assume it crosses midnight
+                if ($end->lessThan($start)) {
+                    $end->addDay();
+                }
+
+                $this->totalNightSeconds += $this->overlapSecondsWithNightWindow($start, $end);
+                $this->totalDaySeconds   += $this->overlapSecondsWithDayWindow($start, $end);
+            }
+
     }
+
+
+    private function overlapSecondsWithDayWindow(Carbon $start, Carbon $end): int
+    {
+        // Day window: 05:00 - 20:00 (same day)
+        return $this->overlapSecondsWithWindow($start, $end, '05:00:00', '20:00:00');
+    }
+
+    private function overlapSecondsWithNightWindow(Carbon $start, Carbon $end): int
+    {
+        // Night window crosses midnight: 21:00 - 04:00
+        // We handle it as two windows:
+        //   21:00 - 23:59:59 (day D)
+        //   00:00 - 04:00 (day D+1)
+        $sec1 = $this->overlapSecondsWithWindow($start, $end, '21:00:00', '23:59:59');
+        $sec2 = $this->overlapSecondsWithWindow($start, $end, '00:00:00', '04:00:00');
+        return $sec1 + $sec2;
+    }
+
+    private function overlapSecondsWithWindow(Carbon $start, Carbon $end, string $windowStart, string $windowEnd): int
+    {
+        // Iterate day-by-day across the interval so it works for multi-day shifts too
+        $total = 0;
+
+        $cursor = $start->copy()->startOfDay();
+        $lastDay = $end->copy()->startOfDay();
+
+        while ($cursor->lte($lastDay)) {
+            $wStart = $cursor->copy()->setTimeFromTimeString($windowStart);
+            $wEnd   = $cursor->copy()->setTimeFromTimeString($windowEnd);
+
+            // clamp overlap between [start,end] and [wStart,wEnd]
+            $oStart = $start->greaterThan($wStart) ? $start : $wStart;
+            $oEnd   = $end->lessThan($wEnd) ? $end : $wEnd;
+
+            if ($oEnd->greaterThan($oStart)) {
+                $total += $oEnd->diffInSeconds($oStart);
+            }
+
+            $cursor->addDay();
+        }
+
+        return $total;
+    }
+
+    private function formatSecondsToHoursMinutes(int $seconds): string
+    {
+        $seconds = max(0, $seconds);
+        $hours = intdiv($seconds, 3600);
+        $minutes = intdiv($seconds % 3600, 60);
+
+        return sprintf('%02dh %02dm', $hours, $minutes);
+    }
+
     public function query()
     { 
-        if (isset($this->from) && isset($this->to)) {
-            if (isset($this->search)) {
-                return Shift::query()->with(['loading_points', 'offloading_points','customer:id,name','driver','horse','vehicle','cargo','transporter','fuel'])
-                            ->whereDate($this->shift_filter, '>=', $this->from)
-                            ->whereDate($this->shift_filter, '<=', $this->to)
-                            ->where(function ($query) {
-                                $query->where('shift_number','like', '%'.$this->search.'%')
-                                    ->orWhere('type','like', '%'.$this->search.'%')
-                                    ->orWhere('date','like', '%'.$this->search.'%')
-                                    ->orWhere('for','like', '%'.$this->search.'%')
-                                    ->orWhereHas('customer', function ($q) {
-                                        $q->where('name', 'like', '%'.$this->search.'%');
-                                    })
-                                    ->orWhereHas('horse', function ($q) {
-                                        $q->where('registration_number', 'like', '%'.$this->search.'%')
-                                        ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
-                                    })
-                                    ->orWhereHas('vehicle', function ($q) {
-                                        $q->where('registration_number', 'like', '%'.$this->search.'%')
-                                        ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
-                                    })
-                                    ->orWhereHas('cargo', function ($q) {
-                                        $q->where('name', 'like', '%'.$this->search.'%');
-                                    })
-                                    ->orWhereHas('transporter', function ($q) {
-                                        $q->where('name', 'like', '%'.$this->search.'%');
-                                    })
-                                    ->orWhereHas('driver.employee', function ($q) {
-                                        $q->where(DB::raw("concat(name, ' ', surname)"), 'LIKE', "%".$this->search."%")
-                                        ->orWhere('name', 'like', '%'.$this->search.'%')
-                                        ->orWhere('surname', 'like', '%'.$this->search.'%');
-                                    });
-                                })
-                            ->orderBy($this->shift_filter, 'desc');
-            }else {
-               return Shift::query()->with(['customer:id,name','driver','horse','vehicle','cargo','transporter','fuel'])
-                ->whereDate($this->shift_filter, '>=', $this->from)
-                ->whereDate($this->shift_filter, '<=', $this->to)             
-                ->orderBy($this->shift_filter,'desc');
-            }
-           
-        }elseif ($this->search) {
-            return Shift::query()->with(['loading_points', 'offloading_points','customer:id,name','driver','horse','vehicle','cargo','transporter','fuel'])
-                    ->whereMonth($this->shift_filter, date('m'))
-                    ->whereYear($this->shift_filter, date('Y'))
-                    ->where(function ($query) {
-                        $query->where('shift_number','like', '%'.$this->search.'%')
-                            ->orWhere('type','like', '%'.$this->search.'%')
-                            ->orWhere('date','like', '%'.$this->search.'%')
-                            ->orWhere('for','like', '%'.$this->search.'%')
-                            ->orWhereHas('customer', function ($q) {
-                                $q->where('name', 'like', '%'.$this->search.'%');
-                            })
-                            ->orWhereHas('horse', function ($q) {
-                                $q->where('registration_number', 'like', '%'.$this->search.'%')
-                                ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
-                            })
-                            ->orWhereHas('vehicle', function ($q) {
-                                $q->where('registration_number', 'like', '%'.$this->search.'%')
-                                ->orWhere('fleet_number', 'like', '%'.$this->search.'%');
-                            })
-                            ->orWhereHas('cargo', function ($q) {
-                                $q->where('name', 'like', '%'.$this->search.'%');
-                            })
-                            ->orWhereHas('transporter', function ($q) {
-                                $q->where('name', 'like', '%'.$this->search.'%');
-                            })
-                            ->orWhereHas('driver.employee', function ($q) {
-                                $q->where(DB::raw("concat(name, ' ', surname)"), 'LIKE', "%".$this->search."%")
-                                ->orWhere('name', 'like', '%'.$this->search.'%')
-                                ->orWhere('surname', 'like', '%'.$this->search.'%');
-                            });
+          $baseQuery = Shift::query()
+        ->with(['trips:id,shift_id,loading_point_id,offloading_point_id','customer:id,name','driver','horse','vehicle','cargo','transporter','fuel']);
+
+        /**
+         * 1) Date filtering: range if from/to, else default current month/year
+         */
+        $baseQuery->when(
+            filled($this->from) && filled($this->to),
+            fn (Builder $q) => $q->whereBetween($this->shift_filter, [
+                Carbon::parse($this->from)->startOfDay(),
+                Carbon::parse($this->to)->endOfDay(),
+            ]),
+            fn (Builder $q) => $q->whereMonth($this->shift_filter, now()->month)
+                ->whereYear($this->shift_filter, now()->year)
+        );
+
+        /**
+         * 2) Dropdown / selected filters
+         *    (Assuming these values are IDs)
+         */
+        $baseQuery
+        ->when(filled($this->filters['transporter_id']), fn (Builder $q) => $q->where('transporter_id', $this->filters['transporter_id']))
+        ->when(filled($this->filters['customer_id']), fn (Builder $q) => $q->where('customer_id', $this->filters['customer_id']))
+        ->when(filled($this->filters['driver_id']), fn (Builder $q) => $q->where('driver_id', $this->filters['driver_id']))
+        ->when(filled($this->filters['horse_id']), fn (Builder $q) => $q->where('horse_id', $this->filters['horse_id']))
+        ->when(filled($this->filters['vehicle_id']), fn (Builder $q) => $q->where('vehicle_id', $this->filters['vehicle_id']))
+        ->when(filled($this->filters['cargo_id']), fn (Builder $q) => $q->where('cargo_id', $this->filters['cargo_id']))
+        ->when(filled($this->filters['shift_type']), fn (Builder $q) => $q->where('type', $this->filters['shift_type']))
+        ->when(filled($this->filters['user_id']), fn (Builder $q) => $q->where('user_id', $this->filters['user_id']))
+
+        // trips-based loading/offloading filters
+        ->when(filled($this->filters['from_destination']), fn (Builder $q) =>
+            $q->whereHas('trips', fn (Builder $t) => $t->where('from', $this->filters['from_destination']))
+        )
+        ->when(filled($this->filters['to_destination']), fn (Builder $q) =>
+            $q->whereHas('trips', fn (Builder $t) => $t->where('to', $this->filters['to_destination']))
+        )
+        ->when(filled($this->filters['haulage_type']), fn (Builder $q) =>
+            $q->whereHas('trips', fn (Builder $t) => $t->where('haulage_type', $this->filters['haulage_type']))
+        )
+        ->when(filled($this->filters['loading_point_id']), fn (Builder $q) =>
+            $q->whereHas('trips', fn (Builder $t) => $t->where('loading_point_id', $this->filters['loading_point_id']))
+        )
+        ->when(filled($this->filters['offloading_point_id']), fn (Builder $q) =>
+            $q->whereHas('trips', fn (Builder $t) => $t->where('offloading_point_id', $this->filters['offloading_point_id']))
+        );
+
+        /**
+         * 3) Search filtering (free text)
+         */
+        $baseQuery->when(filled($this->search), function (Builder $q) {
+            $term = trim($this->search);
+            $like = "%{$term}%";
+
+            $q->where(function (Builder $query) use ($term, $like) {
+                $query->where('shift_number', 'like', $like)
+                    ->orWhere('type', 'like', $like)
+                    ->orWhere('date', 'like', $like)
+                    ->orWhere('for', 'like', $like)
+                    ->orWhereHas('customer', fn (Builder $qq) => $qq->where('name', 'like', $like))
+                    ->orWhereHas('team', fn (Builder $qq) => $qq->where('name', 'like', $like))
+                    ->orWhereHas('horse', function (Builder $qq) use ($like) {
+                        $qq->where('registration_number', 'like', $like)
+                        ->orWhere('fleet_number', 'like', $like);
                     })
-                    ->orderBy($this->shift_filter, 'desc');
-        }
-        else {
-           return Shift::query()->with(['customer:id,name','driver','horse','vehicle','cargo','transporter','fuel'])
-                        ->whereMonth($this->shift_filter, date('m'))
-                        ->whereYear($this->shift_filter, date('Y'))
-                        ->orderBy($this->shift_filter,'desc');
-          
-        }
+                    ->orWhereHas('vehicle', function (Builder $qq) use ($like) {
+                        $qq->where('registration_number', 'like', $like)
+                        ->orWhere('fleet_number', 'like', $like);
+                    })
+                    ->orWhereHas('cargo', fn (Builder $qq) => $qq->where('name', 'like', $like))
+                    ->orWhereHas('transporter', fn (Builder $qq) => $qq->where('name', 'like', $like))
+                    ->orWhereHas('driver.employee', function (Builder $qq) use ($like) {
+                        $qq->where(DB::raw("CONCAT(name,' ',surname)"), 'like', $like)
+                        ->orWhere('name', 'like', $like)
+                        ->orWhere('surname', 'like', $like);
+                    });
+            });
+        });
+
+        return $baseQuery->orderByDesc($this->shift_filter);
        
        
     }
@@ -236,8 +334,8 @@ WithCustomStartCell
     {
         return [
             AfterSheet::class => function (AfterSheet $event) {
-                // Styling for headings (now on A15)
-                $event->sheet->getStyle('A15:P15')->applyFromArray([
+                // Styling for headings (now on A17:Q17)
+                $event->sheet->getStyle('A17:Q17')->applyFromArray([
                     'font' => ['bold' => true],
                     'borders' => [
                         'outline' => [
@@ -268,6 +366,16 @@ WithCustomStartCell
 
                 $row++;
 
+                $event->sheet->setCellValue("K{$row}", 'Total Night Hours (21:00 - 04:00)');
+                $event->sheet->setCellValue("L{$row}", $this->formatSecondsToHoursMinutes($this->totalNightSeconds));
+
+                $row++;
+
+                $event->sheet->setCellValue("K{$row}", 'Total Day Hours (05:00 - 20:00)');
+                $event->sheet->setCellValue("L{$row}", $this->formatSecondsToHoursMinutes($this->totalDaySeconds));
+
+                $row++;
+
                 $event->sheet->setCellValue("K{$row}", 'Total Weight');
                 $event->sheet->setCellValue("L{$row}", $this->totals->total_weight ?? 0);
 
@@ -287,7 +395,7 @@ WithCustomStartCell
                 $event->sheet->setCellValue("L{$row}", round($this->totals->avg_fuel_consumption_mileage, 2) ?? 0);
 
                 // Optional: style the values
-                $event->sheet->getStyle("K8:L13")->applyFromArray([
+                $event->sheet->getStyle("K8:L15")->applyFromArray([
                     'font' => ['bold' => true],
                     'fill' => [
                         'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
@@ -320,6 +428,6 @@ WithCustomStartCell
     }
 
     public function startCell(): string{
-        return 'A15';
+        return 'A17';
     }
 }

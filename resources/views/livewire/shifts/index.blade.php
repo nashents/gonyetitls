@@ -265,12 +265,12 @@
                                     </th>
                                    
                                     <th class="th-sm" style="width:120px;">
-                                        Distance
+                                        Distance(Km)
                                         <hr style="margin-top:2px; margin-bottom:2px">
-                                        Hours
+                                        Hours(H)
                                     </th>
                                     <th class="th-sm" style="width: 5%;">
-                                        Fuel
+                                        Fuel(l)
                                     </th>
                                     <th class="th-sm" style="width:120px;">
                                         F/C Mileage(Km/l)
@@ -337,7 +337,7 @@
                                          {{$shift->hours ? $shift->hours : ""}}
                                     </td>
                                     <td>
-                                        {{$shift->total_fuel ? $shift->total_fuel. " l" : ""}}
+                                        {{$shift->total_fuel ? $shift->total_fuel : ""}}
                                     </td>
                                    <td>
                                         {{$shift->fuel_consumption_mileage ? number_format($shift->fuel_consumption_mileage,2) : ""}}
@@ -400,6 +400,8 @@
         </div>
         <!-- /.container-fluid -->
     </section>
+
+    
 
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="shiftsImportModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
         <div class="modal-dialog" role="document">

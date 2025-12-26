@@ -83,6 +83,7 @@ class Index extends Component
     public $selected_currency;
     public $customers;
     public $customer_id;
+    public $filteres;
 
 
     public $selectedLoadingPoint;
@@ -171,10 +172,7 @@ class Index extends Component
     public $cargo_id;
     public $transporter_id;
     public $users;
-
-
-
-
+    public $filters = [];
 
     public $selected_container;
     public $fuel_category;
@@ -775,18 +773,20 @@ class Index extends Component
     protected $rules = [
         'type' => 'required',
         'date' => 'required',
+        'shift_start_time' => 'nullable|date_format:Y-m-d\TH:i',
+        'shift_end_time'   => 'nullable|date_format:Y-m-d\TH:i',
     ];
 
     public function exportShiftsCSV(Excel $excel){
 
-        return $excel->download(new ShiftsExport($this->from, $this->to, $this->shift_filter, $this->search), 'shifts_'.time().'.csv', Excel::CSV);
+        return $excel->download(new ShiftsExport($this->from, $this->to, $this->shift_filter, $this->search, $this->filters), 'shifts_'.time().'.csv', Excel::CSV);
     }
     public function exportShiftsPDF(Excel $excel){
 
-        return $excel->download(new ShiftsExport($this->from, $this->to, $this->shift_filter, $this->search), 'shifts_'.time().'.pdf', Excel::DOMPDF);
+        return $excel->download(new ShiftsExport($this->from, $this->to, $this->shift_filter, $this->search, $this->filters), 'shifts_'.time().'.pdf', Excel::DOMPDF);
     }
     public function exportShiftsExcel(Excel $excel){
-        return $excel->download(new ShiftsExport($this->from, $this->to, $this->shift_filter, $this->search), 'shifts_'.time().'.xlsx');
+        return $excel->download(new ShiftsExport($this->from, $this->to, $this->shift_filter, $this->search, $this->filters), 'shifts_'.time().'.xlsx');
     }
 
         public function importShifts(){
@@ -953,11 +953,45 @@ class Index extends Component
         $shift->save();
     }
 
+    public function updatedShiftStartTime($value)
+    {
+        $this->shift_start_time = $this->normalizeDateTimeLocal($value);
+    }
+
+    public function updatedShiftEndTime($value)
+    {
+        $this->shift_end_time = $this->normalizeDateTimeLocal($value);
+    }
+
+    private function normalizeDateTimeLocal($value): ?string
+    {
+        $value = trim((string) $value);
+
+        if ($value === '') return null;
+
+        // Strict check for datetime-local format
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/', $value)) {
+            return null; // drop invalid values
+        }
+
+        // If it matches, keep it as-is (DB format can be handled later)
+        return $value;
+    }
+
 
     public function calculatedShiftDuration($shift){
 
-        $start = Carbon::parse($shift->shift_start_time);
-        $end = Carbon::parse($shift->shift_end_time);
+        try {
+            $start = Carbon::createFromFormat('Y-m-d\TH:i', $shift->shift_start_time);
+        } catch (\Exception $e) {
+            $start = null;
+        }
+        try {
+            $end = Carbon::createFromFormat('Y-m-d\TH:i', $shift->shift_end_time);
+        } catch (\Exception $e) {
+            $end = null;
+        }
+      
 
         // If you have dates for the shift times, parse them directly
         // Otherwise, handle cases where only the time is given
@@ -1345,6 +1379,8 @@ class Index extends Component
                 'ending_hours.*'       => 'nullable|numeric|min:0',
                 'loading_point_id.*'   => 'nullable|integer|exists:loading_points,id',
                 'offloading_point_id.*'=> 'nullable|integer|exists:offloading_points,id',
+                'shift_start_time' => 'nullable|date_format:Y-m-d\TH:i',
+                'shift_end_time'   => 'nullable|date_format:Y-m-d\TH:i',
                 // …add the rest as needed
             ]);
         } 
@@ -1688,6 +1724,23 @@ class Index extends Component
     public function render()
     {
 
+         $this->filters = [
+            'shift_filter' => $this->shift_filter,
+            'transporter_id' => $this->transporter_id,
+            'customer_id' => $this->customer_id,
+            'driver_id' => $this->driver_id,
+            'user_id' => $this->user_id,
+            'horse_id' => $this->horse_id,
+            'from_destination' => $this->from_destination,
+            'to_destination' => $this->to_destination,
+            'cargo_id' => $this->cargo_id,
+            'vehicle_id' => $this->vehicle_id,
+            'haulage_type' => $this->haulage_type,
+            'loading_point_id' => $this->loading_point_id,
+            'offloading_point_id' => $this->offloading_point_id,
+            'shift_type' => $this->shift_type,
+        ];
+
         if ((isset($this->fuel_exchange_rate) && $this->fuel_exchange_rate > 0 && is_numeric($this->fuel_exchange_rate)) && (isset($this->fuel_amount) && $this->fuel_amount > 0 && is_numeric($this->fuel_amount)) ) {
             $this->fuel_exchange_amount = $this->fuel_exchange_rate * $this->fuel_amount;
         }
@@ -1695,6 +1748,8 @@ class Index extends Component
         if ((isset($this->exchange_rate) && $this->exchange_rate > 0)  &&  ( isset($this->total) && $this->total > 0 )) {
             $this->exchange_amount = $this->exchange_rate * $this->total;
         }
+
+        
 
         $baseQuery = Shift::query()
         ->with(['trips:id,shift_id,loading_point_id,offloading_point_id','customer:id,name','driver','horse','vehicle','cargo','transporter','fuel']);
