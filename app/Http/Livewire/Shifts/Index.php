@@ -991,7 +991,10 @@ class Index extends Component
         } catch (\Exception $e) {
             $end = null;
         }
-      
+
+        if ($start == null || $end == null) {
+            return null;
+        }
 
         // If you have dates for the shift times, parse them directly
         // Otherwise, handle cases where only the time is given
