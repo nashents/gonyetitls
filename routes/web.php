@@ -52,6 +52,9 @@ Route::get('loan/applications/rejected','LoanController@rejected')->name('loans.
 Route::post('loan/application/{id}/decision','LoanController@decision')->name('loans.decision');
 Route::get('loan/reports','LoanController@reports')->name('loans.reports');
 
+Route::get('accounts/receivable','AccountController@accountsReceivable')->name('accounts.receivable');
+Route::get('accounts/payable','AccountController@accountsPayable')->name('accounts.payable');
+
 Route::get('admins/management','AdminController@manage')->name('admins.manage');
 
 //**Fuel Management Routes**

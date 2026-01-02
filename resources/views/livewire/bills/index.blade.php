@@ -284,7 +284,7 @@
                                   </tr>
                                   @empty
                                   <tr>
-                                    <td colspan="13">
+                                    <td colspan="14">
                                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                             No Bills Found ....
                                         </div>

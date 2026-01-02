@@ -1,11 +1,5 @@
 <div>
-@section('extra-css')
-    <style>
-      :root{
-      --accent: {{$company->color}};          /* tweak to match your brand */
-    }
-    </style>
-@endsection
+
 @section('extra-css')
 <style>
   :root {
@@ -18,105 +12,70 @@
     margin: 10mm;
   }
 
-  @media print {
-    /* Remove default browser margins */
-    html, body {
-      margin: 0;
-      padding: 0;
-    }
 
-    /* Hide buttons / toolbars */
-    .action-bar,
-    .hidden-print {
-      display: none !important;
-    }
+@media print {
 
-    /* Main manifest container */
-    .manifest {
-      width: 190mm;              /* inside A4 minus margins */
-      margin: 0 auto;
-      padding: 0;
-      box-sizing: border-box;
-      font-size: 11px;           /* tighten text */
-      line-height: 1.2;
-    }
-
-    /* Keep big logical blocks on same page */
-    .manifest__header,
-    .grid-2,
-    .items,
-    .signatures,
-    .manifest__footer,
-    .block-keep {
-      page-break-inside: avoid;
-    }
-
-    /* Headings a bit smaller for print */
-    .manifest h1 {
-      font-size: 16px;
-      margin: 0 0 6px;
-    }
-
-    .manifest h3 {
-      font-size: 12px;
-      margin: 4px 0;
-    }
-
-    /* Cards & grids – reduce padding/gaps */
-    .card {
-      padding: 4px 6px;
-      margin-bottom: 4px;
-    }
-
-    .grid-2 {
-      gap: 6px;
-    }
-
-    /* Key-value pairs tighter */
-    .kv .k,
-    .kv .v {
-      padding: 1px 0;
-    }
-
-    /* Table – compact mode */
-    .tbl {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 10px;
-    }
-
-    .tbl th,
-    .tbl td {
-      padding: 2px 3px;
-    }
-
-    .tbl th {
-      font-weight: 600;
-    }
-
-    /* Signatures – keep compact */
-    .signatures {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 6px;
-      margin-top: 6px;
-    }
-
-    .sig {
-      min-height: 40px;
-    }
-
-    .sig .label {
-      font-size: 10px;
-      margin-bottom: 3px;
-    }
-
-    /* Footer compact */
-    .manifest__footer {
-      margin-top: 6px;
-      font-size: 10px;
-    }
+  /* Remove section-level spacing */
+  section,
+  header,
+  footer {
+    margin: 0 !important;
+    padding: 0 !important;
   }
+
+  /* Grid containers: no gaps */
+  .grid-2,
+  .signatures {
+    gap: 0 !important;
+  }
+
+  /* Cards: no separation */
+  .card {
+    margin: 0 !important;
+    padding: 3px 4px !important; /* still readable */
+    border-spacing: 0 !important;
+  }
+
+  /* Headings tight */
+  h1, h3 {
+    margin: 2px 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Divider line tight */
+  .hr {
+    margin: 2px 0 !important;
+  }
+
+  /* Items section */
+  .items {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Totals block */
+  .totals {
+    margin: 2px 0 0 !important;
+    padding: 0 !important;
+    gap: 4px !important;
+  }
+
+  /* Signatures */
+  .signatures {
+    margin-top: 2px !important;
+  }
+
+  .sig {
+    margin: 0 !important;
+    padding: 2px 3px !important;
+  }
+
+  /* Footer glued to content */
+  .manifest__footer {
+    margin-top: 2px !important;
+    padding: 0 !important;
+  }
+}
 </style>
 @endsection
     <div class="action-bar">
@@ -149,10 +108,9 @@
       <aside class="meta">
         <h1>Transport Manifest</h1>
         <dl class="meta-grid">
-          <dt>Manifest #</dt><dd class="mono" data-field="manifest.number">{{$trip->manifest_number}}</dd>
+          <dt>Manifest#</dt><dd class="mono" data-field="manifest.number">{{$trip->trip_ref ? "/".$trip->trip_ref : ""}} {{$trip->manifest_number}}</dd>
           <dt>Date</dt><dd data-field="manifest.date">{{$trip->start_date}}</dd>
           <dt>Trip #</dt><dd class="mono" data-field="trip.number">{{$trip->trip_number}} {{$trip->trip_ref ? "/".$trip->trip_ref : ""}}</dd>
-          <dt>Currency</dt><dd data-field="currency">{{$trip->currency ? $trip->currency->name : ""}}</dd>
           <dt>Manifest Created By:</dt><dd data-field="currency">{{$trip->user ? $trip->user->name : ""}} {{$trip->user ? $trip->user->surname : ""}}</dd>
         </dl>
       </aside>
@@ -168,7 +126,7 @@
           <div class="k">Name</div><div class="v" data-field="shipper.name">{{$customer?->name}}</div>
           <div class="k">Address</div><div class="v" data-field="shipper.address">{{$customer?->street_address}} {{$customer?->suburb ? $customer?->suburb.", " : ""}} {{$customer?->city ? $customer?->city : ""}} {{$customer?->country}}</div>
           <div class="k">Contact</div><div class="v" data-field="shipper.contact">{{$customer?->phonenumber}} {{$customer?->email ? "/".$customer?->email: ""}}</div>
-          <div class="k">VAT/TIN</div><div class="v" data-field="shipper.tax_id">{{$customer?->vat_number}} {{$customer?->tin_number ? "/".$customer?->tin_number : ""}}</div>
+          {{-- <div class="k">VAT/TIN</div><div class="v" data-field="shipper.tax_id">{{$customer?->vat_number}} {{$customer?->tin_number ? "/".$customer?->tin_number : ""}}</div> --}}
         </div>
       </div>
 
@@ -178,7 +136,7 @@
           <div class="k">Name</div><div class="v" data-field="consignee.name">{{$consignee?->name}}</div>
           <div class="k">Address</div><div class="v" data-field="consignee.address">{{$consignee?->street_address}} {{$consignee?->suburb ? $consignee?->suburb.", " : ""}} {{$consignee?->city ? $consignee?->city : ""}} {{$consignee?->country}}</div>
           <div class="k">Contact</div><div class="v" data-field="consignee.contact">{{$consignee?->phonenumber}} {{$consignee?->email}}</div>
-          <div class="k">VAT/TIN</div><div class="v" data-field="consignee.tax_id">{{$consignee?->vat_number}} {{$consignee?->tin_number ? "/".$consignee?->tin_number : ""}}</div>
+          {{-- <div class="k">VAT/TIN</div><div class="v" data-field="consignee.tax_id">{{$consignee?->vat_number}} {{$consignee?->tin_number ? "/".$consignee?->tin_number : ""}}</div> --}}
         </div>
       </div>
 
@@ -201,14 +159,11 @@
            </div>
          
            @if ($trip->driver)
-          <div class="k">Driver</div><div class="v" data-field="driver.name">
-               
-                    {{$trip->driver->employee ? $trip->driver->employee->name : ""}} {{$trip->driver->employee ? $trip->driver->employee->surname : ""}}
-              
+          <div class="k">Driver / Passport#</div><div class="v" data-field="driver.name">
+                    {{$trip->driver->employee ? $trip->driver->employee->name : ""}} {{$trip->driver->employee ? $trip->driver->employee->surname : ""}} {{$trip->driver->passport_number ? " / ".$trip->driver->passport_number: ""}}
           </div>
-          <div class="k">License/ID/Passport</div><div class="v" data-field="driver.license">{{$trip->driver->license_number}} {{$trip->driver->employee->idnumber ? " / ".$trip->driver->employee->idnumber : ""}} {{$trip->driver->passport_number ? " / ".$trip->driver->passport_number: ""}} </div>
-          <div class="k">Phone</div><div class="v" data-field="driver.phone">{{$trip->driver->employee ? $trip->driver->employee->phonenumber : ""}}</div>
-            @endif
+        
+          @endif
         </div>
       </div>
 
@@ -219,19 +174,26 @@
             @if ($from)
                  {{$from->country ? $from->country->name : ""}} {{$from->city}}
             @endif
-           
+            {{$trip->loading_point ? $trip->loading_point->name : ""}}
           </div>
-          <div class="k">Loading Point</div><div class="v" data-field="route.origin">{{$trip->loading_point ? $trip->loading_point->name : ""}}</div>
+        
           <div class="k">Destination</div><div class="v" data-field="route.destination">
             @if ($to)
                  {{$to->country ? $to->country->name : ""}} {{$to->city}}      
             @endif
+            {{$trip->offloading_point ? $trip->offloading_point->name : ""}}
           </div>
-          <div class="k">Offloading Point</div><div class="v" data-field="route.destination">{{$trip->offloading_point ? $trip->offloading_point->name : ""}}</div>
-          <div class="k">Border(s) (if any)</div><div class="v" data-field="route.border">
+        
+          <div class="k">Border(s)</div><div class="v" data-field="route.border">
             @foreach ($trip->borders as $border)
                 {{$border->name}}@if(!$loop->last), @endif
             @endforeach
+          </div>
+          <div class="k">Clearing Agent(s)</div><div class="v" data-field="route.border">
+            @foreach ($trip->clearing_agents as $agent)
+                {{$agent->name}}@if(!$loop->last), @endif
+            @endforeach
+                
           </div>
         </div>
        
@@ -240,7 +202,7 @@
 
     <!-- ===== Items ===== -->
     <section class="items">
-       <div class="block-keep">
+       {{-- <div class="block-keep"> --}}
       <h3>Cargo / Items</h3>
       <table class="tbl" role="table" aria-label="Cargo Items">
         <thead>
@@ -251,7 +213,7 @@
             <th style="width:80px" class="right">Qty</th>
             <th style="width:70px">Unit</th>
             <th style="width:100px" class="right">Weight (Tons)</th>
-            <th style="width:100px" class="right">Volume (m³)</th>
+            {{-- <th style="width:100px" class="right">Volume (m³)</th> --}}
           </tr>
         </thead>
         <tbody data-collection="items">
@@ -295,15 +257,13 @@
         </div>
         <div class="card">
           <div class="kv">
-            <div class="k">Gross Weight</div><div class="v" data-field="summary.gross_weight">{{$trip->weight ? $trip->weight."t" : ""}}</div>
-            <div class="k">Net Weight</div><div class="v" data-field="summary.net_weight">{{$trip->net_weight ? $trip->net_weight."t" : ""}}</div>
-            <div class="k">Total Volume</div><div class="v" data-field="summary.volume">{{$trip->volume ? $trip->volume."m³" : ""}} </div>
+            <div class="k">Gross / Net Weight</div><div class="v" data-field="summary.gross_weight">{{$trip->weight ? $trip->weight."t" : ""}} {{$trip->net_weight ? " / ".$trip->net_weight."t" : ""}}</div>
             <div class="k">Seal #</div><div class="v" data-field="summary.seal">{{$trip->seal_number}}</div>
-            <div class="k">Temp (if cold)</div><div class="v" data-field="summary.temperature">{{$trip->temparature}}</div>
+            <div class="k">Container#</div><div class="v" data-field="summary.temperature">{{$trip->container_details}}</div>
           </div>
         </div>
       </div>
-       </div>
+       {{-- </div> --}}
     </section>
 
     <!-- ===== Sign-off ===== -->

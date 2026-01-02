@@ -27,21 +27,21 @@
                                     <!-- /input-group -->
                                 </div>
                                 @if ($bill_filter == "created_at")
-                                <div class="col-lg-2" style="margin-right: 7px">
+                                <div class="col-lg-2" >
                                     <div class="input-group">
                                         <span class="input-group-addon">
                                   From
                                   </span>
-                                  <input type="date" wire:model.debounce.300ms="from" wire:change="dateRange()" class="form-control" aria-label="...">
+                                  <input type="date" wire:model.debounce.300ms="from"  class="form-control" aria-label="...">
                                     </div>
                                     <!-- /input-group -->
                                 </div>
-                                <div class="col-lg-2" style="margin-left: 30px">
+                                <div class="col-lg-2" >
                                     <div class="input-group">
                                         <span class="input-group-addon">
                                   To
                                   </span>
-                                  <input type="date" wire:model.debounce.300ms="to" wire:change="dateRange()" class="form-control" aria-label="...">
+                                  <input type="date" wire:model.debounce.300ms="to"  class="form-control" aria-label="...">
                                     </div>
                                     <!-- /input-group -->
                                 </div>
@@ -242,7 +242,7 @@
                                   </tr>
                                   @empty
                                   <tr>
-                                    <td colspan="11">
+                                    <td colspan="14">
                                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                             No Pending Bills Found ....
                                         </div>

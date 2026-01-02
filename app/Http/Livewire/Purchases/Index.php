@@ -13,9 +13,11 @@ use Livewire\Component;
 use App\Models\Category;
 use App\Models\Currency;
 use App\Models\Document;
+use App\Models\Employee;
 use App\Models\Purchase;
 use App\Models\VendorType;
 use App\Models\AccountType;
+use App\Models\Requisition;
 use App\Models\ExchangeRate;
 use App\Models\Notification;
 use Livewire\WithPagination;
@@ -50,6 +52,8 @@ class Index extends Component
     public $purchase;
     public $currencies;
     public $selectedCurrency;
+    public $employees;
+    public $employee_id;
     public $selected_currency;
     public $currency_id;
     public $department;
@@ -60,6 +64,7 @@ class Index extends Component
 
     public $exchange_rate;
     public $exchange_amount;
+    public $attach_to;
 
     
     public $expense_accounts;
@@ -75,6 +80,8 @@ class Index extends Component
 
     public $booking_id;
     public $bookings;
+    public $requisition_id;
+    public $requisitions;
 
     public $contact_name;
     public $contact_surname;
@@ -278,7 +285,9 @@ class Index extends Component
             $this->resetPage();
             $this->company = Auth::user()->employee->company;
             $this->purchase_filter = "created_at";
+            $this->employees = Employee::where('archive', 0)->where('status',1)->orderBy('name','asc')->orderBy('surname','asc')->get();
             $this->bookings = Booking::where('authorization','approved')->where('status',1)->whereYear('in_date',date('Y'))->latest()->get();
+            $this->requisitions = Requisition::where('authorization','approved')->where('is_completed', False)->whereYear('date',date('Y'))->latest()->get();
             $this->department = $category;
             $this->products = Product::orderBy('name','asc')->where('department', $this->department)->where('status',True)->where('buy',True)->get();
             $this->vendor_types = VendorType::latest()->get();
@@ -421,6 +430,18 @@ class Index extends Component
         }
     }
 
+    public function purchaseRequisition($id){
+        if(!is_null($id)){
+            $requisition = Requisition::find($id);
+            if ($requisition) {
+                 return "#: ".$requisition->requisition_number ." ". " - ". Carbon::parse($requisition->date)->format('d M, Y');
+            }else{
+                 return Null;
+            }
+           
+        }
+    }
+
     public function store(){
 
         DB::transaction(function () {
@@ -430,10 +451,17 @@ class Index extends Component
         $purchase->purchase_number = $this->purchase_number;
         $purchase->date = $this->date;
         $purchase->department = $this->department;
-        $purchase->booking_id = $this->booking_id ? $this->booking_id : Null;
+        $purchase->booking_id = Null;
+        $purchase->requisition_id = Null;
+        if($this->attach_to == "Booking"){
+              $purchase->booking_id = $this->booking_id;
+        }elseif($this->attach_to == "Requisition"){
+             $purchase->requisition_id = $this->requisition_id;
+        }
         $purchase->description = $this->description;
         $purchase->account_id = $this->selectedAccount;
         $purchase->vendor_id = $this->vendor_id;
+        $purchase->employee_id = $this->employee_id;
         $purchase->currency_id = $this->selectedCurrency;
         $purchase->status = '1';
         $purchase->expiry = Carbon::parse($this->date)->addMonth()->format('Y-m-d');
@@ -593,6 +621,13 @@ class Index extends Component
         $this->selectedCurrency = $this->purchase->currency_id;
         $this->selected_currency = Currency::find($this->selectedCurrency);
         $this->booking_id = $this->purchase->booking_id;
+        $this->employee_id = $this->purchase->employee_id;
+        $this->requisition_id = $this->purchase->requisition_id;
+        if($this->requisition_id){
+            $this->attach_to = "Requisition";
+        }elseif($this->booking_id){
+             $this->attach_to = "Booking";
+        }
         $this->purchase_order_products = $this->purchase->purchase_products;
         if(isset($this->purchase_order_products)){
 
@@ -630,7 +665,14 @@ class Index extends Component
         $purchase->purchase_number = $this->purchase_number;
         $purchase->date = $this->date;
         $purchase->description = $this->description;
-        $purchase->booking_id = $this->booking_id ? $this->booking_id : Null;
+        $purchase->employee_id = $this->employee_id;
+        $purchase->booking_id = Null;
+        $purchase->requisition_id = Null;
+        if($this->attach_to == "Booking"){
+              $purchase->booking_id = $this->booking_id;
+        }elseif($this->attach_to == "Requisition"){
+             $purchase->requisition_id = $this->requisition_id;
+        }
         $purchase->account_id = $this->selectedAccount;
         $purchase->expense_id = $this->expense_id;
         $purchase->vendor_id = $this->vendor_id;

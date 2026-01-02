@@ -10,10 +10,14 @@ use Livewire\Component;
 use App\Models\Destination;
 use App\Models\InvoiceItem;
 use App\Models\IncomeStream;
+use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
 
 class InvoiceItems extends Component
 {
+
+     use WithPagination;
+    protected $paginationTheme = 'bootstrap';
     public $income_streams;
     public $income_stream;
     public $products;
@@ -39,7 +43,7 @@ class InvoiceItems extends Component
     public $description;
     public $invoice;
     public $invoice_id;
-    public $invoice_items;
+    protected $invoice_items;
     public $invoice_item_id;
     public $accounts;
     public $invoice_item;
@@ -92,8 +96,6 @@ class InvoiceItems extends Component
         $this->subtotal =  $this->invoice->subtotal;
         $this->total =   $this->invoice->total;
         $this->tax_amount =   $this->invoice->tax_amount; 
-        $this->invoice_items = $this->invoice->invoice_items;
-
         $this->accounts = Account::where('account_type_id',1)->latest()->get();
         $this->income_accounts = Account::whereHas('account_type', function($q){
             $q->where('name', 'Income');
@@ -343,13 +345,12 @@ class InvoiceItems extends Component
 
         }
 
-        $this->invoice_items = InvoiceItem::where('invoice_id',$this->invoice_id)->get();
         $this->products = Product::where('sell',True)->orderBy('name','asc')->get();
         $this->tax_accounts = Account::whereHas('account_type', function ($query) {
             return $query->where('name','Sales Taxes');
         })->get();
         return view('livewire.invoices.invoice-items',[
-            'invoice_items' => $this->invoice_items,
+            'invoice_items' => InvoiceItem::where('invoice_id',$this->invoice_id)->paginate(10),
             'products' => $this->products,
             'tax_accounts' => $this->tax_accounts,
         ]);

@@ -85,6 +85,8 @@
                                         </th>
                                         <th class="th-sm">Total
                                         </th>
+                                        <th class="th-sm">Payment
+                                        </th>
                                         <th class="th-sm">Status
                                         </th>
                                         <th class="th-sm">Auth
@@ -180,7 +182,40 @@
                                         <td>{{$requisition->date }}</td>
                                         <td>
                                             {{$company->currency ? $company->currency->name : "" }} {{$company->currency ? $company->currency->symbol : "" }}{{number_format($requisition->total,2)}}</td>
-                                        <td><span class="label label-{{($requisition->status == 'Paid') ? 'success' : (($requisition->status == 'Partial') ? 'warning' : 'danger') }}">{{ $requisition->status }}</span></td>
+                                        <td>
+                                            @if ($requisition->total)
+                                                <span class="label label-{{($requisition->status == 'Paid') ? 'success' : (($requisition->status == 'Partial') ? 'warning' : 'danger') }}">{{ $requisition->status }}</span>
+                                            @else
+                                                <span class="label label-info">No payment</span>  
+                                            @endif
+                                             @if ($requisition->paid_by_id)
+                                                <br>
+                                                 <small style="background-color: orange"><strong >MarkedBy: </strong> {{$this->findUser($requisition->paid_by_id)}}</small>  
+                                            @endif
+                                            @if ($requisition->paid_on)
+                                                <br>
+                                                 <small style="background-color: orange"><strong >Date: </strong> {{$requisition->paid_on}}</small>  
+                                            @endif
+                                            @if ($requisition->paid_comments)
+                                                <br>
+                                                <small style="background-color: orange"><strong >Comments: </strong> {{$requisition->paid_comments}}</small>  
+                                            @endif 
+                                        </td>
+                                        <td>
+                                            <span class="label label-{{($requisition->is_completed == False ? 'warning' : 'success') }}">{{ $requisition->is_completed == False ? "inprogress" : "completed" }}</span>
+                                            @if ($requisition->completed_by_id)
+                                                <br>
+                                                 <small style="background-color: orange"><strong >MarkedBy: </strong> {{$this->findUser($requisition->completed_by_id)}}</small>  
+                                            @endif
+                                            @if ($requisition->completed_on)
+                                                <br>
+                                                 <small style="background-color: orange"><strong >Date: </strong> {{$requisition->completed_on}}</small>  
+                                            @endif
+                                            @if ($requisition->completed_comments)
+                                                <br>
+                                                <small style="background-color: orange"><strong >Comments: </strong> {{$requisition->completed_comments}}</small>  
+                                            @endif 
+                                        </td>
                                         <td>
                                             <span class="badge bg-{{($requisition->authorization == 'approved') ? 'success' : (($requisition->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($requisition->authorization == 'approved') ? 'approved' : (($requisition->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
                                 
@@ -219,8 +254,11 @@
                                                         }
                                                     @endphp
                                                     @if (in_array('Finance', $department_names) || in_array('Super Admin', $role_names))
-                                                    <li><a href="#" wire:click="showPayment({{$requisition->id}})"  ><i class="fas fa-check color-success"></i> Mark as paid</a></li>
+                                                        @if ($requisition->total)
+                                                            <li><a href="#" wire:click="showPayment({{$requisition->id}})"  ><i class="fas fa-check color-success"></i> Mark as paid</a></li>
+                                                        @endif
                                                     @endif
+                                                     <li><a href="#" wire:click="showStatus({{$requisition->id}})"  ><i class="fas fa-check color-success"></i> Mark as completed</a></li>
                                                   
                                                @endif
                                                     <li><a href="#" data-toggle="modal" data-target="#requisitionDeleteModal{{$requisition->id}}"><i class="fa fa-trash color-danger"></i>Delete</a></li>
@@ -285,6 +323,61 @@
                         @endif
                         as paid?
                        </p>
+                       <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="">Paid On<span class="required" style="color: red">*</span></label>
+                                    <input type="date" wire:model.debounce.300ms="paid_date" class="form-control"  required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="">Comments</label>
+                                    <textarea class="form-control" wire:model.debounce.300ms="paid_comments"  cols="30" rows="2"></textarea>
+                                </div>
+                            </div>
+                       </div>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                            <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-refresh"></i>Update</button>
+                        </div>
+                        <!-- /.btn-group -->
+                    </div>
+                </form>
+                </div>
+            </div>
+        </div>
+
+        <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="requisitionStatusModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title" id="modal4Label"><i class="fas fa-check"></i> Mark requisition  as comleted<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                    </div>
+                    <form wire:submit.prevent="updateStatus()" >
+                    <div class="modal-body">
+                       <p>Are you sure you want to mark requisition
+                        @if ($requisition_number)
+                            {{$requisition_number}}
+                        @endif
+                        as completed?
+                       </p>
+                       <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="">Completed On<span class="required" style="color: red">*</span></label>
+                                    <input type="date" wire:model.debounce.300ms="completed_date" class="form-control"  required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="">Comments</label>
+                                    <textarea class="form-control" wire:model.debounce.300ms="completed_comments"  cols="30" rows="2"></textarea>
+                                </div>
+                            </div>
+                       </div>
                     </div>
                     <div class="modal-footer">
                         <div class="btn-group" role="group">
@@ -476,8 +569,8 @@
                                     </div>
                                     <div class="col-md-2">
                                         <div class="form-group">
-                                            <label for="country">Currencies<span class="required" style="color: red">*</span></label>
-                                            <select wire:model.debounce.300ms="selectedCurrency.0"  class="form-control" required >
+                                            <label for="country">Currencies</label>
+                                            <select wire:model.debounce.300ms="selectedCurrency.0"  class="form-control"  >
                                                 <option value="">Select Currency</option>
                                                 @foreach ($currencies as $currency)
                                                 <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
@@ -534,8 +627,8 @@
                                     </div>
                                     <div class="col-md-2">
                                         <div class="form-group">
-                                            <label for="name">Amount<span class="required" style="color: red">*</span></label>
-                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="amount.0"   required />
+                                            <label for="name">Amount</label>
+                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="amount.0"/>
                                             @error('amount.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
                                     </div>
@@ -593,8 +686,8 @@
                                     </div>
                                     <div class="col-md-2">
                                         <div class="form-group">
-                                            <label for="country">Currencies<span class="required" style="color: red">*</span></label>
-                                            <select wire:model.debounce.300ms="selectedCurrency.{{$value}}" {{in_array($this->requisition_for, ['Trip', 'Purchase', 'Booking']) ? "disabled" : ""}} class="form-control" required >
+                                            <label for="country">Currencies</label>
+                                            <select wire:model.debounce.300ms="selectedCurrency.{{$value}}" {{in_array($this->requisition_for, ['Trip', 'Purchase', 'Booking']) ? "disabled" : ""}} class="form-control"  >
                                                 <option value="">Select Currency</option>
                                                 @foreach ($currencies as $currency)
                                                 <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
@@ -650,8 +743,8 @@
                                     </div>
                                     <div class="col-md-2">
                                         <div class="form-group">
-                                            <label for="name">Amount<span class="required" style="color: red">*</span></label>
-                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="amount.{{ $value }}" {{in_array($this->requisition_for, ['Trip', 'Purchase', 'Booking']) ? "disabled" : ""}}  required />
+                                            <label for="name">Amount</label>
+                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="amount.{{ $value }}" {{in_array($this->requisition_for, ['Trip', 'Purchase', 'Booking']) ? "disabled" : ""}}  />
                                             @error('amount.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
                                     </div>

@@ -188,7 +188,7 @@
                             <div class="form-group">    
                                 <label for="title">Categories<span class="required" style="color: red">*</span></label>                              
                                 <select class="form-control" wire:model.debounce.300ms="category.0"  required>
-                                    <option value="">Select Category</option>
+                                <option value="">Select Category</option>
                                 <option value="Customer">Customer</option>
                                 <option value="Self">Self</option>
                                 <option value="Transporter">Transporter</option>
@@ -430,9 +430,9 @@
                             <label for="title">Categories<span class="required" style="color: red">*</span></label>                              
                             <select class="form-control" wire:model.debounce.300ms="category"  required>
                                 <option value="">Select Category</option>
-                               {{-- <option value="Customer">Customer</option> --}}
+                               <option value="Customer">Customer</option>
                                <option value="Self">Self</option>
-                               {{-- <option value="Transporter">Transporter</option> --}}
+                               <option value="Transporter">Transporter</option>
                             </select>
                             @error('category') <span class="text-danger error">{{ $message }}</span>@enderror
                         </div>

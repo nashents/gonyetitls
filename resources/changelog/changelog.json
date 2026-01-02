@@ -1,0 +1,24 @@
+{
+  "releases": [
+    {
+      "key": "2025.12.29-01-purchase-orders-requested-by",
+      "title": "Purchase Orders: Requested by field",
+      "description": "Added a 'Requested by' field to purchase orders for better tracking and accountability.",
+      "module": "Purchase Orders",
+      "type": "added",
+      "version": "2025.12.29",
+      "released_at": "2025-12-29 08:00:00",
+      "is_published": true
+    },
+    {
+      "key": "2025.12.29-02-requsitions-mandatory-fields",
+      "title": "Removed Currency and Amount as mandatory fields in Requisitions",
+      "description": "The Currency and Amount fields are no longer mandatory when creating requisitions, allowing for more flexibility in the requisition process, to be able to request items without specifying these details upfront.",
+      "module": "Requisitions",
+      "type": "improved",
+      "version": "2025.12.29",
+      "released_at": "2025-12-29 08:00:00",
+      "is_published": true
+    }
+  ]
+}

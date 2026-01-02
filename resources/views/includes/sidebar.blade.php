@@ -292,6 +292,8 @@
                         </ul>
                     </li>
                     <li class="{{ request()->routeIs('customers.index') ? 'active' : '' }}"><a href="{{route('customers.index')}}" ><i class="fas fa-user-friends"></i> <span>Customers</span></a></li>
+                    <li class="{{ request()->routeIs('accounts.receivable') ? 'active' : '' }}"><a href="{{route('accounts.receivable')}}" ><i class="fas fa-list"></i> <span>Accounts Receivable</span></a></li>
+                    
                 @endif
                 <li class="nav-header"><span class="">Purchases</span></li>
                 @if ($inFinance || $isSuperAdmin)
@@ -332,12 +334,13 @@
                         </ul>
                     </li>
                     <li class="{{ request()->routeIs('vendors.index') ? 'active' : '' }}"><a href="{{route('vendors.index')}}"><i class="fas fa-user-friends"></i> <span>Vendors</span></a></li>
+                    <li class="{{ request()->routeIs('accounts.payable') ? 'active' : '' }}"><a href="{{route('accounts.payable')}}" ><i class="fas fa-list"></i> <span>Accounts Payable</span></a></li>
                 @endif
                 <li class="has-children {{ request()->routeIs('requisitions.*') ? 'active' : '' }}" >
                     <a href="javascript:void(0)"><i class="fas fa-hand-holding-usd"></i> <span>Requisitions</span> <i class="fas fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
                         <li><a href="{{route('requisitions.index')}}" ><i class="fas fa-list "></i> <span>Manage Requisitions</span></a></li>
-                        @if ($isManagement  || isset($fndepartment_head)  || $isSuperAdmin || $isSuperAdmin)
+                        @if ($isManagement  || isset($fndepartment_head)  || $isAdmin || $isSuperAdmin)
                         <li><a href="{{route('requisitions.pending')}}"><i class="fas fa-clock "></i> <span>Pending Requisitions</span>
                             @if ($requisitionsPendingCount>0)
                             <span class="label label-success ml-5">{{$requisitionsPendingCount}}</span>

@@ -8,10 +8,13 @@ use App\Models\Expense;
 use App\Models\Product;
 use Livewire\Component;
 use App\Models\BillExpense;
+use Livewire\WithPagination;
 
 class Expenses extends Component
 {
 
+    use WithPagination;
+    protected $paginationTheme = 'bootstrap';
     public $expenses;
     public $expense_id;
     public $qty;
@@ -23,15 +26,18 @@ class Expenses extends Component
     public $bills;
     public $bill;
     public $bill_id;
-    public $bill_expenses;
+    protected $bill_expenses;
     public $bill_expense_id;
     public $tax_amount;
+    public $exchange_amount;
+    public $tax_rate;
     
     public $bill_total;
     public $bill_tax_amount;
     public $bill_balance;
     public $bill_subtotal;
     public $total_tax_amount;
+    public $bill_expense;
 
     public $products;
     public $selectedProduct;
@@ -59,7 +65,7 @@ class Expenses extends Component
     public function mount($id){
         $this->bill_id = $id;
         $this->bill = Bill::find($id);
-        $this->bill_expenses = BillExpense::where('bill_id', $this->bill_id)->get();
+       
         $this->products = Product::where('buy',True)->orderBy('name','asc')->get();
         $this->tax_accounts = Account::whereHas('account_type', function ($query) {
             return $query->where('name','Sales Taxes');
@@ -248,9 +254,8 @@ class Expenses extends Component
 
         }
 
-        $this->bill_expenses = BillExpense::where('bill_id', $this->bill_id)->get();
         return view('livewire.bills.expenses',[
-            'bill_expenses' => $this->bill_expenses,
+            'bill_expenses' => BillExpense::where('bill_id', $this->bill_id)->paginate(10),
             'expenses' => $this->expenses,
         ]);
     }

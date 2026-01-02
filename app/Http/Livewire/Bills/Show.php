@@ -4,11 +4,16 @@ namespace App\Http\Livewire\Bills;
 
 use App\Models\Bill;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class Show extends Component
 {
+    use WithPagination;
+    protected $paginationTheme = 'bootstrap';
     public $bills;
     public $bill_id;
+    public $bill;
+    protected $payments;
 
     public function mount($id){
         $this->bill_id = $id;
@@ -17,9 +22,9 @@ class Show extends Component
 
     public function render()
     {
-        $this->bill = Bill::find($this->bill_id);
+      
         return view('livewire.bills.show',[
-            'bill' => $this->bill
+            'payments' => $this->bill->payments()->paginate(10),
         ]);
     }
 }

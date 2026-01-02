@@ -692,6 +692,16 @@
             })
     </script>
     <script type="text/javascript">
+            window.addEventListener('show-requisitionStatusModal', event => {
+                $('#requisitionStatusModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-requisitionStatusModal', event => {
+                $('#requisitionStatusModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
             window.addEventListener('show-requisitionPaymentModal', event => {
                 $('#requisitionPaymentModal').modal('show');
             })

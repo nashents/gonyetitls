@@ -290,14 +290,14 @@ class Index extends Component
 
     public function drawdownPayments(){
 
-         DB::transaction(function () {
+        DB::transaction(function () {
 
         $this->amount_paid = 0;
         $this->payment_drawdown_balance = 0;
        
       
 
-        if (isset($this->drawdown_amount) && isset($this->invoice_drawdown_balance) && ($this->drawdown_amount >= $this->invoice_drawdown_balance)) {
+        if (isset($this->drawdown_amount) && isset($this->invoice_drawdown_balance) && ($this->drawdown_amount >= $this->invoice_drawdown_balance)) { 
             $this->payment_drawdown_balance = $this->drawdown_amount - $this->invoice_drawdown_balance;
             $this->amount_paid = $this->invoice_drawdown_balance;
             $this->invoice_drawdown_balance = 0;
@@ -331,8 +331,8 @@ class Index extends Component
             ])
             ->where('customer_id', $invoice->customer_id)
             ->where('currency_id', $invoice->currency_id)
-             ->whereNull('deleted_at') // exclude soft-deleted payments
-             ->whereNotNull('accrual_balance'); // Ensure accrual balance exists
+            ->whereNull('deleted_at') // exclude soft-deleted payments
+            ->whereNotNull('accrual_balance'); // Ensure accrual balance exists
             // ->whereNotNull('invoice_id') // Ensure the payment is linked to an invoice
         
 
@@ -350,7 +350,7 @@ class Index extends Component
             ->where('authorization','approved')
             ->where('customer_id', $invoice->customer_id)
             ->where('currency_id', $invoice->currency_id)
-             ->whereNull('deleted_at') // exclude soft-deleted invoices
+            ->whereNull('deleted_at') // exclude soft-deleted invoices
             ->whereNotNull('accrual_balance'); // Ensure accrual balance exists
 
         // 3) Union and pick the most recent row
@@ -358,7 +358,7 @@ class Index extends Component
             ->fromSub($payments->unionAll($invoices), 'u')
             ->orderByDesc('date')        // ✅ business date first
             ->orderByDesc('created_at')  // ✅ system timestamp next
-            ->orderByRaw("CASE WHEN source = 'payment' THEN 1 ELSE 0 END DESC") // ✅ prefer payments over bills
+            ->orderByRaw("CASE WHEN source = 'payment' THEN 1 ELSE 0 END DESC") // ✅ prefer payments over invoices
             ->first();
         
         
@@ -729,7 +729,6 @@ class Index extends Component
             $payment->account_id = $this->account_id;
         }
         $payment->invoice_id = $this->invoice->id;
-        
         $payment->amount = $this->amount;
         $payment->exchange_rate = $this->exchange_rate;
         $payment->exchange_amount = $this->exchange_amount;
@@ -750,7 +749,7 @@ class Index extends Component
                 DB::raw("'payment' AS source"),
                 'id',
             ])
-             ->whereNull('deleted_at') // exclude soft-deleted payments
+            ->whereNull('deleted_at') // exclude soft-deleted payments
             ->where('customer_id', $this->invoice->customer_id)
             ->where('currency_id', $this->invoice->currency_id)
             // ->whereNotNull('invoice_id') // Ensure the payment is linked to an invoice
@@ -767,7 +766,7 @@ class Index extends Component
                 DB::raw("'invoice' AS source"),
                 'id',
             ])
-             ->whereNull('deleted_at') // exclude soft-deleted invoices
+            ->whereNull('deleted_at') // exclude soft-deleted invoices
             ->where('authorization','approved')
             ->where('customer_id', $this->invoice->customer_id)
             ->where('currency_id', $this->invoice->currency_id);
@@ -777,7 +776,7 @@ class Index extends Component
             ->fromSub($payments->unionAll($invoices), 'u')
             ->orderByDesc('date')        // ✅ business date first
             ->orderByDesc('created_at')  // ✅ system timestamp next
-            ->orderByRaw("CASE WHEN source = 'payment' THEN 1 ELSE 0 END DESC") // ✅ prefer payments over bills
+            ->orderByRaw("CASE WHEN source = 'payment' THEN 1 ELSE 0 END DESC") // ✅ prefer payments over invoices
             ->first();
           
 
@@ -858,7 +857,10 @@ class Index extends Component
         if (isset($this->account_id)) {
             $account = Account::find($this->account_id);
             $current_balance = $account->balance;
-            $account->balance = $current_balance + $this->amount;
+            if(($current_balance && is_numeric($current_balance)) && is_numeric($this->amount) ){
+                $account->balance = $current_balance + $this->amount;
+            }
+          
             $account->update();
         }
       
@@ -900,12 +902,14 @@ class Index extends Component
 
         if (isset($this->selectedCustomer) && isset($this->selectedCurrency)) {
         
-            $this->last_payment = Payment::where('customer_id',$this->selectedCustomer)->where('currency_id',$this->selectedCurrency)->where('transaction_category', "Customer Deposits")->orderBy('created_at','desc')->first();
+            $this->last_payment = Payment::where('customer_id', $this->selectedCustomer)
+            ->where('currency_id',$this->selectedCurrency)
+            ->where('transaction_category', "Customer Deposits")
+            ->orderBy('created_at','desc')->first();
+
             if(isset($this->last_payment)){
                 $this->drawdown_amount = $this->last_payment->drawdown_balance;
-                $this->payment_drawdown_balance = $this->last_payment->drawdown_balance;
             }
-        
 
             $this->unpaid_invoices = Invoice::where('customer_id',$this->selectedCustomer)
                                         ->where('currency_id',$this->selectedCurrency)

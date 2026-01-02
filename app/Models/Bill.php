@@ -30,6 +30,9 @@ class Bill extends Model implements Auditable
     public function vehicle(){
         return $this->belongsTo('App\Models\Vehicle');
     }
+    public function user(){
+        return $this->belongsTo('App\Models\User');
+    }
     public function retread(){
         return $this->belongsTo('App\Models\Retread');
     }

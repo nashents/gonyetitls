@@ -963,7 +963,7 @@ class Index extends Component
         $this->department_count = Department::all()->count();
         $this->rank = Rank::where('name','HOD')->first();
         $this->hods = DepartmentHead::all();
-        $this->trip_count = Trip::whereYear('start_date',date('Y'))->where('deleted_at', Null)->get()->count();
+        $this->trip_count = Trip::whereYear('start_date', date('Y'))->where('deleted_at', Null)->get()->count();
         if($this->driver){
              $this->driver_inspections = Checklist::whereYear('date',date('Y'))->where('deleted_at', Null)->where('driver_id',$this->driver->id)->get()->count();
              $this->driver_breakdowns = Breakdown::whereYear('date',date('Y'))->where('deleted_at', Null)->where('driver_id',$this->driver->id)->get()->count();

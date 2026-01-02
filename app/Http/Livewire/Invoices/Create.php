@@ -52,7 +52,6 @@ class Create extends Component
     public $inventories;
     public $selectedInventory = [];
 
-
     public $fiscalize_invoice;
     public $reason;
     public $trip_filter;
@@ -63,6 +62,7 @@ class Create extends Component
     public $inventory_products;
     public $weight = [];
     public $measurement = [];
+    public array $is_custom_item = [];
     public $selectedProduct = [];
     public $description = [];
     public $qty = [];
@@ -151,6 +151,7 @@ class Create extends Component
     public $city;
     public $suburb;
     public $street_address;
+    public $base_currency;
 
     // bank acc vars
 
@@ -200,11 +201,19 @@ class Create extends Component
     {
         $i = $i + 1;
         $this->i = $i;
+        $this->is_custom_item[$i] = false;
         array_push($this->inputs ,$i);
     }
 
     public function remove($i)
     {
+        unset($this->is_custom_item[$i]);
+        unset($this->description[$i]);
+        unset($this->qty[$i]);
+        unset($this->amount[$i]);
+        unset($this->selectedTax[$i]);
+        unset($this->selectedProduct[$i]);
+        unset($this->selectedTrip[$i]);
         unset($this->inputs[$i]);
     }
 
@@ -281,7 +290,11 @@ class Create extends Component
         if(!is_null($value)){
             if($value == "Transporter"){
                 $this->source = "Booking";
+                $this->selectedCustomer = Null;
                 $this->selectedCurrency = Auth::user()->employee->company->currency_id;
+                $this->bank_accounts = BankAccount::where('currency_id',$this->selectedCurrency)->where('company_id',$this->company->id)->orderBy('name','asc')->get();
+            }elseif($value == "Customer"){
+                 $this->selectedTransporter = Null;
             }
         }
     }
@@ -448,6 +461,7 @@ class Create extends Component
         $this->trip_filter = "created_at";
         $this->booking_filter = "created_at";
         $this->company = Auth::user()->employee->company;
+        $this->base_currency = $this->company->currency;
 
         $this->accounts = Account::where('account_type_id',1)->latest()->get();
 
@@ -487,7 +501,6 @@ class Create extends Component
 
     public function updatedSelectedProduct($id, $key){
         if (!is_null($id)) {
-         
             $product = Product::find($id);
             $this->selectedAccount[$key] = $product->account_id;
             if (isset($product)) {
@@ -506,7 +519,6 @@ class Create extends Component
                     
                 }  
             }
-           
         }
     }
 
@@ -581,7 +593,18 @@ class Create extends Component
                         }
                     }
                 }
-                if (isset($this->total_customer_expenses) && $this->total_customer_expenses > 0) {
+                
+
+                if($this->invoice_to == "Transporter"){
+                    $this->description[$key] = $this->setTransporterDescription($id); 
+                    $base_currency_id = $this->base_currency->id;
+                    $this->amount[$key] = $trip->trip_expenses->sum(function ($expense) use ($base_currency_id) {
+                        return $expense->currency_id == $base_currency_id
+                            ? (float) $expense->amount
+                            : (float) $expense->exchange_amount;
+                    });
+                }elseif($this->invoice_to == "Customer"){
+                    if (isset($this->total_customer_expenses) && $this->total_customer_expenses > 0) {
                     if($this->values == "scheduled"){
                         $this->amount[$key] = $trip->freight + $this->total_customer_expenses; 
                     }elseif($this->values == "loading"){
@@ -600,8 +623,9 @@ class Create extends Component
                     }
                    
                 }
-
-                $this->description[$key] = $this->setDescription($id); 
+                    $this->description[$key] = $this->setDescription($id); 
+                }
+                
                 $this->qty[$key] = 1; 
                 $this->selectedAccount[$key] =  $this->income_account_id;
             }
@@ -681,6 +705,74 @@ class Create extends Component
         }
 
         return implode(', ', $parts);
+    }
+   
+    public function setTransporterDescription($id)
+    {
+        $trip = Trip::with([
+            'trip_expenses'
+        ])->find($id);
+
+        if (! $trip || ! $trip->trip_expenses) {
+            return '';
+        }
+
+        $parts = [];
+
+        foreach ($trip->trip_expenses as $trip_expense) {
+
+                $name = null;
+
+                if ($trip_expense->allowance) {
+                    $name = $trip_expense->allowance->name;
+                } elseif ($trip_expense->expense) {
+                    $name = $trip_expense->expense->name;
+                } 
+
+                if (! $name) {
+                    continue; // skip items without a proper name
+                }
+
+                $defaultCurrencyName = $this->base_currency?->name ?? '';
+                $defaultCurrencySymbol = $this->base_currency?->symbol ?? '';
+                $currencyName   = $trip_expense->currency?->name   ?? '';
+                $currencySymbol = $trip_expense->currency?->symbol ?? '';
+                $amount = number_format($trip_expense->amount ?? 0, 2);
+                $exchange_amount = number_format($trip_expense->exchange_amount ?? 0, 2);
+                $exchange_rate = $trip_expense->exchange_rate;
+
+                // Build: Name x Qty (CurrencyName CurrencySymbolTotal)
+                if($trip_expense->exchange_amount && $trip_expense->exchange_rate){
+                     $parts[] = "{$name} ({$currencyName} {$currencySymbol}{$amount} Exc at {$exchange_rate} {$defaultCurrencyName} {$defaultCurrencySymbol}{$exchange_amount} ) ";
+                }else{
+                    $parts[] = "{$name} ({$currencyName} {$currencySymbol}{$amount}) ";
+                }
+               
+       
+        }
+
+         // Registration number (horse first, then vehicle)
+        $regNumber = $trip->horse?->registration_number
+            ?? $trip->vehicle?->registration_number
+            ?? '';
+
+        // Origin / destination
+        $originCity      = Destination::find($trip->from)?->city ?? '';
+        $destinationCity = Destination::find($trip->to)?->city ?? '';
+
+        $lp = $trip->loading_point?->name ?? '';
+        $op = $trip->offloading_point?->name ?? '';
+
+        $from = trim("{$originCity} {$lp}");
+        $to   = trim("{$destinationCity} {$op}");
+
+        $route = $from && $to
+            ? "{$from} to {$to}"
+            : trim($from . ' ' . $to);
+
+        $trip_details = $route ." (".$regNumber.") : ";
+
+        return $trip_details . " ".implode(', ', $parts);
     }
   
     
@@ -1009,10 +1101,8 @@ class Create extends Component
 
             if ($this->source == "Trip") {
             
-                    foreach($this->selectedTrip as $key => $value){
+                    foreach($this->qty as $key => $value){
 
-                        if ($this->invoice_to == "Customer") {
-                
                             $invoice_item = new InvoiceItem;
                             $invoice_item->invoice_id = $invoice->id;
                             if (isset($this->selectedAccount[$key])) {
@@ -1021,6 +1111,12 @@ class Create extends Component
                             if (isset($this->selectedTrip[$key])) {
                                 $invoice_item->trip_id = $this->selectedTrip[$key];
                             }
+                            if (isset($this->selectedProduct[$key])) {
+                                $invoice_item->product_id = $this->selectedProduct[$key];
+                            }
+                            if (isset($this->is_custom_item[$key])) {
+                                $invoice_item->is_custom_item = $this->is_custom_item[$key];
+                            }
                             if (isset($this->qty[$key])) {
                                 $invoice_item->qty = $this->qty[$key];
                             }
@@ -1028,6 +1124,7 @@ class Create extends Component
                                 $invoice_item->amount = $this->amount[$key];
                             }
                             if (isset($this->description[$key])) {
+                               
                                 $invoice_item->description = $this->description[$key];
                             }
                             if (isset($this->tax_rate[$key])) {
@@ -1068,7 +1165,7 @@ class Create extends Component
                             $invoice_item->save();
                     
                             
-                        }
+                      
 
                     }
                     
@@ -1375,6 +1472,15 @@ class Create extends Component
             ]);
 
         }
+        elseif($category == "products"){
+
+            $this->products = Product::where('sell',True)->where('status',True)->orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Products & Services Refreshed Successfully!!."
+            ]);
+
+        }
         elseif($category == "bank_accounts"){
             $this->bank_accounts = BankAccount::where('currency_id',$this->selectedCurrency)->where('company_id',$this->company->id)->orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert',[
@@ -1387,10 +1493,12 @@ class Create extends Component
     public function getTripsProperty(){
 
             $query = Trip::query()
-            ->with('customer:id,name','loading_point:id,name','offloading_point:id,name','currency')
+            ->with('transporter:id,name','customer:id,name','loading_point:id,name','offloading_point:id,name','currency')
             ->where('authorization','approved')
             ->where('trip_status','!=', 'Cancelled')
-            ->where('currency_id', $this->selectedCurrency);
+            ->when($this->invoice_to === 'Customer', function ($q) {
+                $q->where('currency_id', $this->selectedCurrency);
+            });
 
                  // Date window
             if ($this->from && $this->to ) {
@@ -1406,6 +1514,9 @@ class Create extends Component
 
             if($this->selectedCustomer){
                 $query->where('customer_id', $this->selectedCustomer);
+            }
+            if($this->selectedTransporter){
+                $query->where('transporter_id', $this->selectedTransporter);
             }
 
             if (filled($this->searchTrip)) {

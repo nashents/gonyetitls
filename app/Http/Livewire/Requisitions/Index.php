@@ -4,6 +4,7 @@ namespace App\Http\Livewire\Requisitions;
 
 use Carbon\Carbon;
 use App\Models\Trip;
+use App\Models\User;
 use App\Models\Account;
 use App\Models\Booking;
 use App\Models\Expense;
@@ -75,6 +76,10 @@ class Index extends Component
     public $total;
     public $subtotal;
     public $requisition_items;
+    public $completed_date;
+    public $completed_comments;
+    public $paid_comments;
+    public $paid_date;
    
     public $company;
     public $item_totals = 0;
@@ -202,6 +207,13 @@ class Index extends Component
     }
     public function exportRequisitionExcel(Excel $excel){
         return $excel->download(new RequisitionExport($this->from, $this->to, $this->requisition_filter,  $this->search), 'requisitions_' .time().'.xlsx');
+    }
+
+    public function findUser($id){
+        $user = User::find($id);
+        $name = $user?->name;
+        $surname = $user?->surname;
+        return $name ." ". $surname;
     }
 
     public function calculateTotals(){
@@ -675,6 +687,9 @@ class Index extends Component
 
     public function recordPayment(){
         $requisition =  Requisition::find($this->requisition_id);
+        $requisition->paid_by_id = Auth::user()->id;
+        $requisition->paid_on = $this->paid_date;
+        $requisition->paid_comments = $this->paid_comments;
         $requisition->status = "Paid";
         $requisition->update();
         $this->dispatchBrowserEvent('hide-requisitionPaymentModal');
@@ -682,6 +697,27 @@ class Index extends Component
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
             'message'=>"Requisition Marked As Paid Successfully!!"
+        ]);
+    }
+    public function showStatus($id){
+        $requisition = Requisition::find($id);
+        $this->requisition_id = $id;
+        $this->requisition_number = $requisition->requisition_number;
+        $this->dispatchBrowserEvent('show-requisitionStatusModal');
+    }
+
+    public function updateStatus(){
+        $requisition =  Requisition::find($this->requisition_id);
+        $requisition->is_completed = True;
+        $requisition->completed_by_id = Auth::user()->id;
+        $requisition->completed_on = $this->completed_date;
+        $requisition->completed_comments = $this->completed_comments;
+        $requisition->update();
+        $this->dispatchBrowserEvent('hide-requisitionStatusModal');
+        $this->resetInputFields();
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Requisition Marked As Completed Successfully!!"
         ]);
     }
 

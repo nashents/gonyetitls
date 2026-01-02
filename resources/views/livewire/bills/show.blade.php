@@ -1,12 +1,10 @@
 <div>
     <div class="row mt-30">
-        <!-- /.col-md-3 -->
         <div class="col-md-10 col-md-offset-1">
             <ul class="nav nav-tabs nav-justified" role="tablist">
                 <li role="presentation" class="active"><a href="#basic" aria-controls="basic" role="tab" data-toggle="tab">Bill Details</a></li>
+                <li role="presentation"><a href="#bill_expenses" aria-controls="bill_expenses" role="tab" data-toggle="tab">Bill Items</a></li>
                 <li role="presentation"><a href="#payments" aria-controls="payments" role="tab" data-toggle="tab">Payments</a></li>
-                <li role="presentation"><a href="#expenses" aria-controls="expenses" role="tab" data-toggle="tab">Bill Items</a></li>
-                 
             </ul>
             <div class="tab-content bg-white p-15">
                 <div role="tabpanel" class="tab-pane active" id="basic">
@@ -203,13 +201,13 @@
                         </tbody>
                     </table>
                 </div>
-
-                   <div role="tabpanel" class="tab-pane" id="payments">
-                    @php
-                        $payments = $bill->payments
-                    @endphp
-                          <table id="paymentsTable" class="table  table-spaymented table-bordered table-sm table-responsive" cellspacing="0" width="100%" style=" width:100%; height:100%;">
-                            <thead >
+                <div role="tabpanel" class="tab-pane" id="bill_expenses">
+                    @livewire('bills.expenses', ['id' => $bill->id])
+                </div>  
+                <div role="tabpanel" class="tab-pane" id="payments">
+                    <table  class="table  table-spaymented table-bordered table-sm table-responsive" cellspacing="0" width="100%" style=" width:100%; height:100%;">
+                        <thead>
+                            <tr>
                                 <th class="th-sm">Payment#
                                 </th>
                                 <th class="th-sm">Date
@@ -224,78 +222,74 @@
                                 </th>
                                 <th class="th-sm">Actions
                                 </th>
-
-                              </tr>
-                            </thead>
-                       
-                            @if ($payments)
+                            </tr>
+                        </thead>
+                        @if (isset($payments))
                             <tbody>
                                 @forelse ($payments as $payment)
-                              <tr>
-                                
-                                <td>{{ucfirst($payment->payment_number)}}</td>
-                                <td>{{$payment->mode_of_payment}}</td>
-                                <td>{{$payment->currency ? $payment->currency->name : ""}}</td>
-                                <td>@if ($payment->amount)
-                                    {{$payment->currency ? $payment->currency->symbol : ""}}{{number_format($payment->amount,2)}}
-                                @endif</td>
-                                <td>
-                                   @if ($payment->bill)
-                                   {{$payment->currency ? $payment->currency->symbol : ""}}{{number_format($payment->bill->balance,2)}} 
-                                   @elseif ($payment->invoice)
-                                   {{$payment->currency ? $payment->currency->symbol : ""}}{{number_format($payment->invoice->balance,2)}} 
-                                   @elseif ($payment->invoice)
-                                   {{$payment->currency ? $payment->currency->symbol : ""}}{{number_format($payment->invoice->balance,2)}} 
-                                    @endif
-                                  </td>
-                                 <td class="w-10 line-height-35 table-dropdown">
-                                    <div class="dropdown">
-                                        <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                            <i class="fa fa-bars"></i>
-                                            <span class="caret"></span>
-                                        </button>
-                                        <ul class="dropdown-menu">
-                                            <li><a href="{{route('payments.show', $payment->id)}}"><i class="fas fa-eye color-default"></i>View</a></li>
-                                           @if ($payment->receipt)
-                                           <li><a href="{{route('receipts.preview',$payment->receipt->id)}}"  ><i class="fas fa-receipt color-primary"></i> Receipt</a></li>
-                                           @endif     
-                                        </ul>
-                                    </div>
-                             
-
-                            </td>
-                              </tr>
-                              @empty
-                                  <tr>
-                                    <td colspan="7">
-                                        <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
-                                            No Bill Payments Recorded....
-                                        </div>
-                                       
-                                    </td>
-                                  </tr>  
+                                    <tr>
+                                        <td>{{ucfirst($payment->payment_number)}}</td>
+                                        <td>{{$payment->mode_of_payment}}</td>
+                                        <td>{{$payment->currency ? $payment->currency->name : ""}}</td>
+                                        <td>
+                                            @if ($payment->amount)
+                                                {{$payment->currency ? $payment->currency->symbol : ""}}{{number_format($payment->amount,2)}}
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if ($payment->bill)
+                                            {{$payment->currency ? $payment->currency->symbol : ""}}{{number_format($payment->bill->balance,2)}} 
+                                            @elseif ($payment->invoice)
+                                                {{$payment->currency ? $payment->currency->symbol : ""}}{{number_format($payment->invoice->balance,2)}} 
+                                            @elseif ($payment->invoice)
+                                                {{$payment->currency ? $payment->currency->symbol : ""}}{{number_format($payment->invoice->balance,2)}} 
+                                            @endif
+                                        </td>
+                                        <td class="w-10 line-height-35 table-dropdown">
+                                            <div class="dropdown">
+                                                <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                    <i class="fa fa-bars"></i>
+                                                    <span class="caret"></span>
+                                                </button>
+                                                <ul class="dropdown-menu">
+                                                    <li><a href="{{route('payments.show', $payment->id)}}"><i class="fas fa-eye color-default"></i>View</a></li>
+                                                    @if ($payment->receipt)
+                                                        <li><a href="{{route('receipts.preview',$payment->receipt->id)}}"  ><i class="fas fa-receipt color-primary"></i> Receipt</a></li>
+                                                    @endif     
+                                                </ul>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="7">
+                                            <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
+                                                No Bill Payments Recorded....
+                                            </div>
+                                        </td>
+                                    </tr>  
                                 @endforelse
                             </tbody>
-                            @else
+                        @else
                             <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
-                            @endif
-                          </table>
-                    </div>
-                    <div role="tabpanel" class="tab-pane" id="expenses">
-                        @livewire('bills.expenses', ['id' => $bill->id])
-                    </div>
-            </div>
-
-            <div class="row">
-                <div class="col-md-12" style="float:right;">
-                    <div class="btn-group" >
-                       <a onclick="goBack()" class="btn bg-gray btn-wide btn-rounded" style="float:right;"><i class="fa fa-arrow-left"></i>Back</a>
+                        @endif
+                    </table>
+                    <nav class="text-center" style="float: right">
+                        <ul class="pagination rounded-corners">
+                            @if (isset($payments))
+                                {{ $payments->links() }} 
+                            @endif 
+                        </ul>
+                    </nav>   
+                </div>  
+               <div class="row">
+                    <div class="col-md-12">
+                        <div class="btn-group pull-right mt-10" >
+                           <a onclick="goBack()" class="btn bg-gray btn-wide btn-rounded"><i class="fa fa-arrow-left"></i>Back</a>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-        <!-- /.col-md-9 -->
     </div>
-
-
 </div>

@@ -677,7 +677,6 @@ class Index extends Component
             
             if(isset($this->last_payment)){
                 $this->drawdown_amount = $this->last_payment->drawdown_balance;
-                $this->payment_drawdown_balance = $this->last_payment->drawdown_balance;
             }
         
 

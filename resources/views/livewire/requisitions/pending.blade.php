@@ -80,6 +80,8 @@
                                         </th>
                                         <th class="th-sm">Total
                                         </th>
+                                        <th class="th-sm">Payment
+                                        </th>
                                         <th class="th-sm">Status
                                         </th>
                                         <th class="th-sm">Auth
@@ -170,7 +172,14 @@
                                         <td>{{$requisition->date }}</td>
                                         <td>
                                             {{$company->currency ? $company->currency->name : "" }} {{$company->currency ? $company->currency->symbol : "" }}{{number_format($requisition->total,2)}}</td>
-                                        <td><span class="label label-{{($requisition->status == 'Paid') ? 'success' : (($requisition->status == 'Partial') ? 'warning' : 'danger') }}">{{ $requisition->status }}</span></td>
+                                       <td>
+                                            @if ($requisition->total)
+                                                <span class="label label-{{($requisition->status == 'Paid') ? 'success' : (($requisition->status == 'Partial') ? 'warning' : 'danger') }}">{{ $requisition->status }}</span>
+                                            @else
+                                                <span class="label label-info">No payment</span>  
+                                            @endif
+                                        </td>
+                                         <td><span class="label label-{{($requisition->is_completed == False ? 'warning' : 'success') }}">{{ $requisition->is_completed == False ? "inprogress" : "completed" }}</span></td>
                                         <td>
                                             <span class="badge bg-{{($requisition->authorization == 'approved') ? 'success' : (($requisition->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($requisition->authorization == 'approved') ? 'approved' : (($requisition->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
                                             @if ($requisition->authorization_date)

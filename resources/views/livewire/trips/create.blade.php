@@ -887,7 +887,6 @@
                                 </div>
                             </div>
                                @endif
-          
                                <h5 class="underline mt-30">Location Details</h5>
                                 <div class="row">
                                     <div class="col-md-3">

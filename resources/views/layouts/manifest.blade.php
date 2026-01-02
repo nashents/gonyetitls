@@ -214,6 +214,117 @@ html, body { background: var(--bg); color: var(--ink); font-family: var(--font);
     height: 110px;
   }
 }
+
+@media print {
+
+  /* Overall page breathing room */
+  .manifest {
+    margin: 0 !important;
+    padding: 6mm !important;
+    border: none !important;
+  }
+
+  /* Header */
+  .manifest__header {
+    gap: 6px !important;
+    margin-bottom: 6px !important;
+  }
+
+  /* Horizontal rule */
+  .hr {
+    margin: 4px 0 !important;
+  }
+
+  /* Grid sections (cards) */
+  .grid-2 {
+    gap: 6px !important;
+    margin-bottom: 6px !important;
+  }
+
+  /* Cards */
+  .card {
+    padding: 6px 8px !important;
+  }
+
+  .card h3 {
+    margin-bottom: 4px !important;
+    font-size: 11px !important;
+  }
+
+  /* Key–value blocks */
+  .kv {
+    gap: 2px 6px !important;
+    font-size: 11px !important;
+  }
+
+  /* Items section */
+  .items {
+    margin-top: 6px !important;
+  }
+
+  .items h3 {
+    margin-bottom: 4px !important;
+  }
+
+  /* Tables */
+  .tbl th,
+  .tbl td {
+    padding: 3px 4px !important;
+    font-size: 10px !important;
+  }
+
+  /* Totals & notes */
+  .totals {
+    gap: 6px !important;
+    margin-top: 6px !important;
+  }
+
+  .notes {
+    padding: 6px !important;
+    min-height: auto !important;
+    font-size: 10px !important;
+  }
+
+  /* Signatures */
+  .signatures {
+    gap: 6px !important;
+    margin-top: 6px !important;
+  }
+
+  .sig {
+    padding: 6px !important;
+    min-height: 60px !important;
+  }
+
+  .sig .label {
+    font-size: 10px !important;
+    margin-top: 3px !important;
+  }
+
+  .sig .line {
+    margin-top: 14px !important;
+  }
+
+  /* Footer */
+  .manifest__footer {
+    margin-top: 6px !important;
+    font-size: 10px !important;
+  }
+
+  /* Header branding tweaks */
+  .brand {
+    gap: 6px !important;
+  }
+
+  .brand__logo {
+    width: 70px !important;
+    height: 70px !important;
+  }
+
+  .brand__meta {
+    line-height: 1.2 !important;
+  }
+}
 </style>
 
 </head>

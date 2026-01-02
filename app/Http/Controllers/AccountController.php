@@ -18,6 +18,14 @@ class AccountController extends Controller
     {
         return view('accounts.index');
     }
+    public function accountsReceivable()
+    {
+        return view('accounts.receivable');
+    }
+    public function accountsPayable()
+    {
+        return view('accounts.payable');
+    }
     public function tax()
     {
         return view('accounts.tax');

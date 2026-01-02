@@ -106,8 +106,6 @@
                                     </th>
                                     <th class="th-sm">Due
                                     </th>
-                                    {{-- <th class="th-sm">Accrual Bal
-                                    </th> --}}
                                     <th class="th-sm">Auth
                                     </th>
                                     <th class="th-sm">Action
@@ -179,12 +177,12 @@
 
                                             $total_paid = $amount_paid + $amount_paid_bulk;  
                                         @endphp
-                                        {{$invoice->currency ? $invoice->currency->symbol : ""}}{{number_format($total_paid,2)}}
+                                        {{$invoice->currency ? $invoice->currency->symbol : ""}}{{number_format($total_paid ? $total_paid : 0,2)}}
                                     </td>
                                     <td>
                                        
                                         {{-- @if ($invoice->balance) --}}
-                                        {{$invoice->currency ? $invoice->currency->symbol : ""}}{{number_format($invoice->balance,2)}}
+                                        {{$invoice->currency ? $invoice->currency->symbol : ""}}{{number_format($invoice->balance ? $invoice->balance : 0,2)}}
                                         
                                         @if ($invoice->accrual_balance)
                                             <br>
@@ -220,7 +218,7 @@
                                   </tr>
                                   @empty
                                   <tr>
-                                    <td colspan="13">
+                                    <td colspan="14">
                                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                             No Invoices Found ....
                                         </div>
@@ -560,7 +558,6 @@
                                 @if ($amount > $invoice_balance)
                                 <small style="color: red">Amount should be less than or equal to invoice balance.</small>   
                                 @endif
-                                
                             </div>
                         </div>
                         @endif
@@ -589,11 +586,13 @@
                     <div class="btn-group" role="group">
                         <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
                         @if ($current_balance >= 0)
-                        <button type="submit" class="btn bg-success btn-wide btn-rounded" ><i class="fa fa-save" ></i>Save</button>      
-                        @elseif ($amount > $invoice_balance)
-                        <button type="submit" class="btn bg-success btn-wide btn-rounded" disabled ><i class="fa fa-save" ></i>Save</button> 
+                            @if ($amount > $invoice_balance)
+                                <button type="submit" class="btn bg-success btn-wide btn-rounded" disabled ><i class="fa fa-save" ></i>Save</button>
+                            @else
+                                <button type="submit" class="btn bg-success btn-wide btn-rounded" ><i class="fa fa-save" ></i>Save</button>     
+                            @endif 
                         @else
-                        <button type="submit" class="btn bg-success btn-wide btn-rounded" disabled ><i class="fa fa-save" ></i>Save</button> 
+                            <button type="submit" class="btn bg-success btn-wide btn-rounded" disabled ><i class="fa fa-save" ></i>Save</button> 
                         @endif
                       
                     </div>
@@ -610,6 +609,7 @@
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fas fa-plus"></i> Add Payment Drawdown <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                 </div>
+        
                 <form wire:submit.prevent="drawdownPayments()" >
                 <div class="modal-body">
                     <div class="row">

@@ -62,12 +62,14 @@ class Expenses extends Component
     {
         $i = $i + 1;
         $this->i = $i;
+        $this->trip_expense_type[$i] = "expense";
         array_push($this->inputs ,$i);
     }
 
     public function remove($i)
     {
         unset($this->inputs[$i]);
+        unset($this->trip_expense_type[$i]);
     }
 
     public function addExpense()
@@ -129,7 +131,7 @@ class Expenses extends Component
 
     public function mount($trip){
    
-
+    $this->trip_expense_type[0] = "expense";
     foreach ($this->inputs as $index) {
         $this->trip_expense_type[$index] = $this->trip_expense_type[$index] ?? 'expense';
     }
@@ -212,18 +214,34 @@ class Expenses extends Component
     }
 
     public function updatedAmount($amount, $key = null){
-        
-        if ($key) {
-            if (!is_null($amount)) {
+        if (!is_null($amount)) {
+            if (isset($key)) {
                 if ((isset($this->exchange_rate[$key]) && $this->exchange_rate[$key] > 0)  &&  ( isset($amount) && $amount > 0 )) {
                     $this->exchange_amount[$key] = $this->exchange_rate[$key] * $amount;
                 }
-            }
-        }else{
-            if ((isset($this->exchange_rate) && $this->exchange_rate > 0)  &&  ( isset($amount) && $amount > 0 )) {
-                $this->exchange_amount = $this->exchange_rate * $amount;
+            }else{
+                if ((isset($this->exchange_rate) && $this->exchange_rate > 0)  &&  ( isset($amount) && $amount > 0 )) {
+                    $this->exchange_amount = $this->exchange_rate * $amount;
+                }
             }
         }
+    }
+    public function updatedExchangeRate($rate, $key = null){
+
+        if (!is_null($rate)) {
+            
+            if (isset($key)) {
+                if ((isset($this->amount[$key]) && $this->amount[$key] > 0)  &&  ( isset($rate) && $rate > 0 )) {
+                    $this->exchange_amount[$key] = $this->amount[$key] * $rate;
+                }
+            }else{
+                if ((isset($this->amount) && $this->amount > 0)  &&  ( isset($rate) && $rate > 0 )) {
+                    $this->exchange_amount = $this->amount * $rate;
+                }
+            }
+                
+        }
+        
     }
 
     public function store(){

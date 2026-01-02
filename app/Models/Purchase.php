@@ -15,6 +15,9 @@ class Purchase extends Model implements Auditable
     public function requisitions(){
         return $this->hasMany('App\Models\Requisition');
     }
+    public function employee(){
+        return $this->belongsTo('App\Models\Employee');
+    }
     public function purchase_products(){
         return $this->hasMany('App\Models\PurchaseProduct');
     }

@@ -8,11 +8,9 @@
         @endif
         <br>
         <br> --}}
-        <table id="invoice_itemsTable" class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
+        <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
             <thead>
               <tr>
-                <th class="th-sm">Invoice#
-                </th>
                 <th class="th-sm">Item
                 </th>
                 <th class="th-sm">Qty
@@ -27,15 +25,12 @@
                 </th>
                 <th class="th-sm">Subtotal(Incl)
                 </th>
-                {{-- <th class="th-sm">Action
-                </th> --}}
               </tr>
             </thead>
-            @if ($invoice_items->count()>0)
+            @if (isset($invoice_items))
             <tbody>
-                @foreach ($invoice_items as $invoice_item)
+                @forelse ($invoice_items as $invoice_item)
               <tr>
-                <td>{{$invoice_item->invoice->invoice_number}}</td>
                 <td>
                     @if ($invoice_item->product)
                         <strong>{{$invoice_item->product ? $invoice_item->product->name : ""}} {{$invoice_item->product ? $invoice_item->product->identification_number : ""}} {{$invoice_item->inventory ? $invoice_item->inventory->serial_number : ""}}</strong>  
@@ -66,30 +61,29 @@
                     {{$invoice_item->invoice->currency->symbol}}{{number_format($invoice_item->subtotal_incl,2)}}
                     @endif
                 </td>
-                
-                {{-- <td class="w-10 line-height-35 table-dropdown">
-                    <div class="dropdown">
-                        <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <i class="fa fa-bars"></i>
-                            <span class="caret"></span>
-                        </button>
-                        <ul class="dropdown-menu">
-                            @if ($invoice->payments->count()>0)
-                            @else    
-                                <li><a href="#" wire:click="edit({{$invoice_item->id }})"><i class="fa fa-edit color-success"></i>Edit</a></li>
-                                <li><a href="#" wire:click="removeShow({{ $invoice_item->id }})"><i class="fa fa-trash color-danger"></i>Delete</a></li>
-                            @endif
-                        </ul>
-                    </div>
-                  
-            </td> --}}
               </tr>
-              @endforeach
+            @empty
+                <tr>
+                <td colspan="7">
+                    <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
+                        No Invoice Items Recorded....
+                    </div>
+                    
+                </td>
+                </tr>  
+            @endforelse
             </tbody>
             @else
                 <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
              @endif
-          </table>
+        </table>
+        <nav class="text-center" style="float: right">
+            <ul class="pagination rounded-corners">
+                @if (isset($invoice_items))
+                    {{ $invoice_items->links() }} 
+                @endif 
+            </ul>
+        </nav>    
      
        
        

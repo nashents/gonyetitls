@@ -1,10 +1,6 @@
 <div>
     <div class="row mt-30">
-    
-        <!-- /.col-md-3 -->
-
         <div class="col-md-10 col-md-offset-1" >
-
             <ul class="nav nav-tabs nav-justified" role="tablist">
                 <li role="presentation" class="active"><a href="#basic" aria-controls="basic" role="tab" data-toggle="tab">Invoice Details</a></li>
                 <li role="presentation"><a href="#invoice_items" aria-controls="invoice_items" role="tab" data-toggle="tab">Invoice Items</a></li>
@@ -118,11 +114,9 @@
                   @livewire('invoices.invoice-items', ['id' => $invoice->id])
                 </div> 
                 <div role="tabpanel" class="tab-pane" id="payments">
-                    @php
-                        $payments = $invoice->payments
-                    @endphp
-                          <table id="paymentsTable" class="table  table-spaymented table-bordered table-sm table-responsive" cellspacing="0" width="100%" style=" width:100%; height:100%;">
-                            <thead >
+                  
+                          <table  class="table  table-spaymented table-bordered table-sm table-responsive" cellspacing="0" width="100%" style=" width:100%; height:100%;">
+                            <thead>
                                 <th class="th-sm">Payment#
                                 </th>
                                 <th class="th-sm">MOP
@@ -135,15 +129,13 @@
                                 </th>
                                 <th class="th-sm">Actions
                                 </th>
-
                               </tr>
                             </thead>
                        
-                            @if ($payments)
+                            @if (isset($payments))
                             <tbody>
                                 @forelse ($payments as $payment)
                               <tr>
-                                
                                 <td>{{$payment->payment_number}}</td>
                                 <td>{{$payment->mode_of_payment}}</td>
                                 <td>{{$payment->currency ? $payment->currency->name : ""}}</td>
@@ -184,9 +176,14 @@
                             @else
                             <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
                             @endif
-                          
-
                           </table>
+                            <nav class="text-center" style="float: right">
+                                <ul class="pagination rounded-corners">
+                                    @if (isset($payments))
+                                        {{ $payments->links() }} 
+                                    @endif 
+                                </ul>
+                            </nav>    
                   </div>
                 <div class="row">
                     <div class="col-md-12">
@@ -194,8 +191,7 @@
                            <a onclick="goBack()" class="btn bg-gray btn-wide btn-rounded"><i class="fa fa-arrow-left"></i>Back</a>
                         </div>
                     </div>
-                    </div>
-
+                </div>
             </div>
         </div>
         <!-- /.col-md-9 -->
