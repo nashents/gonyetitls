@@ -32,20 +32,20 @@ class CompanySeeder extends Seeder
 
     public function run()
     {
-        $password = Hash::make('admin@gonyetitls');
+        $password = Hash::make('admin@basilmark');
         $currency = Currency::where('name','USD')->first();
         $user = User::create([
-            'name' => 'Gonyeti TLS',
+            'name' => 'Basilmark Software Solutions',
             'category' => 'company',
-            'email' => 'info@gonyetitls.com',
+            'email' => 'info@basilmark.com',
             'password' => $password,
         ]);
      
         $company = Company::create([
             'user_id' => $user->id,
             'type' => 'Admin',
-            'name' => 'Gonyeti TLS',
-            'email' => 'info@gonyetitls.com',
+            'name' => 'Basilmark Software Solutions',
+            'email' => 'info@basilmark.com',
             'noreply' => 'noreply@gonyetitls.com',
             'phonenumber' => '0782421799',
             'country' => 'Zimbabwe',
@@ -66,22 +66,22 @@ class CompanySeeder extends Seeder
 
         // Mail::to('info@gonyetitls.com')->send(new AccountCreationMail($transporter_user, $company,$pin));
 
-        $transporter = new Transporter;
-        $transporter->creator_id = $user->id;
-        $transporter->company_id = $company->id;
-        $transporter->user_id = $transporter_user->id;
-        $transporter->name = "Gonyeti TLS";
-        $transporter->transporter_number = "GTT00001";
-        $transporter->email = "info@gonyetitls.com";
-        $transporter->pin = $pin;
-        $transporter->phonenumber ='0782421799';
-        $transporter->country = 'Zimbabwe';
-        $transporter->city = 'Harare';
-        $transporter->suburb = 'Waterfalls';
-        $transporter->street_address = '271 Northway Ave';
-        $transporter->authorization = "approved";
-        $transporter->status = 1;
-        $transporter->save();
+        // $transporter = new Transporter;
+        // $transporter->creator_id = $user->id;
+        // $transporter->company_id = $company->id;
+        // $transporter->user_id = $transporter_user->id;
+        // $transporter->name = "Gonyeti TLS";
+        // $transporter->transporter_number = "GTT00001";
+        // $transporter->email = "info@gonyetitls.com";
+        // $transporter->pin = $pin;
+        // $transporter->phonenumber ='0782421799';
+        // $transporter->country = 'Zimbabwe';
+        // $transporter->city = 'Harare';
+        // $transporter->suburb = 'Waterfalls';
+        // $transporter->street_address = '271 Northway Ave';
+        // $transporter->authorization = "approved";
+        // $transporter->status = 1;
+        // $transporter->save();
 
     }
 }

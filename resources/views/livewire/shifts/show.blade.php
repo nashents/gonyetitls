@@ -60,10 +60,6 @@
                                 <td class="w-20 line-height-35">{{$shift->customer ? $shift->customer->name : ""}}</td>
                             </tr>
                             <tr>
-                                <th class="w-10 text-center line-height-35">Cargo</th>
-                                <td class="w-20 line-height-35">{{$shift->cargo ? $shift->cargo->name : ""}}</td>
-                            </tr>
-                            <tr>
                                 <th class="w-10 text-center line-height-35">Loading Points</th>
                                 <td class="w-20 line-height-35">
                                     @if ($shift->loading_points && $shift->loading_points->count()>0)
@@ -100,7 +96,7 @@
                                 <td class="w-20 line-height-35">{{$shift?->trips->count()}}</td>
                             </tr>
                             <tr>
-                                <th class="w-10 text-center line-height-35">Total Weight</th>
+                                <th class="w-10 text-center line-height-35">Total Weight(t)</th>
                                 <td class="w-20 line-height-35">{{$shift->trips->sum('weight')}}</td>
                             </tr>
                             @if ($company->rates_managed_by_finance == True)
@@ -188,6 +184,10 @@
                             <tr>
                                 <th class="w-10 text-center line-height-35">Fuel Order#</th>
                                 <td class="w-20 line-height-35"> {{$fuel->order_number}}</td>
+                            </tr>
+                            <tr>
+                                <th class="w-10 text-center line-height-35">Expense Account</th>
+                                <td class="w-20 line-height-35"> {{App\Models\Account::find($fuel->account_id)?->name}}</td>
                             </tr>
                             <tr>
                                 <th class="w-10 text-center line-height-35"> Refueling Date</th>

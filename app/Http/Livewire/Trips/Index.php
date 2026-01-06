@@ -4,6 +4,7 @@ namespace App\Http\Livewire\Trips;
 
 use App\Models\Bill;
 use App\Models\Trip;
+use App\Models\User;
 use App\Models\Horse;
 use App\Models\Driver;
 use App\Models\Country;
@@ -236,6 +237,14 @@ class Index extends Component
         ]);
 
         return redirect(request()->header('Referer'));
+    }
+
+    public function getAuthorizer($id){
+        if(is_null($id)){
+            return ;
+        }
+        $user = User::find($id);
+        return $user?->name." ".$user?->surname;
     }
  
     private function resetInputFields(){

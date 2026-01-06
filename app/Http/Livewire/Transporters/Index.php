@@ -227,11 +227,7 @@ class Index extends Component
         $user->password = Hash::make($pin);
         $user->save();
 
-        if (isset(Auth::user()->company)) {
-            $company = Auth::user()->company;
-        }elseif (isset(Auth::user()->employee->company)) {
-            $company = Auth::user()->employee->company;
-        }
+         $company = Auth::user()->employee->company;
 
         
 

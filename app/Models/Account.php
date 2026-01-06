@@ -22,6 +22,9 @@ class Account extends Model implements Auditable
     public function retreads(){
         return $this->hasMany('App\Models\Retread');
     }
+    public function fuels(){
+        return $this->hasMany('App\Models\Fuel');
+    }
     public function loans(){
         return $this->hasMany('App\Models\Loan');
     }

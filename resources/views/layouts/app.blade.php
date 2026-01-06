@@ -2339,6 +2339,16 @@
                 $('#removeModal').modal('hide');
             })
         </script>
+        <script type="text/javascript">
+            window.addEventListener('show-removeRehandlingModal', event => {
+                $('#removeRehandlingModal').modal('show');
+            })
+        </script>
+        <script type="text/javascript">
+            window.addEventListener('hide-removeRehandlingModal', event => {
+                $('#removeRehandlingModal').modal('hide');
+            })
+        </script>
 
         <script type="text/javascript">
             window.addEventListener('show-trip_groupModal', event => {

@@ -33,6 +33,9 @@ class Fuel extends Model implements Auditable
     public function vehicle(){
         return $this->belongsTo('App\Models\Vehicle');
     }
+    public function acccount(){
+        return $this->belongsTo('App\Models\Account');
+    }
     public function horse(){
         return $this->belongsTo('App\Models\Horse');
     }
@@ -57,4 +60,29 @@ class Fuel extends Model implements Auditable
     public function bill(){
         return $this->hasOne('App\Models\Bill');
     }
+
+  protected $fillable = [
+        'user_id',
+        'order_number',      // include this only if you allow mass-assigning it
+        'account_id',
+        'horse_id',
+        'vehicle_id',
+        'currency_id',
+        'type',
+        'driver_id',
+        'container_id',
+        'date',
+        'unit_price',
+        'quantity',
+        'amount',
+        'odometer',
+        'hours',
+        'category',
+        'exchange_amount',
+        'exchange_rate',
+        'fillup',
+        'status',
+        'comments',
+    ];
+
 }

@@ -15,7 +15,6 @@
                     Transporter
                     <hr style="margin-top:2px; margin-bottom:2px">
                     Driver
-
                 </th>
                 <th class="th-sm">Horse
                 </th>
@@ -28,7 +27,7 @@
                 </th>
                 <th class="th-sm">To
                 </th>
-                <th class="th-sm">Status
+                <th class="th-sm" style="width: 17%">Timelines
                 </th>
                 @if ($company->rates_managed_by_finance == True)
                     @if (in_array('Finance', $department_names) ||  in_array('Super Admin', $role_names))
@@ -56,6 +55,8 @@
                     @if ($trip->trip_ref)
                     /{{$trip->trip_ref}}
                     @endif
+                    <br>
+                    <small><strong>Haulage Type: </strong>{{$trip->haulage_type == "short_haul" ? "Short Haul" : "Long Haul"}}</small>
                 </td>
                 <td>
                     @php
@@ -83,7 +84,7 @@
                     {{ucfirst($trip->customer ? $trip->customer->name : "")}}
                     @if ($trip->cargo)
                     <hr>  
-                    {{ucfirst($trip->cargo ? $trip->cargo->name : "")}}
+                    {{ucfirst($trip->cargo ? $trip->cargo->name : "")}} {{$trip->weight ? $trip->weight."(t)" : ""}}
                     @endif 
                 </td>
                
@@ -109,41 +110,22 @@
                         {{ $trip->offloading_point ? $trip->offloading_point->name : "" }}
                     @endif
                 </td>
-                @if ($trip->trip_status == "Offloaded")
-                <td class="table-success" style="padding-left: 5px; padding-right: 5px;">
-                    <span class="label label-success label-wide">{{$trip->trip_status}} </span>
+                <td>
+                    <strong>ArriveLP:</strong> {{$trip->arrive_loading_point}} <br>
+                    <strong>DepartLP: </strong> {{$trip->depart_loading_point}} <br>
+                    <strong>ArriveOP: </strong> {{$trip->arrive_offloading_point}} <br>
+                    <strong>DepartOP: </strong> {{$trip->depart_offloading_point}} <br>
+                    <strong>StartingMileage(Km): </strong> {{$trip->starting_mileage}} <br>
+                    <strong>EndingMileage(Km): </strong> {{$trip->ending_mileage}} <br>
+                    <strong>StartingHours(H): </strong> {{$trip->starting_hours}} <br>
+                    <strong>EndingHours(H): </strong> {{$trip->ending_hours}} <br>
                 </td>
-                @elseif($trip->trip_status == "Scheduled")
-                <td class="table-warning" style="padding-left: 5px; padding-right: 5px;" >
-                    <span class="label label-warning label-wide">{{$trip->trip_status}} </span>
-                </td>
-                @elseif($trip->trip_status == "Loading Point")
-                <td class="table-gray" style="padding-left: 5px; padding-right: 5px;" >
-                    <span class="label label-gray label-wide">{{$trip->trip_status}} </span>
-                </td>
-                @elseif($trip->trip_status == "Loaded")
-                <td class="table-info" style="padding-left: 5px; padding-right: 5px;">
-                    <span class="label label-info label-wide">{{$trip->trip_status}} </span>
-                </td>
-                @elseif($trip->trip_status == "InTransit")
-                <td class="table-primary" style="padding-left: 5px; padding-right: 5px;">
-                    <span class="label label-primary label-wide">{{$trip->trip_status}} </span>
-                </td>
-                @elseif($trip->trip_status == "OnHold")
-                <td class="table-danger" style="padding-left: 5px; padding-right: 5px;">
-                    <span class="label label-danger label-wide">{{$trip->trip_status}} </span>
-                </td>
-                @elseif($trip->trip_status == "Offloading Point")
-                <td class="table-accent" style="padding-left: 5px; padding-right: 5px;" >
-                    <span class="label label-accent label-wide" >{{$trip->trip_status}} </span>
-                </td>
-                @endif
                 @if ($company->rates_managed_by_finance == True)
                     @if (in_array('Finance', $department_names) ||  in_array('Super Admin', $role_names))
-                        <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight : 0,2)}}</td>
+                        <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}}{{number_format($trip->freight ? $trip->freight : 0,2)}} @ {{$trip->currency ? $trip->currency->symbol : ""}}{{number_format($trip->rate ? $trip->rate : 0,2)}}/t</td>
                     @endif
                 @else
-                    <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight : 0,2)}}</td>
+                    <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}}{{number_format($trip->freight ? $trip->freight : 0,2)}} @ {{$trip->currency ? $trip->currency->symbol : ""}}{{number_format($trip->rate ? $trip->rate : 0,2)}}/t </td>
                 @endif
                  <td class="w-10 line-height-35 table-dropdown">
                     <div class="dropdown">
@@ -161,7 +143,7 @@
           
               @empty
                     <tr>
-                    <td colspan="9">
+                    <td colspan="10">
                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                             No Trips Found ....
                         </div>

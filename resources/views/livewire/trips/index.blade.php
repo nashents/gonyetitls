@@ -389,8 +389,11 @@
                                             <span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
                                             @if ($trip->authorization_date)
                                                 <br>
-                                                 <small><strong style="background-color: orange">Date: {{$trip->authorization_date}}</strong></small>  
-                                               
+                                                 <small><strong style="background-color: orange">AuthorizedOn: {{$trip->authorization_date}}</strong></small>  
+                                            @endif
+                                            @if ($trip->authorized_by_id)
+                                                <br>
+                                                 <small><strong style="background-color: orange">AuthorizedBy: {{$this->getAuthorizer($trip->authorized_by_id)}}</strong></small>  
                                             @endif
                                             @if ($trip->reason)
                                                 <br>
@@ -600,8 +603,12 @@
                                             <span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
                                             @if ($trip->authorization_date)
                                                 <br>
-                                                 <small><strong style="background-color: orange">Date: {{$trip->authorization_date}}</strong></small>  
+                                                 <small><strong style="background-color: orange">AuthorizedOn: {{$trip->authorization_date}}</strong></small>  
                                                
+                                            @endif
+                                             @if ($trip->authorized_by_id)
+                                                <br>
+                                                 <small><strong style="background-color: orange">AuthorizedBy: {{$this->getAuthorizer($trip->authorized_by_id)}}</strong></small>  
                                             @endif
                                             @if ($trip->reason)
                                                 <br>
@@ -808,8 +815,12 @@
                                             <span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
                                             @if ($trip->authorization_date)
                                                 <br>
-                                                 <small><strong style="background-color: orange">Date: {{$trip->authorization_date}}</strong></small>  
+                                                 <small><strong style="background-color: orange">AuthorizedOn: {{$trip->authorization_date}}</strong></small>  
                                                
+                                            @endif
+                                             @if ($trip->authorized_by_id)
+                                                <br>
+                                                 <small><strong style="background-color: orange">AuthorizedBy: {{$this->getAuthorizer($trip->authorized_by_id)}}</strong></small>  
                                             @endif
                                             @if ($trip->reason)
                                                 <br>
@@ -1015,8 +1026,12 @@
                                             <span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
                                             @if ($trip->authorization_date)
                                                 <br>
-                                                 <small><strong style="background-color: orange">Date: {{$trip->authorization_date}}</strong></small>  
+                                                 <small><strong style="background-color: orange">AuthorizedOn: {{$trip->authorization_date}}</strong></small>  
                                                
+                                            @endif
+                                             @if ($trip->authorized_by_id)
+                                                <br>
+                                                 <small><strong style="background-color: orange">AuthorizedBy: {{$this->getAuthorizer($trip->authorized_by_id)}}</strong></small>  
                                             @endif
                                             @if ($trip->reason)
                                                 <br>
@@ -1223,8 +1238,12 @@
                                             <span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
                                             @if ($trip->authorization_date)
                                                 <br>
-                                                 <small><strong style="background-color: orange">Date: {{$trip->authorization_date}}</strong></small>  
+                                                 <small><strong style="background-color: orange">AuthorizedOn: {{$trip->authorization_date}}</strong></small>  
                                                
+                                            @endif
+                                             @if ($trip->authorized_by_id)
+                                                <br>
+                                                 <small><strong style="background-color: orange">AuthorizedBy: {{$this->getAuthorizer($trip->authorized_by_id)}}</strong></small>  
                                             @endif
                                             @if ($trip->reason)
                                                 <br>
@@ -1431,8 +1450,12 @@
                                             <span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
                                             @if ($trip->authorization_date)
                                                 <br>
-                                                 <small><strong style="background-color: orange">Date: {{$trip->authorization_date}}</strong></small>  
+                                                 <small><strong style="background-color: orange">AuthorizedOn: {{$trip->authorization_date}}</strong></small>  
                                                
+                                            @endif
+                                             @if ($trip->authorized_by_id)
+                                                <br>
+                                                 <small><strong style="background-color: orange">AuthorizedBy: {{$this->getAuthorizer($trip->authorized_by_id)}}</strong></small>  
                                             @endif
                                             @if ($trip->reason)
                                                 <br>
@@ -1637,8 +1660,12 @@
                                             <span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
                                             @if ($trip->authorization_date)
                                                 <br>
-                                                 <small><strong style="background-color: orange">Date: {{$trip->authorization_date}}</strong></small>  
+                                                 <small><strong style="background-color: orange">AuthorizedOn: {{$trip->authorization_date}}</strong></small>  
                                                
+                                            @endif
+                                             @if ($trip->authorized_by_id)
+                                                <br>
+                                                 <small><strong style="background-color: orange">AuthorizedBy: {{$this->getAuthorizer($trip->authorized_by_id)}}</strong></small>  
                                             @endif
                                             @if ($trip->reason)
                                                 <br>
@@ -1844,8 +1871,12 @@
                                             <span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
                                             @if ($trip->authorization_date)
                                                 <br>
-                                                 <small><strong style="background-color: orange">Date: {{$trip->authorization_date}}</strong></small>  
+                                                 <small><strong style="background-color: orange">AuthorizedOn: {{$trip->authorization_date}}</strong></small>  
                                                
+                                            @endif
+                                             @if ($trip->authorized_by_id)
+                                                <br>
+                                                 <small><strong style="background-color: orange">AuthorizedBy: {{$this->getAuthorizer($trip->authorized_by_id)}}</strong></small>  
                                             @endif
                                             @if ($trip->reason)
                                                 <br>
@@ -2052,8 +2083,12 @@
                                             <span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span>
                                             @if ($trip->authorization_date)
                                                 <br>
-                                                 <small><strong style="background-color: orange">Date: {{$trip->authorization_date}}</strong></small>  
+                                                 <small><strong style="background-color: orange">AuthorizedOn: {{$trip->authorization_date}}</strong></small>  
                                                
+                                            @endif
+                                             @if ($trip->authorized_by_id)
+                                                <br>
+                                                 <small><strong style="background-color: orange">AuthorizedBy: {{$this->getAuthorizer($trip->authorized_by_id)}}</strong></small>  
                                             @endif
                                             @if ($trip->reason)
                                                 <br>

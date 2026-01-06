@@ -4,17 +4,17 @@
           <tr>
             <th class="th-sm">Start Time
             </th>
-            <th class="th-sm">Open Hours
+            <th class="th-sm">Open Hours(H)
             </th>
-            <th class="th-sm">Open Mileage
+            <th class="th-sm">Open Mileage(Km)
             </th>
             <th class="th-sm">Work Description & Location
             </th>
             <th class="th-sm">Stop Time
             </th>
-            <th class="th-sm">Close Hours
+            <th class="th-sm">Close Hours(H)
             </th>
-            <th class="th-sm">Close Mileage
+            <th class="th-sm">Close Mileage(Km)
             </th>
             <th class="th-sm">Action
             </th>
@@ -25,8 +25,8 @@
             @forelse ($rehandlings as $rehandling)
           <tr>
             <td>{{$rehandling->start_time}}</td>
-            <td>{{$rehandling->open_hours ? $rehandling->open_hours : " Hours"}}</td>
-            <td>{{$rehandling->open_mileage ? $rehandling->open_mileage." Kms" : ""}}</td>
+            <td>{{$rehandling->open_hours}}</td>
+            <td>{{$rehandling->open_mileage}}</td>
             <td>
                 {{$rehandling->work ? $rehandling->work->description : ""}}
                 @if ($rehandling->location)
@@ -34,26 +34,14 @@
                 @endif
             </td>
               <td>{{$rehandling->stop_time}}</td>
-              <td>{{$rehandling->close_hours ? $rehandling->close_hours." Hours" : ""}}</td>
-              <td>{{$rehandling->close_mileage ? $rehandling->close_mileage." Kms" : ""}}</td>
-            <td class="w-10 line-height-35 table-dropdown">
-                <div class="dropdown">
-                    <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <i class="fa fa-bars"></i>
-                        <span class="caret"></span>
-                    </button>
-                    <ul class="dropdown-menu">
-                        <li><a href="#" wire:click="edit({{$rehandling->id}})"  ><i class="fa fa-edit color-success"></i> Edit</a></li>
-                    </ul>
-                </div>
-                @include('rehandlings.delete')
-        </td>
+              <td>{{$rehandling->close_hours}}</td>
+              <td>{{$rehandling->close_mileage}}</td>
           </tr>
           @empty
           <tr>
             <td colspan="9">
                 <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
-                    No rehandling work found ....
+                    No Rehandling Work Found ....
                 </div>
                
             </td>
