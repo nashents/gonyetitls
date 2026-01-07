@@ -211,6 +211,14 @@
                                                                 </td>
                                                             </tr>
                                                             @endif
+                                                            @if ($trip->bill_of_entry)
+                                                            <tr>
+                                                                <th scope="row">Bill Of Entry #</th>
+                                                                <td>
+                                                                    {{$trip->bill_of_entry}}
+                                                                </td>
+                                                            </tr>
+                                                            @endif
                                                             @if ($trip->manifest_number)
                                                             <tr>
                                                                 <th scope="row">Manifest#</th>
@@ -540,6 +548,22 @@
                                                                     @elseif($trip->cargo->risk == "Low")
                                                                     <strong>Risk Level | </strong><span class="label label-success"> {{ $trip->cargo ? $trip->cargo->risk : "" }}</span>
                                                                     @endif 
+                                                                    @endif
+                                                                    @if ($trip->temparature)
+                                                                        <br>
+                                                                        <strong>Temperature(<span>&deg;C</span>)</strong>  {{$trip->temparature}}
+                                                                    @endif
+                                                                    @if ($trip->volume)
+                                                                        <br>
+                                                                        <strong>Volume(m<sup>3</sup>)</strong>  {{$trip->volume}}
+                                                                    @endif
+                                                                    @if ($trip->seal_number)
+                                                                        <br>
+                                                                        <strong>Seal Number(s)</strong>  {{$trip->seal_number}}
+                                                                    @endif
+                                                                    @if ($trip->container_number)
+                                                                        <br>
+                                                                        <strong>Container Number(s)</strong>  {{$trip->container_number}}
                                                                     @endif
                                                                 </td>
                                                             </tr>

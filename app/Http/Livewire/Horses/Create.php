@@ -38,6 +38,7 @@ class Create extends Component
     public $chasis_number;
     public $engine_number;
     public $year;
+    public $custom_ref;
     public $capacity;
     public $measurement;
     public $color;
@@ -123,6 +124,7 @@ class Create extends Component
         $this->horse_group = '';
         $this->capacity = '';
         $this->measurement = '';
+        $this->custom_ref = '';
         $this->origin = '';
         $this->mileage = '';
         $this->hours = '';
@@ -208,6 +210,7 @@ class Create extends Component
         $horse->horse_model_id = $this->horse_model_id;
         $horse->transporter_id = $this->transporter_id;
         $horse->registration_number = $this->registration_number;
+        $horse->custom_ref = $this->custom_ref;
         $horse->chasis_number = $this->chasis_number;
         $horse->engine_number = $this->engine_number;
         $horse->year = $this->year;

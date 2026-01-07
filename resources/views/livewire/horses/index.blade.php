@@ -32,6 +32,8 @@
                                 <table class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                     <thead >
                                         <tr>
+                                        <th class="th-sm">Horse#
+                                        </th>
                                         <th class="th-sm">Transporter
                                         </th>
                                         <th class="th-sm">Make
@@ -70,6 +72,13 @@
                                     <tbody>
                                         @forelse ($horses as $horse)
                                      <tr>
+                                        <td>
+                                            {{$horse->horse_number}}
+                                            @if ($horse->custom_ref)
+                                            <br>
+                                                <small>Custom Ref:{{$horse->custom_ref}}</small>
+                                            @endif 
+                                        </td>
                                         <td>{{$horse->transporter ? $horse->transporter->name : ""}}</td>
                                         <td>{{ucfirst($horse->horse_make ? $horse->horse_make->name : "")}} {{ucfirst($horse->horse_model ? $horse->horse_model->name : "")}}</td>
                                         <td width="150">

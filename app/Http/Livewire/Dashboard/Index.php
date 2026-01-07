@@ -1000,7 +1000,7 @@ class Index extends Component
                     $q->where('employees.id',$this->employee->id);
                 })->whereYear('created_at', date('Y'))->count();
         $this->fuel_supplier_count = Container::all()->count();
-        $this->fuel_order_count = Fuel::whereYear('created_at', date('Y'))->count();
+        $this->fuel_order_count = Fuel::whereYear('date', date('Y'))->count();
         $this->transport_order_count = TransportOrder::whereYear('created_at', date('Y'))->count();
         $this->recent_employees = Employee::latest()->take('5')->get();
         $this->containers = Container::latest()->get();

@@ -29,6 +29,7 @@ class Edit extends Component
     public $start_date;
     public $end_date;
     public $horse_groups;
+    public $custom_ref;
     public $no_of_wheels;
     public $horse_number;
     public $fleet_number;
@@ -117,6 +118,7 @@ class Edit extends Component
         $this->year = '';
         $this->color = '';
         $this->condition = '';
+        $this->custom_ref = '';
         $this->capacity = '';
         $this->measurement = '';
         $this->horse_type = '';
@@ -239,6 +241,7 @@ class Edit extends Component
         $horse->manufacturer = $this->manufacturer;
         $horse->country_of_origin = $this->origin;
         $horse->color = $this->color;
+        $horse->custom_ref = $this->custom_ref;
         $horse->start_date = $this->start_date;
         $horse->end_date = $this->end_date;
         $horse->no_of_wheels = $this->no_of_wheels;

@@ -369,8 +369,15 @@
                                             <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight: 0,2)}}</td>
                                         @endif
                                         <td> 
-                                            @if ($trip->invoice_items->count()>0)
+                                            
+                                            @if (isset($trip->invoices) && $trip->invoices->count() > 0)
                                                 <span class="label label-success"> issued</span>
+                                                <small>
+                                                    <strong>Invoice#(s):</strong>
+                                                    @foreach ($trip->invoices as $invoice)
+                                                        {{$invoice->invoice_number}} @if (!$loop->last),@endif
+                                                    @endforeach
+                                                </small>
                                             @else   
                                                 <span class="label label-warning"> pending</span> 
                                             @endif
@@ -582,8 +589,15 @@
                                             <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight: 0,2)}}</td>
                                         @endif
                                         <td> 
-                                            @if ($trip->invoice_items->count()>0)
+                                             @if (isset($trip->invoices) && $trip->invoices->count() > 0)
+                                           
                                                 <span class="label label-success"> issued</span>
+                                                <small>
+                                                    <strong>Invoice#(s):</strong>
+                                                    @foreach ($trip->invoices as $invoice)
+                                                        {{$invoice->invoice_number}} @if (!$loop->last),@endif
+                                                    @endforeach
+                                                </small>
                                             @else   
                                                 <span class="label label-warning"> pending</span> 
                                             @endif
@@ -795,8 +809,15 @@
                                             <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight: 0,2)}}</td>
                                         @endif
                                         <td> 
-                                            @if ($trip->invoice_items->count()>0)
+                                             @if (isset($trip->invoices) && $trip->invoices->count() > 0)
+                                           
                                                 <span class="label label-success"> issued</span>
+                                                  <small>
+                                                    <strong>Invoice#(s):</strong>
+                                                    @foreach ($trip->invoices as $invoice)
+                                                        {{$invoice->invoice_number}} @if (!$loop->last),@endif
+                                                    @endforeach
+                                                </small>
                                             @else   
                                                 <span class="label label-warning"> pending</span> 
                                             @endif
@@ -1006,11 +1027,18 @@
                                             <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight: 0,2)}}</td>
                                         @endif
                                     <td> 
-                                        @if ($trip->invoice_items->count()>0)
-                                            <span class="label label-success"> issued</span>
-                                        @else   
-                                            <span class="label label-warning"> pending</span> 
-                                        @endif
+                                        @if (isset($trip->invoices) && $trip->invoices->count() > 0)
+                                           
+                                                <span class="label label-success"> issued</span>
+                                                 <small>
+                                                    <strong>Invoice#(s):</strong>
+                                                    @foreach ($trip->invoices as $invoice)
+                                                        {{$invoice->invoice_number}} @if (!$loop->last),@endif
+                                                    @endforeach
+                                                </small>
+                                            @else   
+                                                <span class="label label-warning"> pending</span> 
+                                            @endif
                                         <hr style="margin-top:5px; margin-bottom:5px">
                                         @php
                                             $pod = App\Models\TripDocument::where('trip_id',$trip->id)->where('title','POD')->get()->first();
@@ -1218,8 +1246,15 @@
                                             <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight: 0,2)}}</td>
                                         @endif
                                         <td> 
-                                            @if ($trip->invoice_items->count()>0)
+                                           @if (isset($trip->invoices) && $trip->invoices->count() > 0)
+                                           
                                                 <span class="label label-success"> issued</span>
+                                                <small>
+                                                    <strong>Invoice#(s):</strong>
+                                                    @foreach ($trip->invoices as $invoice)
+                                                        {{$invoice->invoice_number}} @if (!$loop->last),@endif
+                                                    @endforeach
+                                                </small>
                                             @else   
                                                 <span class="label label-warning"> pending</span> 
                                             @endif
@@ -1430,8 +1465,15 @@
                                             <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight: 0,2)}}</td>
                                         @endif
                                         <td> 
-                                            @if ($trip->invoice_items->count()>0)
+                                           @if (isset($trip->invoices) && $trip->invoices->count() > 0)
+                                           
                                                 <span class="label label-success"> issued</span>
+                                                <small>
+                                                    <strong>Invoice#(s):</strong>
+                                                    @foreach ($trip->invoices as $invoice)
+                                                        {{$invoice->invoice_number}} @if (!$loop->last),@endif
+                                                    @endforeach
+                                                </small>
                                             @else   
                                                 <span class="label label-warning"> pending</span> 
                                             @endif
@@ -1640,8 +1682,15 @@
                                             <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight: 0,2)}}</td>
                                         @endif
                                         <td> 
-                                            @if ($trip->invoice_items->count()>0)
+                                             @if (isset($trip->invoices) && $trip->invoices->count() > 0)
+                                           
                                                 <span class="label label-success"> issued</span>
+                                                 <small>
+                                                    <strong>Invoice#(s):</strong>
+                                                    @foreach ($trip->invoices as $invoice)
+                                                        {{$invoice->invoice_number}} @if (!$loop->last),@endif
+                                                    @endforeach
+                                                </small>
                                             @else   
                                                 <span class="label label-warning"> pending</span> 
                                             @endif
@@ -1851,8 +1900,15 @@
                                             <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight: 0,2)}}</td>
                                         @endif
                                         <td> 
-                                            @if ($trip->invoice_items->count()>0)
+                                            @if (isset($trip->invoices) && $trip->invoices->count() > 0)
                                                 <span class="label label-success"> issued</span>
+                                                <strong>Invoice#(s):</strong>
+                                                  <small>
+                                                    <strong>Invoice#(s):</strong>
+                                                    @foreach ($trip->invoices as $invoice)
+                                                        {{$invoice->invoice_number}} @if (!$loop->last),@endif
+                                                    @endforeach
+                                                </small>
                                             @else   
                                                 <span class="label label-warning"> pending</span> 
                                             @endif
@@ -2063,8 +2119,15 @@
                                             <td>{{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}} {{number_format($trip->freight ? $trip->freight: 0,2)}}</td>
                                         @endif
                                         <td> 
-                                            @if ($trip->invoice_items->count()>0)
+                                            @if (isset($trip->invoices) && $trip->invoices->count() > 0)
                                                 <span class="label label-success"> issued</span>
+                                                <small>
+                                                    <strong>Invoice#(s):</strong>
+                                                    @foreach ($trip->invoices as $invoice)
+                                                        {{$invoice->invoice_number}} @if (!$loop->last),@endif
+                                                    @endforeach
+                                                </small>
+                                                
                                             @else   
                                                 <span class="label label-warning"> pending</span> 
                                             @endif

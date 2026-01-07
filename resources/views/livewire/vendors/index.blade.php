@@ -47,7 +47,13 @@
                                 <tbody>
                                     @forelse ($vendors as $vendor)
                                   <tr>
-                                    <td>{{$vendor->vendor_number}}</td>
+                                    <td>
+                                        {{$vendor->vendor_number}}
+                                        @if ($vendor->custom_ref)
+                                        <br>
+                                            <small><strong>Custom Ref:</strong> {{$vendor->custom_ref}}</small>
+                                        @endif
+                                    </td>
                                     <td>{{ucfirst($vendor->name)}}</td>
                                     <td>{{$vendor->email}}</td>
                                     <td>{{$vendor->phonenumber}}</td>
@@ -135,10 +141,21 @@
                 </div>
                 <form wire:submit.prevent="store()" >
                 <div class="modal-body">
-                    <div class="form-group">
-                        <label for="name">Name<span class="required" style="color: red">*</span></label>
-                        <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Name" required />
-                        @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    <div class="row">
+                        <div class="col-md-8">
+                             <div class="form-group">
+                                <label for="name">Name<span class="required" style="color: red">*</span></label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Name" required />
+                                @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="name">Custom Ref</label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="custom_ref" placeholder="Enter Custom Reference #"/>
+                                @error('custom_ref') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
                     </div>
                     <div class="row">
                         <div class="col-md-4">
@@ -390,11 +407,21 @@
                 <form wire:submit.prevent="update()" >
 
                 <div class="modal-body">
-                   
-                    <div class="form-group">
-                        <label for="name">Name<span class="required" style="color: red">*</span></label>
-                        <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Name" required />
-                        @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                   <div class="row">
+                        <div class="col-md-8">
+                             <div class="form-group">
+                                <label for="name">Name<span class="required" style="color: red">*</span></label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Name" required />
+                                @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="name">Custom Ref</label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="custom_ref" placeholder="Enter Custom Reference #"/>
+                                @error('custom_ref') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
                     </div>
                     <div class="row">
                         <div class="col-md-4">

@@ -39,6 +39,7 @@ class Index extends Component
     public $contact_phonenumber;
     public $department;
     public $name;
+    public $custom_ref;
     public $vat_number;
     public $tin_number;
     public $phonenumber;
@@ -167,6 +168,7 @@ class Index extends Component
         $this->currency_id = "";
         $this->phonenumber = "";
         $this->worknumber = "";
+        $this->custom_ref = "";
         $this->email = "";
         $this->country = "";
         $this->website = "";
@@ -224,6 +226,7 @@ class Index extends Component
         $vendor->vendor_type_id = $this->vendor_type_id;
         $vendor->name = $this->name;
         $vendor->email = $this->email;
+        $vendor->custom_ref = $this->custom_ref;
         $vendor->pin = $pin;
         $vendor->phonenumber = $this->phonenumber;
         $vendor->currency_id = $this->currency_id ? $this->currency_id : NULL;
@@ -328,6 +331,7 @@ class Index extends Component
     $this->phonenumber = $vendor->phonenumber;
     $this->worknumber = $vendor->worknumber;
     $this->website = $vendor->website;
+    $this->custom_ref = $vendor->custom_ref;
     $this->vat_number = $vendor->vat_number;
     $this->tin_number = $vendor->tin_number;
     $this->currency_id = $vendor->currency_id;
@@ -354,6 +358,7 @@ class Index extends Component
             $vendor->name = $this->name;
             $vendor->phonenumber = $this->phonenumber;
             $vendor->worknumber = $this->worknumber;
+            $vendor->custom_ref = $this->custom_ref;
             $vendor->email = $this->email;
             $vendor->vat_number = $this->vat_number;
             $vendor->tin_number = $this->tin_number;

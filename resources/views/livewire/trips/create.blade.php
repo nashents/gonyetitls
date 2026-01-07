@@ -254,15 +254,21 @@
                                         <!-- CD Numbers -->
                                         <div class="col-md-6">
                                             <div class="row">
-                                                <div class="col-md-6">
+                                                <div class="col-md-4">
                                                     <div class="form-group">
                                                         <label for="cd3_number">CD3 Number</label>
                                                         <input type="text" class="form-control" wire:model.debounce.300ms="cd3_number" placeholder="Enter CD3 Number">
                                                         @error('cd3_number') <span class="text-danger error">{{ $message }}</span> @enderror
                                                     </div>
                                                 </div>
-                                
-                                                <div class="col-md-6">
+                                                <div class="col-md-4">
+                                                    <div class="form-group">
+                                                        <label for="boe">Bill Of Entry #</label>
+                                                        <input type="text" class="form-control" wire:model.debounce.300ms="bill_of_entry" placeholder="Enter BOE #">
+                                                        @error('bill_of_entry') <span class="text-danger error">{{ $message }}</span> @enderror
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
                                                     @if ($trip_type_name == 'Outward')
                                                         <div class="form-group">
                                                             <label for="cd1_number">CD1 Number</label>
@@ -736,21 +742,28 @@
                                 @endif
                                 @if ($cargo_type == "Solid")
                                 <div class="row">
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <div class="form-group">
                                             <label for="weight">Volume(m<sup>3</sup>)</label>
                                             <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="volume" placeholder="Cargo Volume" >
                                             @error('volume') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <div class="form-group">
                                             <label for="weight">Temparature(<span>&deg;C</span>)</label>
                                             <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="temparature" placeholder="Cargo Temparature" >
                                             @error('temparature') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="weight">Container Number(s)</label>
+                                            <input type="text"  class="form-control" wire:model.debounce.300ms="container_number" placeholder="Seperate Container#s by ," >
+                                            @error('container_number') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
                                         <div class="form-group">
                                             <label for="weight">Seal Number(s)</label>
                                             <input type="text"  class="form-control" wire:model.debounce.300ms="seal_number" placeholder="Seperate Seal#s by ," >

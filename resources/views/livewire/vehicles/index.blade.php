@@ -33,12 +33,14 @@
                                 <table  class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                     <thead >
                                         <tr>
+                                            <th class="th-sm">Vehicle#
+                                            </th>
                                             <th class="th-sm">Transporter
                                             </th>
                                             <th class="th-sm">Make
                                             </th>
                                             <th class="th-sm">
-                                            (Fleet#) HRN
+                                                (Fleet#) HRN
                                             </th>
                                             <th class="th-sm">Revenue
                                             </th>
@@ -69,6 +71,13 @@
                                     <tbody>
                                         @forelse ($vehicles as $vehicle)
                                       <tr>
+                                         <td>
+                                            {{$vehicle->vehicle_number}}
+                                            @if ($vehicle->custom_ref)
+                                            <br>
+                                                <small>Custom Ref:{{$vehicle->custom_ref}}</small>
+                                            @endif 
+                                        </td>
                                         <td>{{$vehicle->transporter ? $vehicle->transporter->name : ""}}</td>
                                         <td>{{ucfirst($vehicle->vehicle_make ? $vehicle->vehicle_make->name : "")}} {{ucfirst($vehicle->vehicle_model ? $vehicle->vehicle_model->name : "")}}</td>
                                         <td width="150">

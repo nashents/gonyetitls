@@ -33,9 +33,9 @@
     .brand__name { font-size: 20px; font-weight: 700; }
     .brand__meta { font-size: 12px; color: var(--muted); line-height: 1.35; }
 
-    .meta { padding: 12px; border: 1px solid var(--line); border-radius: 10px; }
+    .meta { padding: 5px; border: 1px solid var(--line); border-radius: 7px; }
     .meta h1 { font-size: 20px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
-    .meta-grid { display:grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; font-size: 12px; }
+    .meta-grid { display:grid; grid-template-columns: 1fr 1fr; gap: 4px 8px; font-size: 12px; }
     .meta-grid dt { color: var(--muted); }
     .meta-grid dd { margin: 0; font-weight: 600; }
 
@@ -204,6 +204,7 @@ html, body { background: var(--bg); color: var(--ink); font-family: var(--font);
   margin-top: 0; /* remove the spacing */
 }
 
+
 @media print {
   .block-keep { break-inside: avoid-page; page-break-inside: avoid; }
 }
@@ -313,7 +314,7 @@ html, body { background: var(--bg); color: var(--ink); font-family: var(--font);
 
   /* Header branding tweaks */
   .brand {
-    gap: 6px !important;
+    gap: 4px !important;
   }
 
   .brand__logo {

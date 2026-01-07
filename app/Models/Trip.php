@@ -13,6 +13,11 @@ class Trip extends Model implements Auditable
     use \OwenIt\Auditing\Auditable;
 
     
+    public function invoices()
+    {
+        return $this->belongsToMany(Invoice::class, 'invoice_items', 'trip_id', 'invoice_id')
+            ->distinct();
+    }
 
     public function trip_statuses(){
         return $this->hasMany('App\Models\TripStatus');
@@ -159,9 +164,9 @@ class Trip extends Model implements Auditable
     public function trip_documents(){
         return $this->hasMany('App\Models\TripDocument');
     }
-    public function invoices(){
-        return $this->hasMany('App\Models\Invoice');
-    }
+    // public function invoices(){
+    //     return $this->hasMany('App\Models\Invoice');
+    // }
     public function invoice_trips(){
         return $this->hasMany('App\Models\InvoiceTrip');
     }

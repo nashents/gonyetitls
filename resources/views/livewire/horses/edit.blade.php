@@ -14,16 +14,27 @@
 
                             <form wire:submit.prevent="update()" class="p-20" >
                                 <h5 class="underline mt-n">Horse Info</h5>
-                                <div class="form-group">
-                                    <label for="exampleInputEmail13">Transporters</label>
-                               <select wire:model.debounce.300ms="transporter_id" class="form-control" >
-                                   <option value="">Select Transporter</option>
-                                   @foreach ($transporters as $transporter)
-                                       <option value="{{$transporter->id}}">{{$transporter->name}}</option>
-                                   @endforeach
-                               </select>
-                               <small><a href="{{ route('transporters.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i>New Transporter</a></small> 
-                                    @error('transporter_id') <span class="text-danger error">{{ $message }}</span>@enderror
+                               <div class="row">
+                                    <div class="col-md-8">
+                                        <div class="form-group">
+                                            <label for="exampleInputEmail13">Transporters<span class="required" style="color: red">*</span></label>
+                                            <select wire:model.debounce.300ms="transporter_id" class="form-control" required>
+                                                <option value="">Select Transporter</option>
+                                                @foreach ($transporters as $transporter)
+                                                    <option value="{{$transporter->id}}">{{$transporter->name}}</option>
+                                                @endforeach
+                                            </select>
+                                            <small>  <a href="{{ route('transporters.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Transporter</a></small> 
+                                            @error('transporter_id') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="name">Custom Ref</label>
+                                            <input type="text" class="form-control" wire:model.debounce.300ms="custom_ref" placeholder="Enter Custom Reference #"/>
+                                            @error('custom_ref') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="row">
                                     <div class="col-md-6">

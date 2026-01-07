@@ -89,6 +89,8 @@ class Edit extends Component
     public $vehicle_fuel_total;
     public $cd3_number;
     public $cd1_number;
+    public $bill_of_entry;
+    public $container_number;
     public $manifest_number;
     public $trip_types;
     public $trip_type_name;
@@ -1089,6 +1091,8 @@ class Edit extends Component
          $this->trip_fuel = $this->trip->trip_fuel;
          $this->cd3_number = $this->trip->cd3_number;
          $this->cd1_number = $this->trip->cd1_number;
+         $this->bill_of_entry = $this->trip->bill_of_entry;
+         $this->container_number = $this->trip->container_number;
          $this->manifest_number = $this->trip->manifest_number;
          $this->measurement = $this->trip->measurement;
          $this->notes = $this->trip->notes;
@@ -1295,9 +1299,10 @@ class Edit extends Component
           'weight' => 'required',
           'freight' => 'required',
           'start_date' => 'required',
-          'manifest_number' => 'nullable|unique:trips,manifest_number,NULL,id,deleted_at,NULL|string|min:2',
-          'cd3_number' => 'nullable|unique:trips,cd3_number,NULL,id,deleted_at,NULL|string|min:2',
-          'cd1_number' => 'nullable|unique:trips,cd1_number,NULL,id,deleted_at,NULL|string|min:2',
+          'manifest_number' => 'nullable|unique:trips,manifest_number,NULL,id,deleted_at,NULL|string',
+          'cd3_number' => 'nullable|unique:trips,cd3_number,NULL,id,deleted_at,NULL|string',
+          'cd1_number' => 'nullable|unique:trips,cd1_number,NULL,id,deleted_at,NULL|string',
+          'bill_of_entry' => 'nullable|unique:trips,bill_of_entry,NULL,id,deleted_at,NULL|string',
           'selectedStatus' => 'required',
           'selectedContainer' => 'required',
           'selectedCategory' => 'required',
@@ -1623,6 +1628,8 @@ class Edit extends Component
           $trip->cd3_number = $this->cd3_number;
           $trip->notes = $this->notes;
           $trip->cd1_number = $this->cd1_number;
+          $trip->bill_of_entry = $this->bill_of_entry;
+          $trip->container_number = $this->container_number;
           $trip->manifest_number = $this->manifest_number;
           $trip->manifest_comments = $this->manifest_comments;
           $trip->volume = $this->volume;

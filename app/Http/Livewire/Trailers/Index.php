@@ -45,6 +45,7 @@ class Index extends Component
     public $trailer_id;
     public $trailer_type_id;
     public $fleet_number;
+    public $custom_ref;
     public $make;
     public $model;
     public $nvm;
@@ -130,6 +131,7 @@ class Index extends Component
         $this->cargo_type = '';
         $this->measurement_id = '';
         $this->cargo_id = '';
+        $this->custom_ref = '';
         $this->no_of_wheels = '';
         $this->nvm = '';
         $this->gvm = '';
@@ -236,6 +238,7 @@ public function activate($id){
         $trailer->year = $this->year;
         $trailer->no_of_wheels = $this->no_of_wheels ?? 0;
         $trailer->manufacturer = $this->manufacturer;
+        $trailer->custom_ref = $this->custom_ref;
         $trailer->gvm = $this->gvm;
         $trailer->nvm = $this->nvm;
         $trailer->country_of_origin = $this->origin;
@@ -352,6 +355,7 @@ public function activate($id){
         $this->transporter_id = $trailer->transporter_id;
         $this->fleet_number = $trailer->fleet_number;
         $this->make = $trailer->make;
+        $this->custom_ref = $trailer->custom_ref;
         $this->model = $trailer->model;
         $this->chasis_number = $trailer->chasis_number;
         $this->cargo_type = $trailer->cargo_type;
@@ -398,6 +402,7 @@ public function activate($id){
                 $trailer->make = $this->make;
                 $trailer->no_of_wheels = $this->no_of_wheels;
                 $trailer->model = $this->model;
+                $trailer->custom_ref = $this->custom_ref;
                 $trailer->year = $this->year;
                 $trailer->cargo_type = $this->cargo_type;
                 $trailer->compartments = $this->compartments;

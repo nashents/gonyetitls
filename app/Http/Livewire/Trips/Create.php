@@ -113,6 +113,8 @@ class Create extends Component
     public $cd3_number;
     public $manifest_number;
     public $cd1_number;
+    public $container_number;
+    public $bill_of_entry;
     public $selectedStatus;
     public $transporters;
     public $selectedTransporter;
@@ -1071,9 +1073,10 @@ class Create extends Component
           'weight' => 'nullable',
           'freight' => 'required',
           'start_date' => 'required',
-          'manifest_number' => 'nullable|unique:trips,manifest_number,NULL,id,deleted_at,NULL|string|min:2',
-          'cd3_number' => 'nullable|unique:trips,cd3_number,NULL,id,deleted_at,NULL|string|min:2',
-          'cd1_number' => 'nullable|unique:trips,cd1_number,NULL,id,deleted_at,NULL|string|min:2',
+          'manifest_number' => 'nullable|unique:trips,manifest_number,NULL,id,deleted_at,NULL|string',
+          'cd3_number' => 'nullable|unique:trips,cd3_number,NULL,id,deleted_at,NULL|string',
+          'cd1_number' => 'nullable|unique:trips,cd1_number,NULL,id,deleted_at,NULL|string',
+          'bill_of_entry' => 'nullable|unique:trips,bill_of_entry,NULL,id,deleted_at,NULL|string',
           'selectedStatus' => 'required',
           'selectedContainer' => 'required',
           'expense_id.*' => 'nullable|exists:expenses,id',
@@ -1352,6 +1355,8 @@ class Create extends Component
                 $trip->depart_offloading_point = $this->depart_op;
                 $trip->offloading_time = $this->calculateTimeDifference($this->arrive_op, $this->depart_op);
                 $trip->cd1_number = $this->cd1_number;
+                $trip->bill_of_entry = $this->bill_of_entry;
+                $trip->container_number = $this->container_number;
                 $trip->manifest_number = $this->manifest_number;
                 $trip->cargo_id = $this->selectedCargo;
                 $trip->trip_type_id = $this->selectedTripType;

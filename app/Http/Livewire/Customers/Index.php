@@ -27,7 +27,8 @@ class Index extends Component
 {
     use WithFileUploads;
     use WithPagination;
-
+    public $search;
+    protected $queryString = ['search'];
     protected $paginationTheme = 'bootstrap';
 
     private $customers;
@@ -46,13 +47,13 @@ class Index extends Component
     public $email;
     public $country;
     public $tin_number;
+    public $custom_ref;
     public $vat_number;
     public $city;
     public $suburb;
     public $street_address;
 
-    public $search;
-    protected $queryString = ['search'];
+ 
 
     public $customer_id;
     public $user_id;
@@ -163,6 +164,7 @@ class Index extends Component
         $this->tin_number = "";
         $this->currency_id = "";
         $this->phonenumber = "";
+        $this->custom_ref = "";
         $this->worknumber = "";
         $this->email = "";
         $this->title = "";
@@ -221,6 +223,7 @@ class Index extends Component
         $customer->user_id = $user->id;
         $customer->currency_id = $this->currency_id ? $this->currency_id : NULL;
         $customer->name = $this->name;
+        $customer->custom_ref = $this->custom_ref;
         $customer->initials = $this->initials;
         $customer->customer_number = $this->customerNumber();
         $customer->email = $this->email;
@@ -324,6 +327,7 @@ class Index extends Component
     $this->email = $customer->email;
     $this->phonenumber = $customer->phonenumber;
     $this->worknumber = $customer->worknumber;
+    $this->custom_ref = $customer->custom_ref;
     $this->country = $customer->country;
     $this->allowable_loss_percentage = $customer->allowable_loss_percentage;
     $this->vat_number = $customer->vat_number;
@@ -351,6 +355,7 @@ class Index extends Component
             $customer->worknumber = $this->worknumber;
             $customer->allowable_loss_percentage = $this->allowable_loss_percentage;
             $customer->vat_number = $this->vat_number;
+            $customer->custom_ref = $this->custom_ref;
             $customer->tin_number = $this->tin_number;
             $customer->email = $this->email;
             $customer->currency_id = $this->currency_id;

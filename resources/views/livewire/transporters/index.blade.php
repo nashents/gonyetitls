@@ -19,11 +19,15 @@
                             </div>
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
-
-                            <table id="transportersTable" class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
+                             <div class="col-md-3" style="float: right; padding-right:0px">
+                                <div class="form-group">
+                                    <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search transporters...">
+                                </div>
+                              
+                            </div>
+                            <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
-
                                     <th class="th-sm">Transporter#
                                     </th>
                                     <th class="th-sm">Name
@@ -34,7 +38,7 @@
                                     </th>
                                     <th class="th-sm">Address
                                     </th>
-                                    <th class="th-sm">Authorization
+                                    <th class="th-sm">Auth
                                     </th>
                                     <th class="th-sm">Status
                                     </th>
@@ -42,11 +46,17 @@
                                     </th>
                                   </tr>
                                 </thead>
-                                @if ($transporters->count()>0)
+                                @if (isset($transporters))
                                 <tbody>
-                                    @foreach ($transporters as $transporter)
+                                    @forelse ($transporters as $transporter)
                                   <tr>
-                                    <td>{{$transporter->transporter_number}}</td>
+                                    <td>
+                                        {{$transporter->transporter_number}}
+                                          @if ($transporter->custom_ref)
+                                          <br>
+                                            <small><strong>Custom Ref:</strong> {{$transporter->custom_ref}}</small>
+                                        @endif
+                                    </td>
                                     <td>{{ucfirst($transporter->name)}}</td>
                                     <td>{{$transporter->email}}</td>
                                     <td>{{$transporter->phonenumber}}</td>
@@ -75,20 +85,35 @@
                                             </button>
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{ route('transporters.show', $transporter->id) }}"  ><i class="fa fa-eye color-default"></i> View</a></li>
-                                                <li><a href="{{ route('transporters.edit', $transporter->id) }}" ><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                                <li><a href="#" wire:click="edit({{$transporter->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
                                                 <li><a href="#" data-toggle="modal" data-target="#transporterDeleteModal{{ $transporter->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                             </ul>
                                         </div>
                                         @include('transporters.delete')
                                 </td>
                                   </tr>
-                                  @endforeach
+                                  @empty
+                                  <tr>
+                                    <td colspan="8">
+                                        <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
+                                            No Transporters Found ....
+                                        </div>
+                                       
+                                    </td>
+                                  </tr>  
+                                @endforelse
                                 </tbody>
                                 @else
                                     <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
                                  @endif
                               </table>
-
+                                <nav class="text-center" style="float: right">
+                                    <ul class="pagination rounded-corners">
+                                        @if (isset($transporters))
+                                            {{ $transporters->links() }} 
+                                        @endif 
+                                    </ul>
+                                </nav> 
                             <!-- /.col-md-12 -->
                         </div>
                     </div>
@@ -127,17 +152,29 @@
         </div>
     </div>
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="transporterModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog  mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fa fa-plus"></i> Add Transporter <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                 </div>
                 <form wire:submit.prevent="store()" >
                 <div class="modal-body">
-                    <div class="form-group">
-                        <label for="name">Name<span class="required" style="color: red">*</span></label>
-                        <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Name" required />
-                        @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="form-group">
+                                <label for="name">Name<span class="required" style="color: red">*</span></label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Name" required />
+                                @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="name">Custom Ref</label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="custom_ref" placeholder="Enter Custom Reference #"/>
+                                @error('custom_ref') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
                     </div>
                    
                     <div class="row">
@@ -439,7 +476,7 @@
         </div>
     </div>
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="transporterEditModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog  mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fa fa-edit"></i> Edit Transporter <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -447,11 +484,23 @@
                 <form wire:submit.prevent="update()" >
 
                 <div class="modal-body">
-                    <div class="form-group">
-                        <label for="name">Name<span class="required" style="color: red">*</span></label>
-                        <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Name" required />
-                        @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="form-group">
+                                <label for="name">Name<span class="required" style="color: red">*</span></label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Name" required />
+                                @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="name">Custom Ref</label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="custom_ref" placeholder="Enter Custom Reference #"/>
+                                @error('custom_ref') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
                     </div>
+                    
                     <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">

@@ -36,6 +36,7 @@ class Edit extends Component
     public $vehicle_makes;
     public $registration_number;
     public $chasis_number;
+    public $custom_ref;
     public $engine_number;
     public $year;
     public $no_of_wheels;
@@ -87,6 +88,7 @@ class Edit extends Component
         $this->condition = '';
         $this->vehicle_type = '';
         $this->vehicle_group = '';
+        $this->custom_ref = '';
         $this->origin = '';
         $this->mileage = '';
         $this->hours = '';
@@ -181,6 +183,7 @@ class Edit extends Component
         $vehicle->year = $this->year;
         $vehicle->manufacturer = $this->manufacturer;
         $vehicle->country_of_origin = $this->origin;
+        $vehicle->custom_ref = $this->custom_ref;
         $vehicle->color = $this->color;
         $vehicle->gvm = $this->gvm;
         $vehicle->nvm = $this->nvm;

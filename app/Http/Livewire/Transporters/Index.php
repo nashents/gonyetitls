@@ -10,6 +10,7 @@ use Livewire\Component;
 use App\Models\Corridor;
 use App\Models\Document;
 use App\Models\Transporter;
+use Livewire\WithPagination;
 use Maatwebsite\Excel\Excel;
 use Livewire\WithFileUploads;
 use App\Mail\AccountCreationMail;
@@ -25,13 +26,16 @@ class Index extends Component
 {
     use WithFileUploads;
 
-
+    use WithPagination;
+    public $search;
+    protected $queryString = ['search'];
+    protected $paginationTheme = 'bootstrap';
 
     public $cargos;
     public $cargo_id;
     public $corridors;
     public $corridor_id;
-    public $transporters;
+    protected $transporters;
     public $contact_name;
     public $contact_surname;
     public $contact_email;
@@ -45,6 +49,7 @@ class Index extends Component
     public $suburb;
     public $street_address;
     public $worknumber;
+    public $custom_ref;
 
     public $transporter_id;
     public $user_id;
@@ -132,9 +137,10 @@ class Index extends Component
     }
 
     public function mount(){
-        $this->transporters = Transporter::latest()->get();
-        $this->corridors = Corridor::latest()->get();
-        $this->cargos = Cargo::latest()->get();
+
+        $this->corridors = Corridor::orderBy('name','asc')->get();
+        $this->cargos = Cargo::orderBy('name','asc')->get();
+
     }
 
     public function transporterNumber(){
@@ -172,7 +178,6 @@ class Index extends Component
     }
 
     private function resetInputFields(){
-        $this->transporters = "";
         $this->contact_name = [];
         $this->contact_surname = [];
         $this->contact_email = [];
@@ -182,6 +187,7 @@ class Index extends Component
         $this->phonenumber = "";
         $this->worknumber = "";
         $this->email = "";
+        $this->custom_ref = "";
         $this->country = "";
         $this->city = "";
         $this->suburb = "";
@@ -238,6 +244,7 @@ class Index extends Component
         $transporter->name = $this->name;
         $transporter->transporter_number = $this->transporterNumber();
         $transporter->email = $this->email;
+        $transporter->custom_ref = $this->custom_ref;
         $transporter->pin = $pin;
         $transporter->phonenumber = $this->phonenumber;
         $transporter->worknumber = $this->worknumber;
@@ -346,41 +353,43 @@ class Index extends Component
             'message'=>"Transporter Created Successfully!!"
         ]);
 
-        return redirect(request()->header('Referer'));
+        // return redirect(request()->header('Referer'));
 
        
     } );
     }
 
     public function edit($id){
-    $transporter = Transporter::find($id);
-    $this->user_id = $transporter->user_id;
-    $this->name = $transporter->name;
-    $this->email = $transporter->email;
-    $this->phonenumber = $transporter->phonenumber;
-    $this->worknumber = $transporter->worknumber;
-    $this->country = $transporter->country;
-    $this->city = $transporter->city;
-    $this->suburb = $transporter->suburb;
-    $this->street_address = $transporter->street_address;
-    $this->transporter_id = $transporter->id;
-    $this->dispatchBrowserEvent('show-transporterEditModal');
+
+        $transporter = Transporter::find($id);
+        $this->user_id = $transporter->user_id;
+        $this->name = $transporter->name;
+        $this->email = $transporter->email;
+        $this->custom_ref = $transporter->custom_ref;
+        $this->phonenumber = $transporter->phonenumber;
+        $this->worknumber = $transporter->worknumber;
+        $this->country = $transporter->country;
+        $this->city = $transporter->city;
+        $this->suburb = $transporter->suburb;
+        $this->street_address = $transporter->street_address;
+        $this->transporter_id = $transporter->id;
+        $this->dispatchBrowserEvent('show-transporterEditModal');
 
     }
 
     public function update()
     {
 
-         DB::transaction(function () {
+        DB::transaction(function () {
 
         if ($this->transporter_id) {
             
-        
             $transporter = Transporter::find($this->transporter_id);
             $transporter->user_id = Auth::user()->id;
             $transporter->name = $this->name;
             $transporter->phonenumber = $this->phonenumber;
             $transporter->worknumber = $this->worknumber;
+            $transporter->custom_ref = $this->custom_ref;
             $transporter->email = $this->email;
             $transporter->country = $this->country;
             $transporter->city = $this->city;
@@ -395,16 +404,33 @@ class Index extends Component
                 'message'=>"Transporter Updated Successfully!!"
             ]);
          
-            return redirect(request()->header('Referer'));
+            // return redirect(request()->header('Referer'));
 
         }
     } );
     }
     public function render()
     {
-        $this->transporters = Transporter::latest()->get();
+
+            $query = Transporter::query()
+            ->with('cargos','corridors')
+            ->orderBy('name', 'asc');
+
+            if (filled($this->search)) {
+                $search = $this->search;
+
+                $query->where(function ($q) use ($search) {
+                    $q->where('transporter_number', 'like', "%{$search}%")
+                    ->orWhere('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+                });
+            }
+
+            $this->transporters = $query->paginate(10);
+
+       
         return view('livewire.transporters.index',[
-            'transporters'=>$this->transporters
+            'transporters'=> $this->transporters
         ]);
     }
 }

@@ -27,6 +27,8 @@
                             <table class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
+                                    <th class="th-sm">Customer#
+                                    </th>
                                     <th class="th-sm">Name
                                     </th>
                                     <th class="th-sm">Email
@@ -49,7 +51,16 @@
                                 <tbody>
                                     @forelse ($customers as $customer)
                                   <tr>
-                                    <td>{{$customer->name}}</td>
+                                    <td>
+                                        {{$customer->customer_number}}
+                                        @if ($customer->custom_ref)
+                                        <br>
+                                            <small>Custom Ref:{{$customer->custom_ref}}</small>
+                                        @endif 
+                                    </td>
+                                    <td>
+                                        {{$customer->name}}
+                                    </td>
                                     <td>{{$customer->email}}</td>
                                     <td>{{$customer->phonenumber}}</td>
                                     <td>{{$customer->vat_number}}{{$customer->tin_number ? " / ".$customer->tin_number : ""}}</td>
@@ -150,18 +161,25 @@
                 <form wire:submit.prevent="store()" >
                 <div class="modal-body">
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label for="name">Name<span class="required" style="color: red">*</span></label>
                                 <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Name" required />
                                 @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label for="name">Initials</label>
                                 <input type="text" class="form-control" wire:model.debounce.300ms="initials" placeholder="Enter Quotation/Invoice Initials"/>
                                 @error('initials') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="name">Custom Ref</label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="custom_ref" placeholder="Enter Custom Reference #"/>
+                                @error('custom_ref') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
                     </div>
@@ -444,18 +462,25 @@
 
                 <div class="modal-body">
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label for="name">Name<span class="required" style="color: red">*</span></label>
                                 <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Name" required />
                                 @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label for="name">Initials</label>
                                 <input type="text" class="form-control" wire:model.debounce.300ms="initials" placeholder="Enter Quotation/Invoice Initials"/>
                                 @error('initials') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                         <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="name">Custom Ref</label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="custom_ref" placeholder="Enter Custom Reference #"/>
+                                @error('custom_ref') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
                     </div>

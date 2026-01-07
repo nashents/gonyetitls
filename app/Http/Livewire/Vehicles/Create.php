@@ -34,6 +34,7 @@ class Create extends Component
     public $vehicle_model_id;
     public $start_date;
     public $nvm;
+    public $custom_ref;
     public $gvm;
     public $end_date;
     public $selectedMake = Null;
@@ -85,6 +86,7 @@ class Create extends Component
         $this->year = '';
         $this->color = '';
         $this->start_date = '';
+        $this->custom_ref = '';
         $this->end_date = '';
         $this->condition = '';
         $this->vehicle_type = '';
@@ -184,6 +186,7 @@ class Create extends Component
         $vehicle->vehicle_model_id = $this->vehicle_model_id;
         $vehicle->registration_number = $this->registration_number;
         $vehicle->chasis_number = $this->chasis_number;
+        $vehicle->custom_ref = $this->custom_ref;
         $vehicle->engine_number = $this->engine_number;
         $vehicle->transporter_id = $this->transporter_id;
         $vehicle->year = $this->year;

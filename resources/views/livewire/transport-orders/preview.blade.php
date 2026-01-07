@@ -121,28 +121,38 @@
                                         @endif
                                     </td>
                                 </tr>
-                                        @if ($trip->trailers->count()>0)
-                                        <tr>
-                                            <th class="text-center"> <strong>Trailer(s)</strong></th>
-                                            <td class="text-center">
-                                                @foreach ($trip->trailers as $trailer)
-                                                    {{$trailer->make}} {{$trailer->model}} {{$trailer->registration_number}} {{$trailer->fleet_number ? "(".$trailer->fleet_number.")" : ""}} <br>
-                                                @endforeach
-                                            </td>
-                                        </tr>
-                                        @endif
-
-                                        @if ($trip->driver_allowances->count()>0)
-                                            @foreach ($trip->driver_allowances as $allowance)
-                                            <tr>
-                                                <th class="text-center"><strong>{{ $allowance->allowance ? $allowance->allowance->name : "" }}</strong></th>
-                                                <td class="text-center"> 
-                                                    {{ $allowance->currency ? $allowance->currency->name : ""}} {{ $allowance->currency ? $allowance->currency->symbol : ""}}{{ number_format($allowance->amount)}}
-                                                </td>
-                                            </tr>
+                                @if ($trip->trailers->count()>0)
+                                    <tr>
+                                        <th class="text-center"> <strong>Trailer(s)</strong></th>
+                                        <td class="text-center">
+                                            @foreach ($trip->trailers as $trailer)
+                                                {{$trailer->make}} {{$trailer->model}} {{$trailer->registration_number}} {{$trailer->fleet_number ? "(".$trailer->fleet_number.")" : ""}} <br>
                                             @endforeach
-                                        @endif
-
+                                        </td>
+                                    </tr>
+                                @endif
+                                @if ($trip->trip_expenses->count() > 0)
+                                    <tr>
+                                        <th class="text-center"><strong>Trip Expenses</strong></th>
+                                        <td class="text-center"> 
+                                        
+                                               @php
+                                                    $i = 1
+                                               @endphp
+                                                @foreach ($trip->trip_expenses as $trip_expense)
+                                                    {{$i++}}) 
+                                                    @if ($trip_expense->expense)
+                                                        {{ $trip_expense->expense ? $trip_expense->expense->name : ""}}
+                                                    @elseif($trip_expense->allowance)
+                                                        {{ $trip_expense->allowance ? $trip_expense->allowance->name : ""}} <small>(Allowance)</small> 
+                                                    @endif
+                                                    @ {{ $trip_expense->currency ? $trip_expense->currency->name : ""}} {{ $trip_expense->currency ? $trip_expense->currency->symbol : ""}}{{ number_format($trip_expense->amount)}}@if (!$loop->last), @endif
+                                                    <br>
+                                                @endforeach
+                                        
+                                        </td>
+                                    </tr>
+                                @endif
                                 <tr>
                                     <th class="text-center"><strong>Customer</strong></th>
                                     <td class="text-center"> {{$trip->customer ? $trip->customer->name : ""}}</td>

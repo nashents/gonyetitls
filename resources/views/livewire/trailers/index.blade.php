@@ -31,6 +31,8 @@
                                 <table class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                     <thead >
                                         <tr>
+                                        <th class="th-sm">Trailer#
+                                        </th>
                                         <th class="th-sm">Transporter
                                         </th>
                                         <th class="th-sm">Make
@@ -52,6 +54,13 @@
                                     <tbody>
                                         @forelse ($trailers as $trailer)
                                       <tr>
+                                        <td>
+                                            {{$trailer->trailer_number}}
+                                            @if ($trailer->custom_ref)
+                                            <br>
+                                                <small>Custom Ref:{{$trailer->custom_ref}}</small>
+                                            @endif 
+                                        </td>
                                         <td>{{$trailer->transporter ? $trailer->transporter->name : ""}}</td>
                                         <td>{{$trailer->make}} {{$trailer->model}}</td>
                                          <td width="150">
@@ -160,7 +169,7 @@
                     <form wire:submit.prevent="store()" >
                     <div class="modal-body">
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="exampleInputEmail13">Transporters<span class="required" style="color: red">*</span></label>
                                     <select wire:model.debounce.300ms="transporter_id" class="form-control" required>
@@ -173,7 +182,7 @@
                                     @error('transporter_id') <span class="text-danger error">{{ $message }}</span>@enderror
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="trailer_type">Trailer Types<span class="required" style="color: red">*</span></label>
                                     <select wire:model.debounce.300ms="trailer_type_id" class="form-control" required >
@@ -184,6 +193,13 @@
                                     </select>
                                     <small><a href="{{ route('trailer_types.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Trailer Type</a></small> 
                                     @error('trailer_type_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="name">Custom Ref</label>
+                                    <input type="text" class="form-control" wire:model.debounce.300ms="custom_ref" placeholder="Enter Custom Reference #"/>
+                                    @error('custom_ref') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                         </div>
@@ -561,7 +577,7 @@
                     <form wire:submit.prevent="update()" >
                     <div class="modal-body">
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="exampleInputEmail13">Transporters<span class="required" style="color: red">*</span></label>
                                     <select wire:model.debounce.300ms="transporter_id" class="form-control" required>
@@ -573,7 +589,7 @@
                                     @error('transporter_id') <span class="text-danger error">{{ $message }}</span>@enderror
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="trailer_type">Trailer Types<span class="required" style="color: red">*</span></label>
                                     <select wire:model.debounce.300ms="trailer_type_id" class="form-control" required >
@@ -583,6 +599,13 @@
                                         @endforeach
                                     </select>
                                     @error('trailer_type_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="name">Custom Ref</label>
+                                    <input type="text" class="form-control" wire:model.debounce.300ms="custom_ref" placeholder="Enter Custom Reference #"/>
+                                    @error('custom_ref') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                         </div>

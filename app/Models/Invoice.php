@@ -63,9 +63,9 @@ class Invoice extends Model implements Auditable
     public function bank_accounts(){
         return $this->belongsToMany('App\Models\BankAccount');
     }
-    public function trip(){
-        return $this->belongsTo('App\Models\Trip');
-    }
+    // public function trip(){
+    //     return $this->belongsTo('App\Models\Trip');
+    // }
     
     public function credit_notes(){
         return $this->hasMany('App\Models\CreditNote');

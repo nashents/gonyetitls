@@ -108,9 +108,9 @@
       <aside class="meta">
         <h1>Transport Manifest</h1>
         <dl class="meta-grid">
-          <dt>Manifest#</dt><dd class="mono" data-field="manifest.number">{{$trip->trip_ref ? "/".$trip->trip_ref : ""}} {{$trip->manifest_number}}</dd>
-          <dt>Date</dt><dd data-field="manifest.date">{{$trip->start_date}}</dd>
+          <dt>Manifest#</dt><dd class="mono" data-field="manifest.number">{{$trip->manifest_number}}</dd>
           <dt>Trip #</dt><dd class="mono" data-field="trip.number">{{$trip->trip_number}} {{$trip->trip_ref ? "/".$trip->trip_ref : ""}}</dd>
+          <dt>Date</dt><dd data-field="manifest.date">{{$trip->start_date}}</dd>
           <dt>Manifest Created By:</dt><dd data-field="currency">{{$trip->user ? $trip->user->name : ""}} {{$trip->user ? $trip->user->surname : ""}}</dd>
         </dl>
       </aside>
@@ -213,7 +213,8 @@
             <th style="width:80px" class="right">Qty</th>
             <th style="width:70px">Unit</th>
             <th style="width:100px" class="right">Weight (Tons)</th>
-            {{-- <th style="width:100px" class="right">Volume (m³)</th> --}}
+            <th style="width:100px" class="right">Volume (m³)</th>
+            <th style="width:100px" class="right">Invoice #(s)</th>
           </tr>
         </thead>
         <tbody data-collection="items">
@@ -232,6 +233,11 @@
             <td data-field="item.unit">{{$trip->measurement}}</td>
             <td class="right" data-field="item.weight">{{$trip->weight}}</td>
             <td class="right" data-field="item.volume">{{$trip->volume}}</td>
+            <td class="right" data-field="item.volume">
+             @foreach ($trip->invoices as $invoice)
+                 {{$invoice->invoice_number}} @if(!$loop->last), @endif
+             @endforeach
+            </td>
           </tr>
         </tbody>
         <tfoot>
@@ -259,7 +265,7 @@
           <div class="kv">
             <div class="k">Gross / Net Weight</div><div class="v" data-field="summary.gross_weight">{{$trip->weight ? $trip->weight."t" : ""}} {{$trip->net_weight ? " / ".$trip->net_weight."t" : ""}}</div>
             <div class="k">Seal #</div><div class="v" data-field="summary.seal">{{$trip->seal_number}}</div>
-            <div class="k">Container#</div><div class="v" data-field="summary.temperature">{{$trip->container_details}}</div>
+            <div class="k">Container#</div><div class="v" data-field="summary.temperature">{{$trip->container_number}}</div>
           </div>
         </div>
       </div>
