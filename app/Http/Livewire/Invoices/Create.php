@@ -205,16 +205,18 @@ class Create extends Component
         array_push($this->inputs ,$i);
     }
 
-    public function remove($i)
+    public function remove($i, $value)
     {
-        unset($this->is_custom_item[$i]);
-        unset($this->description[$i]);
-        unset($this->qty[$i]);
-        unset($this->amount[$i]);
-        unset($this->selectedTax[$i]);
-        unset($this->selectedProduct[$i]);
-        unset($this->selectedTrip[$i]);
+      
         unset($this->inputs[$i]);
+        unset($this->is_custom_item[$value]);
+        unset($this->description[$value]);
+        unset($this->qty[$value]);
+        unset($this->amount[$value]);
+        unset($this->selectedTax[$value]);
+        unset($this->selectedProduct[$value]);
+        unset($this->selectedTrip[$value]);
+        
     }
 
     private function resetInputFields(){

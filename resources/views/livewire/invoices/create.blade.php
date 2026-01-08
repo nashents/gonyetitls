@@ -307,7 +307,7 @@
                                             </div>
                                         </div>
                                         @foreach ($inputs as $key => $value)
-                                            <div class="row" wire:key="invoice-line-{{ $key }}">
+                                            <div class="row">
                                                 <div class="col-md-12" >
                                                     <input type="checkbox" wire:model.debounce.300ms="is_custom_item.{{ $value }}"   class="line-style" />
                                                     <label for="one" class="radio-label">Add custom item</label>
@@ -399,7 +399,7 @@
                                                 <div class="col-md-1">
                                                     <div class="form-group">
                                                         <label for=""></label>
-                                                        <button class="btn btn-danger btn-rounded xs" style="margin-top:23px"  wire:click.prevent="remove({{$key}})"> <i class="fa fa-times"></i></button>
+                                                        <button class="btn btn-danger btn-rounded xs" style="margin-top:23px"  wire:click.prevent="remove({{$key}},{{$value}})"> <i class="fa fa-times"></i></button>
                                                     </div>
                                                 </div>
                                             </div>
