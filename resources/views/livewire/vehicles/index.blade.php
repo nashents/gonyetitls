@@ -129,12 +129,15 @@
                                                     <li><a href="{{route('vehicles.edit', $vehicle->id)}}"><i class="fa fa-edit color-success"></i> Edit</a></li>
                                                     <li><a href="#" data-toggle="modal" data-target="#vehicleDeleteModal{{$vehicle->id}}"><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                                     @if ($vehicle->status == 1)
-                                                    <li><a href="{{route('vehicles.deactivate', $vehicle->id)}}"  ><i class="fa fa-toggle-on color-danger"></i>Deactivate</a></li>
+                                                        <li><a href="{{route('vehicles.deactivate', $vehicle->id)}}"  ><i class="fa fa-toggle-on color-danger"></i>Deactivate</a></li>
                                                     @else
-                                                    <li><a href="{{route('vehicles.activate', $vehicle->id)}}"  ><i class="fa fa-toggle-off color-success"></i>Activate</a></li>
+                                                        <li><a href="{{route('vehicles.activate', $vehicle->id)}}"  ><i class="fa fa-toggle-off color-success"></i>Activate</a></li>
                                                     @endif
-                                                    @if ($vehicle->archive == 0)
-                                                    <li><a href="{{route('vehicles.archive', $vehicle->id)}}"  ><i class="fa fa-archive color-primary"></i>Archive</a></li>
+                                                    @if ($vehicle->service == 1)
+                                                        <li><a href="{{route('vehicles.service', $vehicle->id)}}"  ><i class="fa fa-remove color-success"></i>Close Ticket(s)</a></li>
+                                                    @endif
+                                                    @if ($vehicle->archive == 0 && $vehicle->status == 0)
+                                                        <li><a href="{{route('vehicles.archive', $vehicle->id)}}"  ><i class="fa fa-archive color-primary"></i>Archive</a></li>
                                                     @endif
 
                                                 </ul>

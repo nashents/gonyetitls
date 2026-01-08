@@ -141,8 +141,8 @@
                                                     @if ($horse->service == 1)
                                                         <li><a href="{{route('horses.service', $horse->id)}}"  ><i class="fa fa-remove color-success"></i>Close Ticket(s)</a></li>
                                                     @endif
-                                                    @if ($horse->archive == 0 && )
-                                                    <li><a href="{{route('horses.archive', $horse->id)}}"  ><i class="fa fa-archive color-primary"></i>Archive</a></li>
+                                                    @if ($horse->archive == 0 && $horse->status == 0)
+                                                        <li><a href="{{route('horses.archive', $horse->id)}}"  ><i class="fa fa-archive color-primary"></i>Archive</a></li>
                                                     @endif
 
                                                 </ul>
