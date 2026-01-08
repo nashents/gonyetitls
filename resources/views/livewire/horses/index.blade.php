@@ -134,14 +134,14 @@
                                                     <li><a href="{{route('horses.edit', $horse->id)}}"><i class="fa fa-edit color-success"></i> Edit</a></li>
                                                     <li><a href="#" data-toggle="modal" data-target="#horseDeleteModal{{$horse->id}}"><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                                     @if ($horse->status == 1)
-                                                    <li><a href="{{route('horses.deactivate', $horse->id)}}"  ><i class="fa fa-toggle-on color-danger"></i>Deactivate</a></li>
+                                                        <li><a href="{{route('horses.deactivate', $horse->id)}}"  ><i class="fa fa-toggle-on color-danger"></i>Deactivate</a></li>
                                                     @else
-                                                    <li><a href="{{route('horses.activate', $horse->id)}}"  ><i class="fa fa-toggle-off color-success"></i>Activate</a></li>
+                                                        <li><a href="{{route('horses.activate', $horse->id)}}"  ><i class="fa fa-toggle-off color-success"></i>Activate</a></li>
                                                     @endif
                                                     @if ($horse->service == 1)
-                                                    <li><a href="{{route('horses.service', $horse->id)}}"  ><i class="fa fa-remove color-success"></i>Close Ticket(s)</a></li>
+                                                        <li><a href="{{route('horses.service', $horse->id)}}"  ><i class="fa fa-remove color-success"></i>Close Ticket(s)</a></li>
                                                     @endif
-                                                    @if ($horse->archive == 0)
+                                                    @if ($horse->archive == 0 && )
                                                     <li><a href="{{route('horses.archive', $horse->id)}}"  ><i class="fa fa-archive color-primary"></i>Archive</a></li>
                                                     @endif
 

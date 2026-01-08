@@ -27,7 +27,7 @@
                                         </div>
                                         
                              
-                                        <div class="col-lg-2" style="margin-right: 7px; margin-left:-15px;">
+                                        <div class="col-lg-3" >
                                             <div class="input-group">
                                                 <span class="input-group-addon">
                                         From
@@ -36,7 +36,7 @@
                                             </div>
                                             <!-- /input-group -->
                                         </div>
-                                        <div class="col-lg-2" style="margin-left: 7px">
+                                        <div class="col-lg-3" >
                                             <div class="input-group">
                                                 <span class="input-group-addon">
                                         To
@@ -45,25 +45,63 @@
                                             </div>
                                             <!-- /input-group -->
                                         </div>
+                                         <div class="col-lg-3">
+                                        <div class="input-group">
+                                            <span class="input-group-addon">Transporters</span>
+                                            <select wire:model.debounce.300ms="transporter_id" class="form-control" aria-label="..." >
+                                            <option value="">Select Transporter</option>
+                                            @foreach ($transporters as $transporter)
+                                                <option value="{{$transporter->id}}">{{$transporter->name}}</option>
+                                            @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                      
+                                </div>
+                                <div class="row">
+                                    <div class="col-lg-3">
+                                        <div class="input-group">
+                                            <span class="input-group-addon">Customers</span>
+                                            <select wire:model.debounce.300ms="customer_id" class="form-control" aria-label="..." >
+                                            <option value="">Select Customer</option>
+                                            @foreach ($customers as $customer)
+                                                <option value="{{$customer->id}}">{{$customer->name}}</option>
+                                            @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-3">
+                                        <div class="input-group">
+                                            <span class="input-group-addon">Currencies</span>
+                                            <select wire:model.debounce.300ms="currency_id" class="form-control" aria-label="..." >
+                                                <option value="">Select Currency</option>
+                                                @foreach ($currencies as $currency)
+                                                    <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                      <div class="col-lg-3">
+                                            <div class="input-group">
+                                                <span class="input-group-addon">Tax Status</span>
+                                                <select wire:model.debounce.300ms="tax_status" class="form-control" aria-label="..." >
+                                                <option value="all">All Invoices</option>
+                                                <option value="taxed">Taxed Invoices</option>
+                                                <option value="non-taxed">Non Taxed Invoices</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                   
+                                </div>
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <a href="#" wire:click="exportSalesExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
+                                        <a href="#" wire:click="exportSalesCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
+                                        <a href="#" wire:click="exportSalesPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a> 
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="panel-title" style="margin-left:-15px;" >
-                                <div class="col-lg-3">
-                                    <div class="input-group">
-                                        <span class="input-group-addon">Tax Status</span>
-                                        <select wire:model.debounce.300ms="tax_status" class="form-control" aria-label="..." >
-                                          <option value="all">All Invoices</option>
-                                          <option value="taxed">Taxed Invoices</option>
-                                          <option value="non-taxed">Non Taxed Invoices</option>
-                                        </select>
-                                    </div>
-                                </div>
-                               
-                                <a href="#" wire:click="exportSalesExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
-                                <a href="#" wire:click="exportSalesCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
-                                <a href="#" wire:click="exportSalesPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a> 
-                            </div>
                             <div class="panel-title" style="margin-top:10px; margin-left:-1px">
                                 <a href="{{route('invoices.create')}}"  class="btn btn-default"><i class="fa fa-plus-square-o"></i>Invoice</a>
                                 @if (Auth::user()->is_admin())
@@ -84,13 +122,15 @@
                                   <tr>
                                     <th class="th-sm">Invoice#
                                     </th>
-                                    <th class="th-sm">CreatedBy
-                                    </th>
                                     <th class="th-sm">InvoiceTo
                                     </th>
-                                    <th class="th-sm">Date
+                                    <th class="th-sm">Item(s)
                                     </th>
-                                    <th class="th-sm">Due
+                                     <th class="th-sm">
+                                            Date
+                                            <hr style="margin-top:2px; margin-bottom:2px">
+                                            Due
+
                                     </th>
                                     <th class="th-sm">Status
                                     </th>  
@@ -98,7 +138,7 @@
                                     </th>
                                     <th class="th-sm">Subtotal
                                     </th>
-                                    <th class="th-sm">Tax Amt
+                                    <th class="th-sm">Tax
                                     </th>
                                     <th class="th-sm">Total
                                     </th>
@@ -115,15 +155,12 @@
                                 @if (isset($invoices))
                                 <tbody>
                                     @forelse ($invoices as $invoice)
-                                    @php
-                                        $expiry = $invoice->expiry;
-                                        $now = new DateTime();
-                                        $expiry_date = new DateTime($expiry);
-                                    @endphp
+                                  
                                   <tr>
                                     <td>
                                         {{$invoice->invoice_number}}
                                         <small>
+                                            <strong>CreatedBy: </strong>{{$invoice->user ? $invoice->user->name : ""}} {{$invoice->user ? $invoice->user->surname : ""}} <br>
                                             @if ($invoice->sales_order_number)
                                                 <br>
                                                 <strong>S.O.#:</strong> {{$invoice->sales_order_number}}
@@ -139,7 +176,7 @@
                                             @endif
                                         </small>
                                     </td>
-                                     <td>{{$invoice->user ? $invoice->user->name : ""}} {{$invoice->user ? $invoice->user->surname : ""}}</td>
+                                     
                                     <td>
                                         @if ($invoice->customer)
                                             {{$invoice->customer->name}}
@@ -147,8 +184,25 @@
                                             {{$invoice->transporter->name}}
                                         @endif
                                     </td>
-                                    <td>{{$invoice->date}}</td>
-                                    <td><span class="label label-{{$now < $expiry_date ? 'success' : 'danger' }}">{{$invoice->expiry}}</span></td>
+                                    <td>
+                                        <small>
+                                                @if ($invoice->invoice_items)
+                                                    @foreach ($invoice->invoice_items as $item)
+                                                        @if ($item->product)
+                                                            <strong>{{$item->product ? $item->product->name : ""}} {{$item->product ? $item->product->identification_number : ""}} {{$item->inventory ? $item->inventory->serial_number : ""}}</strong>  
+                                                        @elseif($item->trip)  
+                                                            <strong>{{$item->trip ? $item->trip->trip_number : ""}}</strong>  
+                                                        @endif {{$item->description}} @ {{number_format($item->subtotal_inc,2)}} @if (!$loop->last),@endif
+                                                    @endforeach
+                                                @endif
+                                        </small>
+                                       
+                                    </td>
+                                    <td>
+                                        {{$invoice->date}}
+                                            <hr style="margin-top:5px; margin-bottom:5px">  
+                                        <span class="label label-{{$this->checkExpiry($invoice->expiry) ? 'success' : 'danger' }}">{{$invoice->expiry}}</span>
+                                    </td>
                                     <td><span class="label label-{{($invoice->status == 'Paid') ? 'success' : (($invoice->status == 'Partial') ? 'warning' : 'danger') }}">{{ $invoice->status }}</span></td>
                                     <td>
                                         {{$invoice->currency ? $invoice->currency->name : ""}}
@@ -204,8 +258,10 @@
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{route('invoices.show',$invoice->id)}}"  ><i class="fas fa-eye color-default"></i> View</a></li>
                                                 @if ($invoice->authorization == "approved")
-                                                <li><a href="{{route('invoices.preview',$invoice->id)}}"  ><i class="fas fa-file-invoice color-primary"></i> Preview</a></li>
-                                                <li><a href="#" wire:click.prevent="showPayment({{$invoice->id}})"  ><i class="fas fa-credit-card color-primary"></i> Record Payment</a></li>
+                                                    <li><a href="{{route('invoices.preview',$invoice->id)}}"  ><i class="fas fa-file-invoice color-primary"></i> Preview</a></li>
+                                                    @if ($invoice->balance > 0 )
+                                                        <li><a href="#" wire:click.prevent="showPayment({{$invoice->id}})"  ><i class="fas fa-credit-card color-primary"></i> Record Payment</a></li>
+                                                    @endif
                                                 @endif
                                                 {{-- @if ($invoice->payments->isEmpty()) --}}
                                                 <li><a href="{{route('invoices.edit',$invoice->id)}}"  ><i class="fas fa-edit color-success"></i> Edit</a></li>

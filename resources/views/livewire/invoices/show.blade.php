@@ -20,8 +20,14 @@
                                 <td class="w-20 line-height-35">{{$invoice->user ? $invoice->user->name : ""}} {{$invoice->user ? $invoice->user->surname : ""}} </td>
                             </tr>
                                 <tr>
-                                    <th class="w-10 text-center line-height-35">Customer</th>
-                                    <td class="w-20 line-height-35">{{$invoice->customer ? $invoice->customer->name : ""}}</td>
+                                    <th class="w-10 text-center line-height-35">Invoice To</th>
+                                    <td class="w-20 line-height-35">
+                                        @if ($invoice->customer)
+                                            {{$invoice->customer->name}}
+                                        @elseif($invoice->transporter)
+                                            {{$invoice->transporter->name}}
+                                        @endif
+                                    </td>
                                 </tr>
                                 <tr>
                                     <th class="w-10 text-center line-height-35">Invoice Date</th>
@@ -29,7 +35,7 @@
                                 </tr>
                                 <tr>
                                     <th class="w-10 text-center line-height-35">Payment Due</th>
-                                    <td class="w-20 line-height-35">{{$invoice->expiry}}</td>
+                                    <td class="w-20 line-height-35"> <span class="label label-{{$this->checkExpiry($invoice->expiry) ? 'success' : 'danger' }}">{{$invoice->expiry}}</span></td>
                                 </tr>
                               
                                 <tr>

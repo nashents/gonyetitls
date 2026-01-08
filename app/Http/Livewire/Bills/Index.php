@@ -704,13 +704,15 @@ class Index extends Component
                 ->where('to_be_paid', true);
 
             // Date filter: use provided range, else current month
-            $base->when(filled($this->from) && filled($this->to), function ($q) {
-                $q->whereDate($this->bill_filter, '>=', $this->from)
-                ->whereDate($this->bill_filter, '<=', $this->to);
-            }, function ($q) {
-                $q->whereMonth($this->bill_filter, Carbon::now()->month)
-                ->whereYear($this->bill_filter, Carbon::now()->year);
-            });
+            $base->when(
+                    filled($this->from) && filled($this->to),
+                    fn ($q) => $q->whereBetween($this->bill_filter, [
+                        Carbon::parse($this->from)->startOfDay(),
+                        Carbon::parse($this->to)->endOfDay(),
+                    ]),
+                    fn ($q) => $q->whereMonth($this->bill_filter, now()->month)
+                                ->whereYear($this->bill_filter, now()->year)
+                );
 
             // Search filter (grouped to keep AND/OR logic correct)
             $base->when(filled($this->search), function ($q) {

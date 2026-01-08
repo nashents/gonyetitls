@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Invoices;
 
+use DateTime;
 use Carbon\Carbon;
 use App\Models\Loan;
 use App\Models\Trip;
@@ -20,6 +21,7 @@ use App\Models\AccountType;
 use App\Models\BankAccount;
 use App\Models\Destination;
 use App\Models\InvoiceItem;
+use App\Models\Transporter;
 use App\Exports\SalesExport;
 use App\Models\Denomination;
 use App\Models\TripDocument;
@@ -52,6 +54,8 @@ class Index extends Component
     public $invoice;
     public $invoice_id;
     public $customers;
+    public $transporters;
+    public $transporter_id;
     public $currencies;
     public $currency_id;
     public $selectedCurrency;
@@ -112,6 +116,7 @@ class Index extends Component
     public $total = 0;
 
     public $exchange_amount;
+    public $filters;
     public $exchange_rate;
 
     public $expires_at;
@@ -145,22 +150,24 @@ class Index extends Component
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->bank_accounts = BankAccount::orderBy('name','asc')->get()->sortBy('account_name');
         $this->customers = Customer::orderBy('name','asc')->get();
+        $this->transporters = Transporter::orderBy('name','asc')->get();
         $this->accounts = Account::where('account_type_id',1)->orderBy('name','asc')->get();
         $this->transaction_type_id = TransactionType::where('name','Deposit')->first()->id;
         $this->transaction_category = "Sales";
+        
     }
 
 
 
     
     public function exportSalesCSV(Excel $excel){
-        return $excel->download(new SalesExport($this->from, $this->to, $this->invoice_filter, $this->tax_status, $this->search), 'sales_' .time().'.csv', Excel::CSV);
+        return $excel->download(new SalesExport($this->from, $this->to, $this->filters, $this->search), 'sales_' .time().'.csv', Excel::CSV);
     }
     public function exportSalesPDF(Excel $excel){
-        return $excel->download(new SalesExport($this->from, $this->to, $this->invoice_filter, $this->tax_status, $this->search), 'sales_' .time().'.pdf', Excel::DOMPDF);
+        return $excel->download(new SalesExport($this->from, $this->to, $this->filters, $this->search), 'sales_' .time().'.pdf', Excel::DOMPDF);
     }
     public function exportSalesExcel(Excel $excel){
-        return $excel->download(new SalesExport($this->from, $this->to, $this->invoice_filter, $this->tax_status, $this->search), 'sales_' .time().'.xlsx');
+        return $excel->download(new SalesExport($this->from, $this->to, $this->filters, $this->search), 'sales_' .time().'.xlsx');
     }
 
 
@@ -890,6 +897,15 @@ class Index extends Component
        
     }
 
+    public function checkExpiry(?string $expiry): bool
+    {
+        if (blank($expiry)) {
+            return false; // or true depending on your business rule
+        }
+
+        return Carbon::parse($expiry)->endOfDay()->gte(now());
+    }
+
    
     public function updatingSearch()
     {
@@ -941,123 +957,72 @@ class Index extends Component
             $this->current_balance = $this->invoice_balance - $this->amount;
         }
 
-  
-            if (isset($this->from) && isset($this->to)) {
+        $this->filters = [
+            'customer_id' => $this->customer_id,
+            'transporter_id' => $this->transporter_id,
+            'invoice_filter' => $this->invoice_filter,
+            'tax_status' => $this->tax_status,
+            'currency_id' => $this->currency_id,
+        ];
 
-                if (isset($this->search)) {
+                $query = Invoice::query()
+                ->with(['customer:id,name','transporter:id,name', 'currency'])
+                ->when(
+                    filled($this->from) && filled($this->to),
+                    fn ($q) => $q->whereBetween($this->invoice_filter, [
+                        Carbon::parse($this->from)->startOfDay(),
+                        Carbon::parse($this->to)->endOfDay(),
+                    ]),
+                    fn ($q) => $q->whereMonth($this->invoice_filter, now()->month)
+                                ->whereYear($this->invoice_filter, now()->year)
+                );
+            
+            
+               // 1) Search (when present, your original logic ignores tax_status — we keep that behavior)
+            if (filled($this->search)) {
+                $s = $this->search;
 
-                    return view('livewire.invoices.index',[
-                        'invoices' => Invoice::query()->with(['customer:id,name','currency'])->whereBetween($this->invoice_filter,[$this->from, $this->to] )
-                        ->where('invoice_number','like', '%'.$this->search.'%')
-                        ->orWhere('status','like', '%'.$this->search.'%')
-                        ->orWhere('date','like', '%'.$this->search.'%')
-                        ->orWhere('expiry','like', '%'.$this->search.'%')
-                        ->orWhere('authorization','like', '%'.$this->search.'%')
-                         ->orWhere('purchase_order_number','like', '%'.$this->search.'%')
-                        ->orWhere('sales_order_number','like', '%'.$this->search.'%')
-                        ->orWhere('pat_number','like', '%'.$this->search.'%')
-                        ->orWhereHas('customer', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('currency', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                        })
-                        ->orderBy($this->invoice_filter,'desc')->paginate(10),
-                        'current_balance' => $this->current_balance
-                    ]);
-
-                }else {
-                    if($this->tax_status == "taxed"){
-
-                        return view('livewire.invoices.index',[
-                            'invoices' => Invoice::query()->with(['customer:id,name','currency'])
-                            ->whereBetween($this->invoice_filter,[$this->from, $this->to] )
-                            ->where('tax_amount','!=', Null)
-                            ->where('tax_amount','!=', 0)
-                            ->where('tax_amount','!=', "")
-                            ->orderBy($this->invoice_filter,'desc')->paginate(10),
-                            'current_balance' => $this->current_balance
-                        ]);
-
-                    }elseif($this->tax_status == "non-taxed"){
-
-                        return view('livewire.invoices.index',[
-                            'invoices' => Invoice::query()->with(['customer:id,name','currency'])
-                            ->whereBetween($this->invoice_filter,[$this->from, $this->to] )
-                            ->where('tax_amount', Null)
-                            ->orWhere('tax_amount', "")
-                            ->orWhere('tax_amount', 0)
-                            ->orderBy($this->invoice_filter,'desc')->paginate(10),
-                            'current_balance' => $this->current_balance
-                        ]);
-
-                    }elseif($this->tax_status == "all"){
-                        return view('livewire.invoices.index',[
-                            'invoices' => Invoice::query()->with(['customer:id,name','currency'])
-                            ->whereBetween($this->invoice_filter,[$this->from, $this->to] )
-                            ->orderBy($this->invoice_filter,'desc')->paginate(10),
-                            'current_balance' => $this->current_balance
-                        ]);
-                    }
-                
-                }
-               
+                $query->where(function ($q) use ($s) {
+                    $q->where('invoice_number', 'like', "%{$s}%")
+                    ->orWhere('status', 'like', "%{$s}%")
+                    ->orWhere('date', 'like', "%{$s}%")
+                    ->orWhere('expiry', 'like', "%{$s}%")
+                    ->orWhere('authorization', 'like', "%{$s}%")
+                    ->orWhere('purchase_order_number', 'like', "%{$s}%")
+                    ->orWhere('sales_order_number', 'like', "%{$s}%")
+                    ->orWhere('pat_number', 'like', "%{$s}%")
+                    ->orWhereHas('customer', fn ($cq) => $cq->where('name', 'like', "%{$s}%"))
+                    ->orWhereHas('transporter', fn ($cq) => $cq->where('name', 'like', "%{$s}%"))
+                    ->orWhereHas('currency', fn ($cq) => $cq->where('name', 'like', "%{$s}%"));
+                });
+            } 
+            if ($this->customer_id != "") {
+                $query->where('customer_id', $this->customer_id);
             }
-            elseif (isset($this->search)) {
-               
-                return view('livewire.invoices.index',[
-                    'invoices' => Invoice::query()->with(['customer:id,name','currency'])->whereMonth($this->invoice_filter, date('m'))
-                    ->whereYear($this->invoice_filter, date('Y'))
-                    ->where('invoice_number','like', '%'.$this->search.'%')
-                        ->orWhere('status','like', '%'.$this->search.'%')
-                        ->orWhere('date','like', '%'.$this->search.'%')
-                        ->orWhere('expiry','like', '%'.$this->search.'%')
-                        ->orWhere('authorization','like', '%'.$this->search.'%')
-                        ->orWhere('purchase_order_number','like', '%'.$this->search.'%')
-                        ->orWhere('sales_order_number','like', '%'.$this->search.'%')
-                        ->orWhere('pat_number','like', '%'.$this->search.'%')
-                        ->orWhereHas('customer', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('currency', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                        })
-                        ->orderBy($this->invoice_filter,'desc')->paginate(10),
-                       
-                        'current_balance' => $this->current_balance
-                ]);
+            if ($this->transporter_id != "") {
+                $query->where('transporter_id', $this->transporter_id);
+            }
+            if ($this->currency_id != "") {
+                $query->where('currency_id', $this->currency_id);
+            }
+            if ($this->tax_status === 'taxed') {
+                $query->whereNotNull('tax_amount')
+                    ->where('tax_amount', '!=', 0)
+                    ->where('tax_amount', '!=', '');
+            }
+            if ($this->tax_status === 'non-taxed') {
+                $query->where(function ($q) {
+                    $q->whereNull('tax_amount')
+                    ->orWhere('tax_amount', 0)
+                    ->orWhere('tax_amount', '');
+                });
+            }
 
-            }
-            else {
-                if ($this->tax_status == "all") {
-                    return view('livewire.invoices.index',[
-                        'invoices' => Invoice::query()->with(['customer:id,name','currency'])->whereMonth($this->invoice_filter, date('m'))
-                        ->whereYear($this->invoice_filter, date('Y'))->orderBy($this->invoice_filter,'desc')->paginate(10),
-                        'current_balance' => $this->current_balance
-                    ]);
-                }elseif($this->tax_status == "taxed"){
-                    return view('livewire.invoices.index',[
-                        'invoices' => Invoice::query()->with(['customer:id,name','currency'])->whereMonth($this->invoice_filter, date('m'))
-                        ->whereYear($this->invoice_filter, date('Y'))
-                        ->where('tax_amount','!=', Null)
-                        ->where('tax_amount','!=', 0)
-                        ->where('tax_amount','!=', "")
-                        ->orderBy($this->invoice_filter,'desc')->paginate(10),
-                        'current_balance' => $this->current_balance
-                    ]);
-                }elseif($this->tax_status == "non-taxed"){
-                    return view('livewire.invoices.index',[
-                        'invoices' => Invoice::query()->with(['customer:id,name','currency'])->whereMonth($this->invoice_filter, date('m'))
-                        ->whereYear($this->invoice_filter, date('Y'))
-                        ->where('tax_amount', Null)
-                        ->orWhere('tax_amount', "")
-                        ->orWhere('tax_amount', 0)
-                        ->orderBy($this->invoice_filter,'desc')->paginate(10),
-                        'current_balance' => $this->current_balance
-                    ]);
-                }
-              
-            }
+            return view('livewire.invoices.index', [
+                'invoices' => $query->orderByDesc($this->invoice_filter)->paginate(10),
+                'current_balance' => $this->current_balance,
+            ]);
+         
         
 
     }

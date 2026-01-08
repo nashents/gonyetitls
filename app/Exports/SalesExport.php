@@ -2,6 +2,7 @@
 
 namespace App\Exports;
 
+use Carbon\Carbon;
 use App\Models\Invoice;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Events\AfterSheet;
@@ -34,96 +35,75 @@ WithCustomStartCell
     public $invoice_filter;
     public $search;
     public $tax_status;
+    public $transporter_id;
+    public $customer_id;
    
 
-    public function __construct($from, $to, $invoice_filter, $tax_status, $search)
+    public function __construct($from, $to, $filters, $search)
     {
-    
+       
             $this->from = $from;
             $this->to = $to;
-            $this->invoice_filter = $invoice_filter;
+            $this->invoice_filter = $filters['invoice_filter'];
             $this->search = $search;
-            $this->tax_status = $tax_status;
+            $this->tax_status = $filters['tax_status'];
+            $this->customer_id = $filters['customer_id'];
+            $this->transporter_id = $filters['transporter_id'];
            
     }
     public function query()
     { 
-        if (isset($this->from) && isset($this->to)) {
-            if (isset($this->search)) {
-            return Invoice::query()->with(['customer:id,name','currency'])->whereBetween($this->invoice_filter,[$this->from, $this->to] )
-            ->where('invoice_number','like', '%'.$this->search.'%')
-            ->orWhere('status','like', '%'.$this->search.'%')
-            ->orWhere('date','like', '%'.$this->search.'%')
-            ->orWhere('expiry','like', '%'.$this->search.'%')
-            ->orWhere('authorization','like', '%'.$this->search.'%')
-            ->orWhereHas('customer', function ($query) {
-                return $query->where('name', 'like', '%'.$this->search.'%');
-            })
-            ->orWhereHas('currency', function ($query) {
-                return $query->where('name', 'like', '%'.$this->search.'%');
-            })
-            ->orderBy($this->invoice_filter,'desc');
-            }else{
-                if ($this->tax_status == "all") {
-                    return Invoice::query()->with(['customer:id,name','currency'])->whereBetween($this->invoice_filter,[$this->from, $this->to] )
-                    ->orderBy($this->invoice_filter,'desc');
-                }elseif ($this->tax_status == "taxed") {
-                    return Invoice::query()->with(['customer:id,name','currency'])
-                    ->whereBetween($this->invoice_filter,[$this->from, $this->to] )
-                    ->where('tax_amount','!=', Null)
-                    ->where('tax_amount','!=', 0)
-                    ->where('tax_amount','!=', "")
-                    ->orderBy($this->invoice_filter,'desc');
-                }elseif ($this->tax_status == "non-taxed") {
-                    return Invoice::query()->with(['customer:id,name','currency'])
-                    ->whereBetween($this->invoice_filter,[$this->from, $this->to] )
-                    ->where('tax_amount', Null)
-                    ->orWhere('tax_amount', "")
-                    ->orWhere('tax_amount', 0)
-                    ->orderBy($this->invoice_filter,'desc');
-                }
-               
-            }
-           
-        }elseif ($this->search) {
-            return Invoice::query()->with(['customer:id,name','currency'])->whereMonth($this->invoice_filter, date('m'))
-            ->whereYear($this->invoice_filter, date('Y'))
-            ->where('invoice_number','like', '%'.$this->search.'%')
-                ->orWhere('status','like', '%'.$this->search.'%')
-                ->orWhere('date','like', '%'.$this->search.'%')
-                ->orWhere('expiry','like', '%'.$this->search.'%')
-                ->orWhere('authorization','like', '%'.$this->search.'%')
-                ->orWhereHas('customer', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('currency', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orderBy($this->invoice_filter,'desc');
+
+        $base = Invoice::query()->with(['customer:id,name','transporter:id,name', 'currency']);
+
+        // Always treat from/to as whole days (inclusive)
+        $base->when(
+                    filled($this->from) && filled($this->to),
+                    fn ($q) => $q->whereBetween($this->invoice_filter, [
+                        Carbon::parse($this->from)->startOfDay(),
+                        Carbon::parse($this->to)->endOfDay(),
+                    ]),
+            fn ($q) => $q->whereMonth($this->invoice_filter, now()->month)
+                        ->whereYear($this->invoice_filter, now()->year)
+        );
+
+        // Search (GROUPED)
+        if (filled($this->search)) {
+            $s = $this->search;
+
+            $base->where(function ($q) use ($s) {
+                $q->where('invoice_number', 'like', "%{$s}%")
+                ->orWhere('status', 'like', "%{$s}%")
+                ->orWhere('date', 'like', "%{$s}%")
+                ->orWhere('expiry', 'like', "%{$s}%")
+                ->orWhere('authorization', 'like', "%{$s}%")
+                ->orWhereHas('customer', fn ($cq) => $cq->where('name', 'like', "%{$s}%"))
+                ->orWhereHas('currency', fn ($cq) => $cq->where('name', 'like', "%{$s}%"));
+            });
+
+            return $base->orderByDesc($this->invoice_filter);
         }
-        else {
-            if ($this->tax_status == "all") {
-                return Invoice::query()->with(['customer:id,name','currency'])->whereMonth($this->invoice_filter, date('m'))
-                ->whereYear($this->invoice_filter, date('Y'))->orderBy($this->invoice_filter,'desc');
-            }elseif ($this->tax_status == "taxed") {
-                return Invoice::query()->with(['customer:id,name','currency'])
-                ->whereMonth($this->invoice_filter, date('m'))
-                ->whereYear($this->invoice_filter, date('Y'))
-                ->where('tax_amount','!=', Null)
-                ->where('tax_amount','!=', 0)
-                ->where('tax_amount','!=', "")
-                ->orderBy($this->invoice_filter,'desc');
-            }elseif ($this->tax_status == "non-taxed") {
-                return Invoice::query()->with(['customer:id,name','currency'])
-                ->whereMonth($this->invoice_filter, date('m'))
-                ->whereYear($this->invoice_filter, date('Y'))
-                ->where('tax_amount', Null)
-                ->orWhere('tax_amount', "")
+
+          if ($this->customer_id != "") {
+                $base->where('customer_id', $this->customer_id);
+            }
+            if ($this->transporter_id != "") {
+                $base->where('transporter_id', $this->transporter_id);
+            }
+        // Tax filter (GROUPED for non-taxed)
+        if ($this->tax_status === 'taxed') {
+            $base->whereNotNull('tax_amount')
+                ->where('tax_amount', '!=', 0)
+                ->where('tax_amount', '!=', '');
+        } elseif ($this->tax_status === 'non-taxed') {
+            $base->where(function ($q) {
+                $q->whereNull('tax_amount')
                 ->orWhere('tax_amount', 0)
-                ->orderBy($this->invoice_filter,'desc');
-            }
-          
+                ->orWhere('tax_amount', '');
+            });
         }
+
+        return $base->orderByDesc($this->invoice_filter);
        
        
     }
@@ -142,11 +122,53 @@ WithCustomStartCell
                 $payments = number_format($invoice->invoice_payments->sum('amount'),2);
                 }
                 $balance =  number_format($invoice->balance,2);
+                $invoice_to = Null;
+                if ($invoice->customer){
+                    $invoice_to = $invoice->customer->name;
+                }elseif($invoice->transporter){
+                    $invoice_to = $invoice->transporter->name;
+                }
 
+                $invoice_items = $invoice->invoice_items;
+                $narrations = [];
+
+                foreach ($invoice_items as $item) {
+                    $invoice_item = "";
+                    if ($item->product) {
+                        $parts = [];
+
+                        if (!blank($item->product->name ?? null)) {
+                            $parts[] = $item->product->name;
+                        }
+
+                        if (!blank($item->product->identification_number ?? null)) {
+                            $parts[] = $item->product->identification_number;
+                        }
+
+                        if (!blank($item->inventory->serial_number ?? null)) {
+                            $parts[] = $item->inventory->serial_number;
+                        }
+
+                        $invoice_item = implode(' ', $parts);
+
+                    } elseif ($item->trip) {
+                        $invoice_item = $item->trip->trip_number ?? '';
+                    }
+
+                    $narrations[] = trim($invoice_item . ' ' . ($item->description ?? '')).' '.number_format((float) $item->subtotal_incl, 2);
+                }
+
+                $narration = implode(', ', $narrations);
+
+                $name = $invoice->user ? $invoice->user->name : "";
+                $surname = $invoice->user ? $invoice->user->surname : "";
+                $created_by = $name." ".$surname;
       
                 return   [
                     $invoice->invoice_number ,
-                    $invoice->customer ? $invoice->customer->name : "",
+                    $created_by,
+                    $invoice_to,
+                    $narration,
                     $invoice->date,
                     $invoice->expiry,
                     $invoice->status,
@@ -163,7 +185,9 @@ WithCustomStartCell
     public function headings(): array{
             return[
                 'Invoice#',
-                'Customer',
+                'CreatedBy',
+                'InvoiceTo',
+                'Item(s)',
                 'Date',
                 'Payment Due',
                 'Status',
@@ -178,7 +202,7 @@ WithCustomStartCell
     public function registerEvents(): array{
         return[
             AfterSheet::class    => function(AfterSheet $event) {
-                $event->sheet->getStyle('A7:K7')->applyFromArray([
+                $event->sheet->getStyle('A7:M7')->applyFromArray([
                     'font' => [
                         'bold' => true
                     ],

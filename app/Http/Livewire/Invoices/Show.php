@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Invoices;
 
+use Carbon\Carbon;
 use App\Models\Invoice;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -18,6 +19,16 @@ class Show extends Component
     public function mount($id){
         $this->invoice = Invoice::withTrashed()->find($id);
     }
+
+     public function checkExpiry(?string $expiry): bool
+    {
+        if (blank($expiry)) {
+            return false; // or true depending on your business rule
+        }
+
+        return Carbon::parse($expiry)->endOfDay()->gte(now());
+    }
+
     public function render()
     {
         return view('livewire.invoices.show',[
