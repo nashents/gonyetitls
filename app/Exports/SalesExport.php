@@ -37,6 +37,7 @@ WithCustomStartCell
     public $tax_status;
     public $transporter_id;
     public $customer_id;
+    public $currency_id;
    
 
     public function __construct($from, $to, $filters, $search)
@@ -49,6 +50,7 @@ WithCustomStartCell
             $this->tax_status = $filters['tax_status'];
             $this->customer_id = $filters['customer_id'];
             $this->transporter_id = $filters['transporter_id'];
+            $this->currency_id = $filters['currency_id'];
            
     }
     public function query()
@@ -86,6 +88,9 @@ WithCustomStartCell
 
           if ($this->customer_id != "") {
                 $base->where('customer_id', $this->customer_id);
+            }
+            if ($this->currency_id != "") {
+                $base->where('currency_id', $this->currency_id);
             }
             if ($this->transporter_id != "") {
                 $base->where('transporter_id', $this->transporter_id);

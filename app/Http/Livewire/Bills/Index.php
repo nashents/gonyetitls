@@ -5,18 +5,26 @@ namespace App\Http\Livewire\Bills;
 
 use Carbon\Carbon;
 use App\Models\Bill;
+use App\Models\Trip;
+use App\Models\Asset;
 use App\Models\Brand;
+use App\Models\Horse;
+use App\Models\Driver;
 use App\Models\Vendor;
 use App\Models\Account;
 use App\Models\Payment;
 use App\Models\Receipt;
+use App\Models\Trailer;
+use App\Models\Vehicle;
 use Livewire\Component;
 use App\Models\CashFlow;
 use App\Models\Category;
 use App\Models\Currency;
+use App\Models\Customer;
 use App\Models\Document;
 use App\Models\BankAccount;
 use App\Models\BillPayment;
+use App\Models\Transporter;
 use App\Exports\BillsExport;
 use App\Models\Denomination;
 use Livewire\WithPagination;
@@ -46,6 +54,20 @@ class Index extends Component
     public $currency_id;
     public $selectedCurrency;
     public $payment_type;
+    public $vehicles;
+    public $vehicle_id;
+    public $drivers;
+    public $driver_id;
+    public $horses;
+    public $horse_id;
+    public $trailers;
+    public $trailer_id;
+    public $customers;
+    public $customer_id;
+    public $assets;
+    public $asset_id;
+    public $transporters;
+    public $transporter_id;
     public $trips;
     public $trip;
     public $trip_id;
@@ -87,6 +109,7 @@ class Index extends Component
     public $mode_of_payment;
     public $accounts;
     public $account_id;
+    public $filters;
     public $accrual_balance;
     public $date;
     public $inputs = [];
@@ -139,13 +162,13 @@ class Index extends Component
 
 
     public function exportBillsCSV(Excel $excel){
-        return $excel->download(new BillsExport($this->from, $this->to, $this->bill_filter, $this->tax_status,  $this->search), 'bills_' .time().'.csv', Excel::CSV);
+        return $excel->download(new BillsExport($this->from, $this->to, $this->filters, $this->tax_status,  $this->search), 'bills_' .time().'.csv', Excel::CSV);
     }
     public function exportBillsPDF(Excel $excel){
-        return $excel->download(new BillsExport($this->from, $this->to, $this->bill_filter, $this->tax_status,  $this->search), 'bills_' .time().'.pdf', Excel::DOMPDF);
+        return $excel->download(new BillsExport($this->from, $this->to, $this->filters, $this->search), 'bills_' .time().'.pdf', Excel::DOMPDF);
     }
     public function exportBillsExcel(Excel $excel){
-        return $excel->download(new BillsExport($this->from, $this->to, $this->bill_filter, $this->tax_status,  $this->search), 'bills_' .time().'.xlsx');
+        return $excel->download(new BillsExport($this->from, $this->to, $this->filters, $this->search), 'bills_' .time().'.xlsx');
     }
 
     public function mount(){
@@ -154,6 +177,25 @@ class Index extends Component
         $this->recalculateBills();
         $this->bill_filter = "created_at";
         $this->currencies = Currency::orderBy('name','asc')->get();
+        $this->drivers = Driver::query()
+        ->join('employees', 'employees.id', '=', 'drivers.employee_id')
+        ->select('drivers.*')          // important so you still get Driver models
+        ->with('employee')             // eager load relationship
+        ->orderBy('employees.name', 'asc')
+        ->orderBy('employees.surname', 'asc')
+        ->get();
+        $this->assets = Asset::query()
+        ->join('products', 'products.id', '=', 'assets.product_id')
+        ->select('assets.*')
+        ->with(['product.brand'])
+        ->orderBy('products.name', 'asc')
+        ->get();
+        $this->customers = Customer::orderBy('name','asc')->get();
+        $this->transporters = Transporter::orderBy('name','asc')->get();
+        $this->trips = Trip::with('customer','horse','trailers','vehicle','loading_point','offloading_point')->whereYear('start_date',date('Y'))->orderBy('start_date','desc')->get();
+        $this->horses = Horse::orderBy('registration_number','asc')->get();
+        $this->vehicles = Vehicle::orderBy('registration_number','asc')->get();
+        $this->trailers = Trailer::orderBy('registration_number','asc')->get();
         $this->transaction_type_id = TransactionType::where('name','Withdrawal')->first()->id;
         $this->bank_accounts = BankAccount::orderBy('name','asc')->get()->sortBy('account_name');
         $this->accounts = Account::where('account_type_id',1)->orderBy('name','asc')->get();
@@ -665,6 +707,19 @@ class Index extends Component
     public function render()
     {
 
+        $this->filters = [
+            'customer_id' => $this->customer_id,
+            'transporter_id' => $this->transporter_id,
+            'bill_filter' => $this->bill_filter,
+            'tax_status' => $this->tax_status,
+            'currency_id' => $this->currency_id,
+            'horse_id' => $this->horse_id,
+            'trailer_id' => $this->trailer_id,
+            'asset_id' => $this->asset_id,
+            'vehicle_id' => $this->vehicle_id,
+            'trip_id' => $this->trip_id,
+        ];
+
         if ((isset($this->exchange_rate) && $this->exchange_rate > 0)  &&  ( isset($this->amount) && $this->amount > 0 )) {
 
             $this->exchange_amount = $this->exchange_rate * $this->amount;
@@ -762,6 +817,46 @@ class Index extends Component
                     });
                 });
             });
+
+
+            if ($this->customer_id != "") {
+                $base->where('customer_id', $this->customer_id);
+            }
+            if ($this->transporter_id != "") {
+                $base->where('transporter_id', $this->transporter_id);
+            }
+            if ($this->trip_id != "") {
+                $base->where('trip_id', $this->trip_id);
+            }
+            if ($this->currency_id != "") {
+                $base->where('currency_id', $this->currency_id);
+            }
+            if ($this->tax_status === 'taxed') {
+                $base->whereNotNull('tax_amount')
+                    ->where('tax_amount', '!=', 0)
+                    ->where('tax_amount', '!=', '');
+            }
+            if ($this->tax_status === 'non-taxed') {
+                $base->where(function ($q) {
+                    $q->whereNull('tax_amount')
+                    ->orWhere('tax_amount', 0)
+                    ->orWhere('tax_amount', '');
+                });
+            }
+            
+            if ($this->horse_id != "") {
+                $base->where('horse_id', $this->horse_id);
+            }
+            if ($this->trailer_id != "") {
+                $base->where('trailer_id', $this->trailer_id);
+            }
+            if ($this->vehicle_id != "") {
+                $base->where('vehicle_id', $this->vehicle_id);
+            }
+            if ($this->asset_id != "") {
+                $base->where('asset_id', $this->asset_id);
+            }
+           
 
             $bills = $base
                 ->orderByDesc($this->bill_filter)

@@ -185,4 +185,22 @@ class Trip extends Model implements Auditable
     public function user(){
         return $this->belongsTo('App\Models\User');
     }
+
+
+    public function fromDestination()
+    {
+        return $this->belongsTo(\App\Models\Destination::class, 'from');
+    }
+
+    public function toDestination()
+    {
+        return $this->belongsTo(\App\Models\Destination::class, 'to');
+    }
+
+    public function pod()
+    {
+        return $this->hasOne(\App\Models\TripDocument::class, 'trip_id')
+            ->where('title', 'POD')
+            ->latestOfMany(); // requires created_at; otherwise remove this line
+    }
 }

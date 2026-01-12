@@ -27,7 +27,7 @@
                                     </th>
                                     <th class="th-sm">Email
                                     </th>
-                                    <th class="th-sm">Email
+                                    <th class="th-sm">Pin
                                     </th>
                                     <th class="th-sm">Address
                                     </th>

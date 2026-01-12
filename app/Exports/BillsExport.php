@@ -2,10 +2,12 @@
 
 namespace App\Exports;
 
+use Carbon\Carbon;
 use App\Models\Bill;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Events\AfterSheet;
+use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\WithEvents;
@@ -30,133 +32,143 @@ WithCustomStartCell
     /**
     * @return \Illuminate\Support\Collection
     */
-    public $from;
-    public $to;
-    public $bill_filter;
-    public $search;
+        public $from;
+        public $to;
+        public $bill_filter;
+        public $search;
+        public $tax_status;
+        public $transporter_id;
+        public $customer_id;
+        public $asset_id;
+        public $trip_id;
+        public $currency_id;
+        public $horse_id;
+        public $trailer_id;
+        public $vehicle_id;
    
 
-    public function __construct($from, $to, $bill_filter, $search)
+    public function __construct($from, $to, $filters, $search)
     {
     
             $this->from = $from;
             $this->to = $to;
-            $this->bill_filter = $bill_filter;
             $this->search = $search;
+            $this->bill_filter = $filters['bill_filter'];
+            $this->tax_status = $filters['tax_status'];
+            $this->customer_id = $filters['customer_id'];
+            $this->transporter_id = $filters['transporter_id'];
+            $this->asset_id = $filters['asset_id'];
+            $this->trip_id = $filters['trip_id'];
+            $this->trailer_id = $filters['trailer_id'];
+            $this->horse_id = $filters['horse_id'];
+            $this->currency_id = $filters['currency_id'];
+            $this->vehicle_id = $filters['vehicle_id'];
           
            
     }
     public function query()
     { 
-        if (isset($this->from) && isset($this->to)) {
-            if (isset($this->search)) {
-            return Bill::query()->with('invoice','transporter','container','top_up','trip','horse','driver','purchase','currency','payments')
-            ->whereDate($this->bill_filter, '>=', $this->from)
-            ->whereDate($this->bill_filter, '<=', $this->to)
-            ->where('to_be_paid', True)
-            ->where('bill_number','like', '%'.$this->search.'%')
-            ->orWhere('status','like', '%'.$this->search.'%')
-            ->orWhere('bill_date','like', '%'.$this->search.'%')
-            ->orWhereHas('horse', function ($query) {
-                return $query->where('registration_number', 'like', '%'.$this->search.'%');
-            })
-            ->orWhereHas('vehicle', function ($query) {
-                return $query->where('registration_number', 'like', '%'.$this->search.'%');
-            })
-            ->orWhereHas('trailer', function ($query) {
-                return $query->where('registration_number', 'like', '%'.$this->search.'%');
-            })
-            ->orWhereHas('driver', function ($query) {
-                $query->whereHas('employee', function ($subQuery) {
-                    $subQuery->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
+        
+        $base = Bill::query()
+        ->with([
+            'invoice',
+            'transporter',
+            'container',
+            'top_up',
+            'trip',
+            'horse',
+            'vehicle',
+            'trailer',
+            'driver.employee',
+            'ticket',
+            'purchase',
+            'vendor',
+            'currency',
+            'payments',
+        ])
+        ->where('to_be_paid', true);
+
+        // Date filter: range OR current month/year
+        $base->when(
+            filled($this->from) && filled($this->to),
+            fn (Builder $q) => $q->whereBetween($this->bill_filter, [
+                Carbon::parse($this->from)->startOfDay(),
+                Carbon::parse($this->to)->endOfDay(),
+            ]),
+            fn (Builder $q) => $q->whereMonth($this->bill_filter, now()->month)
+                                ->whereYear($this->bill_filter, now()->year)
+        );
+
+        // Search filter (GROUPED so ORs don't break the base filters)
+        $base->when(filled($this->search), function (Builder $q) {
+            $s = trim($this->search);
+            $term = "%{$s}%";
+
+            $q->where(function (Builder $qq) use ($term) {
+                $qq->where('bill_number', 'like', $term)
+                ->orWhere('status', 'like', $term)
+                ->orWhere('bill_date', 'like', $term)
+
+                ->orWhereHas('horse', fn (Builder $r) => $r->where('registration_number', 'like', $term))
+                ->orWhereHas('vehicle', fn (Builder $r) => $r->where('registration_number', 'like', $term))
+                ->orWhereHas('trailer', fn (Builder $r) => $r->where('registration_number', 'like', $term))
+
+                ->orWhereHas('driver.employee', function (Builder $r) use ($term) {
+                    // safer than DB::raw concat without bindings
+                    $r->whereRaw("concat(name, ' ', surname) like ?", [$term]);
+                })
+
+                ->orWhereHas('ticket', fn (Builder $r) => $r->where('ticket_number', 'like', $term))
+                ->orWhereHas('trip', fn (Builder $r) => $r->where('trip_number', 'like', $term))
+                ->orWhereHas('currency', fn (Builder $r) => $r->where('name', 'like', $term))
+                ->orWhereHas('invoice', fn (Builder $r) => $r->where('invoice_number', 'like', $term))
+                ->orWhereHas('transporter', fn (Builder $r) => $r->where('name', 'like', $term))
+                ->orWhereHas('container', fn (Builder $r) => $r->where('name', 'like', $term))
+                ->orWhereHas('purchase', fn (Builder $r) => $r->where('purchase_number', 'like', $term))
+                ->orWhereHas('vendor', fn (Builder $r) => $r->where('name', 'like', $term));
+            });
+        });
+
+          if ($this->customer_id != "") {
+                $base->where('customer_id', $this->customer_id);
+            }
+            if ($this->transporter_id != "") {
+                $base->where('transporter_id', $this->transporter_id);
+            }
+            if ($this->trip_id != "") {
+                $base->where('trip_id', $this->trip_id);
+            }
+            if ($this->currency_id != "") {
+                $base->where('currency_id', $this->currency_id);
+            }
+            if ($this->tax_status === 'taxed') {
+                $base->whereNotNull('tax_amount')
+                    ->where('tax_amount', '!=', 0)
+                    ->where('tax_amount', '!=', '');
+            }
+            if ($this->tax_status === 'non-taxed') {
+                $base->where(function ($q) {
+                    $q->whereNull('tax_amount')
+                    ->orWhere('tax_amount', 0)
+                    ->orWhere('tax_amount', '');
                 });
-            })
-            ->orWhereHas('ticket', function ($query) {
-                return $query->where('ticket_number', 'like', '%'.$this->search.'%');
-            })
-            ->orWhereHas('trip', function ($query) {
-                return $query->where('trip_number', 'like', '%'.$this->search.'%');
-            })
-            ->orWhereHas('currency', function ($query) {
-                return $query->where('name', 'like', '%'.$this->search.'%');
-            })
-            ->orWhereHas('invoice', function ($query) {
-                return $query->where('invoice_number', 'like', '%'.$this->search.'%');
-            })
-            ->orWhereHas('transporter', function ($query) {
-                return $query->where('name', 'like', '%'.$this->search.'%');
-            })
-            ->orWhereHas('container', function ($query) {
-                return $query->where('name', 'like', '%'.$this->search.'%');
-            })
-            ->orWhereHas('purchase', function ($query) {
-                return $query->where('purchase_number', 'like', '%'.$this->search.'%');
-            })
-            ->orWhereHas('vendor', function ($query) {
-                return $query->where('name', 'like', '%'.$this->search.'%');
-            })
-            ->orderBy($this->bill_filter,'desc');
-            }else{
-                return Bill::query()->with('invoice','transporter','container','top_up','trip','horse','driver','purchase','currency','payments')
-                ->where('to_be_paid', True)->whereBetween($this->bill_filter,[$this->from, $this->to] )->orderBy($this->bill_filter,'desc');
-               
+            }
+            
+            if ($this->horse_id != "") {
+                $base->where('horse_id', $this->horse_id);
+            }
+            if ($this->trailer_id != "") {
+                $base->where('trailer_id', $this->trailer_id);
+            }
+            if ($this->vehicle_id != "") {
+                $base->where('vehicle_id', $this->vehicle_id);
+            }
+            if ($this->asset_id != "") {
+                $base->where('asset_id', $this->asset_id);
             }
            
-        }elseif ($this->search) {
-          
-            return Bill::query()->with('invoice','transporter','container','top_up','trip','horse','driver','purchase','currency','payments')
-            ->whereMonth($this->bill_filter, date('m'))
-            ->whereYear($this->bill_filter, date('Y'))
-            ->where('to_be_paid', True)
-            ->where('bill_number','like', '%'.$this->search.'%')
-            ->orWhere('status','like', '%'.$this->search.'%')
-            ->orWhere('bill_date','like', '%'.$this->search.'%')
-            ->orWhereHas('horse', function ($query) {
-                return $query->where('registration_number', 'like', '%'.$this->search.'%');
-            })
-            ->orWhereHas('vehicle', function ($query) {
-                return $query->where('registration_number', 'like', '%'.$this->search.'%');
-            })
-            ->orWhereHas('trailer', function ($query) {
-                return $query->where('registration_number', 'like', '%'.$this->search.'%');
-            })
-            ->orWhereHas('driver', function ($query) {
-                $query->whereHas('employee', function ($subQuery) {
-                    $subQuery->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
-                });
-            })
-            ->orWhereHas('ticket', function ($query) {
-                return $query->where('ticket_number', 'like', '%'.$this->search.'%');
-            })
-            ->orWhereHas('trip', function ($query) {
-                return $query->where('trip_number', 'like', '%'.$this->search.'%');
-            })
-            ->orWhereHas('invoice', function ($query) {
-                return $query->where('invoice_number', 'like', '%'.$this->search.'%');
-            })
-            ->orWhereHas('transporter', function ($query) {
-                return $query->where('name', 'like', '%'.$this->search.'%');
-            })
-            ->orWhereHas('currency', function ($query) {
-                return $query->where('name', 'like', '%'.$this->search.'%');
-            })
-            ->orWhereHas('container', function ($query) {
-                return $query->where('name', 'like', '%'.$this->search.'%');
-            })
-            ->orWhereHas('purchase', function ($query) {
-                return $query->where('purchase_number', 'like', '%'.$this->search.'%');
-            })
-            ->orWhereHas('vendor', function ($query) {
-                return $query->where('name', 'like', '%'.$this->search.'%');
-            })
-            ->orderBy($this->bill_filter,'desc');
-        }
-        else {
-            return Bill::query()->with('invoice','transporter','container','top_up','trip','horse','driver','purchase','currency','payments')->whereMonth($this->bill_filter, date('m'))
-            ->where('to_be_paid', True)
-            ->whereYear($this->bill_filter, date('Y'))->orderBy($this->bill_filter,'desc');
-          
-        }
+
+        return $base->orderByDesc($this->bill_filter);
        
        
     }

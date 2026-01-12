@@ -9,10 +9,10 @@
                             <div>
                                 @include('includes.messages')
                             </div>
-
+                        </div>
+                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
                             <div class="panel-title">
                                 <div class="row">
-                                
                                     <div class="col-lg-3">
                                         <div class="input-group">
                                             <span class="input-group-addon">
@@ -44,34 +44,134 @@
                                         <!-- /input-group -->
                                     </div>
                                 <!-- /input-group -->
-                            </div>
-                          
-                           
-                            </div>
-                             <div class="panel-title" style="margin-left:-15px;" >
-                                <div class="col-lg-3">
-                                    <div class="input-group">
-                                        <span class="input-group-addon">Tax Status</span>
-                                        <select wire:model.debounce.300ms="tax_status" class="form-control" aria-label="..." >
-                                          <option value="all">All Bills</option>
-                                          <option value="taxed">Taxed Bills</option>
-                                          <option value="non-taxed">Non Taxed Bills</option>
-                                        </select>
+                                    <div class="col-lg-3">
+                                        <div class="input-group">
+                                            <span class="input-group-addon">Tax Status</span>
+                                            <select wire:model.debounce.300ms="tax_status" class="form-control" aria-label="..." >
+                                            <option value="all">All Bills</option>
+                                            <option value="taxed">Taxed Bills</option>
+                                            <option value="non-taxed">Non Taxed Bills</option>
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
-                               
-                               <a href="#" wire:click="exportBillsExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
-                                <a href="#" wire:click="exportBillsCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
-                                <a href="#" wire:click="exportBillsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
-
+                                <div class="row">
+                                    <div class="col-lg-3">
+                                        <div class="input-group">
+                                            <span class="input-group-addon">Transporters</span>
+                                            <select wire:model.debounce.300ms="transporter_id" class="form-control" aria-label="..." >
+                                            <option value="">Select Transporter</option>
+                                            @foreach ($transporters as $transporter)
+                                                <option value="{{$transporter->id}}">{{$transporter->name}}</option>
+                                            @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-3">
+                                        <div class="input-group">
+                                            <span class="input-group-addon">Customers</span>
+                                            <select wire:model.debounce.300ms="customer_id" class="form-control" aria-label="..." >
+                                            <option value="">Select Customer</option>
+                                            @foreach ($customers as $customer)
+                                                <option value="{{$customer->id}}">{{$customer->name}}</option>
+                                            @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-3">
+                                        <div class="input-group">
+                                            <span class="input-group-addon">Currencies</span>
+                                            <select wire:model.debounce.300ms="currency_id" class="form-control" aria-label="..." >
+                                                <option value="">Select Currency</option>
+                                                @foreach ($currencies as $currency)
+                                                    <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-3">
+                                        <div class="input-group">
+                                            <span class="input-group-addon">Assets</span>
+                                            <select wire:model.debounce.300ms="asset_id" class="form-control" aria-label="..." >
+                                                <option value="">Select Asset</option>
+                                                @foreach ($assets as $asset)
+                                                    <option value="{{ $asset->id }}">{{ $asset->asset_number }} </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-lg-3">
+                                        <div class="input-group">
+                                            <span class="input-group-addon">Horses</span>
+                                            <select wire:model.debounce.300ms="horse_id" class="form-control" aria-label="..." >
+                                                <option value="">Select Horse</option>
+                                                @foreach ($horses as $horse)
+                                                    <option value="{{$horse->id}}">{{$horse->registration_number}} {{$horse->fleet_number ? "(".$horse->fleet_number.")" : ""}}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-3">
+                                        <div class="input-group">
+                                            <span class="input-group-addon">Trailers</span>
+                                            <select wire:model.debounce.300ms="trailer_id" class="form-control" aria-label="..." >
+                                                <option value="">Select Trailer</option>
+                                                @foreach ($trailers as $trailer)
+                                                    <option value="{{$trailer->id}}">{{$trailer->registration_number}} {{$trailer->fleet_number ? "(".$trailer->fleet_number.")" : ""}}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-3">
+                                        <div class="input-group">
+                                            <span class="input-group-addon">Vehicles</span>
+                                            <select wire:model.debounce.300ms="vehicle_id" class="form-control" aria-label="..." >
+                                                <option value="">Select Vehicle</option>
+                                                @foreach ($vehicles as $vehicle)
+                                                    <option value="{{$vehicle->id}}">{{$vehicle->registration_number}} {{$vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : ""}}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-3">
+                                        <div class="input-group">
+                                            <span class="input-group-addon">Trips</span>
+                                            <select wire:model.debounce.300ms="trip_id" class="form-control" aria-label="..." >
+                                                <option value="">Select Trip</option>
+                                                @foreach ($trips as $trip)
+                                                    <option value="{{ $trip->id }}">
+                                                        {{ $trip->trip_number }}{{ $trip->trip_ref ? "/".$trip->trip_ref : "" }} | {{ $trip->start_date }}
+                                                        @if ($trip->horse)
+                                                            | {{ $trip->horse ? $trip->horse->registration_number : "" }} {{ $trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : "" }} 
+                                                        @endif
+                                                        @if ($trip->driver)
+                                                            | {{ $trip->driver->employee ? $trip->driver->employee->name : "" }} {{ $trip->driver->employee ? $trip->driver->employee->surname : "" }}
+                                                        @endif
+                                                            | {{ $trip->customer ? $trip->customer->name : "" }} | {{ $trip->loading_point ? $trip->loading_point->name : "" }} - {{ $trip->offloading_point ? $trip->offloading_point->name : "" }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                </div>
+                               <div class="row">
+                                    <div class="col-lg-12">
+                                         <a href="#" wire:click="exportBillsExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
+                                        <a href="#" wire:click="exportBillsCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
+                                        <a href="#" wire:click="exportBillsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
+                                    </div>
+                               </div>
                             </div>
                             <div class="panel-title" style="margin-top:10px; margin-left:-1px">
                                 <a href="{{route('bills.create')}}"  class="btn btn-default"><i class="fa fa-plus-square-o"></i>Bill</a>
                                 <a href="#" type="button" data-toggle="modal" data-target="#paymentDrawdownModal" class="btn btn-default btn-rounded btn-wide"><i class="fa fa-credit-card"></i>Bulk Bills Payments</a>
                             </div>
                             
-                        </div>
-                        <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
+                      
+                       
                             <div class="col-md-3" style="float: right; padding-right:0px">
                                 <div class="form-group">
                                     <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search bills...">
@@ -82,8 +182,6 @@
                                 <thead>
                                   <tr>
                                     <th class="th-sm">Bill#
-                                    </th>
-                                    <th class="th-sm">CreatedBy
                                     </th>
                                     <th class="th-sm">Narration
                                     </th>
@@ -115,11 +213,17 @@
                                 <tbody>
                                     @forelse ($bills as $bill)
                                   <tr>
-                                    <td>{{$bill->bill_number}}</td>
-                                     <td>{{$bill->user ? $bill->user->name : ""}} {{$bill->user ? $bill->user->surname : ""}}</td>
+                                    <td>
+                                        {{$bill->bill_number}}
+                                        <br>
+                                        <small><strong>CreatedBy:</strong> {{$bill->user ? $bill->user->name : ""}} {{$bill->user ? $bill->user->surname : ""}}</small>
+                                    </td>
                                     <td>
                                         @if ($bill->transporter)
                                             Transporter | <a href="{{ route('transporters.show',$bill->transporter->id) }}" style="color: blue" target="_blank">{{ $bill->transporter ? $bill->transporter->name  : ""}}</a> 
+                                            @if ($bill->trip)
+                                                <a href="{{ route('trips.show', $bill->trip->id) }}" style="color: blue" target="_blank">{{ $bill->trip->trip_number }}
+                                            @endif
                                         @elseif($bill->vendor)
                                             Vendor | <a href="{{ route('vendors.show',$bill->vendor->id) }}" style="color: blue" target="_blank">{{ $bill->vendor ? $bill->vendor->name : "" }}</a> 
                                             @if ($bill->horse)
@@ -135,8 +239,6 @@
                                                 <br>
                                                 Driver | <a href="{{route('drivers.show', $bill->driver->id)}}" style="color: blue" target="_blank">{{$bill->driver->employee ? $bill->driver->employee->name : ""}} {{$bill->driver->employee ? $bill->driver->employee->surname : ""}} </a> 
                                             @endif
-                                           
-                                          
                                         @elseif ( $bill->container && $bill->top_up)
                                             Fuel Topup | <a href="{{ route('containers.show', $bill->container->id) }}" style="color: blue" target="_blank">{{ $bill->container ? $bill->container->name : "" }}</a> 
                                         @elseif ( $bill->retread)
@@ -146,8 +248,7 @@
                                             Trip Expense - Fuel Order | <a href="{{ route('fuels.show', $bill->fuel->id) }}" style="color: blue" target="_blank">{{ $bill->fuel ? $bill->fuel->order_number : "" }}</a> | <a href="{{ route('trips.show', $bill->trip->id) }}" style="color: blue" target="_blank">{{ $bill->trip->trip_number }}</a> 
                                             @else
                                             Fuel Order | <a href="{{ route('fuels.show', $bill->fuel->id) }}" style="color: blue" target="_blank">{{ $bill->fuel ? $bill->fuel->order_number : "" }}</a> 
-                                            @endif
-                                           
+                                            @endif 
                                         @elseif ( $bill->requisition)
                                             Requisition | <a href="{{ route('requisitions.show', $bill->requisition->id) }}" style="color: blue" target="_blank">{{ $bill->requisition ? $bill->requisition->requisition_number : "" }}</a> 
                                         @elseif ( $bill->invoice)
@@ -177,21 +278,16 @@
                                         @elseif ($bill->horse && !$bill->vendor)
                                             Horse | <a href="{{route('horses.show', $bill->horse->id)}}" style="color: blue" target="_blank">{{$bill->horse ? $bill->horse->registration_number : ""}} {{$bill->horse->fleet_number ? "(".$bill->horse->fleet_number.")" : ""}} {{$bill->horse->horse_make ? $bill->horse->horse_make->name : ""}} {{$bill->horse->horse_model ? $bill->horse->horse_model->name : ""}}</a> 
                                         @elseif ($bill->vehicle && !$bill->vendor)
-                                           
                                             Vehicle | <a href="{{route('vehicles.show', $bill->vehicle->id)}}" style="color: blue" target="_blank">{{$bill->vehicle ? $bill->vehicle->registration_number : ""}} {{$bill->vehicle->fleet_number ? "(".$bill->vehicle->fleet_number.")" : ""}} {{$bill->vehicle->vehicle_make ? $bill->vehicle->vehicle_make->name : ""}} {{$bill->vehicle->vehicle_model ? $bill->vehicle->vehicle_model->name : ""}}</a> 
                                         @elseif ($bill->trailer && !$bill->vendor)
-                                           
                                             Trailer | <a href="{{route('trailers.show', $bill->trailer->id)}}" style="color: blue" target="_blank">{{$bill->trailer ? $bill->trailer->registration_number : ""}} {{$bill->trailer->fleet_number ? "(".$bill->trailer->fleet_number.")" : ""}} {{$bill->trailer->make}} {{$bill->trailer->model}}</a> 
                                         @elseif ($bill->driver && !$bill->vendor)
-                                          
                                             Driver | <a href="{{route('drivers.show', $bill->driver->id)}}" style="color: blue" target="_blank">{{$bill->driver->employee ? $bill->driver->employee->name : ""}} {{$bill->driver->employee ? $bill->driver->employee->surname : ""}} </a> 
                                         @endif
-                                        
                                         @if ($bill->description)
-                                        <br>
-                                        {{$bill->description}}
+                                            <br>
+                                            {{$bill->description}}
                                         @endif
-                                       
                                     </td>
                                   
                                     <td>

@@ -216,6 +216,7 @@ class Create extends Component
         unset($this->selectedTax[$value]);
         unset($this->selectedProduct[$value]);
         unset($this->selectedTrip[$value]);
+        unset($this->selectedInventory[$value]);
         
     }
 

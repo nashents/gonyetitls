@@ -238,6 +238,7 @@ class Index extends Component
 
         return redirect(request()->header('Referer'));
     }
+    
 
     public function getAuthorizer($id){
         if(is_null($id)){

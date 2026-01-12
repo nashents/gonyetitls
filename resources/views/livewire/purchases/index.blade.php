@@ -111,14 +111,15 @@
                                                 <small><strong>RequestedBy:</strong> {{$purchase->employee ? $purchase->employee->name : ""}} {{$purchase->employee ? $purchase->employee->surname : ""}}</small>
                                             @endif
                                             @if ($purchase->booking)
+
                                                 <small>
                                                     <strong>Booking#:</strong>{{$purchase->booking->booking_number}} Date: {{$purchase->booking->in_date}} JobType: {{$purchase->booking->service_type ? $purchase->booking->service_type->name : ""}}
-                                                    @if ($booking->horse)
-                                                        {{ $booking->horse ? $booking->horse->registration_number : "" }} {{ $booking->horse->fleet_number ? "(".$booking->horse->fleet_number.")" : "" }}
-                                                    @elseif ($booking->vehicle)
-                                                        {{ $booking->vehicle ? $booking->vehicle->registration_number : "" }} {{ $booking->vehicle->fleet_number ? "(".$booking->vehicle->fleet_number.")" : "" }}
-                                                    @elseif ($booking->trailer)
-                                                        {{ $booking->trailer ? $booking->trailer->registration_number : "" }} {{ $booking->trailer->fleet_number ? "(".$booking->trailer->fleet_number.")" : "" }}
+                                                    @if ($purchase->booking->horse)
+                                                        {{ $purchase->booking->horse ? $purchase->booking->horse->registration_number : "" }} {{ $purchase->booking->horse->fleet_number ? "(".$purchase->booking->horse->fleet_number.")" : "" }}
+                                                    @elseif ($purchase->booking->vehicle)
+                                                        {{ $purchase->booking->vehicle ? $purchase->booking->vehicle->registration_number : "" }} {{ $purchase->booking->vehicle->fleet_number ? "(".$purchase->booking->vehicle->fleet_number.")" : "" }}
+                                                    @elseif ($purchase->booking->trailer)
+                                                        {{ $purchase->booking->trailer ? $purchase->booking->trailer->registration_number : "" }} {{ $purchase->booking->trailer->fleet_number ? "(".$purchase->booking->trailer->fleet_number.")" : "" }}
                                                     @endif
                                                 </small>
                                                 <br>

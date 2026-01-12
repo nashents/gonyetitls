@@ -114,6 +114,9 @@
         <div role="tabpanel" class="tab-pane" id="notifications">
             @livewire('notifications.index')
           </div>
+           <div role="tabpanel" class="tab-pane" id="modules">
+            @livewire('modules.index', ['id' => $company->id])
+          </div>
       
       
        
