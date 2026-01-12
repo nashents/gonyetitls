@@ -190,8 +190,8 @@ class Index extends Component
     {
         $search = trim($value);
 
-        $baseQuery = Ticket::query()
-            ->whereYear('in_date', date('Y'));
+        $baseQuery = Ticket::query()->with(['booking','service_type','horse','vehicle','trailer']);
+            // ->whereYear('in_date', date('Y'));
             // ->where('status', 1);
 
         if (filled($search)) {
