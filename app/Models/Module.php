@@ -22,7 +22,9 @@ class Module extends Model implements Auditable
     protected $casts = [
         'route_params' => 'array',
         'visibility'   => 'array',
+         'is_active'  => 'boolean',
     ];
+  
 
     protected $fillable = [
         'module_group_id','slug','name','icon','route_name','route_params','url',

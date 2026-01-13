@@ -38,6 +38,7 @@ use Database\Seeders\MeasurementSeeder;
 use Database\Seeders\ServiceTypeSeeder;
 use Database\Seeders\VehicleTypeSeeder;
 use Database\Seeders\LossCategorySeeder;
+use Database\Seeders\MenuRegistrySeeder;
 use Database\Seeders\ReminderItemSeeder;
 use Database\Seeders\TrainingItemSeeder;
 use Database\Seeders\VehicleGroupSeeder;
@@ -105,6 +106,7 @@ class DatabaseSeeder extends Seeder
         $this->call(TransactionTypeSeeder::class);
         $this->call(TaxBracketSeeder::class);
         $this->call(PaymentMethodSeeder::class);
+        $this->call(MenuRegistrySeeder::class);
 
         
        

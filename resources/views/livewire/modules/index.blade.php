@@ -10,6 +10,19 @@
             .action-cell { width: 140px; }
         </style>
     @endsection
+    @push('scripts')
+        <script>
+            window.addEventListener('close-modal', (e) => {
+                const id = e.detail.id;
+                if (id) $('#' + id).modal('hide');
+            });
+
+            // Optional toast hook (use your own toast lib)
+            window.addEventListener('toast', (e) => {
+                // console.log(e.detail);
+            });
+        </script>
+    @endpush
     <section class="section">
         <x-loading/>
         <div class="container-fluid">
@@ -21,9 +34,21 @@
                                 @include('includes.messages')
                             </div>
 
-                            <div class="panel-title">
-                                <a href="" data-toggle="modal" data-target="#moduleModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Module</a>
-                            </div>
+                            {{-- <div class="panel-title">
+                                <div class="mb-2">
+                                    <button class="btn btn-default" data-toggle="modal" data-target="#moduleGroupModal" wire:click="resetGroupForm">
+                                        <i class="fa fa-plus-square-o"></i> Add Module Group
+                                    </button>
+
+                                    <button class="btn btn-default" data-toggle="modal" data-target="#moduleModal" wire:click="resetModuleForm">
+                                        <i class="fa fa-plus-square-o"></i> Add Module
+                                    </button>
+
+                                    <button class="btn btn-default" data-toggle="modal" data-target="#submoduleModal" wire:click="resetSubmoduleForm">
+                                        <i class="fa fa-plus-square-o"></i> Add Submodule
+                                    </button>
+                                </div>
+                            </div> --}}
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
                             <div class="table-responsive">
@@ -89,11 +114,11 @@
                                                     </button>
 
                                                     <ul class="dropdown-menu">
-                                                        <li>
+                                                        {{-- <li>
                                                             <a href="#" wire:click.prevent="editGroup({{ $group->id }})">
                                                                 <i class="fa fa-edit color-success"></i> Edit Group
                                                             </a>
-                                                        </li>
+                                                        </li> --}}
 
                                                         <li>
                                                             <a href="#" wire:click.prevent="toggleAllGroupItems({{ $group->id }}, true)">
@@ -157,19 +182,19 @@
                                                             <i class="fa fa-bars"></i> <span class="caret"></span>
                                                         </button>
                                                         <ul class="dropdown-menu">
-                                                            <li>
+                                                            {{-- <li>
                                                                 <a href="#" wire:click.prevent="editModule({{ $module->id }})">
                                                                     <i class="fa fa-edit color-success"></i> Edit Module
                                                                 </a>
-                                                            </li>
+                                                            </li> --}}
                                                             <li>
-                                                                <a href="#" wire:click.prevent="toggleAllsub_modules({{ $module->id }}, true)">
-                                                                    <i class="fa fa-check"></i> Enable all sub_modules
+                                                                <a href="#" wire:click.prevent="toggleAllModuleItems({{ $module->id }}, true)">
+                                                                    <i class="fa fa-check"></i> Enable Module (Sub Modules)
                                                                 </a>
                                                             </li>
                                                             <li>
-                                                                <a href="#" wire:click.prevent="toggleAllsub_modules({{ $module->id }}, false)">
-                                                                    <i class="fa fa-ban"></i> Disable all sub_modules
+                                                                <a href="#" wire:click.prevent="toggleAllModuleItems({{ $module->id }}, false)">
+                                                                    <i class="fa fa-ban"></i> Disable Module (Sub Modules)
                                                                 </a>
                                                             </li>
                                                         </ul>
@@ -216,7 +241,7 @@
                                                             {{ $submodule->is_active ? 'checked' : '' }}>
                                                     </td>
 
-                                                    <td class="nowrap">
+                                                    {{-- <td class="nowrap">
                                                         <div class="dropdown">
                                                             <button class="btn btn-default btn-xs dropdown-toggle" type="button" data-toggle="dropdown">
                                                                 <i class="fa fa-bars"></i> <span class="caret"></span>
@@ -229,7 +254,7 @@
                                                                 </li>
                                                             </ul>
                                                         </div>
-                                                    </td>
+                                                    </td> --}}
                                                 </tr>
                                             @endforeach
                                         @endforeach
@@ -259,234 +284,406 @@
         <!-- /.container-fluid -->
     </section>
 
-    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="bank_accountModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="bank_account">
+
+    {{-- =========================
+    1) MODULE GROUP MODAL
+    ========================= --}}
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false"
+        class="modal" id="moduleGroupModal" tabindex="-1" role="dialog" aria-labelledby="moduleGroupLabel">
+        <div class="modal-dialog" role="document">
             <div class="modal-content">
+
                 <div class="modal-header">
-                    <h4 class="modal-title" id="modal4Label"><i class="fa fa-plus"></i> Add Bank Account(s) <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                    <h4 class="modal-title" id="moduleGroupLabel">
+                        <i class="fa fa-plus"></i> Add Module Group
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">×</span>
+                        </button>
+                    </h4>
                 </div>
-                <form wire:submit.prevent="store()" >
-                <div class="modal-body">
-                    <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="title">Bank<span class="required" style="color: red">*</span></label>
-                            <input type="text" class="form-control"  wire:model.debounce.300ms="name.0" placeholder="Enter Bank Name" required />
-                            @error('name.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="file">Account Name<span class="required" style="color: red">*</span></label>
-                            <input type="text" class="form-control"  wire:model.debounce.300ms="account_name.0" placeholder="Enter Account Name" required/>
-                            @error('account_name.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                        </div>
-                    </div>
-                   
-                   
-                </div>
-                <div class="row">
-                   
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="file">Account Number<span class="required" style="color: red">*</span></label>
-                            <input type="text" class="form-control"  wire:model.debounce.300ms="account_number.0" placeholder="Enter Account Number" required/>
-                            @error('account_number.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                        </div>
-                    </div>
-                  
-                </div>
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="expiry_date">Account Branch<span class="required" style="color: red">*</span></label>
-                                <input type="text" class="form-control"  wire:model.debounce.300ms="branch.0" placeholder="Enter Branch" required />
-                                @error('branch.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="expiry_date">Branch Code</label>
-                                <input type="text" class="form-control"  wire:model.debounce.300ms="branch_code.0" placeholder="Enter Branch Code" />
-                                @error('branch_code.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="expiry_date">Swift Code</label>
-                                <input type="text" class="form-control"  wire:model.debounce.300ms="swift_code.0" placeholder="Enter Swift Code" />
-                                @error('swift_code.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
-                        </div>
-                    </div>
-                    
-                       
-                        @foreach ($inputs as $key => $value)
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="title">Bank<span class="required" style="color: red">*</span></label>
-                                    <input type="text" class="form-control"  wire:model.debounce.300ms="name.{{ $value }}" placeholder="Enter Bank Name " required/>
-                                    @error('name.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="file">Account Name<span class="required" style="color: red">*</span></label>
-                                    <input type="text" class="form-control"  wire:model.debounce.300ms="account_name.{{ $value }}" placeholder="Enter Account Name" required/>
-                                    @error('account_name.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                </div>
-                            </div>
-                            
-                         
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="file">Account Number<span class="required" style="color: red">*</span></label>
-                                    <input type="text" class="form-control"  wire:model.debounce.300ms="account_number.{{ $value }}" placeholder="Enter Account Number" required />
-                                    @error('account_number.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                </div>
-                            </div>
-                           
-                        </div>
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label for="expiry_date">Account Branch<span class="required" style="color: red">*</span></label>
-                                        <input type="text" class="form-control"  wire:model.debounce.300ms="branch.{{ $value }}" placeholder="Enter Branch" required />
-                                        @error('branch.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="form-group">
-                                        <label for="expiry_date">Branch Code</label>
-                                        <input type="text" class="form-control"  wire:model.debounce.300ms="branch_code.{{ $value }}" placeholder="Enter Branch Code" >
-                                        @error('branch_code.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="form-group">
-                                        <label for="expiry_date">Swift Code</label>
-                                        <input type="text" class="form-control"  wire:model.debounce.300ms="swift_code.{{ $value }}" placeholder="Enter Swift Code" >
-                                        @error('swift_code.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                    </div>
-                                </div>
-                                <div class="col-md-1">
-                                    <div class="form-group">
-                                        <button class="btn btn-danger btn-rounded xs" style="margin-top:23px"  wire:click.prevent="remove({{$key}})"> <i class="fa fa-times"></i></button>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                        @endforeach
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div class="form-group">
-                                    <button class="btn btn-success btn-rounded" style="float: right" wire:click.prevent="add({{$i}})"> <i class="fa fa-plus"></i> Bank Account</button>
-                                </div>
-                            </div>
-                        </div>
-                </div>
-                <div class="modal-footer">
-                    <div class="btn-group" role="group">
-                        <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
-                        <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Save</button>
-                    </div>
-                    <!-- /.btn-group -->
-                </div>
-            </form>
-            </div>
-        </div>
-    </div>
-    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="bank_accountEditModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="bank_account">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title" id="modal4Label"><i class="fa fa-edit"></i> Edit Bank Account <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
-                </div>
-                <form wire:submit.prevent="update()" >
+
+                <form wire:submit.prevent="storeGroup">
                     <div class="modal-body">
                         <div class="row">
+
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="title">Bank<span class="required" style="color: red">*</span></label>
-                                    <input type="text" class="form-control"  wire:model.debounce.300ms="name" placeholder="Enter Bank Name" required />
-                                    @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    <label>Name <span class="required" style="color:red">*</span></label>
+                                    <input type="text" class="form-control"
+                                        wire:model.debounce.300ms="group_name"
+                                        placeholder="e.g. Human Resource" required>
+                                    @error('group_name') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
+
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="file">Account Name<span class="required" style="color: red">*</span></label>
-                                    <input type="text" class="form-control"  wire:model.debounce.300ms="account_name" placeholder="Enter Account Name" required/>
-                                    @error('account_name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    <label>Slug <span class="required" style="color:red">*</span></label>
+                                    <input type="text" class="form-control"
+                                        wire:model.debounce.300ms="group_slug"
+                                        placeholder="e.g. human-resource" required>
+                                    @error('group_slug') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
-                           
-                           
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Icon</label>
+                                    <input type="text" class="form-control"
+                                        wire:model.debounce.300ms="group_icon"
+                                        placeholder="e.g. fas fa-users">
+                                    @error('group_icon') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label>Sort Order</label>
+                                    <input type="number" class="form-control"
+                                        wire:model.debounce.300ms="group_sort_order"
+                                        placeholder="0" min="0">
+                                    @error('group_sort_order') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label>Active?</label>
+                                    <select class="form-control" wire:model="group_is_active">
+                                        <option value="1">Yes</option>
+                                        <option value="0">No</option>
+                                    </select>
+                                    @error('group_is_active') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label>Visibility (JSON)</label>
+                                    <textarea class="form-control" rows="4"
+                                            wire:model.debounce.300ms="group_visibility_json"
+                                            placeholder='e.g. {"roles":["Super Admin"],"departments":["Security"]}'></textarea>
+                                    @error('group_visibility_json') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+
                         </div>
-                        <div class="row">
-                           
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="file">Account Number<span class="required" style="color: red">*</span></label>
-                                    <input type="text" class="form-control"  wire:model.debounce.300ms="account_number" placeholder="Enter Account Number" required/>
-                                    @error('account_number') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                
-                            </div>
-                        </div>
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label for="expiry_date">Account Branch<span class="required" style="color: red">*</span></label>
-                                        <input type="text" class="form-control"  wire:model.debounce.300ms="branch" placeholder="Enter Branch" required />
-                                        @error('branch.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label for="expiry_date">Branch Code</label>
-                                        <input type="text" class="form-control"  wire:model.debounce.300ms="branch_code" placeholder="Enter Branch Code" />
-                                        @error('branch_code') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label for="expiry_date">Swift Code</label>
-                                        <input type="text" class="form-control"  wire:model.debounce.300ms="swift_code" placeholder="Enter Swift Code" />
-                                        @error('swift_code') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                    </div>
-                                </div>
-                            </div>
-                           
-                           
-                           
-                            <div class="form-group">
-                                <label for="title">Status</label>
-                                <select class="form-control" wire:model.debounce.300ms="status">
-                                    <option value="">Select Status</option>
-                                    <option value="1">Active</option>
-                                    <option value="0">Inactive</option>
-                                </select>
-                                @error('status') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
-                </div>
-                <div class="modal-footer">
-                    <div class="btn-group" role="group">
-                        <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
-                        <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Update</button>
                     </div>
-                    <!-- /.btn-group -->
-                </div>
-            </form>
+
+                    <div class="modal-footer">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal">
+                                <i class="fa fa-times"></i> Close
+                            </button>
+                            <button type="submit" class="btn bg-success btn-wide btn-rounded">
+                                <i class="fa fa-save"></i> Save
+                            </button>
+                        </div>
+                    </div>
+
+                </form>
             </div>
         </div>
     </div>
 
 
+    {{-- =========================
+        2) MODULE MODAL
+    ========================= --}}
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false"
+        class="modal" id="moduleModal" tabindex="-1" role="dialog" aria-labelledby="moduleLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
 
+                <div class="modal-header">
+                    <h4 class="modal-title" id="moduleLabel">
+                        <i class="fa fa-plus"></i> Add Module
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">×</span>
+                        </button>
+                    </h4>
+                </div>
+
+                <form wire:submit.prevent="storeModule">
+                    <div class="modal-body">
+                        <div class="row">
+
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label>Module Group <span class="required" style="color:red">*</span></label>
+                                    <select class="form-control" wire:model="module_group_id" required>
+                                        <option value="">-- select group --</option>
+                                        @foreach($moduleGroups  as $g)
+                                            <option value="{{ $g->id }}">{{ $g->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('module_group_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Name <span class="required" style="color:red">*</span></label>
+                                    <input type="text" class="form-control"
+                                        wire:model.debounce.300ms="module_name"
+                                        placeholder="e.g. Fleet Management" required>
+                                    @error('module_name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Slug <span class="required" style="color:red">*</span></label>
+                                    <input type="text" class="form-control"
+                                        wire:model.debounce.300ms="module_slug"
+                                        placeholder="e.g. fleet-management" required>
+                                    @error('module_slug') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Icon</label>
+                                    <input type="text" class="form-control"
+                                        wire:model.debounce.300ms="module_icon"
+                                        placeholder="e.g. fas fa-truck">
+                                    @error('module_icon') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Badge Key</label>
+                                    <input type="text" class="form-control"
+                                        wire:model.debounce.300ms="module_badge_key"
+                                        placeholder="e.g. gate_passes_pending_count">
+                                    @error('module_badge_key') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Route Name</label>
+                                    <input type="text" class="form-control"
+                                        wire:model.debounce.300ms="module_route_name"
+                                        placeholder="e.g. trips.index">
+                                    @error('module_route_name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>URL (optional)</label>
+                                    <input type="text" class="form-control"
+                                        wire:model.debounce.300ms="module_url"
+                                        placeholder="e.g. /trips">
+                                    @error('module_url') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Sort Order</label>
+                                    <input type="number" class="form-control"
+                                        wire:model.debounce.300ms="module_sort_order"
+                                        placeholder="0" min="0">
+                                    @error('module_sort_order') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Active?</label>
+                                    <select class="form-control" wire:model="module_is_active">
+                                        <option value="1">Yes</option>
+                                        <option value="0">No</option>
+                                    </select>
+                                    @error('module_is_active') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label>Route Params (JSON)</label>
+                                    <textarea class="form-control" rows="3"
+                                            wire:model.debounce.300ms="module_route_params_json"
+                                            placeholder='e.g. {"department":"security"}'></textarea>
+                                    @error('module_route_params_json') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label>Visibility (JSON)</label>
+                                    <textarea class="form-control" rows="4"
+                                            wire:model.debounce.300ms="module_visibility_json"
+                                            placeholder='e.g. {"roles":["Super Admin"],"permissions":["trips.view"]}'></textarea>
+                                    @error('module_visibility_json') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal">
+                                <i class="fa fa-times"></i> Close
+                            </button>
+                            <button type="submit" class="btn bg-success btn-wide btn-rounded">
+                                <i class="fa fa-save"></i> Save
+                            </button>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+    {{-- =========================
+        3) SUBMODULE MODAL
+    ========================= --}}
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false"
+        class="modal" id="submoduleModal" tabindex="-1" role="dialog" aria-labelledby="submoduleLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h4 class="modal-title" id="submoduleLabel">
+                        <i class="fa fa-plus"></i> Add Submodule
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">×</span>
+                        </button>
+                    </h4>
+                </div>
+
+                <form wire:submit.prevent="storeSubmodule">
+                    <div class="modal-body">
+                        <div class="row">
+
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label>Module <span class="required" style="color:red">*</span></label>
+                                    <select class="form-control" wire:model="sub_module_id" required>
+                                        <option value="">-- select module --</option>
+                                        @foreach($modules as $m)
+                                            <option value="{{ $m->id }}">{{ $m->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('sub_module_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Name <span class="required" style="color:red">*</span></label>
+                                    <input type="text" class="form-control"
+                                        wire:model.debounce.300ms="sub_name"
+                                        placeholder="e.g. Manage Trips" required>
+                                    @error('sub_name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Slug <span class="required" style="color:red">*</span></label>
+                                    <input type="text" class="form-control"
+                                        wire:model.debounce.300ms="sub_slug"
+                                        placeholder="e.g. manage-trips" required>
+                                    @error('sub_slug') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Icon</label>
+                                    <input type="text" class="form-control"
+                                        wire:model.debounce.300ms="sub_icon"
+                                        placeholder="e.g. fas fa-list">
+                                    @error('sub_icon') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Route Name</label>
+                                    <input type="text" class="form-control"
+                                        wire:model.debounce.300ms="sub_route_name"
+                                        placeholder="e.g. trips.index">
+                                    @error('sub_route_name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>URL (optional)</label>
+                                    <input type="text" class="form-control"
+                                        wire:model.debounce.300ms="sub_url"
+                                        placeholder="e.g. /trips">
+                                    @error('sub_url') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label>Sort Order</label>
+                                    <input type="number" class="form-control"
+                                        wire:model.debounce.300ms="sub_sort_order"
+                                        placeholder="0" min="0">
+                                    @error('sub_sort_order') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label>Active?</label>
+                                    <select class="form-control" wire:model="sub_is_active">
+                                        <option value="1">Yes</option>
+                                        <option value="0">No</option>
+                                    </select>
+                                    @error('sub_is_active') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label>Route Params (JSON)</label>
+                                    <textarea class="form-control" rows="3"
+                                            wire:model.debounce.300ms="sub_route_params_json"
+                                            placeholder='e.g. {"department":"security"}'></textarea>
+                                    @error('sub_route_params_json') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label>Visibility (JSON)</label>
+                                    <textarea class="form-control" rows="4"
+                                            wire:model.debounce.300ms="sub_visibility_json"
+                                            placeholder='e.g. {"roles":["Super Admin"],"permissions":["trips.view"]}'></textarea>
+                                    @error('sub_visibility_json') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal">
+                                <i class="fa fa-times"></i> Close
+                            </button>
+                            <button type="submit" class="btn bg-success btn-wide btn-rounded">
+                                <i class="fa fa-save"></i> Save
+                            </button>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 

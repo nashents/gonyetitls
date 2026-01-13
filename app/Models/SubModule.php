@@ -20,6 +20,7 @@ class SubModule extends Model implements Auditable
     protected $casts = [
         'route_params' => 'array',
         'visibility'   => 'array',
+         'is_active'  => 'boolean',
     ];
 
     protected $fillable = [

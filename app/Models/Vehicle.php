@@ -12,6 +12,9 @@ class Vehicle extends Model implements Auditable
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 
+    public function rentals(){
+        return $this->hasMany('App\Models\Rental');
+    }
     public function vehicle_documents(){
         return $this->hasMany('App\Models\VehicleDocument');
     }

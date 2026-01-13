@@ -8,7 +8,8 @@ use Carbon\Carbon;
 use  App\Models\{
     Allocation, Department, DepartmentHead, Leave, Loan,
     Payroll, Invoice, CreditNote, Bill, Requisition, TopUp,User,Purchase, Dispatch,
-    GatePass, Fuel, FuelRequest, Trip, Transporter, Shift, TransportOrder, Recovery, Booking, Transfer, Retread, Customer, Agent, Company
+    GatePass, Fuel, FuelRequest, Trip, Transporter, Shift, TransportOrder, Recovery, Booking, Transfer, Retread, Customer, Agent, Company,
+    ModuleGroup
     // ... add all models you need here
 };
 
@@ -481,7 +482,51 @@ class SidebarComposer
         $companies = Company::where('type','!=','admin')->get();
         $admin_company = Company::where('type','admin')->get()->first();
 
+           // Build your context keys ONCE (map your booleans + ids here)
+        $ctx = [
+             // roles / flags (use what you computed, not session())
+            'isAdmin'       => (bool) $isAdmin,
+            'isSuperAdmin'  => (bool) $isSuperAdmin,
+            'isDriver'      => (bool) ($user?->driver ?? false),
+
+            'inHR'          => (bool) $inHR,
+            'inFinance'     => (bool) $inFinance,
+            'inTransport'   => (bool) $inTransport,
+            'inHSEQ'        => (bool) $inHSEQ,
+            'inSecurity'    => (bool) $inSecurity,
+
+            // ids for placeholders (MOST IMPORTANT PART)
+            'user_id'       => $user?->id,
+            'employee_id'   => $employee?->id ?? $user?->employee_id,  // ✅ reliable
+            'hseq_department_id' => $hseq_department?->id,
+        ];
+
+
+        // Your badge map (connect to your real computed counts)
+        $badges = [
+            'leaves_pending_count' => $view->offsetExists('leavesPendingCount') ? $view['leavesPendingCount'] : 0,
+            'loans_pending_count' => $view->offsetExists('loansPendingCount') ? $view['loansPendingCount'] : 0,
+            // ...add more keys you use
+        ];
+
+       $menuGroups = ModuleGroup::query()
+        ->where('is_active', true)
+        ->orderBy('sort_order')
+        ->with(['modules' => function ($q) {
+            $q->where('is_active', true)->orderBy('sort_order')
+            ->with(['sub_modules' => function ($sq) {
+                $sq->where('is_active', true)->orderBy('sort_order');
+            }]);
+        }])
+        ->get();
+
+
+       
+
         $view->with([
+            'menuCtx' => $ctx,
+            'menuBadges' => $badges,
+            'menuGroups' => $menuGroups,
             'user'         => $user,
             'employee'     => $employee,
             'department_names'     => $department_names,

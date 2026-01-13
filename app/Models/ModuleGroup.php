@@ -16,4 +16,14 @@ class ModuleGroup extends Model implements Auditable
         return $this->hasMany('App\Models\Module');
     }
 
+        protected $casts = [
+        'visibility' => 'array',
+        'is_active'  => 'boolean',
+    ];
+
+      protected $fillable = [
+        'slug','name','icon',
+        'sort_order','is_active','badge_key','visibility'
+    ];
+
 }

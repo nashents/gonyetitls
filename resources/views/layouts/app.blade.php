@@ -131,6 +131,36 @@
 @stack('scripts')
     
     <script type="text/javascript">
+            window.addEventListener('show-rentalDeleteModal', event => {
+                $('#rentalDeleteModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-rentalDeleteModal', event => {
+                $('#rentalDeleteModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-rentalModal', event => {
+                $('#rentalModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-rentalModal', event => {
+                $('#rentalModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-rentalEditModal', event => {
+                $('#rentalEditModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-rentalEditModal', event => {
+                $('#rentalEditModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
             window.addEventListener('show-dispatchDeleteModal', event => {
                 $('#dispatchDeleteModal').modal('show');
             })

@@ -654,6 +654,7 @@ Route::resource('stores','StoreController');
 Route::resource('orders','OrderController');
 Route::resource('vehicle_makes','VehicleMakeController');
 Route::resource('horse_makes','HorseMakeController');
+Route::resource('rentals','RentalController');
 Route::resource('vehicle_models','VehicleModelController');
 Route::resource('modules','ModuleController');
 Route::resource('horse_models','HorseModelController');

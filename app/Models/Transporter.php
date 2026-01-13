@@ -25,6 +25,9 @@ class Transporter extends Model implements Auditable
     public function incidents(){
         return $this->hasMany('App\Models\Incident');
     }
+     public function rentals(){
+        return $this->hasMany('App\Models\Rental');
+    }
     public function workshop_services(){
         return $this->hasMany('App\Models\WorkshopService');
     }
