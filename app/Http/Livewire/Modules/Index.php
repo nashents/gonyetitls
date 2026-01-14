@@ -42,20 +42,33 @@ public $inputs = [];
     }
 
     public function toggleGroup($groupId)
-{
-    $group = ModuleGroup::findOrFail($groupId);
+    {
+        $group = ModuleGroup::findOrFail($groupId);
 
-    $newState = ! (bool) $group->is_active;
-    $group->is_active = $newState;
-    $group->save();
+        $newState = ! (bool) $group->is_active;
 
-    // Optional rule (recommended): group off => everything off under it
-    if (!$newState) {
-        Module::where('module_group_id', $groupId)->update(['is_active' => false]);
+        $group->is_active      = $newState;
+        $group->is_customized  = true;
+        $group->customized_at  = now();
+        $group->save();
 
-        $moduleIds = Module::where('module_group_id', $groupId)->pluck('id');
-        SubModule::whereIn('module_id', $moduleIds)->update(['is_active' => false]);
-    }
+        // Optional rule (recommended): group off => everything off under it
+        if (! $newState) {
+
+            Module::where('module_group_id', $groupId)->update([
+                'is_active'     => false,
+                'is_customized' => true,
+                'customized_at' => now(),
+            ]);
+
+            $moduleIds = Module::where('module_group_id', $groupId)->pluck('id');
+
+            SubModule::whereIn('module_id', $moduleIds)->update([
+                'is_active'     => false,
+                'is_customized' => true,
+                'customized_at' => now(),
+            ]);
+        }
     }
 
     public function toggleAllGroupItems($groupId, $state)
@@ -63,38 +76,65 @@ public $inputs = [];
         $state = (bool) $state;
 
         $group = ModuleGroup::findOrFail($groupId);
-        $group->is_active = $state;
+
+        $group->is_active      = $state;
+        $group->is_customized  = true;
+        $group->customized_at  = now();
         $group->save();
 
-        Module::where('module_group_id', $groupId)->update(['is_active' => $state]);
+        Module::where('module_group_id', $groupId)->update([
+            'is_active'     => $state,
+            'is_customized' => true,
+            'customized_at' => now(),
+        ]);
 
         $moduleIds = Module::where('module_group_id', $groupId)->pluck('id');
-        SubModule::whereIn('module_id', $moduleIds)->update(['is_active' => $state]);
+
+        SubModule::whereIn('module_id', $moduleIds)->update([
+            'is_active'     => $state,
+            'is_customized' => true,
+            'customized_at' => now(),
+        ]);
     }
 
     public function toggleModule($moduleId)
     {
         $module = Module::findOrFail($moduleId);
-        $module->is_active = ! $module->is_active;
+
+        $module->is_active      = ! (bool) $module->is_active;
+        $module->is_customized  = true;
+        $module->customized_at  = now();
         $module->save();
     }
 
     public function toggleSubmodule($submoduleId)
     {
         $sub = SubModule::findOrFail($submoduleId);
-        $sub->is_active = ! $sub->is_active;
+
+        $sub->is_active      = ! (bool) $sub->is_active;
+        $sub->is_customized  = true;
+        $sub->customized_at  = now();
         $sub->save();
     }
 
     public function toggleAllModuleItems($moduleId, $state)
     {
+        $state = (bool) $state;
+
         $module = Module::findOrFail($moduleId);
-        $module->is_active = $state;
+
+        $module->is_active      = $state;
+        $module->is_customized  = true;
+        $module->customized_at  = now();
         $module->save();
 
-        SubModule::where('module_id', $moduleId)->update(['is_active' => (bool) $state]);
+        SubModule::where('module_id', $moduleId)->update([
+            'is_active'     => $state,
+            'is_customized' => true,
+            'customized_at' => now(),
+        ]);
     }
-
+ 
     public function editGroup($groupId) { /* open group modal */ }
     public function editModule($moduleId) { /* open module modal */ }
     public function editSubmodule($submoduleId) { /* open submodule modal */ }

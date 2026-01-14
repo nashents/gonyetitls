@@ -15,7 +15,7 @@ class AddDriverIdToRentalsTable extends Migration
     {
         Schema::table('rentals', function (Blueprint $table) {
             $table->bigInteger('driver_id')->nullable()->unsigned();
-            $table->foreignId('currency_id')->constrained('currencies')->cascadeOnDelete();
+            $table->bigInteger('currency_id')->nullable()->unsigned();
             $table->bigInteger('account_id')->unsigned()->nullable();
             $table->bigInteger('tax_id')->unsigned()->nullable();
             $table->string('tax_rate')->nullable();
@@ -34,7 +34,6 @@ class AddDriverIdToRentalsTable extends Migration
     {
         Schema::table('rentals', function (Blueprint $table) {
             $table->dropColumn('driver_id');
-            $table->dropForeign(['currency_id']);
             $table->dropColumn('currency_id');
             $table->dropColumn('account_id');
             $table->dropColumn('tax_id');

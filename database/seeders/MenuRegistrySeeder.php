@@ -2354,14 +2354,25 @@ class MenuRegistrySeeder extends Seeder
     {
         $slug = $data['slug'] ?? Str::slug($data['name']);
 
+        // Find existing first so we can respect is_customized for is_active
+        $existing = ModuleGroup::where('slug', $slug)->first();
+
+        $seededIsActive = $data['is_active'] ?? true;
+
+        // If client customized -> preserve DB is_active, else use seeded
+        $finalIsActive = $existing && $existing->is_customized
+            ? $existing->is_active
+            : $seededIsActive;
+
         return ModuleGroup::updateOrCreate(
             ['slug' => $slug],
             [
                 'name'       => $data['name'],
                 'icon'       => $data['icon'] ?? null,
-                'sort_order' => $indexSort, // ✅ index default
-                'is_active'  => $data['is_active'] ?? true,
+                'sort_order' => $data['sort_order'] ?? $indexSort,
+                'is_active'  => $finalIsActive,
                 'visibility' => $data['visibility'] ?? null,
+                // don't touch is_customized / customized_at in seeder
             ]
         );
     }
@@ -2370,6 +2381,16 @@ class MenuRegistrySeeder extends Seeder
     {
         $slug = $data['slug'] ?? Str::slug($data['name']);
 
+        $existing = Module::where('module_group_id', $moduleGroupId)
+            ->where('slug', $slug)
+            ->first();
+
+        $seededIsActive = $data['is_active'] ?? true;
+
+        $finalIsActive = $existing && $existing->is_customized
+            ? $existing->is_active
+            : $seededIsActive;
+
         return Module::updateOrCreate(
             ['module_group_id' => $moduleGroupId, 'slug' => $slug],
             [
@@ -2377,12 +2398,11 @@ class MenuRegistrySeeder extends Seeder
                 'icon'         => $data['icon'] ?? null,
                 'route_name'   => $data['route_name'] ?? null,
                 'url'          => $data['url'] ?? null,
-                'sort_order'   => $indexSort, // ✅ index default
-                'is_active'    => $data['is_active'] ?? true,
+                'sort_order' => $data['sort_order'] ?? $indexSort,
+                'is_active'    => $finalIsActive,
                 'badge_key'    => $data['badge_key'] ?? null,
                 'visibility'   => $data['visibility'] ?? null,
-                // If you have route_params column in modules table (json), keep it; otherwise remove this line
-                'route_params' => $data['route_params'] ?? null,
+                'route_params' => $data['route_params'] ?? null, // remove if column doesn't exist
             ]
         );
     }
@@ -2391,6 +2411,16 @@ class MenuRegistrySeeder extends Seeder
     {
         $slug = $data['slug'] ?? Str::slug($data['name']);
 
+        $existing = SubModule::where('module_id', $moduleId)
+            ->where('slug', $slug)
+            ->first();
+
+        $seededIsActive = $data['is_active'] ?? true;
+
+        $finalIsActive = $existing && $existing->is_customized
+            ? $existing->is_active
+            : $seededIsActive;
+
         return SubModule::updateOrCreate(
             ['module_id' => $moduleId, 'slug' => $slug],
             [
@@ -2398,12 +2428,11 @@ class MenuRegistrySeeder extends Seeder
                 'icon'         => $data['icon'] ?? null,
                 'route_name'   => $data['route_name'] ?? null,
                 'url'          => $data['url'] ?? null,
-                'sort_order'   => $indexSort, // ✅ index default
-                'is_active'    => $data['is_active'] ?? true,
+                'sort_order' => $data['sort_order'] ?? $indexSort,
+                'is_active'    => $finalIsActive,
                 'badge_key'    => $data['badge_key'] ?? null,
                 'visibility'   => $data['visibility'] ?? null,
-                // If you have route_params column in sub_modules table (json), keep it; otherwise remove this line
-                'route_params' => $data['route_params'] ?? null,
+                'route_params' => $data['route_params'] ?? null, // remove if column doesn't exist
             ]
         );
     }
