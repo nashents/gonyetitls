@@ -3,10 +3,8 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-// ✅ Adjust these model namespaces to match your app
 use App\Models\ModuleGroup;
 use App\Models\Module;
 use App\Models\SubModule;
@@ -15,2425 +13,1850 @@ class MenuRegistrySeeder extends Seeder
 {
     public function run(): void
     {
-        DB::transaction(function () {
 
-            /**
-             * VISIBILITY JSON (simple + practical)
-             * Your app should evaluate these keys when building the sidebar:
-             * - any_roles: ["Admin","SuperAdmin","Management"]
-             * - any_departments: ["HR","Finance","Transport","HSEQ","Security","Workshop","Stores"]
-             * - any_ranks: ["HOD","Directors"]
-             * - flags: ["is_business_admin","not_driver","has_vehicle_assignment","has_hseq_department","is_department_head_hr","is_department_head_finance","is_department_head_transport","is_department_head_workshop","is_department_head_stores"]
-             * - route_params supports placeholders like "{employee_id}", "{company_id}", "{user_id}", "{hseq_department_id}"
-             */
-
-            $groups = [
-
-                // =========================================================
-                // MAIN CATEGORY
-                // =========================================================
-                [
-                    'group' => [
-                        'name'       => 'Main Category',
-                        'slug'       => 'main-category',
-                        'icon'       => null,
-                        'sort_order' => 10,
-                        'is_active'  => true,
-                        'visibility' => $this->vis([]),
-                    ],
-                    'modules' => [
-                        [
-                            'module' => [
-                                'name'       => 'Dashboard',
-                                'slug'       => 'dashboard',
-                                'icon'       => 'fas fa-tachometer-alt',
-                                'route_name' => 'dashboard.index',
-                                'url'        => null,
-                                'sort_order' => 10,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis([]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'Companies',
-                                'slug'       => 'companies',
-                                'icon'       => 'fas fa-building',
-                                'route_name' => null,
-                                'url'        => null,
-                                'sort_order' => 20,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis([
-                                    'any_roles' => ['Admin', 'SuperAdmin'],
-                                    'flags'     => ['is_business_admin'], // matches $is_admin in blade
-                                ]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [
-                                [
-                                    'name'       => 'Manage Companies',
-                                    'slug'       => 'manage-companies',
-                                    'icon'       => 'fas fa-list',
-                                    'route_name' => 'companies.index',
-                                    'url'        => null,
-                                    'sort_order' => 10,
-                                    'is_active'  => true,
-                                    'badge_key'  => null,
-                                    'visibility' => $this->vis([
-                                        'any_roles' => ['Admin', 'SuperAdmin'],
-                                        'flags'     => ['is_business_admin'],
-                                    ]),
-                                    'route_params' => null,
-                                ],
-                            ],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'Reminders',
-                                'slug'       => 'reminders',
-                                'icon'       => 'fas fa-bell',
-                                'route_name' => 'reminders.index',
-                                'url'        => null,
-                                'sort_order' => 30,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis([]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [],
-                        ],
-                    ],
-                ],
-
-                // =========================================================
-                // HUMAN RESOURCE
-                // =========================================================
-                [
-                    'group' => [
-                        'name'       => 'Human Resource',
-                        'slug'       => 'human-resource',
-                        'icon'       => null,
-                        'sort_order' => 20,
-                        'is_active'  => true,
-                        'visibility' => $this->vis([
-                            'any_departments' => ['HR'],
-                            'any_roles'       => ['SuperAdmin'],
-                        ]),
-                    ],
-                    'modules' => [
-                        [
-                            'module' => [
-                                'name'       => 'Master',
-                                'slug'       => 'hr-master',
-                                'icon'       => 'fas fa-cog',
-                                'route_name' => null,
-                                'url'        => null,
-                                'sort_order' => 10,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis([
-                                    'any_roles'       => ['SuperAdmin'],
-                                    'any_departments' => ['HR'],
-                                    // blade: (($isAdmin && $inHR) || $isSuperAdmin)
-                                ]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Allowances','slug'=>'allowances','icon'=>'fas fa-list','route_name'=>'allowances.index','url'=>null,'sort_order' => 10,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_roles'=>['SuperAdmin'],'any_departments'=>['HR']]),'route_params'=>null],
-                                ['name'=>'Branches','slug'=>'branches','icon'=>'fas fa-list','route_name'=>'branches.index','url'=>null,'sort_order' => 20,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_roles'=>['SuperAdmin'],'any_departments'=>['HR']]),'route_params'=>null],
-                                ['name'=>'Departments','slug'=>'departments','icon'=>'fas fa-list','route_name'=>'departments.index','url'=>null,'sort_order' => 30,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['flags'=>['is_business_admin']]),'route_params'=>null],
-                                ['name'=>'Deductions','slug'=>'deductions','icon'=>'fas fa-list','route_name'=>'deductions.index','url'=>null,'sort_order' => 40,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_roles'=>['SuperAdmin'],'any_departments'=>['HR']]),'route_params'=>null],
-                                ['name'=>'Earnings','slug'=>'earnings','icon'=>'fas fa-list','route_name'=>'earnings.index','url'=>null,'sort_order' => 50,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_roles'=>['SuperAdmin'],'any_departments'=>['HR']]),'route_params'=>null],
-                                ['name'=>'Grades','slug'=>'grades','icon'=>'fas fa-list','route_name'=>'grades.index','url'=>null,'sort_order' => 60,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_roles'=>['SuperAdmin'],'any_departments'=>['HR']]),'route_params'=>null],
-                                ['name'=>'Job Titles','slug'=>'job-titles','icon'=>'fas fa-list','route_name'=>'job_titles.index','url'=>null,'sort_order'=>70,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_roles'=>['SuperAdmin'],'any_departments'=>['HR']]),'route_params'=>null],
-                                ['name'=>'Qualifications','slug'=>'qualifications','icon'=>'fas fa-list','route_name'=>'qualifications.index','url'=>null,'sort_order'=>80,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_roles'=>['SuperAdmin'],'any_departments'=>['HR']]),'route_params'=>null],
-                                ['name'=>'Leave Types','slug'=>'leave-types','icon'=>'fas fa-list','route_name'=>'leave_types.index','url'=>null,'sort_order'=>90,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_roles'=>['SuperAdmin'],'any_departments'=>['HR']]),'route_params'=>null],
-                            ],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'Employees',
-                                'slug'       => 'employees',
-                                'icon'       => 'fas fa-users',
-                                'route_name' => null,
-                                'url'        => null,
-                                'sort_order' => 20,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis([
-                                    'any_departments' => ['HR'],
-                                    'any_roles'       => ['SuperAdmin'],
-                                ]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Create Employee','slug'=>'create-employee','icon'=>'fas fa-plus','route_name'=>'employees.create','url'=>null,'sort_order' => 10,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['HR'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                                ['name'=>'Manage Employees','slug'=>'manage-employees','icon'=>'fas fa-list','route_name'=>'employees.index','url'=>null,'sort_order' => 20,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['HR'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                                ['name'=>'Manage Leave Days','slug'=>'manage-leave-days','icon'=>'fas fa-list','route_name'=>'employees.leaves.index','url'=>null,'sort_order' => 30,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['HR'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                                ['name'=>'Archived Employees','slug'=>'archived-employees','icon'=>'fas fa-archive','route_name'=>'employees.archived','url'=>null,'sort_order' => 40,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['HR'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                                ['name'=>'Deleted Employees','slug'=>'deleted-employees','icon'=>'fas fa-trash','route_name'=>'employees.deleted','url'=>null,'sort_order' => 50,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['HR'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                            ],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'Head of Departments',
-                                'slug'       => 'head-of-departments',
-                                'icon'       => 'fas fa-user-plus',
-                                'route_name' => 'department_heads.index',
-                                'url'        => null,
-                                'sort_order' => 30,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis([
-                                    'any_departments' => ['HR'],
-                                    'any_roles'       => ['SuperAdmin'],
-                                ]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'Drivers',
-                                'slug'       => 'drivers',
-                                'icon'       => 'fas fa-users',
-                                'route_name' => null,
-                                'url'        => null,
-                                'sort_order' => 40,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis([
-                                    'any_departments' => ['Transport', 'HR'],
-                                    'any_roles'       => ['SuperAdmin'],
-                                ]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Create Driver','slug'=>'create-driver','icon'=>'fas fa-plus','route_name'=>'drivers.create','url'=>null,'sort_order' => 10,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['Transport','HR'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                                ['name'=>'Manage Drivers','slug'=>'manage-drivers','icon'=>'fas fa-list','route_name'=>'drivers.index','url'=>null,'sort_order' => 20,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['Transport','HR'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                                ['name'=>'Archived Drivers','slug'=>'archived-drivers','icon'=>'fas fa-archive','route_name'=>'drivers.archived','url'=>null,'sort_order' => 30,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['Transport','HR'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                            ],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'Leave Management',
-                                'slug'       => 'leave-management',
-                                'icon'       => 'fas fa-calendar',
-                                'route_name' => null,
-                                'url'        => null,
-                                'sort_order' => 50,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis([]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Apply for leave','slug'=>'apply-for-leave','icon'=>'fas fa-plus','route_name'=>'leaves.index','url'=>null,'sort_order' => 10,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis([]),'route_params'=>null],
-                                ['name'=>'My Team','slug'=>'leave-my-team','icon'=>'fas fa-users','route_name'=>'leaves.myteam','url'=>null,'sort_order' => 20,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis([]),'route_params'=>null],
-
-                                // “manage” set (restricted)
-                                ['name'=>'Manage Applications','slug'=>'manage-leave-applications','icon'=>'fas fa-list','route_name'=>'leaves.manage','url'=>null,'sort_order' => 30,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis([
-                                    'any_roles'       => ['SuperAdmin'],
-                                    'any_departments' => ['HR'],
-                                    'flags'           => ['is_department_head_hr'], // hrdepartment_head
-                                    'any_roles_2'     => ['Admin','Management'],   // your evaluator can treat this as “OR”
-                                ]),'route_params'=>null],
-
-                                ['name'=>'Pending Applications','slug'=>'pending-leaves','icon'=>'fas fa-clock','route_name'=>'leaves.pending','url'=>null, 'sort_order' => 40,'is_active'=>true,'badge_key'=>'leaves_pending_count','visibility'=>$this->vis([
-                                    'any_roles'       => ['SuperAdmin'],
-                                    'any_departments' => ['HR'],
-                                    'flags'           => ['is_department_head_hr'],
-                                    'any_roles_2'     => ['Admin','Management'],
-                                ]),'route_params'=>null],
-
-                                ['name'=>'Approved Applications','slug'=>'approved-leaves','icon'=>'fas fa-check','route_name'=>'leaves.approved','url'=>null,'sort_order' => 50,'is_active'=>true,'badge_key'=>'leaves_approved_count','visibility'=>$this->vis([
-                                    'any_roles'       => ['SuperAdmin'],
-                                    'any_departments' => ['HR'],
-                                    'flags'           => ['is_department_head_hr'],
-                                    'any_roles_2'     => ['Admin','Management'],
-                                ]),'route_params'=>null],
-
-                                ['name'=>'Rejected Applications','slug'=>'rejected-leaves','icon'=>'fas fa-ban','route_name'=>'leaves.rejected','url'=>null,'sort_order'=>60,'is_active'=>true,'badge_key'=>'leaves_rejected_count','visibility'=>$this->vis([
-                                    'any_roles'       => ['SuperAdmin'],
-                                    'any_departments' => ['HR'],
-                                    'flags'           => ['is_department_head_hr'],
-                                    'any_roles_2'     => ['Admin','Management'],
-                                ]),'route_params'=>null],
-                            ],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'Inbox',
-                                'slug'       => 'inbox',
-                                'icon'       => 'fas fa-envelope',
-                                'route_name' => 'emails.index',
-                                'url'        => null,
-                                'sort_order' => 60,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis([]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [],
-                        ],
-                    ],
-                ],
-
-                // =========================================================
-                // SALARIES & PAYROLL
-                // =========================================================
-                [
-                    'group' => [
-                        'name'       => 'Salaries & Payroll',
-                        'slug'       => 'salaries-payroll',
-                        'icon'       => null,
-                        'sort_order' => 30,
-                        'is_active'  => true,
-                        'visibility' => $this->vis([]),
-                    ],
-                    'modules' => [
-                        [
-                            'module' => [
-                                'name'       => 'Master',
-                                'slug'       => 'payroll-master',
-                                'icon'       => 'fas fa-cog',
-                                'route_name' => null,
-                                'url'        => null,
-                                'sort_order' => 10,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis([
-                                    'any_roles'       => ['SuperAdmin','Admin'],
-                                    'any_departments' => ['HR'],
-                                ]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Allowances','slug'=>'allowances','icon'=>'fas fa-list','route_name'=>'allowances.index','url'=>null, 'sort_order' => 10,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['HR'],'any_roles'=>['Admin','SuperAdmin']]),'route_params'=>null],
-                                ['name'=>'Deductions','slug'=>'deductions','icon'=>'fas fa-list','route_name'=>'deductions.index','url'=>null,'sort_order' => 20,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['HR'],'any_roles'=>['Admin','SuperAdmin']]),'route_params'=>null],
-                                ['name'=>'Earnings','slug'=>'earnings','icon'=>'fas fa-list','route_name'=>'earnings.index','url'=>null,'sort_order' => 30,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['HR'],'any_roles'=>['Admin','SuperAdmin']]),'route_params'=>null],
-                                ['name'=>'Loan Type','slug'=>'loan-types','icon'=>'fas fa-list','route_name'=>'loan_types.index','url'=>null,'sort_order' => 40,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['HR'],'any_roles'=>['Admin','SuperAdmin']]),'route_params'=>null],
-                                ['name'=>'Tax Table','slug'=>'tax-brackets','icon'=>'fas fa-list','route_name'=>'tax_brackets.index','url'=>null, 'sort_order' => 50,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['flags'=>['is_business_admin'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                            ],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'My Payslip',
-                                'slug'       => 'my-payslip',
-                                'icon'       => 'fas fa-file',
-                                'route_name' => 'payslips.index',
-                                'url'        => null,
-                                'sort_order' => 20,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis([]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'Loans',
-                                'slug'       => 'loans',
-                                'icon'       => 'fas fa-credit-card',
-                                'route_name' => null,
-                                'url'        => null,
-                                'sort_order' => 30,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis([]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'My Applications','slug'=>'my-loan-applications','icon'=>'fas fa-arrow-right','route_name'=>'loans.myloans','url'=>null,'sort_order' => 10,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis([]),'route_params'=>null],
-
-                                ['name'=>'Manage Loans','slug'=>'manage-loans','icon'=>'fas fa-list','route_name'=>'loans.index','url'=>null,'sort_order' => 20,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis([
-                                    'any_roles'       => ['SuperAdmin','Management'],
-                                    'any_departments' => ['HR','Finance'],
-                                    'flags'           => ['is_department_head_finance'], // fndepartment_head
-                                ]),'route_params'=>null],
-
-                                ['name'=>'Pending Loans','slug'=>'pending-loans','icon'=>'fas fa-clock','route_name'=>'loans.pending','url'=>null, 'sort_order' => 30,'is_active'=>true,'badge_key'=>'loans_pending_count','visibility'=>$this->vis([
-                                    'any_roles'       => ['SuperAdmin','Management'],
-                                    'any_departments' => ['HR','Finance'],
-                                    'flags'           => ['is_department_head_finance'],
-                                ]),'route_params'=>null],
-
-                                ['name'=>'Approved Loans','slug'=>'approved-loans','icon'=>'fas fa-check','route_name'=>'loans.approved','url'=>null,'sort_order' => 40,'is_active'=>true,'badge_key'=>'loans_approved_count','visibility'=>$this->vis([
-                                    'any_roles'       => ['SuperAdmin','Management'],
-                                    'any_departments' => ['HR','Finance'],
-                                    'flags'           => ['is_department_head_finance'],
-                                ]),'route_params'=>null],
-
-                                ['name'=>'Rejected Loans','slug'=>'rejected-loans','icon'=>'fas fa-ban','route_name'=>'loans.rejected','url'=>null,'sort_order' => 50,'is_active'=>true,'badge_key'=>'loans_rejected_count','visibility'=>$this->vis([
-                                    'any_roles'       => ['SuperAdmin','Management'],
-                                    'any_departments' => ['HR','Finance'],
-                                    'flags'           => ['is_department_head_finance'],
-                                ]),'route_params'=>null],
-                            ],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'Salaries',
-                                'slug'       => 'salaries',
-                                'icon'       => 'fas fa-donate',
-                                'route_name' => null,
-                                'url'        => null,
-                                'sort_order' => 40,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis([
-                                    'any_roles'       => ['SuperAdmin','Admin'],
-                                    'any_departments' => ['HR'],
-                                ]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Create Salary','slug'=>'create-salary','icon'=>'fas fa-plus','route_name'=>'salaries.create','url'=>null,'sort_order' => 10,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['HR'],'any_roles'=>['Admin','SuperAdmin']]),'route_params'=>null],
-                                ['name'=>'Manage Salaries','slug'=>'manage-salaries','icon'=>'fas fa-list','route_name'=>'salaries.index','url'=>null,'sort_order' => 20,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['HR'],'any_roles'=>['Admin','SuperAdmin']]),'route_params'=>null],
-                            ],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'Payroll',
-                                'slug'       => 'payroll',
-                                'icon'       => 'fas fa-file',
-                                'route_name' => null,
-                                'url'        => null,
-                                'sort_order' => 50,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis([
-                                    'any_roles'       => ['SuperAdmin','Admin'],
-                                    'any_departments' => ['HR'],
-                                ]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Manage Payrolls','slug'=>'manage-payrolls','icon'=>'fas fa-list','route_name'=>'payrolls.index','url'=>null,'sort_order' => 10,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['HR'],'any_roles'=>['Admin','SuperAdmin']]),'route_params'=>null],
-                                ['name'=>'Pending Payrolls','slug'=>'pending-payrolls','icon'=>'fas fa-clock','route_name'=>'payrolls.pending','url'=>null,'sort_order' => 20,'is_active'=>true,'badge_key'=>'payrolls_pending_count','visibility'=>$this->vis([
-                                    'any_roles'       => ['SuperAdmin','Admin','Management'],
-                                    'any_departments' => ['HR'],
-                                    'flags'           => ['is_department_head_hr'],
-                                ]),'route_params'=>null],
-                                ['name'=>'Approved Payrolls','slug'=>'approved-payrolls','icon'=>'fas fa-check','route_name'=>'payrolls.approved','url'=>null,'sort_order' => 30,'is_active'=>true,'badge_key'=>'payrolls_approved_count','visibility'=>$this->vis([
-                                    'any_roles'       => ['SuperAdmin','Admin','Management'],
-                                    'any_departments' => ['HR'],
-                                    'flags'           => ['is_department_head_hr'],
-                                ]),'route_params'=>null],
-                                ['name'=>'Rejected Payrolls','slug'=>'rejected-payrolls','icon'=>'fas fa-ban','route_name'=>'payrolls.rejected','url'=>null, 'sort_order' => 40,'is_active'=>true,'badge_key'=>'payrolls_rejected_count','visibility'=>$this->vis([
-                                    'any_roles'       => ['SuperAdmin','Admin','Management'],
-                                    'any_departments' => ['HR'],
-                                    'flags'           => ['is_department_head_hr'],
-                                ]),'route_params'=>null],
-                            ],
-                        ],
-                    ],
-                ],
-
-                // =========================================================
-                // SALES & PAYMENTS (FINANCE)
-                // =========================================================
-                [
-                    'group' => [
-                        'name'       => 'Sales & Payments',
-                        'slug'       => 'sales-payments',
-                        'icon'       => null,
-                        'sort_order' => 40,
-                        'is_active'  => true,
-                        'visibility' => $this->vis([
-                            'any_departments' => ['Finance'],
-                            'any_roles'       => ['SuperAdmin'],
-                        ]),
-                    ],
-                    'modules' => [
-                        [
-                            'module' => [
-                                'name'       => 'Master',
-                                'slug'       => 'finance-master',
-                                'icon'       => 'fas fa-cog',
-                                'route_name' => null,
-                                'url'        => null,
-                                'sort_order' => 10,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis([
-                                    'any_roles' => ['SuperAdmin'],
-                                    // blade tries to restrict to Admin in Finance AND HR
-                                    'any_departments' => ['Finance','HR'],
-                                    'require_all_departments' => true,
-                                    'any_roles_2' => ['Admin'],
-                                ]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Currencies','slug'=>'currencies','icon'=>'fas fa-money-bill-alt','route_name'=>'currencies.index','url'=>null,'sort_order' => 10,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_roles'=>['SuperAdmin','Admin'],'any_departments'=>['Finance','HR'],'require_all_departments'=>true]),'route_params'=>null],
-                                ['name'=>'Payment Methods','slug'=>'payment-methods','icon'=>'fas fa-list','route_name'=>'payment_methods.index','url'=>null,'sort_order' => 20,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_roles'=>['SuperAdmin','Admin'],'any_departments'=>['Finance','HR'],'require_all_departments'=>true]),'route_params'=>null],
-                            ],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'Quotations',
-                                'slug'       => 'quotations',
-                                'icon'       => 'fas fa-file-invoice',
-                                'route_name' => null,
-                                'url'        => null,
-                                'sort_order' => 20,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Create Quotation','slug'=>'create-quotation','icon'=>'fas fa-plus','route_name'=>'quotations.create','url'=>null, 'sort_order' => 10,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                                ['name'=>'Manage Quotations','slug'=>'manage-quotations','icon'=>'fas fa-list','route_name'=>'quotations.index','url'=>null,'sort_order' => 20,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                            ],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'Invoices',
-                                'slug'       => 'invoices',
-                                'icon'       => 'fas fa-file-invoice-dollar',
-                                'route_name' => null,
-                                'url'        => null,
-                                'sort_order' => 30,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Create Invoice','slug'=>'create-invoice','icon'=>'fas fa-plus','route_name'=>'invoices.create','url'=>null,'sort_order' => 10,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                                ['name'=>'Manage Invoices','slug'=>'manage-invoices','icon'=>'fas fa-list','route_name'=>'invoices.index','url'=>null,'sort_order' => 20,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-
-                                ['name'=>'Pending Invoices','slug'=>'pending-invoices','icon'=>'fas fa-clock','route_name'=>'invoices.pending','url'=>null,'sort_order' => 30,'is_active'=>true,'badge_key'=>'invoices_pending_count','visibility'=>$this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin','Admin','Management'],'flags'=>['is_department_head_finance']]),'route_params'=>null],
-                                ['name'=>'Approved Invoices','slug'=>'approved-invoices','icon'=>'fas fa-check','route_name'=>'invoices.approved','url'=>null,'sort_order' => 40,'is_active'=>true,'badge_key'=>'invoices_approved_count','visibility'=>$this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin','Admin','Management'],'flags'=>['is_department_head_finance']]),'route_params'=>null],
-                                ['name'=>'Rejected Invoices','slug'=>'rejected-invoices','icon'=>'fas fa-ban','route_name'=>'invoices.rejected','url'=>null,'sort_order' => 50,'is_active'=>true,'badge_key'=>'invoices_rejected_count','visibility'=>$this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin','Admin','Management'],'flags'=>['is_department_head_finance']]),'route_params'=>null],
-                                ['name'=>'Deleted Invoices','slug'=>'deleted-invoices','icon'=>'fas fa-trash','route_name'=>'invoices.deleted','url'=>null,'sort_order'=>60,'is_active'=>true,'badge_key'=>'invoices_deleted_count','visibility'=>$this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin','Admin','Management'],'flags'=>['is_department_head_finance']]),'route_params'=>null],
-                            ],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'Customer Statements',
-                                'slug'       => 'customer-statements',
-                                'icon'       => 'fas fa-file-invoice-dollar',
-                                'route_name' => null,
-                                'url'        => null,
-                                'sort_order' => 40,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Manage Statements','slug'=>'manage-customer-statements','icon'=>'fas fa-list','route_name'=>'customer_statements.index','url'=>null,'sort_order' => 10,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                            ],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'Credit Notes',
-                                'slug'       => 'credit-notes',
-                                'icon'       => 'fas fa-file-invoice-dollar',
-                                'route_name' => null,
-                                'url'        => null,
-                                'sort_order' => 50,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Create','slug'=>'create-credit-note','icon'=>'fas fa-plus','route_name'=>'credit_notes.create','url'=>null,'sort_order' => 10,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                                ['name'=>'Manage C Notes','slug'=>'manage-credit-notes','icon'=>'fas fa-list','route_name'=>'credit_notes.index','url'=>null,'sort_order' => 20,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                                ['name'=>'Pending C Notes','slug'=>'pending-credit-notes','icon'=>'fas fa-clock','route_name'=>'credit_notes.pending','url'=>null,'sort_order' => 30,'is_active'=>true,'badge_key'=>'credit_notes_pending_count','visibility'=>$this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin','Management'],'flags'=>['is_department_head_finance']]),'route_params'=>null],
-                                ['name'=>'Approved C Notes','slug'=>'approved-credit-notes','icon'=>'fas fa-check','route_name'=>'credit_notes.approved','url'=>null,'sort_order' => 40,'is_active'=>true,'badge_key'=>'credit_notes_approved_count','visibility'=>$this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin','Management'],'flags'=>['is_department_head_finance']]),'route_params'=>null],
-                                ['name'=>'Rejected C Notes','slug'=>'rejected-credit-notes','icon'=>'fas fa-ban','route_name'=>'credit_notes.rejected','url'=>null,'sort_order' => 50,'is_active'=>true,'badge_key'=>'credit_notes_rejected_count','visibility'=>$this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin','Management'],'flags'=>['is_department_head_finance']]),'route_params'=>null],
-                                // blade uses credit_notes.rejected also for “deleted” (looks like a bug). Keep it aligned:
-                                ['name'=>'Deleted C Notes','slug'=>'deleted-credit-notes','icon'=>'fas fa-trash','route_name'=>'credit_notes.rejected','url'=>null,'sort_order'=>60,'is_active'=>true,'badge_key'=>'credit_notes_deleted_count','visibility'=>$this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin','Management'],'flags'=>['is_department_head_finance']]),'route_params'=>null],
-                            ],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'Payments',
-                                'slug'       => 'payments',
-                                'icon'       => 'fas fa-credit-card',
-                                'route_name' => null,
-                                'url'        => null,
-                                'sort_order' => 60,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Manage Payments','slug'=>'manage-payments','icon'=>'fas fa-list','route_name'=>'payments.index','url'=>null,'sort_order' => 10,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                                ['name'=>'Manage Receipts','slug'=>'manage-receipts','icon'=>'fas fa-list','route_name'=>'receipts.index','url'=>null,'sort_order' => 20,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                            ],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'Products & Services',
-                                'slug'       => 'products-services-invoices',
-                                'icon'       => 'fas fa-boxes',
-                                'route_name' => null,
-                                'url'        => null,
-                                'sort_order' => 70,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [
-                                [
-                                    'name'=>'Manage P & S',
-                                    'slug'=>'manage-products-services-invoices',
-                                    'icon'=>'fas fa-list',
-                                    'route_name'=>'product_services.all',
-                                    'url'=>null,
-                                    'sort_order' => 10,
-                                    'is_active'=>true,
-                                    'badge_key'=>null,
-                                    'visibility'=>$this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),
-                                    'route_params'=>['category' => 'invoices'],
-                                ],
-                            ],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'Customers',
-                                'slug'       => 'customers',
-                                'icon'       => 'fas fa-user-friends',
-                                'route_name' => 'customers.index',
-                                'url'        => null,
-                                'sort_order' => 80,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'Accounts Receivable',
-                                'slug'       => 'accounts-receivable',
-                                'icon'       => 'fas fa-list',
-                                'route_name' => 'accounts.receivable',
-                                'url'        => null,
-                                'sort_order' => 90,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [],
-                        ],
-                    ],
-                ],
-
-                // =========================================================
-                // PURCHASES
-                // =========================================================
-                [
-                    'group' => [
-                        'name'       => 'Purchases',
-                        'slug'       => 'purchases',
-                        'icon'       => null,
-                        'sort_order' => 50,
-                        'is_active'  => true,
-                        'visibility' => $this->vis([]),
-                    ],
-                    'modules' => [
-                        [
-                            'module' => [
-                                'name'       => 'Bills',
-                                'slug'       => 'bills',
-                                'icon'       => 'fas fa-th-list',
-                                'route_name' => null,
-                                'url'        => null,
-                                'sort_order' => 10,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Create Bill','slug'=>'create-bill','icon'=>'fas fa-plus','route_name'=>'bills.create','url'=>null,'sort_order' => 10,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                                ['name'=>'Manage Bills','slug'=>'manage-bills','icon'=>'fas fa-list','route_name'=>'bills.index','url'=>null,'sort_order' => 20,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                                ['name'=>'Pending Bills','slug'=>'pending-bills','icon'=>'fas fa-clock','route_name'=>'bills.pending','url'=>null,'sort_order' => 30,'is_active'=>true,'badge_key'=>'bills_pending_count','visibility'=>$this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin','Management'],'flags'=>['is_department_head_finance']]),'route_params'=>null],
-                                ['name'=>'Approved Bills','slug'=>'approved-bills','icon'=>'fas fa-check','route_name'=>'bills.approved','url'=>null,'sort_order' => 40,'is_active'=>true,'badge_key'=>'bills_approved_count','visibility'=>$this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin','Management'],'flags'=>['is_department_head_finance']]),'route_params'=>null],
-                                ['name'=>'Rejected Bills','slug'=>'rejected-bills','icon'=>'fas fa-ban','route_name'=>'bills.rejected','url'=>null,'sort_order' => 50,'is_active'=>true,'badge_key'=>'bills_rejected_count','visibility'=>$this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin','Management'],'flags'=>['is_department_head_finance']]),'route_params'=>null],
-                            ],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'Vendor Statements',
-                                'slug'       => 'vendor-statements',
-                                'icon'       => 'fas fa-file-invoice-dollar',
-                                'route_name' => null,
-                                'url'        => null,
-                               'sort_order' => 20,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Manage Statements','slug'=>'manage-vendor-statements','icon'=>'fas fa-list','route_name'=>'vendor_statements.index','url'=>null,'sort_order' => 10,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                            ],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'Products & Services',
-                                'slug'       => 'products-services-bills',
-                                'icon'       => 'fas fa-boxes',
-                                'route_name' => null,
-                                'url'        => null,
-                                'sort_order' => 30,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [
-                                [
-                                    'name'=>'Manage P & S',
-                                    'slug'=>'manage-products-services-bills',
-                                    'icon'=>'fas fa-list',
-                                    'route_name'=>'product_services.all',
-                                    'url'=>null,
-                                    'sort_order' => 10,
-                                    'is_active'=>true,
-                                    'badge_key'=>null,
-                                    'visibility'=>$this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),
-                                    'route_params'=>['category' => 'bills'],
-                                ],
-                            ],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'Vendors',
-                                'slug'       => 'vendors',
-                                'icon'       => 'fas fa-user-friends',
-                                'route_name' => 'vendors.index',
-                                'url'        => null,
-                                'sort_order' => 40,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'Accounts Payable',
-                                'slug'       => 'accounts-payable',
-                                'icon'       => 'fas fa-list',
-                                'route_name' => 'accounts.payable',
-                                'url'        => null,
-                                'sort_order' => 50,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'Requisitions',
-                                'slug'       => 'requisitions',
-                                'icon'       => 'fas fa-hand-holding-usd',
-                                'route_name' => null,
-                                'url'        => null,
-                                'sort_order' => 60,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis([]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Manage Requisitions','slug'=>'manage-requisitions','icon'=>'fas fa-list','route_name'=>'requisitions.index','url'=>null,'sort_order' => 10,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis([]),'route_params'=>null],
-                                ['name'=>'Pending Requisitions','slug'=>'pending-requisitions','icon'=>'fas fa-clock','route_name'=>'requisitions.pending','url'=>null,'sort_order' => 20,'is_active'=>true,'badge_key'=>'requisitions_pending_count','visibility'=>$this->vis(['any_roles'=>['SuperAdmin','Admin','Management'],'flags'=>['is_department_head_finance']]),'route_params'=>null],
-                                ['name'=>'Approved Requisitions','slug'=>'approved-requisitions','icon'=>'fas fa-check','route_name'=>'requisitions.approved','url'=>null,'sort_order' => 30,'is_active'=>true,'badge_key'=>'requisitions_approved_count','visibility'=>$this->vis(['any_roles'=>['SuperAdmin','Admin','Management'],'flags'=>['is_department_head_finance']]),'route_params'=>null],
-                                ['name'=>'Rejected Requisitions','slug'=>'rejected-requisitions','icon'=>'fas fa-ban','route_name'=>'requisitions.rejected','url'=>null,'sort_order' => 40,'is_active'=>true,'badge_key'=>'requisitions_rejected_count','visibility'=>$this->vis(['any_roles'=>['SuperAdmin','Admin','Management'],'flags'=>['is_department_head_finance']]),'route_params'=>null],
-                            ],
-                        ],
-                    ],
-                ],
-
-                // =========================================================
-                // ACCOUNTING
-                // =========================================================
-                [
-                    'group' => [
-                        'name'       => 'Accounting',
-                        'slug'       => 'accounting',
-                        'icon'       => null,
-                        'sort_order' => 60,
-                        'is_active'  => true,
-                        'visibility' => $this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),
-                    ],
-                    'modules' => [
-                        [
-                            'module' => [
-                                'name'       => 'Transactions',
-                                'slug'       => 'transactions',
-                                'icon'       => 'fas fa-money-check',
-                                'route_name' => 'transactions.index',
-                                'url'        => null,
-                                'sort_order' => 10,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'Charts of Accounts',
-                                'slug'       => 'charts-of-accounts',
-                                'icon'       => 'fas fa-balance-scale',
-                                'route_name' => null,
-                                'url'        => null,
-                                'sort_order' => 20,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Manage Accounts','slug'=>'manage-accounts','icon'=>'fas fa-list','route_name'=>'accounts.index','url'=>null,'sort_order' => 10,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                                ['name'=>'Manage Sales Taxes','slug'=>'manage-sales-taxes','icon'=>'fas fa-list','route_name'=>'accounts.tax','url'=>null,'sort_order' => 20,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['flags'=>['is_business_admin'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                            ],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'Bank Accounts',
-                                'slug'       => 'bank-accounts',
-                                'icon'       => 'fas fa-bank',
-                                'route_name' => 'bank_accounts.index',
-                                'url'        => null,
-                                'sort_order' => 30,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'Currency Exchange Rates',
-                                'slug'       => 'exchange-rates',
-                                'icon'       => 'fas fa-exchange',
-                                'route_name' => 'exchange_rates.index',
-                                'url'        => null,
-                                'sort_order' => 40,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [],
-                        ],
-                    ],
-                ],
-
-                // =========================================================
-                // ASSET MANAGEMENT
-                // =========================================================
-                [
-                    'group' => [
-                        'name'       => 'Asset Management',
-                        'slug'       => 'asset-management',
-                        'icon'       => null,
-                        'sort_order' => 70,
-                        'is_active'  => true,
-                        'visibility' => $this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),
-                    ],
-                    'modules' => [
-                        [
-                            'module' => [
-                                'name'       => 'Master',
-                                'slug'       => 'asset-master',
-                                'icon'       => 'fas fa-cog',
-                                'route_name' => null,
-                                'url'        => null,
-                                'sort_order' => 10,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Manage Categories','slug'=>'asset-categories','icon'=>'fas fa-list','route_name'=>'categories.index','url'=>null,'sort_order' => 10,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                                ['name'=>'Manage Attributes','slug'=>'asset-attributes','icon'=>'fas fa-list','route_name'=>'attributes.index','url'=>null,'sort_order' => 20,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                                ['name'=>'Manage Brands','slug'=>'asset-brands','icon'=>'fas fa-list','route_name'=>'brands.index','url'=>null,'sort_order' => 30,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                            ],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'Products',
-                                'slug'       => 'asset-products',
-                                'icon'       => 'fas fa-boxes',
-                                'route_name' => null,
-                                'url'        => null,
-                                'sort_order' => 20,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Create Product','slug'=>'create-asset-product','icon'=>'fas fa-plus','route_name'=>'products.create','url'=>null,'sort_order' => 10,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                                ['name'=>'Manage Products','slug'=>'manage-asset-products','icon'=>'fas fa-list','route_name'=>'products.index','url'=>null,'sort_order' => 20,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                            ],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'Purchase Orders',
-                                'slug'       => 'asset-purchase-orders',
-                                'icon'       => 'fas fa-hand-holding-usd',
-                                'route_name' => null,
-                                'url'        => null,
-                                'sort_order' => 30,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Manage Orders','slug'=>'manage-asset-orders','icon'=>'fas fa-list','route_name'=>'purchases.index','url'=>null,'sort_order' => 10,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                                ['name'=>'Pending Orders','slug'=>'pending-asset-orders','icon'=>'fas fa-clock','route_name'=>'purchases.pending','url'=>null,'sort_order' => 20,'is_active'=>true,'badge_key'=>'asset_purchases_pending_count','visibility'=>$this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin','Management'],'flags'=>['is_department_head_finance']]),'route_params'=>null],
-                                ['name'=>'Approved Orders','slug'=>'approved-asset-orders','icon'=>'fas fa-check','route_name'=>'purchases.approved','url'=>null,'sort_order' => 30,'is_active'=>true,'badge_key'=>'asset_purchases_approved_count','visibility'=>$this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin','Management'],'flags'=>['is_department_head_finance']]),'route_params'=>null],
-                                ['name'=>'Rejected Orders','slug'=>'rejected-asset-orders','icon'=>'fas fa-ban','route_name'=>'purchases.rejected','url'=>null,'sort_order' => 40,'is_active'=>true,'badge_key'=>'asset_purchases_rejected_count','visibility'=>$this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin','Management'],'flags'=>['is_department_head_finance']]),'route_params'=>null],
-                                ['name'=>'Deleted Orders','slug'=>'deleted-asset-orders','icon'=>'fas fa-trash','route_name'=>'purchases.deleted','url'=>null,'sort_order' => 50,'is_active'=>true,'badge_key'=>'asset_purchases_deleted_count','visibility'=>$this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin','Management'],'flags'=>['is_department_head_finance']]),'route_params'=>null],
-                            ],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'GRV (Assets)',
-                                'slug'       => 'grv-assets',
-                                'icon'       => 'fas fa-th-list',
-                                'route_name' => null,
-                                'url'        => null,
-                                'sort_order' => 40,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Manage Assets GRVs','slug'=>'manage-assets-grv','icon'=>'fas fa-list','route_name'=>'goods_receiveds.assets','url'=>null,'sort_order' => 10,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                            ],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'Assets',
-                                'slug'       => 'assets',
-                                'icon'       => 'fas fa-th-list',
-                                'route_name' => null,
-                                'url'        => null,
-                                'sort_order' => 50,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Create Asset','slug'=>'create-asset','icon'=>'fas fa-plus','route_name'=>'assets.create','url'=>null,'sort_order' => 10,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                                ['name'=>'Manage Assets','slug'=>'manage-assets','icon'=>'fas fa-list','route_name'=>'assets.index','url'=>null,'sort_order' => 20,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                            ],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'Dispatches (Assets)',
-                                'slug'       => 'asset-dispatches',
-                                'icon'       => 'fas fa-list',
-                                'route_name' => null,
-                                'url'        => null,
-                                'sort_order' => 60,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Manage Dispatches','slug'=>'manage-asset-dispatches','icon'=>'fas fa-list','route_name'=>'asset_dispatches.index','url'=>null,'sort_order' => 10,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['Finance'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                                ['name'=>'Pending Dispatches','slug'=>'pending-asset-dispatches','icon'=>'fas fa-clock','route_name'=>'asset_dispatches.pending','url'=>null,'sort_order' => 20,'is_active'=>true,'badge_key'=>'asset_dispatches_pending_count','visibility'=>$this->vis(['any_roles'=>['SuperAdmin','Admin','Management']]),'route_params'=>null],
-                                ['name'=>'Approved Dispatches','slug'=>'approved-asset-dispatches','icon'=>'fas fa-check','route_name'=>'asset_dispatches.approved','url'=>null,'sort_order' => 30,'is_active'=>true,'badge_key'=>'asset_dispatches_approved_count','visibility'=>$this->vis(['any_roles'=>['SuperAdmin','Admin','Management']]),'route_params'=>null],
-                                ['name'=>'Rejected Dispatches','slug'=>'rejected-asset-dispatches','icon'=>'fas fa-ban','route_name'=>'asset_dispatches.rejected','url'=>null,'sort_order' => 40,'is_active'=>true,'badge_key'=>'asset_dispatches_rejected_count','visibility'=>$this->vis(['any_roles'=>['SuperAdmin','Admin','Management']]),'route_params'=>null],
-                            ],
-                        ],
-                    ],
-                ],
-
-                // =========================================================
-                // SHEQ
-                // =========================================================
-                [
-                    'group' => [
-                        'name'       => 'SHEQ',
-                        'slug'       => 'sheq',
-                        'icon'       => null,
-                        'sort_order' => 80,
-                        'is_active'  => true,
-                        'visibility' => $this->vis(['any_departments'=>['HSEQ'],'any_roles'=>['SuperAdmin']]),
-                    ],
-                    'modules' => [
-                        [
-                            'module' => [
-                                'name'       => 'Master',
-                                'slug'       => 'sheq-master',
-                                'icon'       => 'fas fa-cog',
-                                'route_name' => null,
-                                'url'        => null,
-                                'sort_order' => 10,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis(['any_departments'=>['HSEQ'],'any_roles'=>['SuperAdmin','Admin']]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Cause Categories','slug'=>'loss-categories','icon'=>'fas fa-list','route_name'=>'loss_categories.index','url'=>null,'sort_order' => 10,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['HSEQ'],'any_roles'=>['Admin','SuperAdmin']]),'route_params'=>null],
-                                ['name'=>'Cause Groups','slug'=>'loss-groups','icon'=>'fas fa-list','route_name'=>'loss_groups.index','url'=>null,'sort_order' => 20,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['HSEQ'],'any_roles'=>['Admin','SuperAdmin']]),'route_params'=>null],
-                                ['name'=>'Loss Causes','slug'=>'losses','icon'=>'fas fa-list','route_name'=>'losses.index','url'=>null,'sort_order' => 30,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['HSEQ'],'any_roles'=>['Admin','SuperAdmin']]),'route_params'=>null],
-                            ],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'Incidents',
-                                'slug'       => 'incidents',
-                                'icon'       => 'fas fa-exclamation-triangle',
-                                'route_name' => null,
-                                'url'        => null,
-                                'sort_order' => 20,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis(['any_departments'=>['HSEQ'],'any_roles'=>['SuperAdmin']]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Create Incidents','slug'=>'create-incidents','icon'=>'fas fa-plus','route_name'=>'incidents.create','url'=>null,'sort_order' => 10,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['HSEQ'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                                ['name'=>'Manage Incidents','slug'=>'manage-incidents','icon'=>'fas fa-list','route_name'=>'incidents.index','url'=>null,'sort_order' => 20,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['HSEQ'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                            ],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'Age Pyramid',
-                                'slug'       => 'age-pyramid',
-                                'icon'       => 'fas fa-hourglass',
-                                'route_name' => null,
-                                'url'        => null,
-                                'sort_order' => 30,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis(['any_departments'=>['HSEQ'],'any_roles'=>['SuperAdmin']]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Customers','slug'=>'age-customers','icon'=>'fas fa-list','route_name'=>'customers.age','url'=>null,'sort_order' => 10,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['HSEQ'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                                ['name'=>'Drivers','slug'=>'age-drivers','icon'=>'fas fa-list','route_name'=>'drivers.age','url'=>null,'sort_order' => 20,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['HSEQ'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                                ['name'=>'Employees','slug'=>'age-employees','icon'=>'fas fa-list','route_name'=>'employees.age','url'=>null,'sort_order' => 30,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['HSEQ'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                                ['name'=>'Horses','slug'=>'age-horses','icon'=>'fas fa-list','route_name'=>'horses.age','url'=>null,'sort_order' => 40,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['HSEQ'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                                ['name'=>'Trailers','slug'=>'age-trailers','icon'=>'fas fa-list','route_name'=>'trailers.age','url'=>null,'sort_order' => 50,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['HSEQ'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                                ['name'=>'Vehicles','slug'=>'age-vehicles','icon'=>'fas fa-list','route_name'=>'vehicles.age','url'=>null,'sort_order'=>60,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['HSEQ'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                                ['name'=>'Vendors','slug'=>'age-vendors','icon'=>'fas fa-list','route_name'=>'vendors.age','url'=>null,'sort_order'=>70,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['HSEQ'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                            ],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'Compliance',
-                                'slug'       => 'compliance',
-                                'icon'       => 'fas fa-check',
-                                'route_name' => null,
-                                'url'        => null,
-                                'sort_order' => 40,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis(['any_departments'=>['HSEQ'],'any_roles'=>['SuperAdmin']]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Driver - Route Compliance','slug'=>'driver-route-compliance','icon'=>'fas fa-list','route_name'=>'compliances.index','url'=>null,'sort_order' => 10,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['HSEQ'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                            ],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'Training Workshops',
-                                'slug'       => 'training-workshops',
-                                'icon'       => 'fas fa-school',
-                                'route_name' => null,
-                                'url'        => null,
-                                'sort_order' => 50,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis(['any_departments'=>['HSEQ'],'any_roles'=>['SuperAdmin']]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'What to train?','slug'=>'training-items','icon'=>'fas fa-list','route_name'=>'training_items.index','url'=>null,'sort_order' => 10,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['HSEQ'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                                ['name'=>'Who to train?','slug'=>'training-departments','icon'=>'fas fa-list','route_name'=>'training_departments.index','url'=>null,'sort_order' => 20,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['HSEQ'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                                ['name'=>'Who needs training?','slug'=>'training-requirements','icon'=>'fas fa-list','route_name'=>'training_requirements.index','url'=>null,'sort_order' => 30,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['HSEQ'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                                ['name'=>'Training Plan','slug'=>'training-plans','icon'=>'fas fa-list','route_name'=>'training_plans.index','url'=>null,'sort_order' => 40,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['HSEQ'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                                ['name'=>'Training Program','slug'=>'trainings','icon'=>'fas fa-list','route_name'=>'trainings.index','url'=>null,'sort_order' => 50,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['HSEQ'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                            ],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'Documents',
-                                'slug'       => 'hseq-documents',
-                                'icon'       => 'fas fa-file',
-                                'route_name' => null,
-                                'url'        => null,
-                                'sort_order' => 60,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis([
-                                    'any_departments'=>['HSEQ'],
-                                    'any_roles'=>['SuperAdmin'],
-                                    'flags'=>['has_hseq_department'], // $hseq_department exists
-                                ]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [
-                                [
-                                    'name'=>'Manage Documents',
-                                    'slug'=>'manage-hseq-documents',
-                                    'icon'=>'fas fa-list',
-                                    'route_name'=>'documents.all',
-                                    'url'=>null,
-                                    'sort_order' => 10,
-                                    'is_active'=>true,
-                                    'badge_key'=>null,
-                                    'visibility'=>$this->vis([
-                                        'any_departments'=>['HSEQ'],
-                                        'any_roles'=>['SuperAdmin'],
-                                        'flags'=>['has_hseq_department'],
-                                    ]),
-                                    'route_params'=>['id' => '{hseq_department_id}', 'category' => 'department'],
-                                ],
-                            ],
-                        ],
-                    ],
-                ],
-
-                // =========================================================
-                // GENERAL ACCESS (SECURITY)
-                // =========================================================
-                [
-                    'group' => [
-                        'name'       => 'General Access',
-                        'slug'       => 'general-access',
-                        'icon'       => null,
-                        'sort_order' => 90,
-                        'is_active'  => true,
-                        'visibility' => $this->vis(['any_departments'=>['Security'],'any_roles'=>['SuperAdmin']]),
-                    ],
-                    'modules' => [
-                        [
-                            'module' => [
-                                'name'       => 'Gatepass',
-                                'slug'       => 'gatepass-security',
-                                'icon'       => 'fas fa-door-open',
-                                'route_name' => null,
-                                'url'        => null,
-                                'sort_order' => 10,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis(['any_departments'=>['Security'],'any_roles'=>['SuperAdmin']]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Manage Gatepasses','slug'=>'manage-gatepasses-security','icon'=>'fas fa-list','route_name'=>'gate_passes.index','url'=>null,'sort_order' => 10,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['Security'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                                ['name'=>'Pending Gatepasses','slug'=>'pending-gatepasses-security','icon'=>'fas fa-clock','route_name'=>'gate_passes.pending','url'=>null,'sort_order' => 20,'is_active'=>true,'badge_key'=>'gate_passes_pending_count','visibility'=>$this->vis(['any_departments'=>['Security'],'any_roles'=>['SuperAdmin']]),'route_params'=>['department'=>'security']],
-                                ['name'=>'Approved Gatepasses','slug'=>'approved-gatepasses-security','icon'=>'fas fa-check','route_name'=>'gate_passes.approved','url'=>null,'sort_order' => 30,'is_active'=>true,'badge_key'=>'gate_passes_approved_count','visibility'=>$this->vis(['any_departments'=>['Security'],'any_roles'=>['SuperAdmin']]),'route_params'=>['department'=>'security']],
-                                ['name'=>'Rejected Gatepasses','slug'=>'rejected-gatepasses-security','icon'=>'fas fa-ban','route_name'=>'gate_passes.rejected','url'=>null,'sort_order' => 40,'is_active'=>true,'badge_key'=>'gate_passes_rejected_count','visibility'=>$this->vis(['any_departments'=>['Security'],'any_roles'=>['SuperAdmin']]),'route_params'=>['department'=>'security']],
-                            ],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'Groups',
-                                'slug'       => 'groups',
-                                'icon'       => 'fas fa-users',
-                                'route_name' => null,
-                                'url'        => null,
-                                'sort_order' => 20,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis(['any_departments'=>['Security'],'any_roles'=>['SuperAdmin']]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Manage Groups','slug'=>'manage-groups','icon'=>'fas fa-list','route_name'=>'groups.index','url'=>null,'sort_order' => 10,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['Security'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                            ],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'Visitors',
-                                'slug'       => 'visitors',
-                                'icon'       => 'fas fa-user-friends',
-                                'route_name' => null,
-                                'url'        => null,
-                                'sort_order' => 30,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis(['any_departments'=>['Security'],'any_roles'=>['SuperAdmin']]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Manage Visitors','slug'=>'manage-visitors','icon'=>'fas fa-list','route_name'=>'visitors.index','url'=>null,'sort_order' => 10,'is_active'=>true,'badge_key'=>null,'visibility'=>$this->vis(['any_departments'=>['Security'],'any_roles'=>['SuperAdmin']]),'route_params'=>null],
-                            ],
-                        ],
-                    ],
-                ],
-
-                
-                // =========================================================
-                // Fleet Management
-                // =========================================================
-                [
-                    'group' => [
-                        'name' => 'Fleet Management',
-                        'slug' => 'fleet-management',
-                        'icon' => 'fas fa-truck',
-                        'sort_order' => 100,
-                        'url' => null,
-                        'is_active' => true,
-                        'visibility' => $this->vis([
-                            'departments' => ['Transport & Logistcs', 'Workshop'],
-                            'or' => ['is_super_admin' => true],
-                            'not_driver' => true,
-                        ]),
-                    ],
-                    'modules' => [
-
-                        // Master (flattened)
-                        [
-                            'module' => [
-                                'name' => 'Master',
-                                'slug' => 'fleet-master',
-                                'icon' => 'fas fa-cog',
-                                'route_name' => null,
-                                'route_params' => null,
-                                'url' => null,
-                                'is_active' => true,
-                                'sort_order' => 10,
-                                'badge_key' => null,
-                                'visibility' => $this->vis([
-                                    'or' => ['is_admin' => true, 'is_super_admin' => true],
-                                ]),
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Fleet Clusters','slug'=>'clusters','icon'=>'fas fa-list','route_name'=>'clusters.index','route_params'=>null,'url'=>null,'sort_order' => 10,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Horse Groups','slug'=>'horse-groups','icon'=>'fas fa-list','route_name'=>'horse_groups.index','route_params'=>null,'url'=>null,'sort_order' => 20,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Horse Makes','slug'=>'horse-makes','icon'=>'fas fa-list','route_name'=>'horse_makes.index','route_params'=>null,'url'=>null,'sort_order' => 30,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Horse Types','slug'=>'horse-types','icon'=>'fas fa-list','route_name'=>'horse_types.index','route_params'=>null,'url'=>null,'sort_order' => 40,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Trailer Groups','slug'=>'trailer-groups','icon'=>'fas fa-list','route_name'=>'trailer_groups.index','route_params'=>null,'url'=>null,'sort_order' => 50,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Trailer Types','slug'=>'trailer-types','icon'=>'fas fa-list','route_name'=>'trailer_types.index','route_params'=>null,'url'=>null,'sort_order' => 60,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Vehicle Groups','slug'=>'vehicle-groups','icon'=>'fas fa-list','route_name'=>'vehicle_groups.index','route_params'=>null,'url'=>null,'sort_order' => 70,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Vehicle Makes','slug'=>'vehicle-makes','icon'=>'fas fa-list','route_name'=>'vehicle_makes.index','route_params'=>null,'url'=>null,'sort_order' => 80,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Vehicle Types','slug'=>'vehicle-types','icon'=>'fas fa-list','route_name'=>'vehicle_types.index','route_params'=>null,'url'=>null,'sort_order' => 90,'badge_key'=>null,'visibility'=>$this->vis([])],
-
-                                // Flattened "Fleet Inspections" under Master
-                                ['name'=>'Fleet Inspections - Checklists','slug'=>'checklist-categories','icon'=>'fas fa-list','route_name'=>'checklist_categories.index','route_params'=>null,'url'=>null,'sort_order' => 100,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Fleet Inspections - Checklist Item Groups','slug'=>'checklist-sub-categories','icon'=>'fas fa-list','route_name'=>'checklist_sub_categories.index','route_params'=>null,'url'=>null,'sort_order' => 110,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Fleet Inspections - Checklist Items','slug'=>'checklist-items','icon'=>'fas fa-list','route_name'=>'checklist_items.index','route_params'=>null,'url'=>null,'sort_order' => 120,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                            ],
-                        ],
-
-                        [
-                            'module' => [
-                                'name' => 'Horses',
-                                'slug' => 'horses',
-                                'icon' => 'fas fa-truck',
-                                'route_name' => null,
-                                'route_params' => null,
-                                'url' => null,
-                                'sort_order' => 20,
-                                'is_active' => true,
-                                'badge_key' => null,
-                                'visibility' => $this->vis([]),
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Create Horse','slug'=>'horses-create','icon'=>'fas fa-plus','route_name'=>'horses.create','route_params'=>null,'url'=>null,'sort_order' => 10,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Manage Horses','slug'=>'horses-index','icon'=>'fas fa-list','route_name'=>'horses.index','route_params'=>null,'url'=>null,'sort_order' => 20,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Archived Horses','slug'=>'horses-archived','icon'=>'fas fa-archive','route_name'=>'horses.archived','route_params'=>null,'url'=>null,'sort_order' => 30,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                            ],
-                        ],
-
-                        [
-                            'module' => [
-                                'name' => 'Trailers',
-                                'slug' => 'trailers',
-                                'icon' => 'fas fa-trailer',
-                                'route_name' => null,
-                                'route_params' => null,
-                                'url' => null,
-                                'sort_order' => 30,
-                                'is_active' => true,
-                                'badge_key' => null,
-                                'visibility' => $this->vis([]),
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Manage Trailers','slug'=>'trailers-index','icon'=>'fas fa-list','route_name'=>'trailers.index','route_params'=>null,'url'=>null,'sort_order' => 10,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Trailer Links','slug'=>'trailer-links','icon'=>'fas fa-list','route_name'=>'trailer_links.index','route_params'=>null,'url'=>null,'sort_order' => 20,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Archived Trailers','slug'=>'trailers-archived','icon'=>'fas fa-archive','route_name'=>'trailers.archived','route_params'=>null,'url'=>null,'sort_order' => 30,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                            ],
-                        ],
-
-                        [
-                            'module' => [
-                                'name' => 'Vehicles',
-                                'slug' => 'vehicles',
-                                'icon' => 'fas fa-car',
-                                'route_name' => null,
-                                'route_params' => null,
-                                'url' => null,
-                                'sort_order' => 40,
-                                'is_active' => true,
-                                'badge_key' => null,
-                                'visibility' => $this->vis([]),
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Create Vehicle','slug'=>'vehicles-create','icon'=>'fas fa-plus','route_name'=>'vehicles.create','route_params'=>null,'url'=>null,'sort_order' => 10,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Manage Vehicles','slug'=>'vehicles-index','icon'=>'fas fa-list','route_name'=>'vehicles.index','route_params'=>null,'url'=>null,'sort_order' => 20,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Archived Vehicles','slug'=>'vehicles-archived','icon'=>'fas fa-archive','route_name'=>'vehicles.archived','route_params'=>null,'url'=>null,'sort_order' => 30,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                            ],
-                        ],
-
-                        [
-                            'module' => [
-                                'name' => 'Assignments',
-                                'slug' => 'assignments',
-                                'icon' => 'fas fa-user-plus',
-                                'route_name' => null,
-                                'route_params' => null,
-                                'url' => null,
-                                'sort_order' => 50,
-                                'is_active' => true,
-                                'badge_key' => null,
-                                'visibility' => $this->vis([]),
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Driver - Horse','slug'=>'assignments-driver-horse','icon'=>'fas fa-plus','route_name'=>'assignments.index','route_params'=>null,'url'=>null,'sort_order' => 10,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Horse - Trailer','slug'=>'assignments-horse-trailer','icon'=>'fas fa-plus','route_name'=>'trailer_assignments.index','route_params'=>null,'url'=>null,'sort_order' => 20,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Employee - Vehicle','slug'=>'assignments-employee-vehicle','icon'=>'fas fa-plus','route_name'=>'vehicle_assignments.index','route_params'=>null,'url'=>null,'sort_order' => 30,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                            ],
-                        ],
-
-                        [
-                            'module' => [
-                                'name' => 'Fleet Inspections',
-                                'slug' => 'fleet-inspections',
-                                'icon' => 'fas fa-search',
-                                'route_name' => null,
-                                'route_params' => null,
-                                'url' => null,
-                                'sort_order' => 60,
-                                'is_active' => true,
-                                'badge_key' => null,
-                                'visibility' => $this->vis([]),
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Manage Inspections','slug'=>'checklists-index','icon'=>'fas fa-tasks','route_name'=>'checklists.index','route_params'=>null,'url'=>null,'sort_order' => 10,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                            ],
-                        ],
-                    ],
-                ],
-
-
-                // =========================================================
-                // Fuel Management
-                // =========================================================
-                [
-                    'group' => [
-                        'name' => 'Fuel Management',
-                        'slug' => 'fuel-management',
-                        'icon' => 'fas fa-gas-pump',
-                        'is_active' => true,
-                        'url' => null,
-                        'sort_order' => 110,
-                        'visibility' => $this->vis([
-                            'departments' => ['Transport & Logistcs'],
-                            'or' => ['is_super_admin' => true],
-                        ]),
-                    ],
-                    'modules' => [
-
-                        [
-                            'module' => [
-                                'name' => 'Fueling Stations',
-                                'slug' => 'fueling-stations',
-                                'icon' => 'fas fa-oil-can',
-                                'route_name' => null,
-                                'sort_order' => 10,
-                                'is_active' => true,
-                                'route_params' => null,
-                                'url' => null,
-                                'badge_key' => null,
-                                'visibility' => $this->vis(['not_driver' => true]),
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Manage Stations','slug'=>'containers-index','icon'=>'fas fa-list','route_name'=>'containers.index','route_params'=>null,'url'=>null,'sort_order' => 10,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Fuel Transfers','slug'=>'transfers-fuel','icon'=>'fas fa-list','route_name'=>'transfers.fuel','route_params'=>null,'url'=>null,'sort_order' => 20,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                            ],
-                        ],
-
-                        [
-                            'module' => [
-                                'name' => 'Fuel Stations TopUps',
-                                'slug' => 'fuel-topups',
-                                'icon' => 'fas fa-fill-drip',
-                                'route_name' => null,
-                                'route_params' => null,
-                                'sort_order' => 20,
-                                'is_active' => true,
-                                'url' => null,
-                                'badge_key' => null,
-                                'visibility' => $this->vis(['not_driver' => true]),
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Fuel Top Ups','slug'=>'topups-index','icon'=>'fas fa-list','route_name'=>'top_ups.index','route_params'=>null,'url'=>null, 'sort_order' => 10,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Pending Top Ups','slug'=>'topups-pending','icon'=>'fas fa-clock','route_name'=>'top_ups.pending','route_params'=>null,'url'=>null,'sort_order' => 20,'is_active' => true,'badge_key'=>'top_ups_pending','visibility'=>$this->vis(['or'=>['is_admin'=>true,'is_super_admin'=>true]])],
-                                ['name'=>'Approved Top Ups','slug'=>'topups-approved','icon'=>'fas fa-check','route_name'=>'top_ups.approved','route_params'=>null,'url'=>null,'sort_order' => 30,'is_active' => true,'badge_key'=>'top_ups_approved','visibility'=>$this->vis(['or'=>['is_admin'=>true,'is_super_admin'=>true]])],
-                                ['name'=>'Rejected Top Ups','slug'=>'topups-rejected','icon'=>'fas fa-ban','route_name'=>'top_ups.rejected','route_params'=>null,'url'=>null,'sort_order' => 40,'is_active' => true,'badge_key'=>'top_ups_rejected','visibility'=>$this->vis(['or'=>['is_admin'=>true,'is_super_admin'=>true]])],
-                            ],
-                        ],
-
-                        [
-                            'module' => [
-                                'name' => 'Fuel Orders',
-                                'slug' => 'fuel-orders',
-                                'icon' => 'fas fa-receipt',
-                                'route_name' => null,
-                                'route_params' => null,
-                                'url' => null,
-                                'sort_order' => 30,
-                                'is_active' => true,
-                                'badge_key' => null,
-                                'visibility' => $this->vis(['not_driver' => true]),
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Manage Fuel Orders','slug'=>'fuels-index','icon'=>'fas fa-list','route_name'=>'fuels.index','route_params'=>null,'url'=>null,'sort_order' => 10,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Pending Fuel Orders','slug'=>'fuels-pending','icon'=>'fas fa-clock','route_name'=>'fuels.pending','route_params'=>null,'url'=>null,'sort_order' => 20,'is_active' => true,'badge_key'=>'fuels_pending','visibility'=>$this->vis(['or'=>['is_management'=>true,'is_super_admin'=>true]])],
-                                ['name'=>'Approved Fuel Orders','slug'=>'fuels-approved','icon'=>'fas fa-check','route_name'=>'fuels.approved','route_params'=>null,'url'=>null,'sort_order' => 30,'is_active' => true,'badge_key'=>'fuels_approved','visibility'=>$this->vis(['or'=>['is_management'=>true,'is_super_admin'=>true]])],
-                                ['name'=>'Rejected Fuel Orders','slug'=>'fuels-rejected','icon'=>'fas fa-ban','route_name'=>'fuels.rejected','route_params'=>null,'url'=>null,'sort_order' => 40,'is_active' => true,'badge_key'=>'fuels_rejected','visibility'=>$this->vis(['or'=>['is_management'=>true,'is_super_admin'=>true]])],
-                                ['name'=>'Deleted Fuel Orders','slug'=>'fuels-deleted','icon'=>'fas fa-trash','route_name'=>'fuels.deleted','route_params'=>null,'url'=>null, 'sort_order' => 50, 'is_active' => true, 'badge_key'=>'fuels_deleted', 'visibility'=>$this->vis(['or'=>['is_management'=>true,'is_super_admin'=>true]])],
-                            ],
-                        ],
-
-                        [
-                            'module' => [
-                                'name' => 'Fuel Allocations',
-                                'slug' => 'fuel-allocations',
-                                'icon' => 'fas fa-random',
-                                'route_name' => null,
-                                'route_params' => null,
-                                'url' => null,
-                                'sort_order' => 40,
-                                'is_active' => true,
-                                'badge_key' => null,
-                                'visibility' => $this->vis([]),
-                            ],
-                            'sub_modules' => [
-                                [
-                                    'name' => 'My Allocation',
-                                    'slug' => 'allocations-myallocations',
-                                    'icon' => 'fas fa-arrow-right',
-                                    'route_name' => 'allocations.myallocations',
-                                    'route_params' => ['id' => '{employee_id}'], // ✅ required {id}
-                                    'url' => null,
-                                    'sort_order' => 10,
-                                    'is_active' => true,
-                                    'badge_key' => 'my_allocation_count',
-                                    'visibility' => $this->vis([]),
-                                ],
-                                [
-                                    'name' => 'Manage Allocation',
-                                    'slug' => 'allocations-index',
-                                    'icon' => 'fas fa-list',
-                                    'route_name' => 'allocations.index',
-                                    'route_params' => null,
-                                    'url' => null,
-                                    'sort_order' => 20,
-                                    'is_active' => true,
-                                    'badge_key' => null,
-                                    'visibility' => $this->vis(['or'=>['is_admin'=>true,'is_super_admin'=>true]]),
-                                ],
-                            ],
-                        ],
-
-                        [
-                            'module' => [
-                                'name' => 'Fuel Requisitions',
-                                'slug' => 'fuel-requisitions',
-                                'icon' => 'fas fa-clipboard-list',
-                                'route_name' => null,
-                                'route_params' => null,
-                                'url' => null,
-                                'sort_order' => 50,
-                                'is_active' => true,
-                                'badge_key' => null,
-                                'visibility' => $this->vis([]),
-                            ],
-                            'sub_modules' => [
-                                [
-                                    'name' => 'My Requests',
-                                    'slug' => 'fuel-requests-myrequests',
-                                    'icon' => 'fas fa-arrow-right',
-                                    'route_name' => 'fuel_requests.myrequests',
-                                    'route_params' => ['id' => '{employee_id}'],
-                                    'url' => null,
-                                    'sort_order' => 10,
-                                    'is_active' => true,
-                                    'badge_key' => null,
-                                    'visibility' => $this->vis([]),
-                                ],
-                                ['name'=>'Pending Requests','slug'=>'fuel-requests-pending','icon'=>'fas fa-clock','route_name'=>'fuel_requests.pending','route_params'=>null,'url'=>null,'sort_order' => 20,'is_active' => true,'badge_key'=>'fuel_requests_pending','visibility'=>$this->vis(['or'=>['is_management'=>true,'is_admin'=>true,'is_super_admin'=>true]])],
-                                ['name'=>'Approved Requests','slug'=>'fuel-requests-approved','icon'=>'fas fa-check','route_name'=>'fuel_requests.approved','route_params'=>null,'url'=>null,'sort_order' => 30, 'is_active' => true,'badge_key'=>'fuel_requests_approved','visibility'=>$this->vis(['or'=>['is_management'=>true,'is_admin'=>true,'is_super_admin'=>true]])],
-                                ['name'=>'Rejected Requests','slug'=>'fuel-requests-rejected','icon'=>'fas fa-ban','route_name'=>'fuel_requests.rejected','route_params'=>null,'url'=>null,'sort_order' => 40, 'is_active' => true,'badge_key'=>'fuel_requests_rejected','visibility'=>$this->vis(['or'=>['is_management'=>true,'is_admin'=>true,'is_super_admin'=>true]])],
-                            ],
-                        ],
-
-                    ],
-                ],
-
-                                // =========================================================
-                // Trip Management
-                // =========================================================
-                [
-                    'group' => [
-                        'name' => 'Trip Management',
-                        'slug' => 'trip-management',
-                        'icon' => 'fas fa-road',
-                        'sort_order' => 120,
-                        'url' => null,
-                        'is_active' => true,
-                        'visibility' => $this->vis([
-                            'or' => ['in_finance' => true, 'in_transport' => true, 'is_super_admin' => true],
-                        ]),
-                    ],
-                    'modules' => [
-
-                        // Master
-                        [
-                            'module' => [
-                                'name' => 'Master',
-                                'slug' => 'trip-master',
-                                'icon' => 'fas fa-cog',
-                                'route_name' => null,
-                                'url' => null,
-                                'sort_order' => 10,
-                                'is_active' => true,
-                                'badge_key' => null,
-                                'visibility' => $this->vis([
-                                    'or' => ['is_super_admin' => true, 'in_transport_admin' => true],
-                                ]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Agents','slug'=>'agents-index','icon'=>'fas fa-list','route_name'=>'agents.index','route_params'=>null,'url'=>null,'sort_order' => 10,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Borders','slug'=>'borders-index','icon'=>'fas fa-bars','route_name'=>'borders.index','route_params'=>null,'url'=>null,'sort_order' => 20,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Brokers','slug'=>'brokers-index','icon'=>'fas fa-list','route_name'=>'brokers.index','route_params'=>null,'url'=>null,'sort_order' => 30,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Cargos','slug'=>'cargos-index','icon'=>'fas fa-truck-loading','route_name'=>'cargos.index','route_params'=>null,'url'=>null,'sort_order' => 40,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Clearing Agents','slug'=>'clearing-agents-index','icon'=>'fas fa-building','route_name'=>'clearing_agents.index','route_params'=>null,'url'=>null,'sort_order' => 50,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Countries','slug'=>'countries-index','icon'=>'fas fa-globe-africa','route_name'=>'countries.index','route_params'=>null,'url'=>null,'sort_order' => 60,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Consignees','slug'=>'consignees-index','icon'=>'fas fa-users','route_name'=>'consignees.index','route_params'=>null,'url'=>null,'sort_order' => 70,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Corridors','slug'=>'corridors-index','icon'=>'fas fa-road','route_name'=>'corridors.index','route_params'=>null,'url'=>null,'sort_order' => 80,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Deductions','slug'=>'deductions-index','icon'=>'fas fa-list','route_name'=>'deductions.index','route_params'=>null,'url'=>null,'sort_order' => 90,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Destinations','slug'=>'destinations-index','icon'=>'fas fa-map-pin','route_name'=>'destinations.index','route_params'=>null,'url'=>null,'sort_order' => 100,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Expenses','slug'=>'expenses-index','icon'=>'fas fa-list','route_name'=>'expenses.index','route_params'=>null,'url'=>null,'sort_order' => 110,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Loading Points','slug'=>'loading-points-index','icon'=>'fas fa-map-marker','route_name'=>'loading_points.index','route_params'=>null,'url'=>null,'sort_order' => 120,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Offloading Points','slug'=>'offloading-points-index','icon'=>'fas fa-map-marker','route_name'=>'offloading_points.index','route_params'=>null,'url'=>null,'sort_order' => 130,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Provinces','slug'=>'provinces-index','icon'=>'fas fa-globe-africa','route_name'=>'provinces.index','route_params'=>null,'url'=>null,'sort_order' => 140,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Rehandling Jobs','slug'=>'works-index','icon'=>'fas fa-list','route_name'=>'works.index','route_params'=>null,'url'=>null,'sort_order' => 150,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Road Routes','slug'=>'routes-index','icon'=>'fas fa-road','route_name'=>'routes.index','route_params'=>null,'url'=>null,'sort_order' => 160,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-
-                                // Super Admin only
-                                ['name'=>'Teams','slug'=>'teams-index','icon'=>'fas fa-users','route_name'=>'teams.index','route_params'=>null,'url'=>null,'sort_order' => 170,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis(['or'=>['is_super_admin'=>true]])],
-
-                                // Finance or Super Admin
-                                ['name'=>'Trip Rates','slug'=>'rates-index','icon'=>'fas fa-list','route_name'=>'rates.index','route_params'=>null,'url'=>null,'sort_order' => 180,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis(['or'=>['in_finance'=>true,'is_super_admin'=>true]])],
-
-                                ['name'=>'Trip Types','slug'=>'trip-types-index','icon'=>'fas fa-road','route_name'=>'trip_types.index','route_params'=>null,'url'=>null, 'sort_order' => 190,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Truck Stops','slug'=>'truck-stops-index','icon'=>'fas fa-stop','route_name'=>'truck_stops.index','route_params'=>null,'url'=>null,'sort_order' => 200,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Worksites','slug'=>'locations-index','icon'=>'fas fa-map-marker','route_name'=>'locations.index','route_params'=>null,'url'=>null,'sort_order' => 210,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                            ],
-                        ],
-
-                        // Log Book (no children)
-                        [
-                            'module' => [
-                                'name' => 'Log Book',
-                                'slug' => 'log-book',
-                                'icon' => 'fas fa-book',
-                                'route_name' => 'logs.index',
-                                'route_params' => null,
-                                'url' => null,
-                                'sort_order' => 20,
-                                'is_active' => true,
-                                'badge_key' => null,
-                                'visibility' => $this->vis([
-                                    'or' => ['is_super_admin' => true, 'has_vehicle_assignment' => true],
-                                ]),
-                            ],
-                            'sub_modules' => [],
-                        ],
-
-                        // Rental
-                        [
-                            'module' => [
-                                'name' => 'Car Rental',
-                                'slug' => 'rental',
-                                'icon' => 'fas fa-car',
-                                'route_name' => null,
-                                'route_params' => null,
-                                'url' => null,
-                                'sort_order' => 30,
-                                'is_active'  => false,
-                                'badge_key' => null,
-                                'visibility' => $this->vis(['not_driver' => true]),
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Manage Rentals','slug'=>'rentals-index','icon'=>'fas fa-list','route_name'=>'rentals.index','route_params'=>null,'url'=>null,'sort_order' => 10,'is_active'  => false,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Pending Rentals','slug'=>'rentals-pending','icon'=>'fas fa-clock','route_name'=>'rentals.pending','route_params'=>null,'url'=>null,'sort_order' => 20,'is_active'  => false,'badge_key'=>'rentals_pending','visibility'=>$this->vis(['or'=>['in_transport_admin'=>true,'in_transport_management'=>true,'is_super_admin'=>true]])],
-                                ['name'=>'Approved Rentals','slug'=>'rentals-approved','icon'=>'fas fa-check','route_name'=>'rentals.approved','route_params'=>null,'url'=>null,'sort_order' => 30,'is_active'  => false,'badge_key'=>'rentals_approved','visibility'=>$this->vis(['or'=>['in_transport_admin'=>true,'in_transport_management'=>true,'is_super_admin'=>true]])],
-                                ['name'=>'Rejected Rentals','slug'=>'rentals-rejected','icon'=>'fas fa-ban','route_name'=>'rentals.rejected','route_params'=>null,'url'=>null,'sort_order' => 40,'is_active'  => false,'badge_key'=>'rentals_rejected','visibility'=>$this->vis(['or'=>['in_transport_admin'=>true,'in_transport_management'=>true,'is_super_admin'=>true]])],
-                            ],
-                        ],
-                        // Transporters
-                        [
-                            'module' => [
-                                'name' => 'Transporters',
-                                'slug' => 'transporters',
-                                'icon' => 'fas fa-truck',
-                                'route_name' => null,
-                                'route_params' => null,
-                                'url' => null,
-                                'sort_order' => 40,
-                                'is_active' => true,
-                                'badge_key' => null,
-                                'visibility' => $this->vis(['not_driver' => true]),
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Manage Transporters','slug'=>'transporters-index','icon'=>'fas fa-list','route_name'=>'transporters.index','route_params'=>null,'url'=>null,'sort_order' => 10,'is_active'  => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Pending Transporters','slug'=>'transporters-pending','icon'=>'fas fa-clock','route_name'=>'transporters.pending','route_params'=>null,'url'=>null,'sort_order' => 20,'is_active'  => true,'badge_key'=>'transporters_pending','visibility'=>$this->vis(['or'=>['in_transport_admin'=>true,'in_transport_management'=>true,'is_super_admin'=>true]])],
-                                ['name'=>'Approved Transporters','slug'=>'transporters-approved','icon'=>'fas fa-check','route_name'=>'transporters.approved','route_params'=>null,'url'=>null,'sort_order' => 30,'is_active'  => true,'badge_key'=>'transporters_approved','visibility'=>$this->vis(['or'=>['in_transport_admin'=>true,'in_transport_management'=>true,'is_super_admin'=>true]])],
-                                ['name'=>'Rejected Transporters','slug'=>'transporters-rejected','icon'=>'fas fa-ban','route_name'=>'transporters.rejected','route_params'=>null,'url'=>null,'sort_order' => 40,'is_active'  => true,'badge_key'=>'transporters_rejected','visibility'=>$this->vis(['or'=>['in_transport_admin'=>true,'in_transport_management'=>true,'is_super_admin'=>true]])],
-                            ],
-                        ],
-
-                        // Shifts
-                        [
-                            'module' => [
-                                'name' => 'Shifts',
-                                'slug' => 'shifts',
-                                'icon' => 'fas fa-clock',
-                                'route_name' => null,
-                                'route_params' => null,
-                                'url' => null,
-                                'sort_order' => 50,
-                                'is_active' => true,
-                                'badge_key' => null,
-                                'visibility' => $this->vis(['not_driver' => true]),
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Manage Shifts','slug'=>'shifts-index','icon'=>'fas fa-list','route_name'=>'shifts.index','route_params'=>null,'url'=>null, 'sort_order' => 10, 'is_active' => true, 'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Shifts Reports','slug'=>'shifts-reports','icon'=>'fas fa-line-chart','route_name'=>'shifts.reports','route_params'=>null,'url'=>null,'sort_order' => 20, 'is_active' => true, 'badge_key'=>null,'visibility'=>$this->vis([])],
-                            ],
-                        ],
-
-                        // Trips
-                        [
-                            'module' => [
-                                'name' => 'Trips',
-                                'slug' => 'trips',
-                                'icon' => 'fas fa-road',
-                                'route_name' => null,
-                                'route_params' => null,
-                                'url' => null,
-                                'sort_order' => 60,
-                                'is_active' => true,
-                                'badge_key' => null,
-                                'visibility' => $this->vis([]),
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Create Trip','slug'=>'trips-create','icon'=>'fas fa-plus','route_name'=>'trips.create','route_params'=>null,'url'=>null,'sort_order' => 10, 'is_active' => true, 'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Manage Trips','slug'=>'trips-index','icon'=>'fas fa-list','route_name'=>'trips.index','route_params'=>null,'url'=>null,'sort_order' => 20, 'is_active' => true, 'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Pending Trips','slug'=>'trips-pending','icon'=>'fas fa-clock','route_name'=>'trips.pending','route_params'=>null,'url'=>null,'sort_order' => 30, 'is_active' => true, 'badge_key'=>'trips_pending','visibility'=>$this->vis(['or'=>['is_management'=>true,'is_super_admin'=>true]])],
-                                ['name'=>'Approved Trips','slug'=>'trips-approved','icon'=>'fas fa-check','route_name'=>'trips.approved','route_params'=>null,'url'=>null,'sort_order' => 40, 'is_active' => true, 'badge_key'=>'trips_approved','visibility'=>$this->vis(['or'=>['is_management'=>true,'is_super_admin'=>true]])],
-                                ['name'=>'Rejected Trips','slug'=>'trips-rejected','icon'=>'fas fa-ban','route_name'=>'trips.rejected','route_params'=>null,'url'=>null,'sort_order' => 50, 'is_active' => true, 'badge_key'=>'trips_rejected','visibility'=>$this->vis(['or'=>['is_management'=>true,'is_super_admin'=>true]])],
-                                ['name'=>'Deleted Trips','slug'=>'trips-deleted','icon'=>'fas fa-trash','route_name'=>'trips.deleted','route_params'=>null,'url'=>null,'sort_order' => 60, 'is_active' => true, 'badge_key'=>'trips_deleted','visibility'=>$this->vis(['or'=>['is_management'=>true,'is_super_admin'=>true]])],
-                                ['name'=>'Tracking Groups','slug'=>'trip-groups-index','icon'=>'fas fa-list','route_name'=>'trip_groups.index','route_params'=>null,'url'=>null,'sort_order' => 70, 'is_active' => true, 'badge_key'=>null,'visibility'=>$this->vis([])],
-                            ],
-                        ],
-
-                        // Gatepass (Logistics)
-                        [
-                            'module' => [
-                                'name' => 'Gatepass',
-                                'slug' => 'gatepass-logistics',
-                                'icon' => 'fas fa-door-open',
-                                'route_name' => null,
-                                'route_params' => null,
-                                'url' => null,
-                                'sort_order' => 70,
-                                'is_active' => true,
-                                'badge_key' => null,
-                                'visibility' => $this->vis(['not_driver' => true]),
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Pending Gatepasses','slug'=>'gatepass-logistics-pending','icon'=>'fas fa-clock','route_name'=>'gate_passes.pending','route_params'=>['department'=>'logistics'],'url'=>null,'sort_order' => 10, 'is_active' => true, 'badge_key'=>'logistics_gate_passes_pending','visibility'=>$this->vis([])],
-                                ['name'=>'Approved Gatepasses','slug'=>'gatepass-logistics-approved','icon'=>'fas fa-check','route_name'=>'gate_passes.approved','route_params'=>['department'=>'logistics'],'url'=>null,'sort_order' => 20, 'is_active' => true, 'badge_key'=>'logistics_gate_passes_approved','visibility'=>$this->vis([])],
-                                ['name'=>'Rejected Gatepasses','slug'=>'gatepass-logistics-rejected','icon'=>'fas fa-ban','route_name'=>'gate_passes.rejected','route_params'=>['department'=>'logistics'],'url'=>null,'sort_order' => 30, 'is_active' => true, 'badge_key'=>'logistics_gate_passes_rejected','visibility'=>$this->vis([])],
-                            ],
-                        ],
-
-                        // Recoveries
-                        [
-                            'module' => [
-                                'name' => 'Recoveries',
-                                'slug' => 'recoveries',
-                                'icon' => 'fas fa-hand-holding-usd',
-                                'route_name' => null,
-                                'route_params' => null,
-                                'url' => null,
-                                'sort_order' => 80,
-                                'is_active' => true,
-                                'badge_key' => null,
-                                'visibility' => $this->vis(['not_driver' => true]),
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Create Recovery','slug'=>'recoveries-create','icon'=>'fas fa-plus','route_name'=>'recoveries.create','route_params'=>null,'url'=>null,'sort_order' => 10, 'is_active' => true, 'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Manage Recoveries','slug'=>'recoveries-index','icon'=>'fas fa-list','route_name'=>'recoveries.index','route_params'=>null,'url'=>null,'sort_order' => 20, 'is_active' => true, 'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Pending Recoveries','slug'=>'recoveries-pending','icon'=>'fas fa-clock','route_name'=>'recoveries.pending','route_params'=>null,'url'=>null,'sort_order' => 30, 'is_active' => true, 'badge_key'=>'recoveries_pending','visibility'=>$this->vis(['or'=>['is_management'=>true,'is_super_admin'=>true]])],
-                                ['name'=>'Approved Recoveries','slug'=>'recoveries-approved','icon'=>'fas fa-check','route_name'=>'recoveries.approved','route_params'=>null,'url'=>null,'sort_order' => 40, 'is_active' => true, 'badge_key'=>'recoveries_approved','visibility'=>$this->vis(['or'=>['is_management'=>true,'is_super_admin'=>true]])],
-                                ['name'=>'Rejected Recoveries','slug'=>'recoveries-rejected','icon'=>'fas fa-ban','route_name'=>'recoveries.rejected','route_params'=>null,'url'=>null,'sort_order' => 50, 'is_active' => true, 'badge_key'=>'recoveries_rejected','visibility'=>$this->vis(['or'=>['is_management'=>true,'is_super_admin'=>true]])],
-                            ],
-                        ],
-                    ],
-                ],
-
-
-                // =========================================================
-                // Workshop Management
-                // =========================================================
-                [
-                    'group' => [
-                        'name' => 'Workshop Management',
-                        'slug' => 'workshop-management',
-                        'icon' => 'fas fa-tools',
-                        'sort_order' => 130,
-                        'is_active' => true,
-                        'url' => null,
-                        'visibility' => $this->vis([
-                            'or' => ['in_finance' => true, 'in_workshop' => true, 'in_stores' => true, 'is_super_admin' => true],
-                        ]),
-                    ],
-                    'modules' => [
-
-                        // Master
-                        [
-                            'module' => [
-                                'name' => 'Master',
-                                'slug' => 'workshop-master',
-                                'icon' => 'fas fa-cog',
-                                'route_name' => null,
-                                'route_params' => null,
-                                'url' => null,
-                                'sort_order' => 10,
-                                'is_active' => true,
-                                'badge_key' => null,
-                                'visibility' => $this->vis([
-                                    'or' => ['ws_department_head' => true, 'in_workshop_admin' => true, 'is_super_admin' => true],
-                                ]),
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Job Types','slug'=>'service-types-index','icon'=>'fas fa-list','route_name'=>'service_types.index','route_params'=>null,'url'=>null,'sort_order' => 10, 'is_active' => true, 'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Inspection Item Groups','slug'=>'inspection-groups-index','icon'=>'fas fa-list','route_name'=>'inspection_groups.index','route_params'=>null,'url'=>null,'sort_order' => 20, 'is_active' => true, 'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Inspection Items','slug'=>'inspection-types-index','icon'=>'fas fa-list','route_name'=>'inspection_types.index','route_params'=>null,'url'=>null,'sort_order' => 30, 'is_active' => true, 'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Workshop Stations','slug'=>'stations-index','icon'=>'fas fa-list','route_name'=>'stations.index','route_params'=>null,'url'=>null,'sort_order' => 40, 'is_active' => true, 'badge_key'=>null,'visibility'=>$this->vis([])],
-                            ],
-                        ],
-
-                        // Bookings
-                        [
-                            'module' => [
-                                'name' => 'Bookings',
-                                'slug' => 'bookings',
-                                'icon' => 'fas fa-tasks',
-                                'route_name' => null,
-                                'route_params' => null,
-                                'url' => null,
-                                'sort_order' => 20,
-                                'is_active' => true,
-                                'badge_key' => null,
-                                'visibility' => $this->vis([]),
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Create Booking','slug'=>'bookings-create','icon'=>'fas fa-plus','route_name'=>'bookings.create','route_params'=>null,'url'=>null,'sort_order' => 10, 'is_active' => true, 'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Manage Bookings','slug'=>'bookings-index','icon'=>'fas fa-list','route_name'=>'bookings.index','route_params'=>null,'url'=>null,'sort_order' => 20, 'is_active' => true, 'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Pending Bookings','slug'=>'bookings-pending','icon'=>'fas fa-clock','route_name'=>'bookings.pending','route_params'=>null,'url'=>null,'sort_order' => 30, 'is_active' => true, 'badge_key'=>'bookings_pending','visibility'=>$this->vis(['or'=>['is_management'=>true,'ws_department_head'=>true,'in_workshop_admin'=>true,'is_super_admin'=>true]])],
-                                ['name'=>'Approved Bookings','slug'=>'bookings-approved','icon'=>'fas fa-check','route_name'=>'bookings.approved','route_params'=>null,'url'=>null,'sort_order' => 40, 'is_active' => true, 'badge_key'=>'bookings_approved','visibility'=>$this->vis(['or'=>['is_management'=>true,'ws_department_head'=>true,'in_workshop_admin'=>true,'is_super_admin'=>true]])],
-                                ['name'=>'Rejected Bookings','slug'=>'bookings-rejected','icon'=>'fas fa-ban','route_name'=>'bookings.rejected','route_params'=>null,'url'=>null,'sort_order' => 50, 'is_active' => true, 'badge_key'=>'bookings_rejected','visibility'=>$this->vis(['or'=>['is_management'=>true,'ws_department_head'=>true,'in_workshop_admin'=>true,'is_super_admin'=>true]])],
-                            ],
-                        ],
-
-                        // Tickets
-                        [
-                            'module' => [
-                                'name' => 'Tickets',
-                                'slug' => 'tickets',
-                                'icon' => 'fas fa-file-invoice',
-                                'route_name' => null,
-                                'route_params' => null,
-                                'url' => null,
-                                'sort_order' => 30,
-                                'is_active' => true,
-                                'badge_key' => null,
-                                'visibility' => $this->vis([]),
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Manage Tickets','slug'=>'tickets-index','icon'=>'fas fa-tasks','route_name'=>'tickets.index','route_params'=>null,'url'=>null,'sort_order' => 10, 'is_active' => true, 'badge_key'=>null,'visibility'=>$this->vis(['or'=>['st_department_head'=>true,'ws_department_head'=>true,'in_workshop_admin'=>true,'in_stores_admin'=>true,'is_super_admin'=>true]])],
-                                ['name'=>'My Tickets','slug'=>'tickets-cards','icon'=>'fas fa-tasks','route_name'=>'tickets.cards','route_params'=>['id'=>'{employee_id}'],'url'=>null,'sort_order' => 20, 'is_active' => true, 'badge_key'=>'job_cards_count','visibility'=>$this->vis(['departments'=>['Workshop']])],
-                            ],
-                        ],
-
-                        // Ticket Inspections
-                        [
-                            'module' => [
-                                'name' => 'Ticket Inspections',
-                                'slug' => 'ticket-inspections',
-                                'icon' => 'fas fa-search',
-                                'route_name' => null,
-                                'route_params' => null,
-                                'url' => null,
-                                'sort_order' => 40,
-                                'is_active' => true,
-                                'badge_key' => null,
-                                'visibility' => $this->vis([]),
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Manage Inspections','slug'=>'inspections-index','icon'=>'fas fa-tasks','route_name'=>'inspections.index','route_params'=>null,'url'=>null,'sort_order' => 10, 'is_active' => true, 'badge_key'=>null,'visibility'=>$this->vis(['or'=>['st_department_head'=>true,'ws_department_head'=>true,'in_workshop_admin'=>true,'in_stores_admin'=>true,'is_super_admin'=>true]])],
-                                ['name'=>'My Inspections','slug'=>'inspections-my','icon'=>'fas fa-tasks','route_name'=>'inspections.my-inspections','route_params'=>['id'=>'{employee_id}'],'url'=>null,'sort_order' => 20, 'is_active' => true, 'badge_key'=>'inspections_count','visibility'=>$this->vis(['departments'=>['Workshop']])],
-                            ],
-                        ],
-
-                        // Gatepass (Workshop)
-                        [
-                            'module' => [
-                                'name' => 'Gatepass',
-                                'slug' => 'gatepass-workshop',
-                                'icon' => 'fas fa-door-open',
-                                'route_name' => null,
-                                'route_params' => null,
-                                'url' => null,
-                                'sort_order' => 50,
-                                'is_active' => true,
-                                'badge_key' => null,
-                                'visibility' => $this->vis(['or'=>['in_workshop_admin'=>true,'is_super_admin'=>true]]),
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Pending Gatepasses','slug'=>'gatepass-workshop-pending','icon'=>'fas fa-clock','route_name'=>'gate_passes.pending','route_params'=>['department'=>'workshop'],'url'=>null,'sort_order' => 10, 'is_active' => true, 'badge_key'=>'workshop_gate_passes_pending','visibility'=>$this->vis([])],
-                                ['name'=>'Approved Gatepasses','slug'=>'gatepass-workshop-approved','icon'=>'fas fa-check','route_name'=>'gate_passes.approved','route_params'=>['department'=>'workshop'],'url'=>null,'sort_order' => 20, 'is_active' => true, 'badge_key'=>'workshop_gate_passes_approved','visibility'=>$this->vis([])],
-                                ['name'=>'Rejected Gatepasses','slug'=>'gatepass-workshop-rejected','icon'=>'fas fa-ban','route_name'=>'gate_passes.rejected','route_params'=>['department'=>'workshop'],'url'=>null,'sort_order' => 30, 'is_active' => true, 'badge_key'=>'workshop_gate_passes_rejected','visibility'=>$this->vis([])],
-                            ],
-                        ],
-                    ],
-                ],
-
-
-                // =========================================================
-                // Stores & Inventory Management
-                // =========================================================
-                [
-                    'group' => [
-                        'name' => 'Stores & Inventory Management',
-                        'slug' => 'stores-inventory-management',
-                        'icon' => 'fas fa-warehouse',
-                        'sort_order' => 140,
-                        'url' => null,
-                        'is_active' => true,
-                        'visibility' => $this->vis([
-                            'or' => ['in_stores' => true, 'is_super_admin' => true],
-                        ]),
-                    ],
-                    'modules' => [
-
-                        // Master
-                        [
-                            'module' => [
-                                'name' => 'Master',
-                                'slug' => 'stores-master',
-                                'icon' => 'fas fa-cog',
-                                'route_name' => null,
-                                'route_params' => null,
-                                'url' => null,
-                                'sort_order' => 10,
-                                'is_active' => true,
-                                'badge_key' => null,
-                                'visibility' => $this->vis(['or'=>['st_department_head'=>true,'in_stores_admin'=>true,'is_super_admin'=>true]]),
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Attributes','slug'=>'attributes-index','icon'=>'fas fa-list','route_name'=>'attributes.index','route_params'=>null,'url'=>null,'sort_order' => 10, 'is_active' => true, 'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Bins','slug'=>'bins-index','icon'=>'fas fa-list','route_name'=>'bins.index','route_params'=>null,'url'=>null,'sort_order' => 20, 'is_active' => true, 'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Brands','slug'=>'brands-index','icon'=>'fas fa-list','route_name'=>'brands.index','route_params'=>null,'url'=>null,'sort_order' => 30, 'is_active' => true, 'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Categories','slug'=>'categories-index','icon'=>'fas fa-list','route_name'=>'categories.index','route_params'=>null,'url'=>null,'sort_order' => 40, 'is_active' => true, 'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Racks','slug'=>'racks-index','icon'=>'fas fa-list','route_name'=>'racks.index','route_params'=>null,'url'=>null,'sort_order' => 50, 'is_active' => true, 'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Stores','slug'=>'stores-index','icon'=>'fas fa-list','route_name'=>'stores.index','route_params'=>null,'url'=>null,'sort_order' => 60, 'is_active' => true, 'badge_key'=>null,'visibility'=>$this->vis([])],
-                            ],
-                        ],
-
-                        // Inventory Transfers
-                        [
-                            'module' => [
-                                'name' => 'Inventory Transfers',
-                                'slug' => 'inventory-transfers',
-                                'icon' => 'fas fa-exchange',
-                                'route_name' => null,
-                                'route_params' => null,
-                                'sort_order' => 20,
-                                'is_active' => true,
-                                'url' => null,
-                                'badge_key' => null,
-                                'visibility' => $this->vis([]),
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Manage Transfers','slug'=>'inventory-transfers-index','icon'=>'fas fa-list','route_name'=>'inventory_transfers.index','route_params'=>null,'url'=>null,'sort_order' => 10, 'is_active' => true, 'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Pending Transfers','slug'=>'inventory-transfers-pending','icon'=>'fas fa-clock','route_name'=>'inventory_transfers.pending','route_params'=>null,'url'=>null,'sort_order' => 20, 'is_active' => true, 'badge_key'=>'inventory_transfers_pending','visibility'=>$this->vis([])],
-                                ['name'=>'Approved Transfers','slug'=>'inventory-transfers-approved','icon'=>'fas fa-check','route_name'=>'inventory_transfers.approved','route_params'=>null,'url'=>null,'sort_order' => 30, 'is_active' => true, 'badge_key'=>'inventory_transfers_approved','visibility'=>$this->vis([])],
-                                ['name'=>'Rejected Transfers','slug'=>'inventory-transfers-rejected','icon'=>'fas fa-ban','route_name'=>'inventory_transfers.rejected','route_params'=>null,'url'=>null,'sort_order' => 40, 'is_active' => true, 'badge_key'=>'inventory_transfers_rejected','visibility'=>$this->vis([])],
-                            ],
-                        ],
-
-                        // Products
-                        [
-                            'module' => [
-                                'name' => 'Products',
-                                'slug' => 'inventory-products',
-                                'icon' => 'fas fa-boxes',
-                                'route_name' => null,
-                                'route_params' => null,
-                                'url' => null,
-                                'sort_order' => 30,
-                                'is_active' => true,
-                                'badge_key' => null,
-                                'visibility' => $this->vis([]),
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Create Product','slug'=>'inventory-products-create','icon'=>'fas fa-plus','route_name'=>'inventory_products.create','route_params'=>null,'url'=>null,'sort_order' => 10, 'is_active' => true, 'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Manage Products','slug'=>'inventory-products-index','icon'=>'fas fa-list','route_name'=>'inventory_products.index','route_params'=>null,'url'=>null,'sort_order' => 20, 'is_active' => true, 'badge_key'=>null,'visibility'=>$this->vis([])],
-                            ],
-                        ],
-
-                        // Purchase Orders
-                        [
-                            'module' => [
-                                'name' => 'Purchase Orders',
-                                'slug' => 'inventory-purchase-orders',
-                                'icon' => 'fas fa-hand-holding-usd',
-                                'route_name' => null,
-                                'route_params' => null,
-                                'url' => null,
-                                'sort_order' => 40,
-                                'is_active' => true,
-                                'badge_key' => null,
-                                'visibility' => $this->vis([]),
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Manage Orders','slug'=>'inventory-purchases-index','icon'=>'fas fa-list','route_name'=>'inventory_purchases.index','route_params'=>null,'url'=>null,'sort_order' => 10, 'is_active' => true, 'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Pending Orders','slug'=>'inventory-purchases-pending','icon'=>'fas fa-clock','route_name'=>'inventory_purchases.pending','route_params'=>null,'url'=>null,'sort_order' => 20, 'is_active' => true, 'badge_key'=>'inventory_purchases_pending','visibility'=>$this->vis(['or'=>['is_management'=>true,'ws_department_head'=>true,'st_department_head'=>true,'is_super_admin'=>true]])],
-                                ['name'=>'Approved Orders','slug'=>'inventory-purchases-approved','icon'=>'fas fa-check','route_name'=>'inventory_purchases.approved','route_params'=>null,'url'=>null,'sort_order' => 30, 'is_active' => true, 'badge_key'=>'inventory_purchases_approved','visibility'=>$this->vis(['or'=>['is_management'=>true,'ws_department_head'=>true,'st_department_head'=>true,'is_super_admin'=>true]])],
-                                ['name'=>'Rejected Orders','slug'=>'inventory-purchases-rejected','icon'=>'fas fa-ban','route_name'=>'inventory_purchases.rejected','route_params'=>null,'url'=>null,'sort_order' => 40, 'is_active' => true, 'badge_key'=>'inventory_purchases_rejected','visibility'=>$this->vis(['or'=>['is_management'=>true,'ws_department_head'=>true,'st_department_head'=>true,'is_super_admin'=>true]])],
-                                ['name'=>'Deleted Orders','slug'=>'inventory-purchases-deleted','icon'=>'fas fa-trash','route_name'=>'inventory_purchases.deleted','route_params'=>null,'url'=>null,'sort_order' => 50, 'is_active' => true, 'badge_key'=>'inventory_purchases_deleted','visibility'=>$this->vis(['or'=>['is_management'=>true,'ws_department_head'=>true,'st_department_head'=>true,'is_super_admin'=>true]])],
-                            ],
-                        ],
-
-                        // GRV (Inventory)
-                        [
-                            'module' => [
-                                'name' => 'GRV (Inventory)',
-                                'slug' => 'inventory-grv',
-                                'icon' => 'fas fa-th-list',
-                                'route_name' => null,
-                                'route_params' => null,
-                                'url' => null,
-                                'sort_order' => 50,
-                                'is_active' => true,
-                                'badge_key' => null,
-                                'visibility' => $this->vis([]),
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Manage Inventory GRVs','slug'=>'goods-receiveds-index','icon'=>'fas fa-list','route_name'=>'goods_receiveds.index','route_params'=>null,'url'=>null,'sort_order' => 10, 'is_active' => true, 'badge_key'=>null,'visibility'=>$this->vis([])],
-                            ],
-                        ],
-
-                        // Inventory
-                        [
-                            'module' => [
-                                'name' => 'Inventory',
-                                'slug' => 'inventories',
-                                'icon' => 'fas fa-th-list',
-                                'route_name' => null,
-                                'route_params' => null,
-                                'url' => null,
-                                'sort_order' => 60,
-                                'is_active' => true,
-                                'badge_key' => null,
-                                'visibility' => $this->vis([]),
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Create Inventory','slug'=>'inventories-create','icon'=>'fas fa-plus','route_name'=>'inventories.create','route_params'=>null,'url'=>null, 'sort_order' => 10, 'is_active' => true, 'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Manage Inventory','slug'=>'inventories-index','icon'=>'fas fa-list','route_name'=>'inventories.index','route_params'=>null,'url'=>null, 'sort_order' => 20, 'is_active' => true, 'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Disposed Items','slug'=>'disposes-index','icon'=>'fas fa-list','route_name'=>'disposes.index','route_params'=>null,'url'=>null, 'sort_order' => 30, 'is_active' => true, 'badge_key'=>null,'visibility'=>$this->vis([])],
-                            ],
-                        ],
-
-                        // Dispatches (Inventory)
-                        [
-                            'module' => [
-                                'name' => 'Dispatches (Inventory)',
-                                'slug' => 'inventory-dispatches',
-                                'icon' => 'fas fa-list',
-                                'route_name' => null,
-                                'route_params' => null,
-                                'url' => null,
-                                'sort_order' => 70,
-                                'is_active' => true,
-                                'badge_key' => null,
-                                'visibility' => $this->vis([]),
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Manage Dispatches','slug'=>'inventory-dispatches-index','icon'=>'fas fa-list','route_name'=>'inventory_dispatches.index','route_params'=>null,'url'=>null, 'sort_order' => 10, 'is_active' => true, 'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Pending Dispatches','slug'=>'inventory-dispatches-pending','icon'=>'fas fa-clock','route_name'=>'inventory_dispatches.pending','route_params'=>null,'url'=>null, 'sort_order' => 20, 'is_active' => true, 'badge_key'=>'inventory_dispatches_pending','visibility'=>$this->vis(['or'=>['is_management'=>true,'is_admin'=>true,'is_super_admin'=>true]])],
-                                ['name'=>'Approved Dispatches','slug'=>'inventory-dispatches-approved','icon'=>'fas fa-check','route_name'=>'inventory_dispatches.approved','route_params'=>null,'url'=>null, 'sort_order' => 30, 'is_active' => true, 'badge_key'=>'inventory_dispatches_approved','visibility'=>$this->vis(['or'=>['is_management'=>true,'is_admin'=>true,'is_super_admin'=>true]])],
-                                ['name'=>'Rejected Dispatches','slug'=>'inventory-dispatches-rejected','icon'=>'fas fa-ban','route_name'=>'inventory_dispatches.rejected','route_params'=>null,'url'=>null, 'sort_order' => 40, 'is_active' => true, 'badge_key'=>'inventory_dispatches_rejected','visibility'=>$this->vis(['or'=>['is_management'=>true,'is_admin'=>true,'is_super_admin'=>true]])],
-                            ],
-                        ],
-                    ],
-                ],
-
-
-                // =========================================================
-                // Tyre Management
-                // =========================================================
-                [
-                    'group' => [
-                        'name' => 'Tyre Management',
-                        'slug' => 'tyre-management',
-                        'icon' => 'fas fa-circle',
-                        'url' => null,
-                        'sort_order' => 150,
-                        'is_active' => true,
-                        'visibility' => $this->vis([
-                            'or' => ['in_stores' => true, 'is_super_admin' => true],
-                        ]),
-                    ],
-                    'modules' => [
-
-                        // Tyre Transfers
-                        [
-                            'module' => [
-                                'name' => 'Tyre Transfers',
-                                'slug' => 'tyre-transfers',
-                                'icon' => 'fas fa-exchange',
-                                'route_name' => null,
-                                'route_params' => null,
-                                'url' => null,
-                                'sort_order' => 10,
-                                'is_active' => true,
-                                'badge_key' => null,
-                                'visibility' => $this->vis([]),
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Manage Transfers','slug'=>'tyre-transfers-index','icon'=>'fas fa-list','route_name'=>'tyre_transfers.index','route_params'=>null,'url'=>null,'sort_order' => 10,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Pending Transfers','slug'=>'tyre-transfers-pending','icon'=>'fas fa-clock','route_name'=>'tyre_transfers.pending','route_params'=>null,'url'=>null,'sort_order' => 20,'is_active' => true,'badge_key'=>'tyre_transfers_pending','visibility'=>$this->vis([])],
-                                ['name'=>'Approved Transfers','slug'=>'tyre-transfers-approved','icon'=>'fas fa-check','route_name'=>'tyre_transfers.approved','route_params'=>null,'url'=>null,'sort_order' => 30,'is_active' => true,'badge_key'=>'tyre_transfers_approved','visibility'=>$this->vis([])],
-                                ['name'=>'Rejected Transfers','slug'=>'tyre-transfers-rejected','icon'=>'fas fa-ban','route_name'=>'tyre_transfers.rejected','route_params'=>null,'url'=>null,'sort_order' => 40,'is_active' => true,'badge_key'=>'tyre_transfers_rejected','visibility'=>$this->vis([])],
-                            ],
-                        ],
-
-                        // Products
-                        [
-                            'module' => [
-                                'name' => 'Products',
-                                'slug' => 'tyre-products',
-                                'icon' => 'fas fa-boxes',
-                                'route_name' => null,
-                                'route_params' => null,
-                                'url' => null,
-                                'sort_order' => 20,
-                                'is_active' => true,
-                                'badge_key' => null,
-                                'visibility' => $this->vis([]),
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Create Product','slug'=>'tyre-products-create','icon'=>'fas fa-plus','route_name'=>'tyre_products.create','route_params'=>null,'url'=>null,'sort_order' => 10,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Manage Products','slug'=>'tyre-products-index','icon'=>'fas fa-list','route_name'=>'tyre_products.index','route_params'=>null,'url'=>null,'sort_order' => 20,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                            ],
-                        ],
-
-                        // Purchase Orders
-                        [
-                            'module' => [
-                                'name' => 'Purchase Orders',
-                                'slug' => 'tyre-purchase-orders',
-                                'icon' => 'fas fa-hand-holding-usd',
-                                'route_name' => null,
-                                'route_params' => null,
-                                'url' => null,
-                                'sort_order' => 30,
-                                'is_active' => true,
-                                'badge_key' => null,
-                                'visibility' => $this->vis([]),
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Manage Orders','slug'=>'tyre-purchases-index','icon'=>'fas fa-list','route_name'=>'tyre_purchases.index','route_params'=>null,'url'=>null,'sort_order' => 10,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Pending Orders','slug'=>'tyre-purchases-pending','icon'=>'fas fa-clock','route_name'=>'tyre_purchases.pending','route_params'=>null,'url'=>null,'sort_order' => 20,'is_active' => true,'badge_key'=>'tyre_purchases_pending','visibility'=>$this->vis(['or'=>['is_management'=>true,'ws_department_head'=>true,'st_department_head'=>true,'is_super_admin'=>true]])],
-                                ['name'=>'Approved Orders','slug'=>'tyre-purchases-approved','icon'=>'fas fa-check','route_name'=>'tyre_purchases.approved','route_params'=>null,'url'=>null,'sort_order' => 30,'is_active' => true,'badge_key'=>'tyre_purchases_approved','visibility'=>$this->vis(['or'=>['is_management'=>true,'ws_department_head'=>true,'st_department_head'=>true,'is_super_admin'=>true]])],
-                                ['name'=>'Rejected Orders','slug'=>'tyre-purchases-rejected','icon'=>'fas fa-ban','route_name'=>'tyre_purchases.rejected','route_params'=>null,'url'=>null,'sort_order' => 40,'is_active' => true,'badge_key'=>'tyre_purchases_rejected','visibility'=>$this->vis(['or'=>['is_management'=>true,'ws_department_head'=>true,'st_department_head'=>true,'is_super_admin'=>true]])],
-                                ['name'=>'Deleted Orders','slug'=>'tyre-purchases-deleted','icon'=>'fas fa-trash','route_name'=>'tyre_purchases.deleted','route_params'=>null,'url'=>null,'sort_order' => 50, 'is_active' => true, 'badge_key'=>'tyre_purchases_deleted', 'visibility'=>$this->vis(['or'=>['is_management'=>true, 'ws_department_head' => true, 'st_department_head' => true, 'is_super_admin' => true]])],
-                            ],
-                        ],
-
-                        // GRV (Tyres)
-                        [
-                            'module' => [
-                                'name' => 'GRV (Tyres)',
-                                'slug' => 'tyres-grv',
-                                'icon' => 'fas fa-th-list',
-                                'route_name' => null,
-                                'route_params' => null,
-                                'url' => null,
-                                'sort_order' => 40,
-                                'is_active' => true,
-                                'badge_key' => null,
-                                'visibility' => $this->vis([]),
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Manage Tyre GRVs','slug'=>'goods-receiveds-tyres','icon'=>'fas fa-list','route_name'=>'goods_receiveds.tyres','route_params'=>null,'url'=>null,'sort_order' => 10,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                            ],
-                        ],
-
-                        // Tyres
-                        [
-                            'module' => [
-                                'name' => 'Tyres',
-                                'slug' => 'tyres',
-                                'icon' => 'fas fa-th-list',
-                                'route_name' => null,
-                                'route_params' => null,
-                                'url' => null,
-                                'sort_order' => 50,
-                                'is_active' => true,
-                                'badge_key' => null,
-                                'visibility' => $this->vis([]),
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Create Tyre','slug'=>'tyres-create','icon'=>'fas fa-plus','route_name'=>'tyres.create','route_params'=>null,'url'=>null,'sort_order' => 10,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Manage Tyres','slug'=>'tyres-index','icon'=>'fas fa-list','route_name'=>'tyres.index','route_params'=>null,'url'=>null,'sort_order' => 20,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Tyre Assignments','slug'=>'tyre-assignments-index','icon'=>'fas fa-list','route_name'=>'tyre_assignments.index','route_params'=>null,'url'=>null,'sort_order' => 30,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Disposed Items','slug'=>'disposes-index-tyres','icon'=>'fas fa-list','route_name'=>'disposes.index','route_params'=>null,'url'=>null,'sort_order' => 40,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                            ],
-                        ],
-
-                        // Retreads
-                        [
-                            'module' => [
-                                'name' => 'Retreads',
-                                'slug' => 'retreads',
-                                'icon' => 'fas fa-th-list',
-                                'route_name' => null,
-                                'route_params' => null,
-                                'url' => null,
-                                'sort_order' => 60,
-                                'is_active' => true,
-                                'badge_key' => null,
-                                'visibility' => $this->vis([]),
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Create Retread','slug'=>'retreads-create','icon'=>'fas fa-plus','route_name'=>'retreads.create','route_params'=>null,'url'=>null,'sort_order' => 10,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Manage Retread','slug'=>'retreads-index','icon'=>'fas fa-list','route_name'=>'retreads.index','route_params'=>null,'url'=>null,'sort_order' => 20,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Pending Retreads','slug'=>'retreads-pending','icon'=>'fas fa-clock','route_name'=>'retreads.pending','route_params'=>null,'url'=>null,'sort_order' => 30,'is_active' => true,'badge_key'=>'retreads_pending','visibility'=>$this->vis(['or'=>['is_management'=>true,'ws_department_head'=>true,'st_department_head'=>true,'is_super_admin'=>true]])],
-                                ['name'=>'Approved Retreads','slug'=>'retreads-approved','icon'=>'fas fa-check','route_name'=>'retreads.approved','route_params'=>null,'url'=>null,'sort_order' => 40,'is_active' => true,'badge_key'=>'retreads_approved','visibility'=>$this->vis(['or'=>['is_management'=>true,'ws_department_head'=>true,'st_department_head'=>true,'is_super_admin'=>true]])],
-                                ['name'=>'Rejected Retreads','slug'=>'retreads-rejected','icon'=>'fas fa-ban','route_name'=>'retreads.rejected','route_params'=>null,'url'=>null,'sort_order' => 50,'is_active' => true,'badge_key'=>'retreads_rejected','visibility'=>$this->vis(['or'=>['is_management'=>true,'ws_department_head'=>true,'st_department_head'=>true,'is_super_admin'=>true]])],
-                            ],
-                        ],
-
-                        // Dispatches (Tyres)
-                        [
-                            'module' => [
-                                'name' => 'Dispatches (Tyres)',
-                                'slug' => 'tyre-dispatches',
-                                'icon' => 'fas fa-list',
-                                'route_name' => null,
-                                'route_params' => null,
-                                'url' => null,
-                                'sort_order' => 70,
-                                'is_active' => true,
-                                'badge_key' => null,
-                                'visibility' => $this->vis([]),
-                            ],
-                            'sub_modules' => [
-                                ['name'=>'Manage Dispatches','slug'=>'tyre-dispatches-index','icon'=>'fas fa-list','route_name'=>'tyre_dispatches.index','route_params'=>null,'url'=>null,'sort_order' => 20,'is_active' => true,'badge_key'=>null,'visibility'=>$this->vis([])],
-                                ['name'=>'Pending Dispatches','slug'=>'tyre-dispatches-pending','icon'=>'fas fa-clock','route_name'=>'tyre_dispatches.pending','route_params'=>null,'url'=>null,'sort_order' => 30,'is_active' => true,'badge_key'=>'tyre_dispatches_pending','visibility'=>$this->vis(['or'=>['is_management'=>true,'is_admin'=>true,'is_super_admin'=>true]])],
-                                ['name'=>'Approved Dispatches','slug'=>'tyre-dispatches-approved','icon'=>'fas fa-check','route_name'=>'tyre_dispatches.approved','route_params'=>null,'url'=>null,'sort_order' => 40,'is_active' => true,'badge_key'=>'tyre_dispatches_approved','visibility'=>$this->vis(['or'=>['is_management'=>true,'is_admin'=>true,'is_super_admin'=>true]])],
-                                ['name'=>'Rejected Dispatches','slug'=>'tyre-dispatches-rejected','icon'=>'fas fa-ban','route_name'=>'tyre_dispatches.rejected','route_params'=>null,'url'=>null,'sort_order' => 50,'is_active' => true,'badge_key'=>'tyre_dispatches_rejected','visibility'=>$this->vis(['or'=>['is_management'=>true,'is_admin'=>true,'is_super_admin'=>true]])],
-                            ],
-                        ],
-                    ],
-                ],
-
-                // =========================================================
-                // BUSINESS SETTINGS
-                // =========================================================
-                [
-                    'group' => [
-                        'name'       => 'Business Settings',
-                        'slug'       => 'business-settings',
-                        'icon'       => null,
-                        'sort_order' => 160,
-                        'is_active'  => true,
-                        'url'        => null,
-                        'visibility' => $this->vis([
-                            'any_roles' => ['SuperAdmin','Management'],
-                            'any_ranks' => ['Directors'],
-                        ]),
-                    ],
-                    'modules' => [
-                        [
-                            'module' => [
-                                'name'       => 'Company Profile',
-                                'slug'       => 'company-profile',
-                                'icon'       => 'fas fa-cog',
-                                'route_name' => 'company-profile',
-                                'url'        => null,
-                                'sort_order' => 10,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis(['any_roles'=>['SuperAdmin','Management'],'any_ranks'=>['Directors']]),
-                                'route_params' => ['company' => '{company_id}'],
-                            ],
-                            'sub_modules' => [],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'Create new business',
-                                'slug'       => 'create-new-business',
-                                'icon'       => 'fas fa-plus-circle',
-                                'route_name' => 'companies.index',
-                                'url'        => null,
-                                'sort_order' => 20,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis(['any_roles'=>['SuperAdmin','Management'],'any_ranks'=>['Directors']]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [],
-                        ],
-                    ],
-                ],
-
-                // =========================================================
-                // PROFILE SETTINGS
-                // =========================================================
-                [
-                    'group' => [
-                        'name'       => 'Profile Settings',
-                        'slug'       => 'profile-settings',
-                        'icon'       => null,
-                        'sort_order' => 170,
-                        'is_active'  => true,
-                        'url'        => null,
-                        'visibility' => $this->vis([]),
-                    ],
-                    'modules' => [
-                        [
-                            'module' => [
-                                'name'       => 'My Profile',
-                                'slug'       => 'my-profile',
-                                'icon'       => 'fas fa-user',
-                                'route_name' => 'profile',
-                                'url'        => null,
-                                'sort_order' => 10,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis([]),
-                                'route_params' => ['user' => '{user_id}'],
-                            ],
-                            'sub_modules' => [],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'Audits',
-                                'slug'       => 'audits',
-                                'icon'       => 'fas fa-history',
-                                'route_name' => 'audits.all',
-                                'url'        => null,
-                                'sort_order' => 20,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis(['any_roles'=>['SuperAdmin']]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [],
-                        ],
-                        [
-                            'module' => [
-                                'name'       => 'Logout',
-                                'slug'       => 'logout',
-                                'icon'       => 'fas fa-sign-out-alt',
-                                'route_name' => 'logout',
-                                'url'        => null,
-                                'sort_order' => 30,
-                                'is_active'  => true,
-                                'badge_key'  => null,
-                                'visibility' => $this->vis([]),
-                                'route_params' => null,
-                            ],
-                            'sub_modules' => [],
-                        ],
-                    ],
-                ],
-            ];
-
-            // ---------------------------------------------------------
-    // Seed everything (index-driven sort_order, overridable)
-    // ---------------------------------------------------------
-    foreach ($groups as $gIndex => $g) {
-
-        // support both shapes: $g['group'] can be array OR string
-        $groupData = is_array($g['group'])
-            ? $g['group']
-            : ['name' => $g['group']];
-
-        $group = $this->upsertGroup($groupData, $gIndex);
-
-        foreach (($g['modules'] ?? []) as $mIndex => $m) {
-
-            // support both shapes: $m['module'] can be array OR string
-            $moduleData = isset($m['module'])
-                ? (is_array($m['module']) ? $m['module'] : ['name' => $m['module']])
-                : (is_array($m) ? $m : ['name' => $m]);
-
-            $module = $this->upsertModule($group->id, $moduleData, $mIndex);
-
-            foreach (($m['sub_modules'] ?? []) as $sIndex => $sm) {
-
-                $subModuleData = is_array($sm) ? $sm : ['name' => $sm];
-
-                $this->upsertSubModule($module->id, $subModuleData, $sIndex);
-            }
+    
+     
+
+       
+// ---------------------------------
+// Helpers: visibility builders
+// ---------------------------------
+$all = fn(array $flags) => ['all_flags' => $flags];
+$any = fn(array $clauses) => ['any' => $clauses];
+
+ // Common vis shortcuts
+        $vInFinanceOrSuper = $any([
+            $all(['inFinance']),
+            $all(['isSuperAdmin']),
+        ]);
+        $vInFinanceStoresOrSuper = $any([
+            $all(['inFinance']),
+            $all(['inStores']),
+            $all(['isSuperAdmin']),
+        ]);
+
+        $vInHROrSuper = $any([
+            $all(['inHR']),
+            $all(['isSuperAdmin']),
+        ]);
+
+        $vInTransportOrSuper = $any([
+            $all(['inTransport']),
+            $all(['isSuperAdmin']),
+        ]);
+
+        $vInHSEQOrSuper = $any([
+            $all(['inHSEQ']),
+            $all(['isSuperAdmin']),
+        ]);
+
+        $vInSecurityOrSuper = $any([
+            $all(['inSecurity']),
+            $all(['isSuperAdmin']),
+        ]);
+
+// ---------------------------------
+// Helpers: preserve is_active if customized
+// ---------------------------------
+$finalIsActive = function (?object $existing, bool $seededIsActive): bool {
+    return ($existing && (bool) $existing->is_customized)
+        ? (bool) $existing->is_active
+        : (bool) $seededIsActive;
+};
+
+// sort_order fallback: if not provided, use index
+$finalSortOrder = function (array $data, int $indexSort = 0): int {
+    return array_key_exists('sort_order', $data)
+        ? (int) $data['sort_order']
+        : (int) $indexSort;
+};
+
+// ---------------------------------
+// Index counters (imperative seeder-friendly)
+// ---------------------------------
+$gIndex = 0;                     // group index
+$mIndex = [];                    // module index per group slug
+$sIndex = [];                    // submodule index per module key (groupSlug::moduleSlug)
+
+// ---------------------------------
+// Upserts
+// ---------------------------------
+$upsertGroup = function (array $g, ?int $indexSort = null) use (
+    &$gIndex, &$mIndex, $finalIsActive, $finalSortOrder
+) {
+    $slug = $g['slug'] ?? Str::slug($g['name']);
+
+    $existing = ModuleGroup::where('slug', $slug)->first();
+
+    $seededIsActive = (bool) ($g['is_active'] ?? true);
+    $isActive       = $finalIsActive($existing, $seededIsActive);
+
+    // index fallback if sort_order not provided
+    $indexSort = $indexSort ?? (++$gIndex * 10);
+
+    $group = ModuleGroup::updateOrCreate(
+        ['slug' => $slug],
+        [
+            'name'       => $g['name'],
+            'icon'       => $g['icon'] ?? null,
+            'sort_order' => $finalSortOrder($g, $indexSort),
+            'is_active'  => $isActive,
+            'visibility' => $g['visibility'] ?? null,
+        ]
+    );
+
+    // reset module indexing for this group
+    $mIndex[$slug] = 0;
+
+    return $group;
+};
+
+$upsertModule = function (ModuleGroup $group, array $m, ?int $indexSort = null) use (
+    &$mIndex, &$sIndex, $finalIsActive, $finalSortOrder
+) {
+    $slug = $m['slug'] ?? Str::slug($m['name']);
+
+    $existing = Module::where('module_group_id', $group->id)
+        ->where('slug', $slug)
+        ->first();
+
+    $seededIsActive = (bool) ($m['is_active'] ?? true);
+    $isActive       = $finalIsActive($existing, $seededIsActive);
+
+    $groupSlug = $group->slug ?? (ModuleGroup::find($group->id)?->slug);
+    $mIndex[$groupSlug] = ($mIndex[$groupSlug] ?? 0) + 1;
+
+    // index fallback if sort_order not provided
+    $indexSort = $indexSort ?? ($mIndex[$groupSlug] * 10);
+
+    $module = Module::updateOrCreate(
+        ['module_group_id' => $group->id, 'slug' => $slug],
+        [
+            'module_group_id' => $group->id,
+            'name'            => $m['name'],
+            'icon'            => $m['icon'] ?? null,
+            'route_name'      => $m['route_name'] ?? null,
+            'url'             => $m['url'] ?? null,
+            'route_params'    => $m['route_params'] ?? null,
+            'badge_key'       => $m['badge_key'] ?? null,
+            'sort_order'      => $finalSortOrder($m, $indexSort),
+            'is_active'       => $isActive,
+            'visibility'      => $m['visibility'] ?? null,
+        ]
+    );
+
+    // reset submodule index for this module
+    $sKey = ($groupSlug ?? 'group') . '::' . $slug;
+    $sIndex[$sKey] = 0;
+
+    return $module;
+};
+
+$upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
+    &$sIndex, $finalIsActive, $finalSortOrder
+) {
+    $slug = $s['slug'] ?? Str::slug($s['name']);
+
+    $existing = SubModule::where('module_id', $module->id)
+        ->where('slug', $slug)
+        ->first();
+
+    $seededIsActive = (bool) ($s['is_active'] ?? true);
+    $isActive       = $finalIsActive($existing, $seededIsActive);
+
+    // build a stable module key for indexing
+    $parent = $module->module_group_id . '::' . $module->id;
+    $sIndex[$parent] = ($sIndex[$parent] ?? 0) + 1;
+
+    // index fallback if sort_order not provided
+    $indexSort = $indexSort ?? ($sIndex[$parent] * 10);
+
+    return SubModule::updateOrCreate(
+        ['module_id' => $module->id, 'slug' => $slug],
+        [
+            'module_id'     => $module->id,
+            'name'          => $s['name'],
+            'icon'          => $s['icon'] ?? null,
+            'route_name'    => $s['route_name'] ?? null,
+            'url'           => $s['url'] ?? null,
+            'route_params'  => $s['route_params'] ?? null,
+            'badge_key'     => $s['badge_key'] ?? null,
+            'sort_order'    => $finalSortOrder($s, $indexSort),
+            'is_active'     => $isActive,
+
+            // null means inherit
+            'visibility'    => $s['visibility'] ?? null,
+        ]
+    );
+};
+
+        // ----------------------------
+        // GROUP: Main Category
+        // ----------------------------
+        $g = $upsertGroup([
+            'name' => 'Main Category',
+            'slug' => 'main-category',
+            'sort_order' => 10,
+            'visibility' => null,
+        ]);
+
+        // Dashboard
+        $upsertModule($g, [
+            'name' => 'Dashboard',
+            'slug' => 'dashboard',
+            'icon' => 'fas fa-tachometer-alt',
+            'route_name' => 'dashboard.index',
+            'sort_order' => 10,
+        ]);
+
+        // Companies (only system admin + (admin or super))
+        $m = $upsertModule($g, [
+            'name' => 'Companies',
+            'slug' => 'companies',
+            'icon' => 'fas fa-building',
+            'sort_order' => 20,
+            'visibility' => $any([
+                $all(['isSystemAdmin', 'isAdmin']),
+                $all(['isSystemAdmin', 'isSuperAdmin']),
+            ]),
+        ]);
+        $upsertSub($m, [
+            'name' => 'Manage Companies',
+            'slug' => 'manage-companies',
+            'icon' => 'fas fa-list',
+            'route_name' => 'companies.index',
+            'sort_order' => 10,
+            'visibility' => null, // inherit
+        ]);
+
+        // Reminders
+        $upsertModule($g, [
+            'name' => 'Reminders',
+            'slug' => 'reminders',
+            'icon' => 'fas fa-bell',
+            'route_name' => 'reminders.index',
+            'sort_order' => 30,
+        ]);
+
+        // Inbox (was global)
+        $upsertModule($g, [
+            'name' => 'Inbox',
+            'slug' => 'inbox',
+            'icon' => 'fas fa-envelope',
+            'route_name' => 'emails.index',
+            'sort_order' => 40,
+        ]);
+
+        // ----------------------------
+        // GROUP: Human Resource
+        // Visible for HR or Super
+        // ----------------------------
+        $g = $upsertGroup([
+            'name' => 'Human Resource',
+            'slug' => 'human-resource',
+            'sort_order' => 20,
+            'visibility' => null,
+        ]);
+
+        // HR Master (Admin+HR) OR Super
+        $m = $upsertModule($g, [
+            'name' => 'Master',
+            'slug' => 'hr-master',
+            'icon' => 'fas fa-cog',
+            'sort_order' => 10,
+            'visibility' => $any([
+                $all(['isAdmin', 'inHR']),
+                $all(['isSuperAdmin']),
+            ]),
+        ]);
+
+        $hrMasterSubs = [
+            ['Allowances','allowances.index','fas fa-list'],
+            ['Branches','branches.index','fas fa-list'],
+            ['Departments','departments.index','fas fa-list', $any([$all(['isSystemAdmin']), $all(['isSuperAdmin'])])],
+            ['Deductions','deductions.index','fas fa-list'],
+            ['Earnings','earnings.index','fas fa-list'],
+            ['Grades','grades.index','fas fa-list'],
+            ['Job Titles','job_titles.index','fas fa-list'],
+            ['Qualifications','qualifications.index','fas fa-list'],
+            ['Leave Types','leave_types.index','fas fa-list'],
+        ];
+
+        $i = 10;
+        foreach ($hrMasterSubs as $row) {
+            $name = $row[0]; $route = $row[1]; $icon = $row[2];
+            $vis = $row[3] ?? null;
+            $upsertSub($m, [
+                'name' => $name,
+                'slug' => Str::slug($name),
+                'icon' => $icon,
+                'route_name' => $route,
+                'sort_order' => $i,
+                'visibility' => $vis, // null inherits module visibility
+            ]);
+            $i += 10;
         }
-    }
 
-       });
-    }
+        // Employees
+        $m = $upsertModule($g, [
+            'name' => 'Employees',
+            'slug' => 'employees',
+            'icon' => 'fas fa-users',
+            'sort_order' => 20,
+            'route_name' => 'employees.*',
+            'visibility' => $any([
+                $all(['inHR']),
+                $all(['isSuperAdmin']),
+            ]),
+        ]);
 
-    // =============================================================
-    // Helpers
-    // =============================================================
+        $upsertSub($m, ['name'=>'Create Employee','slug'=>'create-employee','icon'=>'fas fa-plus','route_name'=>'employees.create','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Manage Employees','slug'=>'manage-employees','icon'=>'fas fa-list','route_name'=>'employees.index','sort_order'=>20]);
+        $upsertSub($m, ['name'=>'Manage Leave Days','slug'=>'manage-leave-days','icon'=>'fas fa-list','route_name'=>'employees.leaves.index','sort_order'=>30]);
+        $upsertSub($m, ['name'=>'Archived Employees','slug'=>'archived-employees','icon'=>'fas fa-archive','route_name'=>'employees.archived','sort_order'=>40]);
+        $upsertSub($m, ['name'=>'Deleted Employees','slug'=>'deleted-employees','icon'=>'fas fa-trash','route_name'=>'employees.deleted','sort_order'=>50]);
 
-    private function vis(array $rules): array
-    {
-        return $rules;
-    }
+        // Head of Departments
+        $upsertModule($g, [
+            'name' => 'Head of Departments',
+            'slug' => 'department-heads',
+            'icon' => 'fas fa-user-plus',
+            'route_name' => 'department_heads.index',
+            'sort_order' => 30,
+            'visibility' => $any([
+                $all(['inHR']),
+                $all(['isSuperAdmin']),
+            ]),
+        ]);
 
-    /**
-     * @param int $fallbackSort If sort_order not provided, use index.
-     */
-    private function upsertGroup(array $data, int $indexSort = 0): ModuleGroup
-    {
-        $slug = $data['slug'] ?? Str::slug($data['name']);
+        // Drivers (Transport OR HR OR Super)
+        $m = $upsertModule($g, [
+            'name' => 'Drivers',
+            'slug' => 'drivers',
+            'icon' => 'fas fa-users',
+            'route_name' => 'drivers.*',
+            'sort_order' => 40,
+            'visibility' => $any([
+                $all(['inTransport']),
+                $all(['inHR']),
+                $all(['isSuperAdmin']),
+            ]),
+        ]);
 
-        // Find existing first so we can respect is_customized for is_active
-        $existing = ModuleGroup::where('slug', $slug)->first();
+        $upsertSub($m, ['name'=>'Create Driver','slug'=>'create-driver','icon'=>'fas fa-plus','route_name'=>'drivers.create','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Manage Drivers','slug'=>'manage-drivers','icon'=>'fas fa-list','route_name'=>'drivers.index','sort_order'=>20]);
+        $upsertSub($m, ['name'=>'Archived Employees','slug'=>'archived-drivers','icon'=>'fas fa-archive','route_name'=>'drivers.archived','sort_order'=>30]);
 
-        $seededIsActive = $data['is_active'] ?? true;
+        // Leave Management (public, but management sub-items restricted)
+        $m = $upsertModule($g, [
+            'name' => 'Leave Management',
+            'slug' => 'leave-management',
+            'icon' => 'fas fa-calendar',
+            'route_name' => 'leaves.*',
+            'sort_order' => 50,
+            'visibility' => [], // explicit public, even if HR group hidden for some companies
+        ]);
 
-        // If client customized -> preserve DB is_active, else use seeded
-        $finalIsActive = $existing && $existing->is_customized
-            ? $existing->is_active
-            : $seededIsActive;
+        $upsertSub($m, ['name'=>'Apply for leave','slug'=>'apply-for-leave','icon'=>'fas fa-plus','route_name'=>'leaves.index','sort_order'=>10, 'visibility'=>[]]);
+        $upsertSub($m, ['name'=>'My Team','slug'=>'my-team','icon'=>'fas fa-users','route_name'=>'leaves.myteam','sort_order'=>20, 'visibility'=>[]]);
 
-        return ModuleGroup::updateOrCreate(
-            ['slug' => $slug],
-            [
-                'name'       => $data['name'],
-                'icon'       => $data['icon'] ?? null,
-                'sort_order' => $data['sort_order'] ?? $indexSort,
-                'is_active'  => $finalIsActive,
-                'visibility' => $data['visibility'] ?? null,
-                // don't touch is_customized / customized_at in seeder
-            ]
-        );
-    }
+        $leaveManageVis = $any([
+            $all(['hasHRDeptHead']),
+            $all(['isAdmin','inHR']),
+            $all(['isManagement','inHR']),
+            $all(['isSuperAdmin']),
+        ]);
 
-    private function upsertModule(int $moduleGroupId, array $data, int $indexSort = 0): Module
-    {
-        $slug = $data['slug'] ?? Str::slug($data['name']);
+        $upsertSub($m, ['name'=>'Manage Applications','slug'=>'manage-applications','icon'=>'fas fa-list','route_name'=>'leaves.manage','sort_order'=>30,'visibility'=>$leaveManageVis]);
+        $upsertSub($m, ['name'=>'Pending Applications','slug'=>'pending-applications','icon'=>'fas fa-clock','route_name'=>'leaves.pending','sort_order'=>40,'badge_key'=>'leaves_pending_count','visibility'=>$leaveManageVis]);
+        $upsertSub($m, ['name'=>'Approved Applications','slug'=>'approved-applications','icon'=>'fas fa-check','route_name'=>'leaves.approved','sort_order'=>50,'badge_key'=>'leaves_approved_count','visibility'=>$leaveManageVis]);
+        $upsertSub($m, ['name'=>'Rejected Applications','slug'=>'rejected-applications','icon'=>'fas fa-ban','route_name'=>'leaves.rejected','sort_order'=>60,'badge_key'=>'leaves_rejected_count','visibility'=>$leaveManageVis]);
 
-        $existing = Module::where('module_group_id', $moduleGroupId)
-            ->where('slug', $slug)
-            ->first();
+        // ----------------------------
+        // GROUP: Salaries & Payroll
+        // (header existed always) -> keep group public
+        // ----------------------------
+        $g = $upsertGroup([
+            'name' => 'Salaries & Payroll',
+            'slug' => 'salaries-payroll',
+            'sort_order' => 30,
+            'visibility' => null,
+        ]);
 
-        $seededIsActive = $data['is_active'] ?? true;
+        // Master (Admin+HR) OR Super
+        $m = $upsertModule($g, [
+            'name' => 'Master',
+            'slug' => 'salary-master',
+            'icon' => 'fas fa-cog',
+            'sort_order' => 10,
+            'visibility' => $any([
+                $all(['isAdmin','inHR']),
+                $all(['isSuperAdmin']),
+            ]),
+        ]);
 
-        $finalIsActive = $existing && $existing->is_customized
-            ? $existing->is_active
-            : $seededIsActive;
+        $upsertSub($m, ['name'=>'Allowances','slug'=>'allowances','icon'=>'fas fa-list','route_name'=>'allowances.index','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Deductions','slug'=>'deductions','icon'=>'fas fa-list','route_name'=>'deductions.index','sort_order'=>20]);
+        $upsertSub($m, ['name'=>'Earnings','slug'=>'earnings','icon'=>'fas fa-list','route_name'=>'earnings.index','sort_order'=>30]);
+        $upsertSub($m, ['name'=>'Loan Type','slug'=>'loan-type','icon'=>'fas fa-list','route_name'=>'loan_types.index','sort_order'=>40]);
+        $upsertSub($m, [
+            'name'=>'Tax Table',
+            'slug'=>'tax-table',
+            'icon'=>'fas fa-list',
+            'route_name'=>'tax_brackets.index',
+            'sort_order'=>50,
+            'visibility' => $any([$all(['isSystemAdmin'])]),
+        ]);
 
-        return Module::updateOrCreate(
-            ['module_group_id' => $moduleGroupId, 'slug' => $slug],
-            [
-                'name'         => $data['name'],
-                'icon'         => $data['icon'] ?? null,
-                'route_name'   => $data['route_name'] ?? null,
-                'url'          => $data['url'] ?? null,
-                'sort_order' => $data['sort_order'] ?? $indexSort,
-                'is_active'    => $finalIsActive,
-                'badge_key'    => $data['badge_key'] ?? null,
-                'visibility'   => $data['visibility'] ?? null,
-                'route_params' => $data['route_params'] ?? null, // remove if column doesn't exist
-            ]
-        );
-    }
+        // My Payslip (public)
+        $upsertModule($g, [
+            'name' => 'My Payslip',
+            'slug' => 'my-payslip',
+            'icon' => 'fas fa-file',
+            'route_name' => 'payslips.index',
+            'sort_order' => 20,
+            'visibility' => null,
+        ]);
 
-    private function upsertSubModule(int $moduleId, array $data, int $indexSort = 0): SubModule
-    {
-        $slug = $data['slug'] ?? Str::slug($data['name']);
+        // Loans (public module, restricted management sub-items)
+        $m = $upsertModule($g, [
+            'name' => 'Loans',
+            'slug' => 'loans',
+            'icon' => 'fas fa-credit-card',
+            'route_name' => 'loans.*',
+            'sort_order' => 30,
+            'visibility' => null,
+        ]);
 
-        $existing = SubModule::where('module_id', $moduleId)
-            ->where('slug', $slug)
-            ->first();
+        $upsertSub($m, ['name'=>'My Applications','slug'=>'my-applications','icon'=>'fas fa-arrow-right','route_name'=>'loans.myloans','sort_order'=>10,'visibility'=>[]]);
 
-        $seededIsActive = $data['is_active'] ?? true;
+        $loanManageVis = $any([
+            $all(['hasFinanceDeptHead']),
+            $all(['isManagement','inHR']),
+            $all(['isManagement','inFinance']),
+            $all(['isSuperAdmin']),
+        ]);
 
-        $finalIsActive = $existing && $existing->is_customized
-            ? $existing->is_active
-            : $seededIsActive;
+        $upsertSub($m, ['name'=>'Manage Loans','slug'=>'manage-loans','icon'=>'fas fa-list','route_name'=>'loans.index','sort_order'=>20,'visibility'=>$loanManageVis]);
+        $upsertSub($m, ['name'=>'Pending Loans','slug'=>'pending-loans','icon'=>'fas fa-clock','route_name'=>'loans.pending','sort_order'=>30,'badge_key'=>'loans_pending_count','visibility'=>$loanManageVis]);
+        $upsertSub($m, ['name'=>'Approved Loans','slug'=>'approved-loans','icon'=>'fas fa-check','route_name'=>'loans.approved','sort_order'=>40,'badge_key'=>'loans_approved_count','visibility'=>$loanManageVis]);
+        $upsertSub($m, ['name'=>'Rejected Loans','slug'=>'rejected-loans','icon'=>'fas fa-ban','route_name'=>'loans.rejected','sort_order'=>50,'badge_key'=>'loans_rejected_count','visibility'=>$loanManageVis]);
 
-        return SubModule::updateOrCreate(
-            ['module_id' => $moduleId, 'slug' => $slug],
-            [
-                'name'         => $data['name'],
-                'icon'         => $data['icon'] ?? null,
-                'route_name'   => $data['route_name'] ?? null,
-                'url'          => $data['url'] ?? null,
-                'sort_order' => $data['sort_order'] ?? $indexSort,
-                'is_active'    => $finalIsActive,
-                'badge_key'    => $data['badge_key'] ?? null,
-                'visibility'   => $data['visibility'] ?? null,
-                'route_params' => $data['route_params'] ?? null, // remove if column doesn't exist
-            ]
-        );
+        // Salaries (Admin+HR) OR Super
+        $m = $upsertModule($g, [
+            'name' => 'Salaries',
+            'slug' => 'salaries',
+            'icon' => 'fas fa-donate',
+            'route_name' => 'salaries.*',
+            'sort_order' => 40,
+            'visibility' => $any([
+                $all(['isAdmin','inHR']),
+                $all(['isSuperAdmin']),
+            ]),
+        ]);
+        $upsertSub($m, ['name'=>'Create Salary','slug'=>'create-salary','icon'=>'fas fa-plus','route_name'=>'salaries.create','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Manage Salaries','slug'=>'manage-salaries','icon'=>'fas fa-list','route_name'=>'salaries.index','sort_order'=>20]);
+
+        // Payroll (Admin+HR) OR Super
+        $m = $upsertModule($g, [
+            'name' => 'Payroll',
+            'slug' => 'payroll',
+            'icon' => 'fas fa-file',
+            'route_name' => 'payrolls.*',
+            'sort_order' => 50,
+            'visibility' => $any([
+                $all(['isAdmin','inHR']),
+                $all(['isManagement','inHR']),
+                $all(['hasHRDeptHead']),
+                $all(['isSuperAdmin']),
+            ]),
+        ]);
+
+        $upsertSub($m, ['name'=>'Manage Payrolls','slug'=>'manage-payrolls','icon'=>'fas fa-list','route_name'=>'payrolls.index','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Pending Payrolls','slug'=>'pending-payrolls','icon'=>'fas fa-clock','route_name'=>'payrolls.pending','sort_order'=>20,'badge_key'=>'payrolls_pending_count']);
+        $upsertSub($m, ['name'=>'Approved Payrolls','slug'=>'approved-payrolls','icon'=>'fas fa-check','route_name'=>'payrolls.approved','sort_order'=>30,'badge_key'=>'payrolls_approved_count']);
+        $upsertSub($m, ['name'=>'Rejected Payrolls','slug'=>'rejected-payrolls','icon'=>'fas fa-ban','route_name'=>'payrolls.rejected','sort_order'=>40,'badge_key'=>'payrolls_rejected_count']);
+
+        // ----------------------------
+        // GROUP: Sales & Payments
+        // Finance or Super
+        // ----------------------------
+        $g = $upsertGroup([
+            'name' => 'Sales & Payments',
+            'slug' => 'sales-payments',
+            'sort_order' => 40,
+            'visibility' => $vInFinanceOrSuper,
+        ]);
+
+        // Master (Admin & Finance & HR) OR Super
+        $m = $upsertModule($g, [
+            'name' => 'Master',
+            'slug' => 'sales-master',
+            'icon' => 'fas fa-cog',
+            'sort_order' => 10,
+            'visibility' => $any([
+                $all(['isAdmin','inFinance']),
+                $all(['isSuperAdmin']),
+            ]),
+        ]);
+        $upsertSub($m, ['name'=>'Currencies','slug'=>'currencies','icon'=>'fas fa-money-bill-alt','route_name'=>'currencies.index','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Payment Methods','slug'=>'payment-methods','icon'=>'fas fa-list','route_name'=>'payment_methods.index','sort_order'=>20]);
+
+        // Quotations
+        $m = $upsertModule($g, [
+            'name' => 'Quotations',
+            'slug' => 'quotations',
+            'icon' => 'fas fa-file-invoice',
+            'route_name' => 'quotations.*',
+            'sort_order' => 20,
+        ]);
+        $upsertSub($m, ['name'=>'Create Quotation','slug'=>'create-quotation','icon'=>'fas fa-plus','route_name'=>'quotations.create','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Manage Quotations','slug'=>'manage-quotations','icon'=>'fas fa-list','route_name'=>'quotations.index','sort_order'=>20]);
+
+        // Invoices
+        $m = $upsertModule($g, [
+            'name' => 'Invoices',
+            'slug' => 'invoices',
+            'icon' => 'fas fa-file-invoice-dollar',
+            'route_name' => 'invoices.*',
+            'sort_order' => 30,
+        ]);
+        $upsertSub($m, ['name'=>'Create Invoice','slug'=>'create-invoice','icon'=>'fas fa-plus','route_name'=>'invoices.create','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Manage Invoices','slug'=>'manage-invoices','icon'=>'fas fa-list','route_name'=>'invoices.index','sort_order'=>20]);
+
+        $invoiceManageVis = $any([
+            $all(['hasFinanceDeptHead']),
+            $all(['isAdmin','inFinance']),
+            $all(['isSuperAdmin']),
+        ]);
+        $upsertSub($m, ['name'=>'Pending Invoices','slug'=>'pending-invoices','icon'=>'fas fa-clock','route_name'=>'invoices.pending','sort_order'=>30,'badge_key'=>'invoices_pending_count','visibility'=>$invoiceManageVis]);
+        $upsertSub($m, ['name'=>'Approved Invoices','slug'=>'approved-invoices','icon'=>'fas fa-check','route_name'=>'invoices.approved','sort_order'=>40,'badge_key'=>'invoices_approved_count','visibility'=>$invoiceManageVis]);
+        $upsertSub($m, ['name'=>'Rejected Invoices','slug'=>'rejected-invoices','icon'=>'fas fa-ban','route_name'=>'invoices.rejected','sort_order'=>50,'badge_key'=>'invoices_rejected_count','visibility'=>$invoiceManageVis]);
+        $upsertSub($m, ['name'=>'Deleted Invoices','slug'=>'deleted-invoices','icon'=>'fas fa-trash','route_name'=>'invoices.deleted','sort_order'=>60,'badge_key'=>'invoices_deleted_count','visibility'=>$invoiceManageVis]);
+
+        // Customer Statements
+        $m = $upsertModule($g, [
+            'name' => 'Customer Statements',
+            'slug' => 'customer-statements',
+            'icon' => 'fas fa-file-invoice-dollar',
+            'route_name' => 'customer_statements.index',
+            'sort_order' => 40,
+        ]);
+        $upsertSub($m, ['name'=>'Manage Statements','slug'=>'manage-statements','icon'=>'fas fa-list','route_name'=>'customer_statements.index','sort_order'=>10]);
+
+        // Credit Notes
+        $m = $upsertModule($g, [
+            'name' => 'Credit Notes',
+            'slug' => 'credit-notes',
+            'icon' => 'fas fa-file-invoice-dollar',
+            'route_name' => 'credit_notes.*',
+            'sort_order' => 50,
+        ]);
+        $upsertSub($m, ['name'=>'Create','slug'=>'create-credit-note','icon'=>'fas fa-plus','route_name'=>'credit_notes.create','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Manage C Notes','slug'=>'manage-credit-notes','icon'=>'fas fa-list','route_name'=>'credit_notes.index','sort_order'=>20]);
+
+        $cnManageVis = $any([
+            $all(['hasFinanceDeptHead']),
+            $all(['isAdmin','inFinance']),
+            $all(['isSuperAdmin']),
+        ]);
+        $upsertSub($m, ['name'=>'Pending C Notes','slug'=>'pending-credit-notes','icon'=>'fas fa-clock','route_name'=>'credit_notes.pending','sort_order'=>30,'badge_key'=>'credit_notes_pending_count','visibility'=>$cnManageVis]);
+        $upsertSub($m, ['name'=>'Approved C Notes','slug'=>'approved-credit-notes','icon'=>'fas fa-check','route_name'=>'credit_notes.approved','sort_order'=>40,'badge_key'=>'credit_notes_approved_count','visibility'=>$cnManageVis]);
+        $upsertSub($m, ['name'=>'Rejected C Notes','slug'=>'rejected-credit-notes','icon'=>'fas fa-ban','route_name'=>'credit_notes.rejected','sort_order'=>50,'badge_key'=>'credit_notes_rejected_count','visibility'=>$cnManageVis]);
+        $upsertSub($m, ['name'=>'Deleted C Notes','slug'=>'deleted-credit-notes','icon'=>'fas fa-trash','route_name'=>'credit_notes.deleted','sort_order'=>60,'badge_key'=>'credit_notes_deleted_count','visibility'=>$cnManageVis]);
+
+        // Payments
+        $m = $upsertModule($g, [
+            'name' => 'Payments',
+            'slug' => 'payments',
+            'icon' => 'fas fa-credit-card',
+            'route_name' => 'payments.index',
+            'sort_order' => 60,
+        ]);
+        $upsertSub($m, ['name'=>'Manage Payments','slug'=>'manage-payments','icon'=>'fas fa-list','route_name'=>'payments.index','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Manage Receipts','slug'=>'manage-receipts','icon'=>'fas fa-list','route_name'=>'receipts.index','sort_order'=>20]);
+
+        // Products & Services (Invoices)
+        $m = $upsertModule($g, [
+            'name' => 'Products & Services',
+            'slug' => 'products-services-invoices',
+            'icon' => 'fas fa-boxes',
+            'route_name' => 'product_services.all',
+            'route_params' => ['category' => 'invoices'],
+            'sort_order' => 70,
+        ]);
+        $upsertSub($m, [
+            'name'=>'Manage P & S',
+            'slug'=>'manage-ps-invoices',
+            'icon'=>'fas fa-list',
+            'route_name'=>'product_services.all',
+            'route_params'=>['category'=>'invoices'],
+            'sort_order'=>10,
+        ]);
+
+        // Customers
+        $upsertModule($g, [
+            'name' => 'Customers',
+            'slug' => 'customers',
+            'icon' => 'fas fa-user-friends',
+            'route_name' => 'customers.index',
+            'sort_order' => 80,
+        ]);
+
+        // // Accounts Receivable
+        // $upsertModule($g, [
+        //     'name' => 'Accounts Receivable',
+        //     'slug' => 'accounts-receivable',
+        //     'icon' => 'fas fa-list',
+        //     'route_name' => 'accounts.receivable',
+        //     'sort_order' => 90,
+        // ]);
+
+        // ----------------------------
+        // GROUP: Purchases (header existed always) -> group public
+        // ----------------------------
+        $g = $upsertGroup([
+            'name' => 'Purchases',
+            'slug' => 'purchases',
+            'sort_order' => 50,
+            'visibility' => null,
+        ]);
+
+        // Bills (Finance or Super)
+        $m = $upsertModule($g, [
+            'name' => 'Bills',
+            'slug' => 'bills',
+            'icon' => 'fas fa-th-list',
+            'route_name' => 'bills.*',
+            'sort_order' => 10,
+            'visibility' => $vInFinanceOrSuper,
+        ]);
+        $upsertSub($m, ['name'=>'Create Bill','slug'=>'create-bill','icon'=>'fas fa-plus','route_name'=>'bills.create','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Manage Bills','slug'=>'manage-bills','icon'=>'fas fa-list','route_name'=>'bills.index','sort_order'=>20]);
+
+        $billManageVis = $any([
+            $all(['hasFinanceDeptHead']),
+            $all(['isAdmin','inFinance']),
+            $all(['isSuperAdmin']),
+        ]);
+        $upsertSub($m, ['name'=>'Pending Bills','slug'=>'pending-bills','icon'=>'fas fa-clock','route_name'=>'bills.pending','sort_order'=>30,'badge_key'=>'bills_pending_count','visibility'=>$billManageVis]);
+        $upsertSub($m, ['name'=>'Approved Bills','slug'=>'approved-bills','icon'=>'fas fa-check','route_name'=>'bills.approved','sort_order'=>40,'badge_key'=>'bills_approved_count','visibility'=>$billManageVis]);
+        $upsertSub($m, ['name'=>'Rejected Bills','slug'=>'rejected-bills','icon'=>'fas fa-ban','route_name'=>'bills.rejected','sort_order'=>50,'badge_key'=>'bills_rejected_count','visibility'=>$billManageVis]);
+
+        // Vendor Statements (Finance or Super)
+        $m = $upsertModule($g, [
+            'name' => 'Vendor Statements',
+            'slug' => 'vendor-statements',
+            'icon' => 'fas fa-file-invoice-dollar',
+            'route_name' => 'vendor_statements.index',
+            'sort_order' => 20,
+            'visibility' => $vInFinanceOrSuper,
+        ]);
+        $upsertSub($m, ['name'=>'Manage Statements','slug'=>'manage-vendor-statements','icon'=>'fas fa-list','route_name'=>'vendor_statements.index','sort_order'=>10]);
+
+        // Products & Services (Bills)
+        $m = $upsertModule($g, [
+            'name' => 'Products & Services',
+            'slug' => 'products-services-bills',
+            'icon' => 'fas fa-boxes',
+            'route_name' => 'product_services.all',
+            'route_params' => ['category' => 'bills'],
+            'sort_order' => 30,
+            'visibility' => $vInFinanceOrSuper,
+        ]);
+        $upsertSub($m, [
+            'name'=>'Manage P & S',
+            'slug'=>'manage-ps-bills',
+            'icon'=>'fas fa-list',
+            'route_name'=>'product_services.all',
+            'route_params'=>['category'=>'bills'],
+            'sort_order'=>10,
+        ]);
+
+        // Vendors
+        $upsertModule($g, [
+            'name' => 'Vendors',
+            'slug' => 'vendors',
+            'icon' => 'fas fa-user-friends',
+            'route_name' => 'vendors.index',
+            'sort_order' => 40,
+            'visibility' => $vInFinanceOrSuper,
+        ]);
+
+        // // Accounts Payable
+        // $upsertModule($g, [
+        //     'name' => 'Accounts Payable',
+        //     'slug' => 'accounts-payable',
+        //     'icon' => 'fas fa-list',
+        //     'route_name' => 'accounts.payable',
+        //     'sort_order' => 50,
+        //     'visibility' => $vInFinanceOrSuper,
+        // ]);
+
+        // Requisitions (was global)
+        $m = $upsertModule($g, [
+            'name' => 'Requisitions',
+            'slug' => 'requisitions',
+            'icon' => 'fas fa-hand-holding-usd',
+            'route_name' => 'requisitions.*',
+            'sort_order' => 60,
+            'visibility' => null,
+        ]);
+        $upsertSub($m, ['name'=>'Manage Requisitions','slug'=>'manage-requisitions','icon'=>'fas fa-list','route_name'=>'requisitions.index','sort_order'=>10]);
+
+        $reqManageVis = $any([
+            $all(['hasFinanceDeptHead']),
+            $all(['isAdmin','inFinance']),
+            $all(['isAdmin','inStores']),
+            $all(['isSuperAdmin']),
+        ]);
+        $upsertSub($m, ['name'=>'Pending Requisitions','slug'=>'pending-requisitions','icon'=>'fas fa-clock','route_name'=>'requisitions.pending','sort_order'=>20,'badge_key'=>'requisitions_pending_count','visibility'=>$reqManageVis]);
+        $upsertSub($m, ['name'=>'Approved Requisitions','slug'=>'approved-requisitions','icon'=>'fas fa-check','route_name'=>'requisitions.approved','sort_order'=>30,'badge_key'=>'requisitions_approved_count','visibility'=>$reqManageVis]);
+        $upsertSub($m, ['name'=>'Rejected Requisitions','slug'=>'rejected-requisitions','icon'=>'fas fa-ban','route_name'=>'requisitions.rejected','sort_order'=>40,'badge_key'=>'requisitions_rejected_count','visibility'=>$reqManageVis]);
+
+        // ----------------------------
+        // GROUP: Accounting (Finance or Super)
+        // ----------------------------
+        $g = $upsertGroup([
+            'name' => 'Accounting',
+            'slug' => 'accounting',
+            'sort_order' => 60,
+            'visibility' => $vInFinanceOrSuper,
+        ]);
+
+        $upsertModule($g, [
+            'name' => 'Transactions',
+            'slug' => 'transactions',
+            'icon' => 'fas fa-money-check',
+            'route_name' => 'transactions.index',
+            'sort_order' => 10,
+        ]);
+
+        $m = $upsertModule($g, [
+            'name' => 'Charts of Accounts',
+            'slug' => 'charts-of-accounts',
+            'icon' => 'fas fa-balance-scale',
+            'route_name' => 'accounts.index',
+            'sort_order' => 20,
+        ]);
+        $upsertSub($m, ['name'=>'Manage Accounts','slug'=>'manage-accounts','icon'=>'fas fa-list','route_name'=>'accounts.index','sort_order'=>10]);
+        $upsertSub($m, [
+            'name'=>'Manage Sales Taxes',
+            'slug'=>'manage-sales-taxes',
+            'icon'=>'fas fa-list',
+            'route_name'=>'accounts.tax',
+            'sort_order'=>20,
+            'visibility'=>$any([$all(['isAdmin','inFinance']), $all(['isSuperAdmin'])]),
+        ]);
+
+        $upsertModule($g, [
+            'name' => 'Bank Accounts',
+            'slug' => 'bank-accounts',
+            'icon' => 'fas fa-bank',
+            'route_name' => 'bank_accounts.index',
+            'sort_order' => 30,
+        ]);
+
+        $upsertModule($g, [
+            'name' => 'Currency Exchange Rates',
+            'slug' => 'exchange-rates',
+            'icon' => 'fas fa-exchange',
+            'route_name' => 'exchange_rates.index',
+            'sort_order' => 40,
+        ]);
+
+        // ----------------------------
+        // GROUP: Asset Management (Finance or Super)
+        // ----------------------------
+        $g = $upsertGroup([
+            'name' => 'Asset Management',
+            'slug' => 'asset-management',
+            'sort_order' => 70,
+            'visibility' => $vInFinanceStoresOrSuper,
+        ]);
+
+        $m = $upsertModule($g, [
+            'name' => 'Master',
+            'slug' => 'asset-master',
+            'icon' => 'fas fa-cog',
+            'sort_order' => 10,
+        ]);
+        $upsertSub($m, ['name'=>'Manage Categories','slug'=>'asset-categories','icon'=>'fas fa-list','route_name'=>'categories.index','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Manage Attributes','slug'=>'asset-attributes','icon'=>'fas fa-list','route_name'=>'attributes.index','sort_order'=>20]);
+        $upsertSub($m, ['name'=>'Manage Brands','slug'=>'asset-brands','icon'=>'fas fa-list','route_name'=>'brands.index','sort_order'=>30]);
+
+        $m = $upsertModule($g, [
+            'name' => 'Products',
+            'slug' => 'asset-products',
+            'icon' => 'fas fa-boxes',
+            'route_name' => 'products.*',
+            'sort_order' => 20,
+        ]);
+        $upsertSub($m, ['name'=>'Create Product','slug'=>'create-product','icon'=>'fas fa-plus','route_name'=>'products.create','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Manage Products','slug'=>'manage-products','icon'=>'fas fa-list','route_name'=>'products.index','sort_order'=>20]);
+
+        $m = $upsertModule($g, [
+            'name' => 'Purchase Orders',
+            'slug' => 'asset-purchase-orders',
+            'icon' => 'fas fa-hand-holding-usd',
+            'route_name' => 'purchases.*',
+            'sort_order' => 30,
+        ]);
+        $upsertSub($m, ['name'=>'Manage Orders','slug'=>'manage-asset-orders','icon'=>'fas fa-list','route_name'=>'purchases.index','sort_order'=>10]);
+
+        $assetPOVis = $any([
+            $all(['hasFinanceDeptHead']),
+            $all(['isAdmin','inFinance']),
+            $all(['isAdmin','inStores']),
+            $all(['isSuperAdmin']),
+        ]);
+        $upsertSub($m, ['name'=>'Pending Orders','slug'=>'pending-asset-orders','icon'=>'fas fa-clock','route_name'=>'purchases.pending','sort_order'=>20,'badge_key'=>'asset_purchases_pending_count','visibility'=>$assetPOVis]);
+        $upsertSub($m, ['name'=>'Approved Orders','slug'=>'approved-asset-orders','icon'=>'fas fa-check','route_name'=>'purchases.approved','sort_order'=>30,'badge_key'=>'asset_purchases_approved_count','visibility'=>$assetPOVis]);
+        $upsertSub($m, ['name'=>'Rejected Orders','slug'=>'rejected-asset-orders','icon'=>'fas fa-ban','route_name'=>'purchases.rejected','sort_order'=>40,'badge_key'=>'asset_purchases_rejected_count','visibility'=>$assetPOVis]);
+        $upsertSub($m, ['name'=>'Deleted Orders','slug'=>'deleted-asset-orders','icon'=>'fas fa-trash','route_name'=>'purchases.deleted','sort_order'=>50,'badge_key'=>'asset_purchases_deleted_count','visibility'=>$assetPOVis]);
+
+        $m = $upsertModule($g, [
+            'name' => 'GRV (Assets)',
+            'slug' => 'grv-assets',
+            'icon' => 'fas fa-th-list',
+            'route_name' => 'goods_receiveds.assets',
+            'sort_order' => 40,
+        ]);
+        $upsertSub($m, ['name'=>'Manage Assets GRVs','slug'=>'manage-assets-grvs','icon'=>'fas fa-list','route_name'=>'goods_receiveds.assets','sort_order'=>10]);
+
+        $m = $upsertModule($g, [
+            'name' => 'Assets',
+            'slug' => 'assets',
+            'icon' => 'fas fa-th-list',
+            'route_name' => 'assets.*',
+            'sort_order' => 50,
+        ]);
+        $upsertSub($m, ['name'=>'Create Asset','slug'=>'create-asset','icon'=>'fas fa-plus','route_name'=>'assets.create','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Manage Assets','slug'=>'manage-assets','icon'=>'fas fa-list','route_name'=>'assets.index','sort_order'=>20]);
+
+        $m = $upsertModule($g, [
+            'name' => 'Dispatches (Assets)',
+            'slug' => 'asset-dispatches',
+            'icon' => 'fas fa-list',
+            'route_name' => 'asset_dispatches.*',
+            'sort_order' => 60,
+        ]);
+        $upsertSub($m, ['name'=>'Manage Dispatches','slug'=>'manage-asset-dispatches','icon'=>'fas fa-list','route_name'=>'asset_dispatches.index','sort_order'=>10]);
+
+        $assetDispatchVis = $any([
+            $all(['isAdmin','inFinance']),
+            $all(['isAdmin','inStores']),
+            $all(['isSuperAdmin']),
+        ]);
+        $upsertSub($m, ['name'=>'Pending Dispatches','slug'=>'pending-asset-dispatches','icon'=>'fas fa-clock','route_name'=>'asset_dispatches.pending','sort_order'=>20,'badge_key'=>'asset_dispatches_pending_count','visibility'=>$assetDispatchVis]);
+        $upsertSub($m, ['name'=>'Approved Dispatches','slug'=>'approved-asset-dispatches','icon'=>'fas fa-check','route_name'=>'asset_dispatches.approved','sort_order'=>30,'badge_key'=>'asset_dispatches_approved_count','visibility'=>$assetDispatchVis]);
+        $upsertSub($m, ['name'=>'Rejected Dispatches','slug'=>'rejected-asset-dispatches','icon'=>'fas fa-ban','route_name'=>'asset_dispatches.rejected','sort_order'=>40,'badge_key'=>'asset_dispatches_rejected_count','visibility'=>$assetDispatchVis]);
+
+        // ----------------------------
+        // GROUP: SHEQ (HSEQ or Super)
+        // ----------------------------
+        $g = $upsertGroup([
+            'name' => 'SHEQ',
+            'slug' => 'sheq',
+            'sort_order' => 80,
+            'visibility' => $vInHSEQOrSuper,
+        ]);
+
+        $m = $upsertModule($g, [
+            'name' => 'Master',
+            'slug' => 'sheq-master',
+            'icon' => 'fas fa-cog',
+            'sort_order' => 10,
+            'visibility' => $any([
+                $all(['isAdmin','inHSEQ']),
+                $all(['isSuperAdmin']),
+            ]),
+        ]);
+        $upsertSub($m, ['name'=>'Cause Categories','slug'=>'cause-categories','icon'=>'fas fa-list','route_name'=>'loss_categories.index','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Cause Groups','slug'=>'cause-groups','icon'=>'fas fa-list','route_name'=>'loss_groups.index','sort_order'=>20]);
+        $upsertSub($m, ['name'=>'Loss Causes','slug'=>'loss-causes','icon'=>'fas fa-list','route_name'=>'losses.index','sort_order'=>30]);
+
+        $m = $upsertModule($g, [
+            'name' => 'Incidents',
+            'slug' => 'incidents',
+            'icon' => 'fas fa-exclamation-triangle',
+            'route_name' => 'incidents.*',
+            'sort_order' => 20,
+        ]);
+        $upsertSub($m, ['name'=>'Create Incidents','slug'=>'create-incidents','icon'=>'fas fa-plus','route_name'=>'incidents.create','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Manage Incidents','slug'=>'manage-incidents','icon'=>'fas fa-list','route_name'=>'incidents.index','sort_order'=>20]);
+
+        $m = $upsertModule($g, [
+            'name' => 'Age Pyramid',
+            'slug' => 'age-pyramid',
+            'icon' => 'fas fa-hourglass',
+            'sort_order' => 30,
+        ]);
+        $upsertSub($m, ['name'=>'Customers','slug'=>'age-customers','icon'=>'fas fa-list','route_name'=>'customers.age','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Drivers','slug'=>'age-drivers','icon'=>'fas fa-list','route_name'=>'drivers.age','sort_order'=>20]);
+        $upsertSub($m, ['name'=>'Employees','slug'=>'age-employees','icon'=>'fas fa-list','route_name'=>'employees.age','sort_order'=>30]);
+        $upsertSub($m, ['name'=>'Horses','slug'=>'age-horses','icon'=>'fas fa-list','route_name'=>'horses.age','sort_order'=>40]);
+        $upsertSub($m, ['name'=>'Trailers','slug'=>'age-trailers','icon'=>'fas fa-list','route_name'=>'trailers.age','sort_order'=>50]);
+        $upsertSub($m, ['name'=>'Vehicles','slug'=>'age-vehicles','icon'=>'fas fa-list','route_name'=>'vehicles.age','sort_order'=>60]);
+        $upsertSub($m, ['name'=>'Vendors','slug'=>'age-vendors','icon'=>'fas fa-list','route_name'=>'vendors.age','sort_order'=>70]);
+
+        $m = $upsertModule($g, [
+            'name' => 'Compliance',
+            'slug' => 'compliance',
+            'icon' => 'fas fa-check',
+            'route_name' => 'compliances.index',
+            'sort_order' => 40,
+        ]);
+        $upsertSub($m, ['name'=>'Driver - Route Compliance','slug'=>'driver-route-compliance','icon'=>'fas fa-list','route_name'=>'compliances.index','sort_order'=>10]);
+
+        $m = $upsertModule($g, [
+            'name' => 'Training Workshops',
+            'slug' => 'training-workshops',
+            'icon' => 'fas fa-school',
+            'sort_order' => 50,
+        ]);
+        $upsertSub($m, ['name'=>'What to train?','slug'=>'training-items','icon'=>'fas fa-list','route_name'=>'training_items.index','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Who to train?','slug'=>'training-departments','icon'=>'fas fa-list','route_name'=>'training_departments.index','sort_order'=>20]);
+        $upsertSub($m, ['name'=>'Who needs training?','slug'=>'training-requirements','icon'=>'fas fa-list','route_name'=>'training_requirements.index','sort_order'=>30]);
+        $upsertSub($m, ['name'=>'Training Plan','slug'=>'training-plans','icon'=>'fas fa-list','route_name'=>'training_plans.index','sort_order'=>40]);
+        $upsertSub($m, ['name'=>'Training Program','slug'=>'trainings','icon'=>'fas fa-list','route_name'=>'trainings.index','sort_order'=>50]);
+
+        // Documents (only when has HSEQ department context)
+        $m = $upsertModule($g, [
+            'name' => 'Documents',
+            'slug' => 'hseq-documents',
+            'icon' => 'fas fa-file',
+            'sort_order' => 60,
+            'visibility' => $any([
+                $all(['inHSEQ']),
+                $all(['isSuperAdmin']),
+            ]),
+        ]);
+        $upsertSub($m, [
+            'name' => 'Manage Documents',
+            'slug' => 'manage-documents',
+            'icon' => 'fas fa-list',
+            'route_name' => 'documents.all',
+            'route_params' => ['id' => '{hseq_department_id}', 'category' => 'department'],
+            'sort_order' => 10,
+        ]);
+
+        // ----------------------------
+        // GROUP: General Access (Security or Super)
+        // ----------------------------
+        $g = $upsertGroup([
+            'name' => 'General Access',
+            'slug' => 'general-access',
+            'sort_order' => 90,
+            'visibility' => $vInSecurityOrSuper,
+        ]);
+
+        $m = $upsertModule($g, [
+            'name' => 'Gatepass',
+            'slug' => 'gatepass-security',
+            'icon' => 'fas fa-door-open',
+            'sort_order' => 10,
+            'route_name' => 'gate_passes.*',
+        ]);
+        $upsertSub($m, ['name'=>'Manage Gatepasses','slug'=>'manage-gatepasses','icon'=>'fas fa-list','route_name'=>'gate_passes.index','sort_order'=>10]);
+        $upsertSub($m, [
+            'name'=>'Pending Gatepasses','slug'=>'pending-gatepasses-security','icon'=>'fas fa-clock',
+            'route_name'=>'gate_passes.pending','route_params'=>['department'=>'security'],
+            'sort_order'=>20,'badge_key'=>'gate_passes_pending_count'
+        ]);
+        $upsertSub($m, [
+            'name'=>'Approved Gatepasses','slug'=>'approved-gatepasses-security','icon'=>'fas fa-check',
+            'route_name'=>'gate_passes.approved','route_params'=>['department'=>'security'],
+            'sort_order'=>30,'badge_key'=>'gate_passes_approved_count'
+        ]);
+        $upsertSub($m, [
+            'name'=>'Rejected Gatepasses','slug'=>'rejected-gatepasses-security','icon'=>'fas fa-ban',
+            'route_name'=>'gate_passes.rejected','route_params'=>['department'=>'security'],
+            'sort_order'=>40,'badge_key'=>'gate_passes_rejected_count'
+        ]);
+
+        $m = $upsertModule($g, [
+            'name' => 'Groups',
+            'slug' => 'security-groups',
+            'icon' => 'fas fa-users',
+            'sort_order' => 20,
+            'route_name' => 'groups.index',
+        ]);
+        $upsertSub($m, ['name'=>'Manage Groups','slug'=>'manage-groups','icon'=>'fas fa-list','route_name'=>'groups.index','sort_order'=>10]);
+
+        $m = $upsertModule($g, [
+            'name' => 'Visitors',
+            'slug' => 'visitors',
+            'icon' => 'fas fa-user-friends',
+            'sort_order' => 30,
+            'route_name' => 'visitors.index',
+        ]);
+        $upsertSub($m, ['name'=>'Manage Visitors','slug'=>'manage-visitors','icon'=>'fas fa-list','route_name'=>'visitors.index','sort_order'=>10]);
+
+        // ----------------------------
+        // GROUP: Fleet Management
+        // (Transport OR Workshop Dept OR Super) AND NOT driver
+        // ----------------------------
+        $g = $upsertGroup([
+            'name' => 'Fleet Management',
+            'slug' => 'fleet-management',
+            'sort_order' => 100,
+            'visibility' => $any([
+                $all(['isNotDriver','inTransport']),
+                $all(['isNotDriver','inWorkshop']),
+                $all(['isSuperAdmin']),
+            ]),
+        ]);
+
+        // Fleet Master (Admin OR Super)
+        $m = $upsertModule($g, [
+            'name' => 'Master',
+            'slug' => 'fleet-master',
+            'icon' => 'fas fa-cog',
+            'sort_order' => 10,
+            'visibility' => $any([$all(['isAdmin']), $all(['isSuperAdmin'])]),
+        ]);
+
+        $fleetMaster = [
+            ['Fleet Clusters','clusters.index','fas fa-list'],
+            ['Horse Groups','horse_groups.index','fas fa-list'],
+            ['Horse Makes','horse_makes.index','fas fa-list'],
+            ['Horse Types','horse_types.index','fas fa-list'],
+            ['Trailer Groups','trailer_groups.index','fas fa-list'],
+            ['Trailer Types','trailer_types.index','fas fa-list'],
+            ['Vehicle Groups','vehicle_groups.index','fas fa-list'],
+            ['Vehicle Makes','vehicle_makes.index','fas fa-list'],
+            ['Vehicle Types','vehicle_types.index','fas fa-list'],
+            ['Checklists','checklist_categories.index','fas fa-list'],
+            ['Checklist Items Groups','checklist_sub_categories.index','fas fa-list'],
+            ['Checklist Items','checklist_items.index','fas fa-list'],
+        ];
+
+        $i = 10;
+        foreach ($fleetMaster as $row) {
+            $upsertSub($m, [
+                'name' => $row[0],
+                'slug' => Str::slug($row[0]),
+                'icon' => $row[2],
+                'route_name' => $row[1],
+                'sort_order' => $i,
+            ]);
+            $i += 10;
+        }
+
+        // Horses
+        $m = $upsertModule($g, [
+            'name' => 'Horses',
+            'slug' => 'horses',
+            'icon' => 'fas fa-truck',
+            'route_name' => 'horses.*',
+            'sort_order' => 20,
+        ]);
+        $upsertSub($m, ['name'=>'Create Horse','slug'=>'create-horse','icon'=>'fas fa-plus','route_name'=>'horses.create','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Manage Horses','slug'=>'manage-horses','icon'=>'fas fa-list','route_name'=>'horses.index','sort_order'=>20]);
+        $upsertSub($m, ['name'=>'Archived Horses','slug'=>'archived-horses','icon'=>'fas fa-archive','route_name'=>'horses.archived','sort_order'=>30]);
+
+        // Trailers
+        $m = $upsertModule($g, [
+            'name' => 'Trailers',
+            'slug' => 'trailers',
+            'icon' => 'fas fa-trailer',
+            'route_name' => 'trailers.*',
+            'sort_order' => 30,
+        ]);
+        $upsertSub($m, ['name'=>'Manage Trailers','slug'=>'manage-trailers','icon'=>'fas fa-list','route_name'=>'trailers.index','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Trailer Links','slug'=>'trailer-links','icon'=>'fas fa-list','route_name'=>'trailer_links.index','sort_order'=>20]);
+        $upsertSub($m, ['name'=>'Archived Trailers','slug'=>'archived-trailers','icon'=>'fas fa-archive','route_name'=>'trailers.archived','sort_order'=>30]);
+
+        // Vehicles
+        $m = $upsertModule($g, [
+            'name' => 'Vehicles',
+            'slug' => 'vehicles',
+            'icon' => 'fas fa-car',
+            'route_name' => 'vehicles.*',
+            'sort_order' => 40,
+        ]);
+        $upsertSub($m, ['name'=>'Create Vehicle','slug'=>'create-vehicle','icon'=>'fas fa-plus','route_name'=>'vehicles.create','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Manage Vehicles','slug'=>'manage-vehicles','icon'=>'fas fa-list','route_name'=>'vehicles.index','sort_order'=>20]);
+        $upsertSub($m, ['name'=>'Archived Vehicles','slug'=>'archived-vehicles','icon'=>'fas fa-archive','route_name'=>'vehicles.archived','sort_order'=>30]);
+
+        // Assignments
+        $m = $upsertModule($g, [
+            'name' => 'Assignments',
+            'slug' => 'assignments',
+            'icon' => 'fas fa-user-plus',
+            'sort_order' => 50,
+        ]);
+        $upsertSub($m, ['name'=>'Driver - Horse','slug'=>'driver-horse','icon'=>'fas fa-plus','route_name'=>'assignments.index','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Horse - Trailer','slug'=>'horse-trailer','icon'=>'fas fa-plus','route_name'=>'trailer_assignments.index','sort_order'=>20]);
+        $upsertSub($m, ['name'=>'Employee - Vehicle','slug'=>'employee-vehicle','icon'=>'fas fa-plus','route_name'=>'vehicle_assignments.index','sort_order'=>30]);
+
+        // Fleet Inspections (manage)
+        $m = $upsertModule($g, [
+            'name' => 'Fleet Inspections',
+            'slug' => 'fleet-inspections',
+            'icon' => 'fas fa-search',
+            'route_name' => 'checklists.index',
+            'sort_order' => 60,
+        ]);
+        $upsertSub($m, ['name'=>'Manage Inspections','slug'=>'manage-inspections','icon'=>'fas fa-tasks','route_name'=>'checklists.index','sort_order'=>10]);
+
+        // ----------------------------
+        // GROUP: Fuel Management (header existed always) -> group public
+        // ----------------------------
+        $g = $upsertGroup([
+            'name' => 'Fuel Management',
+            'slug' => 'fuel-management',
+            'sort_order' => 110,
+            'visibility' => null,
+        ]);
+
+        // Fueling Stations (Transport or Super) AND not driver
+        $m = $upsertModule($g, [
+            'name' => 'Fueling Stations',
+            'slug' => 'fuel-stations',
+            'icon' => 'fas fa-gas-pump',
+            'sort_order' => 10,
+            'visibility' => $any([
+                $all(['isNotDriver','inTransport']),
+                $all(['isNotDriver','isSuperAdmin']),
+            ]),
+        ]);
+        $upsertSub($m, ['name'=>'Manage Stations','slug'=>'manage-stations','icon'=>'fas fa-list','route_name'=>'containers.index','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Fuel Transfers','slug'=>'fuel-transfers','icon'=>'fas fa-list','route_name'=>'transfers.fuel','sort_order'=>20]);
+
+        // Fuel Stations TopUps (Transport or Super) AND not driver
+        $m = $upsertModule($g, [
+            'name' => 'Fuel Stations TopUps',
+            'slug' => 'fuel-topups',
+            'icon' => 'fas fa-oil-can',
+            'sort_order' => 20,
+            'route_name' => 'top_ups.*',
+            'visibility' => $any([
+                $all(['isNotDriver','inTransport']),
+                $all(['isNotDriver','isSuperAdmin']),
+            ]),
+        ]);
+        $upsertSub($m, ['name'=>'Fuel Top Ups','slug'=>'fuel-top-ups','icon'=>'fas fa-list','route_name'=>'top_ups.index','sort_order'=>10]);
+
+        $topupManageVis = $any([
+            $all(['inTransport','isAdmin']),
+            $all(['isSuperAdmin']),
+        ]);
+        $upsertSub($m, ['name'=>'Pending Top Ups','slug'=>'pending-top-ups','icon'=>'fas fa-clock','route_name'=>'top_ups.pending','sort_order'=>20,'badge_key'=>'top_ups_pending_count','visibility'=>$topupManageVis]);
+        $upsertSub($m, ['name'=>'Approved Top Ups','slug'=>'approved-top-ups','icon'=>'fas fa-check','route_name'=>'top_ups.approved','sort_order'=>30,'badge_key'=>'top_ups_approved_count','visibility'=>$topupManageVis]);
+        $upsertSub($m, ['name'=>'Rejected Top Ups','slug'=>'rejected-top-ups','icon'=>'fas fa-ban','route_name'=>'top_ups.rejected','sort_order'=>40,'badge_key'=>'top_ups_rejected_count','visibility'=>$topupManageVis]);
+
+        // Fuel Orders (Transport or Super) AND not driver
+        $m = $upsertModule($g, [
+            'name' => 'Fuel Orders',
+            'slug' => 'fuel-orders',
+            'icon' => 'fas fa-clipboard-list',
+            'sort_order' => 30,
+            'route_name' => 'fuels.*',
+            'visibility' => $any([
+                $all(['isNotDriver','inTransport']),
+                $all(['isNotDriver','isSuperAdmin']),
+            ]),
+        ]);
+        $upsertSub($m, ['name'=>'Manage Fuel Orders','slug'=>'manage-fuel-orders','icon'=>'fas fa-list','route_name'=>'fuels.index','sort_order'=>10]);
+
+        $fuelOrderManageVis = $any([
+            $all(['isAdmin','inTransport']),
+            $all(['hasTLDeptHead']),
+            $all(['isSuperAdmin']),
+        ]);
+        $upsertSub($m, ['name'=>'Pending Fuel Orders','slug'=>'pending-fuel-orders','icon'=>'fas fa-clock','route_name'=>'fuels.pending','sort_order'=>20,'badge_key'=>'fuels_pending_count','visibility'=>$fuelOrderManageVis]);
+        $upsertSub($m, ['name'=>'Approved Fuel Orders','slug'=>'approved-fuel-orders','icon'=>'fas fa-check','route_name'=>'fuels.approved','sort_order'=>30,'badge_key'=>'fuels_approved_count','visibility'=>$fuelOrderManageVis]);
+        $upsertSub($m, ['name'=>'Rejected Fuel Orders','slug'=>'rejected-fuel-orders','icon'=>'fas fa-ban','route_name'=>'fuels.rejected','sort_order'=>40,'badge_key'=>'fuels_rejected_count','visibility'=>$fuelOrderManageVis]);
+        $upsertSub($m, ['name'=>'Deleted Fuel Orders','slug'=>'deleted-fuel-orders','icon'=>'fas fa-trash','route_name'=>'fuels.deleted','sort_order'=>50,'badge_key'=>'fuels_deleted_count','visibility'=>$fuelOrderManageVis]);
+
+        // Fuel Allocations (was global)
+        $m = $upsertModule($g, [
+            'name' => 'Fuel Allocations',
+            'slug' => 'fuel-allocations',
+            'icon' => 'fas fa-chart-pie',
+            'sort_order' => 40,
+            'route_name' => 'allocations.*',
+            'visibility' => null,
+        ]);
+        $upsertSub($m, [
+            'name'=>'My Allocation',
+            'slug'=>'my-allocation',
+            'icon'=>'fas fa-arrow-right',
+            'route_name'=>'allocations.myallocations',
+            'route_params'=>['employee' => '{employee_id}'],
+            'sort_order'=>10,
+            'badge_key'=>'my_allocation_count',
+            'visibility'=>[],
+        ]);
+
+        $allocManageVis = $any([
+            $all(['inTransport','isAdmin']),
+            $all(['hasTLDeptHead']),
+            $all(['isSuperAdmin']),
+        ]);
+        $upsertSub($m, [
+            'name'=>'Manage Allocation',
+            'slug'=>'manage-allocation',
+            'icon'=>'fas fa-list',
+            'route_name'=>'allocations.index',
+            'sort_order'=>20,
+            'visibility'=>$allocManageVis,
+        ]);
+
+        // Fuel Requisitions
+        $m = $upsertModule($g, [
+            'name' => 'Fuel Requisitions',
+            'slug' => 'fuel-requisitions',
+            'icon' => 'fas fa-hand-holding-usd',
+            'sort_order' => 50,
+            'route_name' => 'fuel_requests.*',
+            'visibility' => null,
+        ]);
+        $upsertSub($m, [
+            'name'=>'My Requests',
+            'slug'=>'my-requests',
+            'icon'=>'fas fa-arrow-right',
+            'route_name'=>'fuel_requests.myrequests',
+            'route_params'=>['employee' => '{employee_id}'],
+            'sort_order'=>10,
+            'visibility'=>[],
+        ]);
+
+        $fuelReqManageVis = $any([
+            $all(['hasTLDeptHead']),
+            $all(['inTransport','isAdmin']),
+            $all(['isSuperAdmin']),
+        ]);
+        $upsertSub($m, ['name'=>'Pending Requests','slug'=>'pending-fuel-requests','icon'=>'fas fa-clock','route_name'=>'fuel_requests.pending','sort_order'=>20,'badge_key'=>'fuel_requisition_pending_count','visibility'=>$fuelReqManageVis]);
+        $upsertSub($m, ['name'=>'Approved Requests','slug'=>'approved-fuel-requests','icon'=>'fas fa-check','route_name'=>'fuel_requests.approved','sort_order'=>30,'badge_key'=>'fuel_requisition_approved_count','visibility'=>$fuelReqManageVis]);
+        $upsertSub($m, ['name'=>'Rejected Requests','slug'=>'rejected-fuel-requests','icon'=>'fas fa-ban','route_name'=>'fuel_requests.rejected','sort_order'=>40,'badge_key'=>'fuel_requisition_rejected_count','visibility'=>$fuelReqManageVis]);
+
+        // ----------------------------
+        // GROUP: Trip Management (Finance or Transport or Super)
+        // ----------------------------
+        $g = $upsertGroup([
+            'name' => 'Trip Management',
+            'slug' => 'trip-management',
+            'sort_order' => 120,
+            'visibility' => $any([
+                $all(['inFinance']),
+                $all(['inTransport']),
+                $all(['isSuperAdmin']),
+            ]),
+        ]);
+
+        // Trip Master (Admin+Transport) OR Super
+        $m = $upsertModule($g, [
+            'name' => 'Master',
+            'slug' => 'trip-master',
+            'icon' => 'fas fa-cog',
+            'sort_order' => 10,
+            'visibility' => $any([
+                $all(['isAdmin','inTransport']),
+                $all(['isSuperAdmin']),
+            ]),
+        ]);
+
+        $tripMasterSubs = [
+            ['Agents','agents.index','fas fa-list', null],
+            ['Borders','borders.index','fas fa-bars', null],
+            ['Brokers','brokers.index','fas fa-list', null],
+            ['Cargos','cargos.index','fas fa-truck-loading', null],
+            ['Clearing Agents','clearing_agents.index','fas fa-building', null],
+            ['Countries','countries.index','fas fa-globe-africa', null],
+            ['Consignees','consignees.index','fas fa-users', null],
+            ['Corridors','corridors.index','fas fa-road', null],
+            ['Deductions','deductions.index','fas fa-list', null],
+            ['Destinations','destinations.index','fas fa-map-pin', null],
+            ['Expenses','expenses.index','fas fa-list', null],
+            ['Loading Points','loading_points.index','fas fa-map-marker', null],
+            ['Offloading Points','offloading_points.index','fas fa-map-marker', null],
+            ['Provinces','provinces.index','fas fa-globe-africa', null],
+            ['Rehandling Jobs','works.index','fas fa-list', null],
+            ['Road Routes','routes.index','fas fa-road', null],
+            ['Teams','teams.index','fas fa-users', $any([$all(['isSuperAdmin'])])],
+            ['Trip Rates','rates.index','fas fa-list', $any([$all(['inFinance']), $all(['isSuperAdmin'])])],
+            ['Trip Types','trip_types.index','fas fa-road', null],
+            ['Truck Stops','truck_stops.index','fas fa-stop', null],
+            ['Worksites','locations.index','fas fa-map-marker', null],
+        ];
+
+        $i=10;
+        foreach ($tripMasterSubs as $row) {
+            $upsertSub($m, [
+                'name'=>$row[0],
+                'slug'=>Str::slug($row[0]),
+                'icon'=>$row[2],
+                'route_name'=>$row[1],
+                'sort_order'=>$i,
+                'visibility'=>$row[3] ?? null, // null inherits trip master visibility
+            ]);
+            $i+=10;
+        }
+
+        // Log Book (vehicle assignment OR super)
+        $upsertModule($g, [
+            'name' => 'Log Book',
+            'slug' => 'log-book',
+            'icon' => 'fas fa-book',
+            'route_name' => 'logs.index',
+            'sort_order' => 20,
+            'visibility' => $any([
+                $all(['hasVehicleAssignment']),
+                $all(['isSuperAdmin']),
+            ]),
+        ]);
+
+        // Car Rental (not driver)
+        $m = $upsertModule($g, [
+            'name' => 'Car Rental',
+            'slug' => 'car-rental',
+            'icon' => 'fas fa-car',
+            'route_name' => 'rentals.*',
+            'sort_order' => 25,
+            'is_active' => false,
+            'visibility' => $any([
+                $all(['isNotDriver']),
+                $all(['isSuperAdmin']),
+            ]),
+        ]);
+        $upsertSub($m, ['name'=>'Manage Rentals','slug'=>'manage-rentals','icon'=>'fas fa-list','route_name'=>'rentals.index','sort_order'=>10,'is_active' => false,]);
+
+        
+        $rentalManageVis = $any([
+            $all(['isAdmin','inTransport']),
+            $all(['hasTLDeptHead']),
+            $all(['isSuperAdmin']),
+        ]);
+        $upsertSub($m, ['name'=>'Pending Rentals','slug'=>'pending-rentals','icon'=>'fas fa-clock','route_name'=>'rentals.pending','sort_order'=>20,'badge_key'=>'rentals_pending_count', 'is_active' => false,'visibility'=>$rentalManageVis]);
+        $upsertSub($m, ['name'=>'Approved Rentals','slug'=>'approved-rentals','icon'=>'fas fa-check','route_name'=>'rentals.approved','sort_order'=>30,'badge_key'=>'rentals_approved_count', 'is_active' => false,'visibility'=>$rentalManageVis]);
+        $upsertSub($m, ['name'=>'Rejected Rentals','slug'=>'rejected-rentals','icon'=>'fas fa-ban','route_name'=>'rentals.rejected','sort_order'=>40,'badge_key'=>'rentals_rejected_count', 'is_active' => false,'visibility'=>$rentalManageVis]);
+
+        // Transporters (not driver)
+        $m = $upsertModule($g, [
+            'name' => 'Transporters',
+            'slug' => 'transporters',
+            'icon' => 'fas fa-truck',
+            'route_name' => 'transporters.*',
+            'sort_order' => 30,
+            'visibility' => $any([
+                $all(['isNotDriver']),
+                $all(['isSuperAdmin']),
+            ]),
+        ]);
+        $upsertSub($m, ['name'=>'Manage Transporters','slug'=>'manage-transporters','icon'=>'fas fa-list','route_name'=>'transporters.index','sort_order'=>10]);
+
+        $transporterManageVis = $any([
+            $all(['isAdmin','inTransport']),
+            $all(['hasTLDeptHead']),
+            $all(['isSuperAdmin']),
+        ]);
+        $upsertSub($m, ['name'=>'Pending Transporters','slug'=>'pending-transporters','icon'=>'fas fa-clock','route_name'=>'transporters.pending','sort_order'=>20,'badge_key'=>'transporters_pending_count','visibility'=>$transporterManageVis]);
+        $upsertSub($m, ['name'=>'Approved Transporters','slug'=>'approved-transporters','icon'=>'fas fa-check','route_name'=>'transporters.approved','sort_order'=>30,'badge_key'=>'transporters_approved_count','visibility'=>$transporterManageVis]);
+        $upsertSub($m, ['name'=>'Rejected Transporters','slug'=>'rejected-transporters','icon'=>'fas fa-ban','route_name'=>'transporters.rejected','sort_order'=>40,'badge_key'=>'transporters_rejected_count','visibility'=>$transporterManageVis]);
+
+        // Shifts (not driver)
+        $m = $upsertModule($g, [
+            'name' => 'Shifts',
+            'slug' => 'shifts',
+            'icon' => 'fas fa-clock',
+            'route_name' => 'shifts.*',
+            'sort_order' => 40,
+            'visibility' => $any([
+                $all(['isNotDriver']),
+                $all(['isSuperAdmin']),
+            ]),
+        ]);
+        $upsertSub($m, ['name'=>'Manage Shifts','slug'=>'manage-shifts','icon'=>'fas fa-list','route_name'=>'shifts.index','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Shifts Reports','slug'=>'shifts-reports','icon'=>'fas fa-line-chart','route_name'=>'shifts.reports','sort_order'=>20]);
+
+        // Trips
+        $m = $upsertModule($g, [
+            'name' => 'Trips',
+            'slug' => 'trips',
+            'icon' => 'fas fa-road',
+            'route_name' => 'trips.*',
+            'sort_order' => 50,
+        ]);
+        $upsertSub($m, 
+        ['name'=>'Create Trip',
+        'slug'=>'create-trip',
+        'icon'=>'fas fa-plus',
+        'route_name'=>'trips.create',
+        'sort_order'=>10,
+        'visibility' => $any([
+                $all(['isNotDriver']),
+            ])
+        ]);
+        $upsertSub($m, ['name'=>'Manage Trips','slug'=>'manage-trips','icon'=>'fas fa-list','route_name'=>'trips.index','sort_order'=>20]);
+
+        $tripManageVis = $any([
+            $all(['isAdmin']),
+            $all(['hasTLDeptHead']),
+            $all(['isSuperAdmin']),
+        ]);
+        $upsertSub($m, ['name'=>'Pending Trips','slug'=>'pending-trips','icon'=>'fas fa-clock','route_name'=>'trips.pending','sort_order'=>30,'badge_key'=>'trips_pending_count','visibility'=>$tripManageVis]);
+        $upsertSub($m, ['name'=>'Approved Trips','slug'=>'approved-trips','icon'=>'fas fa-check','route_name'=>'trips.approved','sort_order'=>40,'badge_key'=>'trips_approved_count','visibility'=>$tripManageVis]);
+        $upsertSub($m, ['name'=>'Rejected Trips','slug'=>'rejected-trips','icon'=>'fas fa-ban','route_name'=>'trips.rejected','sort_order'=>50,'badge_key'=>'trips_rejected_count','visibility'=>$tripManageVis]);
+        $upsertSub($m, ['name'=>'Deleted Trips','slug'=>'deleted-trips','icon'=>'fas fa-trash','route_name'=>'trips.deleted','sort_order'=>60,'badge_key'=>'trips_deleted_count','visibility'=>$tripManageVis]);
+
+        $upsertSub($m, ['name'=>'Tracking Groups','slug'=>'tracking-groups','icon'=>'fas fa-list','route_name'=>'trip_groups.index','sort_order'=>70]);
+
+        // Gatepass (Logistics) - not driver
+        $m = $upsertModule($g, [
+            'name' => 'Gatepass',
+            'slug' => 'gatepass-logistics',
+            'icon' => 'fas fa-door-open',
+            'sort_order' => 60,
+            'visibility' => $any([
+                $all(['isNotDriver']),
+                $all(['isSuperAdmin']),
+            ]),
+        ]);
+        $upsertSub($m, [
+            'name'=>'Pending Gatepasses','slug'=>'pending-gatepasses-logistics','icon'=>'fas fa-clock',
+            'route_name'=>'gate_passes.pending','route_params'=>['department'=>'logistics'],
+            'sort_order'=>10,'badge_key'=>'logistics_gate_passes_pending_count'
+        ]);
+        $upsertSub($m, [
+            'name'=>'Approved Gatepasses','slug'=>'approved-gatepasses-logistics','icon'=>'fas fa-check',
+            'route_name'=>'gate_passes.approved','route_params'=>['department'=>'logistics'],
+            'sort_order'=>20,'badge_key'=>'logistics_gate_passes_approved_count'
+        ]);
+        $upsertSub($m, [
+            'name'=>'Rejected Gatepasses','slug'=>'rejected-gatepasses-logistics','icon'=>'fas fa-ban',
+            'route_name'=>'gate_passes.rejected','route_params'=>['department'=>'logistics'],
+            'sort_order'=>30,'badge_key'=>'logistics_gate_passes_rejected_count'
+        ]);
+
+        // Recoveries (not driver)
+        $m = $upsertModule($g, [
+            'name' => 'Recoveries',
+            'slug' => 'recoveries',
+            'icon' => 'fas fa-hand-holding-usd',
+            'route_name' => 'recoveries.*',
+            'sort_order' => 70,
+            'visibility' => $any([
+                $all(['isNotDriver']),
+                $all(['isSuperAdmin']),
+            ]),
+        ]);
+        $upsertSub($m, ['name'=>'Create Recovery','slug'=>'create-recovery','icon'=>'fas fa-plus','route_name'=>'recoveries.create','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Manage Recoveries','slug'=>'manage-recoveries','icon'=>'fas fa-list','route_name'=>'recoveries.index','sort_order'=>20]);
+
+        $recoveryManageVis = $any([
+            $all(['isAdmin']),
+            $all(['hasTLDeptHead']),
+            $all(['isSuperAdmin']),
+        ]);
+        $upsertSub($m, ['name'=>'Pending Recoveries','slug'=>'pending-recoveries','icon'=>'fas fa-clock','route_name'=>'recoveries.pending','sort_order'=>30,'badge_key'=>'recoveries_pending_count','visibility'=>$recoveryManageVis]);
+        $upsertSub($m, ['name'=>'Approved Recoveries','slug'=>'approved-recoveries','icon'=>'fas fa-check','route_name'=>'recoveries.approved','sort_order'=>40,'badge_key'=>'recoveries_approved_count','visibility'=>$recoveryManageVis]);
+        $upsertSub($m, ['name'=>'Rejected Recoveries','slug'=>'rejected-recoveries','icon'=>'fas fa-ban','route_name'=>'recoveries.rejected','sort_order'=>50,'badge_key'=>'recoveries_rejected_count','visibility'=>$recoveryManageVis]);
+
+        // ----------------------------
+        // GROUP: Workshop Management
+        // (Finance OR Workshop OR Stores OR Super)
+        // ----------------------------
+        $g = $upsertGroup([
+            'name' => 'Workshop Management',
+            'slug' => 'workshop-management',
+            'sort_order' => 130,
+            'visibility' => $any([
+                // $all(['inFinance']),
+                $all(['inWorkshop']),
+                // $all(['inStores']),
+                $all(['isSuperAdmin']),
+            ]),
+        ]);
+
+        $m = $upsertModule($g, [
+            'name' => 'Master',
+            'slug' => 'workshop-master',
+            'icon' => 'fas fa-cog',
+            'sort_order' => 10,
+            'visibility' => $any([
+                $all(['hasWorkshopDeptHead']),
+                $all(['isAdmin','inWorkshop']),
+                $all(['isSuperAdmin']),
+            ]),
+        ]);
+        $upsertSub($m, ['name'=>'Job Types','slug'=>'job-types','icon'=>'fas fa-list','route_name'=>'service_types.index','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Inspection Item Groups','slug'=>'inspection-item-groups','icon'=>'fas fa-list','route_name'=>'inspection_groups.index','sort_order'=>20]);
+        $upsertSub($m, ['name'=>'Inspection Items','slug'=>'inspection-items','icon'=>'fas fa-list','route_name'=>'inspection_types.index','sort_order'=>30]);
+        $upsertSub($m, ['name'=>'Workshop Stations','slug'=>'workshop-stations','icon'=>'fas fa-list','route_name'=>'stations.index','sort_order'=>40]);
+
+        $m = $upsertModule($g, [
+            'name' => 'Bookings',
+            'slug' => 'bookings',
+            'icon' => 'fas fa-tasks',
+            'route_name' => 'bookings.*',
+            'sort_order' => 20,
+        ]);
+        $upsertSub($m, ['name'=>'Create Booking','slug'=>'create-booking','icon'=>'fas fa-plus','route_name'=>'bookings.create','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Manage Bookings','slug'=>'manage-bookings','icon'=>'fas fa-list','route_name'=>'bookings.index','sort_order'=>20]);
+
+        $bookingManageVis = $any([
+            $all(['hasWorkshopDeptHead']),
+            $all(['isAdmin','inWorkshop']),
+            $all(['isSuperAdmin']),
+        ]);
+        $upsertSub($m, ['name'=>'Pending Bookings','slug'=>'pending-bookings','icon'=>'fas fa-clock','route_name'=>'bookings.pending','sort_order'=>30,'badge_key'=>'bookings_pending_count','visibility'=>$bookingManageVis]);
+        $upsertSub($m, ['name'=>'Approved Bookings','slug'=>'approved-bookings','icon'=>'fas fa-check','route_name'=>'bookings.approved','sort_order'=>40,'badge_key'=>'bookings_approved_count','visibility'=>$bookingManageVis]);
+        $upsertSub($m, ['name'=>'Rejected Bookings','slug'=>'rejected-bookings','icon'=>'fas fa-ban','route_name'=>'bookings.rejected','sort_order'=>50,'badge_key'=>'bookings_rejected_count','visibility'=>$bookingManageVis]);
+
+        // Tickets
+        $m = $upsertModule($g, [
+            'name' => 'Tickets',
+            'slug' => 'tickets',
+            'icon' => 'fas fa-file-invoice',
+            'route_name' => 'tickets.index',
+            'sort_order' => 30,
+        ]);
+
+        $ticketManageVis = $any([
+            // $all(['hasStoresDeptHead']),
+            $all(['hasWorkshopDeptHead']),
+            $all(['isAdmin','inWorkshop']),
+            // $all(['isAdmin','inStores']),
+            $all(['isSuperAdmin']),
+        ]);
+        $upsertSub($m, ['name'=>'Manage Tickets','slug'=>'manage-tickets','icon'=>'fas fa-tasks','route_name'=>'tickets.index','sort_order'=>10,'visibility'=>$ticketManageVis]);
+
+        $upsertSub($m, [
+            'name'=>'My Tickets',
+            'slug'=>'my-tickets',
+            'icon'=>'fas fa-tasks',
+            'route_name'=>'tickets.cards',
+            'route_params'=>['employee' => '{employee_id}'],
+            'sort_order'=>20,
+            'badge_key'=>'job_cards_count',
+            // 'visibility'=>$any([$all(['inWorkshop']), $all(['isSuperAdmin'])]),
+        ]);
+
+        // Ticket Inspections
+        $m = $upsertModule($g, [
+            'name' => 'Ticket Inspections',
+            'slug' => 'ticket-inspections',
+            'icon' => 'fas fa-search',
+            'route_name' => 'inspections.index',
+            'sort_order' => 40,
+        ]);
+        $upsertSub($m, ['name'=>'Manage Inspections','slug'=>'manage-ticket-inspections','icon'=>'fas fa-tasks','route_name'=>'inspections.index','sort_order'=>10,'visibility'=>$ticketManageVis]);
+        $upsertSub($m, [
+            'name'=>'My Inspections',
+            'slug'=>'my-inspections',
+            'icon'=>'fas fa-tasks',
+            'route_name'=>'inspections.my-inspections',
+            'route_params'=>['employee' => '{employee_id}'],
+            'sort_order'=>20,
+            'badge_key'=>'inspections_count',
+            // 'visibility'=>$any([$all(['inWorkshop']), $all(['isSuperAdmin'])]),
+        ]);
+
+        // Gatepass (Workshop) - Admin or Super
+        $m = $upsertModule($g, [
+            'name' => 'Gatepass',
+            'slug' => 'gatepass-workshop',
+            'icon' => 'fas fa-door-open',
+            'sort_order' => 50,
+            'visibility' => $any([$all(['isAdmin']), $all(['isSuperAdmin'])]),
+        ]);
+        $upsertSub($m, [
+            'name'=>'Pending Gatepasses','slug'=>'pending-gatepasses-workshop','icon'=>'fas fa-clock',
+            'route_name'=>'gate_passes.pending','route_params'=>['department'=>'workshop'],
+            'sort_order'=>10,'badge_key'=>'workshop_gate_passes_pending_count'
+        ]);
+        $upsertSub($m, [
+            'name'=>'Approved Gatepasses','slug'=>'approved-gatepasses-workshop','icon'=>'fas fa-check',
+            'route_name'=>'gate_passes.approved','route_params'=>['department'=>'workshop'],
+            'sort_order'=>20,'badge_key'=>'workshop_gate_passes_approved_count'
+        ]);
+        $upsertSub($m, [
+            'name'=>'Rejected Gatepasses','slug'=>'rejected-gatepasses-workshop','icon'=>'fas fa-ban',
+            'route_name'=>'gate_passes.rejected','route_params'=>['department'=>'workshop'],
+            'sort_order'=>30,'badge_key'=>'workshop_gate_passes_rejected_count'
+        ]);
+
+        // ----------------------------
+        // GROUP: Stores & Inventory Management (Stores or Super)
+        // ----------------------------
+        $g = $upsertGroup([
+            'name' => 'Stores & Inventory Management',
+            'slug' => 'stores-inventory',
+            'sort_order' => 140,
+            'visibility' => $any([
+                $all(['inStores']),
+                $all(['isSuperAdmin']),
+            ]),
+        ]);
+
+        $m = $upsertModule($g, [
+            'name' => 'Master',
+            'slug' => 'stores-master',
+            'icon' => 'fas fa-cog',
+            'sort_order' => 10,
+            'visibility' => $any([
+                $all(['hasStoresDeptHead']),
+                $all(['isAdmin','inStores']),
+                $all(['isSuperAdmin']),
+            ]),
+        ]);
+        $upsertSub($m, ['name'=>'Attributes','slug'=>'store-attributes','icon'=>'fas fa-list','route_name'=>'attributes.index','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Bins','slug'=>'bins','icon'=>'fas fa-list','route_name'=>'bins.index','sort_order'=>20]);
+        $upsertSub($m, ['name'=>'Brands','slug'=>'store-brands','icon'=>'fas fa-list','route_name'=>'brands.index','sort_order'=>30]);
+        $upsertSub($m, ['name'=>'Categories','slug'=>'store-categories','icon'=>'fas fa-list','route_name'=>'categories.index','sort_order'=>40]);
+        $upsertSub($m, ['name'=>'Racks','slug'=>'racks','icon'=>'fas fa-list','route_name'=>'racks.index','sort_order'=>50]);
+        $upsertSub($m, ['name'=>'Stores','slug'=>'stores','icon'=>'fas fa-list','route_name'=>'stores.index','sort_order'=>60]);
+
+        $m = $upsertModule($g, [
+            'name' => 'Inventory Transfers',
+            'slug' => 'inventory-transfers',
+            'icon' => 'fas fa-exchange',
+            'sort_order' => 20,
+        ]);
+        $upsertSub($m, ['name'=>'Manage Transfers','slug'=>'manage-inventory-transfers','icon'=>'fas fa-list','route_name'=>'inventory_transfers.index','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Pending Transfers','slug'=>'pending-inventory-transfers','icon'=>'fas fa-clock','route_name'=>'inventory_transfers.pending','sort_order'=>20,'badge_key'=>'inventory_transfers_pending_count']);
+        $upsertSub($m, ['name'=>'Approved Transfers','slug'=>'approved-inventory-transfers','icon'=>'fas fa-check','route_name'=>'inventory_transfers.approved','sort_order'=>30,'badge_key'=>'inventory_transfers_approved_count']);
+        $upsertSub($m, ['name'=>'Rejected Transfers','slug'=>'rejected-inventory-transfers','icon'=>'fas fa-ban','route_name'=>'inventory_transfers.rejected','sort_order'=>40,'badge_key'=>'inventory_transfers_rejected_count']);
+
+        $m = $upsertModule($g, [
+            'name' => 'Products',
+            'slug' => 'inventory-products',
+            'icon' => 'fas fa-boxes',
+            'route_name' => 'inventory_products.*',
+            'sort_order' => 30,
+        ]);
+        $upsertSub($m, ['name'=>'Create Product','slug'=>'create-inventory-product','icon'=>'fas fa-plus','route_name'=>'inventory_products.create','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Manage Products','slug'=>'manage-inventory-products','icon'=>'fas fa-list','route_name'=>'inventory_products.index','sort_order'=>20]);
+
+        $m = $upsertModule($g, [
+            'name' => 'Purchase Orders',
+            'slug' => 'inventory-purchase-orders',
+            'icon' => 'fas fa-hand-holding-usd',
+            'route_name' => 'inventory_purchases.*',
+            'sort_order' => 40,
+        ]);
+        $upsertSub($m, ['name'=>'Manage Orders','slug'=>'manage-inventory-orders','icon'=>'fas fa-list','route_name'=>'inventory_purchases.index','sort_order'=>10]);
+
+        $invPOVis = $any([
+            $all(['isAdmin']),
+            $all(['hasStoresDeptHead']),
+            $all(['isSuperAdmin']),
+        ]);
+        $upsertSub($m, ['name'=>'Pending Orders','slug'=>'pending-inventory-orders','icon'=>'fas fa-clock','route_name'=>'inventory_purchases.pending','sort_order'=>20,'badge_key'=>'inventory_purchases_pending_count','visibility'=>$invPOVis]);
+        $upsertSub($m, ['name'=>'Approved Orders','slug'=>'approved-inventory-orders','icon'=>'fas fa-check','route_name'=>'inventory_purchases.approved','sort_order'=>30,'badge_key'=>'inventory_purchases_approved_count','visibility'=>$invPOVis]);
+        $upsertSub($m, ['name'=>'Rejected Orders','slug'=>'rejected-inventory-orders','icon'=>'fas fa-ban','route_name'=>'inventory_purchases.rejected','sort_order'=>40,'badge_key'=>'inventory_purchases_rejected_count','visibility'=>$invPOVis]);
+        $upsertSub($m, ['name'=>'Deleted Orders','slug'=>'deleted-inventory-orders','icon'=>'fas fa-trash','route_name'=>'inventory_purchases.deleted','sort_order'=>50,'badge_key'=>'inventory_purchases_deleted_count','visibility'=>$invPOVis]);
+
+        $m = $upsertModule($g, [
+            'name' => 'GRV (Inventory)',
+            'slug' => 'grv-inventory',
+            'icon' => 'fas fa-th-list',
+            'route_name' => 'goods_receiveds.index',
+            'sort_order' => 50,
+        ]);
+        $upsertSub($m, ['name'=>'Manage Inventory GRVs','slug'=>'manage-inventory-grvs','icon'=>'fas fa-list','route_name'=>'goods_receiveds.index','sort_order'=>10]);
+
+        $m = $upsertModule($g, [
+            'name' => 'Inventory',
+            'slug' => 'inventory',
+            'icon' => 'fas fa-th-list',
+            'route_name' => 'inventories.*',
+            'sort_order' => 60,
+        ]);
+        $upsertSub($m, ['name'=>'Create Inventory','slug'=>'create-inventory','icon'=>'fas fa-plus','route_name'=>'inventories.create','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Manage Inventory','slug'=>'manage-inventory','icon'=>'fas fa-list','route_name'=>'inventories.index','sort_order'=>20]);
+        $upsertSub($m, ['name'=>'Disposed Items','slug'=>'disposed-items','icon'=>'fas fa-list','route_name'=>'disposes.index','sort_order'=>30]);
+
+        $m = $upsertModule($g, [
+            'name' => 'Dispatches (Inventory)',
+            'slug' => 'inventory-dispatches',
+            'icon' => 'fas fa-list',
+            'route_name' => 'inventory_dispatches.*',
+            'sort_order' => 70,
+        ]);
+        $upsertSub($m, ['name'=>'Manage Dispatches','slug'=>'manage-inventory-dispatches','icon'=>'fas fa-list','route_name'=>'inventory_dispatches.index','sort_order'=>10]);
+
+        $invDispatchVis = $any([$all(['isAdmin']), $all(['isSuperAdmin'])]);
+        $upsertSub($m, ['name'=>'Pending Dispatches','slug'=>'pending-inventory-dispatches','icon'=>'fas fa-clock','route_name'=>'inventory_dispatches.pending','sort_order'=>20,'badge_key'=>'inventory_dispatches_pending_count','visibility'=>$invDispatchVis]);
+        $upsertSub($m, ['name'=>'Approved Dispatches','slug'=>'approved-inventory-dispatches','icon'=>'fas fa-check','route_name'=>'inventory_dispatches.approved','sort_order'=>30,'badge_key'=>'inventory_dispatches_approved_count','visibility'=>$invDispatchVis]);
+        $upsertSub($m, ['name'=>'Rejected Dispatches','slug'=>'rejected-inventory-dispatches','icon'=>'fas fa-ban','route_name'=>'inventory_dispatches.rejected','sort_order'=>40,'badge_key'=>'inventory_dispatches_rejected_count','visibility'=>$invDispatchVis]);
+
+        // ----------------------------
+        // GROUP: Tyre Management (same visibility as Stores)
+        // ----------------------------
+        $g = $upsertGroup([
+            'name' => 'Tyre Management',
+            'slug' => 'tyre-management',
+            'sort_order' => 150,
+            'visibility' => $any([$all(['inStores']), $all(['isSuperAdmin'])]),
+        ]);
+
+        $m = $upsertModule($g, [
+            'name' => 'Tyre Transfers',
+            'slug' => 'tyre-transfers',
+            'icon' => 'fas fa-exchange',
+            'sort_order' => 10,
+        ]);
+        $upsertSub($m, ['name'=>'Manage Transfers','slug'=>'manage-tyre-transfers','icon'=>'fas fa-list','route_name'=>'tyre_transfers.index','sort_order'=>10]);
+
+        $upsertSub($m, ['name'=>'Pending Transfers','slug'=>'pending-tyre-transfers','icon'=>'fas fa-clock','route_name'=>'tyre_transfers.pending','sort_order'=>20,'badge_key'=>'tyre_transfers_pending_count','visibility'=>$invDispatchVis]);
+        $upsertSub($m, ['name'=>'Approved Transfers','slug'=>'approved-tyre-transfers','icon'=>'fas fa-check','route_name'=>'tyre_transfers.approved','sort_order'=>30,'badge_key'=>'tyre_transfers_approved_count','visibility'=>$invDispatchVis]);
+        $upsertSub($m, ['name'=>'Rejected Transfers','slug'=>'rejected-tyre-transfers','icon'=>'fas fa-ban','route_name'=>'tyre_transfers.rejected','sort_order'=>40,'badge_key'=>'tyre_transfers_rejected_count','visibility'=>$invDispatchVis]);
+
+        $m = $upsertModule($g, [
+            'name' => 'Products',
+            'slug' => 'tyre-products',
+            'icon' => 'fas fa-boxes',
+            'route_name' => 'tyre_products.*',
+            'sort_order' => 20,
+        ]);
+        $upsertSub($m, ['name'=>'Create Product','slug'=>'create-tyre-product','icon'=>'fas fa-plus','route_name'=>'tyre_products.create','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Manage Products','slug'=>'manage-tyre-products','icon'=>'fas fa-list','route_name'=>'tyre_products.index','sort_order'=>20]);
+
+        $m = $upsertModule($g, [
+            'name' => 'Purchase Orders',
+            'slug' => 'tyre-purchase-orders',
+            'icon' => 'fas fa-hand-holding-usd',
+            'route_name' => 'tyre_purchases.*',
+            'sort_order' => 30,
+        ]);
+        $upsertSub($m, ['name'=>'Manage Orders','slug'=>'manage-tyre-orders','icon'=>'fas fa-list','route_name'=>'tyre_purchases.index','sort_order'=>10]);
+
+        $tyrePOVis = $any([
+            $all(['isAdmin']),
+            $all(['hasStoresDeptHead']),
+            $all(['isSuperAdmin']),
+        ]);
+        $upsertSub($m, ['name'=>'Pending Orders','slug'=>'pending-tyre-orders','icon'=>'fas fa-clock','route_name'=>'tyre_purchases.pending','sort_order'=>20,'badge_key'=>'tyre_purchases_pending_count','visibility'=>$tyrePOVis]);
+        $upsertSub($m, ['name'=>'Approved Orders','slug'=>'approved-tyre-orders','icon'=>'fas fa-check','route_name'=>'tyre_purchases.approved','sort_order'=>30,'badge_key'=>'tyre_purchases_approved_count','visibility'=>$tyrePOVis]);
+        $upsertSub($m, ['name'=>'Rejected Orders','slug'=>'rejected-tyre-orders','icon'=>'fas fa-ban','route_name'=>'tyre_purchases.rejected','sort_order'=>40,'badge_key'=>'tyre_purchases_rejected_count','visibility'=>$tyrePOVis]);
+        $upsertSub($m, ['name'=>'Deleted Orders','slug'=>'deleted-tyre-orders','icon'=>'fas fa-trash','route_name'=>'tyre_purchases.deleted','sort_order'=>50,'badge_key'=>'tyre_purchases_deleted_count','visibility'=>$tyrePOVis]);
+
+        $m = $upsertModule($g, [
+            'name' => 'GRV (Tyres)',
+            'slug' => 'grv-tyres',
+            'icon' => 'fas fa-th-list',
+            'route_name' => 'goods_receiveds.tyres',
+            'sort_order' => 40,
+        ]);
+        $upsertSub($m, ['name'=>'Manage Tyre GRVs','slug'=>'manage-tyre-grvs','icon'=>'fas fa-list','route_name'=>'goods_receiveds.tyres','sort_order'=>10]);
+
+        $m = $upsertModule($g, [
+            'name' => 'Tyres',
+            'slug' => 'tyres',
+            'icon' => 'fas fa-th-list',
+            'route_name' => 'tyres.*',
+            'sort_order' => 50,
+        ]);
+        $upsertSub($m, ['name'=>'Create Tyre','slug'=>'create-tyre','icon'=>'fas fa-plus','route_name'=>'tyres.create','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Manage Tyres','slug'=>'manage-tyres','icon'=>'fas fa-list','route_name'=>'tyres.index','sort_order'=>20]);
+        $upsertSub($m, ['name'=>'Tyre Assignments','slug'=>'tyre-assignments','icon'=>'fas fa-list','route_name'=>'tyre_assignments.index','sort_order'=>30]);
+        $upsertSub($m, ['name'=>'Disposed Items','slug'=>'tyre-disposed-items','icon'=>'fas fa-list','route_name'=>'disposes.index','sort_order'=>40]);
+
+        $m = $upsertModule($g, [
+            'name' => 'Retreads',
+            'slug' => 'retreads',
+            'icon' => 'fas fa-th-list',
+            'route_name' => 'retreads.*',
+            'sort_order' => 60,
+        ]);
+        $upsertSub($m, ['name'=>'Create Retread','slug'=>'create-retread','icon'=>'fas fa-plus','route_name'=>'retreads.create','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Manage Retread','slug'=>'manage-retread','icon'=>'fas fa-list','route_name'=>'retreads.index','sort_order'=>20]);
+
+        $retreadVis = $any([
+            $all(['isAdmin']),
+            $all(['hasStoresDeptHead']),
+            $all(['isSuperAdmin']),
+        ]);
+        $upsertSub($m, ['name'=>'Pending Retreads','slug'=>'pending-retreads','icon'=>'fas fa-clock','route_name'=>'retreads.pending','sort_order'=>30,'badge_key'=>'retreads_pending_count','visibility'=>$retreadVis]);
+        $upsertSub($m, ['name'=>'Approved Retreads','slug'=>'approved-retreads','icon'=>'fas fa-check','route_name'=>'retreads.approved','sort_order'=>40,'badge_key'=>'retreads_approved_count','visibility'=>$retreadVis]);
+        $upsertSub($m, ['name'=>'Rejected Retreads','slug'=>'rejected-retreads','icon'=>'fas fa-ban','route_name'=>'retreads.rejected','sort_order'=>50,'badge_key'=>'retreads_rejected_count','visibility'=>$retreadVis]);
+
+        $m = $upsertModule($g, [
+            'name' => 'Dispatches (Tyres)',
+            'slug' => 'tyre-dispatches',
+            'icon' => 'fas fa-list',
+            'route_name' => 'tyre_dispatches.*',
+            'sort_order' => 70,
+        ]);
+        $upsertSub($m, ['name'=>'Manage Dispatches','slug'=>'manage-tyre-dispatches','icon'=>'fas fa-list','route_name'=>'tyre_dispatches.index','sort_order'=>10]);
+
+        $tyreDispatchVis = $any([$all(['isAdmin']), $all(['isSuperAdmin'])]);
+        $upsertSub($m, ['name'=>'Pending Dispatches','slug'=>'pending-tyre-dispatches','icon'=>'fas fa-clock','route_name'=>'tyre_dispatches.pending','sort_order'=>20,'badge_key'=>'tyre_dispatches_pending_count','visibility'=>$tyreDispatchVis]);
+        $upsertSub($m, ['name'=>'Approved Dispatches','slug'=>'approved-tyre-dispatches','icon'=>'fas fa-check','route_name'=>'tyre_dispatches.approved','sort_order'=>30,'badge_key'=>'tyre_dispatches_approved_count','visibility'=>$tyreDispatchVis]);
+        $upsertSub($m, ['name'=>'Rejected Dispatches','slug'=>'rejected-tyre-dispatches','icon'=>'fas fa-ban','route_name'=>'tyre_dispatches.rejected','sort_order'=>40,'badge_key'=>'tyre_dispatches_rejected_count','visibility'=>$tyreDispatchVis]);
+
+        // ----------------------------
+        // GROUP: Business Settings
+        // (Management OR Director OR Super)
+        // ----------------------------
+        $g = $upsertGroup([
+            'name' => 'Business Settings',
+            'slug' => 'business-settings',
+            'sort_order' => 160,
+            'visibility' => $any([
+                $all(['isSuperAdmin']),
+            ]),
+        ]);
+
+        // Company Profile (dynamic company_id at runtime)
+        $upsertModule($g, [
+            'name' => 'Company Profile',
+            'slug' => 'company-profile',
+            'icon' => 'fas fa-cog',
+            'route_name' => 'company-profile',
+            'route_params' => ['id' => '{company_id}'],
+            'sort_order' => 10,
+            'visibility' => null,
+        ]);
+
+        // // Create new business
+        // $upsertModule($g, [
+        //     'name' => 'Create new business',
+        //     'slug' => 'create-new-business',
+        //     'icon' => 'fas fa-plus-circle',
+        //     'route_name' => 'companies.index',
+        //     'sort_order' => 20,
+        //     'visibility' => null,
+        // ]);
+
+        // ----------------------------
+        // GROUP: Profile Settings (public)
+        // ----------------------------
+        $g = $upsertGroup([
+            'name' => 'Profile Settings',
+            'slug' => 'profile-settings',
+            'sort_order' => 170,
+            'visibility' => null,
+        ]);
+
+        $upsertModule($g, [
+            'name' => 'My Profile',
+            'slug' => 'my-profile',
+            'icon' => 'fas fa-user',
+            'route_name' => 'profile',
+            'route_params' => ['id' => '{user_id}'],
+            'sort_order' => 10,
+        ]);
+
+        $upsertModule($g, [
+            'name' => 'Audits',
+            'slug' => 'audits',
+            'icon' => 'fas fa-history',
+            'route_name' => 'audits.all',
+            'sort_order' => 20,
+            'visibility' => $any([$all(['isSuperAdmin'])]),
+        ]);
+
+        $upsertModule($g, [
+            'name' => 'Logout',
+            'slug' => 'logout',
+            'icon' => 'fas fa-sign-out-alt',
+            'route_name' => 'logout',
+            'sort_order' => 30,
+        ]);
     }
 }

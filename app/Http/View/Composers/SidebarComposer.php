@@ -9,7 +9,7 @@ use  App\Models\{
     Allocation, Department, DepartmentHead, Leave, Loan,
     Payroll, Invoice, CreditNote, Bill, Requisition, TopUp,User,Purchase, Dispatch,
     GatePass, Fuel, FuelRequest, Trip, Transporter, Shift, TransportOrder, Recovery, Booking, Transfer, Retread, Customer, Agent, Company,
-    ModuleGroup
+    ModuleGroup,Rental
     // ... add all models you need here
 };
 
@@ -20,9 +20,11 @@ class SidebarComposer
         $user = Auth::user();
         $logged_in_user = User::find($user->id);
 
-        $is_admin =  $logged_in_user->is_admin();
-
+        $isSystemAdmin =  $logged_in_user->is_admin();
+        $is_admin  =  $logged_in_user->is_admin();
         $employee = $user?->employee;
+        $not_driver = !$employee->driver;
+        $has_vehicle_assignment = $employee->vehicle_assignment;
 
         // Collections instead of foreach + push
         $department_names = $employee
@@ -73,13 +75,18 @@ class SidebarComposer
             ->whereDate('created_at', now()->toDateString())
             ->count();
 
-        $hrDepartment   = $departments->get('Human Resources');
-        $hrDeptHead     = $employee && $hrDepartment
-            ? DepartmentHead::where('department_id', $hrDepartment->id)
+        $hrdepartment   = $departments->get('Human Resources');
+        $hrdepartment_head     = $employee && $hrdepartment
+            ? DepartmentHead::where('department_id', $hrdepartment->id)
                   ->where('employee_id', $employee->id)
                   ->first()
             : null;
         $hseq_department   = $departments->get('HSEQ');
+        $hseqdepartment_head     = $employee && $hseq_department
+            ? DepartmentHead::where('department_id', $hseq_department->id)
+                  ->where('employee_id', $employee->id)
+                  ->first()
+            : null;
         $wsdepartment   = $departments->get('Workshop');
         $wsdepartment_head     = $employee && $wsdepartment
             ? DepartmentHead::where('department_id', $wsdepartment->id)
@@ -104,19 +111,31 @@ class SidebarComposer
                   ->where('employee_id', $employee->id)
                   ->first()
             : null;
+       
+        $sdepartment   = $departments->get('Security');
+        $sdepartment_head     = $employee && $sdepartment
+            ? DepartmentHead::where('department_id', $sdepartment->id)
+                  ->where('employee_id', $employee->id)
+                  ->first()
+            : null;
 
         // ... same pattern for Finance, HSEQ, etc.
 
         $isManagement      = in_array('Management', $rank_names);
+        $isEmployee      = in_array('Employee', $rank_names);
         $isDirector      = in_array('Directors', $rank_names);
         $isSuperAdmin      = in_array('Super Admin', $role_names);
         $isAdmin           = in_array('Admin', $role_names);
+        $isUser           = in_array('User', $role_names);
         $inHR              = in_array('Human Resources', $department_names);
         $inFinance         = in_array('Finance', $department_names);
         $inHSEQ            = in_array('HSEQ', $department_names);
         $inSecurity            = in_array('Security', $department_names);
         $inTransport       = in_array('Transport & Logistics', $department_names);
-
+        $inStores       = in_array('Stores', $department_names);
+        $inWorkshop       = in_array('Workshop', $department_names);
+       
+        
        
         $companyColor =
         $employee?->company->color ??
@@ -124,7 +143,16 @@ class SidebarComposer
         $user?->transporter?->company->color ??
         $user?->customer?->company->color ??
         $user?->agent?->company->color;
+        $user?->company->color ??
+        $user?->transporter?->company->color ??
+        $user?->customer?->company->color ??
+        $user?->agent?->company->color;
+        $user?->company->color ??
+        $user?->transporter?->company->color ??
+        $user?->customer?->company->color ??
+        $user?->agent?->company->color;
 
+        
          $billsPendingCount = Bill::where('authorization','pending')
         ->where('created_at', '>', Carbon::now()->startOfWeek())
         ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
@@ -302,6 +330,19 @@ class SidebarComposer
         ->where('created_at', '>', Carbon::now()->startOfWeek())
         ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
         $transportersDeletedCount = Transporter::onlyTrashed()
+        ->whereDate('created_at', Carbon::today())->get()->count();
+        
+        $rentalsPendingCount = Rental::where('authorization','pending')
+        ->where('created_at', '>', Carbon::now()->startOfWeek())
+        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
+        // ->whereDate('created_at', Carbon::today())->get()->count();
+        $rentalsApprovedCount = Rental::where('authorization','approved')
+        ->where('created_at', '>', Carbon::now()->startOfWeek())
+        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
+        $rentalsRejectedCount = Rental::where('authorization','rejected')
+        ->where('created_at', '>', Carbon::now()->startOfWeek())
+        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
+        $rentalsDeletedCount = Rental::onlyTrashed()
         ->whereDate('created_at', Carbon::today())->get()->count();
 
         $shiftsPendingCount = Shift::where('authorization','pending')
@@ -482,32 +523,203 @@ class SidebarComposer
         $companies = Company::where('type','!=','admin')->get();
         $admin_company = Company::where('type','admin')->get()->first();
 
+        $in_transport_admin = $isAdmin && $inTransport;
+        $in_transport_management = $isManagement && $inTransport;
+
            // Build your context keys ONCE (map your booleans + ids here)
         $ctx = [
              // roles / flags (use what you computed, not session())
             'isAdmin'       => (bool) $isAdmin,
             'isSuperAdmin'  => (bool) $isSuperAdmin,
+            'isUser'        => (bool) $isUser,
+            'isManagement'  => (bool) $isManagement,
+            'isEmployee'    => (bool) $isEmployee,
+            'isDirector'    => (bool) $isDirector,
             'isDriver'      => (bool) ($user?->driver ?? false),
-
+            'isSystemAdmin'      => (bool) $isSystemAdmin,
+            'is_admin '      => (bool) $is_admin ,
+            'in_transport_admin' => (bool) $in_transport_admin,
+            'in_transport_management' => (bool) $in_transport_management,
             'inHR'          => (bool) $inHR,
             'inFinance'     => (bool) $inFinance,
             'inTransport'   => (bool) $inTransport,
             'inHSEQ'        => (bool) $inHSEQ,
             'inSecurity'    => (bool) $inSecurity,
+            'inStores'      => (bool) $inStores,
+            'inWorkshop'    => (bool) $inWorkshop,
+            'isNotDriver'    => (bool) $not_driver,
+            'hasStoresDeptHead'    => (bool) $stdepartment_head,
+            'hasWorkshopDeptHead'    => (bool) $wsdepartment_head,
+            'hasHRDeptHead'    => (bool) $hrdepartment_head,
+            'hasHSEQDeptHead'    => (bool) $hseqdepartment_head,
+            'hasTLDeptHead'    => (bool) $tldepartment_head,
+            'hasFinanceDeptHead'    => (bool) $fndepartment_head,
+            'hasVehicleAssignment'    => (bool) ($employee?->vehicleAssignments?->where('status',1)->count() > 0),
+            'admin_company_id' => $admin_company?->id,
+            'driver_id'        => $employee?->driver?->id,     // only if you have a driver relation
+            'department_id'    => $employee?->departments->first()?->id,
 
+            'roles'       => $role_names ?? [],        // from DB/session/computed user roles
+            'departments' => $department_names ?? [],  // from DB/session/computed user departments
+            'ranks'       => $rank_names ?? [],  
             // ids for placeholders (MOST IMPORTANT PART)
             'user_id'       => $user?->id,
             'employee_id'   => $employee?->id ?? $user?->employee_id,  // ✅ reliable
+            'company_id'   => $employee?->company_id ,  // ✅ reliable
             'hseq_department_id' => $hseq_department?->id,
         ];
 
 
         // Your badge map (connect to your real computed counts)
-        $badges = [
-            'leaves_pending_count' => $view->offsetExists('leavesPendingCount') ? $view['leavesPendingCount'] : 0,
-            'loans_pending_count' => $view->offsetExists('loansPendingCount') ? $view['loansPendingCount'] : 0,
-            // ...add more keys you use
-        ];
+        $menuBadges = [
+        // Leave Management
+        'leaves_pending_count'  => (int) ($leavesPendingCount ?? 0),
+        'leaves_approved_count' => (int) ($leavesApprovedCount ?? 0),
+        'leaves_rejected_count' => (int) ($leavesRejectedCount ?? 0),
+
+        // Loans
+        'loans_pending_count'   => (int) ($loansPendingCount ?? 0),
+        'loans_approved_count'  => (int) ($loansApprovedCount ?? 0),
+        'loans_rejected_count'  => (int) ($loansRejectedCount ?? 0),
+
+        // Payroll
+        'payrolls_pending_count'  => (int) ($payrollsPendingCount ?? 0),
+        'payrolls_approved_count' => (int) ($payrollsApprovedCount ?? 0),
+        'payrolls_rejected_count' => (int) ($payrollsRejectedCount ?? 0),
+
+        // Invoices
+        'invoices_pending_count'  => (int) ($invoicesPendingCount ?? 0),
+        'invoices_approved_count' => (int) ($invoicesApprovedCount ?? 0),
+        'invoices_rejected_count' => (int) ($invoicesRejectedCount ?? 0),
+        'invoices_deleted_count'  => (int) ($invoicesDeletedCount ?? 0),
+
+        // Credit Notes
+        'credit_notes_pending_count'  => (int) ($credit_notesPendingCount ?? 0),
+        'credit_notes_approved_count' => (int) ($credit_notesApprovedCount ?? 0),
+        'credit_notes_rejected_count' => (int) ($credit_notesRejectedCount ?? 0),
+        'credit_notes_deleted_count'  => (int) ($credit_notesDeletedCount ?? 0),
+
+        // Bills
+        'bills_pending_count'  => (int) ($billsPendingCount ?? 0),
+        'bills_approved_count' => (int) ($billsApprovedCount ?? 0),
+        'bills_rejected_count' => (int) ($billsRejectedCount ?? 0),
+
+        // Requisitions
+        'requisitions_pending_count'  => (int) ($requisitionsPendingCount ?? 0),
+        'requisitions_approved_count' => (int) ($requisitionsApprovedCount ?? 0),
+        'requisitions_rejected_count' => (int) ($requisitionsRejectedCount ?? 0),
+
+        // Gatepasses (Security)
+        'gate_passes_pending_count'  => (int) ($gate_passesPendingCount ?? 0),
+        'gate_passes_approved_count' => (int) ($gate_passesApprovedCount ?? 0),
+        'gate_passes_rejected_count' => (int) ($gate_passesRejectedCount ?? 0),
+
+        // Gatepasses (Logistics)
+        'logistics_gate_passes_pending_count'  => (int) ($logistics_gate_passesPendingCount ?? 0),
+        'logistics_gate_passes_approved_count' => (int) ($logistics_gate_passesApprovedCount ?? 0),
+        'logistics_gate_passes_rejected_count' => (int) ($logistics_gate_passesRejectedCount ?? 0),
+
+        // Gatepasses (Workshop)
+        'workshop_gate_passes_pending_count'  => (int) ($workshop_gate_passesPendingCount ?? 0),
+        'workshop_gate_passes_approved_count' => (int) ($workshop_gate_passesApprovedCount ?? 0),
+        'workshop_gate_passes_rejected_count' => (int) ($workshop_gate_passesRejectedCount ?? 0),
+
+        // Fuel Top Ups
+        'top_ups_pending_count'  => (int) ($top_upsPendingCount ?? 0),
+        'top_ups_approved_count' => (int) ($top_upsApprovedCount ?? 0),
+        'top_ups_rejected_count' => (int) ($top_upsRejectedCount ?? 0),
+
+        // Fuel Orders
+        'fuels_pending_count'  => (int) ($fuelsPendingCount ?? 0),
+        'fuels_approved_count' => (int) ($fuelsApprovedCount ?? 0),
+        'fuels_rejected_count' => (int) ($fuelsRejectedCount ?? 0),
+        'fuels_deleted_count'  => (int) ($fuelsDelectedCount ?? 0), // note: your variable is spelled Delected
+
+        // Fuel Allocations / Requests
+        'my_allocation_count' => (int) ($myAllocationCount ?? 0),
+
+        'fuel_requests_pending_count'  => (int) ($fuelRequesitionPendingCount ?? 0),
+        'fuel_requests_approved_count' => (int) ($fuelRequesitionApprovedCount ?? 0),
+        'fuel_requests_rejected_count' => (int) ($fuelRequesitionRejectedCount ?? 0),
+
+        // Trips
+        'trips_pending_count'  => (int) ($tripsPendingCount ?? 0),
+        'trips_approved_count' => (int) ($tripsApprovedCount ?? 0),
+        'trips_rejected_count' => (int) ($tripsRejectedCount ?? 0),
+        'trips_deleted_count'  => (int) ($tripsDelectedCount ?? 0), // note: your variable is spelled Delected
+
+        // Transporters
+        'transporters_pending_count'  => (int) ($transportersPendingCount ?? 0),
+        'transporters_approved_count' => (int) ($transportersApprovedCount ?? 0),
+        'transporters_rejected_count' => (int) ($transportersRejectedCount ?? 0),
+  
+        // Transporters
+        'rentals_pending_count'  => (int) ($rentalsPendingCount ?? 0),
+        'rentals_approved_count' => (int) ($rentalsApprovedCount ?? 0),
+        'rentals_rejected_count' => (int) ($rentalsRejectedCount ?? 0),
+
+        // Recoveries
+        'recoveries_pending_count'  => (int) ($recoveriesPendingCount ?? 0),
+        'recoveries_approved_count' => (int) ($recoveriesApprovedCount ?? 0),
+        'recoveries_rejected_count' => (int) ($recoveriesRejectedCount ?? 0),
+
+        // Workshop Bookings
+        'bookings_pending_count'  => (int) ($bookingsPendingCount ?? 0),
+        'bookings_approved_count' => (int) ($bookingsApprovedCount ?? 0),
+        'bookings_rejected_count' => (int) ($bookingsRejectedCount ?? 0),
+
+        // Tickets / Inspections (Workshop “My” counters)
+        'job_cards_count'    => (int) ($jobCardsCount ?? 0),
+        'inspections_count'  => (int) ($inspectionsCount ?? 0),
+
+        // Asset Purchases (POs)
+        'asset_purchases_pending_count'  => (int) ($asset_purchasesPendingCount ?? 0),
+        'asset_purchases_approved_count' => (int) ($asset_purchasesApprovedCount ?? 0),
+        'asset_purchases_rejected_count' => (int) ($asset_purchasesRejectedCount ?? 0),
+        'asset_purchases_deleted_count'  => (int) ($asset_purchasesDeletedCount ?? 0),
+
+        // Asset Dispatches
+        'asset_dispatches_pending_count'  => (int) ($asset_dispatchesPendingCount ?? 0),
+        'asset_dispatches_approved_count' => (int) ($asset_dispatchesApprovedCount ?? 0),
+        'asset_dispatches_rejected_count' => (int) ($asset_dispatchesRejectedCount ?? 0),
+
+        // Inventory Transfers
+        'inventory_transfers_pending_count'  => (int) ($inventory_transfersPendingCount ?? 0),
+        'inventory_transfers_approved_count' => (int) ($inventory_transfersApprovedCount ?? 0),
+        'inventory_transfers_rejected_count' => (int) ($inventory_transfersRejectedCount ?? 0),
+
+        // Inventory Purchases
+        'inventory_purchases_pending_count'  => (int) ($inventory_purchasesPendingCount ?? 0),
+        'inventory_purchases_approved_count' => (int) ($inventory_purchasesApprovedCount ?? 0),
+        'inventory_purchases_rejected_count' => (int) ($inventory_purchasesRejectedCount ?? 0),
+        'inventory_purchases_deleted_count'  => (int) ($inventory_purchasesDeletedCount ?? 0),
+
+        // Inventory Dispatches
+        'inventory_dispatches_pending_count'  => (int) ($inventory_dispatchesPendingCount ?? 0),
+        'inventory_dispatches_approved_count' => (int) ($inventory_dispatchesApprovedCount ?? 0),
+        'inventory_dispatches_rejected_count' => (int) ($inventory_dispatchesRejectedCount ?? 0),
+
+        // Tyre Transfers
+        'tyre_transfers_pending_count'  => (int) ($tyre_transfersPendingCount ?? 0),
+        'tyre_transfers_approved_count' => (int) ($tyre_transfersApprovedCount ?? 0),
+        'tyre_transfers_rejected_count' => (int) ($tyre_transfersRejectedCount ?? 0),
+
+        // Tyre Purchases
+        'tyre_purchases_pending_count'  => (int) ($tyre_purchasesPendingCount ?? 0),
+        'tyre_purchases_approved_count' => (int) ($tyre_purchasesApprovedCount ?? 0),
+        'tyre_purchases_rejected_count' => (int) ($tyre_purchasesRejectedCount ?? 0),
+        'tyre_purchases_deleted_count'  => (int) ($tyre_purchasesDeletedCount ?? 0),
+
+        // Retreads
+        'retreads_pending_count'  => (int) ($retreadsPendingCount ?? 0),
+        'retreads_approved_count' => (int) ($retreadsApprovedCount ?? 0),
+        'retreads_rejected_count' => (int) ($retreadsRejectedCount ?? 0),
+
+        // Tyre Dispatches
+        'tyre_dispatches_pending_count'  => (int) ($tyre_dispatchesPendingCount ?? 0),
+        'tyre_dispatches_approved_count' => (int) ($tyre_dispatchesApprovedCount ?? 0),
+        'tyre_dispatches_rejected_count' => (int) ($tyre_dispatchesRejectedCount ?? 0),
+    ];
 
        $menuGroups = ModuleGroup::query()
         ->where('is_active', true)
@@ -525,13 +737,14 @@ class SidebarComposer
 
         $view->with([
             'menuCtx' => $ctx,
-            'menuBadges' => $badges,
+            'menuBadges' => $menuBadges,
             'menuGroups' => $menuGroups,
             'user'         => $user,
             'employee'     => $employee,
+            'not_driver'     => $not_driver,
+            'not_driver'     => $not_driver,
             'department_names'     => $department_names,
             'companies'     => $companies,
-            'isDirector'     => $isDirector,
             'admin_company'     => $admin_company,
             'jobCardsCount'     => $jobCardsCount,
             'inspectionsCount'     => $inspectionsCount,
@@ -539,11 +752,9 @@ class SidebarComposer
             'rank_names'           => $rank_names,
             'myAllocationCount'   => $myAllocationCount,
             'departmentsMap'      => $departments,
-            'leavesPendingCount'  => $leavesPendingCount,
-            'leavesApprovedCount' => $leavesApprovedCount,
-            'leavesRejectedCount' => $leavesRejectedCount,
-            'leavesDeletedCount'  => $leavesDeletedCount,
-            'hrDeptHead'          => $hrDeptHead,
+           
+            'in_transport_management' => $in_transport_management,
+            'in_transport_admin' => $in_transport_admin,
             'inTransport'          => $inTransport,
             'inHSEQ'          => $inHSEQ,
             'inSecurity'          => $inSecurity,
@@ -551,13 +762,25 @@ class SidebarComposer
             'inHR'          => $inHR,
             'isAdmin'          => $isAdmin,
             'isSuperAdmin'          => $isSuperAdmin,
+            'isUser'          => $isUser,
+            'isEmployee'          => $isEmployee,
             'isManagement'          => $isManagement,
+            'isDirector'     => $isDirector,
             'companyColor'          => $companyColor,
+            'hseqdepartment_head'        => $hseqdepartment_head,
+            'hrdepartment_head'          => $hrdepartment_head,
             'tldepartment_head'          => $tldepartment_head,
             'fndepartment_head'          => $fndepartment_head,
             'stdepartment_head'          => $stdepartment_head,
             'wsdepartment_head'          => $wsdepartment_head,
+            'sdepartment_head'          => $sdepartment_head,
+            'isSystemAdmin'          => $isSystemAdmin,
             'is_admin'          => $is_admin,
+
+            'leavesPendingCount'  => $leavesPendingCount,
+            'leavesApprovedCount' => $leavesApprovedCount,
+            'leavesRejectedCount' => $leavesRejectedCount,
+            'leavesDeletedCount'  => $leavesDeletedCount,
             'billsDeletedCount'          => $billsDeletedCount,
             'billsRejectedCount'          => $billsRejectedCount,
             'billsApprovedCount'          => $billsApprovedCount,
@@ -625,6 +848,10 @@ class SidebarComposer
             'transportersRejectedCount'          => $transportersRejectedCount,
             'transportersApprovedCount'          => $transportersApprovedCount,
             'transportersPendingCount'          => $transportersPendingCount,
+            'rentalsDeletedCount'          => $rentalsDeletedCount,
+            'rentalsRejectedCount'          => $rentalsRejectedCount,
+            'rentalsApprovedCount'          => $rentalsApprovedCount,
+            'rentalsPendingCount'          => $rentalsPendingCount,
             'shiftsRejectedCount'          => $shiftsRejectedCount,
             'shiftsApprovedCount'          => $shiftsApprovedCount,
             'shiftsPendingCount'          => $shiftsPendingCount,
