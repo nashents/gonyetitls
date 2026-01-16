@@ -12,6 +12,9 @@ class InvoiceItem extends Model implements Auditable
     use \OwenIt\Auditing\Auditable;
     use HasFactory, SoftDeletes;
 
+    public function inventory(){
+        return $this->belongsTo('App\Models\Inventory');
+    }
     public function invoice(){
         return $this->belongsTo('App\Models\Invoice');
     }

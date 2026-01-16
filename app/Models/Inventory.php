@@ -66,6 +66,9 @@ class Inventory extends Model implements Auditable
     public function inventory_details(){
         return $this->hasMany('App\Models\InventoryDetail');
     }
+    public function invoice_items(){
+        return $this->hasMany('App\Models\InvoiceItem');
+    }
     public function sale_items(){
         return $this->hasMany('App\Models\SaleItem');
     }
