@@ -2,6 +2,8 @@
     <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
         <thead>
           <tr>
+            <th class="th-sm">Rehandling#
+            </th>
             <th class="th-sm">Start Time
             </th>
             <th class="th-sm">Open Hours(H)
@@ -16,14 +18,13 @@
             </th>
             <th class="th-sm">Close Mileage(Km)
             </th>
-            <th class="th-sm">Action
-            </th>
           </tr>
         </thead>
         @if (isset($rehandlings))
         <tbody>
             @forelse ($rehandlings as $rehandling)
           <tr>
+            <td>{{$rehandling->rehandling_number}}</td>
             <td>{{$rehandling->start_time}}</td>
             <td>{{$rehandling->open_hours}}</td>
             <td>{{$rehandling->open_mileage}}</td>

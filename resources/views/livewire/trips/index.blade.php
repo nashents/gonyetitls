@@ -291,7 +291,13 @@
                                                 @if($showFreight)
                                                     <td>
                                                         {{ $trip->currency?->name }} {{ $trip->currency?->symbol }}
-                                                        {{ number_format($trip->freight ?? 0, 2) }}
+                                                        {{ number_format(
+                                                                (float) (is_numeric($trip->freight)
+                                                                    ? $trip->freight
+                                                                    : preg_replace('/[^\d\.\-]/', '', (string) ($trip->freight ?? 0))
+                                                                ),
+                                                                2
+                                                            ) }}
                                                     </td>
                                                 @endif
 

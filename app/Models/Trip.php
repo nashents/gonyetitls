@@ -12,6 +12,9 @@ class Trip extends Model implements Auditable
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 
+    protected $casts = [
+    'freight' => 'float',
+    ];
     
     public function invoices()
     {

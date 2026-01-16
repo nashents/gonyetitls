@@ -224,6 +224,25 @@
                                         <!-- /input-group -->
                                     </div>
                                 </div>
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="input-group ">
+                                            <span class="input-group-addon">
+                                                Teams
+                                            </span>
+                                            <select wire:model.debounce.300ms="filter_team_id" class="form-control  " aria-label="..." >
+                                                <option value="">Select Team</option>
+                                                @foreach ($teams as $team)
+                                                        <option value="{{ $team->id }}"  > {{ $team->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <!-- /input-group -->
+                                    </div>
+                               
+                                   
+                                    
+                                </div>
                             </div>
                             <div class="panel-title">
                                 <a href="" data-toggle="modal" data-target="#shiftModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Shift</a>

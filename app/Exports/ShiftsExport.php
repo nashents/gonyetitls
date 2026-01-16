@@ -181,30 +181,31 @@ WithCustomStartCell
          *    (Assuming these values are IDs)
          */
         $baseQuery
-        ->when(filled($this->filters['transporter_id']), fn (Builder $q) => $q->where('transporter_id', $this->filters['transporter_id']))
-        ->when(filled($this->filters['customer_id']), fn (Builder $q) => $q->where('customer_id', $this->filters['customer_id']))
-        ->when(filled($this->filters['driver_id']), fn (Builder $q) => $q->where('driver_id', $this->filters['driver_id']))
-        ->when(filled($this->filters['horse_id']), fn (Builder $q) => $q->where('horse_id', $this->filters['horse_id']))
-        ->when(filled($this->filters['vehicle_id']), fn (Builder $q) => $q->where('vehicle_id', $this->filters['vehicle_id']))
-        ->when(filled($this->filters['cargo_id']), fn (Builder $q) => $q->where('cargo_id', $this->filters['cargo_id']))
-        ->when(filled($this->filters['shift_type']), fn (Builder $q) => $q->where('type', $this->filters['shift_type']))
-        ->when(filled($this->filters['user_id']), fn (Builder $q) => $q->where('user_id', $this->filters['user_id']))
+        ->when(filled($this->filters['filter_transporter_id']), fn (Builder $q) => $q->where('transporter_id', $this->filters['filter_transporter_id']))
+        ->when(filled($this->filters['filter_team_id']), fn (Builder $q) => $q->where('team_id', $this->filters['filter_team_id']))
+        ->when(filled($this->filters['filter_customer_id']), fn (Builder $q) => $q->where('customer_id', $this->filters['filter_customer_id']))
+        ->when(filled($this->filters['filter_driver_id']), fn (Builder $q) => $q->where('driver_id', $this->filters['filter_driver_id']))
+        ->when(filled($this->filters['filter_horse_id']), fn (Builder $q) => $q->where('horse_id', $this->filters['filter_horse_id']))
+        ->when(filled($this->filters['filter_vehicle_id']), fn (Builder $q) => $q->where('vehicle_id', $this->filters['filter_vehicle_id']))
+        ->when(filled($this->filters['filter_cargo_id']), fn (Builder $q) => $q->where('cargo_id', $this->filters['filter_cargo_id']))
+        ->when(filled($this->filters['filter_shift_type']), fn (Builder $q) => $q->where('type', $this->filters['filter_shift_type']))
+        ->when(filled($this->filters['filter_user_id']), fn (Builder $q) => $q->where('user_id', $this->filters['filter_user_id']))
 
         // trips-based loading/offloading filters
-        ->when(filled($this->filters['from_destination']), fn (Builder $q) =>
-            $q->whereHas('trips', fn (Builder $t) => $t->where('from', $this->filters['from_destination']))
+        ->when(filled($this->filters['filter_from_destination']), fn (Builder $q) =>
+            $q->whereHas('trips', fn (Builder $t) => $t->where('from', $this->filters['filter_from_destination']))
         )
-        ->when(filled($this->filters['to_destination']), fn (Builder $q) =>
-            $q->whereHas('trips', fn (Builder $t) => $t->where('to', $this->filters['to_destination']))
+        ->when(filled($this->filters['filter_to_destination']), fn (Builder $q) =>
+            $q->whereHas('trips', fn (Builder $t) => $t->where('to', $this->filters['filter_to_destination']))
         )
-        ->when(filled($this->filters['haulage_type']), fn (Builder $q) =>
-            $q->whereHas('trips', fn (Builder $t) => $t->where('haulage_type', $this->filters['haulage_type']))
+        ->when(filled($this->filters['filter_haulage_type']), fn (Builder $q) =>
+            $q->whereHas('trips', fn (Builder $t) => $t->where('haulage_type', $this->filters['filter_haulage_type']))
         )
-        ->when(filled($this->filters['loading_point_id']), fn (Builder $q) =>
-            $q->whereHas('trips', fn (Builder $t) => $t->where('loading_point_id', $this->filters['loading_point_id']))
+        ->when(filled($this->filters['filter_loading_point_id']), fn (Builder $q) =>
+            $q->whereHas('trips', fn (Builder $t) => $t->where('loading_point_id', $this->filters['filter_loading_point_id']))
         )
-        ->when(filled($this->filters['offloading_point_id']), fn (Builder $q) =>
-            $q->whereHas('trips', fn (Builder $t) => $t->where('offloading_point_id', $this->filters['offloading_point_id']))
+        ->when(filled($this->filters['filter_offloading_point_id']), fn (Builder $q) =>
+            $q->whereHas('trips', fn (Builder $t) => $t->where('offloading_point_id', $this->filters['filter_offloading_point_id']))
         );
 
         /**

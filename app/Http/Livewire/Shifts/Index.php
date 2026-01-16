@@ -102,6 +102,7 @@ class Index extends Component
     public $filter_vehicle_id;
     public $filter_horse_id;
     public $filter_transporter_id;
+    public $filter_team_id;
     public $filter_shift_type;
     public $shift_open_mileage;
     public $shift_open_hours;
@@ -2098,19 +2099,20 @@ class Index extends Component
 
          $this->filters = [
             'shift_filter' => $this->shift_filter,
-            'transporter_id' => $this->transporter_id,
-            'customer_id' => $this->customer_id,
-            'driver_id' => $this->driver_id,
-            'user_id' => $this->user_id,
-            'horse_id' => $this->horse_id,
-            'from_destination' => $this->from_destination,
-            'to_destination' => $this->to_destination,
-            'cargo_id' => $this->cargo_id,
-            'vehicle_id' => $this->vehicle_id,
-            'haulage_type' => $this->haulage_type,
-            'loading_point_id' => $this->loading_point_id,
-            'offloading_point_id' => $this->offloading_point_id,
-            'shift_type' => $this->shift_type,
+            'filter_team_id' => $this->filter_team_id,
+            'filter_transporter_id' => $this->filter_transporter_id,
+            'filter_customer_id' => $this->filter_customer_id,
+            'filter_driver_id' => $this->filter_driver_id,
+            'filter_user_id' => $this->filter_user_id,
+            'filter_horse_id' => $this->filter_horse_id,
+            'filter_from_destination' => $this->filter_from_destination,
+            'filter_to_destination' => $this->filter_to_destination,
+            'filter_cargo_id' => $this->filter_cargo_id,
+            'filter_vehicle_id' => $this->filter_vehicle_id,
+            'filter_haulage_type' => $this->filter_haulage_type,
+            'filter_loading_point_id' => $this->filter_loading_point_id,
+            'filter_offloading_point_id' => $this->filter_offloading_point_id,
+            'filter_shift_type' => $this->filter_shift_type,
         ];
 
         if ((isset($this->fuel_exchange_rate) && $this->fuel_exchange_rate > 0 && is_numeric($this->fuel_exchange_rate)) && (isset($this->fuel_amount) && $this->fuel_amount > 0 && is_numeric($this->fuel_amount)) ) {
@@ -2156,6 +2158,7 @@ class Index extends Component
          */
         $baseQuery
         ->when(filled($this->filter_transporter_id), fn (Builder $q) => $q->where('transporter_id', $this->filter_transporter_id))
+        ->when(filled($this->filter_team_id), fn (Builder $q) => $q->where('team_id', $this->filter_team_id))
         ->when(filled($this->filter_customer_id), fn (Builder $q) => $q->where('customer_id', $this->filter_customer_id))
         ->when(filled($this->filter_driver_id), fn (Builder $q) => $q->where('driver_id', $this->filter_driver_id))
         ->when(filled($this->filter_horse_id), fn (Builder $q) => $q->where('horse_id', $this->filter_horse_id))
