@@ -1146,6 +1146,7 @@
                                     <div class="form-group">
                                         <label for="quantity">Quantity<span class="required" style="color: red">*</span></label>
                                        <input type="number" step="any" min="0"  class="form-control"  wire:model.debounce.300ms="fuel_quantity" placeholder="Enter Fillup Quantity" required />
+                                        @error('fuel_quantity') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
                             </div>
@@ -1174,7 +1175,7 @@
                                             @endif
                                         </label>
                                         <input type="number" step="any" class="form-control" wire:model.debounce.300ms="mileage"  placeholder="Enter Mileage" {{$for == "Trips" ? "required" : ""}}/>
-                                        @error('odometer') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        @error('mileage') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
                                 <div class="col-md-4">

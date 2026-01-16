@@ -274,8 +274,6 @@ class Index extends Component
     public $shift_trips;
     public $shift_rehandlings;
 
-   
-
     public $cargo_type = [];
     public $calculation_measurement = [];
 
@@ -285,10 +283,62 @@ class Index extends Component
 
     public $trip_type;
 
+    public $trip_inputs = [];
+    public $t = 1;
+    public $r = 1;
 
+    public function addTrip($t)
+    {
+        $t = $t + 1;
+        $this->t = $t;
+        
+        array_push($this->trip_inputs ,$t);
+
+        $this->weight[$t] = $this->company->default_weight;
+        $this->rate[$t]   = $this->company->default_rate;
+
+    }
+    public function removeTrip($t)
+    {
+        unset($this->trip_inputs[$t]);
+    }
+
+    public $inputs = [];
+    public $i = 1;
+    public $n = 1;
+    public function add($i)
+    {
+        $i = $i + 1;
+        $this->i = $i;
+        array_push($this->inputs ,$i);
+       
+    }
+    public function remove($i)
+    {
+        unset($this->inputs[$i]);
+    }
+
+
+    
     private function resetInputFields(){
         $this->name = Null;
         $this->shift_start_time = Null;
+        $this->for = Null;
+        $this->depart_workshop_time = Null;
+        $this->arrive_location_time = Null;
+        $this->depart_location_time = Null;
+        $this->arrive_workshop_time = Null;
+        $this->fuel_category = Null;
+        $this->account_id = Null;
+        $this->fuel_quantity = Null;
+        $this->unit_price = Null;
+        $this->fuel_amount = Null;
+        $this->mileage = Null;
+        $this->hours = Null;
+        $this->fuel_comments = Null;
+        $this->customer_id = Null;
+        $this->driver_id = Null;
+        $this->selectedTransporter = Null;
         $this->shift_end_time = Null;
         $this->shift_trips = Null;
         $this->shift_rehandlings = Null;
@@ -302,6 +352,8 @@ class Index extends Component
         $this->start_time = [];
         $this->stop_time = [];
         $this->work_id = [];
+        $this->inputs = [];
+        $this->trip_inputs = [];
         $this->location_id = [];
         $this->shift_open_mileage = Null;
         $this->shift_open_hours = Null;
@@ -319,6 +371,7 @@ class Index extends Component
         $this->selectedTo = [];
         $this->haulage_type = [];
         $this->weight = [];
+        $this->loads = [];
         $this->rate = [];
         $this->trip_ref = [];
         $this->loading_point_id = [];
@@ -364,42 +417,7 @@ class Index extends Component
 
     }
 
-    public $trip_inputs = [];
-    public $t = 1;
-    public $r = 1;
-
-    public function addTrip($t)
-    {
-        $t = $t + 1;
-        $this->t = $t;
-        
-        array_push($this->trip_inputs ,$t);
-
-        $this->weight[$t] = $this->company->default_weight;
-        $this->rate[$t]   = $this->company->default_rate;
-
-    }
-    public function removeTrip($t)
-    {
-        unset($this->trip_inputs[$t]);
-    }
-
-    public $inputs = [];
-    public $i = 1;
-    public $n = 1;
-    public function add($i)
-    {
-        $i = $i + 1;
-        $this->i = $i;
-        array_push($this->inputs ,$i);
-       
-    }
-    public function remove($i)
-    {
-        unset($this->inputs[$i]);
-    }
-
-     public function updatingSearch()
+    public function updatingSearch()
     {
         $this->resetPage();
     }
@@ -1139,7 +1157,7 @@ class Index extends Component
 
       public function tripNumber(){
 
-     if (isset($this->company)) {
+        if (isset($this->company)) {
             $str = $this->company->name;
             $words = explode(' ', $str);
             if (isset($words[1][0])) {
@@ -1159,6 +1177,30 @@ class Index extends Component
         }
 
         return  $trip_number;
+
+    }
+      public function rehandlingNumber(){
+
+        if (isset($this->company)) {
+            $str = $this->company->name;
+            $words = explode(' ', $str);
+            if (isset($words[1][0])) {
+                $initials = $words[0][0].$words[1][0];
+            }else {
+                $initials = $words[0][0];
+            }
+        }
+ 
+        $rehandling = Rehandling::orderBy('id','desc')->first();
+
+        if (!$rehandling) {
+            $rehandling_number =  $initials .'R'. str_pad(1, 5, "0", STR_PAD_LEFT);
+        }else {
+            $number = $rehandling->id + 1;
+            $rehandling_number =  $initials .'R'. str_pad($number, 5, "0", STR_PAD_LEFT);
+        }
+
+        return  $rehandling_number;
 
     }
 
@@ -1593,6 +1635,7 @@ class Index extends Component
                 $rehandling = new Rehandling;
                 $rehandling->user_id = Auth::user()->id;
                 $rehandling->shift_id = $shift_id;
+                $rehandling->rehandling_number = $this->rehandlingNumber();
                 $rehandling->currency_id = $this->selectedCurrency;
                 if (isset($this->location_id[$key])){
                     $rehandling->location_id = $this->location_id[$key];
@@ -1714,7 +1757,7 @@ class Index extends Component
          
 
         if ($this->fuel_order) {
-                $container = Container::find($this->selectedContainer);
+               
                 $fuel = new Fuel;
                 $fuel->user_id = $shift->user->id;
                 $fuel->order_number = $this->orderNumber();
