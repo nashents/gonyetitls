@@ -8,6 +8,7 @@ use App\Models\Trip;
 use App\Models\User;
 use App\Models\Cargo;
 use App\Models\Count;
+use App\Models\Rental;
 use App\Models\Account;
 use App\Models\Booking;
 use App\Models\Invoice;
@@ -96,6 +97,7 @@ class Create extends Component
     public $selectedCurrency;
     public $selected_currency;
     public $selectedTrip = [];
+    public $selectedRental = [];
     public $trip_sum = [];
     public $tax_rate = [];
     public $hs_code = [];
@@ -216,6 +218,7 @@ class Create extends Component
         unset($this->selectedTax[$value]);
         unset($this->selectedProduct[$value]);
         unset($this->selectedTrip[$value]);
+        unset($this->selectedRental[$value]);
         unset($this->selectedInventory[$value]);
         
     }
@@ -629,6 +632,23 @@ class Create extends Component
                     $this->description[$key] = $this->setDescription($id); 
                 }
                 
+                $this->qty[$key] = 1; 
+                $this->selectedAccount[$key] =  $this->income_account_id;
+            }
+           
+            
+        }
+   
+    }
+    public function updatedSelectedRental($id, $key){
+      
+        if (!is_null($id)) {
+            
+            $rental = Rental::find($id);
+          
+            if (isset($rental)) {
+                $this->amount[$key] = $rental->rate_amount ; 
+                $this->description[$key] = $this->setRentalDescription($id); 
                 $this->qty[$key] = 1; 
                 $this->selectedAccount[$key] =  $this->income_account_id;
             }
@@ -1172,7 +1192,79 @@ class Create extends Component
 
                     }
                     
-            }elseif ($this->source == "Booking") {
+            }
+            elseif ($this->source == "Rental") {
+            
+                    foreach($this->qty as $key => $value){
+
+                            $invoice_item = new InvoiceItem;
+                            $invoice_item->invoice_id = $invoice->id;
+                            if (isset($this->selectedAccount[$key])) {
+                                $invoice_item->account_id = $this->selectedAccount[$key];
+                            }
+                            if (isset($this->selectedRental[$key])) {
+                                $invoice_item->trip_id = $this->selectedRental[$key];
+                            }
+                            if (isset($this->selectedProduct[$key])) {
+                                $invoice_item->product_id = $this->selectedProduct[$key];
+                            }
+                            if (isset($this->is_custom_item[$key])) {
+                                $invoice_item->is_custom_item = $this->is_custom_item[$key];
+                            }
+                            if (isset($this->qty[$key])) {
+                                $invoice_item->qty = $this->qty[$key];
+                            }
+                            if (isset($this->amount[$key])) {
+                                $invoice_item->amount = $this->amount[$key];
+                            }
+                            if (isset($this->description[$key])) {
+                               
+                                $invoice_item->description = $this->description[$key];
+                            }
+                            if (isset($this->tax_rate[$key])) {
+                                $invoice_item->tax_rate = $this->tax_rate[$key];
+                            }
+                            if (isset($this->hs_code[$key])) {
+                                $invoice_item->hs_code = $this->hs_code[$key];
+                            }
+                            if (isset($this->selectedTax[$key])) {
+                                $invoice_item->tax_id = $this->selectedTax[$key];
+                            }
+                            if ((isset($this->amount[$key]) && is_numeric($this->amount[$key])) && ( isset($this->qty[$key]) && is_numeric($this->qty[$key]) ) ) {
+
+                                $item_subtotal = $this->amount[$key]*$this->qty[$key];
+                                $invoice_item->subtotal = $item_subtotal;
+                                $this->subtotal = $this->subtotal + $item_subtotal;
+
+                            }
+                            if ((isset($this->tax_rate[$key]) && is_numeric($this->tax_rate[$key])) && isset($this->selectedTax[$key])) {
+
+                                $item_tax_amount = ($item_subtotal * ($this->tax_rate[$key] / 100 ));
+                                $invoice_item->tax_amount =  $item_tax_amount;
+                                $this->tax_amount = $this->tax_amount + $item_tax_amount;
+                                $item_subtotal_incl = $item_tax_amount + $item_subtotal;
+                                $invoice_item->subtotal_incl =  $item_subtotal_incl;
+                                $this->total =  $this->total + $item_subtotal_incl;
+
+                            }else{
+                                $item_subtotal_incl = $item_subtotal;
+                                $invoice_item->subtotal_incl = $item_subtotal_incl;
+                                $this->total =  $this->total + $item_subtotal_incl;
+                            }
+                            
+                            if ((isset($this->exchange_rate) && is_numeric($this->exchange_rate))) {
+                                $invoice_item->exchange_rate = $this->exchange_rate;
+                                $invoice_item->exchange_amount = $this->exchange_rate * $item_subtotal_incl ;
+                            }
+                            $invoice_item->save();
+                    
+                            
+                      
+
+                    }
+                    
+            }
+            elseif ($this->source == "Booking") {
             
                     foreach($this->selectedBooking as $key => $value){
 

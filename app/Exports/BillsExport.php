@@ -407,22 +407,7 @@ class BillsExport implements
     $lastCol = Coordinate::stringFromColumnIndex(max(3, $colIndex - 1)); // last written column
     $accountsRange = "C{$startRow}:{$lastCol}{$startRow}";
 
-    $sheet->getStyle($accountsRange)->applyFromArray([
-        'font' => ['bold' => true],
-        'fill' => [
-            'fillType' => Fill::FILL_SOLID,
-            'startColor' => ['argb' => 'FCE4D6'], // same light grey
-        ],
-        'borders' => [
-            'allBorders' => [
-                'borderStyle' => Border::BORDER_THIN,
-                'color' => ['argb' => 'FF000000'],
-            ],
-        ],
-        'alignment' => [
-            'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
-        ],
-    ]);
+   
 
     // Optional: give those columns a bit more space
     $sheet->getRowDimension($startRow)->setRowHeight(18);

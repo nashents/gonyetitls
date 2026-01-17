@@ -107,6 +107,7 @@
                                 @if (Auth::user()->is_admin())
                                 <option value="Admin">Admin</option> 
                                 @endif
+                                <option value="Rental">Car Rental</option>
                                 <option value="Broker">Broker</option>
                                 <option value="Transporter">Transporter</option>
                             </select>
@@ -315,7 +316,8 @@
                                     @if (Auth::user()->is_admin())
                                     <option value="Admin">Admin</option> 
                                     @endif
-                                    <option value="Broker">Broker</option>
+                                     <option value="Broker">Broker</option>
+                                     <option value="Rental">Car Rental</option>
                                     <option value="Transporter">Transporter</option>
                                 </select>
                                 @error('selectedType') <span class="error" style="color:red">{{ $message }}</span> @enderror
