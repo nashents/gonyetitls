@@ -45,8 +45,9 @@ use Illuminate\Support\Facades\Session;
 class Create extends Component
 {
     public $searchBooking;
+    public $searchRental;
     public $searchTrip;
-    protected $queryString = ['searchTrip','searchBooking'];
+    protected $queryString = ['searchTrip','searchBooking','searchRental'];
     public $from;
     public $to;
 
@@ -58,6 +59,7 @@ class Create extends Component
     public $trip_filter;
     public $invoice_to = "Customer";
     public $booking_filter;
+    public $rental_filter;
 
     public $products;
     public $inventory_products;
@@ -466,6 +468,7 @@ class Create extends Component
 
         $this->trip_filter = "created_at";
         $this->booking_filter = "created_at";
+        $this->rental_filter = "created_at";
         $this->company = Auth::user()->employee->company;
         $this->base_currency = $this->company->currency;
 
@@ -679,6 +682,25 @@ class Create extends Component
    
     }
 
+
+    public function setRentalDescription($id)
+    {
+        $rental = Rental::with([
+            'vehicle','customer','transporter','driver','currency',
+        ])->find($id);
+
+        if (! $rental ) {
+            return '';
+        }
+        $from = $rental->pickup_at;
+        $to = $rental->due_at;
+        $make = $rental->vehicle->vehicle_make ? $rental->vehicle->vehicle_make->name : "";
+        $model = $rental->vehicle->vehicle_model ? $rental->vehicle->vehicle_model->name : "";
+        $reg_number = $rental->vehicle ? $rental->vehicle->registration_number : "";
+        $vehicle = $make." ".$model." (".$reg_number.")";
+
+        return "Rental of ".$vehicle." from ".$from." to ".$to;
+    }
 
     public function setBookingDescription($id)
     {
@@ -1702,6 +1724,48 @@ class Create extends Component
          return $query->orderByDesc($this->booking_filter)->get();
 
     }
+ 
+    public function getRentalsProperty(){
+
+            $query = Rental::query()
+            ->with('transporter','customer','driver','vehicle')
+            ->whereIn('status',['Active','Reserved']);
+                 // Date window
+            if ($this->from && $this->to ) {
+                $from = Carbon::parse($this->from)->startOfDay();
+                $to   = Carbon::parse($this->to)->endOfDay();
+                $query->whereBetween($this->rental_filter, [$from, $to]);
+            } else {
+                $query->whereBetween($this->rental_filter, [
+                    now()->startOfMonth(),
+                    now()->endOfMonth(),
+                ]);
+            }
+
+            if (filled($this->searchRental)) {
+            $term = '%'.$this->searchRental.'%';
+
+            $query->where(function ($q) use ($term) {
+                $q->where('car_rental_number', 'like', $term)
+                ->orWhere('pickup_at', 'like', $term)
+                ->orWhere('due_at', 'like', $term)
+                ->orWhere('rate_amount', 'like', $term)
+                ->orWhereHas('customer', function ($qq) use ($term) {
+                return $qq->where('name', 'like', $term);
+                })
+                ->orWhereHas('transporter', function ($qq) use ($term) {
+                return $qq->where('name', 'like', $term);
+                })
+                ->orWhereHas('vehicle', function ($qq) use ($term)  {
+                return $qq->where('registration_number', 'like', $term)
+                            ->where('fleet_number', 'like', $term);
+                });
+            });
+        }
+
+         return $query->orderByDesc($this->rental_filter)->get();
+
+    }
 
    
 
@@ -1720,6 +1784,7 @@ class Create extends Component
         return view('livewire.invoices.create',[
             'trips' => $this->trips,
             'bookings' => $this->bookings,
+            'rentals' => $this->rentals,
         ]);
 
 

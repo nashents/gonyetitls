@@ -257,7 +257,7 @@
                                             <option value="{{ $customer->id }}">{{ $customer->name }} </option>                                        
                                     @endforeach
                                 </select>
-                                <small><a href="#" data-toggle="modal" data-target="#customerModal"><i class="fa fa-plus-square-o"></i> New Customer</a></small> 
+                                <small><a href="{{ route('customers.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Customer</a></small> 
                                     <a href="#" wire:click.prevent="refresh('customers')" class="float-end" style="float: right"><i class="fa fa-refresh"></i></a>
                                 @error('selectedCustomer') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>

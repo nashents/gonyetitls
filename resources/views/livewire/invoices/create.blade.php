@@ -472,30 +472,45 @@
                                                     <label for="subheading">Rentals<span class="required" style="color: red">*</span></label>
                                                     <select wire:model.debounce.300ms="selectedRental.0"  class="form-control" required size="4">
                                                         <option value="">Select Rental</option>
-                                                        
-                                                            @foreach ($rentals as $rental)
+                                                            @foreach ($rentals->where('currency_id', $selectedCurrency) as $rental)
                                                                     @if (isset($rental_ids))
                                                                         @if (in_array($rental->id,$rental_ids))
-                                                                        <option value="{{$rental->id}}" style="color: orange"
+                                                                            <option value="{{$rental->id}}" style="color: orange"
                                                                             @if(in_array($rental->id, $selectedRental ?? []) && ($selectedRental[0] ?? null) != $rental->id) 
                                                                                 disabled 
                                                                             @endif
-                                                                            >{{$rental->car_rental_number ? $rental->car_rental_number." |" : ""}} {{ $rental->customer ? $rental->customer->name : "" }} {{ isset($pod) ? $pod->document_number." | " : "" }} {{$rental->currency ? $rental->currency->name : ""}} {{$rental->currency ? $rental->currency->symbol : ""}}{{$rental->rate_amount ? number_format($rental->rate_amount,2)." |" : ""}} {{$rental->vehicle ? $rental->vehicle->registration_number : ""}} | {{$rental->customer ? $rental->customer->name : ""}} </option> 
+                                                                            >
+                                                                            {{$rental->car_rental_number ? $rental->car_rental_number : ""}} {{ $rental->customer ? $rental->customer->name : "" }}  {{$rental->currency ? $rental->currency->name : ""}} {{$rental->currency ? $rental->currency->symbol : ""}}{{$rental->rate_amount ? number_format($rental->rate_amount,2): ""}} 
+                                                                            @if ($rental->vehicle)
+                                                                                {{$rental->vehicle->vehicle_make ? $rental->vehicle->vehicle_make->name : ""}} {{$rental->vehicle->vehicle_model ? $rental->vehicle->vehicle_model->name : ""}} {{$rental->vehicle ? "(".$rental->vehicle->registration_number.")" : ""}}    
+                                                                            @endif
+                                                                            </option> 
                                                                         @else
                                                                             <option value="{{$rental->id}}"
                                                                                 @if(in_array($rental->id, $selectedRental ?? []) && ($selectedRental[0] ?? null) != $rental->id) 
                                                                                 disabled 
                                                                             @endif
-                                                                                >{{$rental->car_rental_number ? $rental->car_rental_number." |" : ""}} {{ $rental->customer ? $rental->customer->name : "" }} {{ isset($pod) ? $pod->document_number." | " : "" }} {{$rental->currency ? $rental->currency->name : ""}} {{$rental->currency ? $rental->currency->symbol : ""}}{{$rental->rate_amount ? number_format($rental->rate_amount,2)." |" : ""}} {{$rental->vehicle ? $rental->vehicle->registration_number : ""}} | {{$rental->customer ? $rental->customer->name : ""}}</option>
-                                                                        @else
+                                                                                >
+                                                                                {{$rental->car_rental_number ? $rental->car_rental_number : ""}} {{ $rental->customer ? $rental->customer->name : "" }}  {{$rental->currency ? $rental->currency->name : ""}} {{$rental->currency ? $rental->currency->symbol : ""}}{{$rental->rate_amount ? number_format($rental->rate_amount,2) : ""}} 
+                                                                                @if ($rental->vehicle)
+                                                                                    {{$rental->vehicle->vehicle_make ? $rental->vehicle->vehicle_make->name : ""}} {{$rental->vehicle->vehicle_model ? $rental->vehicle->vehicle_model->name : ""}} {{$rental->vehicle ? "(".$rental->vehicle->registration_number.")" : ""}}    
+                                                                                @endif
+                                                                            </option>
+                                                                        @endif
+                                                                    @else
                                                                             <option value="{{$rental->id}}"
                                                                                 @if(in_array($rental->id, $selectedRental ?? []) && ($selectedRental[0] ?? null) != $rental->id) 
                                                                                 disabled 
                                                                             @endif
-                                                                            >{{$rental->car_rental_number ? $rental->car_rental_number." |" : ""}} {{ $rental->customer ? $rental->customer->name : "" }} {{ isset($pod) ? $pod->document_number." | " : "" }} {{$rental->currency ? $rental->currency->name : ""}} {{$rental->currency ? $rental->currency->symbol : ""}}{{$rental->rate_amount ? number_format($rental->rate_amount,2)." |" : ""}} {{$rental->vehicle ? $rental->vehicle->registration_number : ""}} | {{$rental->customer ? $rental->customer->name : ""}}</option>
+                                                                            >
+                                                                            {{$rental->car_rental_number ? $rental->car_rental_number : ""}} {{ $rental->customer ? $rental->customer->name : "" }}  {{$rental->currency ? $rental->currency->name : ""}} {{$rental->currency ? $rental->currency->symbol : ""}}{{$rental->rate_amount ? number_format($rental->rate_amount,2): ""}} 
+                                                                            @if ($rental->vehicle)
+                                                                                {{$rental->vehicle->vehicle_make ? $rental->vehicle->vehicle_make->name : ""}} {{$rental->vehicle->vehicle_model ? $rental->vehicle->vehicle_model->name : ""}} {{$rental->vehicle ? "(".$rental->vehicle->registration_number.")" : ""}}    
+                                                                            @endif
+                                                                            </option>
+                                                                      
                                                                     @endif
                                                                 @endforeach  
-                                                        
                                                         </select>
                                                         <small style="color: green">NB: All invoiced rentals will appear in orange</small>
                                                     @error('selectedRental.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -556,20 +571,35 @@
                                                                             @if(in_array($rental->id, $selectedRental ?? []) && ($selectedRental[$value] ?? null) != $rental->id) 
                                                                             disabled 
                                                                         @endif
-                                                                            >{{$rental->rental_number ? $rental->rental_number." |" : ""}} {{ $rental->rental_ref ? $rental->rental_ref." |" : "" }} {{ isset($pod) ? $pod->document_number." | " : "" }} {{$rental->currency ? $rental->currency->name : ""}} {{$rental->currency ? $rental->currency->symbol : ""}}{{$rental->turnover ? number_format($rental->turnover,2)." |" : ""}} {{$rental->horse ? $rental->horse->registration_number : ""}} | {{$rental->customer ? $rental->customer->name : ""}} </option> 
+                                                                            >
+                                                                            {{$rental->car_rental_number ? $rental->car_rental_number : ""}} {{ $rental->customer ? $rental->customer->name : "" }}  {{$rental->currency ? $rental->currency->name : ""}} {{$rental->currency ? $rental->currency->symbol : ""}}{{$rental->rate_amount ? number_format($rental->rate_amount,2): ""}} 
+                                                                            @if ($rental->vehicle)
+                                                                                {{$rental->vehicle->vehicle_make ? $rental->vehicle->vehicle_make->name : ""}} {{$rental->vehicle->vehicle_model ? $rental->vehicle->vehicle_model->name : ""}} {{$rental->vehicle ? "(".$rental->vehicle->registration_number.")" : ""}}    
+                                                                            @endif 
+                                                                        </option> 
                                                                         @else
                                                                             <option value="{{$trip->id}}"
                                                                                 @if(in_array($trip->id, $selectedTrip ?? []) && ($selectedTrip[$value] ?? null) != $trip->id) 
                                                                             disabled 
                                                                         @endif
-                                                                                >{{$rental->rental_number ? $rental->rental_number." |" : ""}} {{ $rental->rental_ref ? $rental->rental_ref." |" : "" }} {{ isset($pod) ? $pod->document_number." | " : "" }} {{$rental->currency ? $rental->currency->name : ""}} {{$rental->currency ? $rental->currency->symbol : ""}}{{$rental->turnover ? number_format($rental->turnover,2)." |" : ""}} {{$rental->horse ? $rental->horse->registration_number : ""}} | {{$rental->customer ? $rental->customer->name : ""}}</option>
+                                                                                >
+                                                                                {{$rental->car_rental_number ? $rental->car_rental_number : ""}} {{ $rental->customer ? $rental->customer->name : "" }}  {{$rental->currency ? $rental->currency->name : ""}} {{$rental->currency ? $rental->currency->symbol : ""}}{{$rental->rate_amount ? number_format($rental->rate_amount,2): ""}} 
+                                                                                @if ($rental->vehicle)
+                                                                                    {{$rental->vehicle->vehicle_make ? $rental->vehicle->vehicle_make->name : ""}} {{$rental->vehicle->vehicle_model ? $rental->vehicle->vehicle_model->name : ""}} {{$rental->vehicle ? "(".$rental->vehicle->registration_number.")" : ""}}    
+                                                                                @endif
+                                                                            </option>
                                                                         @endif
                                                                     @else
                                                                         <option value="{{$rental->id}}"
                                                                             @if(in_array($rental->id, $selectedRental ?? []) && ($selectedRental[$value] ?? null) != $rental->id) 
                                                                             disabled 
                                                                         @endif
-                                                                            >{{$rental->rental_number ? $rental->rental_number." |" : ""}} {{ $rental->rental_ref ? $rental->rental_ref." |" : "" }} {{ isset($pod) ? $pod->document_number." | " : "" }} {{$rental->currency ? $rental->currency->name : ""}} {{$rental->currency ? $rental->currency->symbol : ""}}{{$rental->turnover ? number_format($rental->turnover,2)." |" : ""}} {{$rental->horse ? $rental->horse->registration_number : ""}} | {{$rental->customer ? $rental->customer->name : ""}}</option>
+                                                                            >
+                                                                            {{$rental->car_rental_number ? $rental->car_rental_number : ""}} {{ $rental->customer ? $rental->customer->name : "" }}  {{$rental->currency ? $rental->currency->name : ""}} {{$rental->currency ? $rental->currency->symbol : ""}}{{$rental->rate_amount ? number_format($rental->rate_amount,2): ""}} 
+                                                                            @if ($rental->vehicle)
+                                                                                {{$rental->vehicle->vehicle_make ? $rental->vehicle->vehicle_make->name : ""}} {{$rental->vehicle->vehicle_model ? $rental->vehicle->vehicle_model->name : ""}} {{$rental->vehicle ? "(".$rental->vehicle->registration_number.")" : ""}}    
+                                                                            @endif    
+                                                                        </option>
                                                                     @endif
                                                                 @endforeach  
                                                             </select>
@@ -699,7 +729,7 @@
                                                             @foreach ($bookings as $booking)
                                                                     @if (isset($booking_ids))
                                                                         @if (in_array($booking->id,$booking_ids))
-                                                                        <option value="{{$booking->id}}" style="color: orange"
+                                                                            <option value="{{$booking->id}}" style="color: orange"
                                                                             @if(in_array($booking->id, $selectedBooking ?? []) && ($selectedBooking[0] ?? null) != $booking->id) 
                                                                                 disabled 
                                                                             @endif
@@ -719,7 +749,6 @@
                                                                             >Booking#: {{$booking->booking_number}} Ticket#: {{ $booking->ticket ? $booking->ticket->ticket_number : "" }} Job: {{ $booking->service_type ? $booking->service_type->name : "" }} Date: {{$booking->in_date}} Reason: {{$booking->description}}</option>
                                                                     @endif
                                                                 @endforeach  
-                                                        
                                                         </select>
                                                         <small style="color: green">NB: All invoiced bookings will appear in orange</small>
                                                     @error('selectedBooking.0') <span class="error" style="color:red">{{ $message }}</span> @enderror

@@ -148,6 +148,81 @@ class Index extends Component
     public function updated($value){
         $this->validateOnly($value);
     }
+
+
+      public function refresh($category){
+
+  
+        if($category == 'transporters'){
+            $this->transporters = Transporter::with('vehicles:id,registration_number','vehicles.vehicle_make:id,name','vehicles.vehicle_model:id,name','horses:id,registration_number','horses.horse_make:id,name','horses.horse_model:id,name','cargos:id,name','trailers:id,registration_number,make,model','drivers:id','drivers.employee:id,name,surname')->where('authorization','approved')->orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Transporters Refreshed Successfully!!."
+            ]);
+        }
+
+        elseif($category == 'vehicles'){
+            if (isset($this->selectedStatus) && ($this->selectedStatus == "Scheduled" || $this->selectedStatus == "Offloaded" || $this->selectedStatus == "Cancelled") ) {
+              
+                $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('transporter_id',$this->selectedTransporter)
+                ->where('archive',0)
+                ->orderBy('registration_number','asc')->get();
+       
+            }else{
+              
+                $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('transporter_id',$this->selectedTransporter)
+                ->where('status', 1)
+                ->where('service',0)
+                ->where('archive',0)
+                ->orderBy('registration_number','asc')->get();
+             
+            }
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Vehicles Refreshed Successfully!!."
+            ]);
+        }
+        
+        elseif($category == 'drivers'){
+            if (isset($this->selectedStatus) && ($this->selectedStatus == "Scheduled" || $this->selectedStatus == "Offloaded" || $this->selectedStatus == "Cancelled") ) {
+                 $this->drivers = Driver::query()
+                        ->with('employee')
+                        ->join('employees', 'employees.id', '=', 'drivers.employee_id')
+                        ->where('employees.archive',0)
+                        ->orderBy('employees.name', 'asc')
+                        ->orderBy('employees.surname', 'asc')
+                        ->select('drivers.*') // important!
+                        ->get();
+            }else{
+                 $this->drivers = Driver::query()
+                        ->with('employee')
+                        ->join('employees', 'employees.id', '=', 'drivers.employee_id')
+                         ->where('drivers.transporter_id',$this->selectedTransporter)
+                         ->where('employees.archive',0)
+                        ->where('employees.status',1)
+                        ->orderBy('employees.name', 'asc')
+                        ->orderBy('employees.surname', 'asc')
+                        ->select('drivers.*') // important!
+                        ->get();
+              
+            }
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Drivers Refreshed Successfully!!."
+            ]);
+        }
+     
+        elseif($category == 'customers'){
+            $this->customers = Customer::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Customers Refreshed Successfully!!."
+            ]);
+        }
+
+    }
+
+
     protected $rules = [
         'selectedTransporter' => 'required',
         'selectedCustomer' => 'required',
