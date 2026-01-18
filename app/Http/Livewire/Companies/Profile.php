@@ -28,6 +28,7 @@ class Profile extends Component
     public $country;
     public $allowable_loss_percentage;
     public $website;
+    public $vendor_number;
     public $city;
     public $suburb;
     public $fiscalize;
@@ -49,6 +50,7 @@ class Profile extends Component
     public $color;
     public $vat;
     public $interest;
+    public $company;
 
     public function mount($company){
 
@@ -66,6 +68,7 @@ class Profile extends Component
         $this->country = $company->country;
         $this->tin_number = $company->tin_number;
         $this->vat_number = $company->vat_number;
+        $this->vendor_number = $company->vendor_number;
         $this->allowable_loss_percentage = $company->allowable_loss_percentage;
         $this->city = $company->city;
         $this->suburb = $company->suburb;
@@ -107,6 +110,7 @@ class Profile extends Component
         $company->fiscalize = $this->fiscalize;
         $company->vat_number = $this->vat_number;
         $company->tin_number = $this->tin_number;
+        $company->vendor_number = $this->vendor_number;
         $company->allowable_loss_percentage = $this->allowable_loss_percentage;
         $company->country = $this->country;
         $company->city = $this->city;

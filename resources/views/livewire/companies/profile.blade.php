@@ -77,15 +77,20 @@
                         </div>
                     </div>  
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label for="one" class="radio-label">Vat Number</label>
                             <input type="text" class="form-control"  wire:model.debounce.300ms="vat_number" placeholder="Enter VAT Number">
                             @error('vat_number') <span class="text-danger error">{{ $message }}</span>@enderror
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label for="one" class="radio-label">TIN Number</label>
                             <input type="text" class="form-control"  wire:model.debounce.300ms="tin_number" placeholder="Enter TIN Number" >
                             @error('tin_number') <span class="text-danger error">{{ $message }}</span>@enderror
+                        </div>
+                        <div class="col-md-4">
+                            <label for="one" class="radio-label">Vendor Number</label>
+                            <input type="text" class="form-control"  wire:model.debounce.300ms="vendor_number" placeholder="Enter Vendor Number" >
+                            @error('vendor_number') <span class="text-danger error">{{ $message }}</span>@enderror
                         </div>
                     </div>    
                     <div class="btn-group" role="group" style="float: right;">
