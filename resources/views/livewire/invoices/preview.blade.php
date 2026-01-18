@@ -56,6 +56,14 @@
                                         TIN.: {{$company->tin_number}}
                                 
                                 </div>
+                                @if ($company->vendor_number)
+                                    <div>
+                                
+                                        Vendor No.: {{$company->vendor_number}}
+                                
+                                    </div>
+                                @endif
+                               
                             </div>
                         </div>
                     
