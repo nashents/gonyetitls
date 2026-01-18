@@ -12,9 +12,9 @@
                             
                             <div class="panel-title">
                                 <a href="" data-toggle="modal" data-target="#rentalModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Rental</a>
-                                <a href="#" wire:click="exportRentalsExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
+                                {{-- <a href="#" wire:click="exportRentalsExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
                                 <a href="#" wire:click="exportRentalsCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
-                                <a href="#" wire:click="exportRentalsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
+                                <a href="#" wire:click="exportRentalsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a> --}}
                             </div>
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
@@ -75,9 +75,9 @@
                                     <td>
                                         <small>
                                             <strong>Pickup At: </strong>{{$rental->pickup_at}}
-                                            <strong>Due At: </strong>{{$rental->due_at}}
+                                            <strong>Due At: </strong>{{$rental->due_back_at}}
                                             <strong>Total Day(s): </strong>{{$rental->days}}
-                                            <strong>Return At: </strong>{{$rental->return_at}}
+                                            <strong>Return At: </strong>{{$rental->returned_at}}
                                         </small>
                                     </td>
                                     <td>
@@ -108,7 +108,7 @@
                                    
                                    <td>
                                         <span class="badge bg-{{ $rental->status == 'active' ? 'success' : ($rental->status == 'closed' ? 'secondary' : ($rental->status == 'cancelled' ? 'danger' : 'warning')) }}">
-                                            {{ $rental->status == 'active' ? 'Active' : ($rental->status == 'closed' ? 'Closed' : ($rental->status == 'cancelled' ? 'Cancelled' : 'Reserved')) }}
+                                            {{ucfirst($rental->status == 'active' ? 'active' : ($rental->status == 'closed' ? 'closed' : ($rental->status == 'cancelled' ? 'cancelled' : 'reserved')))}}
                                         </span>
                                     </td>
                                     <td class="w-10 line-height-35 table-dropdown">
@@ -230,51 +230,31 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="horse"><a href="{{ route('vehicles.index') }}" target="_blank" style="color: blue">Vehicle(s)<span class="required" style="color: red">*</span></a></label>
-                                <input type="checkbox" wire:model.debounce.300ms="all_vehicles"   class="line-style" />
-                                <label for="one" class="radio-label">Select from all vehicles</label>
                                 <input type="text" wire:model.debounce.300ms="searchVehicle" placeholder="Search with reg..." class="form-control">
                                 <select class="form-control" wire:model.debounce.300ms="selectedVehicle"  size="4" required>
                                     <option value="">Select Vehicle </option>
-                                    @if (!is_null($selectedTransporter))
-                                    @foreach ($vehicles as $vehicle)
-                                    <option value="{{$vehicle->id}}"> {{$vehicle->registration_number}} {{$vehicle->vehicle_make ? $vehicle->vehicle_make->name : ""}} {{$vehicle->vehicle_model ? $vehicle->vehicle_model->name : ""}}</option>
-                                    @endforeach
-                                    @endif
-
+                                    {{-- @if (!is_null($selectedTransporter)) --}}
+                                        @foreach ($vehicles as $vehicle)
+                                            <option value="{{$vehicle->id}}"> {{$vehicle->registration_number}} {{$vehicle->vehicle_make ? $vehicle->vehicle_make->name : ""}} {{$vehicle->vehicle_model ? $vehicle->vehicle_model->name : ""}}</option>
+                                        @endforeach
+                                    {{-- @endif --}}
                                 </select>
                                 @error('selectedVehicle') <span class="text-danger error">{{ $message }}</span>@enderror
                                 <small>  <a href="{{ route('vehicles.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Vehicle</a></small> <a href="#" wire:click.prevent="refresh('vehicles')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                             </div>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="vat"><a href="{{route('customers.index')}}">Customers<span class="required" style="color: red">*</span></a></label>
-                                <select class="form-control" wire:model.debounce.300ms="selectedCustomer" required>
-                                    <option value="">Select Customers</option>
-                                    @foreach ($customers as $customer)
-                                            <option value="{{ $customer->id }}">{{ $customer->name }} </option>                                        
-                                    @endforeach
-                                </select>
-                                <small><a href="{{ route('customers.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Customer</a></small> 
-                                    <a href="#" wire:click.prevent="refresh('customers')" class="float-end" style="float: right"><i class="fa fa-refresh"></i></a>
-                                @error('selectedCustomer') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="driver"><a href="{{ route('drivers.index') }}" target="_blank" style="color: blue">Driver(s)</a></label> 
-                                <select class="form-control" wire:model.debounce.300ms="driver_id">
-                                    <option value="">Select Driver</option>
-                                    @foreach ($drivers as $driver)
-                                        <option value="{{$driver->id}}">{{$driver->employee->name}} {{$driver->employee->surname}}</option>
-                                    @endforeach
-                                </select>
-                                @error('driver_id') <span class="text-danger error">{{ $message }}</span>@enderror
-                                <small>  <a href="{{ route('drivers.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Driver</a></small> <a href="#" wire:click.prevent="refresh('drivers')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
-                            </div>
-                        </div>
+                    <div class="form-group">
+                        <label for="vat"><a href="{{route('customers.index')}}">Customers<span class="required" style="color: red">*</span></a></label>
+                        <select class="form-control" wire:model.debounce.300ms="selectedCustomer" required>
+                            <option value="">Select Customers</option>
+                            @foreach ($customers as $customer)
+                                    <option value="{{ $customer->id }}">{{ $customer->name }} </option>                                        
+                            @endforeach
+                        </select>
+                        <small><a href="{{ route('customers.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Customer</a></small> 
+                            <a href="#" wire:click.prevent="refresh('customers')" class="float-end" style="float: right"><i class="fa fa-refresh"></i></a>
+                        @error('selectedCustomer') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
                     <div class="mb-10">
                         <input type="checkbox" wire:model.debounce.300ms="transporter_agreement"   class="line-style" />
@@ -447,10 +427,10 @@
                                 <label for="status">Status<span class="required" style="color: red">*</span></label>
                                 <select  wire:model.debounce.300ms="status" class="form-control" required>
                                     <option value="">Select Option</option>
-                                    <option value="Reserved">Reserved</option>
-                                    <option value="Active">Active</option>
-                                    <option value="Closed">Closed</option>
-                                    <option value="Cancelled">Cancelled</option>
+                                    <option value="reserved">Reserved</option>
+                                    <option value="active">Active</option>
+                                    <option value="closed">Closed</option>
+                                    <option value="cancelled">Cancelled</option>
                                 </select>
                                 @error('status') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
@@ -495,51 +475,31 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="horse"><a href="{{ route('vehicles.index') }}" target="_blank" style="color: blue">Vehicle(s)<span class="required" style="color: red">*</span></a></label>
-                                <input type="checkbox" wire:model.debounce.300ms="all_vehicles"   class="line-style" />
-                                <label for="one" class="radio-label">Select from all vehicles</label>
                                 <input type="text" wire:model.debounce.300ms="searchVehicle" placeholder="Search with reg..." class="form-control" required>
                                 <select class="form-control" wire:model.debounce.300ms="selectedVehicle"  size="4">
                                     <option value="">Select Vehicle </option>
-                                    @if (!is_null($selectedTransporter))
+                                    {{-- @if (!is_null($selectedTransporter)) --}}
                                     @foreach ($vehicles as $vehicle)
-                                    <option value="{{$vehicle->id}}"> {{$vehicle->registration_number}} {{$vehicle->vehicle_make ? $vehicle->vehicle_make->name : ""}} {{$vehicle->vehicle_model ? $vehicle->vehicle_model->name : ""}}</option>
+                                        <option value="{{$vehicle->id}}"> {{$vehicle->registration_number}} {{$vehicle->vehicle_make ? $vehicle->vehicle_make->name : ""}} {{$vehicle->vehicle_model ? $vehicle->vehicle_model->name : ""}}</option>
                                     @endforeach
-                                    @endif
-
+                                    {{-- @endif --}}
                                 </select>
                                 @error('selectedVehicle') <span class="text-danger error">{{ $message }}</span>@enderror
                                 <small>  <a href="{{ route('vehicles.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Vehicle</a></small> <a href="#" wire:click.prevent="refresh('vehicles')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                             </div>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="vat"><a href="{{route('customers.index')}}">Customers<span class="required" style="color: red">*</span></a></label>
-                                <select class="form-control" wire:model.debounce.300ms="selectedCustomer" required>
-                                    <option value="">Select Customers</option>
-                                    @foreach ($customers as $customer)
-                                            <option value="{{ $customer->id }}">{{ $customer->name }} </option>                                        
-                                    @endforeach
-                                </select>
-                                <small><a href="#" data-toggle="modal" data-target="#customerModal"><i class="fa fa-plus-square-o"></i> New Customer</a></small> 
-                                    <a href="#" wire:click.prevent="refresh('customers')" class="float-end" style="float: right"><i class="fa fa-refresh"></i></a>
-                                @error('selectedCustomer') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="driver"><a href="{{ route('drivers.index') }}" target="_blank" style="color: blue">Driver(s)</a></label> 
-                                <select class="form-control" wire:model.debounce.300ms="driver_id">
-                                    <option value="">Select Driver</option>
-                                    @foreach ($drivers as $driver)
-                                        <option value="{{$driver->id}}">{{$driver->employee->name}} {{$driver->employee->surname}}</option>
-                                    @endforeach
-                                </select>
-                                @error('driver_id') <span class="text-danger error">{{ $message }}</span>@enderror
-                                <small>  <a href="{{ route('drivers.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Driver</a></small> <a href="#" wire:click.prevent="refresh('drivers')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
-                            </div>
-                        </div>
+                    <div class="form-group">
+                        <label for="vat"><a href="{{route('customers.index')}}">Customers<span class="required" style="color: red">*</span></a></label>
+                        <select class="form-control" wire:model.debounce.300ms="selectedCustomer" required>
+                            <option value="">Select Customers</option>
+                            @foreach ($customers as $customer)
+                                    <option value="{{ $customer->id }}">{{ $customer->name }} </option>                                        
+                            @endforeach
+                        </select>
+                        <small><a href="#" data-toggle="modal" data-target="#customerModal"><i class="fa fa-plus-square-o"></i> New Customer</a></small> 
+                            <a href="#" wire:click.prevent="refresh('customers')" class="float-end" style="float: right"><i class="fa fa-refresh"></i></a>
+                        @error('selectedCustomer') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
                     <div class="mb-10">
                         <input type="checkbox" wire:model.debounce.300ms="transporter_agreement"   class="line-style" />
@@ -582,8 +542,8 @@
                             </div>
                             <div class="col-md-3">
                                 <div class="form-group">
-                                    <label for="transporter_rate_amount">Transporter Rate Amount</label>
-                                    <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="transporter_rate_amount" placeholder="Transporter Rate Amount">
+                                    <label for="transporter_rate_amount">Transporter Rate</label>
+                                    <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="transporter_rate_amount" placeholder="Transporter Rate">
                                     @error('transporter_rate_amount') <span class="text-danger error">{{ $message }}</span>@enderror
                                 </div>
                             </div>
@@ -713,10 +673,10 @@
                                 <label for="status">Status<span class="required" style="color: red">*</span></label>
                                 <select  wire:model.debounce.300ms="status" class="form-control" required>
                                     <option value="">Select Option</option>
-                                    <option value="Reserved">Reserved</option>
-                                    <option value="Active">Active</option>
-                                    <option value="Closed">Closed</option>
-                                    <option value="Cancelled">Cancelled</option>
+                                    <option value="reserved">Reserved</option>
+                                    <option value="active">Active</option>
+                                    <option value="closed">Closed</option>
+                                    <option value="cancelled">Cancelled</option>
                                 </select>
                                 @error('status') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>

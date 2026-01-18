@@ -165,12 +165,13 @@
                                         <label for="one" class="radio-label">Generic</label>
                                         <input type="radio" wire:model.debounce.300ms="source" value="Inventory"  class="line-style"  />
                                         <label for="one" class="radio-label">Inventory</label>
-                                        <input type="radio" wire:model.debounce.300ms="source" value="Trip"  class="line-style"  />
-                                        <label for="one" class="radio-label">Trips</label>
-                                        @if ($company->type == "Rental")
+                                           @if ($company->type == "Rental")
                                             <input type="radio" wire:model.debounce.300ms="source" value="Rental"  class="line-style"  />
                                             <label for="one" class="radio-label">Rentals</label>
                                         @endif
+                                        <input type="radio" wire:model.debounce.300ms="source" value="Trip"  class="line-style"  />
+                                        <label for="one" class="radio-label">Trips</label>
+                                     
                                      
                                          @error('source') <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>    
@@ -377,7 +378,7 @@
                                                 <div class="col-md-1">
                                                     <div class="form-group">
                                                         <label for="date">Qty<span class="required" style="color: red">*</span></label>
-                                                        <input type="number"  class="form-control" wire:model.debounce.300ms="qty.0"   required>
+                                                        <input type="number"  class="form-control" wire:model.debounce.300ms="qty.{{$value}}"   required>
                                                         @error('qty.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                                     </div>
                                                 </div>
@@ -578,8 +579,8 @@
                                                                             @endif 
                                                                         </option> 
                                                                         @else
-                                                                            <option value="{{$trip->id}}"
-                                                                                @if(in_array($trip->id, $selectedTrip ?? []) && ($selectedTrip[$value] ?? null) != $trip->id) 
+                                                                            <option value="{{$rental->id}}"
+                                                                                @if(in_array($rental->id, $selectedRental ?? []) && ($selectedRental[$value] ?? null) != $rental->id) 
                                                                             disabled 
                                                                         @endif
                                                                                 >
@@ -632,7 +633,7 @@
                                                 <div class="col-md-1">
                                                     <div class="form-group">
                                                         <label for="date">Qty<span class="required" style="color: red">*</span></label>
-                                                        <input type="number"  class="form-control" wire:model.debounce.300ms="qty.0"   required>
+                                                        <input type="number"  class="form-control" wire:model.debounce.300ms="qty.{{$value}}" disabled required>
                                                         @error('qty.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                                     </div>
                                                 </div>
@@ -855,7 +856,7 @@
                                                 <div class="col-md-1">
                                                     <div class="form-group">
                                                         <label for="date">Qty<span class="required" style="color: red">*</span></label>
-                                                        <input type="number"  class="form-control" wire:model.debounce.300ms="qty.0"   required>
+                                                        <input type="number"  class="form-control" wire:model.debounce.300ms="qty.{{$value}}"   required>
                                                         @error('qty.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                                     </div>
                                                 </div>

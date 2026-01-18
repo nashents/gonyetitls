@@ -371,7 +371,7 @@
                         </label>
                     </div>
 
-    @if (!empty($dispatch_for) && $dispatch_for == "inventory")
+                @if (!empty($dispatch_for) && $dispatch_for == "inventory")
                   
 
                      {{-- <h5 class="underline mt-30">Select store to dispatch from</h5> --}}
@@ -874,8 +874,8 @@
                             </div>
                         @endif
                     @endif
-    @elseif(!empty($dispatch_for) && $dispatch_for == "expenses")
-                                <div class="row">
+                @elseif(!empty($dispatch_for) && $dispatch_for == "expenses")
+                    <div class="row">
                         <div class="col-md-8">
                             <div class="form-group">
                                 <label for="country">Vendor(s)<span class="required" style="color: red">*</span></label>
@@ -932,7 +932,7 @@
                                             </option> 
                                         @endforeach
                                     </select>
-                                    <small><a href="{{route('product_services.all',['category' => 'bills'])}}}}" ><i class="fa fa-plus-square-o"></i> New Product / Service</a></small><a href="#" wire:click.prevent="refresh('products')" class="float-end" style="float: right"><i class="fa fa-refresh"></i></a>
+                                    <small><a href="{{route('inventory_products.create')}}" target="_blank" ><i class="fa fa-plus-square-o"></i> New Product / Service</a></small><a href="#" wire:click.prevent="refresh('products')" class="float-end" style="float: right"><i class="fa fa-refresh"></i></a>
                                 @error('selectedExpenseProduct.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -999,7 +999,7 @@
                                             </option> 
                                         @endforeach
                                     </select>
-                                    <small><a href="{{route('product_services.all',['category' => 'bills'])}}}}" ><i class="fa fa-plus-square-o"></i> New Product / Service</a></small><a href="#" wire:click.prevent="refresh('products')" class="float-end" style="float: right"><i class="fa fa-refresh"></i></a>
+                                    <small><a href="{{route('inventory_products.create')}}" target="_blank" ><i class="fa fa-plus-square-o"></i> New Product / Service</a></small><a href="#" wire:click.prevent="refresh('products')" class="float-end" style="float: right"><i class="fa fa-refresh"></i></a>
                                 @error('selectedExpenseProduct.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>

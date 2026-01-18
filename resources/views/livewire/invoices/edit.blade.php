@@ -165,8 +165,13 @@
                                         <label for="one" class="radio-label">Generic</label>
                                         <input type="radio" wire:model.debounce.300ms="source" value="Inventory"  class="line-style"  />
                                         <label for="one" class="radio-label">Inventory</label>
+                                        @if ($company->type == "Rental")
+                                            <input type="radio" wire:model.debounce.300ms="source" value="Rental"  class="line-style"  />
+                                            <label for="one" class="radio-label">Rentals</label>
+                                        @endif
                                         <input type="radio" wire:model.debounce.300ms="source" value="Trip"  class="line-style"  />
                                         <label for="one" class="radio-label">Trips</label>
+                                      
                                         @error('source') <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>    
                                     @if ($source == "Trip")
@@ -419,6 +424,269 @@
                                                 <div class="col-md-12">
                                                     <div class="form-group">
                                                         <button class="btn btn-success btn-rounded" style="float: right" wire:click.prevent="add({{$i}})"> <i class="fa fa-plus"></i>Trip</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endif
+                                    @elseif ($source == "Rental")
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <div class="input-group">
+                                                    <span class="input-group-addon">
+                                                        Filter By
+                                                    </span>
+                                                    <select wire:model.debounce.300ms="rental_filter" class="form-control" aria-label="..." >
+                                                        <option value="created_at">Rental Created At</option>
+                                                        <option value="pickup_at">Rental Pickup At</option>
+                                                    </select>
+                                                </div>
+                                                <!-- /input-group -->
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-2" >
+                                                <div class="input-group">
+                                                    <span class="input-group-addon">
+                                                        From
+                                                    </span>
+                                                    <input type="date" wire:model.debounce.300ms="from"  class="form-control" aria-label="...">
+                                                </div>
+                                                <!-- /input-group -->
+                                            </div>
+                                            <div class="col-md-2" style="margin-left:20px;" >
+                                                <div class="input-group">
+                                                    <span class="input-group-addon">
+                                                        To
+                                                    </span>
+                                                    <input type="date" wire:model.debounce.300ms="to"  class="form-control" aria-label="...">
+                                                </div>
+                                                <!-- /input-group -->
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-5">
+                                                <div class="form-group">
+                                                    <label for="">Search rentals</label>
+                                                    <input type="text" wire:model.debounce.300ms="searchRental" class="form-control" placeholder="Search rentals using: rental#, rental ref, waybill#, customer, HRN...">
+                                                </div>
+                                            </div>
+                                           
+                                        </div>
+                                        @php
+                                            $selected_invoice_items = App\Models\InvoiceItem::all();
+                                            foreach($selected_invoice_items as $invoice_item){
+                                                    $rental_ids[] = $invoice_item->rental_id;
+                                            }   
+                                        @endphp
+                                        @foreach ($invoice_items as $key => $value)
+                                            <div class="row">
+                                               
+                                                <div class="col-md-5">
+                                                    <div class="form-group">
+                                                            <label for="subheading">Rentals<span class="required" style="color: red">*</span></label>
+                                                            <select wire:model.debounce.300ms="selectedCurrentRental.{{$key}}"  class="form-control" required size="4">
+                                                                <option value="">Select Rental</option>
+                                                                @foreach ($rentals->where('currency_id', $selectedCurrency) as $rental)
+                                                                    @if (isset($rental_ids))
+                                                                        @if (in_array($rental->id,$rental_ids))
+                                                                            <option value="{{$rental->id}}" style="color: orange"
+                                                                                @if(in_array($rental->id, $selectedCurrentRental ?? []) && ($selectedCurrentRental[$key] ?? null) != $rental->id) 
+                                                                                    disabled 
+                                                                                @endif >
+                                                                                {{$rental->car_rental_number ? $rental->car_rental_number : ""}} {{ $rental->customer ? $rental->customer->name : "" }}  {{$rental->currency ? $rental->currency->name : ""}} {{$rental->currency ? $rental->currency->symbol : ""}}{{$rental->rate_amount ? number_format($rental->rate_amount,2): ""}} 
+                                                                                @if ($rental->vehicle)
+                                                                                    {{$rental->vehicle->vehicle_make ? $rental->vehicle->vehicle_make->name : ""}} {{$rental->vehicle->vehicle_model ? $rental->vehicle->vehicle_model->name : ""}} {{$rental->vehicle ? "(".$rental->vehicle->registration_number.")" : ""}}    
+                                                                                @endif
+                                                                            </option> 
+                                                                        @else
+                                                                            <option value="{{$rental->id}}"
+                                                                                @if(in_array($rental->id, $selectedCurrentRental ?? []) && ($selectedCurrentRental[$key] ?? null) != $rental->id) 
+                                                                                    disabled 
+                                                                                @endif >
+                                                                                {{$rental->car_rental_number ? $rental->car_rental_number : ""}} {{ $rental->customer ? $rental->customer->name : "" }}  {{$rental->currency ? $rental->currency->name : ""}} {{$rental->currency ? $rental->currency->symbol : ""}}{{$rental->rate_amount ? number_format($rental->rate_amount,2): ""}} 
+                                                                                @if ($rental->vehicle)
+                                                                                    {{$rental->vehicle->vehicle_make ? $rental->vehicle->vehicle_make->name : ""}} {{$rental->vehicle->vehicle_model ? $rental->vehicle->vehicle_model->name : ""}} {{$rental->vehicle ? "(".$rental->vehicle->registration_number.")" : ""}}    
+                                                                                @endif
+                                                                            </option>
+                                                                        @endif
+                                                                    @else
+                                                                        <option value="{{$rental->id}}"
+                                                                            @if(in_array($rental->id, $selectedCurrentRental ?? []) && ($selectedCurrentRental[$key] ?? null) != $rental->id) 
+                                                                                disabled 
+                                                                            @endif >
+                                                                           {{$rental->car_rental_number ? $rental->car_rental_number : ""}} {{ $rental->customer ? $rental->customer->name : "" }}  {{$rental->currency ? $rental->currency->name : ""}} {{$rental->currency ? $rental->currency->symbol : ""}}{{$rental->rate_amount ? number_format($rental->rate_amount,2): ""}} 
+                                                                                @if ($rental->vehicle)
+                                                                                    {{$rental->vehicle->vehicle_make ? $rental->vehicle->vehicle_make->name : ""}} {{$rental->vehicle->vehicle_model ? $rental->vehicle->vehicle_model->name : ""}} {{$rental->vehicle ? "(".$rental->vehicle->registration_number.")" : ""}}    
+                                                                                @endif
+                                                                        </option>
+                                                                    @endif
+                                                                @endforeach  
+                                                            </select>
+                                                            <small style="color: green">NB: All invoiced rentals will appear in orange</small>
+                                                            @error('selectedCurrentRental.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <div class="form-group">
+                                                        <label for="name">Description</label>
+                                                        <textarea wire:model.debounce.300ms="current_description.{{$key}}" class="form-control" cols="30" rows="4" placeholder="Enter Item Description"></textarea>
+                                                        @error('current_description.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-1">
+                                                    <div class="form-group">
+                                                        <label for="date">Qty<span class="required" style="color: red">*</span></label>
+                                                        <input type="number"  class="form-control" wire:model.debounce.300ms="current_qty.{{$key}}" {{$recorded_payments > 0  ? "disabled" : ""}}   required>
+                                                        @error('current_qty.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <div class="form-group">
+                                                        <label for="subheading">Amount<span class="required" style="color: red">*</span></label>
+                                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="current_amount.{{$key}}" {{$recorded_payments > 0 ? "disabled" : ""}}   required/>
+                                                        @error('current_amount.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-1">
+                                                    <div class="form-group">
+                                                        <label for="subheading">Taxes</label>
+                                                        <select wire:model.debounce.300ms="selectedCurrentTax.{{$key}}"  class="form-control" {{$recorded_payments > 0 ? "disabled" : ""}}>
+                                                            <option value=""></option>
+                                                            @foreach ($tax_accounts as $tax)
+                                                                <option value="{{$tax->id}}">{{$tax->abbreviation}} {{$tax->rate ? $tax->rate."%" : ""}}</option> 
+                                                            @endforeach
+                                                        </select>
+                                                        <small><a href="{{ route('accounts.tax') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small><a href="#" wire:click.prevent="refresh('taxes')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
+                                                        @error('selectedCurrentTax.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-1">
+                                                    <div class="form-group" style="margin-top: 29px; ">
+                                                        @if ($invoice->payments->isEmpty())
+                                                            <a href="#" wire:click.prevent="removeShow({{ $value->id }})" ><i class="fa fa-trash color-danger"></i></a>
+                                                        @endif
+                                                    </div>
+                                                </div>  
+                                            </div>
+                                        @endforeach
+                                        @foreach ($inputs as $key => $value)
+                                            <div class="row" >
+                                                <div class="col-md-12" >
+                                                    <input type="checkbox" wire:model.debounce.300ms="is_custom_item.{{ $value }}"   class="line-style" />
+                                                    <label for="one" class="radio-label">Add custom item</label>
+                                                    @error('is_custom_item.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="form-group">
+                                                        @if(!($is_custom_item[$value] ?? false))
+                                                            <label for="subheading">Rentals<span class="required" style="color: red">*</span></label>
+                                                            <select wire:model.debounce.300ms="selectedRental.{{$value}}"  class="form-control" required size="4">
+                                                                <option value="">Select Rental</option>
+                                                                  @foreach ($rentals->where('currency_id', $selectedCurrency) as $rental)
+                                                                    @if (isset($rental_ids))
+                                                                        @if (in_array($rental->id,$rental_ids))
+                                                                        <option value="{{$rental->id}}" style="color: orange"
+                                                                            @if(in_array($rental->id, $selectedRental ?? []) && ($selectedRental[$value] ?? null) != $rental->id) 
+                                                                            disabled 
+                                                                        @endif
+                                                                            >
+                                                                            {{$rental->car_rental_number ? $rental->car_rental_number : ""}} {{ $rental->customer ? $rental->customer->name : "" }}  {{$rental->currency ? $rental->currency->name : ""}} {{$rental->currency ? $rental->currency->symbol : ""}}{{$rental->rate_amount ? number_format($rental->rate_amount,2): ""}} 
+                                                                            @if ($rental->vehicle)
+                                                                                {{$rental->vehicle->vehicle_make ? $rental->vehicle->vehicle_make->name : ""}} {{$rental->vehicle->vehicle_model ? $rental->vehicle->vehicle_model->name : ""}} {{$rental->vehicle ? "(".$rental->vehicle->registration_number.")" : ""}}    
+                                                                            @endif 
+                                                                        </option> 
+                                                                        @else
+                                                                            <option value="{{$rental->id}}"
+                                                                                @if(in_array($rental->id, $selectedRental ?? []) && ($selectedRental[$value] ?? null) != $rental->id) 
+                                                                            disabled 
+                                                                        @endif
+                                                                                >
+                                                                                {{$rental->car_rental_number ? $rental->car_rental_number : ""}} {{ $rental->customer ? $rental->customer->name : "" }}  {{$rental->currency ? $rental->currency->name : ""}} {{$rental->currency ? $rental->currency->symbol : ""}}{{$rental->rate_amount ? number_format($rental->rate_amount,2): ""}} 
+                                                                                @if ($rental->vehicle)
+                                                                                    {{$rental->vehicle->vehicle_make ? $rental->vehicle->vehicle_make->name : ""}} {{$rental->vehicle->vehicle_model ? $rental->vehicle->vehicle_model->name : ""}} {{$rental->vehicle ? "(".$rental->vehicle->registration_number.")" : ""}}    
+                                                                                @endif
+                                                                            </option>
+                                                                        @endif
+                                                                    @else
+                                                                        <option value="{{$rental->id}}"
+                                                                            @if(in_array($rental->id, $selectedRental ?? []) && ($selectedRental[$value] ?? null) != $rental->id) 
+                                                                            disabled 
+                                                                        @endif
+                                                                            >
+                                                                            {{$rental->car_rental_number ? $rental->car_rental_number : ""}} {{ $rental->customer ? $rental->customer->name : "" }}  {{$rental->currency ? $rental->currency->name : ""}} {{$rental->currency ? $rental->currency->symbol : ""}}{{$rental->rate_amount ? number_format($rental->rate_amount,2): ""}} 
+                                                                            @if ($rental->vehicle)
+                                                                                {{$rental->vehicle->vehicle_make ? $rental->vehicle->vehicle_make->name : ""}} {{$rental->vehicle->vehicle_model ? $rental->vehicle->vehicle_model->name : ""}} {{$rental->vehicle ? "(".$rental->vehicle->registration_number.")" : ""}}    
+                                                                            @endif    
+                                                                        </option>
+                                                                    @endif
+                                                                @endforeach   
+                                                            </select>
+                                                            <small style="color: green">NB: All invoiced rentals will appear in orange</small>
+                                                            @error('selectedRental.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                        @else
+                                                            <label for="country">Items<span class="required" style="color: red">*</span></label>
+                                                            <select wire:model.debounce.300ms="selectedProduct.{{ $value }}" class="form-control" required>
+                                                                <option value="">Select Item</option>
+                                                                @foreach ($products as $product)
+                                                                <option value="{{$product->id}}"
+                                                                        @if(in_array($product->id, $selectedProduct ?? []) && ($selectedProduct[$value] ?? null) != $product->id) 
+                                                                        disabled 
+                                                                    @endif
+                                                                    >{{$product->brand ? $product->brand->name : ""}} {{$product->name}} {{$product->identification_number ? "ID#:".$product->identification_number : ""}}</option> 
+                                                                @endforeach
+                                                            </select>
+                                                            <small>  <a href="#" wire:click="showItem({{$value}})"><i class="fa fa-plus-square-o"></i> New Product / Service</a></small><a href="#" wire:click.prevent="refresh('products')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
+                                                            @error('selectedProduct.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="form-group">
+                                                        <label for="name">Description</label>
+                                                        <textarea wire:model.debounce.300ms="description.{{$value}}" class="form-control" cols="30" rows="4" placeholder="Enter Item Description"></textarea>
+                                                        @error('description.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-1">
+                                                    <div class="form-group">
+                                                        <label for="date">Qty<span class="required" style="color: red">*</span></label>
+                                                        <input type="number"  class="form-control" wire:model.debounce.300ms="qty.{{$value}}"   required>
+                                                        @error('qty.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <div class="form-group">
+                                                        <label for="subheading">Amount<span class="required" style="color: red">*</span></label>
+                                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="amount.{{$value}}"   required/>
+                                                        @error('amount.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-1">
+                                                    <div class="form-group">
+                                                        <label for="subheading">Taxes</label>
+                                                        <select wire:model.debounce.300ms="selectedTax.{{$value}}"  class="form-control">
+                                                            <option value=""></option>
+                                                                @foreach ($tax_accounts as $tax)
+                                                                <option value="{{$tax->id}}">{{$tax->abbreviation}} </option> 
+                                                                @endforeach
+                                                        </select>
+                                                        <small><a href="{{ route('accounts.tax') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small><a href="#" wire:click.prevent="refresh('taxes')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
+                                                        @error('selectedTax.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-1">
+                                                    <div class="form-group">
+                                                        <label for=""></label>
+                                                        <button class="btn btn-danger btn-rounded xs" style="margin-top:23px"  wire:click.prevent="remove({{$key}},{{$value}})"> <i class="fa fa-times"></i></button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                        @if ($invoice->payments->isEmpty())
+                                            <div class="row">
+                                                <div class="col-md-12">
+                                                    <div class="form-group">
+                                                        <button class="btn btn-success btn-rounded" style="float: right" wire:click.prevent="add({{$i}})"> <i class="fa fa-plus"></i>Rental</button>
                                                     </div>
                                                 </div>
                                             </div>

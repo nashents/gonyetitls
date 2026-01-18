@@ -192,7 +192,9 @@
                                                             <strong>{{$item->product ? $item->product->name : ""}} {{$item->product ? $item->product->identification_number : ""}} {{$item->inventory ? $item->inventory->serial_number : ""}}</strong>  
                                                         @elseif($item->trip)  
                                                             <strong>{{$item->trip ? $item->trip->trip_number : ""}}</strong>  
-                                                        @endif {{$item->description}} @ {{number_format($item->subtotal_inc,2)}} @if (!$loop->last),@endif
+                                                        @elseif($item->rental)  
+                                                            <strong>{{$item->rental ? $item->rental->car_rental_number : ""}}</strong>  
+                                                        @endif {{$item->description}} @ {{number_format($item->subtotal_incl,2)}} @if (!$loop->last),@endif
                                                     @endforeach
                                                 @endif
                                         </small>

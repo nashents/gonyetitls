@@ -150,12 +150,12 @@
                                         <td class="text-center">
                                             @if ($invoice_item->product)
                                                {{$invoice_item->product ? $invoice_item->product->name : ""}}<br>
-                                                {{$invoice_item->description}}
                                             @elseif ($invoice_item->trip)
-                                                {{$invoice_item->description ? $invoice_item->description : $invoice_item->trip_details}}
+                                                {{$invoice_item->trip ? $invoice_item->trip->trip_number : ""}}<br>
+                                            @elseif ($invoice_item->rental)
+                                                {{$invoice_item->rental ? $invoice_item->rental->car_rental_number : ""}}<br>
                                             @endif
-
-                                            
+                                             {{$invoice_item->description}}
                                         </td>
                                         <td class="unit text-right"> {{$invoice_item->qty}}</td>
                                         <td class="unit text-right">

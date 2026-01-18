@@ -106,10 +106,6 @@ class DatabaseSeeder extends Seeder
         $this->call(TransactionTypeSeeder::class);
         $this->call(TaxBracketSeeder::class);
         $this->call(PaymentMethodSeeder::class);
-        $this->call(MenuRegistrySeeder::class);
-
-        
-       
-        
+     
     }
 }

@@ -87,13 +87,11 @@ class Index extends Component
 
     public function updatedSelectedTransporter($transporterId)
     {
-        $this->vehicles = Vehicle::query()->with('rentals')
-                        ->where('transporter_id', $transporterId)
-                        ->whereDoesntHave('rentals', function ($q) {
-                            $q->whereIn('status', ['Reserved', 'Active']);
-                        })
-                        ->orderBy('registration_number', 'asc')
-                        ->get();
+       $this->vehicles = Vehicle::query()->where('transporter_id', $transporterId)
+                        ->where('status', 1)
+                        ->where('service',0)
+                        ->where('archive',0)
+                        ->orderBy('registration_number','asc')->get();
                         }
 
     public function updatedSelectedCustomer($customerId)
@@ -154,28 +152,20 @@ class Index extends Component
 
   
         if($category == 'transporters'){
-            $this->transporters = Transporter::with('vehicles:id,registration_number','vehicles.vehicle_make:id,name','vehicles.vehicle_model:id,name','horses:id,registration_number','horses.horse_make:id,name','horses.horse_model:id,name','cargos:id,name','trailers:id,registration_number,make,model','drivers:id','drivers.employee:id,name,surname')->where('authorization','approved')->orderBy('name','asc')->get();
+            $this->transporters = Transporter::where('authorization','approved')->orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Transporters Refreshed Successfully!!."
             ]);
         }
-
+        
         elseif($category == 'vehicles'){
-            if (isset($this->selectedStatus) && ($this->selectedStatus == "Scheduled" || $this->selectedStatus == "Offloaded" || $this->selectedStatus == "Cancelled") ) {
-              
-                $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('transporter_id',$this->selectedTransporter)
-                ->where('archive',0)
-                ->orderBy('registration_number','asc')->get();
-       
-            }else{
-              
-                $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('transporter_id',$this->selectedTransporter)
-                ->where('status', 1)
-                ->where('service',0)
-                ->where('archive',0)
-                ->orderBy('registration_number','asc')->get();
-             
+            if(!is_null($this->selectedTransporter)){
+                    $this->vehicles = Vehicle::query()->where('transporter_id',$this->selectedTransporter)
+                            ->where('status', 1)
+                            ->where('service',0)
+                            ->where('archive',0)
+                            ->orderBy('registration_number','asc')->get();
             }
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
@@ -184,27 +174,8 @@ class Index extends Component
         }
         
         elseif($category == 'drivers'){
-            if (isset($this->selectedStatus) && ($this->selectedStatus == "Scheduled" || $this->selectedStatus == "Offloaded" || $this->selectedStatus == "Cancelled") ) {
-                 $this->drivers = Driver::query()
-                        ->with('employee')
-                        ->join('employees', 'employees.id', '=', 'drivers.employee_id')
-                        ->where('employees.archive',0)
-                        ->orderBy('employees.name', 'asc')
-                        ->orderBy('employees.surname', 'asc')
-                        ->select('drivers.*') // important!
-                        ->get();
-            }else{
-                 $this->drivers = Driver::query()
-                        ->with('employee')
-                        ->join('employees', 'employees.id', '=', 'drivers.employee_id')
-                         ->where('drivers.transporter_id',$this->selectedTransporter)
-                         ->where('employees.archive',0)
-                        ->where('employees.status',1)
-                        ->orderBy('employees.name', 'asc')
-                        ->orderBy('employees.surname', 'asc')
-                        ->select('drivers.*') // important!
-                        ->get();
-              
+            if (isset($this->selectedCustomer) && !is_null($this->selectedCustomer)) {
+                $this->drivers = Driver::where('customer_id', $this->selectedCustomer)->orderBy('name', 'asc')->orderBy('surname', 'asc')->get();
             }
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
@@ -317,8 +288,20 @@ class Index extends Component
         $this->rental_id = $id;
         $this->selectedCustomer = $rental->customer_id;
         $this->selectedTransporter = $rental->transporter_id;
+        if(!is_null($this->selectedTransporter)){
+             $this->vehicles = Vehicle::query()->where('transporter_id', $this->selectedTransporter)
+                        ->where('status', 1)
+                        ->where('service',0)
+                        ->where('archive',0)
+                        ->orderBy('registration_number','asc')->get();
+        }
+       
+        if (isset($this->selectedCustomer) && !is_null($this->selectedCustomer)) {
+            $this->drivers = Driver::where('customer_id', $this->selectedCustomer)->orderBy('name', 'asc')->orderBy('surname', 'asc')->get();
+        }
         $this->driver_id = $rental->driver_id;
         $this->selectedVehicle = $rental->vehicle_id;
+     
         $this->selectedCurrency = $rental->currency_id;
         $this->rate_amount = $rental->rate_amount;
         $this->deposit_amount = $rental->deposit_amount;
@@ -334,6 +317,8 @@ class Index extends Component
         $this->pickup_fuel_level = $rental->pickup_fuel_level;
         $this->return_fuel_level = $rental->return_fuel_level;
         $this->status = $rental->status;
+       
+        
 
          $this->dispatchBrowserEvent('show-rentalEditModal');
     }

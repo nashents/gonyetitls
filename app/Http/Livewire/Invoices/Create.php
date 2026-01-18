@@ -693,7 +693,7 @@ class Create extends Component
             return '';
         }
         $from = $rental->pickup_at;
-        $to = $rental->due_at;
+        $to = $rental->due_back_at;
         $make = $rental->vehicle->vehicle_make ? $rental->vehicle->vehicle_make->name : "";
         $model = $rental->vehicle->vehicle_model ? $rental->vehicle->vehicle_model->name : "";
         $reg_number = $rental->vehicle ? $rental->vehicle->registration_number : "";
@@ -1225,7 +1225,7 @@ class Create extends Component
                                 $invoice_item->account_id = $this->selectedAccount[$key];
                             }
                             if (isset($this->selectedRental[$key])) {
-                                $invoice_item->trip_id = $this->selectedRental[$key];
+                                $invoice_item->rental_id = $this->selectedRental[$key];
                             }
                             if (isset($this->selectedProduct[$key])) {
                                 $invoice_item->product_id = $this->selectedProduct[$key];
@@ -1279,10 +1279,7 @@ class Create extends Component
                                 $invoice_item->exchange_amount = $this->exchange_rate * $item_subtotal_incl ;
                             }
                             $invoice_item->save();
-                    
-                            
-                      
-
+                
                     }
                     
             }
