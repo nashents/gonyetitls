@@ -3,262 +3,218 @@
 namespace App\Http\Livewire\Horses\ProfitLoss;
 
 use Carbon\Carbon;
-use App\Models\Bill;
-use App\Models\Fuel;
-use App\Models\Trip;
-use App\Models\Horse;
-use App\Models\Account;
 use Livewire\Component;
+use Illuminate\Support\Facades\Auth;
+
+use App\Models\Trip;
+use App\Models\Fuel;
+use App\Models\Horse;
 use App\Models\AccountType;
 use App\Models\BillExpense;
-use Illuminate\Support\Facades\Auth;
 
 class Preview extends Component
 {
-    
     public $selectedHorse;
     public $selected_horse;
+
     public $from;
     public $to;
+    public $fromDt;
+    public $toDt;
+
     public $company;
-
-  
-    public $horses;
-    public $trips;
-    public $details;
-    public $summary = "summary";
-    
-    public $income_account_type;
-    public $income_accounts;
-    public $income_accounts_ids = [];
-   
-    public $cost_of_goods_sold_account_type;
-    public $cost_of_goods_sold_accounts;
-    public $cost_of_goods_sold_accounts_ids = [];
-
-    public $operating_expenses_account_type;
-    public $operating_expenses_accounts;
-    public $operating_expenses_accounts_ids = [];
-
-
-    public $operating_expenses = 0;
-    public $exchange_operating_expenses = 0;
-    public $total_operating_expenses = 0;
-
-    public $cost_of_goods_sold = 0;
-    public $exchange_cost_of_goods_sold = 0;
-    public $total_cost_of_goods_sold = 0;
-
-    public $income = 0;
-    public $exchange_income = 0;
-    public $total_income = 0;
-
     public $default_currency;
     public $default_currency_id;
-    public $net_profit;
-    public $net_profit_percentage;
-    public $gross_profit;
-    public $gross_profit_percentage;
-    public $total_trips;
-    public $total_fuel;
-    public $total_fuel_orders;
-   
 
-    public function mount($selectedHorse, $from, $to){
-        $this->selectedHorse = $selectedHorse;
-        $this->selected_horse = Horse::find($this->selectedHorse);
-        $this->from = $from;
-        $this->to = $to;
-        $this->total_trips = Trip::where('horse_id',$selectedHorse)->where('trip_status','!=','Cancelled')->where('authorization','approved')
-        ->whereDate('start_date','>=',$this->from)
-        ->whereDate('start_date','<=',$this->to)->get()->count();
-        $this->total_fuel_orders = Fuel::where('horse_id',$selectedHorse)->where('authorization','approved')
-        ->whereDate('date','>=',$this->from)
-        ->whereDate('date','<=',$this->to)->get()->count();
-        $this->total_fuel = Fuel::where('horse_id',$selectedHorse)->where('authorization','approved')
-        ->whereDate('date','>=',$this->from)
-        ->whereDate('date','<=',$this->to)
-        ->whereRaw('quantity REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->get()->sum('quantity');
+    public $income_accounts;
+    public $cost_of_goods_sold_accounts;
+    public $operating_expenses_accounts;
+
+    // Prepared statement lines (no DB work in Blade)
+    public $cogs_lines = []; // [ ['name' => 'Fuel', 'amount' => 123.45], ... ]
+    public $opex_lines = [];
+
+    // Totals
+    public $total_income = 0;
+    public $total_cost_of_goods_sold = 0;
+    public $total_operating_expenses = 0;
+
+    public $gross_profit = 0;
+    public $gross_profit_percentage = 0;
+
+    public $net_profit = 0;
+    public $net_profit_percentage = 0;
+
+    public $total_trips = 0;
+    public $total_fuel_orders = 0;
+    public $total_fuel = 0;
+
+    public function mount($selectedHorse, $from, $to)
+    {
         $this->company = Auth::user()->employee->company;
 
-     
-        $this->horses = Horse::orderBy('registration_number','asc')->get();
-        $this->accounts = Account::orderBy('name','asc')->get();
-        $this->account_types = AccountType::orderBy('name','asc')->get();
-        $this->income_account_type = AccountType::where('name','Income')->first();
-        $this->income_accounts = $this->income_account_type->accounts;
-        $this->cost_of_goods_sold_account_type = AccountType::where('name','Cost Of Goods Sold')->first();
-        $this->cost_of_goods_sold_accounts = $this->cost_of_goods_sold_account_type->accounts;
-        $this->operating_expenses_account_type = AccountType::where('name','Operating Expense')->first();
-        $this->operating_expenses_accounts = $this->operating_expenses_account_type->accounts;
+        $this->selectedHorse = (int) $selectedHorse;
+        $this->selected_horse = Horse::findOrFail($this->selectedHorse);
 
-        if (isset($this->operating_expenses_accounts)) {
-            foreach ($this->operating_expenses_accounts as $account) {
-                $this->operating_expenses_accounts_ids[] = $account->id;
-              }
-        }
-        if (isset($this->cost_of_goods_sold_accounts)) {
-            foreach ($this->cost_of_goods_sold_accounts as $account) {
-                $this->cost_of_goods_sold_accounts_ids[] = $account->id;
-              }
-        }
-        if (isset($this->income_accounts)) {
-            foreach ($this->income_accounts as $account) {
-                $this->income_accounts_ids[] = $account->id;
-              }
-        }
+        $this->from = $from;
+        $this->to = $to;
 
-        
-  
+        $this->fromDt = Carbon::parse($from)->startOfDay();
+        $this->toDt   = Carbon::parse($to)->endOfDay();
+
+        $this->default_currency    = $this->company->currency;
+        $this->default_currency_id = $this->company->currency_id;
+
+        // Account groups
+        $incomeType = AccountType::where('name', 'Income')->first();
+        $cogsType   = AccountType::where('name', 'Cost Of Goods Sold')->first();
+        $opexType   = AccountType::where('name', 'Operating Expense')->first();
+
+        $this->income_accounts = $incomeType?->accounts ?? collect();
+        $this->cost_of_goods_sold_accounts = $cogsType?->accounts ?? collect();
+        $this->operating_expenses_accounts = $opexType?->accounts ?? collect();
+
+        $this->recalculate();
     }
+
+    public function recalculate(): void
+    {
+        $horseId = $this->selectedHorse;
+
+        // ---------- Counts / usage ----------
+        $this->total_trips = Trip::query()
+            ->where('horse_id', $horseId)
+            ->where('authorization', 'approved')
+            ->where('trip_status', '!=', 'Cancelled')
+            ->whereBetween('start_date', [$this->fromDt, $this->toDt])
+            // ->where('company_id', $this->company->id) // enable if you have it
+            ->count();
+
+        $this->total_fuel_orders = Fuel::query()
+            ->where('horse_id', $horseId)
+            ->where('authorization', 'approved')
+            ->whereBetween('date', [$this->fromDt, $this->toDt])
+            // ->where('company_id', $this->company->id)
+            ->count();
+
+        $this->total_fuel = (float) Fuel::query()
+            ->where('horse_id', $horseId)
+            ->where('authorization', 'approved')
+            ->whereBetween('date', [$this->fromDt, $this->toDt])
+            // ->where('company_id', $this->company->id)
+            ->sum('quantity');
+
+        // ---------- Revenue (company currency) ----------
+        $incomeBase = (float) Trip::query()
+            ->where('horse_id', $horseId)
+            ->where('authorization', 'approved')
+            ->where('trip_status', '!=', 'Cancelled')
+            ->whereBetween('start_date', [$this->fromDt, $this->toDt])
+            ->where('currency_id', $this->default_currency_id)
+            // ->where('company_id', $this->company->id)
+            ->sum('freight');
+
+        $incomeFxBaseEquivalent = (float) Trip::query()
+            ->where('horse_id', $horseId)
+            ->where('authorization', 'approved')
+            ->where('trip_status', '!=', 'Cancelled')
+            ->whereBetween('start_date', [$this->fromDt, $this->toDt])
+            ->where('currency_id', '!=', $this->default_currency_id)
+            // ->where('company_id', $this->company->id)
+            ->sum('exchange_customer_freight'); // assumed in company currency
+
+        $this->total_income = $incomeBase + $incomeFxBaseEquivalent;
+
+        // ---------- COGS + OPEX (lines + totals) ----------
+        [$this->cogs_lines, $this->total_cost_of_goods_sold] = $this->buildExpenseLines(
+            $this->cost_of_goods_sold_accounts,
+            tripOnly: true,
+            excludeAllowances: true
+        );
+
+        [$this->opex_lines, $this->total_operating_expenses] = $this->buildExpenseLines(
+            $this->operating_expenses_accounts,
+            tripOnly: false,
+            excludeAllowances: false
+        );
+
+        // ---------- Profits ----------
+        $this->gross_profit = $this->total_income - $this->total_cost_of_goods_sold;
+        $this->gross_profit_percentage = ($this->total_income != 0)
+            ? ($this->gross_profit / $this->total_income) * 100
+            : 0;
+
+        $this->net_profit = $this->gross_profit - $this->total_operating_expenses;
+        $this->net_profit_percentage = ($this->total_income != 0)
+            ? ($this->net_profit / $this->total_income) * 100
+            : 0;
+    }
+
+    /**
+     * Returns:
+     *  - lines: [ ['name' => 'Account', 'amount' => 123.45], ... ]
+     *  - total: float
+     */
+    protected function buildExpenseLines($accounts, bool $tripOnly, bool $excludeAllowances): array
+    {
+        $horseId = $this->selectedHorse;
+        $accountIds = $accounts->pluck('id')->values()->all();
+
+        if (empty($accountIds)) {
+            return [[], 0.0];
+        }
+
+        $baseQuery = BillExpense::query()
+            ->whereIn('account_id', $accountIds)
+            ->when($excludeAllowances, fn($q) => $q->whereNull('allowance_id'))
+            ->whereHas('bill', function ($b) use ($tripOnly) {
+                $b->whereBetween('bill_date', [$this->fromDt, $this->toDt])
+                  ->where('authorization', 'approved')
+                  // ->where('company_id', $this->company->id)
+                  ->when($tripOnly, fn($bb) => $bb->whereNotNull('trip_id'));
+            })
+            // ✅ Critical: group the horse scope so OR doesn't leak
+            ->where(function ($q) use ($horseId) {
+                $q->whereHas('bill', fn($b) => $b->where('horse_id', $horseId));
+            });
+
+        // Sum default currency using subtotal_incl
+        $baseByAccount = (clone $baseQuery)
+            ->whereHas('bill', fn($b) => $b->where('currency_id', $this->default_currency_id))
+            ->selectRaw('account_id, SUM(subtotal) as amount')
+            ->groupBy('account_id')
+            ->pluck('amount', 'account_id');
+
+        // Sum foreign currency using exchange_amount (assumed base equivalent)
+        $fxByAccount = (clone $baseQuery)
+            ->whereHas('bill', fn($b) => $b->where('currency_id', '!=', $this->default_currency_id))
+            ->selectRaw('account_id, SUM(exchange_amount) as amount')
+            ->groupBy('account_id')
+            ->pluck('amount', 'account_id');
+
+        $lines = [];
+        $total = 0.0;
+
+        foreach ($accounts as $acc) {
+            $amount = (float) ($baseByAccount[$acc->id] ?? 0) + (float) ($fxByAccount[$acc->id] ?? 0);
+
+            // Hide zero lines (optional)
+            if (abs($amount) < 0.00001) {
+                continue;
+            }
+
+            $lines[] = [
+                'name' => $acc->name,
+                'amount' => $amount,
+            ];
+            $total += $amount;
+        }
+
+        return [$lines, $total];
+    }
+
     public function render()
     {
-
-        $this->default_currency = Auth::user()->employee->company->currency;
-        $this->default_currency_id = Auth::user()->employee->company->currency_id;
-       
-        if (isset($this->from) && isset($this->to)) {
-            if ($this->selectedHorse) {
-            $this->income = Trip::whereDate('start_date','>=',$this->from)
-            ->whereDate('start_date','<=',$this->to)
-            ->where('horse_id',$this->selectedHorse)
-            ->where('authorization','approved')
-            ->where('trip_status','!=','Cancelled')
-            ->where('currency_id', $this->default_currency_id)
-            ->whereRaw('freight REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->get()->sum('freight');
-
-            $this->exchange_income = Trip::whereDate('start_date','>=',$this->from)
-            ->whereDate('start_date','<=',$this->to)
-            ->where('horse_id',$this->selectedHorse)
-            ->where('authorization','approved')
-            ->where('trip_status','!=','Cancelled')
-            ->where('currency_id','!=', $this->default_currency_id)
-            ->whereRaw('exchange_customer_freight REGEXP "^-?[0-9]+(\.[0-9]+)?$"')
-            ->get()->sum('exchange_customer_freight');
-            
-            $this->total_income = $this->income +  $this->exchange_income;
-            $selected_horse = $this->selectedHorse;
-            
-            $this->cost_of_goods_sold = BillExpense::whereIn('account_id',$this->cost_of_goods_sold_accounts_ids)
-            ->whereNull('allowance_id')
-            ->whereHas('bill', function($q){
-                $q->whereDate('bill_date','>=',$this->from);
-            })
-            ->whereHas('bill', function($q){
-                $q->whereDate('bill_date','<=',$this->to);
-            })
-            ->whereHas('bill', function($q){
-                $q->where('authorization', 'approved');
-            })
-            ->whereHas('bill', function ($query) {
-                $query->whereNotNull('trip_id');
-            })
-            ->whereHas('bill', function($q){
-                $q->where('currency_id', $this->default_currency_id);
-            })
-            ->whereHas('bill', function($q){
-                $q->where('horse_id', $this->selectedHorse);
-            })
-            ->orWhereHas('bill', function ($billQuery) use ($selected_horse) {
-                $billQuery->whereHas('trip', function ($tripQuery) use ($selected_horse) {
-                    $tripQuery->where('horse_id', $selected_horse);
-                });
-            })
-            ->whereRaw('subtotal_incl REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->get()->sum('subtotal_incl');
-
-            $this->exchange_cost_of_goods_sold = BillExpense::whereIn('account_id',$this->cost_of_goods_sold_accounts_ids)
-            ->whereNull('allowance_id')
-            ->whereHas('bill', function($q){
-                $q->whereDate('bill_date','>=',$this->from);
-            })
-            ->whereHas('bill', function($q){
-                $q->whereDate('bill_date','<=',$this->to);
-            })
-            ->whereHas('bill', function ($query) {
-                $query->whereNotNull('trip_id');
-            })
-            ->whereHas('bill', function($q){
-                $q->where('authorization', 'approved');
-            })
-            ->whereHas('bill', function($q){
-                $q->where('currency_id','!=', $this->default_currency_id);
-            })
-            ->whereHas('bill', function($q){
-                $q->where('horse_id', $this->selectedHorse);
-            })
-            ->orWhereHas('bill', function ($billQuery) use ($selected_horse) {
-                $billQuery->whereHas('trip', function ($tripQuery) use ($selected_horse) {
-                    $tripQuery->where('horse_id', $selected_horse);
-                });
-                })
-            ->whereRaw('exchange_amount REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->get()->sum('exchange_amount');
-
-            $this->total_cost_of_goods_sold = $this->cost_of_goods_sold + $this->exchange_cost_of_goods_sold;
-
-
-            $this->operating_expenses = BillExpense::whereIn('account_id',$this->operating_expenses_accounts_ids)
-            ->whereHas('bill', function($q){
-                $q->whereDate('bill_date','>=',$this->from);
-            })
-            ->whereHas('bill', function($q){
-                $q->whereDate('bill_date','<=',$this->to);
-            })
-            ->whereHas('bill', function($q){
-                $q->where('authorization', 'approved');
-            })
-            ->whereHas('bill', function($q){
-                $q->where('currency_id', $this->default_currency_id);
-            })
-            ->whereHas('bill', function($q){
-                $q->where('horse_id', $this->selectedHorse);
-            })
-            ->whereRaw('subtotal_incl REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->get()->sum('subtotal_incl');
-           
-          
-
-            $this->exchange_operating_expenses = BillExpense::whereIn('account_id',$this->operating_expenses_accounts_ids)
-            ->whereHas('bill', function($q){
-                $q->whereDate('bill_date','>=',$this->from);
-            })
-            ->whereHas('bill', function($q){
-                $q->whereDate('bill_date','<=',$this->to);
-            })
-            ->whereHas('bill', function($q){
-                $q->where('authorization', 'approved');
-            })
-            ->whereHas('bill', function($q){
-                $q->where('currency_id','!=', $this->default_currency_id);
-            })
-            ->whereHas('bill', function($q){
-                $q->where('horse_id', $this->selectedHorse);
-            })
-            ->whereRaw('exchange_amount REGEXP "^-?[0-9]+(\.[0-9]+)?$"')->get()->sum('exchange_amount');
-
-            $this->total_operating_expenses = $this->operating_expenses + $this->exchange_operating_expenses;
-
-
-        }
-
-        }
-
-        if ((isset($this->total_income) && is_numeric($this->total_income)) && (isset($this->total_cost_of_goods_sold) && is_numeric($this->total_cost_of_goods_sold))) {
-            $this->gross_profit = $this->total_income -  $this->total_cost_of_goods_sold;
-            if ((is_numeric($this->gross_profit) && $this->gross_profit > 0) && (is_numeric($this->total_income) && $this->total_income > 0)) {
-                $this->gross_profit_percentage =  ($this->gross_profit / $this->total_income) * 100 ;
-            }
-        }else {
-            $this->gross_profit_percentage = 0;
-        }
-     
-        if ((isset($this->total_income) && is_numeric($this->total_income)) && (isset($this->total_cost_of_goods_sold) && is_numeric($this->total_cost_of_goods_sold)) && (isset($this->total_operating_expenses) && is_numeric($this->total_operating_expenses))) {
-            $this->net_profit = $this->total_income -  $this->total_cost_of_goods_sold - $this->total_operating_expenses;
-            if ((is_numeric($this->net_profit) && $this->net_profit > 0) && (is_numeric($this->total_income) && $this->total_income > 0) ) {
-                $this->net_profit_percentage =  ($this->net_profit / $this->total_income) * 100 ;
-            }
-        } else {
-            $this->net_profit_percentage = 0;
-        }
-
         return view('livewire.horses.profit-loss.preview');
     }
 }

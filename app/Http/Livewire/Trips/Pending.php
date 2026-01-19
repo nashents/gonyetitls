@@ -420,7 +420,10 @@ class Pending extends Component
                                     $bill->currency_id = $trip_expense->currency_id;
                                     $bill->subtotal = $trip_expense->amount;
                                     $bill->total = $trip_expense->amount;
-                                    $bill->exchange_amount = $trip_expense->exchange_amount;
+                                    if($trip_expense->currency_id != Auth::user()->employee->company->currency_id){
+                                        $bill->exchange_rate = $trip_expense ->exchange_rate;
+                                        $bill->exchange_amount = $trip_expense->exchange_amount;
+                                    }
                                     $bill->balance = $trip_expense->amount;
                                     $bill->authorized_by_id = Auth::user()->id;
                                     $bill->authorization = $this->authorize;
@@ -437,6 +440,10 @@ class Pending extends Component
                                     $bill_expense->currency_id = $bill->currency_id;
                                     $bill_expense->expense_id = $trip_expense->expense_id;
                                     $bill_expense->qty = 1;
+                                    if($trip_expense->currency_id != Auth::user()->employee->company->currency_id){
+                                        $bill_expense->exchange_rate = $trip_expense ->exchange_rate;
+                                        $bill_expense->exchange_amount = $trip_expense->exchange_amount;
+                                    }
                                     $bill_expense->amount = $trip_expense->amount;
                                     $bill_expense->subtotal = $trip_expense->amount;
                                     $bill_expense->subtotal_incl = $trip_expense->amount;
@@ -455,6 +462,7 @@ class Pending extends Component
                         $bill->user_id = Auth::user()->id;
                         $bill->bill_number = $this->billNumber();
                         $bill->trip_id = $trip->id;
+                        $bill->horse_id = $trip->horse_id;
                         $bill->category = "Trip Expense - Transporter Payment";
                         $bill->transporter_id = $trip_expense->transporter_id;
                         $bill->trip_expense_id = $trip_expense->id;
@@ -487,6 +495,10 @@ class Pending extends Component
                             $bill_expense->account_type_id = $account->account_type->id;
                         }
                         $bill_expense->qty = 1;
+                        if($trip_expense->currency_id != Auth::user()->employee->company->currency_id){
+                            $bill_expense->exchange_rate = $trip_expense ->exchange_rate;
+                            $bill_expense->exchange_amount = $trip_expense->exchange_amount;
+                        }
                         $bill_expense->amount = $trip_expense->amount;
                         $bill_expense->subtotal = $trip_expense->amount;
                         $bill_expense->subtotal_incl = $trip_expense->amount;
@@ -515,7 +527,10 @@ class Pending extends Component
                         $bill->currency_id = $trip_expense->currency_id;
                         $bill->subtotal = $trip_expense->amount;
                         $bill->total = $trip_expense->amount;
-                        $bill->exchange_amount = $trip_expense->exchange_amount;
+                        if($trip_expense->currency_id != Auth::user()->employee->company->currency_id){
+                            $bill->exchange_rate = $trip_expense ->exchange_rate;
+                            $bill->exchange_amount = $trip_expense->exchange_amount;
+                        }
                         $bill->balance = $trip_expense->amount;
                         $bill->authorized_by_id = Auth::user()->id;
                         $bill->authorization = $this->authorize;
@@ -533,6 +548,10 @@ class Pending extends Component
                             $bill_expense->account_type_id = $account->account_type->id;
                         }
                         $bill_expense->qty = 1;
+                        if($trip_expense->currency_id != Auth::user()->employee->company->currency_id){
+                            $bill_expense->exchange_rate = $trip_expense ->exchange_rate;
+                            $bill_expense->exchange_amount = $trip_expense->exchange_amount;
+                        }
                         $bill_expense->amount = $trip_expense->amount;
                         $bill_expense->subtotal = $trip_expense->amount;
                         $bill_expense->subtotal_incl = $trip_expense->amount;
@@ -938,7 +957,10 @@ class Pending extends Component
                                                 $bill->currency_id = $trip_expense->currency_id;
                                                 $bill->subtotal = $trip_expense->amount;
                                                 $bill->total = $trip_expense->amount;
-                                                $bill->exchange_amount = $trip_expense->exchange_amount;
+                                                if($trip_expense->currency_id != Auth::user()->employee->company->currency_id){
+                                                    $bill->exchange_rate = $trip_expense ->exchange_rate;
+                                                    $bill->exchange_amount = $trip_expense->exchange_amount;
+                                                }
                                                 $bill->balance = $trip_expense->amount;
                             
                                                 $bill->authorized_by_id = Auth::user()->id;
@@ -956,6 +978,10 @@ class Pending extends Component
                                                     $bill_expense->account_type_id = $account->account_type->id;
                                                 }
                                                 $bill_expense->qty = 1;
+                                                if($trip_expense->currency_id != Auth::user()->employee->company->currency_id){
+                                                    $bill_expense->exchange_rate = $trip_expense ->exchange_rate;
+                                                    $bill_expense->exchange_amount = $trip_expense->exchange_amount;
+                                                }
                                                 $bill_expense->amount = $trip_expense->amount;
                                                 $bill_expense->subtotal = $trip_expense->amount;
                                                 $bill_expense->subtotal_incl = $trip_expense->amount;
@@ -1034,7 +1060,10 @@ class Pending extends Component
                                     $bill->currency_id = $trip_expense->currency_id;
                                     $bill->subtotal = $trip_expense->amount;
                                     $bill->total = $trip_expense->amount;
-                                    $bill->exchange_amount = $trip_expense->exchange_amount;
+                                    if($trip_expense->currency_id != Auth::user()->employee->company->currency_id){
+                                        $bill->exchange_rate = $trip_expense ->exchange_rate;
+                                        $bill->exchange_amount = $trip_expense->exchange_amount;
+                                    }
                                     $bill->balance = $trip_expense->amount;
                                     $bill->authorized_by_id = Auth::user()->id;
                                     $bill->authorization = $this->authorize;
@@ -1052,6 +1081,10 @@ class Pending extends Component
                                         $bill_expense->account_type_id = $account->account_type->id;
                                     }
                                     $bill_expense->qty = 1;
+                                    if($trip_expense->currency_id != Auth::user()->employee->company->currency_id){
+                                        $bill_expense->exchange_rate = $trip_expense ->exchange_rate;
+                                        $bill_expense->exchange_amount = $trip_expense->exchange_amount;
+                                    }
                                     $bill_expense->amount = $trip_expense->amount;
                                     $bill_expense->subtotal = $trip_expense->amount;
                                     $bill_expense->subtotal_incl = $trip_expense->amount;

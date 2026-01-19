@@ -34,6 +34,7 @@ class Index extends Component
     public $issued_at;
     public $number;
     public $expires_at;
+    public $cc;
     public $reminder_at;
     public $first_reminder_at;
     public $first_reminder_at_status;
@@ -69,6 +70,7 @@ class Index extends Component
         $this->reminder_item_id = "" ;
         $this->issued_at = "";
         $this->expires_at = "" ;
+        $this->cc = "" ;
         $this->inputs = [];
     }
 
@@ -127,6 +129,9 @@ class Index extends Component
         if (isset($this->reminder_item_id[$key])) {
              $fitness->reminder_item_id = $this->reminder_item_id[$key];
         }
+        if (isset($this->cc[$key])) {
+             $fitness->cc = $this->cc[$key];
+        }
 
         if (isset($this->issued_at[$key])) {
               $fitness->issued_at = Carbon::create($this->issued_at[$key])->toDateTimeString();
@@ -177,6 +182,7 @@ class Index extends Component
         $this->reminder_item_id = $fitness->reminder_item_id;
         $this->issued_at = $fitness->issued_at;
         $this->expires_at =  $fitness->expires_at;
+        $this->cc =  $fitness->cc;
         $this->first_reminder_at = $fitness->first_reminder_at;
         $this->first_reminder_at_status = $fitness->first_reminder_at_status;
         $this->second_reminder_at = $fitness->second_reminder_at;
@@ -202,6 +208,7 @@ class Index extends Component
                 $fitness->reminder_item_id = $this->reminder_item_id;
                 $fitness->issued_at =$this->issued_at;
                 $fitness->expires_at = $this->expires_at;
+                $fitness->cc = $this->cc;
                 $fitness->expires_at = Carbon::create($this->expires_at)->toDateTimeString();
                 $fitness->first_reminder_at = Carbon::parse($this->expires_at)->subDays(14);
                 $fitness->first_reminder_at_status = $this->first_reminder_at_status;

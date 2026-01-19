@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use Carbon\Carbon;
 use App\Mail\SendMail;
 use App\Models\Fitness;
+use App\Models\ReminderCopy;
 use Illuminate\Console\Command;
 use App\Mail\SendReminderEmails;
 use Illuminate\Support\Facades\Mail;
@@ -89,10 +90,16 @@ class FitnessReminderCommand extends Command
                 continue;
             }
 
+            if($fitness->cc){
+                $copies = ReminderCopy::where('user_id', $fitness->user_id)->get();
+            } else {
+                $copies = [];
+            }
+
             // Send email (ideally queue this - see note below)
             $email = $fitness->user?->email;
             if ($email) {
-                Mail::to($email)->send(new SendReminderEmails($fitness));
+                Mail::to($email)->send(new SendReminderEmails($fitness, $copies));
             }
 
             // Mark only what was actually due/unsent

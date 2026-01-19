@@ -39,6 +39,8 @@
                                     </th>
                                     <th class="th-sm">Status
                                     </th>
+                                    <th class="th-sm">Copy
+                                    </th>
                                     <th class="th-sm">Action
                                     </th>
                                   </tr>
@@ -114,6 +116,9 @@
                                         <span class="badge bg-danger">Expired</span>        
                                         @endif
                                     </td>
+                                    <td>
+                                        {{ $reminder->cc ? 'Yes' : 'No' }}
+                                    </td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -169,30 +174,25 @@
                 </div>
                 <form wire:submit.prevent="store()" >
                 <div class="modal-body">
-                    <div class="row">
-                        @if (!isset($type))
-                        <div class="col-md-6">
-                            {{-- <h5 class="underline mt-30">Reminder For ?</h5> --}}
-                            <label for="exampleInputEmail13">Reminder For ?<span class="required" style="color: red">*</span></label>
-                            <div class="mb-10">
-                                <input type="radio" wire:model.debounce.300ms="type" value="Horse"  class="line-style"  />
-                                <label for="one" class="radio-label">Horse</label>
-                                <input type="radio" wire:model.debounce.300ms="type" value="Vehicle"  class="line-style"  />
-                                <label for="one" class="radio-label">Vehicle</label>
-                                <input type="radio" wire:model.debounce.300ms="type" value="Trailer"  class="line-style"  />
-                                <label for="one" class="radio-label">Trailer</label>
-                                <br>
-                                <input type="radio" wire:model.debounce.300ms="type" value="Employee"  class="line-style"  />
-                                <label for="one" class="radio-label">Employee</label>
-                                <input type="radio" wire:model.debounce.300ms="type" value="Other"  class="line-style"  />
-                                <label for="one" class="radio-label">Other</label>
-                            </div>  
-                        </div>
-                        @endif
-                        
-                            @if (isset($type))
-                                @if ($type == "Horse")
-                                    <div class="col-md-6">
+                    <label for="exampleInputEmail13">Reminder For ?<span class="required" style="color: red">*</span></label>
+                    <div class="mb-10">
+                        <input type="radio" wire:model.debounce.300ms="type" value="Horse"  class="line-style"  />
+                        <label for="one" class="radio-label">Horse</label>
+                        <input type="radio" wire:model.debounce.300ms="type" value="Vehicle"  class="line-style"  />
+                        <label for="one" class="radio-label">Vehicle</label>
+                        <input type="radio" wire:model.debounce.300ms="type" value="Trailer"  class="line-style"  />
+                        <label for="one" class="radio-label">Trailer</label>
+                        <input type="radio" wire:model.debounce.300ms="type" value="Employee"  class="line-style"  />
+                        <label for="one" class="radio-label">Employee</label>
+                        <input type="radio" wire:model.debounce.300ms="type" value="Other"  class="line-style"  />
+                        <label for="one" class="radio-label">Other</label>
+                    </div>  
+                    
+                    @if (isset($type))
+                        @if ($type != "Other")
+                            <div class="row">
+                                <div class="col-md-6">
+                                    @if ($type == "Horse")
                                         <div class="form-group">
                                             <label for="exampleInputEmail13">Horses<span class="required" style="color: red">*</span></label>
                                             <input type="text" wire:model.debounce.300ms="searchHorse" placeholder="Search horse..." class="form-control" >
@@ -204,9 +204,7 @@
                                             </select>
                                             @error('selectedHorse') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
-                                    </div>
-                                @elseif ($type == "Vehicle")
-                                    <div class="col-md-6">
+                                    @elseif ($type == "Vehicle")
                                         <div class="form-group">
                                             <label for="exampleInputEmail13">Vehicles<span class="required" style="color: red">*</span></label>
                                             <input type="text" wire:model.debounce.300ms="searchVehicle" placeholder="Search vehicle..." class="form-control" >
@@ -218,9 +216,7 @@
                                             </select>
                                             @error('selectedVehicle') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
-                                    </div>
-                                @elseif ($type == "Trailer")
-                                    <div class="col-md-6">
+                                    @elseif ($type == "Trailer")
                                         <div class="form-group">
                                             <label for="exampleInputEmail13">Trailers<span class="required" style="color: red">*</span></label>
                                             <input type="text" wire:model.debounce.300ms="searchTrailer" placeholder="Search trailer..." class="form-control" >
@@ -232,9 +228,7 @@
                                             </select>
                                             @error('selectedTrailer') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
-                                    </div>
-                                @elseif ($type == "Employee")
-                                    <div class="col-md-6">
+                                    @elseif ($type == "Employee")
                                         <div class="form-group">
                                             <label for="exampleInputEmail13">Employees<span class="required" style="color: red">*</span></label>
                                             <input type="text" wire:model.debounce.300ms="searchEmployee" placeholder="Search employee..." class="form-control" >
@@ -246,61 +240,54 @@
                                             </select>
                                             @error('selectedEmployee') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
-                                    </div>
-                                @elseif ($type == "Other")
-                                <div class="col-md-6">
-                                    <label for="exampleInputEmail13">Reminder For ?<span class="required" style="color: red">*</span></label>
-                                    <div class="mb-10">
-                                        <input type="radio" wire:model.debounce.300ms="type" value="Horse"  class="line-style"  />
-                                        <label for="one" class="radio-label">Horse</label>
-                                        <input type="radio" wire:model.debounce.300ms="type" value="Vehicle"  class="line-style"  />
-                                        <label for="one" class="radio-label">Vehicle</label>
-                                        <input type="radio" wire:model.debounce.300ms="type" value="Trailer"  class="line-style"  />
-                                        <label for="one" class="radio-label">Trailer</label>
-                                        <br>
-                                        <input type="radio" wire:model.debounce.300ms="type" value="Employee"  class="line-style"  />
-                                        <label for="one" class="radio-label">Employee</label>
-                                        <input type="radio" wire:model.debounce.300ms="type" value="Other"  class="line-style"  />
-                                        <label for="one" class="radio-label">Other</label>
-                                    </div>  
+                                    @endif
                                 </div>
-                                @endif
-                            @endif
-                      
-                        <div class="col-md-6">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="name">Reminder Item(s)<span class="required" style="color: red">*</span></label>
+                                        <select wire:model.lazy="reminder_item_id" class="form-control" required>
+                                            <option value="">Select Reminder</option>
+                                        @foreach ($reminder_items as $reminder_item)
+                                            <option value="{{ $reminder_item->id }}">{{ $reminder_item->name }}</option>
+                                        @endforeach
+                                        </select>
+                                        <small>  <a href="{{ route('reminder_items.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Reminder Item</a></small> 
+                                        @error('reminder_item_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                            </div>
+                        @else
                             <div class="form-group">
                                 <label for="name">Reminder Item(s)<span class="required" style="color: red">*</span></label>
                                 <select wire:model.lazy="reminder_item_id" class="form-control" required>
                                     <option value="">Select Reminder</option>
-                                   @foreach ($reminder_items as $reminder_item)
-                                       <option value="{{ $reminder_item->id }}">{{ $reminder_item->name }}</option>
-                                   @endforeach
+                                    @foreach ($reminder_items as $reminder_item)
+                                        <option value="{{ $reminder_item->id }}">{{ $reminder_item->name }}</option>
+                                    @endforeach
                                 </select>
                                 <small>  <a href="{{ route('reminder_items.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Reminder Item</a></small> 
                                 @error('reminder_item_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
-                        </div>
-                    </div>
+                        @endif
+                    @endif
                     <div class="row">
-                    
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="number">Issued@<span class="required" style="color: red">*</span></label>
-                            <input type="datetime-local" class="form-control"  wire:model.debounce.300ms="issued_at" placeholder="Issue Date" required>
-                            @error('issued_at') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="number">Issued@<span class="required" style="color: red">*</span></label>
+                                <input type="datetime-local" class="form-control"  wire:model.debounce.300ms="issued_at" placeholder="Issue Date" required>
+                                @error('issued_at') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="number">Expires@<span class="required" style="color: red">*</span></label>
+                                <input type="datetime-local" class="form-control"  wire:model.debounce.300ms="expires_at" placeholder="Expiry Date" required>
+                                @error('expires_at') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="number">Expires@<span class="required" style="color: red">*</span></label>
-                            <input type="datetime-local" class="form-control"  wire:model.debounce.300ms="expires_at" placeholder="Expiry Date" required>
-                            @error('expires_at') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                        </div>
-                    </div>
-                    
-                </div>
                 <input type="checkbox" wire:model.debounce.300ms="cc"   class="line-style" />
-                <label for="one" class="radio-label">Send notifications to your copy list</label>
+                <label for="one" class="radio-label">Send reminders to my copy list</label>
    
                 </div>
                 <div class="modal-footer">
@@ -322,30 +309,25 @@
                 </div>
                 <form wire:submit.prevent="update()" >
                 <div class="modal-body">
-                    <div class="row">
-                        @if (!isset($type))
-                        <div class="col-md-6">
-                            {{-- <h5 class="underline mt-30">Reminder For ?</h5> --}}
-                            <label for="exampleInputEmail13">Reminder For ?<span class="required" style="color: red">*</span></label>
-                            <div class="mb-10">
-                                <input type="radio" wire:model.debounce.300ms="type" value="Horse"  class="line-style"  />
-                                <label for="one" class="radio-label">Horse</label>
-                                <input type="radio" wire:model.debounce.300ms="type" value="Vehicle"  class="line-style"  />
-                                <label for="one" class="radio-label">Vehicle</label>
-                                <input type="radio" wire:model.debounce.300ms="type" value="Trailer"  class="line-style"  />
-                                <label for="one" class="radio-label">Trailer</label>
-                                <br>
-                                <input type="radio" wire:model.debounce.300ms="type" value="Employee"  class="line-style"  />
-                                <label for="one" class="radio-label">Employee</label>
-                                <input type="radio" wire:model.debounce.300ms="type" value="Other"  class="line-style"  />
-                                <label for="one" class="radio-label">Other</label>
-                            </div>  
-                        </div>
-                        @endif
-                        
-                            @if (isset($type))
-                                @if ($type == "Horse")
-                                    <div class="col-md-6">
+                   <label for="exampleInputEmail13">Reminder For ?<span class="required" style="color: red">*</span></label>
+                    <div class="mb-10">
+                        <input type="radio" wire:model.debounce.300ms="type" value="Horse"  class="line-style"  />
+                        <label for="one" class="radio-label">Horse</label>
+                        <input type="radio" wire:model.debounce.300ms="type" value="Vehicle"  class="line-style"  />
+                        <label for="one" class="radio-label">Vehicle</label>
+                        <input type="radio" wire:model.debounce.300ms="type" value="Trailer"  class="line-style"  />
+                        <label for="one" class="radio-label">Trailer</label>
+                        <input type="radio" wire:model.debounce.300ms="type" value="Employee"  class="line-style"  />
+                        <label for="one" class="radio-label">Employee</label>
+                        <input type="radio" wire:model.debounce.300ms="type" value="Other"  class="line-style"  />
+                        <label for="one" class="radio-label">Other</label>
+                    </div>  
+                    
+                    @if (isset($type))
+                        @if ($type != "Other")
+                            <div class="row">
+                                <div class="col-md-6">
+                                    @if ($type == "Horse")
                                         <div class="form-group">
                                             <label for="exampleInputEmail13">Horses<span class="required" style="color: red">*</span></label>
                                             <input type="text" wire:model.debounce.300ms="searchHorse" placeholder="Search horse..." class="form-control" >
@@ -357,9 +339,7 @@
                                             </select>
                                             @error('selectedHorse') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
-                                    </div>
-                                @elseif ($type == "Vehicle")
-                                    <div class="col-md-6">
+                                    @elseif ($type == "Vehicle")
                                         <div class="form-group">
                                             <label for="exampleInputEmail13">Vehicles<span class="required" style="color: red">*</span></label>
                                             <input type="text" wire:model.debounce.300ms="searchVehicle" placeholder="Search vehicle..." class="form-control" >
@@ -371,9 +351,7 @@
                                             </select>
                                             @error('selectedVehicle') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
-                                    </div>
-                                @elseif ($type == "Trailer")
-                                    <div class="col-md-6">
+                                    @elseif ($type == "Trailer")
                                         <div class="form-group">
                                             <label for="exampleInputEmail13">Trailers<span class="required" style="color: red">*</span></label>
                                             <input type="text" wire:model.debounce.300ms="searchTrailer" placeholder="Search trailer..." class="form-control" >
@@ -385,9 +363,7 @@
                                             </select>
                                             @error('selectedTrailer') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
-                                    </div>
-                                @elseif ($type == "Employee")
-                                    <div class="col-md-6">
+                                    @elseif ($type == "Employee")
                                         <div class="form-group">
                                             <label for="exampleInputEmail13">Employees<span class="required" style="color: red">*</span></label>
                                             <input type="text" wire:model.debounce.300ms="searchEmployee" placeholder="Search employee..." class="form-control" >
@@ -399,41 +375,36 @@
                                             </select>
                                             @error('selectedEmployee') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
-                                    </div>
-                                @elseif ($type == "Other")
-                                <div class="col-md-6">
-                                    <label for="exampleInputEmail13">Reminder For ?<span class="required" style="color: red">*</span></label>
-                                    <div class="mb-10">
-                                        <input type="radio" wire:model.debounce.300ms="type" value="Horse"  class="line-style"  />
-                                        <label for="one" class="radio-label">Horse</label>
-                                        <input type="radio" wire:model.debounce.300ms="type" value="Vehicle"  class="line-style"  />
-                                        <label for="one" class="radio-label">Vehicle</label>
-                                        <input type="radio" wire:model.debounce.300ms="type" value="Trailer"  class="line-style"  />
-                                        <label for="one" class="radio-label">Trailer</label>
-                                        <br>
-                                        <input type="radio" wire:model.debounce.300ms="type" value="Employee"  class="line-style"  />
-                                        <label for="one" class="radio-label">Employee</label>
-                                        <input type="radio" wire:model.debounce.300ms="type" value="Other"  class="line-style"  />
-                                        <label for="one" class="radio-label">Other</label>
-                                    </div>  
+                                    @endif
                                 </div>
-                                @endif
-                            @endif
-                      
-                        <div class="col-md-6">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="name">Reminder Item(s)<span class="required" style="color: red">*</span></label>
+                                        <select wire:model.lazy="reminder_item_id" class="form-control" required>
+                                            <option value="">Select Reminder</option>
+                                        @foreach ($reminder_items as $reminder_item)
+                                            <option value="{{ $reminder_item->id }}">{{ $reminder_item->name }}</option>
+                                        @endforeach
+                                        </select>
+                                        <small>  <a href="{{ route('reminder_items.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Reminder Item</a></small> 
+                                        @error('reminder_item_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                            </div>
+                        @else
                             <div class="form-group">
                                 <label for="name">Reminder Item(s)<span class="required" style="color: red">*</span></label>
                                 <select wire:model.lazy="reminder_item_id" class="form-control" required>
                                     <option value="">Select Reminder</option>
-                                   @foreach ($reminder_items as $reminder_item)
-                                       <option value="{{ $reminder_item->id }}">{{ $reminder_item->name }}</option>
-                                   @endforeach
+                                    @foreach ($reminder_items as $reminder_item)
+                                        <option value="{{ $reminder_item->id }}">{{ $reminder_item->name }}</option>
+                                    @endforeach
                                 </select>
                                 <small>  <a href="{{ route('reminder_items.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Reminder Item</a></small> 
                                 @error('reminder_item_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
-                        </div>
-                    </div>
+                        @endif
+                    @endif
                     <div class="row">
                     
                     <div class="col-md-6">
@@ -451,6 +422,8 @@
                         </div>
                     </div>
                         </div>
+                <input type="checkbox" wire:model.debounce.300ms="cc"   class="line-style" />
+                <label for="one" class="radio-label">Send reminders to my copy list</label>
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">

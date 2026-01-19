@@ -115,6 +115,8 @@
                         </div>
                     </div>
                         </div>
+                         <input type="checkbox" wire:model.debounce.300ms="cc.0"   class="line-style" />
+                            <label for="one" class="radio-label">Send reminders to my copy list</label>
                         @foreach ($inputs as $key => $value)
                         <div class="row">
                             <div class="col-md-4">
@@ -149,7 +151,10 @@
                                 </div>
                             </div>
                                 </div>
+                            <input type="checkbox" wire:model.debounce.300ms="cc.{{$value}}"   class="line-style" />
+                            <label for="one" class="radio-label">Send reminders to my copy list</label>
                         @endforeach
+                       
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="form-group">
@@ -178,33 +183,35 @@
                 <form wire:submit.prevent="update()" >
                 <div class="modal-body">
                     <div class="row">
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label for="name">Reminder Item(s)<span class="required" style="color: red">*</span></label>
-                            <select wire:model.lazy="reminder_item_id" class="form-control" required>
-                                <option value="">Select Reminder</option>
-                               @foreach ($reminder_items as $reminder_item)
-                                   <option value="{{ $reminder_item->id }}">{{ $reminder_item->name }}</option>
-                               @endforeach
-                            </select>
-                            @error('reminder_item_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="name">Reminder Item(s)<span class="required" style="color: red">*</span></label>
+                                <select wire:model.lazy="reminder_item_id" class="form-control" required>
+                                    <option value="">Select Reminder</option>
+                                @foreach ($reminder_items as $reminder_item)
+                                    <option value="{{ $reminder_item->id }}">{{ $reminder_item->name }}</option>
+                                @endforeach
+                                </select>
+                                @error('reminder_item_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="number">Issued@<span class="required" style="color: red">*</span></label>
+                                <input type="datetime-local" class="form-control"  wire:model.debounce.300ms="issued_at" placeholder="Issue Date" required>
+                                @error('issued_at') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="number">Expires@<span class="required" style="color: red">*</span></label>
+                                <input type="datetime-local" class="form-control"  wire:model.debounce.300ms="expires_at" placeholder="Expiry Date" required>
+                                @error('expires_at') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label for="number">Issued@<span class="required" style="color: red">*</span></label>
-                            <input type="datetime-local" class="form-control"  wire:model.debounce.300ms="issued_at" placeholder="Issue Date" required>
-                            @error('issued_at') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label for="number">Expires@<span class="required" style="color: red">*</span></label>
-                            <input type="datetime-local" class="form-control"  wire:model.debounce.300ms="expires_at" placeholder="Expiry Date" required>
-                            @error('expires_at') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                        </div>
-                    </div>
-                        </div>
+                    <input type="checkbox" wire:model.debounce.300ms="cc"   class="line-style" />
+                    <label for="one" class="radio-label">Send reminders to my copy list</label>
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">

@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use App\Models\Company;
 use App\Models\Fitness;
+use App\Models\ReminderCopy;
 use App\Models\ReminderItem;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -24,13 +25,16 @@ class SendReminderEmails extends Mailable implements ShouldQueue
     public $fitness;
     public $reminder_item;
     public $user;
+    public $copies;
 
-    public function __construct(Fitness $fitness)
+    public function __construct(Fitness $fitness, $copies)
     {
         $this->company = $fitness->company;
         $this->fitness = $fitness;
         $this->reminder_item = ReminderItem::find($fitness->reminder_item_id);
         $this->user = $fitness->user;
+        $this->copies = $copies;
+      
     }
 
     /**
@@ -41,10 +45,14 @@ class SendReminderEmails extends Mailable implements ShouldQueue
     public function build()
     {
         $subject = ucfirst($this->reminder_item->name)." Reminder: expires on {$this->fitness->expires_at->format('d M Y')}";
-
+        $cc = $this->copies
+            ->filter(fn ($c) => filled($c->email))
+            ->map(fn ($c) => ['email' => $c->email, 'name' => $c->name])
+            ->values()
+            ->all();
         return $this->view('emails.reminders')
             ->from($this->company->noreply, $this->company->name ?? null)
             ->subject($subject)
-            ->cc($this->company->email);
+            ->cc($cc);
             }
 }

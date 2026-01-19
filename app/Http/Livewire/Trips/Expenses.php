@@ -324,6 +324,10 @@ class Expenses extends Component
                     }
                     $bill->bill_date = $this->trip->start_date;
                     $bill->currency_id = $trip_expense->currency_id;
+                    if($trip_expense->currency_id != Auth::user()->employee->company->currency_id){
+                        $bill->exchange_rate = $trip_expense ->exchange_rate;
+                        $bill->exchange_amount = $trip_expense->exchange_amount;
+                    }
                     $bill->total = $trip_expense->amount;
                     $bill->subtotal = $trip_expense->amount;
                     $bill->balance = $trip_expense->amount;
@@ -340,6 +344,10 @@ class Expenses extends Component
                         $bill_expense->account_type_id = $account->account_type->id;
                     }
                     $bill_expense->qty = 1;
+                    if($this->selectedCurrency[$key] != Auth::user()->employee->company->currency_id){
+                        $bill_expense->exchange_rate = $this->exchange_rate[$key];
+                        $bill_expense->exchange_amount = $this->exchange_amount[$key];
+                    }
                     $bill_expense->amount = $trip_expense->amount;
                     $bill_expense->subtotal = $trip_expense->amount;
                     $bill_expense->subtotal_incl = $trip_expense->amount;
@@ -484,6 +492,10 @@ class Expenses extends Component
                     $bill->driver_id = $this->trip->driver_id;
                     $bill->bill_date = $this->trip->start_date;
                     $bill->currency_id = $this->trip->currency_id;
+                    if($trip_expense->currency_id != Auth::user()->employee->company->currency_id){
+                        $bill->exchange_rate = $trip_expense ->exchange_rate;
+                        $bill->exchange_amount = $trip_expense->exchange_amount;
+                    }
                     $bill->subtotal = $trip_expense->amount;
                     $bill->total = $trip_expense->amount;
                     $bill->balance = $trip_expense->amount;
@@ -496,6 +508,10 @@ class Expenses extends Component
                     $bill_expense->currency_id = $bill->currency_id;
                     $bill_expense->expense_id = $trip_expense->expense_id;
                     $bill_expense->qty = 1;
+                    if($trip_expense->currency_id != Auth::user()->employee->company->currency_id){
+                        $bill_expense->exchange_rate = $trip_expense ->exchange_rate;
+                        $bill_expense->exchange_amount = $trip_expense->exchange_amount;
+                    }
                     $bill_expense->amount = $trip_expense->amount;
                     $bill_expense->subtotal = $trip_expense->amount;
                     $bill_expense->subtotal_incl = $trip_expense->amount;

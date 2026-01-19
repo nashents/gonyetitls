@@ -59,6 +59,7 @@ class Index extends Component
     public $searchVehicle;
     public $searchTrailer;
     public $searchEmployee;
+    public $cc;
     
     protected $queryString = ['search','searchVehicle','searchHorse','searchTrailer','searchEmployee'];
 
@@ -82,6 +83,7 @@ class Index extends Component
         $this->reminder_item_id = "" ;
         $this->issued_at = "";
         $this->expires_at = "" ;
+        $this->cc = "";
         $this->inputs = [];
     }
 
@@ -125,6 +127,7 @@ class Index extends Component
             $fitness->employee_id = $this->selectedEmployee ? $this->selectedEmployee : Null;
             $fitness->reminder_item_id = $this->reminder_item_id ? $this->reminder_item_id : Null;
             $fitness->type = $this->type ;
+            $fitness->cc = $this->cc ;
     
             $fitness->issued_at = Carbon::create($this->issued_at)->toDateTimeString();
             $fitness->expires_at = Carbon::create($this->expires_at)->toDateTimeString();
@@ -177,10 +180,24 @@ class Index extends Component
             $this->third_reminder_at = $this->third_reminder_at;
             $this->third_reminder_at_status = $this->third_reminder_at_status;
             $this->status = $fitness->status;
-            $this->selectedHorse = $fitness->horse_id;
-            $this->selectedVehicle = $fitness->vehicle_id;
-            $this->selectedTrailer = $fitness->trailer_id;
-            $this->selectedEmployee = $fitness->employee_id;
+            $this->cc = $fitness->cc;
+
+            if ($fitness->horse_id) {
+                $this->selectedHorse = $fitness->horse_id;
+                $this->type = 'Horse';
+            }elseif ($fitness->vehicle_id) {
+                $this->selectedVehicle = $fitness->vehicle_id;
+                $this->type = 'Vehicle';
+            }elseif ($fitness->trailer_id) {
+                $this->selectedTrailer = $fitness->trailer_id;
+                $this->type = 'Trailer';
+            }elseif ($fitness->employee_id) {
+                $this->selectedEmployee = $fitness->employee_id;
+                $this->type = 'Employee';
+           
+            }else{
+                $this->type = 'Other';
+            }
             $this->fitness_id = $fitness->id;
             $this->dispatchBrowserEvent('show-fitnessEditModal');
     
@@ -200,6 +217,7 @@ class Index extends Component
                     $fitness->reminder_item_id = $this->reminder_item_id;
                     $fitness->issued_at =$this->issued_at;
                     $fitness->expires_at = $this->expires_at;
+                    $fitness->cc = $this->cc ;
                     $fitness->expires_at = Carbon::create($this->expires_at)->toDateTimeString();
                     $fitness->first_reminder_at = Carbon::parse($this->expires_at)->subDays(14);
                     $fitness->first_reminder_at_status = $this->first_reminder_at_status;

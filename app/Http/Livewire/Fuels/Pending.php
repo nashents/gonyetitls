@@ -266,6 +266,7 @@ class Pending extends Component
                  
     
                     $bill = new Bill;
+
                     if($fuel->trip){
                         $bill->trip_id = $fuel->trip_id;
                         $trip_expense = $fuel->trip_expense;
@@ -292,17 +293,16 @@ class Pending extends Component
                         $bill->to_be_paid = False;
                     }
     
-                   
-                   
-                  
-                    
-    
                     $bill->fuel_id = $fuel->id;
                     $bill->bill_date = $fuel->date;
                     $bill->horse_id = $fuel->horse_id;
                     $bill->vehicle_id = $fuel->vehicle_id;
                     $bill->asset_id = $fuel->asset_id;
                     $bill->currency_id = $fuel->currency_id;
+                    if($fuel->currency_id != Auth::user()->employee->company->currency_id){
+                        $bill->exchange_rate = $fuel->exchange_rate;
+                        $bill->exchange_amount = $fuel->exchange_amount;
+                    }
                     $bill->subtotal = $fuel->amount;
                     $bill->total = $fuel->amount;
                     $bill->balance = $fuel->amount;
@@ -326,6 +326,10 @@ class Pending extends Component
                         $bill_expense->account_type_id = $account->account_type->id;
                     }
                     $bill_expense->qty = $fuel->quantity;
+                     if($fuel->currency_id != Auth::user()->employee->company->currency_id){
+                        $bill_expense->exchange_rate = $fuel->exchange_rate;
+                        $bill_expense->exchange_amount = $fuel->exchange_amount;
+                    }
                     $bill_expense->amount = $fuel->unit_price;
                     $bill_expense->subtotal = $fuel->amount;
                     $bill_expense->subtotal_incl = $fuel->amount;
@@ -565,6 +569,10 @@ class Pending extends Component
                     $bill->horse_id = $fuel->horse_id;
                     $bill->vehicle_id = $fuel->vehicle_id;
                     $bill->asset_id = $fuel->asset_id;
+                    if($fuel->currency_id != Auth::user()->employee->company->currency_id){
+                        $bill->exchange_rate = $fuel->exchange_rate;
+                        $bill->exchange_amount = $fuel->exchange_amount;
+                    }
                     $bill->subtotal = $fuel->amount;
                     $bill->total = $fuel->amount;
                     $bill->balance = $fuel->amount;
@@ -592,6 +600,10 @@ class Pending extends Component
                     $bill_expense->amount = $fuel->unit_price;
                     $bill_expense->subtotal = $fuel->amount;
                     $bill_expense->subtotal_incl = $fuel->amount;
+                    if($fuel->currency_id != Auth::user()->employee->company->currency_id){
+                        $bill_expense->exchange_rate = $fuel->exchange_rate;
+                        $bill_expense->exchange_amount = $fuel->exchange_amount;
+                    }
                     $bill_expense->save();
        
 

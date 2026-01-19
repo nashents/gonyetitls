@@ -76,7 +76,7 @@ Reminder | {{$company->name}}
                                         @endif
                                         
                                         <p style="margin:0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">
-											Renew your <strong>{{$fitness->name}}</strong> before
+											Renew your <strong>{{$fitness->reminder_item ? $fitness->reminder_item->name : ""}}</strong> before
 											<strong style="color: red">{{Carbon\Carbon::parse($fitness->expires_at)->format('d-m-Y')}}</strong> to avoid any inconveniences. <a href="{{$company->website}}/fitnesses/{{$fitness->id}}" target="_blank" style="color: blue"> Click me to take action</a>
 										</p>
                                     </td>

@@ -252,7 +252,7 @@
                                     <option value="{{ $customer->id }}">{{ $customer->name }} </option>                                        
                             @endforeach
                         </select>
-                        <small><a href="{{ route('customers.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Customer</a></small> 
+                        <small><a href="{{ route('customers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Customer</a></small> 
                             <a href="#" wire:click.prevent="refresh('customers')" class="float-end" style="float: right"><i class="fa fa-refresh"></i></a>
                         @error('selectedCustomer') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
@@ -494,11 +494,11 @@
                         <select class="form-control" wire:model.debounce.300ms="selectedCustomer" required>
                             <option value="">Select Customers</option>
                             @foreach ($customers as $customer)
-                                    <option value="{{ $customer->id }}">{{ $customer->name }} </option>                                        
+                                <option value="{{ $customer->id }}">{{ $customer->name }} </option>                                        
                             @endforeach
                         </select>
-                        <small><a href="#" data-toggle="modal" data-target="#customerModal"><i class="fa fa-plus-square-o"></i> New Customer</a></small> 
-                            <a href="#" wire:click.prevent="refresh('customers')" class="float-end" style="float: right"><i class="fa fa-refresh"></i></a>
+                        <small><a href="{{ route('customers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Customer</a></small> 
+                        <a href="#" wire:click.prevent="refresh('customers')" class="float-end" style="float: right"><i class="fa fa-refresh"></i></a>
                         @error('selectedCustomer') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
                     <div class="mb-10">
