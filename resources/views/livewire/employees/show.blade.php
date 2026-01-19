@@ -563,8 +563,9 @@
                                                     <i class="fa fa-bars"></i>
                                                     <span class="caret"></span>
                                                 </button>
+
                                                 <ul class="dropdown-menu">
-                                                    <li><a href="#" wire:click="removeDepartment({{ $department->id }})"><i class="fa fa-remove color-danger"></i>Remove</a></li>
+                                                    <li><a href="#" wire:click="showRemove({{ $department->id }})"><i class="fa fa-remove color-danger"></i>Remove</a></li>
                                                 </ul>
                                             </div>
                                             @include('employees.delete')
@@ -740,7 +741,7 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content bg-danger">
                 <div class="modal-body">
-                   <center> <strong>Are you sure you want to remove this Department?</strong> </center> 
+                   <center> <strong>Are you sure you want to remove this {{ $selected_department?->name }} Department?</strong> </center> 
                 </div>
                 <form wire:submit.prevent="removeDepartment()">
                 <div class="modal-footer no-border">

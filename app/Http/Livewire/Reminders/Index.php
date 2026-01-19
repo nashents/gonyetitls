@@ -3,6 +3,7 @@
 namespace App\Http\Livewire\Reminders;
 
 use Carbon\Carbon;
+use App\Models\User;
 use App\Models\Horse;
 use App\Models\Fitness;
 use App\Models\Trailer;
@@ -50,6 +51,9 @@ class Index extends Component
     public $selectedVehicle;
     public $employees;
     public $selectedEmployee;
+    public $user_id;
+    public $status;
+    public $reminder_copies;
 
     public $searchHorse;
     public $searchVehicle;
@@ -89,6 +93,11 @@ class Index extends Component
     }
     public function exportRemindersExcel(Excel $excel){
         return $excel->download(new RemindersExport, 'reminders_' .time().'.xlsx');
+    }
+
+    public function showCopies($id){
+        $user = User::find($id);
+        $this->reminder_copies = $user->reminder_copies;
     }
 
     public function mount(){

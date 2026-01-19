@@ -230,13 +230,29 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
         ]);
 
         // Reminders
-        $upsertModule($g, [
+         $m = $upsertModule($g, [
             'name' => 'Reminders',
             'slug' => 'reminders',
             'icon' => 'fas fa-bell',
-            'route_name' => 'reminders.index',
             'sort_order' => 30,
+              'visibility' => null,
         ]);
+     
+        $upsertSub($m, [
+            'name' => 'Manage Reminders',
+            'slug' => 'manage-reminders',
+            'icon' => 'fas fa-list',
+            'route_name' => 'reminders.index',
+            'sort_order' => 10,
+        ]);
+         $upsertSub($m, [
+            'name' => 'Reminder Copies',
+            'slug' => 'reminder-copies',
+            'icon' => 'fas fa-list',
+            'route_name' => 'reminders.copy',
+            'sort_order' => 20,
+        ]);
+
 
         // Inbox (was global)
         $upsertModule($g, [

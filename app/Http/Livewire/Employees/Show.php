@@ -36,6 +36,7 @@ class Show extends Component
     public $driver_allowance;
     public $pattern;
     public $department;
+    public $selected_department;
 
 
     public $inputs = [];
@@ -115,25 +116,65 @@ class Show extends Component
 
     public function showRemove($id){
         $this->department_id = $id;
-        $this->department = Department::find($id);
+        $this->selected_department = Department::find($id);
         $this->dispatchBrowserEvent('show-removeDepartmentModal');
     }
-    public function removeDepartment(){
+
+    public function removeDepartment()
+    {
+        if (! filled($this->department_id)) {
+            $this->dispatchBrowserEvent('alert', [
+                'type' => 'warning',
+                'message' => 'No department selected.'
+            ]);
+            return;
+        }
+
         $this->employee->departments()->detach($this->department_id);
-        $this->employee_departments = $this->employee->departments;
+
+        // Clear cached relationship and reload cleanly
+        $this->employee->unsetRelation('departments');
+       
+
         $this->dispatchBrowserEvent('hide-removeDepartmentModal');
-        $this->dispatchBrowserEvent('alert',[
-            'type'=>'success',
-            'message'=>"Department Removed Successfully!!"
+
+        $this->dispatchBrowserEvent('alert', [
+            'type' => 'success',
+            'message' => 'Department Removed Successfully!!'
         ]);
     }
-    public function addDepartments(){
-        $this->employee->departments()->attach($this->department_id);
-        $this->employee_departments = $this->employee->departments;
+
+
+    public function addDepartments()
+    {
+        // $this->department_id is an array like [0 => 8, 1 => 3, ...]
+        $ids = collect($this->department_id ?? [])
+            ->filter(fn ($v) => filled($v))     // remove null/empty
+            ->map(fn ($v) => (int) $v)          // cast to int
+            ->filter(fn ($v) => $v > 0)         // keep valid
+            ->unique()
+            ->values()
+            ->all();
+
+        if (empty($ids)) {
+            $this->dispatchBrowserEvent('alert', [
+                'type' => 'warning',
+                'message' => 'Please select at least one department.'
+            ]);
+            return;
+        }
+
+        // avoids duplicates in pivot
+        $this->employee->departments()->syncWithoutDetaching($ids);
+
+        // refresh for UI
+        $this->employee->unsetRelation('departments');
+        $this->employee_departments = $this->employee->departments()->get();
+
         $this->dispatchBrowserEvent('hide-departmentModal');
-        $this->dispatchBrowserEvent('alert',[
-            'type'=>'success',
-            'message'=>"Department(s) Added Successfully!!"
+        $this->dispatchBrowserEvent('alert', [
+            'type' => 'success',
+            'message' => 'Department(s) Added Successfully!!'
         ]);
     }
 
@@ -149,14 +190,14 @@ class Show extends Component
         if (isset($this->driver)) {
             return view('livewire.employees.show',[
                 'all_departments' => $this->all_departments,
-                'employee_departments' =>  $this->employee->departments,
+                'employee_departments' =>  $this->employee->departments()->get(),
                 'driver_allowances' => AllowanceDriver::where('driver_id', $this->driver->id)->orderBy('created_at','desc')->paginate(10),
                 'recoveries' => Recovery::where('driver_id', $this->driver->id)->orderBy('created_at','desc')->paginate(10)
             ]);
         }else{
             return view('livewire.employees.show',[
                 'all_departments' => $this->all_departments,
-                'employee_departments' =>  $this->employee->departments,
+                'employee_departments' =>  $this->employee->departments()->get(),
             ]);
         }
        

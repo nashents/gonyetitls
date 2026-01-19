@@ -297,7 +297,10 @@
                             @error('expires_at') <span class="error" style="color:red">{{ $message }}</span> @enderror
                         </div>
                     </div>
-                        </div>
+                    
+                </div>
+                <input type="checkbox" wire:model.debounce.300ms="cc"   class="line-style" />
+                <label for="one" class="radio-label">Send notifications to your copy list</label>
    
                 </div>
                 <div class="modal-footer">

@@ -131,6 +131,17 @@
 @stack('scripts')
     
     <script type="text/javascript">
+            window.addEventListener('show-reminderCopyModal', event => {
+                $('#reminderCopyModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-reminderCopyModal', event => {
+                $('#reminderCopyModal').modal('hide');
+            })
+    </script>
+
+    <script type="text/javascript">
             window.addEventListener('show-rentalDeleteModal', event => {
                 $('#rentalDeleteModal').modal('show');
             })

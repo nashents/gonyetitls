@@ -2,11 +2,14 @@
 
 namespace App\Http\Livewire\Invoices;
 
-use App\Models\Invoice;
 use App\Models\User;
+use App\Models\Invoice;
 use Livewire\Component;
+use App\Models\CashFlow;
+use App\Models\Container;
 use App\Models\TransportOrder;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
 
 class Approved extends Component
@@ -69,7 +72,7 @@ class Approved extends Component
             $container->update();
 
             $cashflow = new CashFlow;
-            $cashflow->trip_id = $trip->id;
+            $cashflow->trip_id = $this->trip->id;
             $cashflow->user_id = Auth::user()->id;
             $cashflow->horse_id = $invoice->horse_id;
             $cashflow->invoice_id = $invoice->id;
@@ -107,8 +110,8 @@ class Approved extends Component
                 'checked_by'=> $this->checked_by,
                 'collection_point'=> $this->collection_point,
                 'delivery_point'=> $this->delivery_point,
-                'invoice_type'=> $invoice_type,
-                'quantity'=> $quantity,
+                'invoice_type'=> $this->invoice_type,
+                'quantity'=> $this->quantity,
                 'from'=> 'no-reply@tinmac.com',
                 'subject'=> 'Auto generated Invoice confirmation'
 

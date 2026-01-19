@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Models\Reminder;
 use Illuminate\Http\Request;
 
@@ -15,6 +16,10 @@ class ReminderController extends Controller
     public function index()
     {
         return view('reminders.index');
+    }
+    public function copy()
+    {   
+        return view('reminders.copy');
     }
 
     /**

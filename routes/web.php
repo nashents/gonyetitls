@@ -473,6 +473,8 @@ Route::get('breakdowns/{driver}/driver/','DriverController@breakdowns')->name('d
 Route::get('goods-received/tyres/','GoodsReceivedController@tyres')->name('goods_receiveds.tyres');
 Route::get('goods-received/assets/','GoodsReceivedController@assets')->name('goods_receiveds.assets');
 
+Route::get('reminders/copy/','ReminderController@copy')->name('reminders.copy');
+
 
 Route::get('horses/{horse}/edit','HorseController@edit')->name('horses.edit')->withTrashed();
 Route::resource('ticket_requests','TicketRequestController');
