@@ -1,4 +1,5 @@
 <div>
+    <div id="print-area">
     <div id="invoice">
         <x-loading/>
 
@@ -10,10 +11,7 @@
                     <i class="fa fa-arrow-left" style="color:black"></i> Back
                 </button>
 
-                <a href="{{ route('horses.statement.print', ['selectedHorse' => $selectedHorse, 'from' => $from, 'to' => $to]) }}"
-                   class="btn btn-default border-primary btn-wide btn-rounded">
-                    <i class="fa fa-print" style="color:black"></i> Print
-                </a>
+                <a href="javascript:void(0)" onclick="printSection()" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-print" style="color: black"></i> Print</a>
             </div>
             <hr>
         </div>
@@ -329,5 +327,6 @@
             {{-- DO NOT DELETE THIS div. It forces footer at bottom --}}
             <div></div>
         </div>
+    </div>
     </div>
 </div>
