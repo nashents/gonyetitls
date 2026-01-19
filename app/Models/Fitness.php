@@ -45,6 +45,19 @@ class Fitness extends Model  implements Auditable
         return $this->belongsTo('App\Models\Trailer');
     }
 
+    protected $casts = [
+        'expires_at'               => 'datetime',
+        'first_reminder_at'        => 'datetime',
+        'second_reminder_at'       => 'datetime',
+        'third_reminder_at'        => 'datetime',
+
+        'first_reminder_at_status' => 'boolean',
+        'second_reminder_at_status'=> 'boolean',
+        'third_reminder_at_status' => 'boolean',
+        'closed'                   => 'boolean',
+        'cc'                       => 'boolean',
+    ];
+
     protected $fillable = [
         'user_id',
         'vehicle_id',

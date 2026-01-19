@@ -26,7 +26,7 @@ Reminder | {{$company->name}}
                                     <td>
                                         @if ($fitness->horse)
                                         	<p style="margin:0;font-size:17px;line-height:24px;font-family:Arial,sans-serif;">
-												Your horse <strong>{{$fitness->name}}</strong> issued on {{Carbon\Carbon::parse($fitness->issued_at)->format('d-m-Y')}},
+												Your horse <strong>{{$fitness->reminder_item ? $fitness->reminder_item->name : ""}}</strong> issued on {{Carbon\Carbon::parse($fitness->issued_at)->format('d-m-Y')}},
 											 </p>
                                         	<p style="margin:0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">
 												    for <strong> {{$fitness->horse->horse_make->name ?? ''}} {{$fitness->horse->horse_model->name ?? ''}} </strong> with registration number 
@@ -39,7 +39,7 @@ Reminder | {{$company->name}}
                                         @endif
                                         @if ($fitness->vehicle)
 											<p style="margin:0;font-size:17px;line-height:24px;font-family:Arial,sans-serif;">
-												Your vehicle <strong>{{$fitness->name}}</strong> issued on {{Carbon\Carbon::parse($fitness->issued_at)->format('d-m-Y')}},
+												Your vehicle <strong>{{$fitness->reminder_item ? $fitness->reminder_item->name : ""}}</strong> issued on {{Carbon\Carbon::parse($fitness->issued_at)->format('d-m-Y')}},
 											</p>
 											<p style="margin:0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">
 												 	for <strong> {{$fitness->vehicle->vehicle_make->name ?? ''}} {{$fitness->vehicle->vehicle_model->name ?? ''}} </strong> with registration number 
@@ -52,7 +52,7 @@ Reminder | {{$company->name}}
 										@endif
                                         @if ($fitness->trailer)
 											<p style="margin:0;font-size:17px;line-height:24px;font-family:Arial,sans-serif;">
-												Your trailer <strong>{{$fitness->name}}</strong> issued on {{Carbon\Carbon::parse($fitness->issued_at)->format('d-m-Y')}},
+												Your trailer <strong>{{$fitness->reminder_item ? $fitness->reminder_item->name : ""}}</strong> issued on {{Carbon\Carbon::parse($fitness->issued_at)->format('d-m-Y')}},
 											</p>
 											<p style="margin:0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">
 												 	for <strong> {{$fitness->trailer->trailer_make->name ?? ''}} {{$fitness->trailer->trailer_model->name ?? ''}} </strong> with registration number 
@@ -65,7 +65,7 @@ Reminder | {{$company->name}}
 										@endif
                                         @if ($fitness->employee)
 											<p style="margin:0;font-size:17px;line-height:24px;font-family:Arial,sans-serif;">
-												Your <strong>{{$fitness->name}}</strong> issued on {{Carbon\Carbon::parse($fitness->issued_at)->format('d-m-Y')}},
+												Your <strong>{{$fitness->reminder_item ? $fitness->reminder_item->name : ""}}</strong> issued on {{Carbon\Carbon::parse($fitness->issued_at)->format('d-m-Y')}},
 											</p>
 											<p style="margin:0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">
 													for <strong>

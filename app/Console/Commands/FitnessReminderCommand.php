@@ -80,18 +80,21 @@ class FitnessReminderCommand extends Command
 
             $fitness = Fitness::find($fitness->id); // Re-fetch to avoid mutating collection items
             
-            // Determine what is due (and still unsent)
-            $dueFirst  = $fitness->first_reminder_at  && $fitness->first_reminder_at->lte($today)  && ! $fitness->first_reminder_at_status;
-            $dueSecond = $fitness->second_reminder_at && $fitness->second_reminder_at->lte($today) && ! $fitness->second_reminder_at_status;
-            $dueThird  = $fitness->third_reminder_at  && $fitness->third_reminder_at->lte($today)  && ! $fitness->third_reminder_at_status;
+            $first  = $fitness->first_reminder_at  ? Carbon::parse($fitness->first_reminder_at)  : null;
+            $second = $fitness->second_reminder_at ? Carbon::parse($fitness->second_reminder_at) : null;
+            $third  = $fitness->third_reminder_at  ? Carbon::parse($fitness->third_reminder_at)  : null;
+
+            $dueFirst  = $first  && $first->lte($today)  && ! $fitness->first_reminder_at_status;
+            $dueSecond = $second && $second->lte($today) && ! $fitness->second_reminder_at_status;
+            $dueThird  = $third  && $third->lte($today)  && ! $fitness->third_reminder_at_status;
 
             // Nothing due? Skip (extra safety)
             if (! ($dueFirst || $dueSecond || $dueThird)) {
                 continue;
             }
-
+          
             if($fitness->cc){
-                $copies = ReminderCopy::where('user_id', $fitness->user_id)->get();
+                $copies = ReminderCopy::where('user_id', $fitness->user_id)->where('status', true)->get();
             } else {
                 $copies = [];
             }
@@ -99,6 +102,7 @@ class FitnessReminderCommand extends Command
             // Send email (ideally queue this - see note below)
             $email = $fitness->user?->email;
             if ($email) {
+              
                 Mail::to($email)->send(new SendReminderEmails($fitness, $copies));
             }
 
