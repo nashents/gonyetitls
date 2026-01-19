@@ -1516,6 +1516,7 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
         $bookingManageVis = $any([
             $all(['hasWorkshopDeptHead']),
             $all(['isAdmin','inWorkshop']),
+            $all(['isAdmin','inTransport']),
             $all(['isSuperAdmin']),
         ]);
         $upsertSub($m, ['name'=>'Pending Bookings','slug'=>'pending-bookings','icon'=>'fas fa-clock','route_name'=>'bookings.pending','sort_order'=>30,'badge_key'=>'bookings_pending_count','visibility'=>$bookingManageVis]);
