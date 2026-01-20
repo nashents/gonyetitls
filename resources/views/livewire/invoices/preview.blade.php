@@ -68,7 +68,10 @@
                         </div>
                     
                         <div style="padding-top: 25px; padding-bottom:15px">
-                            <center><h2>{{ $invoice->fiscalize == TRUE ? " FISCAL TAX INVOICE" : "INVOICE"}} </h2>  </center>
+                            <center>
+                                <h2>{{ $invoice->fiscalize == TRUE ? " FISCAL TAX INVOICE" : $company->invoice_title }} </h2>
+                                <p>{{$company->invoice_subheading}}</p>
+                            </center>
                         </div>
                 
                     </header>
@@ -135,10 +138,19 @@
                             <thead>
                                 <tr>
                                     <th class="text-center"> <strong>HS Code</strong></th>
-                                    <th class="text-center"> <strong>Description</strong></th>
-                                    <th class="text-right"><strong>Qty</strong></th>
-                                    <th class="text-right"><strong>Price</strong></th>
-                                    <th class="text-right"><strong>Total</strong><small>(Excl)</small></th>
+                                    @if ($company->hide_description == False)
+                                         <th class="text-center"> <strong>{{$company->items_column}}</strong></th>
+                                    @endif
+                                    
+                                    @if ($company->hide_quantity == False)
+                                        <th class="text-right"><strong>{{$company->units_column}}</strong></th>
+                                    @endif
+                                    @if ($company->hide_price == False)
+                                        <th class="text-right"><strong>{{$company->price_column}}</strong></th>
+                                    @endif
+                                    @if ($company->hide_amount == False)
+                                         <th class="text-right"><strong>{{$company->amount_column}}</strong><small>(Excl)</small></th>
+                                    @endif
                                     <th class="text-right"><strong>VAT Amount</strong></th>
                                     <th class="text-right"><strong>Total</strong><small>(Incl)</small></th>
                                 </tr>
@@ -155,27 +167,35 @@
                                                 {{$tax->hs_code}}
                                             @endif
                                         </td>
-                                        <td class="text-center">
-                                            @if ($invoice_item->product)
-                                               {{$invoice_item->product ? $invoice_item->product->name : ""}}<br>
-                                            @elseif ($invoice_item->trip)
-                                                {{$invoice_item->trip ? $invoice_item->trip->trip_number : ""}}<br>
-                                            @elseif ($invoice_item->rental)
-                                                {{$invoice_item->rental ? $invoice_item->rental->car_rental_number : ""}}<br>
-                                            @endif
-                                             {{$invoice_item->description}}
-                                        </td>
-                                        <td class="unit text-right"> {{$invoice_item->qty}}</td>
-                                        <td class="unit text-right">
-                                            @if ($invoice_item->amount)
-                                            {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format($invoice_item->amount,2)}}        
-                                            @endif
-                                        </td>
-                                        <td class="unit text-right">
-                                            @if ($invoice_item->subtotal)
-                                                {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format($invoice_item->subtotal,2)}}
-                                            @endif
-                                        </td>
+                                        @if ($company->hide_description == False)
+                                            <td class="text-center">
+                                                @if ($invoice_item->product)
+                                                {{$invoice_item->product ? $invoice_item->product->name : ""}}<br>
+                                                @elseif ($invoice_item->trip)
+                                                    {{$invoice_item->trip ? $invoice_item->trip->trip_number : ""}}<br>
+                                                @elseif ($invoice_item->rental)
+                                                    {{$invoice_item->rental ? $invoice_item->rental->car_rental_number : ""}}<br>
+                                                @endif
+                                                {{$invoice_item->description}}
+                                            </td>
+                                        @endif
+                                        @if ($company->hide_quantity == False)
+                                            <td class="unit text-right"> {{$invoice_item->qty}}</td>
+                                        @endif
+                                        @if ($company->hide_price == False)
+                                            <td class="unit text-right">
+                                                @if ($invoice_item->amount)
+                                                {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format($invoice_item->amount,2)}}        
+                                                @endif
+                                            </td>
+                                        @endif
+                                        @if ($company->hide_amount == False)
+                                            <td class="unit text-right">
+                                                @if ($invoice_item->subtotal)
+                                                    {{ $invoice->currency ? $invoice->currency->symbol : "" }}{{number_format($invoice_item->subtotal,2)}}
+                                                @endif
+                                            </td>
+                                        @endif
 
                                         <td class="unit text-right">
                                             @if (isset($invoice->tax_amount) && $invoice->tax_amount > 0)

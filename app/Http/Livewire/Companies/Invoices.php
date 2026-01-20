@@ -49,6 +49,22 @@ class Invoices extends Component
     public $color;
     public $vat;
     public $interest;
+    //columns
+    public $amount_column;
+    public $price_column;
+    public $units_column;
+    public $items_column;
+    public $hide_items;
+    public $hide_description;
+    public $hide_price;
+    public $hide_quantity;
+    public $hide_amount;
+    public $invoice_due_when;
+    public $quote_valid_until;
+    public $invoice_title;
+    public $invoice_subheading;
+    public $quotation_title;
+    public $quotation_subheading;
 
 
 
@@ -90,6 +106,21 @@ class Invoices extends Component
         $this->invoice_footer = $company->invoice_footer;
         $this->receipt_memo = $company->receipt_memo;
         $this->receipt_footer = $company->receipt_footer;
+        $this->hide_amount = $company->hide_amount;
+        $this->hide_description = $company->hide_description;
+        $this->hide_items = $company->hide_items;
+        $this->hide_quantity = $company->hide_quantity;
+        $this->hide_price = $company->hide_price;
+        $this->items_column = $company->items_column;
+        $this->price_column = $company->price_column;
+        $this->units_column = $company->units_column;
+        $this->amount_column = $company->amount_column;
+        $this->quotation_subheading = $company->quotation_subheading;
+        $this->quotation_title = $company->quotation_title;
+        $this->invoice_subheading = $company->invoice_subheading;
+        $this->invoice_title = $company->invoice_title;
+        $this->invoice_due_when = $company->invoice_due_when;
+        $this->quote_valid_until = $company->quote_valid_until;
     }
 
     public function update(){
@@ -128,6 +159,24 @@ class Invoices extends Component
         $company->invoice_footer = $this->invoice_footer;
         $company->receipt_memo = $this->receipt_memo;
         $company->receipt_footer = $this->receipt_footer;
+        $company->receipt_footer = $this->receipt_footer;
+        $company->receipt_footer = $this->receipt_footer;
+        $company->amount_column = $this->amount_column;
+        $company->items_column = $this->items_column;
+        $company->units_column = $this->units_column;
+        $company->price_column = $this->price_column;
+        $company->amount_column = $this->amount_column;
+        $company->hide_amount = $this->hide_amount;
+        $company->hide_description = $this->hide_description;
+        $company->hide_price = $this->hide_price;
+        $company->hide_items = $this->hide_items;
+        $company->hide_quantity = $this->hide_quantity;
+        $company->invoice_due_when = $this->invoice_due_when;
+        $company->quote_valid_until = $this->quote_valid_until;
+        $company->quotation_title = $this->quotation_title;
+        $company->quotation_subheading = $this->quotation_subheading;
+        $company->invoice_title = $this->invoice_title;
+        $company->invoice_subheading = $this->invoice_subheading;
         $company->update();
 
         $this->dispatchBrowserEvent('alert',[
