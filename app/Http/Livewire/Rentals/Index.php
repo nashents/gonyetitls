@@ -46,8 +46,8 @@ class Index extends Component
     public $transporter_rate_amount;
     public $transporter_agreement = false;
   
-    public $rate_amount;
-    public $deposit_amount;
+    public $rate_amount = 0;
+    public $deposit_amount = 0;
     public $currencies;
     public $selectedCurrency;
     public $notes;
@@ -128,8 +128,8 @@ class Index extends Component
         $this->selectedTransporter = null;
         $this->driver_id = null;
         $this->selectedVehicle = null;
-        $this->rate_amount = "";
-        $this->deposit_amount = "";
+        $this->rate_amount = 0;
+        $this->deposit_amount = 0;
         $this->notes = "";
         $this->pickup_at = "";
         $this->days = "";

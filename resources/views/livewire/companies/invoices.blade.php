@@ -72,6 +72,51 @@
                     </div>
                 </div>
             </div> 
+
+            <h5 class="underline mt-5">Invoice Column Settings</h5>
+            <div class="row">
+                <div class="col-md-3">
+                    <label for="items_column">Items</label>
+                    <select wire:model.debounce.300ms="items_column"  class="form-control">
+                        <option value="">Select Option</option>
+                        <option value="Items">Items</option>
+                        <option value="Products">Products</option>
+                        <option value="Services">Services</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    @error('items_column') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                </div>
+                <div class="col-md-3">
+                    <label for="items_column">Units</label>
+                    <select wire:model.debounce.300ms="units_column"  class="form-control">
+                        <option value="">Select Option</option>
+                        <option value="Quantity">Quantity</option>
+                        <option value="Hours">Hours</option>
+                        <option value="Days">Days</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    @error('units_column') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                </div>
+                <div class="col-md-3">
+                    <label for="items_column">Price</label>
+                    <select wire:model.debounce.300ms="price_column"  class="form-control">
+                        <option value="">Select Option</option>
+                        <option value="Price">Price</option>
+                        <option value="Rate">Rate</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    @error('price_column') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                </div>
+                <div class="col-md-3">
+                    <label for="amount_column">Amount</label>
+                    <select wire:model.debounce.300ms="amount_column"  class="form-control">
+                        <option value="">Select Option</option>
+                        <option value="Amount">Amount</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    @error('amount_column') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                </div>
+            </div>
          
             <div class="btn-group" role="group" style="float: right;">
                 <button type="submit" class="btn btn-success btn-wide btn-rounded" ><i class="fa fa-refresh"></i>Update</button>
