@@ -40,6 +40,7 @@ use App\Imports\ShiftsImport;
 use Livewire\WithFileUploads;
 use App\Models\OffloadingPoint;
 use App\Imports\ShiftTripsImport;
+use App\Exports\ShiftsDailyExport;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
@@ -926,6 +927,17 @@ class Index extends Component
     }
     public function exportShiftsExcel(Excel $excel){
         return $excel->download(new ShiftsExport($this->from, $this->to, $this->shift_filter, $this->search, $this->filters), 'shifts_'.time().'.xlsx');
+    }
+
+    public function exportShiftsDailyCSV(Excel $excel){
+
+        return $excel->download(new ShiftsDailyExport(), 'shifts_daily_'.time().'.csv', Excel::CSV);
+    }
+    public function exportShiftsDailyPDF(Excel $excel){
+        return $excel->download(new ShiftsDailyExport(), 'shifts_daily_'.time().'.pdf', Excel::DOMPDF);
+    }
+    public function exportShiftsDailyExcel(Excel $excel){
+        return $excel->download(new ShiftsDailyExport(), 'shifts_daily_'.time().'.xlsx');
     }
 
         public function importShifts(){
