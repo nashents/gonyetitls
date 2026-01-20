@@ -50,7 +50,7 @@ class Invoices extends Component
     public $vat;
     public $interest;
     //columns
-    public $amount_column;
+    public $total_column;
     public $price_column;
     public $units_column;
     public $items_column;
@@ -114,7 +114,7 @@ class Invoices extends Component
         $this->items_column = $company->items_column;
         $this->price_column = $company->price_column;
         $this->units_column = $company->units_column;
-        $this->amount_column = $company->amount_column;
+        $this->total_column = $company->total_column;
         $this->quotation_subheading = $company->quotation_subheading;
         $this->quotation_title = $company->quotation_title;
         $this->invoice_subheading = $company->invoice_subheading;
@@ -161,11 +161,10 @@ class Invoices extends Component
         $company->receipt_footer = $this->receipt_footer;
         $company->receipt_footer = $this->receipt_footer;
         $company->receipt_footer = $this->receipt_footer;
-        $company->amount_column = $this->amount_column;
+        $company->total_column = $this->total_column;
         $company->items_column = $this->items_column;
         $company->units_column = $this->units_column;
         $company->price_column = $this->price_column;
-        $company->amount_column = $this->amount_column;
         $company->hide_amount = $this->hide_amount;
         $company->hide_description = $this->hide_description;
         $company->hide_price = $this->hide_price;

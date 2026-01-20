@@ -120,11 +120,13 @@
                 <div class="col-md-6">
                      <label for="one" class="radio-label">Amount</label>
                     <div class="mb-10">
-                        <input type="radio" wire:model.debounce.300ms="amount_column" value="Amount"  class="line-style"  />
-                        <label for="one" class="radio-label">Amount<small><i>(Default)</i></small></label>
-                        <input type="radio" wire:model.debounce.300ms="amount_column" value="Other"  class="line-style"  />
+                        <input type="radio" wire:model.debounce.300ms="total_column" value="Total"  class="line-style"  />
+                        <label for="one" class="radio-label">Total<small><i>(Default)</i></small></label>
+                        <input type="radio" wire:model.debounce.300ms="total_column" value="Amount"  class="line-style"  />
+                        <label for="one" class="radio-label">Amount</label>
+                        <input type="radio" wire:model.debounce.300ms="total_column" value="Other"  class="line-style"  />
                         <label for="one" class="radio-label">Other</label>
-                        @error('amount_column') <span class="text-danger error">{{ $message }}</span>@enderror
+                        @error('total_column') <span class="text-danger error">{{ $message }}</span>@enderror
                     </div>   
                 </div>
             </div>

@@ -138,7 +138,7 @@
                                                 <th class="text-right"><strong>{{$company->price_column}}</strong></th>
                                             @endif
                                             @if ($company->hide_amount == False)
-                                                <th class="text-right"><strong>{{$company->amount_column}}</strong><small>(Excl)</small></th>
+                                                <th class="text-right"><strong>{{$company->total_column}}</strong><small>(Excl)</small></th>
                                             @endif
                                             <th class="text-right"><strong>VAT Amount</strong></th>
                                             <th class="text-right"><strong>Total</strong><small>(Incl)</small></th>
