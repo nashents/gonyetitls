@@ -11,7 +11,6 @@
                             @include('includes.messages')
                         </div>
 
-                        {{-- Header --}}
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="panel">
@@ -22,6 +21,7 @@
                                     </div>
 
                                     <div class="panel-body">
+
                                         {{-- Filters --}}
                                         <div class="row">
                                             <form wire:submit.prevent="generateStatement()">
@@ -69,7 +69,7 @@
 
                                         <br><br>
 
-                                        {{-- Summary/Details Toggle --}}
+                                        {{-- Toggle --}}
                                         <div class="row">
                                             <div class="col-md-4"></div>
 
@@ -98,7 +98,7 @@
                                             <div class="col-md-2"></div>
                                         </div>
 
-                                        {{-- Top KPI Row --}}
+                                        {{-- KPI Row --}}
                                         <div class="row">
                                             <center>
                                                 <div class="col-md-2"></div>
@@ -142,6 +142,7 @@
                                                 <div class="col-md-2"></div>
                                             </center>
                                         </div>
+
                                     </div>
                                 </div>
                             </div>
@@ -155,7 +156,7 @@
                                     <div class="panel-heading">
                                         <div class="panel-title">
                                             <div class="col-xs-5 p-n">
-                                                @if (isset($selected_horse))
+                                                @if (!empty($selected_horse))
                                                     <strong>
                                                         {{ $selected_horse->registration_number }}
                                                         {{ $selected_horse->fleet_number ? $selected_horse->fleet_number : '' }}
@@ -179,13 +180,11 @@
 
                                     <div class="panel-body">
 
-                                        {{-- ===================== SUMMARY VIEW ===================== --}}
+                                        {{-- SUMMARY --}}
                                         @if (($summary === 'summary') && empty($details))
 
                                             <div class="col-xs-12 p-n">
-                                                <div class="col-xs-5 p-n">
-                                                    <span style="margin-left:5px">Income</span>
-                                                </div>
+                                                <div class="col-xs-5 p-n"><span style="margin-left:5px">Income</span></div>
                                                 <div class="col-xs-6 p-n">
                                                     <span style="float:right">
                                                         {{ $default_currency->name }} {{ $default_currency->symbol }}
@@ -196,9 +195,7 @@
                                             <hr style="width:100%;" size="3" color="black">
 
                                             <div class="col-xs-12 p-n">
-                                                <div class="col-xs-5 p-n">
-                                                    <span style="margin-left:5px">Cost of Goods Sold</span>
-                                                </div>
+                                                <div class="col-xs-5 p-n"><span style="margin-left:5px">Cost of Goods Sold</span></div>
                                                 <div class="col-xs-6 p-n">
                                                     <span style="float:right">
                                                         {{ $default_currency->name }} {{ $default_currency->symbol }}
@@ -213,7 +210,6 @@
                                                     <strong><span style="margin-left:5px">GROSS PROFIT</span></strong>
                                                     <p style="margin-left:5px">As a percentage of Total Income</p>
                                                 </div>
-
                                                 <div class="col-xs-6 p-n" style="margin-top:10px; margin-bottom:-10px;">
                                                     <strong>
                                                         <span style="float:right">
@@ -222,11 +218,7 @@
                                                         </span>
                                                     </strong>
                                                     <br>
-                                                    <p>
-                                                        <span style="float:right">
-                                                            {{ number_format((float)($gross_profit_percentage ?? 0), 2) }}%
-                                                        </span>
-                                                    </p>
+                                                    <p><span style="float:right">{{ number_format((float)($gross_profit_percentage ?? 0), 2) }}%</span></p>
                                                 </div>
                                             </div>
 
@@ -234,9 +226,7 @@
                                             <hr style="width:100%;" size="3" color="black">
 
                                             <div class="col-xs-12 p-n">
-                                                <div class="col-xs-5 p-n">
-                                                    <span style="margin-left:5px">Operating Expenses</span>
-                                                </div>
+                                                <div class="col-xs-5 p-n"><span style="margin-left:5px">Operating Expenses</span></div>
                                                 <div class="col-xs-6 p-n">
                                                     <span style="float:right">
                                                         {{ $default_currency->name }} {{ $default_currency->symbol }}
@@ -251,7 +241,6 @@
                                                     <strong><span style="margin-left:5px">NET PROFIT</span></strong>
                                                     <p style="margin-left:5px">As a percentage of Total Income</p>
                                                 </div>
-
                                                 <div class="col-xs-6 p-n" style="margin-top:10px; margin-bottom:-10px;">
                                                     <strong>
                                                         <span style="float:right">
@@ -260,15 +249,11 @@
                                                         </span>
                                                     </strong>
                                                     <br>
-                                                    <p>
-                                                        <span style="float:right">
-                                                            {{ number_format((float)($net_profit_percentage ?? 0), 2) }}%
-                                                        </span>
-                                                    </p>
+                                                    <p><span style="float:right">{{ number_format((float)($net_profit_percentage ?? 0), 2) }}%</span></p>
                                                 </div>
                                             </div>
 
-                                        {{-- ===================== DETAILS VIEW ===================== --}}
+                                        {{-- DETAILS: LINE ITEMS --}}
                                         @elseif (($details === 'details') && empty($summary))
 
                                             {{-- Income --}}
@@ -280,9 +265,7 @@
                                             <hr style="width:100%;" size="3" color="black">
 
                                             <div class="col-xs-12 p-n">
-                                                <div class="col-xs-5 p-n">
-                                                    <span style="margin-left:5px">Sales</span>
-                                                </div>
+                                                <div class="col-xs-5 p-n"><span style="margin-left:5px">Sales</span></div>
                                                 <div class="col-xs-6 p-n">
                                                     <span style="float:right">
                                                         {{ $default_currency->name }} {{ $default_currency->symbol }}
@@ -292,57 +275,52 @@
                                             </div>
                                             <hr style="width:100%;" size="3" color="black">
 
-                                            <div class="col-xs-12 p-n">
-                                                <div class="col-xs-5 p-n">
-                                                    <strong><span style="margin-left:5px">Total Income</span></strong>
-                                                </div>
-                                                <div class="col-xs-6 p-n">
-                                                    <span style="float:right">
-                                                        {{ $default_currency->name }} {{ $default_currency->symbol }}
-                                                        {{ number_format((float)($total_income ?? 0), 2) }}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <hr style="width:100%;" size="3" color="black">
-
-                                            {{-- COGS --}}
+                                            {{-- COGS line items --}}
                                             <div class="col-xs-12 p-n" style="background-color:#D3D3D3">
-                                                <div class="col-xs-5 p-n">
-                                                    <strong><span style="margin-left:5px">Cost of Goods Sold</span></strong>
+                                                <div class="col-xs-12 p-n">
+                                                    <strong><span style="margin-left:5px">Cost of Goods Sold (Line Items)</span></strong>
                                                 </div>
                                             </div>
                                             <hr style="width:100%;" size="3" color="black">
 
-                                            @php $cogsLines = $cogs_lines ?? []; @endphp
-
-                                            @if(!empty($cogsLines))
-                                                @foreach($cogsLines as $line)
-                                                    <div class="col-xs-12 p-n">
-                                                        <div class="col-xs-5 p-n">
-                                                            <span style="margin-left:5px">{{ $line['name'] ?? '—' }}</span>
-                                                        </div>
-                                                        <div class="col-xs-6 p-n">
-                                                            <span style="float:right">
-                                                                {{ $default_currency->name }} {{ $default_currency->symbol }}
-                                                                {{ number_format((float)($line['amount'] ?? 0), 2) }}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    <hr style="width:100%;" size="3" color="black">
-                                                @endforeach
-                                            @else
-                                                <div class="col-xs-12 p-n">
-                                                    <div class="col-xs-5 p-n">
-                                                        <span style="margin-left:5px">No COGS posted for this period</span>
-                                                    </div>
-                                                    <div class="col-xs-6 p-n">
-                                                        <span style="float:right">
-                                                            {{ $default_currency->name }} {{ $default_currency->symbol }}0.00
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                <hr style="width:100%;" size="3" color="black">
-                                            @endif
+                                            <div class="table-responsive">
+                                                <table class="table table-bordered table-striped">
+                                                    <thead>
+                                                        <tr>
+                                                            <th style="width:120px;">Date</th>
+                                                            <th style="width:140px;">Bill #</th>
+                                                            <th style="width:140px;">Trip</th>
+                                                            <th style="width:180px;">Account</th>
+                                                            <th>Item</th>
+                                                            <th style="width:170px;">Expense Currency</th>
+                                                            <th style="width:220px;" class="text-right">Amount ({{ $default_currency->name }} {{ $default_currency->symbol }})</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @forelse(($cogs_items ?? []) as $it)
+                                                            <tr>
+                                                                <td>{{ $it['date'] ?? '' }}</td>
+                                                                <td>{{ $it['bill_number'] ?? '' }}</td>
+                                                                <td>{{ $it['trip_ref'] ?? '' }}</td>
+                                                                <td>{{ $it['account_name'] ?? '—' }}</td>
+                                                                <td>{{ $it['item_name'] ?? '—' }}</td>
+                                                                <td>{{ $it['expense_currency'] ?? '' }}</td>
+                                                                <td class="text-right">{{ number_format((float)($it['amount'] ?? 0), 2) }}</td>
+                                                            </tr>
+                                                        @empty
+                                                            <tr>
+                                                                <td colspan="7" class="text-center">No COGS line items for this period.</td>
+                                                            </tr>
+                                                        @endforelse
+                                                    </tbody>
+                                                    <tfoot>
+                                                        <tr>
+                                                            <th colspan="6" class="text-right">Total COGS</th>
+                                                            <th class="text-right">{{ number_format((float)($total_cost_of_goods_sold ?? 0), 2) }}</th>
+                                                        </tr>
+                                                    </tfoot>
+                                                </table>
+                                            </div>
 
                                             {{-- Gross Profit --}}
                                             <div class="col-xs-12 p-n" style="background-color:#D3D3D3">
@@ -352,62 +330,61 @@
                                                 </div>
 
                                                 <div class="col-xs-6 p-n" style="margin-top:10px; margin-bottom:-10px;">
-                                                    <strong>
-                                                        <span style="float:right">
-                                                            {{ $default_currency->name }} {{ $default_currency->symbol }}
-                                                            {{ number_format((float)($gross_profit ?? 0), 2) }}
-                                                        </span>
-                                                    </strong>
+                                                    <strong><span style="float:right">{{ number_format((float)($gross_profit ?? 0), 2) }}</span></strong>
                                                     <br>
-                                                    <p>
-                                                        <span style="float:right">
-                                                            {{ number_format((float)($gross_profit_percentage ?? 0), 2) }}%
-                                                        </span>
-                                                    </p>
+                                                    <p><span style="float:right">{{ number_format((float)($gross_profit_percentage ?? 0), 2) }}%</span></p>
                                                 </div>
                                             </div>
 
                                             <br>
                                             <hr style="width:100%;" size="3" color="black">
 
-                                            {{-- Operating Expenses --}}
+                                            {{-- OPEX line items --}}
                                             <div class="col-xs-12 p-n" style="background-color:#D3D3D3">
-                                                <div class="col-xs-5 p-n">
-                                                    <strong><span style="margin-left:5px">Operating Expenses</span></strong>
+                                                <div class="col-xs-12 p-n">
+                                                    <strong><span style="margin-left:5px">Operating Expenses (Line Items)</span></strong>
                                                 </div>
                                             </div>
                                             <hr style="width:100%;" size="3" color="black">
 
-                                            @php $opexLines = $opex_lines ?? []; @endphp
-
-                                            @if(!empty($opexLines))
-                                                @foreach($opexLines as $line)
-                                                    <div class="col-xs-12 p-n">
-                                                        <div class="col-xs-5 p-n">
-                                                            <span style="margin-left:5px">{{ $line['name'] ?? '—' }}</span>
-                                                        </div>
-                                                        <div class="col-xs-6 p-n">
-                                                            <span style="float:right">
-                                                                {{ $default_currency->name }} {{ $default_currency->symbol }}
-                                                                {{ number_format((float)($line['amount'] ?? 0), 2) }}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    <hr style="width:100%;" size="3" color="black">
-                                                @endforeach
-                                            @else
-                                                <div class="col-xs-12 p-n">
-                                                    <div class="col-xs-5 p-n">
-                                                        <span style="margin-left:5px">No Operating Expenses posted for this period</span>
-                                                    </div>
-                                                    <div class="col-xs-6 p-n">
-                                                        <span style="float:right">
-                                                            {{ $default_currency->name }} {{ $default_currency->symbol }}0.00
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                <hr style="width:100%;" size="3" color="black">
-                                            @endif
+                                            <div class="table-responsive">
+                                                <table class="table table-bordered table-striped">
+                                                    <thead>
+                                                        <tr>
+                                                            <th style="width:120px;">Date</th>
+                                                            <th style="width:140px;">Bill #</th>
+                                                            <th style="width:140px;">Trip</th>
+                                                            <th style="width:180px;">Account</th>
+                                                            <th>Item</th>
+                                                            <th style="width:170px;">Expense Currency</th>
+                                                            <th style="width:220px;" class="text-right">Amount ({{ $default_currency->name }} {{ $default_currency->symbol }})</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @forelse(($opex_items ?? []) as $it)
+                                                            <tr>
+                                                                <td>{{ $it['date'] ?? '' }}</td>
+                                                                <td>{{ $it['bill_number'] ?? '' }}</td>
+                                                                <td>{{ $it['trip_ref'] ?? '' }}</td>
+                                                                <td>{{ $it['account_name'] ?? '—' }}</td>
+                                                                <td>{{ $it['item_name'] ?? '—' }}</td>
+                                                                <td>{{ $it['expense_currency'] ?? '' }}</td>
+                                                                <td class="text-right">{{ number_format((float)($it['amount'] ?? 0), 2) }}</td>
+                                                            </tr>
+                                                        @empty
+                                                            <tr>
+                                                                <td colspan="7" class="text-center">No Operating Expense line items for this period.</td>
+                                                            </tr>
+                                                        @endforelse
+                                                    </tbody>
+                                                    <tfoot>
+                                                        <tr>
+                                                            <th colspan="6" class="text-right">Total Operating Expenses</th>
+                                                            <th class="text-right">{{ number_format((float)($total_operating_expenses ?? 0), 2) }}</th>
+                                                        </tr>
+                                                    </tfoot>
+                                                </table>
+                                            </div>
 
                                             {{-- Net Profit --}}
                                             <div class="col-xs-12 p-n" style="background-color:#D3D3D3">
@@ -417,28 +394,20 @@
                                                 </div>
 
                                                 <div class="col-xs-6 p-n" style="margin-top:10px; margin-bottom:-10px;">
-                                                    <strong>
-                                                        <span style="float:right">
-                                                            {{ $default_currency->name }} {{ $default_currency->symbol }}
-                                                            {{ number_format((float)($net_profit ?? 0), 2) }}
-                                                        </span>
-                                                    </strong>
+                                                    <strong><span style="float:right">{{ number_format((float)($net_profit ?? 0), 2) }}</span></strong>
                                                     <br>
-                                                    <p>
-                                                        <span style="float:right">
-                                                            {{ number_format((float)($net_profit_percentage ?? 0), 2) }}%
-                                                        </span>
-                                                    </p>
+                                                    <p><span style="float:right">{{ number_format((float)($net_profit_percentage ?? 0), 2) }}%</span></p>
                                                 </div>
                                             </div>
 
                                         @endif
 
-                                    </div>{{-- panel-body --}}
-                                </div>{{-- panel --}}
-                            </div>{{-- col --}}
-                        </div>{{-- panel-body --}}
-                    </div>{{-- panel --}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
             </div>
         </div>

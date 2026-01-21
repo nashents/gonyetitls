@@ -764,7 +764,9 @@ class Create extends Component
 
         $parts = [];
 
-        foreach ($trip->trip_expenses as $trip_expense) {
+        $trip_expenses = $trip->trip_expenses->where('category','Transporter');
+
+        foreach ($trip_expenses as $trip_expense) {
 
                 $name = null;
 
@@ -1612,6 +1614,9 @@ class Create extends Component
             ->where('trip_status','!=', 'Cancelled')
             ->when($this->invoice_to === 'Customer', function ($q) {
                 $q->where('currency_id', $this->selectedCurrency);
+            })
+            ->when($this->invoice_to === 'Transporter', function ($q) {
+                $q->where('transporter_agreement', True);
             });
 
                  // Date window

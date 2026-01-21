@@ -8,11 +8,13 @@
 @endif
 @endsection
 @section('title')
-Horses P & L | @if (Auth::user()->employee->company)
-{{Auth::user()->employee->company->name}}
-@elseif (Auth::user()->company)
-{{Auth::user()->company->name}}
-@endif
+@php
+    $selected_horse = App\Models\Horse::find($selectedHorse);
+@endphp
+{{$selected_horse?->registration_number.'_Statement'
+    .'_'.\Carbon\Carbon::parse($from)->format('Y-m-d')
+    .'_'.\Carbon\Carbon::parse($to)->format('Y-m-d')
+    .'_Profit_and_Loss'}}
 @endsection
 @section('content')
 

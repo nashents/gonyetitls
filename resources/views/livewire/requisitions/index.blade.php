@@ -1063,7 +1063,7 @@
                                  <br>
                                 @endforeach
                             @endif
-
+                            
                             @foreach ($inputs as $key => $value)
                              <div class="mt-15" style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">
                                 <div class="row">

@@ -135,6 +135,8 @@ class Index extends Component
     
     public function remove($i)
     {
+     
+        unset($this->requisition_items[$i]);
         unset($this->inputs[$i]);
         unset($this->selectedCurrency[$i]);
         unset($this->selected_currency[$i]);
