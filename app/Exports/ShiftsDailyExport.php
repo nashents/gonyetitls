@@ -28,7 +28,7 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
 class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, WithTitle, WithDrawings, WithCustomStartCell
 {
     // ✅ Adjust if your schema uses different names
-    protected string $shiftDateColumn            = 'date';
+    protected string $shiftDateColumn            = 'shift_start_time';
     protected string $tripWeightColumn           = 'weight';
     protected string $shiftOpenMileageColumn     = 'open_mileage';
     protected string $shiftCloseMileageColumn    = 'close_mileage';
@@ -86,11 +86,16 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
     {
         $asAt = $this->asAt->copy();
 
-        $yFrom = $asAt->copy()->subDay()->startOfDay();
-        $yTo   = $asAt->copy()->subDay()->endOfDay();
+        // reporting cutoff: today @ 01:00
+        $reportTo = $asAt->copy()->startOfDay()->addHour(); // 01:00 today
 
-        $mFrom = $asAt->copy()->startOfMonth()->startOfDay();
-        $mTo   = $asAt->copy()->endOfDay();
+        // Yesterday Production window: day before @ 02:00  -> today @ 01:00
+        $yFrom = $asAt->copy()->subDay()->startOfDay()->addHours(2); // 02:00 yesterday
+        $yTo   = $reportTo;                                          // 01:00 today
+
+        // MTD window: start of month @ 02:00 -> today @ 01:00
+        $mFrom = $asAt->copy()->startOfMonth()->startOfDay()->addHours(2); // 02:00 month start
+        $mTo   = $reportTo;  
 
         $lpMap = LoadingPoint::query()
             ->whereIn('name', $this->lpCodes)
@@ -271,7 +276,7 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
         // Long-haul ore
         $oreLongTrips = (clone $tripBase)
             ->where('haulage_type', 'long_haul')
-            ->whereHas('cargo', fn(Builder $q) => $q->where('name', 'platinum ore'));
+            ->whereHas('cargo', fn(Builder $q) => $q->where('name', 'Platinum Ore'));
 
         $oreLongLoads  = (clone $oreLongTrips)->count();
         $oreLongActual = (clone $oreLongTrips)->sum($this->tripWeightColumn);
@@ -295,7 +300,7 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
         // Short-haul ore
         $oreShortTrips = (clone $tripBase)
             ->where('haulage_type', 'short_haul')
-            ->whereHas('cargo', fn(Builder $q) => $q->where('name', 'platinum ore'));
+            ->whereHas('cargo', fn(Builder $q) => $q->where('name', 'Platinum Ore'));
 
         $oreShortLoads  = (clone $oreShortTrips)->count();
         $oreShortActual = (clone $oreShortTrips)->sum($this->tripWeightColumn);
@@ -317,7 +322,7 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
             ->avg($this->shiftFuelConsumptionColumn);
 
         // Concentrates
-        $concTrips = (clone $tripBase)->whereHas('cargo', fn(Builder $q) => $q->where('name', 'Concentrate'));
+        $concTrips = (clone $tripBase)->whereHas('cargo', fn(Builder $q) => $q->where('name', '	Platinum Concentrate'));
         $concLoads  = (clone $concTrips)->count();
         $concActual = (clone $concTrips)->sum($this->tripWeightColumn);
 
@@ -325,7 +330,7 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
             ->whereHas('shift', fn(Builder $q) =>
                 $q->whereBetween($this->shiftDateColumn, [$from, $to])
                   ->whereHas('trips', fn(Builder $t) =>
-                      $t->whereHas('cargo', fn(Builder $c) => $c->where('name', 'Concentrate'))
+                      $t->whereHas('cargo', fn(Builder $c) => $c->where('name', 'Platinum Concentrate'))
                   )
             )->sum('quantity');
 
