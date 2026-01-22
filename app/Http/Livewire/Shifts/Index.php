@@ -39,6 +39,7 @@ use App\Exports\ShiftsExport;
 use App\Imports\ShiftsImport;
 use Livewire\WithFileUploads;
 use App\Models\OffloadingPoint;
+use Illuminate\Validation\Rule;
 use App\Imports\ShiftTripsImport;
 use App\Exports\ShiftsDailyExport;
 use Illuminate\Support\Facades\DB;
@@ -1696,7 +1697,7 @@ class Index extends Component
     public function store(){
        
 
-        if($this->for == "Trips") {
+        // if($this->for == "Trips") {
             $this->validate([
                 'selectedCurrency'     => 'nullable',
                 'rate.*'               => 'nullable|numeric|min:0',
@@ -1708,11 +1709,19 @@ class Index extends Component
                 'ending_hours.*'       => 'nullable|numeric|min:0',
                 'loading_point_id.*'   => 'nullable|integer|exists:loading_points,id',
                 'offloading_point_id.*'=> 'nullable|integer|exists:offloading_points,id',
-                'shift_start_time' => 'nullable|date_format:Y-m-d\TH:i',
-                'shift_end_time'   => 'nullable|date_format:Y-m-d\TH:i',
+                'shift_start_time' => 'required|date_format:Y-m-d\TH:i',
+                'shift_end_time'   => 'required|date_format:Y-m-d\TH:i',
+                'date'   => 'required|date_format:Y-m-d',
+                'type'   => 'required',
+                'for'   => 'required',
+                'team_id'   => 'required',
                 // …add the rest as needed
+                'driver_id' => ['required','integer', Rule::exists('drivers','id')],
+                'selectedTransporter' => ['required','integer', Rule::exists('transporters','id')],
+                'selectedHorse' => ['nullable','integer', Rule::exists('horses','id')],
+                'selectedVehicle' => ['nullable','integer', Rule::exists('vehicles','id')],
             ]);
-        } 
+        // } 
 
     DB::transaction(function () {
     

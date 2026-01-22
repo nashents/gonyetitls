@@ -124,7 +124,7 @@
                                 <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">   
                                     @if ($selectedType == "Outstanding Invoices")
                                     <table id="invoicesTable" class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
-                                        <caption>Outstanding Invoices for {{ App\Models\Customer::find($selectedCustomer)->name }}</caption>
+                                        <caption>Outstanding Invoices for {{ App\Models\Customer::find($selectedCustomer)?->name }}</caption>
                                         <thead>
                                           <tr>
                                             <th class="th-sm">Invoice#
@@ -203,7 +203,7 @@
                                         @if (in_array($currency->id, $invoiced_currencies))
 
                                                 <table id="invoicesTable" class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
-                                                    <caption>Account Activity for {{ App\Models\Customer::find($selectedCustomer)->name }} in {{ $currency->fullname }} {{ $currency->name }}</caption>
+                                                    <caption>Account Activity for {{ App\Models\Customer::find($selectedCustomer)?->name }} in {{ $currency->fullname }} {{ $currency->name }}</caption>
                                                     <thead>
                                                     <tr>
                                                         <th class="th-sm">Date

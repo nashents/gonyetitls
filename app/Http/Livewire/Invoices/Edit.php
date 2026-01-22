@@ -43,6 +43,7 @@ class Edit extends Component
     public $selectedTrip = [];
 
     public $fiscalize_invoice;
+    public $base_currency;
     public $reason;
     public $trip_filter;
     public $booking_filter;
@@ -439,8 +440,10 @@ class Edit extends Component
     public function updatedSelectedTrip($id, $key){
       
         if (!is_null($id)) {
+            
             $trip = Trip::find($id);
             $delivery_note = $trip->delivery_note;
+
             if (isset($trip)) {
 
                 foreach($trip->trip_expenses as $expense){
@@ -453,14 +456,16 @@ class Edit extends Component
                                 $this->total_customer_expenses = $this->total_customer_expenses + $expense->amount;
                                }
                             }
+                           
                         }
                     }
                 }
+                
 
-                    if($this->invoice_to == "Transporter"){
+                if($this->invoice_to == "Transporter"){
                     $this->description[$key] = $this->setTransporterDescription($id); 
                     $base_currency_id = $this->base_currency->id;
-                    $this->amount[$key] = $trip->trip_expenses->sum(function ($expense) use ($base_currency_id) {
+                    $this->amount[$key] = $trip->trip_expenses->where('category','Transporter')->sum(function ($expense) use ($base_currency_id) {
                         return $expense->currency_id == $base_currency_id
                             ? (float) $expense->amount
                             : (float) $expense->exchange_amount;
@@ -487,12 +492,14 @@ class Edit extends Component
                 }
                     $this->description[$key] = $this->setDescription($id); 
                 }
+                
                 $this->qty[$key] = 1; 
                 $this->selectedAccount[$key] =  $this->income_account_id;
             }
            
             
         }
+   
     }
     public function updatedSelectedCurrentTrip($id, $key){
       
@@ -850,6 +857,7 @@ class Edit extends Component
 
     public function mount($invoice){
         $this->company = Auth::user()->employee->company;
+        $this->base_currency = $this->company->currency;
         $this->trip_filter = "created_at";
         $this->booking_filter = "created_at";
         $this->rental_filter = "created_at";
@@ -1862,13 +1870,18 @@ class Edit extends Component
 
     }
     
-        public function getTripsProperty(){
+ public function getTripsProperty(){
 
             $query = Trip::query()
-            ->with('customer:id,name','loading_point:id,name','offloading_point:id,name','currency')
+            ->with('transporter:id,name','customer:id,name','loading_point:id,name','offloading_point:id,name','currency')
             ->where('authorization','approved')
             ->where('trip_status','!=', 'Cancelled')
-            ->where('currency_id', $this->selectedCurrency);
+            ->when($this->invoice_to === 'Customer', function ($q) {
+                $q->where('currency_id', $this->selectedCurrency);
+            })
+            ->when($this->invoice_to === 'Transporter', function ($q) {
+                $q->where('transporter_agreement', True);
+            });
 
                  // Date window
             if ($this->from && $this->to ) {
@@ -1884,6 +1897,9 @@ class Edit extends Component
 
             if($this->selectedCustomer){
                 $query->where('customer_id', $this->selectedCustomer);
+            }
+            if($this->selectedTransporter){
+                $query->where('transporter_id', $this->selectedTransporter);
             }
 
             if (filled($this->searchTrip)) {

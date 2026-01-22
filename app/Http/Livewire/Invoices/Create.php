@@ -607,7 +607,7 @@ class Create extends Component
                 if($this->invoice_to == "Transporter"){
                     $this->description[$key] = $this->setTransporterDescription($id); 
                     $base_currency_id = $this->base_currency->id;
-                    $this->amount[$key] = $trip->trip_expenses->sum(function ($expense) use ($base_currency_id) {
+                    $this->amount[$key] = $trip->trip_expenses->where('category','Transporter')->sum(function ($expense) use ($base_currency_id) {
                         return $expense->currency_id == $base_currency_id
                             ? (float) $expense->amount
                             : (float) $expense->exchange_amount;

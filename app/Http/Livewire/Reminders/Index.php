@@ -59,7 +59,7 @@ class Index extends Component
     public $searchVehicle;
     public $searchTrailer;
     public $searchEmployee;
-    public $cc;
+    public $cc = false;
     
     protected $queryString = ['search','searchVehicle','searchHorse','searchTrailer','searchEmployee'];
 
@@ -83,7 +83,7 @@ class Index extends Component
         $this->reminder_item_id = "" ;
         $this->issued_at = "";
         $this->expires_at = "" ;
-        $this->cc = "";
+        $this->cc = false;
         $this->inputs = [];
     }
 

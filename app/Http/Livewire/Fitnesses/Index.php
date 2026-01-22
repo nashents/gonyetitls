@@ -34,7 +34,7 @@ class Index extends Component
     public $issued_at;
     public $number;
     public $expires_at;
-    public $cc;
+    public $cc = false;
     public $reminder_at;
     public $first_reminder_at;
     public $first_reminder_at_status;
@@ -70,7 +70,7 @@ class Index extends Component
         $this->reminder_item_id = "" ;
         $this->issued_at = "";
         $this->expires_at = "" ;
-        $this->cc = "" ;
+        $this->cc = false ;
         $this->inputs = [];
     }
 

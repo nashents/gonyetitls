@@ -509,7 +509,7 @@
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="name">Teams<span class="required" style="color: red">*</span></label>
-                                    <select class="form-control" wire:model.debounce.300ms="team_id" disabled>
+                                    <select class="form-control" wire:model.debounce.300ms="team_id" disabled required>
                                         <option value="">Select Team</option>
                                         @foreach ($teams as $team)
                                             <option value="{{$team->id}}">{{$team->name}}</option>
@@ -521,7 +521,7 @@
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="name">Type<span class="required" style="color: red">*</span></label>
-                                    <select class="form-control" wire:model.debounce.300ms="type">
+                                    <select class="form-control" wire:model.debounce.300ms="type" required>
                                         <option value="">Select Option</option>
                                         <option value="Morning">Morning</option>
                                         <option value="Night">Night</option>
@@ -532,7 +532,7 @@
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="name">For<span class="required" style="color: red">*</span></label>
-                                    <select class="form-control" wire:model.debounce.300ms="for">
+                                    <select class="form-control" wire:model.debounce.300ms="for" required>
                                         <option value="">Select Option</option>
                                         <option value="Rehandling">Rehandling Work</option>
                                         <option value="Trips">Trips</option>
@@ -545,7 +545,7 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="name">Customers<span class="required" style="color: red">*</span></label>
-                                    <select class="form-control" wire:model.debounce.300ms="customer_id">
+                                    <select class="form-control" wire:model.debounce.300ms="customer_id" required>
                                         <option value="">Select Customer</option>
                                         @foreach ($customers as $customer)
                                             <option value="{{$customer->id}}">{{$customer->name}}</option>
@@ -557,8 +557,8 @@
                         
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="exampleInputEmail13"><a href="{{ route('transporters.index') }}" target="_blank" style="color: blue">Transporter(s)</a></label>
-                                    <select wire:model.debounce.300ms="selectedTransporter" class="form-control" >
+                                    <label for="exampleInputEmail13"><a href="{{ route('transporters.index') }}" target="_blank" style="color: blue">Transporter(s)<span class="required" style="color: red">*</span></a></label>
+                                    <select wire:model.debounce.300ms="selectedTransporter" class="form-control" required>
                                         <option value="">Select Transporter</option>
                                         @foreach ($transporters as $transporter)
                                         <option value="{{$transporter->id}}">{{$transporter->name}}</option>
@@ -583,8 +583,6 @@
                                 @if (isset($equipment) && $equipment == "Horse")
                                     <div class="form-group">
                                         <label for="horse"><a href="{{ route('horses.index') }}" target="_blank" style="color: blue">Horse(s)</a><span class="required" style="color: red">*</span></label>
-                                        <input type="checkbox" wire:model.debounce.300ms="all_horses"   class="line-style" />
-                                        <label for="one" class="radio-label">Select from all horses</label>
                                         <input type="text" wire:model.debounce.300ms="searchHorse" placeholder="Search with reg..." class="form-control">
                                         <select class="form-control" wire:model.debounce.300ms="selectedHorse"  required size="4">
                                             <option value="">Select Horse </option>
@@ -601,8 +599,6 @@
                                 @elseif (isset($equipment) && $equipment == "Vehicle")
                                     <div class="form-group">
                                         <label for="horse"><a href="{{ route('vehicles.index') }}" target="_blank" style="color: blue">Vehicle(s)</a><span class="required" style="color: red">*</span></label>
-                                        <input type="checkbox" wire:model.debounce.300ms="all_vehicles"   class="line-style" />
-                                        <label for="one" class="radio-label">Select from all vehicles</label>
                                         <input type="text" wire:model.debounce.300ms="searchVehicle" placeholder="Search with reg..." class="form-control">
                                         <select class="form-control" wire:model.debounce.300ms="selectedVehicle"  required size="4">
                                             <option value="">Select Vehicle </option>
@@ -620,10 +616,8 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="driver"><a href="{{ route('drivers.index') }}" target="_blank" style="color: blue">Driver(s)</a><span class="required" style="color: red">*</span></label> 
-                                    <input type="checkbox" wire:model.debounce.300ms="all_drivers"   class="line-style" />
-                                    <label for="one" class="radio-label">Select from all drivers</label>
                                     <input type="text" wire:model.debounce.300ms="searchDriver" placeholder="Search with names..." class="form-control" >
-                                    <select class="form-control" wire:model.debounce.300ms="driver_id" required size="4">
+                                    <select class="form-control" wire:model.debounce.300ms="driver_id" required size="4" required>
                                         <option value="">Select Driver</option>
                                         @if (!is_null($selectedTransporter))
                                             @foreach ($drivers as $driver)
@@ -648,15 +642,15 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label for="name">Duty Start Time</label>
-                                    <input type="datetime-local" class="form-control" wire:model.debounce.300ms="shift_start_time" placeholder="Enter Shift Start Time"/>
+                                    <label for="name">Duty Start Time<span class="required" style="color: red">*</span></label>
+                                    <input type="datetime-local" class="form-control" wire:model.debounce.300ms="shift_start_time" placeholder="Enter Shift Start Time" required/>
                                     @error('shift_start_time') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label for="name">Duty Close Time</label>
-                                    <input type="datetime-local" class="form-control" wire:model.debounce.300ms="shift_end_time" placeholder="Enter Shift End Time" />
+                                    <label for="name">Duty Close Time<span class="required" style="color: red">*</span></label>
+                                    <input type="datetime-local" class="form-control" wire:model.debounce.300ms="shift_end_time" placeholder="Enter Shift End Time" required/>
                                     @error('shift_end_time') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
@@ -1290,8 +1284,8 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="exampleInputEmail13"><a href="{{ route('transporters.index') }}" target="_blank" style="color: blue">Transporter(s)</a></label>
-                                    <select wire:model.debounce.300ms="selectedTransporter" class="form-control" >
+                                    <label for="exampleInputEmail13"><a href="{{ route('transporters.index') }}" target="_blank" style="color: blue">Transporter(s)<span class="required" style="color: red">*</span></a></label>
+                                    <select wire:model.debounce.300ms="selectedTransporter" class="form-control" required>
                                         <option value="">Select Transporter</option>
                                         @foreach ($transporters as $transporter)
                                         <option value="{{$transporter->id}}">{{$transporter->name}}</option>
@@ -1316,8 +1310,6 @@
                                 @if (isset($equipment) && $equipment == "Horse")
                                     <div class="form-group">
                                         <label for="horse"><a href="{{ route('horses.index') }}" target="_blank" style="color: blue">Horse(s)</a><span class="required" style="color: red">*</span></label>
-                                        <input type="checkbox" wire:model.debounce.300ms="all_horses"   class="line-style" />
-                                        <label for="one" class="radio-label">Select from all horses</label>
                                         <input type="text" wire:model.debounce.300ms="searchHorse" placeholder="Search with reg..." class="form-control">
                                         <select class="form-control" wire:model.debounce.300ms="selectedHorse"  required size="4">
                                             <option value="">Select Horse </option>
@@ -1334,8 +1326,6 @@
                                 @elseif (isset($equipment) && $equipment == "Vehicle")
                                     <div class="form-group">
                                         <label for="horse"><a href="{{ route('vehicles.index') }}" target="_blank" style="color: blue">Vehicle(s)</a><span class="required" style="color: red">*</span></label>
-                                        <input type="checkbox" wire:model.debounce.300ms="all_vehicles"   class="line-style" />
-                                        <label for="one" class="radio-label">Select from all vehicles</label>
                                         <input type="text" wire:model.debounce.300ms="searchVehicle" placeholder="Search with reg..." class="form-control">
                                         <select class="form-control" wire:model.debounce.300ms="selectedVehicle"  required size="4">
                                             <option value="">Select Vehicle </option>
@@ -1351,11 +1341,10 @@
                                     </div>
                                 @endif
                             </div>
+
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="driver"><a href="{{ route('drivers.index') }}" target="_blank" style="color: blue">Driver(s)</a><span class="required" style="color: red">*</span></label> 
-                                    <input type="checkbox" wire:model.debounce.300ms="all_drivers"   class="line-style" />
-                                    <label for="one" class="radio-label">Select from all drivers</label>
                                     <input type="text" wire:model.debounce.300ms="searchDriver" placeholder="Search with names..." class="form-control" >
                                     <select class="form-control" wire:model.debounce.300ms="driver_id" required size="4">
                                         <option value="">Select Driver</option>
