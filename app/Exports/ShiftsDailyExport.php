@@ -2,55 +2,370 @@
 
 namespace App\Exports;
 
+use Carbon\Carbon;
+use App\Models\Shift;
+use App\Models\Trip;
+use App\Models\Fuel;
+use App\Models\LoadingPoint;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\Eloquent\Builder;
+
 use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithTitle;
+use Maatwebsite\Excel\Concerns\WithDrawings;
+use Maatwebsite\Excel\Concerns\WithCustomStartCell;
+
 use Maatwebsite\Excel\Events\AfterSheet;
+
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
 
-class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, WithTitle
+class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, WithTitle, WithDrawings, WithCustomStartCell
 {
+    // ✅ Adjust if your schema uses different names
+    protected string $shiftDateColumn            = 'date';
+    protected string $tripWeightColumn           = 'weight';
+    protected string $shiftOpenMileageColumn     = 'open_mileage';
+    protected string $shiftCloseMileageColumn    = 'close_mileage';
+    protected string $shiftFuelConsumptionColumn = 'fuel_consumption_mileage';
+
+    protected array $lpCodes = ['D', 'P3', 'P4', 'P6'];
+
     public function __construct(
         protected string $periodTitle = 'Key Operating Metrics - Jan -26',
-        protected array $rows = [] // pass your metric rows in controller/service
-    ) {}
+        protected ?Carbon $asAt = null,
+        protected array $budgets = []
+    ) {
+        $this->asAt = $this->asAt ?: now();
+    }
 
     public function title(): string
     {
         return 'Key Metrics';
     }
 
+    /**
+     * ✅ Start the whole table at A7 (logo stays above)
+     */
+    public function startCell(): string
+    {
+        return 'A7';
+    }
+
+    public function drawings()
+    {
+        $drawing = new Drawing();
+
+        $company = Auth::user()?->employee?->company;
+
+        $drawing->setName($company?->name ?? 'Company');
+        $drawing->setDescription(($company?->name ?? 'Company') . ' Logo');
+
+        $logoPath = public_path('/images/uploads/logo.png');
+
+        if ($company && !empty($company->logo)) {
+            $candidate = public_path('/images/uploads/' . $company->logo);
+            if (file_exists($candidate)) {
+                $logoPath = $candidate;
+            }
+        }
+
+        $drawing->setPath($logoPath);
+        $drawing->setHeight(90);
+        $drawing->setCoordinates('A2');
+
+        return $drawing;
+    }
+
     public function array(): array
     {
-        // If you don't pass $rows, here's a default sample using your data
-        $dataRows = $this->rows ?: [
-            // Metric, D, P3, P4, P6, Loads, Actual, Budget, Var, [J sep], D, P3, P4, P6, Loads, Actual, Budget, Var
-            ['Total Ore Hauled - Long-haul', 14, 0, 0, 62, 76, 7980, 7560, 420, '', 192, 3, '-', 1076, 1271, 133455, 136080, -2625],
-            ['Total Fuel Used – Long-haul',   '', '', '', '', '', 6238, 4331, 1907, '', '', '', '', '', '', 111754, 238360, -126606],
-            ['Total Kilometres - Long-haul',  '', '', '', '', '', 7567, 10944, -3377, '', '', '', '', '', '', 134169, 196992, -62823],
-            ['Fuel Consumption - Long Haul',  '', '', '', '', '', 1.21, 1.25, -0.04, '', '', '', '', '', '', 1.20, 1.21, 0],
-            ['Total Ore Hauled – Short-haul', 20, 32, 0, 0, 52, 3370, 3465, -95, '', 474, 256, 17, 23, 770, 65670, 62370, 3300],
-            ['Total Fuel Used – Short-haul',  '', '', '', '', '', 1229, 594, 635, '', '', '', '', '', '', 14958, 10692, 4266],
-            ['Total Kilometres - Short-haul', '', '', '', '', '', 1502, 660, 842, '', '', '', '', '', '', 16294, 11880, 4414],
-            ['Fuel Consumption - Short Haul', '', '', '', '', '', 1.22, 0.90, 0.32, '', '', '', '', '', '', 1.09, 0.90, 0],
-            ['Total Concentrates Hauled',     '', '', '', '', 6, 608, 600, 8, '', '', '', '', '', 108, 10821, 10800, 21],
-            ['Total Fuel Used – Concentrates','', '', '', '', '', 701, 674.35, 27, '', '', '', '', '', '', 11500, 11478, 22],
-        ];
+        $asAt = $this->asAt->copy();
 
-        return array_values(array_filter([
-            // Row 1 (big headers)
+        $yFrom = $asAt->copy()->subDay()->startOfDay();
+        $yTo   = $asAt->copy()->subDay()->endOfDay();
+
+        $mFrom = $asAt->copy()->startOfMonth()->startOfDay();
+        $mTo   = $asAt->copy()->endOfDay();
+
+        $lpMap = LoadingPoint::query()
+            ->whereIn('name', $this->lpCodes)
+            ->pluck('id', 'name')
+            ->toArray();
+
+        $y = $this->computePeriod($yFrom, $yTo, $lpMap);
+        $m = $this->computePeriod($mFrom, $mTo, $lpMap);
+
+        $b = fn(string $bucket, string $key) => $this->budgets[$bucket][$key] ?? null;
+
+        return [
+            // Header row 1 (merged later)
             [$this->periodTitle, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''],
-            // Row 2 (sub headers)
+            // Header row 2
             ['', 'D', 'P3', 'P4', 'P6', 'Loads', 'Actual', 'Budget', 'Var', '', 'D', 'P3', 'P4', 'P6', 'Loads', 'Actual', 'Budget', 'Var'],
-            // Row 3 (blank spacer)
+            // Spacer
             array_fill(0, 18, ''),
-            // Data rows start Row 4
-            ...$dataRows,
-        ]));
+
+            // Long-haul ore (with D/P3/P4/P6 counts)
+            [
+                'Total Ore Hauled - Long-haul',
+                $y['ore_long']['lp']['D'] ?? 0,
+                $y['ore_long']['lp']['P3'] ?? 0,
+                $y['ore_long']['lp']['P4'] ?? 0,
+                $y['ore_long']['lp']['P6'] ?? 0,
+                $y['ore_long']['loads'] ?? 0,
+                $y['ore_long']['actual'] ?? 0,
+                $b('yesterday', 'ore_long'),
+                $this->variance($y['ore_long']['actual'] ?? null, $b('yesterday','ore_long')),
+                '',
+                $m['ore_long']['lp']['D'] ?? 0,
+                $m['ore_long']['lp']['P3'] ?? 0,
+                $m['ore_long']['lp']['P4'] ?? 0,
+                $m['ore_long']['lp']['P6'] ?? 0,
+                $m['ore_long']['loads'] ?? 0,
+                $m['ore_long']['actual'] ?? 0,
+                $b('mtd', 'ore_long'),
+                $this->variance($m['ore_long']['actual'] ?? null, $b('mtd','ore_long')),
+            ],
+
+            [
+                'Total Fuel Used – Long-haul',
+                '', '', '', '', '',
+                $y['fuel_long'] ?? 0,
+                $b('yesterday', 'fuel_long'),
+                $this->variance($y['fuel_long'] ?? null, $b('yesterday','fuel_long')),
+                '',
+                '', '', '', '', '',
+                $m['fuel_long'] ?? 0,
+                $b('mtd', 'fuel_long'),
+                $this->variance($m['fuel_long'] ?? null, $b('mtd','fuel_long')),
+            ],
+
+            [
+                'Total Kilometres - Long-haul',
+                '', '', '', '', '',
+                $y['km_long'] ?? 0,
+                $b('yesterday', 'km_long'),
+                $this->variance($y['km_long'] ?? null, $b('yesterday','km_long')),
+                '',
+                '', '', '', '', '',
+                $m['km_long'] ?? 0,
+                $b('mtd', 'km_long'),
+                $this->variance($m['km_long'] ?? null, $b('mtd','km_long')),
+            ],
+
+            [
+                'Fuel Consumption - Long Haul',
+                '', '', '', '', '',
+                $y['cons_long'] ?? null,
+                $b('yesterday', 'cons_long'),
+                $this->variance($y['cons_long'] ?? null, $b('yesterday','cons_long')),
+                '',
+                '', '', '', '', '',
+                $m['cons_long'] ?? null,
+                $b('mtd', 'cons_long'),
+                $this->variance($m['cons_long'] ?? null, $b('mtd','cons_long')),
+            ],
+
+            // Short-haul ore
+            [
+                'Total Ore Hauled – Short-haul',
+                $y['ore_short']['lp']['D'] ?? 0,
+                $y['ore_short']['lp']['P3'] ?? 0,
+                $y['ore_short']['lp']['P4'] ?? 0,
+                $y['ore_short']['lp']['P6'] ?? 0,
+                $y['ore_short']['loads'] ?? 0,
+                $y['ore_short']['actual'] ?? 0,
+                $b('yesterday', 'ore_short'),
+                $this->variance($y['ore_short']['actual'] ?? null, $b('yesterday','ore_short')),
+                '',
+                $m['ore_short']['lp']['D'] ?? 0,
+                $m['ore_short']['lp']['P3'] ?? 0,
+                $m['ore_short']['lp']['P4'] ?? 0,
+                $m['ore_short']['lp']['P6'] ?? 0,
+                $m['ore_short']['loads'] ?? 0,
+                $m['ore_short']['actual'] ?? 0,
+                $b('mtd', 'ore_short'),
+                $this->variance($m['ore_short']['actual'] ?? null, $b('mtd','ore_short')),
+            ],
+
+            [
+                'Total Fuel Used – Short-haul',
+                '', '', '', '', '',
+                $y['fuel_short'] ?? 0,
+                $b('yesterday', 'fuel_short'),
+                $this->variance($y['fuel_short'] ?? null, $b('yesterday','fuel_short')),
+                '',
+                '', '', '', '', '',
+                $m['fuel_short'] ?? 0,
+                $b('mtd', 'fuel_short'),
+                $this->variance($m['fuel_short'] ?? null, $b('mtd','fuel_short')),
+            ],
+
+            [
+                'Total Kilometres - Short-haul',
+                '', '', '', '', '',
+                $y['km_short'] ?? 0,
+                $b('yesterday', 'km_short'),
+                $this->variance($y['km_short'] ?? null, $b('yesterday','km_short')),
+                '',
+                '', '', '', '', '',
+                $m['km_short'] ?? 0,
+                $b('mtd', 'km_short'),
+                $this->variance($m['km_short'] ?? null, $b('mtd','km_short')),
+            ],
+
+            [
+                'Fuel Consumption - Short Haul',
+                '', '', '', '', '',
+                $y['cons_short'] ?? null,
+                $b('yesterday', 'cons_short'),
+                $this->variance($y['cons_short'] ?? null, $b('yesterday','cons_short')),
+                '',
+                '', '', '', '', '',
+                $m['cons_short'] ?? null,
+                $b('mtd', 'cons_short'),
+                $this->variance($m['cons_short'] ?? null, $b('mtd','cons_short')),
+            ],
+
+            // Concentrates
+            [
+                'Total Concentrates Hauled',
+                '', '', '', '', $y['conc']['loads'] ?? 0,
+                $y['conc']['actual'] ?? 0,
+                $b('yesterday', 'conc'),
+                $this->variance($y['conc']['actual'] ?? null, $b('yesterday','conc')),
+                '',
+                '', '', '', '', $m['conc']['loads'] ?? 0,
+                $m['conc']['actual'] ?? 0,
+                $b('mtd', 'conc'),
+                $this->variance($m['conc']['actual'] ?? null, $b('mtd','conc')),
+            ],
+
+            [
+                'Total Fuel Used – Concentrates',
+                '', '', '', '', '',
+                $y['fuel_conc'] ?? 0,
+                $b('yesterday', 'fuel_conc'),
+                $this->variance($y['fuel_conc'] ?? null, $b('yesterday','fuel_conc')),
+                '',
+                '', '', '', '', '',
+                $m['fuel_conc'] ?? 0,
+                $b('mtd', 'fuel_conc'),
+                $this->variance($m['fuel_conc'] ?? null, $b('mtd','fuel_conc')),
+            ],
+        ];
+    }
+
+    protected function computePeriod(Carbon $from, Carbon $to, array $lpMap): array
+    {
+        $shiftBase = Shift::query()->whereBetween($this->shiftDateColumn, [$from, $to]);
+
+        // Trips constrained by shifts in date range
+        $tripBase = Trip::query()->whereHas('shift', fn(Builder $q) => $q->whereBetween($this->shiftDateColumn, [$from, $to]));
+
+        // Long-haul ore
+        $oreLongTrips = (clone $tripBase)
+            ->where('haulage_type', 'long_haul')
+            ->whereHas('cargo', fn(Builder $q) => $q->where('name', 'platinum ore'));
+
+        $oreLongLoads  = (clone $oreLongTrips)->count();
+        $oreLongActual = (clone $oreLongTrips)->sum($this->tripWeightColumn);
+        $oreLongLp     = $this->tripCountsByLoadingPoint(clone $oreLongTrips, $lpMap);
+
+        $fuelLong = Fuel::query()
+            ->whereHas('shift', fn(Builder $q) =>
+                $q->whereBetween($this->shiftDateColumn, [$from, $to])
+                  ->whereHas('trips', fn(Builder $t) => $t->where('haulage_type', 'long_haul'))
+            )->sum('quantity');
+
+        $kmLong = (clone $shiftBase)
+            ->whereHas('trips', fn(Builder $t) => $t->where('haulage_type', 'long_haul'))
+            ->selectRaw("COALESCE(SUM(COALESCE({$this->shiftCloseMileageColumn},0) - COALESCE({$this->shiftOpenMileageColumn},0)),0) as km")
+            ->value('km');
+
+        $consLong = (clone $shiftBase)
+            ->whereHas('trips', fn(Builder $t) => $t->where('haulage_type', 'long_haul'))
+            ->avg($this->shiftFuelConsumptionColumn);
+
+        // Short-haul ore
+        $oreShortTrips = (clone $tripBase)
+            ->where('haulage_type', 'short_haul')
+            ->whereHas('cargo', fn(Builder $q) => $q->where('name', 'platinum ore'));
+
+        $oreShortLoads  = (clone $oreShortTrips)->count();
+        $oreShortActual = (clone $oreShortTrips)->sum($this->tripWeightColumn);
+        $oreShortLp     = $this->tripCountsByLoadingPoint(clone $oreShortTrips, $lpMap);
+
+        $fuelShort = Fuel::query()
+            ->whereHas('shift', fn(Builder $q) =>
+                $q->whereBetween($this->shiftDateColumn, [$from, $to])
+                  ->whereHas('trips', fn(Builder $t) => $t->where('haulage_type', 'short_haul'))
+            )->sum('quantity');
+
+        $kmShort = (clone $shiftBase)
+            ->whereHas('trips', fn(Builder $t) => $t->where('haulage_type', 'short_haul'))
+            ->selectRaw("COALESCE(SUM(COALESCE({$this->shiftCloseMileageColumn},0) - COALESCE({$this->shiftOpenMileageColumn},0)),0) as km")
+            ->value('km');
+
+        $consShort = (clone $shiftBase)
+            ->whereHas('trips', fn(Builder $t) => $t->where('haulage_type', 'short_haul'))
+            ->avg($this->shiftFuelConsumptionColumn);
+
+        // Concentrates
+        $concTrips = (clone $tripBase)->whereHas('cargo', fn(Builder $q) => $q->where('name', 'Concentrate'));
+        $concLoads  = (clone $concTrips)->count();
+        $concActual = (clone $concTrips)->sum($this->tripWeightColumn);
+
+        $fuelConc = Fuel::query()
+            ->whereHas('shift', fn(Builder $q) =>
+                $q->whereBetween($this->shiftDateColumn, [$from, $to])
+                  ->whereHas('trips', fn(Builder $t) =>
+                      $t->whereHas('cargo', fn(Builder $c) => $c->where('name', 'Concentrate'))
+                  )
+            )->sum('quantity');
+
+        return [
+            'ore_long' => ['loads' => (int)$oreLongLoads, 'actual' => (float)$oreLongActual, 'lp' => $oreLongLp],
+            'fuel_long' => (float)$fuelLong,
+            'km_long'   => (float)$kmLong,
+            'cons_long' => $consLong !== null ? round((float)$consLong, 2) : null,
+
+            'ore_short' => ['loads' => (int)$oreShortLoads, 'actual' => (float)$oreShortActual, 'lp' => $oreShortLp],
+            'fuel_short' => (float)$fuelShort,
+            'km_short'   => (float)$kmShort,
+            'cons_short' => $consShort !== null ? round((float)$consShort, 2) : null,
+
+            'conc' => ['loads' => (int)$concLoads, 'actual' => (float)$concActual],
+            'fuel_conc' => (float)$fuelConc,
+        ];
+    }
+
+    protected function tripCountsByLoadingPoint(Builder $tripQuery, array $lpMap): array
+    {
+        $counts = (clone $tripQuery)
+            ->whereIn('loading_point_id', array_values(array_filter($lpMap)))
+            ->selectRaw('loading_point_id, COUNT(*) as c')
+            ->groupBy('loading_point_id')
+            ->pluck('c', 'loading_point_id')
+            ->toArray();
+
+        $out = [];
+        foreach ($this->lpCodes as $code) {
+            $id = $lpMap[$code] ?? null;
+            $out[$code] = $id ? (int)($counts[$id] ?? 0) : 0;
+        }
+        return $out;
+    }
+
+    protected function variance($actual, $budget): ?float
+    {
+        if ($actual === null || $budget === null || $budget === '') return null;
+        return (float)$actual - (float)$budget;
     }
 
     public function columnWidths(): array
@@ -59,7 +374,7 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
             'A' => 34,
             'B' => 5,  'C' => 5,  'D' => 5,  'E' => 5,  'F' => 7,
             'G' => 12, 'H' => 12, 'I' => 10,
-            'J' => 2, // separator
+            'J' => 2,
             'K' => 5,  'L' => 5,  'M' => 5,  'N' => 5,  'O' => 7,
             'P' => 12, 'Q' => 12, 'R' => 10,
         ];
@@ -72,25 +387,33 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
 
                 $sheet = $event->sheet->getDelegate();
 
-                $lastRow = $sheet->getHighestRow(); // dynamic based on data
-                $rangeAll = "A1:R{$lastRow}";
+                // ✅ Because startCell is A7, everything shifts down
+                $startRow   = 7;
+                $headerRow1 = $startRow;       // 7
+                $headerRow2 = $startRow + 1;   // 8
+                $spacerRow  = $startRow + 2;   // 9
+                $dataStart  = $startRow + 3;   // 10
+
+                $lastRow    = $sheet->getHighestRow();
+                $rangeAll   = "A{$headerRow1}:R{$lastRow}";
+
                 $headerFill = 'D9D9D9';
                 $greyFill   = 'BFBFBF';
-                $sepFill    = '7B61A6'; // purple-ish
+                $sepFill    = '7B61A6';
 
-                // --- Merge the top headers ---
-                $sheet->mergeCells('A1:A2');
-                $sheet->mergeCells('B1:I1');
-                $sheet->mergeCells('K1:R1');
+                // Merge headers
+                $sheet->mergeCells("A{$headerRow1}:A{$headerRow2}");
+                $sheet->mergeCells("B{$headerRow1}:I{$headerRow1}");
+                $sheet->mergeCells("K{$headerRow1}:R{$headerRow1}");
 
-                // Separator column (J)
-                $sheet->mergeCells('J1:J' . $lastRow);
+                // Separator column
+                $sheet->mergeCells("J{$headerRow1}:J{$lastRow}");
 
-                $sheet->setCellValue('B1', 'YESTERDAY PRODUCTION');
-                $sheet->setCellValue('K1', 'MTD PRODUCTION');
+                $sheet->setCellValue("B{$headerRow1}", 'YESTERDAY PRODUCTION');
+                $sheet->setCellValue("K{$headerRow1}", 'MTD PRODUCTION');
 
-                // --- Header styling ---
-                $sheet->getStyle('A1:R2')->applyFromArray([
+                // Header styling
+                $sheet->getStyle("A{$headerRow1}:R{$headerRow2}")->applyFromArray([
                     'font' => ['bold' => true],
                     'alignment' => [
                         'horizontal' => Alignment::HORIZONTAL_CENTER,
@@ -103,23 +426,22 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
                     ],
                 ]);
 
-                // Title cell (A1:A2) left aligned
-                $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+                // Title left aligned
+                $sheet->getStyle("A{$headerRow1}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
 
-                // Purple separator column fill
-                $sheet->getStyle("J1:J{$lastRow}")->applyFromArray([
-                    'fill' => [
-                        'fillType' => Fill::FILL_SOLID,
-                        'color'    => ['rgb' => $sepFill],
-                    ],
+                // Purple separator
+                $sheet->getStyle("J{$headerRow1}:J{$lastRow}")->applyFromArray([
+                    'fill' => ['fillType' => Fill::FILL_SOLID, 'color' => ['rgb' => $sepFill]],
                 ]);
 
-                // Row heights (nice dashboard look)
-                $sheet->getRowDimension(1)->setRowHeight(22);
-                $sheet->getRowDimension(2)->setRowHeight(18);
-                $sheet->freezePane('B4'); // keep metric names visible
+                // Row heights + freeze
+                $sheet->getRowDimension($headerRow1)->setRowHeight(22);
+                $sheet->getRowDimension($headerRow2)->setRowHeight(18);
+                $sheet->getRowDimension($spacerRow)->setRowHeight(6);
 
-                // --- Borders for whole table area ---
+                $sheet->freezePane("B{$dataStart}");
+
+                // Borders
                 $sheet->getStyle($rangeAll)->applyFromArray([
                     'borders' => [
                         'allBorders' => [
@@ -129,55 +451,42 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
                     ],
                 ]);
 
-                // --- Number formats ---
-                // Integers / counts (D,P3,P4,P6,Loads)
-                $sheet->getStyle("B4:F{$lastRow}")->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_NUMBER);
-                $sheet->getStyle("K4:O{$lastRow}")->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_NUMBER);
+                // Number formats (data area only)
+                $sheet->getStyle("B{$dataStart}:F{$lastRow}")->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_NUMBER);
+                $sheet->getStyle("K{$dataStart}:O{$lastRow}")->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_NUMBER);
 
-                // Actual/Budget/Var: thousands with commas, 2dp when needed
-                $sheet->getStyle("G4:I{$lastRow}")->getNumberFormat()->setFormatCode('#,##0.00');
-                $sheet->getStyle("P4:R{$lastRow}")->getNumberFormat()->setFormatCode('#,##0.00');
+                $sheet->getStyle("G{$dataStart}:I{$lastRow}")->getNumberFormat()->setFormatCode('#,##0.00');
+                $sheet->getStyle("P{$dataStart}:R{$lastRow}")->getNumberFormat()->setFormatCode('#,##0.00');
 
-                // Align numeric cells right
-                $sheet->getStyle("B4:I{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
-                $sheet->getStyle("K4:R{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
-                $sheet->getStyle("A4:A{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+                // Alignment
+                $sheet->getStyle("A{$dataStart}:A{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+                $sheet->getStyle("B{$dataStart}:I{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+                $sheet->getStyle("K{$dataStart}:R{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
 
-                // --- Bold budget columns (H and Q) like your screenshot ---
-                $sheet->getStyle("H4:H{$lastRow}")->getFont()->setBold(true);
-                $sheet->getStyle("Q4:Q{$lastRow}")->getFont()->setBold(true);
+                // Bold budgets
+                $sheet->getStyle("H{$dataStart}:H{$lastRow}")->getFont()->setBold(true);
+                $sheet->getStyle("Q{$dataStart}:Q{$lastRow}")->getFont()->setBold(true);
 
-                // --- Grey-out “blank” blocks (like your dashboard) ---
-                // This is the key trick: for rows where B-F are empty, paint them grey; same for K-O.
-                for ($r = 4; $r <= $lastRow; $r++) {
+                // Grey-out blocks (based on whether D col is blank)
+                for ($r = $dataStart; $r <= $lastRow; $r++) {
                     $yesterdayD = trim((string)$sheet->getCell("B{$r}")->getValue());
                     $mtdD       = trim((string)$sheet->getCell("K{$r}")->getValue());
 
                     if ($yesterdayD === '') {
                         $sheet->getStyle("B{$r}:F{$r}")->applyFromArray([
-                            'fill' => [
-                                'fillType' => Fill::FILL_SOLID,
-                                'color'    => ['rgb' => $greyFill],
-                            ],
+                            'fill' => ['fillType' => Fill::FILL_SOLID, 'color' => ['rgb' => $greyFill]],
                         ]);
                     }
-
                     if ($mtdD === '') {
                         $sheet->getStyle("K{$r}:O{$r}")->applyFromArray([
-                            'fill' => [
-                                'fillType' => Fill::FILL_SOLID,
-                                'color'    => ['rgb' => $greyFill],
-                            ],
+                            'fill' => ['fillType' => Fill::FILL_SOLID, 'color' => ['rgb' => $greyFill]],
                         ]);
                     }
                 }
 
                 // Center the subheaders row
-                $sheet->getStyle('B2:I2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-                $sheet->getStyle('K2:R2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-
-                // Optional: make row 3 a thin spacer
-                $sheet->getRowDimension(3)->setRowHeight(6);
+                $sheet->getStyle("B{$headerRow2}:I{$headerRow2}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle("K{$headerRow2}:R{$headerRow2}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
             },
         ];
     }
