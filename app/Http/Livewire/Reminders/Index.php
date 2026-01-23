@@ -106,13 +106,13 @@ class Index extends Component
         $this->resetPage();
         $this->reminder_items = ReminderItem::orderBy('name','asc')->get();
 
-        $this->horses = Horse::orderBy('registration_number','asc')->where('status',1)->latest()->get();
+        $this->horses = Horse::orderBy('registration_number','asc')->where('status',1)->get();
 
-        $this->employees = Employee::orderBy('name','asc')->where('status',1)->get();
+        $this->employees = Employee::orderBy('name','asc')->orderBy('surname','asc')->where('status',1)->get();
 
-        $this->vehicles = Vehicle::orderBy('registration_number','asc')->where('status',1)->latest()->get();
+        $this->vehicles = Vehicle::orderBy('registration_number','asc')->where('status',1)->get();
 
-        $this->trailers = Trailer::orderBy('registration_number','asc')->where('status',1)->latest()->get();
+        $this->trailers = Trailer::orderBy('registration_number','asc')->where('status',1)->get();
     }
 
     public function store(){
@@ -253,18 +253,18 @@ class Index extends Component
     public function render()
     {
 
-        if (isset($this->searchHorse)) {
+        if (filled($this->searchHorse)) {
             $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('registration_number', 'like', '%'.$this->searchHorse.'%')->get();
         }
-        if (isset($this->searchVehicle)) {
+        if (filled($this->searchVehicle)) {
             $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('registration_number', 'like', '%'.$this->searchVehicle.'%')->get();
             
         }
-        if (isset($this->searchTrailer)) {
-            $this->trailers = Trailer::where('registration_number', 'like', '%'.$this->searchTrailer.'%')->get();
+        if (filled($this->searchTrailer)) {
+            $this->trailers = Trailer::where('registration_number', 'like', '%'.$this->searchTrailer.'%')->where('fleet_number', 'like', '%'.$this->searchTrailer.'%')->get();
         }
 
-        if (isset($this->searchEmployee)) {
+        if (filled($this->searchEmployee)) {
             $this->employees = Employee::where(DB::raw("concat(name, ' ', surname)"), 'LIKE', "%".$this->searchEmployee."%")
             ->get();
         }

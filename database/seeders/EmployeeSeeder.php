@@ -63,8 +63,8 @@ class EmployeeSeeder extends Seeder
         $employee->country ="Zimbabwe";
         $employee->province = "Harare";
         $employee->city = "Harare";
-        $employee->street_address =  "271 Northway Ave Prospect";
-        $employee->suburb = "Waterfalls";
+        $employee->street_address =  "3381 Haydon Rd";
+        $employee->suburb = "Shineplus Park";
         $employee->post = "Software Developer";
         $employee->save();
         $employee->departments()->attach(1);

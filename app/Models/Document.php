@@ -16,7 +16,9 @@ class Document extends Model implements Auditable
     public function retread(){
         return $this->belongsTo('App\Models\Retread');
     }
-    
+    public function payment(){
+        return $this->belongsTo('App\Models\Payment');
+    }
     public function clearing_agent(){
         return $this->belongsTo('App\Models\ClearingAgent');
     }

@@ -82,6 +82,7 @@ class Index extends Component
     public $mode_of_payment;
     public $specify_other;
     public $accrual_balance;
+    public $selected_payment;
 
     public $exchange_amount;
     public $exchange_rate;
@@ -140,7 +141,6 @@ class Index extends Component
         }
     
         return  $receipt_number;
-    
     
     }
     public function paymentNumber(){
@@ -271,7 +271,7 @@ class Index extends Component
 
     public function recordPayment(){
 
-          DB::transaction(function () {
+        DB::transaction(function () {
 
         if ($this->source_destination === "Vendor" && $this->selected_account && isset($this->selected_account->balance)) {
             if ($this->selected_account->balance < $this->amount) {
@@ -424,12 +424,143 @@ class Index extends Component
             'message'=>"Payment Recorded Successfully!!"
         ]);
     
-            });
+    });
     }
 
     public function updatingSearch()
     {
         $this->resetPage();
+    }
+
+    public function delete($id){
+        $payment = Payment::find($id);
+        $this->payment_id = $id;
+        $this->selected_payment = $payment;
+        $this->dispatchBrowserEvent('show-paymentDeleteModal');
+    }
+
+    public function destroy()
+    {
+        DB::transaction(function () {
+
+            $payment = Payment::with([
+                'invoice',                    // if you still use single-invoice payments sometimes
+                'account',                    // cash/bank account
+                'invoice_payments.invoice',   // allocations
+                'denominations',
+                'documents',
+                'receipt',
+                'cash_flow',
+            ])->findOrFail($this->payment_id);
+
+            // -----------------------------
+            // 1) Reverse allocations to invoices (preferred)
+            // -----------------------------
+            $appliedTotal = 0;
+
+            if ($payment->invoice_payments && $payment->invoice_payments->count() > 0) {
+
+                foreach ($payment->invoice_payments as $invoice_payment) {
+                    $drawdownInvoice = $invoice_payment->invoice;
+                    if (! $drawdownInvoice) continue;
+
+                    $applied = (float) $invoice_payment->amount;   // 👈 change column name if needed
+                    $appliedTotal += $applied;
+
+                    // Reverse: invoice balance increases (they owe again)
+                    $drawdownInvoice->balance = (float) $drawdownInvoice->balance + $applied;
+                    $drawdownInvoice->status  = $this->computeInvoiceStatus($drawdownInvoice->balance, $drawdownInvoice->total);
+                    $drawdownInvoice->save();
+
+                    // Delete the allocation row (so history matches deletion)
+                    $invoice_payment->delete();
+                }
+
+            } else {
+                // -----------------------------
+                // 1b) Fallback: single invoice payment reversal
+                // Only do this if your system still allows Payment->invoice directly.
+                // -----------------------------
+                $invoice = $payment->invoice;
+                if ($invoice) {
+                    $invoice->balance = (float) $invoice->balance + (float) $payment->amount;
+                    $invoice->status  = $this->computeInvoiceStatus($invoice->balance, $invoice->total);
+                    $invoice->save();
+                }
+            }
+
+            // -----------------------------
+            // 2) Reverse cash/bank account movement
+            // -----------------------------
+            if ($payment->account) {
+                $payment->account->balance = (float) $payment->account->balance - (float) $payment->amount;
+                $payment->account->save();
+            }
+
+            // -----------------------------
+            // 3) Reverse customer wallet (temporary holding account)
+            // Wallet originally increased by payment.amount
+            // Wallet may have decreased by applied allocations
+            // To fully undo, we:
+            //   + add back appliedTotal (undo drawdowns)
+            //   - subtract payment.amount (remove deposit)
+            // Net effect restores the wallet to pre-payment state.
+            // -----------------------------
+            if ($payment->customer_account_id) {
+                $customerAccount = Account::find($payment->customer_account_id);
+
+                if ($customerAccount) {
+                    $customerAccount->balance = (float) $customerAccount->balance + (float) $appliedTotal;
+                    $customerAccount->balance = (float) $customerAccount->balance - (float) $payment->amount;
+                    $customerAccount->save();
+                }
+            }
+
+            // -----------------------------
+            // 4) Delete children
+            // -----------------------------
+            $payment->denominations?->each->delete();
+            $payment->documents?->each->delete();
+
+            if ($payment->receipt) {
+                $payment->receipt->delete();
+            }
+
+            if ($payment->cash_flow) {
+                $payment->cash_flow->delete();
+            }
+
+            // -----------------------------
+            // 5) Delete payment
+            // -----------------------------
+            $payment->delete();
+        });
+
+        $this->dispatchBrowserEvent('hide-paymentDeleteModal');
+        $this->resetInputFields();
+
+        $this->dispatchBrowserEvent('alert', [
+            'type'    => 'success',
+            'message' => "Payment reversed and deleted successfully!",
+        ]);
+    }
+
+    /**
+     * Safer invoice status computation (tolerant to decimals).
+     * Consider storing money as integer cents long-term.
+     */
+    protected function computeInvoiceStatus($balance, $total): string
+    {
+        $balance = (float) $balance;
+        $total   = (float) $total;
+        $eps     = 0.00001;
+
+        if (abs($balance - $total) < $eps) return 'Unpaid';
+        if ($balance > $eps && $balance < ($total - $eps)) return 'Partial';
+        if ($balance <= $eps) return 'Paid';
+
+        // balance > total (rare): treat as Unpaid or introduce "Credit"
+        return 'Unpaid';
     }
 
     public function render()

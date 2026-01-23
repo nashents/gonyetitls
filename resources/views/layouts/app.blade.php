@@ -131,6 +131,18 @@
 @stack('scripts')
     
     <script type="text/javascript">
+            window.addEventListener('show-paymentDeleteModal', event => {
+                $('#paymentDeleteModal').modal('show');
+            })
+    </script>
+    
+    <script type="text/javascript">
+            window.addEventListener('hide-paymentDeleteModal', event => {
+                $('#paymentDeleteModal').modal('hide');
+            })
+    </script>
+
+    <script type="text/javascript">
             window.addEventListener('show-reminderCopyModal', event => {
                 $('#reminderCopyModal').modal('show');
             })

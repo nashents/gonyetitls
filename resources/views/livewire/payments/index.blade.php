@@ -193,12 +193,12 @@
                                                    <li><a href="{{route('receipts.preview',$payment->receipt->id)}}"  ><i class="fas fa-receipt color-primary"></i> Receipt</a></li>
                                                    @endif    
                                                    {{-- @if (Auth::user()->is_admin()) --}}
-                                                        <li><a href="#" data-toggle="modal" data-target="#paymentDeleteModal{{$payment->id}}"><i class="fas fa-trash color-danger"></i>Delete</a></li> 
+                                                        <li><a href="#" wire:click.prevent="delete({{$payment->id}})"><i class="fas fa-trash color-danger"></i>Delete</a></li> 
                                                    {{-- @endif --}}
                                                 </ul>
                                             </div>
                                      
-                                            @include('payments.delete')
+                                    
                                     </td>
                                       </tr>
                                       @empty
@@ -239,7 +239,27 @@
             <!-- /.container-fluid -->
         </section>
 
-            <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="accrualModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+        <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal fade" id="paymentDeleteModal" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content bg-danger">
+                    <div class="modal-body">
+                    <center> <strong>Are you sure you want to delete Payment {{$selected_payment?->payment_number}}?. Please note deleting the payment reverses the entire transaction</strong> </center> 
+                    </div>
+                    <form wire:submit.prevent="destroy()" >
+                    
+                    <div class="modal-footer no-border">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn bg-white btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                            <button onClick="this.form.submit(); this.disabled=true; this.value='Sending…'; " class="btn bg-black btn-wide btn-rounded" ><i class="fa fa-trash"></i>Delete</button>
+                        </div>
+                        <!-- /.btn-group -->
+                    </div>
+                </form>
+                </div>
+            </div>
+        </div>
+
+        <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="accrualModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
         <div class="modal-dialog  mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">

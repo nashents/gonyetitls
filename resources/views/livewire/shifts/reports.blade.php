@@ -277,7 +277,7 @@
                                         @if ($shift->horse)
                                             <strong>Horse:</strong>  {{$shift->horse->registration_number}} {{$shift->horse->fleet_number ? "(".$shift->horse->fleet_number.")" : ""}} <br>
                                         @elseif($shift->vehicle)
-                                            <strong>Vehicle:</strong> {{$shift->horse->registration_number}} <br>
+                                            <strong>Vehicle:</strong> {{$shift->vehicle->registration_number}} <br>
                                         @endif
                                     @if ($shift->loading_points->isNotEmpty() && $shift->loading_points->count()>0)
                                             <strong>Loading Points: </strong>

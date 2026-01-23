@@ -1386,7 +1386,7 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
             ]),
         ]);
         $upsertSub($m, ['name'=>'Manage Shifts','slug'=>'manage-shifts','icon'=>'fas fa-list','route_name'=>'shifts.index','sort_order'=>10]);
-        $upsertSub($m, ['name'=>'Shifts Reports','slug'=>'shifts-reports','icon'=>'fas fa-line-chart','route_name'=>'shifts.reports','sort_order'=>20]);
+        $upsertSub($m, ['name'=>'Shifts Reports','slug'=>'shifts-reports',  'is_active'  => false,'icon'=>'fas fa-line-chart','route_name'=>'shifts.reports','sort_order'=>20]);
 
         // Trips
         $m = $upsertModule($g, [

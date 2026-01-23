@@ -50,6 +50,7 @@ class User extends Authenticatable implements Auditable
     ];
 
     public function is_admin(){
+        
         if($this->is_admin){
             return true;
         }else{

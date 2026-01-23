@@ -42,17 +42,16 @@ class Index extends Component
     public $expiry_date;
     public $currencies;
     public $currency_id;
+    public $company;
+    public $user;
 
     public function mount(){
-        if (Auth::user()->is_admin()) {
-            $this->companies = Company::latest()->get();
-        }else {
-            $this->companies = Company::where('type','!=','admin')->get();
-        }
-      
+        
+        $this->user = User::find(Auth::user()->id);
         $this->roles = Role::orderBy('name','asc')->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->noreply = 'noreply@gonyetitls.com';
+
     }
 
     public function updated($value){
@@ -344,10 +343,10 @@ class Index extends Component
 
     public function render()
     {
-        if (Auth::user()->is_admin()) {
-            $this->companies = Company::latest()->get();
+        if ($this->user->is_admin()) {
+            $this->companies = Company::orderBy('name','asc')->get();
         }else {
-            $this->companies = Company::where('type','!=','admin')->get();
+            $this->companies = Company::where('type','!=','admin')->orderBy('name','asc')->get();
         }
         return view('livewire.companies.index',[
             'companies' => $this->companies

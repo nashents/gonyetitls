@@ -73,6 +73,9 @@ class Payment extends Model implements Auditable
     public function user(){
         return $this->belongsTo('App\Models\User');
     }
+    public function documents(){
+        return $this->hasMany('App\Models\Document');
+    }
     public function denominations(){
         return $this->hasMany('App\Models\Denomination');
     }

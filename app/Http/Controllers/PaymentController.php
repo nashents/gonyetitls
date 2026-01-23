@@ -84,38 +84,7 @@ class PaymentController extends Controller
     public function destroy(Payment $payment)
     {
 
-        $invoice = $payment->invoice;
-        $payment_account = $payment->account;
-        $customer_account = Account::find($payment->customer_account_id);
-        
-        if ($payment_account) {
-            $payment_account->balance = $payment_account->balance - $payment->amount;
-            $payment_account->update();
-        }
-        if ($customer_account) {
-            $customer_account->balance = $customer_account->balance - $payment->amount;
-            $customer_account->update();
-        }
-        if ($invoice) {
-            $invoice->balance = $invoice->balance + $payment->amount;
-            if ($invoice->balance == $invoice->total) {
-                $invoice->status = "Unpaid";
-            }elseif($invoice->balance < $invoice->total && $invoice->balance > 0){
-                $invoice->status = "Partial";
-            }
-            $invoice->update();
-        }
-    
-        $receipt = $payment->receipt;
-        
-        if (isset($receipt)) {
-            $receipt->delete();
-        }
-        $cashflow = $payment->cash_flow;
-        if (isset($cashflow)) {
-            $cashflow->delete();
-        }
-        $payment->delete();
+   
         Session::flash('success','Payment Deleted Successfully');
         return redirect()->back();
     }

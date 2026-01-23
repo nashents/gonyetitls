@@ -64,91 +64,90 @@
                                             $lastLogin = $employee->user->last_login_at;
                                         @endphp
                                         @if (!$employee->driver)
-                                         @if (Auth::user()->is_admin() || !$employee->user->is_admin())
-                                        <tr>
-                                            <td >
-                                                <img src="{{asset('images/uploads/'.$employee->user->profile)}}" alt="" class="border-radius-50 img-circle profile-img " style="width: 50px; height:50px">
-                                            </td>
-                                          
-                                            <td>
-                                                {{ucfirst($employee->name)}} {{ucfirst($employee->surname)}}
-                                                <br>
-                                                <small>
-                                                    <strong>Emp#: </strong> {{ucfirst($employee->employee_number)}}
-                                                </small>
-                                            </td>
-                                            <td>{{ucfirst(strtolower($employee->gender))}}</td>
-                                            <td>
-                                                <small>
-                                                    @if ($employee->email)
-                                                        <i class="fas fa-envelope"></i>{{$employee->email}} <br>
-                                                    @endif
-                                                    @if ($employee->phonenumber)
-                                                        <i class="fas fa-phone"></i>{{$employee->phonenumber}}
-                                                    @endif
-                                                </small>
-                                            </td>
-                                            <td>
-                                                <strong>Deparments:</strong>
-                                                @foreach ($employee->departments as $department)
-                                                    {{$department->name}} @if (!$loop->last),@endif
-                                                @endforeach
-                                                <br>
-                                                <strong>Post: </strong>{{$employee->post}} <br>
-                                                <strong>Branch: </strong>{{$employee->branch ? $employee->branch->name : ""}} <br>
-                                                <strong>Rank: </strong>{{$employee->ranks ? $employee->ranks->first()->name : ""}} <br>
-                                                <strong>Role(s):</strong> 
-                                                    @if ($employee->user->roles)
-                                                        @foreach ($employee->user->roles as $role)
-                                                            {{$role->name}} @if (!$loop->last),@endif
-                                                        @endforeach
-                                                    @endif
-                                            </td>
-                                            <td>
-
-                                                @if ($employee->user)
-                                                    @if ($employee->user->username)
-                                                        <small><strong><i class="fas fa-user"></i> </strong> {{$employee->user->username}}</small>  <br>    
-                                                    @endif
-                                                    <span class="badge bg-{{$employee->user->active == 1 ? "success" : "danger"}}">{{$employee->user->active == 1 ? "Active" : "Inactive"}}</span> <br>
+                                            @if (Auth::user()->is_admin() || !$employee->user->is_admin())
+                                            <tr>
+                                                <td >
+                                                    <img src="{{asset('images/uploads/'.$employee->user->profile)}}" alt="" class="border-radius-50 img-circle profile-img " style="width: 50px; height:50px">
+                                                </td>
+                                            
+                                                <td>
+                                                    {{ucfirst($employee->name)}} {{ucfirst($employee->surname)}}
+                                                    <br>
                                                     <small>
-                                                        <strong>Created: </strong>   {{Carbon\Carbon::parse($employee->created_at)->format('d-m-y')}}
-                                                    </small> 
-                                                    @if (!empty($employee->email) && filter_var($employee->email, FILTER_VALIDATE_EMAIL))
-                                                            <br>
-                                                            <button type="button"  wire:click.prevent="sendCredentials({{$employee->id}})" class="btn btn-default btn-rounded btn-xs mt-5"><i class="fa fa-send-o"></i>{{$employee->user->sent_credentials == False ? "Send Credentials" : "Resend Credentials"}}</button>
+                                                        <strong>Emp#: </strong> {{ucfirst($employee->employee_number)}}
+                                                    </small>
+                                                </td>
+                                                <td>{{ucfirst(strtolower($employee->gender))}}</td>
+                                                <td>
+                                                    <small>
+                                                        @if ($employee->email)
+                                                            <i class="fas fa-envelope"></i>{{$employee->email}} <br>
+                                                        @endif
+                                                        @if ($employee->phonenumber)
+                                                            <i class="fas fa-phone"></i>{{$employee->phonenumber}}
+                                                        @endif
+                                                    </small>
+                                                </td>
+                                                <td>
+                                                    <strong>Deparments:</strong>
+                                                    @foreach ($employee->departments as $department)
+                                                        {{$department->name}} @if (!$loop->last),@endif
+                                                    @endforeach
+                                                    <br>
+                                                    <strong>Post: </strong>{{$employee->post}} <br>
+                                                    <strong>Branch: </strong>{{$employee->branch ? $employee->branch->name : ""}} <br>
+                                                    <strong>Rank: </strong>{{$employee->ranks ? $employee->ranks->first()->name : ""}} <br>
+                                                    <strong>Role(s):</strong> 
+                                                        @if ($employee->user->roles)
+                                                            @foreach ($employee->user->roles as $role)
+                                                                {{$role->name}} @if (!$loop->last),@endif
+                                                            @endforeach
+                                                        @endif
+                                                </td>
+                                                <td>
+
+                                                    @if ($employee->user)
+                                                        @if ($employee->user->username)
+                                                            <small><strong><i class="fas fa-user"></i> </strong> {{$employee->user->username}}</small>  <br>    
+                                                        @endif
+                                                        <span class="badge bg-{{$employee->user->active == 1 ? "success" : "danger"}}">{{$employee->user->active == 1 ? "Active" : "Inactive"}}</span> <br>
+                                                        <small>
+                                                            <strong>Created: </strong>   {{Carbon\Carbon::parse($employee->created_at)->format('d-m-y')}}
+                                                        </small> 
+                                                        @if (!empty($employee->email) && filter_var($employee->email, FILTER_VALIDATE_EMAIL))
+                                                                <br>
+                                                                <button type="button"  wire:click.prevent="sendCredentials({{$employee->id}})" class="btn btn-default btn-rounded btn-xs mt-5"><i class="fa fa-send-o"></i>{{$employee->user->sent_credentials == False ? "Send Credentials" : "Resend Credentials"}}</button>
+                                                        @endif
+                                                    @else
+                                                    <span class="badge bg-danger">Deleted</span>
                                                     @endif
-                                                @else
-                                                <span class="badge bg-danger">Deleted</span>
-                                                @endif
-                                            </td>
-                                            <td>{{ $lastLogin ? \Carbon\Carbon::parse($lastLogin)->diffForHumans() : 'Never' }}</td>
-                                            <td class="w-10 line-height-35 table-dropdown">
-                                                <div class="dropdown">
-                                                    <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                        <i class="fa fa-bars"></i>
-                                                        <span class="caret"></span>
-                                                    </button>
-                                                    <ul class="dropdown-menu">
-                                                        <li><a href="{{route('employees.show', $employee->id)}}"><i class="fa fa-eye color-default"></i>View</a></li>
-                                                        <li><a href="{{route('employees.edit', $employee->id)}}"><i class="fa fa-edit color-success"></i> Edit</a></li>
-                                                        <li><a href="#" wire:click.prevent="changePosition({{$employee->id}})"><i class="fa fa-edit color-success"></i> Change Position</a></li>
-                                                        <li><a href="#" data-toggle="modal" data-target="#employeeDeleteModal{{$employee->id}}"><i class="fa fa-trash color-danger"></i>Delete</a></li>
-                                                       @if ($employee->user)
-                                                       @if ($employee->user->active == 1)
-                                                       <li><a href="{{route('employees.deactivate', $employee->id)}}"  ><i class="fa fa-ban color-danger"></i>Suspend</a></li>
-                                                       @else
-                                                       <li><a href="{{route('employees.activate', $employee->id)}}"  ><i class="fa fa-toggle-off color-success"></i>Unsuspend</a></li>
-                                                       <li><a href="{{route('employees.archive', $employee->id)}}"  ><i class="fa fa-archive color-primary"></i>Archive</a></li>
-                                                       @endif
-                                                       @endif
-    
-                                                    </ul>
-                                                </div>
-                                                @include('employees.delete')
-    
-                                        </td>
-                                          </tr>
+                                                </td>
+                                                <td>{{ $lastLogin ? \Carbon\Carbon::parse($lastLogin)->diffForHumans() : 'Never' }}</td>
+                                                <td class="w-10 line-height-35 table-dropdown">
+                                                    <div class="dropdown">
+                                                        <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                            <i class="fa fa-bars"></i>
+                                                            <span class="caret"></span>
+                                                        </button>
+                                                        <ul class="dropdown-menu">
+                                                            <li><a href="{{route('employees.show', $employee->id)}}"><i class="fa fa-eye color-default"></i>View</a></li>
+                                                            <li><a href="{{route('employees.edit', $employee->id)}}"><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                                            <li><a href="#" wire:click.prevent="changePosition({{$employee->id}})"><i class="fa fa-edit color-success"></i> Change Position</a></li>
+                                                            <li><a href="#" data-toggle="modal" data-target="#employeeDeleteModal{{$employee->id}}"><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                                                        @if ($employee->user)
+                                                        @if ($employee->user->active == 1)
+                                                        <li><a href="{{route('employees.deactivate', $employee->id)}}"  ><i class="fa fa-ban color-danger"></i>Suspend</a></li>
+                                                        @else
+                                                        <li><a href="{{route('employees.activate', $employee->id)}}"  ><i class="fa fa-toggle-off color-success"></i>Unsuspend</a></li>
+                                                        <li><a href="{{route('employees.archive', $employee->id)}}"  ><i class="fa fa-archive color-primary"></i>Archive</a></li>
+                                                        @endif
+                                                        @endif
+        
+                                                        </ul>
+                                                    </div>
+                                                    @include('employees.delete')
+                                                </td>
+                                            </tr>
                                              @endif
                                         @endif
                             
