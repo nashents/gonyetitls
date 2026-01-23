@@ -106,13 +106,13 @@ class Index extends Component
         $this->resetPage();
         $this->reminder_items = ReminderItem::orderBy('name','asc')->get();
 
-        $this->horses = Horse::orderBy('registration_number','asc')->where('status',1)->get();
+        $this->horses = Horse::orderBy('registration_number','asc')->where('archive',0)->get();
 
-        $this->employees = Employee::orderBy('name','asc')->orderBy('surname','asc')->where('status',1)->get();
+        $this->employees = Employee::orderBy('name','asc')->orderBy('surname','asc')->where('archive',0)->get();
 
-        $this->vehicles = Vehicle::orderBy('registration_number','asc')->where('status',1)->get();
+        $this->vehicles = Vehicle::orderBy('registration_number','asc')->where('archive',0)->get();
 
-        $this->trailers = Trailer::orderBy('registration_number','asc')->where('status',1)->get();
+        $this->trailers = Trailer::orderBy('registration_number','asc')->where('archive',0)->get();
     }
 
     public function store(){
@@ -254,18 +254,18 @@ class Index extends Component
     {
 
         if (filled($this->searchHorse)) {
-            $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('registration_number', 'like', '%'.$this->searchHorse.'%')->get();
+            $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('registration_number', 'like', '%'.$this->searchHorse.'%')->where('archive',0)->get();
         }
         if (filled($this->searchVehicle)) {
-            $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('registration_number', 'like', '%'.$this->searchVehicle.'%')->get();
+            $this->vehicles = Vehicle::query()->with('vehicle_make:id,name','vehicle_model:id,name')->where('registration_number', 'like', '%'.$this->searchVehicle.'%')->where('archive',0)->get();
             
         }
         if (filled($this->searchTrailer)) {
-            $this->trailers = Trailer::where('registration_number', 'like', '%'.$this->searchTrailer.'%')->where('fleet_number', 'like', '%'.$this->searchTrailer.'%')->get();
+            $this->trailers = Trailer::where('registration_number', 'like', '%'.$this->searchTrailer.'%')->where('fleet_number', 'like', '%'.$this->searchTrailer.'%')->where('archive',0)->get();
         }
 
         if (filled($this->searchEmployee)) {
-            $this->employees = Employee::where(DB::raw("concat(name, ' ', surname)"), 'LIKE', "%".$this->searchEmployee."%")
+            $this->employees = Employee::where(DB::raw("concat(name, ' ', surname)"), 'LIKE', "%".$this->searchEmployee."%")->where('archive',0)
             ->get();
         }
 
