@@ -24,13 +24,50 @@ class Performance extends Component
     public $to;
     public $totalFuel;
     public $currency;
+     public $year;
+    public $chartData;
 
     public function mount(){
         $this->filter = "created_at";
         $this->currency = Auth::user()->employee->company->currency;  
         // $this->drivers = Driver::orderBy('registration_number','asc')->get();
+        $this->year = now()->year;
+        $this->loadChart();
        
     }
+
+
+         public function updatedYear()
+    {
+        $this->loadChart();
+
+        // Push updated data to the browser (no full page refresh needed)
+        $this->dispatch('drivers-weight-updated',
+            data: $this->chartData,
+            year: $this->year
+        );
+    }
+
+    private function loadChart(): void
+    {
+        $drivers = Driver::query()
+            ->with(['employee:id,name,surname']) // adjust if your columns differ
+            ->withSum([
+                'trips as year_total_weight' => function ($q) {
+                    $q->whereYear('start_date', $this->year);   // <-- your trip date column
+                }
+            ], 'weight')                                  // <-- your weight column
+            ->orderByRaw('COALESCE(year_total_weight, 0) DESC')
+            ->get();
+
+        $this->chartData = $drivers->map(function ($d) {
+            $name = trim(($d->employee->name ?? '') . ' ' . ($d->employee->surname ?? ''));
+            $name = $name !== '' ? $name : ($d->name ?? ('Driver #' . $d->id));
+
+            return [$name, (float) ($d->year_total_weight ?? 0)];
+        })->values()->all();
+    }
+
 
     public function exportDriversPerformanceCSV(Excel $excel){
         return $excel->download(new DriversPerformanceExport($this->from, $this->to, $this->filter), 'drivers.csv', Excel::CSV);

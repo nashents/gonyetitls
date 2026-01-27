@@ -307,6 +307,8 @@ class Index extends Component
     public $expenses_2025;
 
     public $company_currency;
+    public $chartData;
+    public $year;
 
 
 
@@ -1008,9 +1010,41 @@ class Index extends Component
         $this->myallocations = Allocation::where('employee_id', Auth::user()->employee->id)->latest()->take('5')->get();
         $this->petrol_quantity = Container::where('fuel_type','Petrol')->sum('balance');
         $this->diesel_quantity = Container::where('fuel_type','Diesel')->sum('balance');
+
+        $this->year = now()->year;
+        $this->loadChart();
     }
 
+    public function updatedYear()
+    {
+        $this->loadChart();
 
+        // Push updated data to the browser (no full page refresh needed)
+        $this->dispatch('drivers-weight-updated',
+            data: $this->chartData,
+            year: $this->year
+        );
+    }
+
+    private function loadChart(): void
+    {
+        $drivers = Driver::query()
+            ->with(['employee:id,name,surname']) // adjust if your columns differ
+            ->withSum([
+                'trips as year_total_weight' => function ($q) {
+                    $q->whereYear('start_date', $this->year);   // <-- your trip date column
+                }
+            ], 'weight')                                  // <-- your weight column
+            ->orderByRaw('COALESCE(year_total_weight, 0) DESC')
+            ->get();
+
+        $this->chartData = $drivers->map(function ($d) {
+            $name = trim(($d->employee->name ?? '') . ' ' . ($d->employee->surname ?? ''));
+            $name = $name !== '' ? $name : ($d->name ?? ('Driver #' . $d->id));
+
+            return [$name, (float) ($d->year_total_weight ?? 0)];
+        })->values()->all();
+    }
 
 
     public function render()

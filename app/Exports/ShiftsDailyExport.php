@@ -34,13 +34,14 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
     protected string $shiftCloseMileageColumn    = 'close_mileage';
     protected string $shiftFuelConsumptionColumn = 'fuel_consumption_mileage';
 
-    protected array $lpCodes = ['D', 'P3', 'P4', 'P6'];
+    protected array $lpCodes = ['Dome', 'P3', 'P4 Flask', 'P6 Dome'];
 
     public function __construct(
-        protected string $periodTitle = 'Key Operating Metrics - Jan -26',
+        protected string $periodTitle = 'Key Operating Metrics - ',
         protected ?Carbon $asAt = null,
         protected array $budgets = []
     ) {
+        $this->periodTitle = $this->periodTitle.date('M - d');
         $this->asAt = $this->asAt ?: now();
     }
 
@@ -111,26 +112,26 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
             // Header row 1 (merged later)
             [$this->periodTitle, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''],
             // Header row 2
-            ['', 'D', 'P3', 'P4', 'P6', 'Loads', 'Actual', 'Budget', 'Var', '', 'D', 'P3', 'P4', 'P6', 'Loads', 'Actual', 'Budget', 'Var'],
+            ['', 'Dome', 'P3', 'P4 Flask', 'P6 Dome', 'Loads', 'Actual', 'Budget', 'Var', '', 'Dome', 'P3', 'P4 Flask', 'P6 Dome', 'Loads', 'Actual', 'Budget', 'Var'],
             // Spacer
             array_fill(0, 18, ''),
 
             // Long-haul ore (with D/P3/P4/P6 counts)
             [
                 'Total Ore Hauled - Long-haul',
-                $y['ore_long']['lp']['D'] ?? 0,
+                $y['ore_long']['lp']['Dome'] ?? 0,
                 $y['ore_long']['lp']['P3'] ?? 0,
-                $y['ore_long']['lp']['P4'] ?? 0,
-                $y['ore_long']['lp']['P6'] ?? 0,
+                $y['ore_long']['lp']['P4 Flask'] ?? 0,
+                $y['ore_long']['lp']['P6 Dome'] ?? 0,
                 $y['ore_long']['loads'] ?? 0,
                 $y['ore_long']['actual'] ?? 0,
                 $b('yesterday', 'ore_long'),
                 $this->variance($y['ore_long']['actual'] ?? null, $b('yesterday','ore_long')),
                 '',
-                $m['ore_long']['lp']['D'] ?? 0,
+                $m['ore_long']['lp']['Dome'] ?? 0,
                 $m['ore_long']['lp']['P3'] ?? 0,
-                $m['ore_long']['lp']['P4'] ?? 0,
-                $m['ore_long']['lp']['P6'] ?? 0,
+                $m['ore_long']['lp']['P4 Flask'] ?? 0,
+                $m['ore_long']['lp']['P6 Dome'] ?? 0,
                 $m['ore_long']['loads'] ?? 0,
                 $m['ore_long']['actual'] ?? 0,
                 $b('mtd', 'ore_long'),
@@ -179,19 +180,19 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
             // Short-haul ore
             [
                 'Total Ore Hauled – Short-haul',
-                $y['ore_short']['lp']['D'] ?? 0,
+                $y['ore_short']['lp']['Dome'] ?? 0,
                 $y['ore_short']['lp']['P3'] ?? 0,
-                $y['ore_short']['lp']['P4'] ?? 0,
-                $y['ore_short']['lp']['P6'] ?? 0,
+                $y['ore_short']['lp']['P4 Flask'] ?? 0,
+                $y['ore_short']['lp']['P6 Dome'] ?? 0,
                 $y['ore_short']['loads'] ?? 0,
                 $y['ore_short']['actual'] ?? 0,
                 $b('yesterday', 'ore_short'),
                 $this->variance($y['ore_short']['actual'] ?? null, $b('yesterday','ore_short')),
                 '',
-                $m['ore_short']['lp']['D'] ?? 0,
+                $m['ore_short']['lp']['Dome'] ?? 0,
                 $m['ore_short']['lp']['P3'] ?? 0,
-                $m['ore_short']['lp']['P4'] ?? 0,
-                $m['ore_short']['lp']['P6'] ?? 0,
+                $m['ore_short']['lp']['P4 Flask'] ?? 0,
+                $m['ore_short']['lp']['P6 Dome'] ?? 0,
                 $m['ore_short']['loads'] ?? 0,
                 $m['ore_short']['actual'] ?? 0,
                 $b('mtd', 'ore_short'),

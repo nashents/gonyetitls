@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use App\Models\Trip;
 use App\Models\Horse;
 use App\Models\Shift;
+use App\Models\Driver;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Excel;
@@ -24,13 +25,20 @@ class Performance extends Component
     public $to;
     public $totalFuel;
     public $currency;
+    public $year;
+    public $chartData;
 
     public function mount(){
         $this->filter = "created_at";
         $this->currency = Auth::user()->employee->company->currency;  
         // $this->drivers = Driver::orderBy('registration_number','asc')->get();
+
+        $this->year = now()->year;
+        $this->loadChart();
        
     }
+
+ 
 
     public function exportHorsesPerformanceCSV(Excel $excel){
         return $excel->download(new HorsesPerformanceExport($this->from, $this->to, $this->filter), 'horses.csv', Excel::CSV);
@@ -42,7 +50,7 @@ class Performance extends Component
         return $excel->download(new HorsesPerformanceExport($this->from, $this->to, $this->filter), 'horses.xlsx');
     }
 
-      public function calculateVolumeLosses($selected_horse){
+    public function calculateVolumeLosses($selected_horse){
 
          $vol_loss_percentage = Null; 
 
@@ -53,6 +61,7 @@ class Performance extends Component
          return $vol_loss_percentage ? $vol_loss_percentage."%" : "";
       
     }
+
     public function calculateTonnageLosses($selected_horse){
        
         $tonnage_loss_percentage = Null;

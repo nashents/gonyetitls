@@ -1136,6 +1136,7 @@
 
                 <!-- /.col-md-4 -->
             </div>
+            
             <!-- /.row -->
         </div>
         <!-- /.container-fluid -->
@@ -2212,6 +2213,7 @@ Highcharts.chart('trip_loss', {
         }
     }]
 });
+
 
 </script>
 

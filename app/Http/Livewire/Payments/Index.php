@@ -20,6 +20,7 @@ use Livewire\WithFileUploads;
 use App\Models\TransactionType;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class Index extends Component
 {
@@ -269,162 +270,204 @@ class Index extends Component
         ]);
     }
 
-    public function recordPayment(){
+    public function recordPayment()
+    {
+        $storedPopPath = null;
 
-        DB::transaction(function () {
+        try {
+            DB::transaction(function () use (&$storedPopPath) {
 
-        if ($this->source_destination === "Vendor" && $this->selected_account && isset($this->selected_account->balance)) {
-            if ($this->selected_account->balance < $this->amount) {
-                $this->dispatchBrowserEvent('hide-paymentModal');
-                $this->resetInputFields();
-                $this->dispatchBrowserEvent('alert', [
-                    'type' => 'error',
-                    'message' => "Insufficient funds in the selected account to process this transaction."
-                ]);
+                $user = Auth::user();
 
-                return;
-            }
-        }
+                $companyId = optional(optional($user->employee)->company)->id; // null if missing
 
-        $payment = new Payment;
-        $payment->company_id = Auth::user()->employee->company ? Auth::user()->employee->company->id : "";
+                // -----------------------------
+                // 1) Lock the account (if selected) and validate funds for vendor payments
+                // -----------------------------
+                $account = null;
 
-        if ($this->source_destination == "Customer") {
-            $payment->customer_id = $this->selectedCustomer;
-            $payment->category = "customer";
-            $payment->vendor_id = Null;
-        }elseif ($this->source_destination == "Vendor") {
-            $payment->vendor_id = $this->selectedVendor;
-            $payment->category = "vendor";
-            $payment->customer_id = Null;
-        }
-       
+                if (!empty($this->selectedAccount)) {
+                    $account = Account::where('id', $this->selectedAccount)
+                        ->lockForUpdate()
+                        ->firstOrFail();
 
-        $payment->user_id = Auth::user()->id;
-        $payment->currency_id = $this->selectedCurrency;
-        $payment->payment_number = $this->paymentNumber();   
-        $payment->notes = $this->notes;
-        $payment->mode_of_payment = $this->mode_of_payment;
-        $payment->transaction_type_id = $this->transaction_type_id;
-        $payment->transaction_category = $this->transaction_category;
-        $payment->specify_other = $this->specify_other;
-        $payment->reference_code = $this->reference_code;
-        $payment->account_id = $this->selectedAccount;
-        $payment->amount = $this->amount;
-
-        if(isset($this->selectedCustomer) && isset($this->selectedCurrency) &&  $this->transaction_category == "Customer Deposits"){
-            if (isset($this->last_payment) && $this->last_payment->drawdown_balance > 0) {
-                $payment->drawdown_balance = $this->last_payment->drawdown_balance + $this->amount;
-            }else{
-                $payment->drawdown_balance = $this->amount;
-            }
-        }
-        
-        if(isset($this->selectedvendor) && isset($this->selectedCurrency) &&  $this->transaction_category == "Vendor Payments"){
-           
-            if (isset($this->last_payment) && $this->last_payment->drawdown_balance > 0) {
-                $payment->drawdown_balance = $this->last_payment->drawdown_balance + $this->amount;
-            }else{
-                $payment->drawdown_balance = $this->amount;
-            }
-        }
-       
-      
-        $payment->exchange_amount = $this->exchange_amount;
-        $payment->exchange_rate = $this->exchange_rate;
-        $payment->date = $this->date;
-        $payment->save();
-
-       
-
-        if(isset($this->pop)){
-            $file = $this->pop;
-            // get file with ext
-            $fileNameWithExt = $file->getClientOriginalName();
-            //get filename
-            $filename = pathinfo($fileNameWithExt, PATHINFO_FILENAME);
-            //get extention
-            $extention = $file->getClientOriginalExtension();
-            //file name to store
-            $fileNameToStore = $filename.'_'.time().'.'.$extention;
-            $file->storeAs('/documents', $fileNameToStore, 'my_files');
-
-            $document = new Document;
-            $document->payment_id = $payment->id;
-            $document->category = 'payment';
-            $document->title = "Proof Of Payment";
-            if (isset( $fileNameToStore)) {
-                $document->filename = $fileNameToStore;
-            }
-            if(isset($this->expires_at)){
-                $document->expires_at = Carbon::create($this->expires_at)->toDateTimeString();
-                $today = now()->toDateTimeString();
-                $expire = Carbon::create($this->expires_at)->toDateTimeString();
-                if ($today <=  $expire) {
-                    $document->status = 1;
-                }else{
-                    $document->status = 0;
+                    if ($this->source_destination === "Vendor") {
+                        if ((float)$account->balance < (float)$this->amount) {
+                            throw new \RuntimeException("Insufficient funds in the selected account to process this transaction.");
+                        }
+                    }
                 }
-            }else {
-            $document->status = 1;
-            }
-            $document->save();
-  
-        }
 
-        if ($this->denomination) {
-            foreach ($this->denomination as $key => $value) {
-                $denomination = new Denomination;
-                $denomination->payment_id = $payment->id;
-                if (isset($this->denomination[$key])) {
-                    $denomination->denomination = $this->denomination[$key];
+                // -----------------------------
+                // 2) Compute running wallet (drawdown_balance) INSIDE TX with lock
+                //    In your design drawdown_balance == "current wallet balance after this payment"
+                // -----------------------------
+                $newWalletBalance = null;
+
+                // Customer wallet top-up
+                if (
+                    $this->source_destination === "Customer"
+                    && !empty($this->selectedCustomer)
+                    && !empty($this->selectedCurrency)
+                    && $this->transaction_category === "Customer Deposits"
+                ) {
+                    $lastWallet = Payment::where('customer_id', $this->selectedCustomer)
+                        ->where('currency_id', $this->selectedCurrency)
+                        ->where('transaction_category', 'Customer Deposits')
+                        ->orderByDesc('id')
+                        ->lockForUpdate()
+                        ->first();
+
+                    $lastBal = $lastWallet ? (float)$lastWallet->drawdown_balance : 0.0;
+                    $newWalletBalance = $lastBal + (float)$this->amount;
                 }
-              if (isset($this->denomination_qty[$key])) {
-                $denomination->quantity =  $this->denomination_qty[$key];
-              }
-               
-                $denomination->save();
+
+                // Vendor wallet top-up (if this is how you use it)
+                if (
+                    $this->source_destination === "Vendor"
+                    && !empty($this->selectedVendor)
+                    && !empty($this->selectedCurrency)
+                    && $this->transaction_category === "Vendor Payments"
+                ) {
+                    $lastWallet = Payment::where('vendor_id', $this->selectedVendor)
+                        ->where('currency_id', $this->selectedCurrency)
+                        ->where('transaction_category', 'Vendor Payments')
+                        ->orderByDesc('id')
+                        ->lockForUpdate()
+                        ->first();
+
+                    $lastBal = $lastWallet ? (float)$lastWallet->drawdown_balance : 0.0;
+                    $newWalletBalance = $lastBal + (float)$this->amount;
+                }
+
+                // -----------------------------
+                // 3) Save Payment
+                // -----------------------------
+                $payment = new Payment;
+                $payment->company_id = $companyId;
+
+                if ($this->source_destination === "Customer") {
+                    $payment->customer_id = $this->selectedCustomer;
+                    $payment->category    = "customer";
+                    $payment->vendor_id   = null;
+                } elseif ($this->source_destination === "Vendor") {
+                    $payment->vendor_id   = $this->selectedVendor; // ✅ fixed casing
+                    $payment->category    = "vendor";
+                    $payment->customer_id = null;
+                }
+
+                $payment->user_id               = $user->id;
+                $payment->currency_id           = $this->selectedCurrency;
+                $payment->payment_number        = $this->paymentNumber();
+                $payment->notes                 = $this->notes;
+                $payment->mode_of_payment       = $this->mode_of_payment;
+                $payment->transaction_type_id   = $this->transaction_type_id;
+                $payment->transaction_category  = $this->transaction_category;
+                $payment->specify_other         = $this->specify_other;
+                $payment->reference_code        = $this->reference_code;
+                $payment->account_id            = $this->selectedAccount;
+                $payment->amount                = $this->amount;
+
+                if ($newWalletBalance !== null) {
+                    $payment->drawdown_balance = $newWalletBalance;
+                }
+
+                $payment->exchange_amount = $this->exchange_amount;
+                $payment->exchange_rate   = $this->exchange_rate;
+                $payment->date            = $this->date;
+
+                $payment->save();
+
+                // -----------------------------
+                // 4) POP upload (store file + create Document)
+                //    Note: file storage isn't rolled back; we cleanup on catch.
+                // -----------------------------
+                if (isset($this->pop) && $this->pop) {
+                    $file = $this->pop;
+
+                    $originalName = $file->getClientOriginalName();
+                    $filename     = pathinfo($originalName, PATHINFO_FILENAME);
+                    $ext          = $file->getClientOriginalExtension();
+                    $fileNameToStore = $filename . '_' . time() . '.' . $ext;
+
+                    $storedPopPath = $file->storeAs('documents', $fileNameToStore, 'my_files');
+
+                    $document = new Document;
+                    $document->payment_id = $payment->id;
+                    $document->category   = 'payment';
+                    $document->title      = 'Proof Of Payment';
+                    $document->filename   = $fileNameToStore;
+
+                    if (!empty($this->expires_at)) {
+                        $expireAt = Carbon::parse($this->expires_at);
+                        $document->expires_at = $expireAt->toDateTimeString();
+                        $document->status     = now()->lte($expireAt) ? 1 : 0;
+                    } else {
+                        $document->status = 1;
+                    }
+
+                    $document->save();
+                }
+
+                // -----------------------------
+                // 5) Denominations
+                // -----------------------------
+                if (!empty($this->denomination) && is_array($this->denomination)) {
+                    foreach ($this->denomination as $key => $value) {
+                        if (empty($value)) continue;
+
+                        $denomination = new Denomination;
+                        $denomination->payment_id    = $payment->id;
+                        $denomination->denomination  = $value;
+                        $denomination->quantity      = $this->denomination_qty[$key] ?? null;
+                        $denomination->save();
+                    }
+                }
+
+                // -----------------------------
+                // 6) Move cash/bank account + create receipt
+                // -----------------------------
+                if ($account) {
+                    if ($this->source_destination === "Customer") {
+                        $account->increment('balance', (float)$this->amount);
+
+                        $receipt = new Receipt;
+                        $receipt->payment_id      = $payment->id;
+                        $receipt->company_id      = $payment->company_id;
+                        $receipt->currency_id     = $payment->currency_id;
+                        $receipt->receipt_number  = $this->receiptNumber();
+                        $receipt->user_id         = $user->id;
+                        $receipt->amount          = $this->amount;
+                        $receipt->date            = $this->date;
+                        $receipt->save();
+
+                    } elseif ($this->source_destination === "Vendor") {
+                        $account->decrement('balance', (float)$this->amount);
+                    }
+                }
+            });
+
+            // UI actions after success
+            $this->dispatchBrowserEvent('hide-paymentModal');
+            $this->resetInputFields();
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'success',
+                'message' => "Payment recorded successfully!",
+            ]);
+
+        } catch (\Throwable $e) {
+
+            // Cleanup POP if file was saved but DB transaction rolled back
+            if ($storedPopPath) {
+                try { Storage::disk('my_files')->delete($storedPopPath); } catch (\Throwable $ignore) {}
             }
+
+            $this->dispatchBrowserEvent('hide-paymentModal');
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'error',
+                'message' => $e->getMessage(),
+            ]);
         }
-
-        if (isset($this->selectedAccount)) {
-            if ($this->source_destination == "Customer") {
-                $account = Account::find($this->selectedAccount);
-                $current_balance = $account->balance;
-                $account->balance = $current_balance + $this->amount;
-                $account->update();
-
-                $receipt =  new Receipt;
-                $receipt->payment_id = $payment->id;
-                $receipt->company_id = $payment->company_id;
-                $receipt->currency_id = $payment->currency_id;
-                $receipt->receipt_number = $this->receiptNumber(); ;
-                $receipt->user_id = Auth::user()->id;
-                $receipt->amount = $this->amount;
-                $receipt->date = $this->date;
-                $receipt->save();
-                
-            }elseif ($this->source_destination == "Vendor") {
-                $account = Account::find($this->selectedAccount);
-                $current_balance = $account->balance;
-                $account->balance = $current_balance - $this->amount;
-                $account->update();
-            }
-            
-        }
-
-        
-        
-
-       
-        $this->dispatchBrowserEvent('hide-paymentModal');
-        $this->resetInputFields();
-        $this->dispatchBrowserEvent('alert',[
-            'type'=>'success',
-            'message'=>"Payment Recorded Successfully!!"
-        ]);
-    
-    });
     }
 
     public function updatingSearch()
@@ -444,9 +487,9 @@ class Index extends Component
         DB::transaction(function () {
 
             $payment = Payment::with([
-                'invoice',                    // if you still use single-invoice payments sometimes
-                'account',                    // cash/bank account
-                'invoice_payments.invoice',   // allocations
+                'invoice',                    // single invoice mode (if you still use it)
+                'account',                    // bank/cash account
+                'invoice_payments.invoice',   // allocations (drawdowns)
                 'denominations',
                 'documents',
                 'receipt',
@@ -456,68 +499,124 @@ class Index extends Component
             // -----------------------------
             // 1) Reverse allocations to invoices (preferred)
             // -----------------------------
-            $appliedTotal = 0;
+            $appliedTotal = 0.0;
 
             if ($payment->invoice_payments && $payment->invoice_payments->count() > 0) {
 
                 foreach ($payment->invoice_payments as $invoice_payment) {
-                    $drawdownInvoice = $invoice_payment->invoice;
-                    if (! $drawdownInvoice) continue;
+                    $inv = $invoice_payment->invoice;
+                    if (! $inv) continue;
 
-                    $applied = (float) $invoice_payment->amount;   // 👈 change column name if needed
+                    // IMPORTANT: use the allocation amount, NOT payment amount
+                    $applied = (float) ($invoice_payment->amount ?? 0);
                     $appliedTotal += $applied;
 
-                    // Reverse: invoice balance increases (they owe again)
-                    $drawdownInvoice->balance = (float) $drawdownInvoice->balance + $applied;
-                    $drawdownInvoice->status  = $this->computeInvoiceStatus($drawdownInvoice->balance, $drawdownInvoice->total);
-                    $drawdownInvoice->save();
+                    // Lock invoice row to avoid concurrent edits
+                    $lockedInvoice = \App\Models\Invoice::where('id', $inv->id)->lockForUpdate()->first();
+                    if ($lockedInvoice) {
+                        $lockedInvoice->balance = (float) $lockedInvoice->balance + $applied;
+                        $lockedInvoice->status  = $this->computeInvoiceStatus($lockedInvoice->balance, $lockedInvoice->total);
+                        $lockedInvoice->save();
+                    }
 
-                    // Delete the allocation row (so history matches deletion)
+                    // Remove allocation row
                     $invoice_payment->delete();
                 }
 
             } else {
-                // -----------------------------
-                // 1b) Fallback: single invoice payment reversal
-                // Only do this if your system still allows Payment->invoice directly.
-                // -----------------------------
+                // Fallback: single-invoice payment reversal (only if your system uses it)
                 $invoice = $payment->invoice;
+
                 if ($invoice) {
-                    $invoice->balance = (float) $invoice->balance + (float) $payment->amount;
-                    $invoice->status  = $this->computeInvoiceStatus($invoice->balance, $invoice->total);
-                    $invoice->save();
+                    $lockedInvoice = \App\Models\Invoice::where('id', $invoice->id)->lockForUpdate()->first();
+                    if ($lockedInvoice) {
+                        $lockedInvoice->balance = (float) $lockedInvoice->balance + (float) $payment->amount;
+                        $lockedInvoice->status  = $this->computeInvoiceStatus($lockedInvoice->balance, $lockedInvoice->total);
+                        $lockedInvoice->save();
+                    }
                 }
             }
 
             // -----------------------------
-            // 2) Reverse cash/bank account movement
+            // 2) Reverse bank/cash account movement (category-aware)
+            // Customer payment: bank was +amount => reverse is -amount
+            // Vendor payment:    bank was -amount => reverse is +amount
             // -----------------------------
             if ($payment->account) {
-                $payment->account->balance = (float) $payment->account->balance - (float) $payment->amount;
-                $payment->account->save();
-            }
+                $lockedAccount = \App\Models\Account::where('id', $payment->account->id)->lockForUpdate()->first();
 
-            // -----------------------------
-            // 3) Reverse customer wallet (temporary holding account)
-            // Wallet originally increased by payment.amount
-            // Wallet may have decreased by applied allocations
-            // To fully undo, we:
-            //   + add back appliedTotal (undo drawdowns)
-            //   - subtract payment.amount (remove deposit)
-            // Net effect restores the wallet to pre-payment state.
-            // -----------------------------
-            if ($payment->customer_account_id) {
-                $customerAccount = Account::find($payment->customer_account_id);
+                if ($lockedAccount) {
+                    if ($payment->category === 'customer') {
+                        $lockedAccount->balance = (float) $lockedAccount->balance - (float) $payment->amount;
+                    } elseif ($payment->category === 'vendor') {
+                        $lockedAccount->balance = (float) $lockedAccount->balance + (float) $payment->amount;
+                    } else {
+                        // If category isn't set consistently, default to reversing as "customer"
+                        $lockedAccount->balance = (float) $lockedAccount->balance - (float) $payment->amount;
+                    }
 
-                if ($customerAccount) {
-                    $customerAccount->balance = (float) $customerAccount->balance + (float) $appliedTotal;
-                    $customerAccount->balance = (float) $customerAccount->balance - (float) $payment->amount;
-                    $customerAccount->save();
+                    $lockedAccount->save();
                 }
             }
 
             // -----------------------------
-            // 4) Delete children
+            // 3) Reverse CUSTOMER wallet (drawdown_balance stored on last deposit payment row)
+            //
+            // Wallet current balance is stored in the latest "Customer Deposits" payment row
+            // for that customer+currency.
+            //
+            // To fully undo this payment:
+            // wallet_new = wallet_current + appliedTotal - payment.amount
+            // (undo wallet deductions, remove deposit)
+            // -----------------------------
+            if ($payment->customer_id && $payment->transaction_category === 'Customer Deposits') {
+
+                $walletLatest = Payment::where('customer_id', $payment->customer_id)
+                    ->where('currency_id', $payment->currency_id)
+                    ->where('transaction_category', 'Customer Deposits')
+                    ->orderByDesc('id')
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($walletLatest) {
+                    $walletCurrent = (float) ($walletLatest->drawdown_balance ?? 0);
+
+                    $walletNew = $walletCurrent + (float)$appliedTotal - (float)$payment->amount;
+
+                    // Guard: wallet should never go negative (unless you allow overdraft)
+                    if ($walletNew < 0) {
+                        $walletNew = 0;
+                    }
+
+                    if ($walletLatest->id === $payment->id) {
+                        // If we are deleting the latest wallet snapshot, we must move the new balance
+                        // to the previous wallet row (since this one will be deleted)
+                        $prevWallet = Payment::where('customer_id', $payment->customer_id)
+                            ->where('currency_id', $payment->currency_id)
+                            ->where('transaction_category', 'Customer Deposits')
+                            ->where('id', '<', $payment->id)
+                            ->orderByDesc('id')
+                            ->lockForUpdate()
+                            ->first();
+
+                        if ($prevWallet) {
+                            $prevWallet->drawdown_balance = $walletNew;
+                            $prevWallet->save();
+                        } else {
+                            // No previous wallet row -> wallet becomes 0 after deleting this record
+                            // (Nothing to update)
+                        }
+
+                    } else {
+                        // Update the latest wallet snapshot to reflect removal of this payment
+                        $walletLatest->drawdown_balance = $walletNew;
+                        $walletLatest->save();
+                    }
+                }
+            }
+
+            // -----------------------------
+            // 4) Delete children (DB rows)
             // -----------------------------
             $payment->denominations?->each->delete();
             $payment->documents?->each->delete();
