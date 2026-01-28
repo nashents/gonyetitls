@@ -12,6 +12,7 @@ use App\Models\ReminderItem;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Excel;
 use App\Exports\FitnessesExport;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
@@ -104,77 +105,151 @@ class Index extends Component
        
 
     }
-    public function store(){
-    // try{
+   
+    public function store()
+    {
+        DB::transaction(function () {
 
-        if (isset($this->reminder_item_id)) {
-        foreach ($this->reminder_item_id as $key => $value) {
-        $fitness = new Fitness;
-        $fitness->user_id = Auth::user()->id;
-        $fitness->company_id = Auth::user()->employee ? Auth::user()->employee->company_id : "";
-        if (isset($this->horse_id) && $this->category == "Horse") {
-            $fitness->horse_id = $this->horse_id;
-        }
-        if (isset($this->vehicle_id) && $this->category == "Vehicle") {
-            $fitness->vehicle_id = $this->vehicle_id;
-        }
-        if (isset( $this->trailer_id) && $this->category == "Trailer") {
-            $fitness->trailer_id = $this->trailer_id;
-        }
-      
-        if (isset( $this->employee_id) && $this->category == "Employee") {
-            $fitness->employee_id = $this->employee_id;
-        }
-
-        if (isset($this->reminder_item_id[$key])) {
-             $fitness->reminder_item_id = $this->reminder_item_id[$key];
-        }
-        if (isset($this->cc[$key])) {
-             $fitness->cc = $this->cc[$key];
-        }
-
-        if (isset($this->issued_at[$key])) {
-              $fitness->issued_at = Carbon::create($this->issued_at[$key])->toDateTimeString();
-        }
-        if (isset($this->expires_at[$key])) {
-           $fitness->expires_at = Carbon::create($this->expires_at[$key])->toDateTimeString();
-           $fitness->first_reminder_at = Carbon::parse( $this->expires_at[$key])->subDays(14);
-           $fitness->first_reminder_at_status = 0;
-           $fitness->second_reminder_at = Carbon::parse( $this->expires_at[$key])->subDays(7);
-           $fitness->second_reminder_at_status = 0;
-           $fitness->third_reminder_at = Carbon::parse( $this->expires_at[$key])->subDay();
-           $fitness->third_reminder_at_status = 0;
-        }
-      
-        $today = now()->toDateTimeString();
-        if (isset($this->expires_at[$key])) {
-            $expire = Carbon::create($this->expires_at[$key])->toDateTimeString();
-        }
-       
-        if ($today <=  $expire) {
-            $fitness->status = 1;
-        }else{
-            $fitness->status = 0;
-        }
-        $fitness->save();
+            if (empty($this->reminder_item_id)) {
+                return;
             }
+
+            $userId    = Auth::id();
+            $companyId = Auth::user()->employee?->company_id;
+
+            foreach ($this->reminder_item_id as $key => $reminderItemId) {
+
+                // ----------------------------
+                // 1) Resolve category target keys
+                // ----------------------------
+                $targets = [
+                    'horse_id'    => null,
+                    'vehicle_id'  => null,
+                    'trailer_id'  => null,
+                    'employee_id' => null,
+                ];
+
+                if ($this->category === 'Horse') {
+                    $targets['horse_id'] = $this->horse_id ?? null;
+                } elseif ($this->category === 'Vehicle') {
+                    $targets['vehicle_id'] = $this->vehicle_id ?? null;
+                } elseif ($this->category === 'Trailer') {
+                    $targets['trailer_id'] = $this->trailer_id ?? null;
+                } elseif ($this->category === 'Employee') {
+                    $targets['employee_id'] = $this->employee_id ?? null;
+                }
+
+                // ----------------------------
+                // 2) Parse dates safely (handles datetime-local: 2025-07-05T12:40)
+                // ----------------------------
+                $issuedAt  = $this->issued_at[$key]  ?? null;
+                $expiresAt = $this->expires_at[$key] ?? null;
+
+                $issuedAtDb  = $this->parseDateTimeLocalToDb($issuedAt);
+                $expiresAtDb = $this->parseDateTimeLocalToDb($expiresAt);
+
+                // Reminders derived from expires_at
+                $firstReminder  = $expiresAtDb ? Carbon::parse($expiresAtDb)->subDays(14) : null;
+                $secondReminder = $expiresAtDb ? Carbon::parse($expiresAtDb)->subDays(7)  : null;
+                $thirdReminder  = $expiresAtDb ? Carbon::parse($expiresAtDb)->subDay()     : null;
+
+                // Active status
+                $status = 0;
+                if ($expiresAtDb) {
+                    $status = now()->lte(Carbon::parse($expiresAtDb)) ? 1 : 0;
+                }
+
+                // ----------------------------
+                // 3) Build "where" for updateOrCreate
+                //    Option A: update by id if supplied (best for edits)
+                // ----------------------------
+                $fitnessId = $this->fitness_ids[$key] ?? null; // add this field on edit if you have it
+
+                $where = $fitnessId
+                    ? ['id' => $fitnessId]
+                    : array_filter([
+                        'company_id'        => $companyId,
+                        'reminder_item_id'  => $reminderItemId,
+                        // category target (only one of these will be set)
+                        'horse_id'          => $targets['horse_id'],
+                        'vehicle_id'        => $targets['vehicle_id'],
+                        'trailer_id'        => $targets['trailer_id'],
+                        'employee_id'       => $targets['employee_id'],
+                    ], fn ($v) => $v !== null);
+
+                // ----------------------------
+                // 4) Build "update" payload
+                // ----------------------------
+                $data = [
+                    'user_id'   => $userId,
+                    'company_id'=> $companyId,
+
+                    'horse_id'    => $targets['horse_id'],
+                    'vehicle_id'  => $targets['vehicle_id'],
+                    'trailer_id'  => $targets['trailer_id'],
+                    'employee_id' => $targets['employee_id'],
+
+                    'reminder_item_id' => $reminderItemId,
+                    'cc'               => $this->cc[$key] ?? null,
+
+                    'issued_at'  => $issuedAtDb,
+                    'expires_at' => $expiresAtDb,
+
+                    'first_reminder_at'        => $firstReminder,
+                    'first_reminder_at_status' => 0,
+
+                    'second_reminder_at'        => $secondReminder,
+                    'second_reminder_at_status' => 0,
+
+                    'third_reminder_at'        => $thirdReminder,
+                    'third_reminder_at_status' => 0,
+
+                    'status' => $status,
+                ];
+
+                Fitness::updateOrCreate($where, $data);
+            }
+
+            $this->dispatchBrowserEvent('hide-fitnessModal');
+            $this->resetInputFields();
+            $this->dispatchBrowserEvent('alert', [
+                'type' => 'success',
+                'message' => "Reminder Set Successfully!!"
+            ]);
+        });
+    }
+
+    /**
+     * Converts either:
+     *  - "2025-07-05T12:40" (datetime-local)
+     *  - "2025-07-05 12:40:00"
+     *  - Carbon/DateTime
+     * into "Y-m-d H:i:s" for DB.
+     */
+    private function parseDateTimeLocalToDb($value): ?string
+    {
+        if (blank($value)) return null;
+
+        try {
+            // If it's already Carbon/DateTime-like
+            if ($value instanceof \DateTimeInterface) {
+                return Carbon::instance($value)->format('Y-m-d H:i:s');
+            }
+
+            $value = (string) $value;
+
+            // datetime-local from browser: 2025-07-05T12:40
+            if (str_contains($value, 'T')) {
+                return Carbon::createFromFormat('Y-m-d\TH:i', $value)->format('Y-m-d H:i:s');
+            }
+
+            // fallback parse (works for standard DB strings)
+            return Carbon::parse($value)->format('Y-m-d H:i:s');
+
+        } catch (\Throwable $e) {
+            // You can log if you want: logger()->warning('Bad datetime', ['value'=>$value]);
+            return null;
         }
-
-        $this->dispatchBrowserEvent('hide-fitnessModal');
-        $this->resetInputFields();
-        $this->dispatchBrowserEvent('alert',[
-            'type'=>'success',
-            'message'=>"Reminder Set Successfully!!"
-        ]);
-
-    // }catch(\Exception $e){
-    //     // Set Flash Message
-    //     $this->dispatchBrowserEvent('alert',[
-    //         'type'=>'error',
-    //         'message'=>"Something goes wrong while creating fitness!!"
-    //     ]);
-    // }
-
     }
 
     public function edit($id){
@@ -200,52 +275,90 @@ class Index extends Component
         }
 
 
-        public function update()
-        {
-            if ($this->fitness_id) {
-                $fitness = Fitness::find($this->fitness_id);
-                $fitness->user_id = Auth::user()->id;
-                $fitness->reminder_item_id = $this->reminder_item_id;
-                $fitness->issued_at =$this->issued_at;
-                $fitness->expires_at = $this->expires_at;
-                $fitness->cc = $this->cc;
-                $fitness->expires_at = Carbon::create($this->expires_at)->toDateTimeString();
-                $fitness->first_reminder_at = Carbon::parse($this->expires_at)->subDays(14);
-                $fitness->first_reminder_at_status = $this->first_reminder_at_status;
-                $fitness->second_reminder_at = Carbon::parse($this->expires_at)->subDays(7);
-                $fitness->second_reminder_at_status = $this->second_reminder_at_status;
-                $fitness->third_reminder_at = Carbon::parse($this->expires_at)->subDay();
-                $fitness->third_reminder_at_status = $this->third_reminder_at_status;
+    public function update()
+    {
+         DB::transaction(function () {
 
-                if (isset($this->horse_id) && $this->category == "Horse") {
-                    $fitness->horse_id = $this->horse_id;
-                }
-                if (isset($this->vehicle_id) && $this->category == "Vehicle") {
-                    $fitness->vehicle_id = $this->vehicle_id;
-                }
-                if (isset( $this->trailer_id) && $this->category == "Trailer") {
-                    $fitness->trailer_id = $this->trailer_id;
-                }
-                if (isset( $this->employee_id) && $this->category == "Employee") {
-                    $fitness->employee_id = $this->employee_id;
-                }
-
-                $today = now()->toDateTimeString();
-                $expire = Carbon::create($this->expires_at)->toDateTimeString();
-                if ($today <=  $expire) {
-                    $fitness->status = 1;
-                }else{
-                    $fitness->status = 0;
-                }
-                $fitness->update();
-
-                $this->dispatchBrowserEvent('hide-fitnessEditModal');
-                $this->resetInputFields();
-                $this->dispatchBrowserEvent('alert',[
-                    'type'=>'success',
-                    'message'=>"Reminder Updated Successfully!!"
-                ]);
+            if (! $this->fitness_id) {
+                return;
             }
+
+            $fitness = Fitness::findOrFail($this->fitness_id);
+
+            // ----------------------------
+            // 1) Resolve target ids (and clear others)
+            // ----------------------------
+            $targets = [
+                'horse_id'    => null,
+                'vehicle_id'  => null,
+                'trailer_id'  => null,
+                'employee_id' => null,
+            ];
+
+            if ($this->category === 'Horse') {
+                $targets['horse_id'] = $this->horse_id ?? null;
+            } elseif ($this->category === 'Vehicle') {
+                $targets['vehicle_id'] = $this->vehicle_id ?? null;
+            } elseif ($this->category === 'Trailer') {
+                $targets['trailer_id'] = $this->trailer_id ?? null;
+            } elseif ($this->category === 'Employee') {
+                $targets['employee_id'] = $this->employee_id ?? null;
+            }
+
+            // ----------------------------
+            // 2) Parse dates safely
+            // ----------------------------
+            $issuedAtDb  = $this->parseDateTimeLocalToDb($this->issued_at);
+            $expiresAtDb = $this->parseDateTimeLocalToDb($this->expires_at);
+
+            // Derived reminders from expires_at
+            $firstReminder  = $expiresAtDb ? Carbon::parse($expiresAtDb)->subDays(14) : null;
+            $secondReminder = $expiresAtDb ? Carbon::parse($expiresAtDb)->subDays(7)  : null;
+            $thirdReminder  = $expiresAtDb ? Carbon::parse($expiresAtDb)->subDay()     : null;
+
+            // Status
+            $status = 0;
+            if ($expiresAtDb) {
+                $status = now()->lte(Carbon::parse($expiresAtDb)) ? 1 : 0;
+            }
+
+            // ----------------------------
+            // 3) Update
+            // ----------------------------
+            $fitness->update([
+                'user_id'          => Auth::id(),
+                'reminder_item_id' => $this->reminder_item_id,
+                'cc'               => $this->cc,
+
+                'issued_at'        => $issuedAtDb,
+                'expires_at'       => $expiresAtDb,
+
+                'first_reminder_at'        => $firstReminder,
+                'first_reminder_at_status' => (int) $this->first_reminder_at_status,
+
+                'second_reminder_at'        => $secondReminder,
+                'second_reminder_at_status' => (int) $this->second_reminder_at_status,
+
+                'third_reminder_at'        => $thirdReminder,
+                'third_reminder_at_status' => (int) $this->third_reminder_at_status,
+
+                // clear all then set only the correct one
+                'horse_id'    => $targets['horse_id'],
+                'vehicle_id'  => $targets['vehicle_id'],
+                'trailer_id'  => $targets['trailer_id'],
+                'employee_id' => $targets['employee_id'],
+
+                'status' => $status,
+            ]);
+
+            $this->dispatchBrowserEvent('hide-fitnessEditModal');
+            $this->resetInputFields();
+
+            $this->dispatchBrowserEvent('alert', [
+                'type' => 'success',
+                'message' => "Reminder Updated Successfully!!"
+            ]);
+         });
         }
 
         

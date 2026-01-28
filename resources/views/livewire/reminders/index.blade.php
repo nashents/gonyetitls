@@ -196,49 +196,49 @@
                                         <div class="form-group">
                                             <label for="exampleInputEmail13">Horses<span class="required" style="color: red">*</span></label>
                                             <input type="text" wire:model.debounce.300ms="searchHorse" placeholder="Search horse..." class="form-control" >
-                                            <select wire:model.debounce.300ms="selectedHorse" class="form-control" required size="4">
+                                            <select wire:model.debounce.300ms="horse_id" class="form-control" required size="4">
                                                 <option value="">Select Horse </option>
                                                 @foreach ($horses as $horse)
                                                     <option value="{{$horse->id}}">{{$horse->registration_number}} {{$horse->horse_make ? $horse->horse_make->name : ""}} {{$horse->horse_model ? $horse->horse_model->name : ""}}</option>
                                                 @endforeach
                                             </select>
-                                            @error('selectedHorse') <span class="text-danger error">{{ $message }}</span>@enderror
+                                            @error('horse_id') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     @elseif ($type == "Vehicle")
                                         <div class="form-group">
                                             <label for="exampleInputEmail13">Vehicles<span class="required" style="color: red">*</span></label>
                                             <input type="text" wire:model.debounce.300ms="searchVehicle" placeholder="Search vehicle..." class="form-control" >
-                                            <select wire:model.debounce.300ms="selectedVehicle" class="form-control" required size="4">
+                                            <select wire:model.debounce.300ms="vehicle_id" class="form-control" required size="4">
                                                 <option value="">Select Vehicle </option>
                                                 @foreach ($vehicles as $vehicle)
                                                     <option value="{{$vehicle->id}}">{{$vehicle->registration_number}} {{$vehicle->vehicle_make ? $vehicle->vehicle_make->name : ""}} {{$vehicle->vehicle_model ? $vehicle->vehicle_model->name : ""}}</option>
                                                 @endforeach
                                             </select>
-                                            @error('selectedVehicle') <span class="text-danger error">{{ $message }}</span>@enderror
+                                            @error('vehicle_id') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     @elseif ($type == "Trailer")
                                         <div class="form-group">
                                             <label for="exampleInputEmail13">Trailers<span class="required" style="color: red">*</span></label>
                                             <input type="text" wire:model.debounce.300ms="searchTrailer" placeholder="Search trailer..." class="form-control" >
-                                            <select wire:model.debounce.300ms="selectedTrailer" class="form-control" required size="4">
+                                            <select wire:model.debounce.300ms="trailer_id" class="form-control" required size="4">
                                                 <option value="">Select Trailer</option>
                                                 @foreach ($trailers as $trailer)
                                                     <option value="{{$trailer->id}}">{{$trailer->registration_number}} {{$trailer->make}} {{$trailer->model}}</option>
                                                 @endforeach
                                             </select>
-                                            @error('selectedTrailer') <span class="text-danger error">{{ $message }}</span>@enderror
+                                            @error('trailer_id') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     @elseif ($type == "Employee")
                                         <div class="form-group">
                                             <label for="exampleInputEmail13">Employees<span class="required" style="color: red">*</span></label>
                                             <input type="text" wire:model.debounce.300ms="searchEmployee" placeholder="Search employee..." class="form-control" >
-                                            <select wire:model.debounce.300ms="selectedEmployee" class="form-control" required size="4">
+                                            <select wire:model.debounce.300ms="employee_id" class="form-control" required size="4">
                                                 <option value="">Select Trailer</option>
                                                 @foreach ($employees as $employee)
                                                     <option value="{{$employee->id}}">{{$employee->name}} {{$employee->surname}}</option>
                                                 @endforeach
                                             </select>
-                                            @error('selectedEmployee') <span class="text-danger error">{{ $message }}</span>@enderror
+                                            @error('employee_id') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     @endif
                                 </div>
@@ -331,49 +331,49 @@
                                         <div class="form-group">
                                             <label for="exampleInputEmail13">Horses<span class="required" style="color: red">*</span></label>
                                             <input type="text" wire:model.debounce.300ms="searchHorse" placeholder="Search horse..." class="form-control" >
-                                            <select wire:model.debounce.300ms="selectedHorse" class="form-control" required size="4">
+                                            <select wire:model.debounce.300ms="horse_id" class="form-control" required size="4">
                                                 <option value="">Select Horse </option>
                                                 @foreach ($horses as $horse)
                                                     <option value="{{$horse->id}}">{{$horse->registration_number}} {{$horse->horse_make ? $horse->horse_make->name : ""}} {{$horse->horse_model ? $horse->horse_model->name : ""}}</option>
                                                 @endforeach
                                             </select>
-                                            @error('selectedHorse') <span class="text-danger error">{{ $message }}</span>@enderror
+                                            @error('horse_id') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     @elseif ($type == "Vehicle")
                                         <div class="form-group">
                                             <label for="exampleInputEmail13">Vehicles<span class="required" style="color: red">*</span></label>
                                             <input type="text" wire:model.debounce.300ms="searchVehicle" placeholder="Search vehicle..." class="form-control" >
-                                            <select wire:model.debounce.300ms="selectedVehicle" class="form-control" required size="4">
+                                            <select wire:model.debounce.300ms="vehicle_id" class="form-control" required size="4">
                                                 <option value="">Select Vehicle </option>
                                                 @foreach ($vehicles as $vehicle)
                                                     <option value="{{$vehicle->id}}">{{$vehicle->registration_number}} {{$vehicle->vehicle_make ? $vehicle->vehicle_make->name : ""}} {{$vehicle->vehicle_model ? $vehicle->vehicle_model->name : ""}}</option>
                                                 @endforeach
                                             </select>
-                                            @error('selectedVehicle') <span class="text-danger error">{{ $message }}</span>@enderror
+                                            @error('vehicle_id') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     @elseif ($type == "Trailer")
                                         <div class="form-group">
                                             <label for="exampleInputEmail13">Trailers<span class="required" style="color: red">*</span></label>
                                             <input type="text" wire:model.debounce.300ms="searchTrailer" placeholder="Search trailer..." class="form-control" >
-                                            <select wire:model.debounce.300ms="selectedTrailer" class="form-control" required size="4">
+                                            <select wire:model.debounce.300ms="trailer_id" class="form-control" required size="4">
                                                 <option value="">Select Trailer</option>
                                                 @foreach ($trailers as $trailer)
                                                     <option value="{{$trailer->id}}">{{$trailer->registration_number}} {{$trailer->make}} {{$trailer->model}}</option>
                                                 @endforeach
                                             </select>
-                                            @error('selectedTrailer') <span class="text-danger error">{{ $message }}</span>@enderror
+                                            @error('trailer_id') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     @elseif ($type == "Employee")
                                         <div class="form-group">
                                             <label for="exampleInputEmail13">Employees<span class="required" style="color: red">*</span></label>
                                             <input type="text" wire:model.debounce.300ms="searchEmployee" placeholder="Search employee..." class="form-control" >
-                                            <select wire:model.debounce.300ms="selectedEmployee" class="form-control" required size="4">
+                                            <select wire:model.debounce.300ms="employee_id" class="form-control" required size="4">
                                                 <option value="">Select Trailer</option>
                                                 @foreach ($employees as $employee)
                                                     <option value="{{$employee->id}}">{{$employee->name}} {{$employee->surname}}</option>
                                                 @endforeach
                                             </select>
-                                            @error('selectedEmployee') <span class="text-danger error">{{ $message }}</span>@enderror
+                                            @error('employee_id') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     @endif
                                 </div>

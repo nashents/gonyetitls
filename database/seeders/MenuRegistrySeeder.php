@@ -1201,7 +1201,7 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
             'slug'=>'my-allocation',
             'icon'=>'fas fa-arrow-right',
             'route_name'=>'allocations.myallocations',
-            'route_params'=>['employee' => '{employee_id}'],
+            'route_params'=>['id' => '{employee_id}'],
             'sort_order'=>10,
             'badge_key'=>'my_allocation_count',
             'visibility'=>[],
@@ -1235,7 +1235,7 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
             'slug'=>'my-requests',
             'icon'=>'fas fa-arrow-right',
             'route_name'=>'fuel_requests.myrequests',
-            'route_params'=>['employee' => '{employee_id}'],
+            'route_params'=>['id' => '{employee_id}'],
             'sort_order'=>10,
             'visibility'=>[],
         ]);
@@ -1379,13 +1379,14 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
             'slug' => 'shifts',
             'icon' => 'fas fa-clock',
             'route_name' => 'shifts.*',
+            'is_active'  => false,
             'sort_order' => 40,
             'visibility' => $any([
                 $all(['isNotDriver']),
                 $all(['isSuperAdmin']),
             ]),
         ]);
-        $upsertSub($m, ['name'=>'Manage Shifts','slug'=>'manage-shifts','icon'=>'fas fa-list','route_name'=>'shifts.index','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Manage Shifts','slug'=>'manage-shifts','is_active'  => false,'icon'=>'fas fa-list','route_name'=>'shifts.index','sort_order'=>10]);
         $upsertSub($m, ['name'=>'Shifts Reports','slug'=>'shifts-reports',  'is_active'  => false,'icon'=>'fas fa-line-chart','route_name'=>'shifts.reports','sort_order'=>20]);
 
         // Trips
@@ -1546,7 +1547,7 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
             'slug'=>'my-tickets',
             'icon'=>'fas fa-tasks',
             'route_name'=>'tickets.cards',
-            'route_params'=>['employee' => '{employee_id}'],
+            'route_params'=> ['id' => '{employee_id}'], // ✅ MUST match {id}
             'sort_order'=>20,
             'badge_key'=>'job_cards_count',
             // 'visibility'=>$any([$all(['inWorkshop']), $all(['isSuperAdmin'])]),
@@ -1566,7 +1567,7 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
             'slug'=>'my-inspections',
             'icon'=>'fas fa-tasks',
             'route_name'=>'inspections.my-inspections',
-            'route_params'=>['employee' => '{employee_id}'],
+            'route_params'=>['id' => '{employee_id}'],
             'sort_order'=>20,
             'badge_key'=>'inspections_count',
             // 'visibility'=>$any([$all(['inWorkshop']), $all(['isSuperAdmin'])]),
@@ -1600,7 +1601,7 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
         // GROUP: Stores & Inventory Management (Stores or Super)
         // ----------------------------
         $g = $upsertGroup([
-            'name' => 'Stores & Inventory Management',
+            'name' => 'Inventory Management',
             'slug' => 'stores-inventory',
             'sort_order' => 140,
             'visibility' => $any([
@@ -1825,7 +1826,7 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
             'slug' => 'company-profile',
             'icon' => 'fas fa-cog',
             'route_name' => 'company-profile',
-            'route_params' => ['id' => '{company_id}'],
+            'route_params'=> ['company' => '{company_id}'], // ✅ MUST match {company}
             'sort_order' => 10,
             'visibility' => null,
         ]);

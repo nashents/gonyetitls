@@ -565,7 +565,7 @@ class SidebarComposer
             // ids for placeholders (MOST IMPORTANT PART)
             'user_id'       => $user?->id,
             'employee_id'   => $employee?->id ?? $user?->employee_id,  // ✅ reliable
-            'company_id'   => $employee?->company_id ,  // ✅ reliable
+            'company_id'   => $employee?->company_id ?? $user?->employee?->company_id,  // ✅ reliable
             'hseq_department_id' => $hseq_department?->id,
         ];
 
