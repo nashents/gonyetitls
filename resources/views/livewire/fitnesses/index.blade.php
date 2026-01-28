@@ -31,11 +31,55 @@
             @forelse ($fitnesses as $fitness)
             <tr>
                 <td>{{$fitness->reminder_item ? $fitness->reminder_item->name : ""}}</td>
-                <td>{{Carbon\Carbon::parse($fitness->issued_at)->format('d M Y h:i a')}}</td>
-                <td>{{Carbon\Carbon::parse($fitness->expires_at)->format('d M Y h:i a')}}</td>
-                <td>{{Carbon\Carbon::parse($fitness->first_reminder_at)->format('d M Y h:i a')}}</td>
-                <td>{{Carbon\Carbon::parse($fitness->second_reminder_at)->format('d M Y h:i a')}}</td>
-                <td>{{Carbon\Carbon::parse($fitness->third_reminder_at)->format('d M Y h:i a')}}</td>
+                 @php
+                                        $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
+                                    @endphp
+                                       
+                                    <td>
+                                         @if ($fitness->issued_at)
+                                                @if ((preg_match($pattern, $fitness->issued_at)) )
+                                                {{ \Carbon\Carbon::parse($fitness->issued_at)->format('d M Y g:i A')}}
+                                            @else
+                                                {{$fitness->issued_at}}
+                                            @endif  
+                                        @endif  
+                                    </td>
+                                    <td>
+                                         @if ($fitness->expires_at)
+                                                @if ((preg_match($pattern, $fitness->expires_at)) )
+                                                {{ \Carbon\Carbon::parse($fitness->expires_at)->format('d M Y g:i A')}}
+                                            @else
+                                                {{$fitness->expires_at}}
+                                            @endif  
+                                        @endif  
+                                    </td>
+                                    <td>
+                                         @if ($fitness->first_reminder_at)
+                                                @if ((preg_match($pattern, $fitness->first_reminder_at)) )
+                                                {{ \Carbon\Carbon::parse($fitness->first_reminder_at)->format('d M Y g:i A')}}
+                                            @else
+                                                {{$fitness->first_reminder_at}}
+                                            @endif  
+                                        @endif  
+                                    </td>
+                                    <td>
+                                         @if ($fitness->second_reminder_at)
+                                                @if ((preg_match($pattern, $fitness->second_reminder_at)) )
+                                                {{ \Carbon\Carbon::parse($fitness->second_reminder_at)->format('d M Y g:i A')}}
+                                            @else
+                                                {{$fitness->second_reminder_at}}
+                                            @endif  
+                                        @endif  
+                                    </td>
+                                    <td>
+                                         @if ($fitness->third_reminder_at)
+                                                @if ((preg_match($pattern, $fitness->third_reminder_at)) )
+                                                {{ \Carbon\Carbon::parse($fitness->third_reminder_at)->format('d M Y g:i A')}}
+                                            @else
+                                                {{$fitness->third_reminder_at}}
+                                            @endif  
+                                        @endif  
+                                    </td>
                 <td>
                     @if ($fitness->expires_at >= now()->toDateTimeString())
                     <span class="badge bg-success">Valid</span>
