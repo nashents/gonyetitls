@@ -25,6 +25,7 @@ class Create extends Component
     public $exchange_amount;
     public $selectedDriver;
     public $drivers;
+    public $driver;
     public $trips;
     public $trip_id;
     public $amount;

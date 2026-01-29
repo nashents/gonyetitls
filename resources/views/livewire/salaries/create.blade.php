@@ -186,7 +186,7 @@
                                     </div>
                                  
 
-                                        @if ($driver)
+                                @if ($driver)
                                     <label for="">Gain Recoveries</label>
                                     <div class="row">  
                                         <div class="col-md-12">
@@ -202,6 +202,7 @@
                                             </div>
                                         </div>
                                     </div>
+
                                 
                                     <div class="row">
                                         @foreach ($earnings_recoveries_inputs as $key => $value)

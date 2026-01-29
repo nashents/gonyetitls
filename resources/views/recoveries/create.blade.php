@@ -51,11 +51,8 @@
                     </div>
                     <!-- /.main-page -->
 
-            
-
         <!-- ========== PAGE JS FILES ========== -->
-
-
+        
 @endsection
 
 @section('extra-js')

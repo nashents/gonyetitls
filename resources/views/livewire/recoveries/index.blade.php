@@ -33,9 +33,13 @@
                                     </th>
                                     <th class="th-sm">Amount
                                     </th>
-                                    <th class="th-sm">Balance
+                                    <th class="th-sm">Period(Months)
                                     </th>
-                                    <th class="th-sm">Payment
+                                    <th class="th-sm">Installment
+                                    </th>
+                                     <th class="th-sm">Balance
+                                    </th>
+                                    <th class="th-sm">Status
                                     </th>
                                     <th class="th-sm">Progress
                                     </th>
@@ -53,8 +57,7 @@
                                     <td>{{$recovery->recovery_number}}</td>
                                     <td>{{$recovery->date}}</td>
                                     <td>{{$recovery->driver ? $recovery->driver->driver_number : ""}} {{$recovery->driver ? $recovery->driver->employee->name : ""}} {{$recovery->driver ? $recovery->driver->employee->surname : ""}}</td>
-                                    
-                                    <td>{{$recovery->deduction ? $recovery->deduction->name : ""}} | {{$recovery->type}}</td>
+                                    <td>{{$recovery->deduction ? $recovery->deduction->name : ""}} <small><strong> {{$recovery->type}}</strong></small></td>
                                     <td>{{$recovery->currency ? $recovery->currency->name : ""}}</td>  
                                     <td>
                                         @if ($recovery->amount)
@@ -62,6 +65,14 @@
                                         @endif
                                     </td>
                                     <td>
+                                        {{$recovery->period ? $recovery->period : ""}}
+                                    </td>
+                                    <td>
+                                        @if ($recovery->payment_per_month)
+                                            {{$recovery->currency ? $recovery->currency->symbol : ""}}{{number_format($recovery->payment_per_month,2)}}
+                                        @endif
+                                    </td>
+                                      <td>
                                         @if ($recovery->balance)
                                             {{$recovery->currency ? $recovery->currency->symbol : ""}}{{number_format($recovery->balance,2)}}
                                         @endif

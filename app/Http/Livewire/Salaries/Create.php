@@ -39,6 +39,7 @@ class Create extends Component
     public $gross;
     public $salary;
     public $driver;
+    public $total_recoveries;
 
 
     public $salary_id;
@@ -47,6 +48,10 @@ class Create extends Component
     public $selectedEarningCurrency;
     public $selectedAllowanceCurrency;
     public $selectedDeductionCurrency;
+    public $selectedEarningRecoveryCurrency;  
+    public $earning_recovery_amount;  
+    public $recovery_amount;  
+    public $selectedRecoveryCurrency;
     public $selectedCurrency;
     public $selected_currency;
     public $basic;
@@ -56,8 +61,11 @@ class Create extends Component
     public $selectedEarning = [];
     public $allowance_selected_currency = [];
     public $allowanceExchangeRate = [];
+    public $recoveryExchangeRate = [];
+    public $earningRecoveryExchangeRate = [];
     public $allowanceExchangeAmount = [];
     public $selectedAllowance = [];
+    public $selectedEarningRecovery = [];
     public $allowance_amount = [];
     public $earning_amount = [];
     public $deduction_selected_currency = [];
@@ -71,6 +79,8 @@ class Create extends Component
     public $aids_levy = false;
     public $total_allowances = 0;
     public $total_deductions = 0;
+    public $total_earning_recoveries = 0;
+    public $total_deduction_recoveries = 0;
     public $frequency;
     public $exchange_amount;
     public $exchange_rate;
@@ -283,6 +293,27 @@ class Create extends Component
                 }
             }
     }
+   
+    public function updatedSelectedEarningRecovery($id, $key){
+        if (!is_null($id)) {
+            $recovery = Recovery::find($id);
+            if (isset($recovery)) {
+                $this->selectedEarningRecoveryCurrency[$key] = $recovery->currency_id;
+                 $this->earningRecoveryExchangeRate[$key] = $recovery->exchange_rate;
+                $this->earning_recovery_amount[$key] = $recovery->payment_per_month;
+            }
+        }
+    }
+    public function updatedSelectedRecovery($id, $key){
+        if (!is_null($id)) {
+            $recovery = Recovery::find($id);
+            if (isset($recovery)) {
+                $this->selectedRecoveryCurrency[$key] = $recovery->currency_id;
+                $this->recoveryExchangeRate[$key] = $recovery->exchange_rate;
+                $this->recovery_amount[$key] = $recovery->payment_per_month;
+            }
+        }
+    }
   
     public function updatedSelectedCurrency($id){
             if (!is_null($id)) {
@@ -343,12 +374,15 @@ class Create extends Component
                 $salary->save();
             
                 $this->salary_id = $salary->id;
-                
                 // Process Allowances
                 $this->total_allowances = $this->processSalaryItems($this->selectedAllowance, 'allowance_id', $this->allowance_amount, $this->selectedAllowanceCurrency, $this->allowanceExchangeRate);
+                $this->total_earning_recoveries = $this->processSalaryItems($this->selectedEarningRecovery, 'recovery_id', $this->earning_recovery_amount, $this->selectedEarningRecoveryCurrency, $this->earningRecoveryExchangeRate);
+                $this->total_recoveries = $this->processSalaryItems($this->selectedRecovery, 'recovery_id', $this->recovery_amount, $this->selectedAllowanceCurrency, $this->recoveryExchangeRate);
+                $this->total_deduction_recoveries = $this->processSalaryItems($this->selectedRecovery, 'recovery_id', $this->allowance_amount, $this->selectedAllowanceCurrency, $this->allowanceExchangeRate);
               
                 // Process Deductions
                 $this->total_deductions = $this->processSalaryItems($this->selectedDeduction, 'deduction_id', $this->deduction_amount, $this->selectedDeductionCurrency, $this->deductionExchangeRate);
+                
                 
                 // Process Loans
                 if (!empty($this->selectedLoan)) {
@@ -416,21 +450,28 @@ class Create extends Component
         private function processSalaryItems($items, $column, $amounts, $currencyIds, $exchangeRates) {
             $total = 0;
             if (!empty($items)) {
+
                 foreach ($items as $key => $item) {
 
                     if (!empty($item) && isset($amounts[$key]) && isset($currencyIds[$key])) {
 
                         $exchange_amount = 0;
 
-                        if ($exchangeRates[$key] && ($currencyIds[$key] != Auth::user()->employee->company->currency_id)) {
+                        if (isset($exchangeRates[$key]) && ($currencyIds[$key] != Auth::user()->employee->company->currency_id)) {
                             $exchange_amount = $exchangeRates[$key] * $amounts[$key];
                         }
-                       
+                        $movement = Null;
+                        if(isset($column[$key]) && $column[$key] == "recovery_id"){
+                            $recovery = Recovery::find($item);
+                            $movement = $recovery?->type;
+                        }
+
                         SalaryItem::create([
                             'salary_id' => $this->salary_id,
                             $column => $item,
                             'currency_id' => $currencyIds[$key],
                             'amount' => $amounts[$key],
+                            'movement' => $movement ,
                             'exchange_rate' => $exchangeRates[$key] ?? Null,
                             'exchange_amount' =>  $exchange_amount,
                         ]);
