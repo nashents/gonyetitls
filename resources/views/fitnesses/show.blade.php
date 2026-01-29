@@ -30,7 +30,7 @@
                                 <div class="col-md-6">
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
-            							<li><a href="#" onclick="goBack()"><i class="fa fa-list"></i> Reminders</a></li>
+            							<li><a href="{{route('reminders.index')}}" ><i class="fa fa-list"></i> Reminders</a></li>
             							<li class="active"> <i class="fas fa-eye"></i> Reminder</li>
             						</ul>
                                 </div>

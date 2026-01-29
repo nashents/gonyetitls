@@ -534,7 +534,7 @@
                 </div>
                 @endif
                 <div role="tabpanel" class="tab-pane" id="fitness">
-                    @livewire('fitnesses.index', ['id' => $employee->id, 'category' => "Employee"])
+                    @livewire('fitnesses.index', ['id' => $employee->id, 'type' => "Employee"])
                </div>
                 <div role="tabpanel" class="tab-pane" id="departments">
                     <a href="" data-toggle="modal" data-target="#departmentModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Department</a>

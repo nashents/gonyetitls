@@ -39,7 +39,7 @@
                                     </th>
                                     <th class="th-sm">Status
                                     </th>
-                                    <th class="th-sm">Copy
+                                    <th class="th-sm">CC
                                     </th>
                                     <th class="th-sm">Action
                                     </th>
@@ -61,54 +61,42 @@
                                         @endif
                                     </td>
                                     @php
-                                        $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
+                                        $dtLocalPattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/';
+
+                                        $fmt = function ($value) use ($dtLocalPattern) {
+                                            if (!$value) return null;
+
+                                            // If it's already a Carbon/DateTime instance
+                                            if ($value instanceof \DateTimeInterface) {
+                                                return \Carbon\Carbon::instance($value)->format('d M Y g:i A');
+                                            }
+
+                                            $value = trim((string) $value);
+
+                                            try {
+                                                // datetime-local: 2025-07-05T12:40 or 2025-07-05T12:40:00
+                                                if (preg_match($dtLocalPattern, $value)) {
+                                                    $format = (substr_count($value, ':') === 2)
+                                                        ? 'Y-m-d\TH:i:s'
+                                                        : 'Y-m-d\TH:i';
+
+                                                    return \Carbon\Carbon::createFromFormat($format, $value)->format('d M Y g:i A');
+                                                }
+
+                                                // DB datetime or anything else Carbon can understand
+                                                return \Carbon\Carbon::parse($value)->format('d M Y g:i A');
+
+                                            } catch (\Throwable $e) {
+                                                return $value; // fallback
+                                            }
+                                        };
                                     @endphp
                                        
-                                    <td>
-                                         @if ($reminder->issued_at)
-                                                @if ((preg_match($pattern, $reminder->issued_at)) )
-                                                {{ \Carbon\Carbon::parse($reminder->issued_at)->format('d M Y g:i A')}}
-                                            @else
-                                                {{$reminder->issued_at}}
-                                            @endif  
-                                        @endif  
-                                    </td>
-                                    <td>
-                                         @if ($reminder->expires_at)
-                                                @if ((preg_match($pattern, $reminder->expires_at)) )
-                                                {{ \Carbon\Carbon::parse($reminder->expires_at)->format('d M Y g:i A')}}
-                                            @else
-                                                {{$reminder->expires_at}}
-                                            @endif  
-                                        @endif  
-                                    </td>
-                                    <td>
-                                         @if ($reminder->first_reminder_at)
-                                                @if ((preg_match($pattern, $reminder->first_reminder_at)) )
-                                                {{ \Carbon\Carbon::parse($reminder->first_reminder_at)->format('d M Y g:i A')}}
-                                            @else
-                                                {{$reminder->first_reminder_at}}
-                                            @endif  
-                                        @endif  
-                                    </td>
-                                    <td>
-                                         @if ($reminder->second_reminder_at)
-                                                @if ((preg_match($pattern, $reminder->second_reminder_at)) )
-                                                {{ \Carbon\Carbon::parse($reminder->second_reminder_at)->format('d M Y g:i A')}}
-                                            @else
-                                                {{$reminder->second_reminder_at}}
-                                            @endif  
-                                        @endif  
-                                    </td>
-                                    <td>
-                                         @if ($reminder->third_reminder_at)
-                                                @if ((preg_match($pattern, $reminder->third_reminder_at)) )
-                                                {{ \Carbon\Carbon::parse($reminder->third_reminder_at)->format('d M Y g:i A')}}
-                                            @else
-                                                {{$reminder->third_reminder_at}}
-                                            @endif  
-                                        @endif  
-                                    </td>
+                                    <td>{{ $fmt($reminder->issued_at) }}</td>
+                                    <td>{{ $fmt($reminder->expires_at) }}</td>
+                                    <td>{{ $fmt($reminder->first_reminder_at) }}</td>
+                                    <td>{{ $fmt($reminder->second_reminder_at) }}</td>
+                                    <td>{{ $fmt($reminder->third_reminder_at) }}</td>
                                     <td>
                                         @if ($reminder->expires_at >= now()->toDateTimeString())
                                         <span class="badge bg-success">Valid</span>
@@ -245,7 +233,7 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="name">Reminder Item(s)<span class="required" style="color: red">*</span></label>
-                                        <select wire:model.lazy="reminder_item_id" class="form-control" required>
+                                        <select wire:model.debounce.300ms="reminder_item_id" class="form-control" required>
                                             <option value="">Select Reminder</option>
                                         @foreach ($reminder_items as $reminder_item)
                                             <option value="{{ $reminder_item->id }}">{{ $reminder_item->name }}</option>
@@ -259,7 +247,7 @@
                         @else
                             <div class="form-group">
                                 <label for="name">Reminder Item(s)<span class="required" style="color: red">*</span></label>
-                                <select wire:model.lazy="reminder_item_id" class="form-control" required>
+                                <select wire:model.debounce.300ms="reminder_item_id" class="form-control" required>
                                     <option value="">Select Reminder</option>
                                     @foreach ($reminder_items as $reminder_item)
                                         <option value="{{ $reminder_item->id }}">{{ $reminder_item->name }}</option>
@@ -380,7 +368,7 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="name">Reminder Item(s)<span class="required" style="color: red">*</span></label>
-                                        <select wire:model.lazy="reminder_item_id" class="form-control" required>
+                                        <select wire:model.debounce.300ms="reminder_item_id" class="form-control" required>
                                             <option value="">Select Reminder</option>
                                         @foreach ($reminder_items as $reminder_item)
                                             <option value="{{ $reminder_item->id }}">{{ $reminder_item->name }}</option>
@@ -394,7 +382,7 @@
                         @else
                             <div class="form-group">
                                 <label for="name">Reminder Item(s)<span class="required" style="color: red">*</span></label>
-                                <select wire:model.lazy="reminder_item_id" class="form-control" required>
+                                <select wire:model.debounce.300ms="reminder_item_id" class="form-control" required>
                                     <option value="">Select Reminder</option>
                                     @foreach ($reminder_items as $reminder_item)
                                         <option value="{{ $reminder_item->id }}">{{ $reminder_item->name }}</option>

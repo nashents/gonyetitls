@@ -212,7 +212,7 @@
                 @livewire('trailers.images', ['id' => $trailer->id])
             </div>
             <div role="tabpanel" class="tab-pane" id="fitness">
-                @livewire('fitnesses.index', ['id' => $trailer->id, 'category' => "Trailer"])
+                @livewire('fitnesses.index', ['id' => $trailer->id, 'type' => "Trailer"])
                    </div>
 
             <div role="tabpanel" class="tab-pane" id="tyres">

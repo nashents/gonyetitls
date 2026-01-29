@@ -59,16 +59,17 @@ class Index extends Component
     public $employees;
     public $employee_id;
 
+
     public function mount(){
         $this->resetPage();
         $this->user = Auth::user();
         $this->employee = $this->user->employee;
         $this->company = $this->employee->company;
         $this->default_currency = $this->company->currency;
-        $this->horses = Horse::where('status',1)->orderBy('registration_number','asc')->get();
-        $this->assets = Asset::with('product')->where('status',1)->get()->sortBy('product.name');
-        $this->trailers = Trailer::where('status',1)->orderBy('registration_number','asc')->get();
-        $this->vehicles = Vehicle::where('status',1)->orderBy('registration_number','asc')->get();
+        $this->horses = collect();
+        $this->assets = collect();
+        $this->trailers = collect();
+        $this->vehicles = collect();
         $this->service_types = ServiceType::where('status',1)->orderBy('name','asc')->get();
         $this->stations = Station::where('status',1)->orderBy('name','asc')->get();
         $this->employees = Employee::query()
@@ -254,6 +255,22 @@ class Index extends Component
            }
         });
 
+      }
+
+      public function updatedFilter($value){
+       
+            if(is_null($value)){
+                return ;
+            }
+            if ($value == "horse") {
+                $this->horses =  Horse::where('archive',0)->orderBy('registration_number','asc')->get();
+            }elseif($value == "vehicle"){
+                $this->vehicles = Vehicle::where('archive',0)->orderBy('registration_number','asc')->get();
+            }elseif($value == "trailer"){
+                $this->trailers = Trailer::where('archive',0)->orderBy('registration_number','asc')->get();
+            }elseif($value == "asset"){
+                $this->assets = Asset::with('product')->get()->sortBy('product.name');
+            }
       }
 
 

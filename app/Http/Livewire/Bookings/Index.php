@@ -68,10 +68,10 @@ class Index extends Component
     
     public function mount(){
         $this->resetPage();
-        $this->horses = Horse::where('status',1)->orderBy('registration_number','asc')->get();
-        $this->assets = Asset::with('product')->where('status',1)->get()->sortBy('product.name');
-        $this->trailers = Trailer::where('status',1)->orderBy('registration_number','asc')->get();
-        $this->vehicles = Vehicle::where('status',1)->orderBy('registration_number','asc')->get();
+        $this->horses = collect();
+        $this->assets = collect();
+        $this->trailers = collect();
+        $this->vehicles = collect();
         $this->stations = Station::where('status',1)->orderBy('name','asc')->get();
         $this->service_types = ServiceType::where('status',1)->orderBy('name','asc')->get();
         $this->employees = Employee::query()
@@ -86,6 +86,24 @@ class Index extends Component
 
       }
 
+      
+      public function updatedFilter($value){
+       
+            if(is_null($value)){
+                return ;
+            }
+            if ($value == "horse") {
+                $this->horses =  Horse::where('archive',0)->orderBy('registration_number','asc')->get();
+            }elseif($value == "vehicle"){
+                $this->vehicles = Vehicle::where('archive',0)->orderBy('registration_number','asc')->get();
+            }elseif($value == "trailer"){
+                $this->trailers = Trailer::where('archive',0)->orderBy('registration_number','asc')->get();
+            }elseif($value == "asset"){
+                $this->assets = Asset::with('product')->get()->sortBy('product.name');
+            }
+      }
+
+
     public function exportBookingsCSV(Excel $excel){
         return $excel->download(new BookingsExport($this->booking_status, $this->search, $this->from, $this->to, $this->filter, $this->search_id, $this->station_id, $this->service_type_id, $this->employee_id), 'bookings_'.time().'.csv', Excel::CSV);
     }
@@ -97,7 +115,7 @@ class Index extends Component
     }
 
 
-      public function showBooking($id){
+    public function showBooking($id){
         $this->booking_id = $id;
         $this->booking = Booking::find($id);
         $this->status = $this->booking->status;

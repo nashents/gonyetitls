@@ -106,13 +106,28 @@ class Index extends Component
         $this->resetPage();
         $this->reminder_items = ReminderItem::orderBy('name','asc')->get();
 
-        $this->horses = Horse::orderBy('registration_number','asc')->where('archive',0)->get();
+        $this->horses = collect();
 
         $this->employees = Employee::orderBy('name','asc')->orderBy('surname','asc')->where('archive',0)->get();
 
-        $this->vehicles = Vehicle::orderBy('registration_number','asc')->where('archive',0)->get();
+        $this->vehicles = collect();
 
-        $this->trailers = Trailer::orderBy('registration_number','asc')->where('archive',0)->get();
+        $this->trailers = collect();
+    }
+
+    public function updatedType($value){
+        if(!is_null($value)){
+            return;
+        }
+
+        if ($value == "horse") {
+            $this->horses =  Horse::where('archive',0)->orderBy('registration_number','asc')->get();
+        }elseif($value == "vehicle"){
+            $this->vehicles = Vehicle::where('archive',0)->orderBy('registration_number','asc')->get();
+        }elseif($value == "trailer"){
+            $this->trailers = Trailer::where('archive',0)->orderBy('registration_number','asc')->get();
+        }
+
     }
 
     public function store()
@@ -129,7 +144,7 @@ class Index extends Component
             foreach ($this->reminder_item_id as $key => $reminderItemId) {
 
                 // ----------------------------
-                // 1) Resolve category target keys
+                // 1) Resolve type target keys
                 // ----------------------------
                 $targets = [
                     'horse_id'    => null,
@@ -138,13 +153,13 @@ class Index extends Component
                     'employee_id' => null,
                 ];
 
-                if ($this->category === 'Horse') {
+                if ($this->type === 'Horse') {
                     $targets['horse_id'] = $this->horse_id ?? null;
-                } elseif ($this->category === 'Vehicle') {
+                } elseif ($this->type === 'Vehicle') {
                     $targets['vehicle_id'] = $this->vehicle_id ?? null;
-                } elseif ($this->category === 'Trailer') {
+                } elseif ($this->type === 'Trailer') {
                     $targets['trailer_id'] = $this->trailer_id ?? null;
-                } elseif ($this->category === 'Employee') {
+                } elseif ($this->type === 'Employee') {
                     $targets['employee_id'] = $this->employee_id ?? null;
                 }
 
@@ -179,7 +194,7 @@ class Index extends Component
                     : array_filter([
                         'company_id'        => $companyId,
                         'reminder_item_id'  => $reminderItemId,
-                        // category target (only one of these will be set)
+                        // type target (only one of these will be set)
                         'horse_id'          => $targets['horse_id'],
                         'vehicle_id'        => $targets['vehicle_id'],
                         'trailer_id'        => $targets['trailer_id'],
@@ -261,36 +276,71 @@ class Index extends Component
         }
     }
 
+    private function dbToDateTimeLocal($value): ?string
+    {
+        if (blank($value)) return null;
+
+        try {
+            if ($value instanceof \DateTimeInterface) {
+                return Carbon::instance($value)->format('Y-m-d\TH:i');
+            }
+
+            return Carbon::parse((string) $value)->format('Y-m-d\TH:i');
+
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
     public function edit($id){
         $fitness = Fitness::find($id);
         $this->reminder_item_id = $fitness->reminder_item_id;
-        $this->issued_at = $fitness->issued_at;
-        $this->expires_at =  $fitness->expires_at;
+        $this->issued_at  = $this->dbToDateTimeLocal($fitness->issued_at);
+        $this->expires_at = $this->dbToDateTimeLocal($fitness->expires_at);
+        $this->first_reminder_at  = $this->dbToDateTimeLocal($fitness->first_reminder_at);
+        $this->second_reminder_at = $this->dbToDateTimeLocal($fitness->second_reminder_at);
+        $this->third_reminder_at  = $this->dbToDateTimeLocal($fitness->third_reminder_at);
         $this->cc =  $fitness->cc;
-        $this->first_reminder_at = $fitness->first_reminder_at;
-        $this->first_reminder_at_status = $fitness->first_reminder_at_status;
-        $this->second_reminder_at = $fitness->second_reminder_at;
-        $this->second_reminder_at_status = $fitness->second_reminder_at_status;
-        $this->third_reminder_at = $this->third_reminder_at;
-        $this->third_reminder_at_status = $this->third_reminder_at_status;
+
         $this->status = $fitness->status;
-        $this->horse_id = $fitness->horse_id;
-        $this->vehicle_id = $fitness->vehicle_id;
-        $this->trailer_id = $fitness->trailer_id;
-        $this->employee_id = $fitness->employee_id;
+
+        if (!is_null($fitness->horse_id)) {
+            $this->type = "Horse";
+            $this->horse_id = $fitness->horse_id;
+        }elseif(!is_null($fitness->vehicle_id)){
+            $this->type = "Vehicle";
+            $this->vehicle_id = $fitness->vehicle_id;
+        }elseif(!is_null($fitness->trailer_id)){
+            $this->type = "Trailer";
+            $this->trailer_id = $fitness->trailer_id;
+        }elseif(!is_null($fitness->employee_id)){
+            $this->type = "Employee";
+            $this->employee_id = $fitness->employee_id;
+        }else{
+            $this->type = "Other";
+        }
+       
+    
         $this->fitness_id = $fitness->id;
+
+        $this->horses =  Horse::where('archive',0)->orderBy('registration_number','asc')->get();
+        $this->vehicles = Vehicle::where('archive',0)->orderBy('registration_number','asc')->get();
+        $this->trailers = Trailer::where('archive',0)->orderBy('registration_number','asc')->get();
+
         $this->dispatchBrowserEvent('show-fitnessEditModal');
 
-        }
+    }
 
 
     public function update()
     {
          DB::transaction(function () {
 
-            if (! $this->fitness_id) {
+            if (! $this->fitness_id || empty($this->reminder_item_id)) {
                 return;
             }
+            $item = ReminderItem::find($this->reminder_item_id);
+            
 
             $fitness = Fitness::findOrFail($this->fitness_id);
 
@@ -304,13 +354,13 @@ class Index extends Component
                 'employee_id' => null,
             ];
 
-            if ($this->category === 'Horse') {
+            if ($this->type === 'Horse') {
                 $targets['horse_id'] = $this->horse_id ?? null;
-            } elseif ($this->category === 'Vehicle') {
+            } elseif ($this->type === 'Vehicle') {
                 $targets['vehicle_id'] = $this->vehicle_id ?? null;
-            } elseif ($this->category === 'Trailer') {
+            } elseif ($this->type === 'Trailer') {
                 $targets['trailer_id'] = $this->trailer_id ?? null;
-            } elseif ($this->category === 'Employee') {
+            } elseif ($this->type === 'Employee') {
                 $targets['employee_id'] = $this->employee_id ?? null;
             }
 

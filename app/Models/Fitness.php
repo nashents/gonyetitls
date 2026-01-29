@@ -64,6 +64,8 @@ class Fitness extends Model  implements Auditable
         'vehicle_id',
         'horse_id',
         'trailer_id',
+        'employee_id',
+        'reminder_item_id',
         'name',
         'issued_at',
         'expires_at',

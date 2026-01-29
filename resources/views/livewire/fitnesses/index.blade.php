@@ -22,6 +22,8 @@
             </th>
             <th class="th-sm">Status
             </th>
+            <th class="th-sm">CC
+            </th>
             <th class="th-sm">Action
             </th>
           </tr>
@@ -31,61 +33,51 @@
             @forelse ($fitnesses as $fitness)
             <tr>
                 <td>{{$fitness->reminder_item ? $fitness->reminder_item->name : ""}}</td>
-                 @php
-                                        $pattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
-                                    @endphp
-                                       
-                                    <td>
-                                         @if ($fitness->issued_at)
-                                                @if ((preg_match($pattern, $fitness->issued_at)) )
-                                                {{ \Carbon\Carbon::parse($fitness->issued_at)->format('d M Y g:i A')}}
-                                            @else
-                                                {{$fitness->issued_at}}
-                                            @endif  
-                                        @endif  
-                                    </td>
-                                    <td>
-                                         @if ($fitness->expires_at)
-                                                @if ((preg_match($pattern, $fitness->expires_at)) )
-                                                {{ \Carbon\Carbon::parse($fitness->expires_at)->format('d M Y g:i A')}}
-                                            @else
-                                                {{$fitness->expires_at}}
-                                            @endif  
-                                        @endif  
-                                    </td>
-                                    <td>
-                                         @if ($fitness->first_reminder_at)
-                                                @if ((preg_match($pattern, $fitness->first_reminder_at)) )
-                                                {{ \Carbon\Carbon::parse($fitness->first_reminder_at)->format('d M Y g:i A')}}
-                                            @else
-                                                {{$fitness->first_reminder_at}}
-                                            @endif  
-                                        @endif  
-                                    </td>
-                                    <td>
-                                         @if ($fitness->second_reminder_at)
-                                                @if ((preg_match($pattern, $fitness->second_reminder_at)) )
-                                                {{ \Carbon\Carbon::parse($fitness->second_reminder_at)->format('d M Y g:i A')}}
-                                            @else
-                                                {{$fitness->second_reminder_at}}
-                                            @endif  
-                                        @endif  
-                                    </td>
-                                    <td>
-                                         @if ($fitness->third_reminder_at)
-                                                @if ((preg_match($pattern, $fitness->third_reminder_at)) )
-                                                {{ \Carbon\Carbon::parse($fitness->third_reminder_at)->format('d M Y g:i A')}}
-                                            @else
-                                                {{$fitness->third_reminder_at}}
-                                            @endif  
-                                        @endif  
-                                    </td>
+                @php
+                    $dtLocalPattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/';
+
+                    $fmt = function ($value) use ($dtLocalPattern) {
+                        if (!$value) return null;
+
+                        // If it's already a Carbon/DateTime instance
+                        if ($value instanceof \DateTimeInterface) {
+                            return \Carbon\Carbon::instance($value)->format('d M Y g:i A');
+                        }
+
+                        $value = trim((string) $value);
+
+                        try {
+                            // datetime-local: 2025-07-05T12:40 or 2025-07-05T12:40:00
+                            if (preg_match($dtLocalPattern, $value)) {
+                                $format = (substr_count($value, ':') === 2)
+                                    ? 'Y-m-d\TH:i:s'
+                                    : 'Y-m-d\TH:i';
+
+                                return \Carbon\Carbon::createFromFormat($format, $value)->format('d M Y g:i A');
+                            }
+
+                            // DB datetime or anything else Carbon can understand
+                            return \Carbon\Carbon::parse($value)->format('d M Y g:i A');
+
+                        } catch (\Throwable $e) {
+                            return $value; // fallback
+                        }
+                    };
+                @endphp                  
+                <td>{{ $fmt($reminder->issued_at) }}</td>
+                <td>{{ $fmt($reminder->expires_at) }}</td>
+                <td>{{ $fmt($reminder->first_reminder_at) }}</td>
+                <td>{{ $fmt($reminder->second_reminder_at) }}</td>
+                <td>{{ $fmt($reminder->third_reminder_at) }}</td>
                 <td>
                     @if ($fitness->expires_at >= now()->toDateTimeString())
                     <span class="badge bg-success">Valid</span>
                     @else
                     <span class="badge bg-danger">Expired</span>        
                     @endif
+                </td>
+                <td>
+                    {{ $reminder->cc ? 'Yes' : 'No' }}
                 </td>
                 <td class="w-10 line-height-35 table-dropdown">
                     <div class="dropdown">
@@ -134,7 +126,7 @@
                     <div class="col-md-4">
                         <div class="form-group">
                             <label for="name">Reminder Item(s)<span class="required" style="color: red">*</span></label>
-                            <select wire:model.lazy="reminder_item_id.0" class="form-control" required>
+                            <select wire:model.debounce.300ms="reminder_item_id.0" class="form-control" required>
                                 <option value="">Select Reminder</option>
                                @foreach ($reminder_items as $reminder_item)
                                    <option value="{{ $reminder_item->id }}">{{ $reminder_item->name }}</option>
@@ -166,7 +158,7 @@
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="name">Reminder Item(s)<span class="required" style="color: red">*</span></label>
-                                    <select wire:model.lazy="reminder_item_id.{{ $value }}" class="form-control" required>
+                                    <select wire:model.debounce.300ms="reminder_item_id.{{ $value }}" class="form-control" required>
                                         <option value="">Select Reminder</option>
                                        @foreach ($reminder_items as $reminder_item)
                                            <option value="{{ $reminder_item->id }}">{{ $reminder_item->name }}</option>
@@ -230,7 +222,7 @@
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label for="name">Reminder Item(s)<span class="required" style="color: red">*</span></label>
-                                <select wire:model.lazy="reminder_item_id" class="form-control" required>
+                                <select wire:model.debounce.300ms="reminder_item_id" class="form-control" required>
                                     <option value="">Select Reminder</option>
                                 @foreach ($reminder_items as $reminder_item)
                                     <option value="{{ $reminder_item->id }}">{{ $reminder_item->name }}</option>

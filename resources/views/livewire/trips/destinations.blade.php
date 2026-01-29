@@ -121,7 +121,7 @@
                 $total_litreage_at_20 = $trip_destinations->where('litreage_at_20','!=', null)->where('litreage_at_20','!=',"")->sum('litreage_at_20');
             @endphp
             <tr>
-                <th colspan="3"><h5 style="margin-top:-5px;"><strong>Total</strong></h5></th>
+                <th colspan="4"><h5 style="margin-top:-5px;"><strong>Total</strong></h5></th>
                 <td  >
                     @if (isset($total_weight) && $total_weight > 0)
                     <strong>{{ number_format($total_weight,2) }} Tons </strong> 
