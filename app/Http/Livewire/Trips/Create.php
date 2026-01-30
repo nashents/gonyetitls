@@ -1388,7 +1388,7 @@ class Create extends Component
                 $trip->exchange_rate = $this->exchange_rate;
                 $trip->exchange_customer_freight = $this->exchange_customer_freight;
                 $trip->exchange_transporter_freight = $this->exchange_transporter_freight;
-                $this->turnover = $this->company->id ==  $this->selectedCurrency ? $this->freight : $this->exchange_customer_freight;
+                $this->turnover = $this->company->currency_id ==  $this->selectedCurrency ? $this->freight : $this->exchange_customer_freight;
                 $trip->turnover = $this->turnover;
               
                

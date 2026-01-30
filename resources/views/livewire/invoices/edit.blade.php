@@ -254,14 +254,26 @@
                                                                                 @if(in_array($trip->id, $selectedCurrentTrip ?? []) && ($selectedCurrentTrip[$key] ?? null) != $trip->id) 
                                                                                     disabled 
                                                                                 @endif >
-                                                                                {{$trip->trip_number ? $trip->trip_number." |" : ""}} {{ $trip->trip_ref ? $trip->trip_ref." |" : "" }} {{ isset($pod) ? $pod->document_number." | " : "" }} {{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}}{{$trip->turnover ? number_format($trip->turnover,2)." |" : ""}} {{$trip->horse ? $trip->horse->registration_number : ""}} | {{$trip->customer ? $trip->customer->name : ""}}
+                                                                                {{$trip->trip_number ? $trip->trip_number: ""}} {{ $trip->trip_ref ? " / ".$trip->trip_ref: "" }} {{ isset($pod) ? "POD#: ".$pod->document_number : "" }} {{$trip->start_date}} {{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}}{{$trip->freight ? number_format($trip->freight,2) : ""}} 
+                                                                                @if ($trip->horse)
+                                                                                    {{$trip->horse ? $trip->horse->registration_number : ""}} {{$trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : ""}}
+                                                                                @elseif($trip->vehicle)
+                                                                                    {{$trip->vehicle ? $trip->vehicle->registration_number : ""}} {{$trip->vehicle->fleet_number ? "(".$trip->vehicle->fleet_number.")" : ""}}
+                                                                                @endif
+                                                                                {{$trip->customer ? $trip->customer->name : ""}}
                                                                             </option> 
                                                                         @else
                                                                             <option value="{{$trip->id}}"
                                                                                 @if(in_array($trip->id, $selectedCurrentTrip ?? []) && ($selectedCurrentTrip[$key] ?? null) != $trip->id) 
                                                                                     disabled 
                                                                                 @endif >
-                                                                                {{$trip->trip_number ? $trip->trip_number." |" : ""}} {{ $trip->trip_ref ? $trip->trip_ref." |" : "" }} {{ isset($pod) ? $pod->document_number." | " : "" }} {{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}}{{$trip->turnover ? number_format($trip->turnover,2)." |" : ""}} {{$trip->horse ? $trip->horse->registration_number : ""}} | {{$trip->customer ? $trip->customer->name : ""}}
+                                                                                 {{$trip->trip_number ? $trip->trip_number: ""}} {{ $trip->trip_ref ? " / ".$trip->trip_ref: "" }} {{ isset($pod) ? "POD#: ".$pod->document_number : "" }} {{$trip->start_date}} {{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}}{{$trip->freight ? number_format($trip->freight,2) : ""}} 
+                                                                                @if ($trip->horse)
+                                                                                    {{$trip->horse ? $trip->horse->registration_number : ""}} {{$trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : ""}}
+                                                                                @elseif($trip->vehicle)
+                                                                                    {{$trip->vehicle ? $trip->vehicle->registration_number : ""}} {{$trip->vehicle->fleet_number ? "(".$trip->vehicle->fleet_number.")" : ""}}
+                                                                                @endif
+                                                                                {{$trip->customer ? $trip->customer->name : ""}}
                                                                             </option>
                                                                         @endif
                                                                     @else
@@ -269,7 +281,13 @@
                                                                             @if(in_array($trip->id, $selectedCurrentTrip ?? []) && ($selectedCurrentTrip[$key] ?? null) != $trip->id) 
                                                                                 disabled 
                                                                             @endif >
-                                                                            {{$trip->trip_number ? $trip->trip_number." |" : ""}} {{ $trip->trip_ref ? $trip->trip_ref." |" : "" }} {{ isset($pod) ? $pod->document_number." | " : "" }} {{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}}{{$trip->turnover ? number_format($trip->turnover,2)." |" : ""}} {{$trip->horse ? $trip->horse->registration_number : ""}} | {{$trip->customer ? $trip->customer->name : ""}}
+                                                                            {{$trip->trip_number ? $trip->trip_number: ""}} {{ $trip->trip_ref ? " / ".$trip->trip_ref: "" }} {{ isset($pod) ? "POD#: ".$pod->document_number : "" }} {{$trip->start_date}} {{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}}{{$trip->freight ? number_format($trip->freight,2) : ""}} 
+                                                                            @if ($trip->horse)
+                                                                                {{$trip->horse ? $trip->horse->registration_number : ""}} {{$trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : ""}}
+                                                                            @elseif($trip->vehicle)
+                                                                                {{$trip->vehicle ? $trip->vehicle->registration_number : ""}} {{$trip->vehicle->fleet_number ? "(".$trip->vehicle->fleet_number.")" : ""}}
+                                                                            @endif
+                                                                            {{$trip->customer ? $trip->customer->name : ""}}
                                                                         </option>
                                                                     @endif
                                                                 @endforeach  
@@ -341,20 +359,44 @@
                                                                             @if(in_array($trip->id, $selectedTrip ?? []) && ($selectedTrip[$value] ?? null) != $trip->id) 
                                                                             disabled 
                                                                         @endif
-                                                                            >{{$trip->trip_number ? $trip->trip_number." |" : ""}} {{ $trip->trip_ref ? $trip->trip_ref." |" : "" }} {{ isset($pod) ? $pod->document_number." | " : "" }} {{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}}{{$trip->turnover ? number_format($trip->turnover,2)." |" : ""}} {{$trip->horse ? $trip->horse->registration_number : ""}} | {{$trip->customer ? $trip->customer->name : ""}} </option> 
+                                                                            >
+                                                                         {{$trip->trip_number ? $trip->trip_number: ""}} {{ $trip->trip_ref ? " / ".$trip->trip_ref: "" }} {{ isset($pod) ? "POD#: ".$pod->document_number : "" }} {{$trip->start_date}} {{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}}{{$trip->freight ? number_format($trip->freight,2) : ""}} 
+                                                                                @if ($trip->horse)
+                                                                                    {{$trip->horse ? $trip->horse->registration_number : ""}} {{$trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : ""}}
+                                                                                @elseif($trip->vehicle)
+                                                                                    {{$trip->vehicle ? $trip->vehicle->registration_number : ""}} {{$trip->vehicle->fleet_number ? "(".$trip->vehicle->fleet_number.")" : ""}}
+                                                                                @endif
+                                                                                {{$trip->customer ? $trip->customer->name : ""}}
+                                                                        </option> 
                                                                         @else
                                                                             <option value="{{$trip->id}}"
                                                                                 @if(in_array($trip->id, $selectedTrip ?? []) && ($selectedTrip[$value] ?? null) != $trip->id) 
                                                                             disabled 
                                                                         @endif
-                                                                                >{{$trip->trip_number ? $trip->trip_number." |" : ""}} {{ $trip->trip_ref ? $trip->trip_ref." |" : "" }} {{ isset($pod) ? $pod->document_number." | " : "" }} {{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}}{{$trip->turnover ? number_format($trip->turnover,2)." |" : ""}} {{$trip->horse ? $trip->horse->registration_number : ""}} | {{$trip->customer ? $trip->customer->name : ""}}</option>
+                                                                                >
+                                                                             {{$trip->trip_number ? $trip->trip_number: ""}} {{ $trip->trip_ref ? " / ".$trip->trip_ref: "" }} {{ isset($pod) ? "POD#: ".$pod->document_number : "" }} {{$trip->start_date}} {{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}}{{$trip->freight ? number_format($trip->freight,2) : ""}} 
+                                                                                @if ($trip->horse)
+                                                                                    {{$trip->horse ? $trip->horse->registration_number : ""}} {{$trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : ""}}
+                                                                                @elseif($trip->vehicle)
+                                                                                    {{$trip->vehicle ? $trip->vehicle->registration_number : ""}} {{$trip->vehicle->fleet_number ? "(".$trip->vehicle->fleet_number.")" : ""}}
+                                                                                @endif
+                                                                                {{$trip->customer ? $trip->customer->name : ""}}
+                                                                            </option>
                                                                         @endif
                                                                     @else
                                                                         <option value="{{$trip->id}}"
                                                                             @if(in_array($trip->id, $selectedTrip ?? []) && ($selectedTrip[$value] ?? null) != $trip->id) 
                                                                             disabled 
                                                                         @endif
-                                                                            >{{$trip->trip_number ? $trip->trip_number." |" : ""}} {{ $trip->trip_ref ? $trip->trip_ref." |" : "" }} {{ isset($pod) ? $pod->document_number." | " : "" }} {{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}}{{$trip->turnover ? number_format($trip->turnover,2)." |" : ""}} {{$trip->horse ? $trip->horse->registration_number : ""}} | {{$trip->customer ? $trip->customer->name : ""}}</option>
+                                                                            >
+                                                                             {{$trip->trip_number ? $trip->trip_number: ""}} {{ $trip->trip_ref ? " / ".$trip->trip_ref: "" }} {{ isset($pod) ? "POD#: ".$pod->document_number : "" }} {{$trip->start_date}} {{$trip->currency ? $trip->currency->name : ""}} {{$trip->currency ? $trip->currency->symbol : ""}}{{$trip->freight ? number_format($trip->freight,2) : ""}} 
+                                                                                @if ($trip->horse)
+                                                                                    {{$trip->horse ? $trip->horse->registration_number : ""}} {{$trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : ""}}
+                                                                                @elseif($trip->vehicle)
+                                                                                    {{$trip->vehicle ? $trip->vehicle->registration_number : ""}} {{$trip->vehicle->fleet_number ? "(".$trip->vehicle->fleet_number.")" : ""}}
+                                                                                @endif
+                                                                                {{$trip->customer ? $trip->customer->name : ""}}
+                                                                        </option>
                                                                     @endif
                                                                 @endforeach  
                                                             </select>
