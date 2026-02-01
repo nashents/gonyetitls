@@ -77,7 +77,7 @@
                     @endif
                 </td>
                 <td>
-                    {{ $reminder->cc ? 'Yes' : 'No' }}
+                    {{ $fitness->cc ? 'Yes' : 'No' }}
                 </td>
                 <td class="w-10 line-height-35 table-dropdown">
                     <div class="dropdown">
