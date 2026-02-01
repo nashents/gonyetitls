@@ -64,11 +64,11 @@
                         }
                     };
                 @endphp                  
-                <td>{{ $fmt($reminder->issued_at) }}</td>
-                <td>{{ $fmt($reminder->expires_at) }}</td>
-                <td>{{ $fmt($reminder->first_reminder_at) }}</td>
-                <td>{{ $fmt($reminder->second_reminder_at) }}</td>
-                <td>{{ $fmt($reminder->third_reminder_at) }}</td>
+                <td>{{ $fmt($fitness->issued_at) }}</td>
+                <td>{{ $fmt($fitness->expires_at) }}</td>
+                <td>{{ $fmt($fitness->first_reminder_at) }}</td>
+                <td>{{ $fmt($fitness->second_reminder_at) }}</td>
+                <td>{{ $fmt($fitness->third_reminder_at) }}</td>
                 <td>
                     @if ($fitness->expires_at >= now()->toDateTimeString())
                     <span class="badge bg-success">Valid</span>

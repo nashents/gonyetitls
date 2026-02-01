@@ -688,7 +688,7 @@ class Index extends Component
         }
 
         $query = Payment::query()
-        ->with(['customer:id,name', 'currency:id,name,symbol', 'transaction_type:id,name']);
+        ->with(['customer:id,name','vendor:id,name', 'currency:id,name,symbol', 'transaction_type:id,name']);
 
         switch ($this->movement) {
         case 'Debit':
@@ -700,13 +700,21 @@ class Index extends Component
         // 'all' or anything else → no bill_id constraint
         }
 
-        if (!empty($this->from) && !empty($this->to)) {
-            $query->whereBetween($this->payment_filter, [$this->from, $this->to]);
+       if (!empty($this->from) && !empty($this->to)) {
+
+            $from = Carbon::parse($this->from)->startOfDay();
+            $to   = Carbon::parse($this->to)->endOfDay();
+
+            $query->whereBetween($this->payment_filter, [$from, $to]);
+
         } else {
-            $start = Carbon::now()->startOfMonth()->toDateString();
-            $end   = Carbon::now()->endOfMonth()->toDateString();
-            $query->whereBetween($this->payment_filter, [$start, $end]);
+
+            $from = now()->startOfMonth()->startOfDay();
+            $to   = now()->endOfMonth()->endOfDay(); // includes all times on last day
+
+            $query->whereBetween($this->payment_filter, [$from, $to]);
         }
+
 
         $search = trim((string) ($this->search ?? ''));
         if ($search !== '') {

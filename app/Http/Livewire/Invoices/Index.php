@@ -369,7 +369,6 @@ class Index extends Component
             ->first();
         
         
-        
 
         $payment = Payment::find($this->last_payment->id);
         $payment->drawdown_balance = $this->payment_drawdown_balance;
