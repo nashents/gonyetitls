@@ -63,7 +63,7 @@
                             return $value; // fallback
                         }
                     };
-                $pattern = '^(19|20)\d{2}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]) ([01]\d|2[0-3]):[0-5]\d:[0-5]\d$'
+                $pattern = '/\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?\z/';
                 @endphp                  
                 <td>
                     @if ((preg_match($pattern, $fitness->issued_at)) )
