@@ -199,6 +199,7 @@ class Index extends Component
                         'vehicle_id'        => $targets['vehicle_id'],
                         'trailer_id'        => $targets['trailer_id'],
                         'employee_id'       => $targets['employee_id'],
+                        
                     ], fn ($v) => $v !== null);
 
                 // ----------------------------

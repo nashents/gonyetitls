@@ -63,9 +63,22 @@
                             return $value; // fallback
                         }
                     };
+                $pattern = '^(19|20)\d{2}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]) ([01]\d|2[0-3]):[0-5]\d:[0-5]\d$'
                 @endphp                  
-                <td>{{ $fmt($fitness->issued_at) }}</td>
-                <td>{{ $fmt($fitness->expires_at) }}</td>
+                <td>
+                    @if ((preg_match($pattern, $fitness->issued_at)) )
+                        {{ $fmt($fitness->issued_at) }}
+                    @else
+                        {{ $fitness->issued_at }}
+                    @endif
+                </td>
+                <td>
+                    @if ((preg_match($pattern, $fitness->expires_at)) )
+                        {{ $fmt($fitness->expires_at) }}
+                    @else
+                        {{ $fitness->expires_at }}
+                    @endif
+                </td>
                 <td>{{ $fmt($fitness->first_reminder_at) }}</td>
                 <td>{{ $fmt($fitness->second_reminder_at) }}</td>
                 <td>{{ $fmt($fitness->third_reminder_at) }}</td>
@@ -115,7 +128,7 @@
     </nav>   
 
       <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="fitnessModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fa fa-plus"></i> Add Reminder <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -211,7 +224,7 @@
         </div>
     </div>
       <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="fitnessEditModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fa fa-edit"></i> Edit Reminder <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>

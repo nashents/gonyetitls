@@ -35,7 +35,7 @@ class Index extends Component
     public $issued_at;
     public $number;
     public $expires_at;
-    public $cc = false;
+    public $cc = False;
     public $reminder_at;
     public $first_reminder_at;
     public $first_reminder_at_status;
@@ -191,7 +191,7 @@ class Index extends Component
                     'employee_id' => $targets['employee_id'],
 
                     'reminder_item_id' => $reminderItemId,
-                    'cc'               => $this->cc[$key] ?? null,
+                    'cc'               => $this->cc[$key] ?? False,
 
                     'issued_at'  => $issuedAtDb,
                     'expires_at' => $expiresAtDb,
@@ -270,6 +270,7 @@ class Index extends Component
     }
 
     public function edit($id){
+     
         $fitness = Fitness::find($id);
         $this->reminder_item_id = $fitness->reminder_item_id;
         $this->issued_at  = $this->dbToDateTimeLocal($fitness->issued_at);
@@ -278,12 +279,24 @@ class Index extends Component
         $this->second_reminder_at = $this->dbToDateTimeLocal($fitness->second_reminder_at);
         $this->third_reminder_at  = $this->dbToDateTimeLocal($fitness->third_reminder_at);
         $this->cc =  $fitness->cc;
-        $this->type =  $fitness->type;
         $this->status = $fitness->status;
-        $this->horse_id = $fitness->horse_id;
-        $this->vehicle_id = $fitness->vehicle_id;
-        $this->trailer_id = $fitness->trailer_id;
-        $this->employee_id = $fitness->employee_id;
+      
+        if (!is_null($fitness->horse_id)) {
+            $this->type = "Horse";
+            $this->horse_id = $fitness->horse_id;
+        }elseif(!is_null($fitness->vehicle_id)){
+            $this->type = "Vehicle";
+            $this->vehicle_id = $fitness->vehicle_id;
+        }elseif(!is_null($fitness->trailer_id)){
+            $this->type = "Trailer";
+            $this->trailer_id = $fitness->trailer_id;
+        }elseif(!is_null($fitness->employee_id)){
+            $this->type = "Employee";
+            $this->employee_id = $fitness->employee_id;
+        }else{
+            $this->type = "Other";
+        }
+       
         $this->fitness_id = $fitness->id;
         $this->dispatchBrowserEvent('show-fitnessEditModal');
 
