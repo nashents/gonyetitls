@@ -442,7 +442,7 @@ class Edit extends Component
         if (!is_null($id)) {
             
             $trip = Trip::find($id);
-            $delivery_note = $trip->delivery_note;
+            $delivery_note = $trip?->delivery_note;
 
             if (isset($trip)) {
 
@@ -506,7 +506,7 @@ class Edit extends Component
         if (!is_null($id)) {
             
             $trip = Trip::find($id);
-            $delivery_note = $trip->delivery_note;
+            $delivery_note = $trip?->delivery_note;
             if (isset($trip)) {
                 foreach($trip->trip_expenses as $expense){
 

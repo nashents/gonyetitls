@@ -66,11 +66,7 @@
                 $pattern = '/\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?\z/';
                 @endphp                  
                 <td>
-                    @if ((preg_match($pattern, $fitness->issued_at)) )
-                        {{ $fmt($fitness->issued_at) }}
-                    @else
-                        {{ $fitness->issued_at }}
-                    @endif
+                   {{ $fitness->issued_at }}
                 </td>
                 <td>
                     @if ((preg_match($pattern, $fitness->expires_at)) )

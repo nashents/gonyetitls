@@ -589,7 +589,7 @@ class Create extends Component
             
             $trip = Trip::find($id);
           
-            $delivery_note = $trip->delivery_note;
+            $delivery_note = $trip?->delivery_note;
 
             if (isset($trip)) {
 
@@ -622,18 +622,18 @@ class Create extends Component
                     if($this->values == "scheduled"){
                         $this->amount[$key] = $trip->freight + $this->total_customer_expenses; 
                     }elseif($this->values == "loading"){
-                        $this->amount[$key] = $delivery_note->loaded_freight + $this->total_customer_expenses; 
+                        $this->amount[$key] = $delivery_note?->loaded_freight + $this->total_customer_expenses; 
                     }elseif($this->values == "offloading"){
-                        $this->amount[$key] =  $delivery_note->offloaded_freight + $this->total_customer_expenses; 
+                        $this->amount[$key] =  $delivery_note?->offloaded_freight + $this->total_customer_expenses; 
                     }
                  
                 }else{
                     if($this->values == "scheduled"){
                         $this->amount[$key] = $trip->freight ; 
                     }elseif($this->values == "loading"){
-                        $this->amount[$key] = $delivery_note->loaded_freight ; 
+                        $this->amount[$key] = $delivery_note?->loaded_freight ; 
                     }elseif($this->values == "offloading"){
-                        $this->amount[$key] = $delivery_note->offloaded_freight ; 
+                        $this->amount[$key] = $delivery_note?->offloaded_freight ; 
                     }
                    
                 }

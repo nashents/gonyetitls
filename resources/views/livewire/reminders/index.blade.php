@@ -93,11 +93,7 @@
                             $pattern = '/\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?\z/';
                             @endphp                  
                             <td>
-                                @if ((preg_match($pattern, $reminder->issued_at)) )
-                                    {{ $fmt($reminder->issued_at) }}
-                                @else
-                                    {{ $reminder->issued_at }}
-                                @endif
+                                {{ $reminder->issued_at }}
                             </td>
                             <td>
                                 @if ((preg_match($pattern, $reminder->expires_at)) )
