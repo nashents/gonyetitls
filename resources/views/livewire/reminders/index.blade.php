@@ -60,45 +60,52 @@
                                         for trailer {{$reminder->trailer->registration_number}}
                                         @endif
                                     </td>
-                                   @php
-                                        $fmt = function ($value) {
-                                            if (blank($value)) return '';
+                             @php
+                                $dtLocalPattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/';
 
-                                            if ($value instanceof \DateTimeInterface) {
-                                                return \Carbon\Carbon::instance($value)->format('d M Y g:i A');
-                                            }
+                                $fmt = function ($value) use ($dtLocalPattern) {
+                                    if (!$value) return null;
 
-                                            $s = trim((string) $value);
+                                    // If it's already a Carbon/DateTime instance
+                                    if ($value instanceof \DateTimeInterface) {
+                                        return \Carbon\Carbon::instance($value)->format('d M Y g:i A');
+                                    }
 
-                                            // 🚫 reject 5+ digit year
-                                            if (preg_match('/^\d{5,}-/', $s)) {
-                                                return $s; // or '' / 'Invalid date'
-                                            }
+                                    $value = trim((string) $value);
 
-                                            $known = [
-                                                'Y-m-d\TH:i:s' => '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/',
-                                                'Y-m-d\TH:i'   => '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/',
-                                                'Y-m-d H:i:s'  => '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/',
-                                                'Y-m-d H:i'    => '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/',
-                                                'Y-m-d'        => '/^\d{4}-\d{2}-\d{2}$/',
-                                            ];
+                                    try {
+                                        // datetime-local: 2025-07-05T12:40 or 2025-07-05T12:40:00
+                                        if (preg_match($dtLocalPattern, $value)) {
+                                            $format = (substr_count($value, ':') === 2)
+                                                ? 'Y-m-d\TH:i:s'
+                                                : 'Y-m-d\TH:i';
 
-                                            foreach ($known as $format => $regex) {
-                                                if (preg_match($regex, $s)) {
-                                                    try {
-                                                        return \Carbon\Carbon::createFromFormat($format, $s)->format('d M Y g:i A');
-                                                    } catch (\Throwable $e) {
-                                                        return $s;
-                                                    }
-                                                }
-                                            }
+                                            return \Carbon\Carbon::createFromFormat($format, $value)->format('d M Y g:i A');
+                                        }
 
-                                            return $s;
-                                        };
-                                        @endphp
-                                       
-                                    <td>{{ $fmt($reminder->issued_at) }}</td>
-                                    <td>{{ $fmt($reminder->expires_at) }}</td>
+                                        // DB datetime or anything else Carbon can understand
+                                        return \Carbon\Carbon::parse($value)->format('d M Y g:i A');
+
+                                    } catch (\Throwable $e) {
+                                        return $value; // fallback
+                                    }
+                                };
+                            $pattern = '/\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?\z/';
+                            @endphp                  
+                            <td>
+                                @if ((preg_match($pattern, $reminder->issued_at)) )
+                                    {{ $fmt($reminder->issued_at) }}
+                                @else
+                                    {{ $reminder->issued_at }}
+                                @endif
+                            </td>
+                            <td>
+                                @if ((preg_match($pattern, $reminder->expires_at)) )
+                                    {{ $fmt($reminder->expires_at) }}
+                                @else
+                                    {{ $reminder->expires_at }}
+                                @endif
+                            </td>
                                     <td>{{ $fmt($reminder->first_reminder_at) }}</td>
                                     <td>{{ $fmt($reminder->second_reminder_at) }}</td>
                                     <td>{{ $fmt($reminder->third_reminder_at) }}</td>
