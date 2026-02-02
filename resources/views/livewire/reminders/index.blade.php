@@ -61,34 +61,39 @@
                                         @endif
                                     </td>
                                     @php
-                                        $dtLocalPattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/';
+                                        
 
-                                        $fmt = function ($value) use ($dtLocalPattern) {
-                                            if (!$value) return null;
+                                        $fmt = function ($value) {
+                                            if (blank($value)) return '';
 
-                                            // If it's already a Carbon/DateTime instance
+                                            // Already a datetime object (casts, etc.)
                                             if ($value instanceof \DateTimeInterface) {
                                                 return \Carbon\Carbon::instance($value)->format('d M Y g:i A');
                                             }
 
-                                            $value = trim((string) $value);
+                                            $s = trim((string) $value);
 
-                                            try {
-                                                // datetime-local: 2025-07-05T12:40 or 2025-07-05T12:40:00
-                                                if (preg_match($dtLocalPattern, $value)) {
-                                                    $format = (substr_count($value, ':') === 2)
-                                                        ? 'Y-m-d\TH:i:s'
-                                                        : 'Y-m-d\TH:i';
+                                            // Allow-list of formats we are willing to parse
+                                            $known = [
+                                                'Y-m-d\TH:i:s' => '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/',
+                                                'Y-m-d\TH:i'   => '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/',
+                                                'Y-m-d H:i:s'  => '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/',
+                                                'Y-m-d H:i'    => '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/',
+                                                'Y-m-d'        => '/^\d{4}-\d{2}-\d{2}$/',
+                                            ];
 
-                                                    return \Carbon\Carbon::createFromFormat($format, $value)->format('d M Y g:i A');
+                                            foreach ($known as $format => $regex) {
+                                                if (preg_match($regex, $s)) {
+                                                    try {
+                                                        return \Carbon\Carbon::createFromFormat($format, $s)->format('d M Y g:i A');
+                                                    } catch (\Throwable $e) {
+                                                        return $s; // if it somehow fails, keep original
+                                                    }
                                                 }
-
-                                                // DB datetime or anything else Carbon can understand
-                                                return \Carbon\Carbon::parse($value)->format('d M Y g:i A');
-
-                                            } catch (\Throwable $e) {
-                                                return $value; // fallback
                                             }
+
+                                            // Unknown/untrusted format -> return as-is, no conversion attempt
+                                            return $s;
                                         };
                                     @endphp
                                        

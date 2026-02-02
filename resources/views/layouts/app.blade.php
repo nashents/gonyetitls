@@ -152,6 +152,26 @@
                 $('#reminderCopyModal').modal('hide');
             })
     </script>
+    <script type="text/javascript">
+            window.addEventListener('show-reminderEditModal', event => {
+                $('#reminderEditModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-reminderEditModal', event => {
+                $('#reminderEditModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-reminderDeleteModal', event => {
+                $('#reminderDeleteModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-reminderDeleteModal', event => {
+                $('#reminderDeleteModal').modal('hide');
+            })
+    </script>
 
     <script type="text/javascript">
             window.addEventListener('show-rentalDeleteModal', event => {

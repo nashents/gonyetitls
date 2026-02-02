@@ -69,6 +69,12 @@ class Copy extends Component
         $copy->delete();
         session()->flash('message', 'Reminder Copy Deleted Successfully.');
     }
+    public function destroy($id)
+    {
+        $copy = ReminderCopy::find($id);
+        $copy->delete();
+        session()->flash('message', 'Reminder Copy Deleted Successfully.');
+    }
 
     public function edit($id)
     {
@@ -78,6 +84,7 @@ class Copy extends Component
         $this->email = $copy->email;
         $this->phonenumber = $copy->phonenumber;
         $this->copy_id = $id;
+         $this->dispatchBrowserEvent('show-reminderCopyEditModal');
     }
 
     public function update()
@@ -96,7 +103,12 @@ class Copy extends Component
         $copy->phonenumber = $this->phonenumber;
         $copy->save();
 
-        session()->flash('message', 'Reminder Copy Updated Successfully.');
+        $this->dispatchBrowserEvent('hide-reminderCopyEditModal');
+        $this->resetInputFields();
+        $this->dispatchBrowserEvent('alert', [
+            'type' => 'success',
+            'message' => "Copy Listing Updated Successfully!!"
+        ]);
     }
     public function render()
     {
