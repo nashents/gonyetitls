@@ -901,6 +901,16 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
         ]);
         $upsertSub($m, ['name'=>'Create Incidents','slug'=>'create-incidents','icon'=>'fas fa-plus','route_name'=>'incidents.create','sort_order'=>10]);
         $upsertSub($m, ['name'=>'Manage Incidents','slug'=>'manage-incidents','icon'=>'fas fa-list','route_name'=>'incidents.index','sort_order'=>20]);
+        
+        $m = $upsertModule($g, [
+            'name' => 'Waste Management',
+            'slug' => 'waste-management',
+            'icon' => 'fas fa-trash',
+            'route_name' => 'waste_collections.*',
+            'sort_order' => 25,
+        ]);
+        $upsertSub($m, ['name'=>'Waste Collection','slug'=>'waste-collection','icon'=>'fas fa-list','route_name'=>'waste_collections.index','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Waste Disposal','slug'=>'waste-disposal','icon'=>'fas fa-list','route_name'=>'waste_disposal.index','sort_order'=>20]);
 
         $m = $upsertModule($g, [
             'name' => 'Age Pyramid',

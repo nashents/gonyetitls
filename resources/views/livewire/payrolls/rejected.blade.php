@@ -66,7 +66,6 @@
                                             </button>
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{ route('payrolls.show', $payroll->id) }}" ><i class="fa fa-eye color-default"></i> View</a></li>
-                                                <li><a href="#" wire:click="authorize({{$payroll->id}})"><i class="fas fa-gavel color-success"></i> Authorization</a></li>
                                             </ul>
                                         </div>
                                         @include('payrolls.delete')

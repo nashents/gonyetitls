@@ -99,7 +99,7 @@
                                                             wire:model.debounce.300ms="allowanceExchangeRate.0"
                                                             placeholder="Fx: {{ optional($allowance_selected_currency ?? null)->name }} to {{ optional($company->currency)->name }}"
                                                             required>
-                                                    @error('earningExchangeRate.0') <span class="text-danger error">{{ $message }}</span>@enderror
+                                                    @error('allowanceExchangeRate.0') <span class="text-danger error">{{ $message }}</span>@enderror
 
                                                     <small style="color:green">
                                                         {{ isset($allowance_selected_currency) ? '1 '.$allowance_selected_currency->name." is how much in" : ""}} {{$company->currency ? $company->currency->name." ?" : ""}}
@@ -193,9 +193,9 @@
                                             <div class="form-group">
                                                 <select wire:model.debounce.300ms="selectedEarningRecovery.0" class="form-control">
                                                     <option value="">Select Gain Recovery</option>
-                                                    @foreach ($earning_recoveries as $earning_recovery)
-                                                        <option value="{{ $earning_recovery->id }}"> {{ $earning_recovery->recovery_number }} </option>
-                                                    @endforeach
+                                                     @foreach ($earning_recoveries as $recovery)
+                                                            <option value="{{ $recovery->id }}"> {{ $recovery->recovery_number }} {{ $recovery->type }} {{ $recovery->currency ? $recovery->currency->name : ""}} {{ $recovery->currency ? $recovery->currency->symbol : ""}} {{ $recovery->payment_per_month}} </option>
+                                                        @endforeach
                                                 </select>
                                                 @error('selectedEarningRecovery.0') <span class="text-danger error">{{ $message }}</span>@enderror
                                                 
@@ -210,8 +210,8 @@
                                                 <div class="form-group">
                                                     <select wire:model.debounce.300ms="selectedEarningRecovery.{{ $value }}" class="form-control">
                                                         <option value="">Select Gain Recovery </option>
-                                                        @foreach ($earning_recoveries as $earning_recovery)
-                                                            <option value="{{ $earning_recovery->id }}"> {{ $earning_recovery->recovery_number }} </option>
+                                                        @foreach ($earning_recoveries as $recovery)
+                                                            <option value="{{ $recovery->id }}"> {{ $recovery->recovery_number }} {{ $recovery->type }} {{ $recovery->currency ? $recovery->currency->name : ""}} {{ $recovery->currency ? $recovery->currency->symbol : ""}} {{ $recovery->payment_per_month}} </option>
                                                         @endforeach
                                                     </select>
                                                     @error('selectedEarningRecovery.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
@@ -375,7 +375,7 @@
                                             <select wire:model.debounce.300ms="selectedRecovery.0" class="form-control">
                                                 <option value="">Select Recovery</option>
                                                 @foreach ($deduction_recoveries as $recovery)
-                                                    <option value="{{ $recovery->id }}"> {{ $recovery->recovery_number }} </option>
+                                                    <option value="{{ $recovery->id }}"> {{ $recovery->recovery_number }} {{ $recovery->type }} {{ $recovery->currency ? $recovery->currency->name : ""}} {{ $recovery->currency ? $recovery->currency->symbol : ""}} {{ $recovery->payment_per_month}}</option>
                                                 @endforeach
                                             </select>
                                             @error('selectedRecovery.0') <span class="text-danger error">{{ $message }}</span>@enderror
@@ -390,7 +390,7 @@
                                                     <select wire:model.debounce.300ms="selectedRecovery.{{ $value }}" class="form-control">
                                                         <option value="">Select Recovery </option>
                                                         @foreach ($deduction_recoveries as $recovery)
-                                                            <option value="{{ $recovery->id }}"> {{ $recovery->recovery_number }} </option>
+                                                            <option value="{{ $recovery->id }}"> {{ $recovery->recovery_number }} {{ $recovery->type }} {{ $recovery->currency ? $recovery->currency->name : ""}} {{ $recovery->currency ? $recovery->currency->symbol : ""}} {{ $recovery->payment_per_month}} </option>
                                                         @endforeach
                                                     </select>
                                                     @error('selectedRecovery.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror

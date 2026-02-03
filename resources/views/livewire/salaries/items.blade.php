@@ -28,6 +28,13 @@
                     Deduction
                 @elseif($salary_item->loan)
                     Deduction
+                @elseif($salary_item->recovery)
+                    @if ($salary_item->recovery->type == "Gain")
+                     Earning
+                    @elseif($salary_item->recovery->type == "Loss")
+                     Deduction
+                    @endif
+                   
                 @endif
             </td>
             <td>
@@ -35,6 +42,8 @@
                     {{$salary_item->allowance ? $salary_item->allowance->name : ""}}
                 @elseif($salary_item->deduction)
                     {{$salary_item->deduction ? $salary_item->deduction->name : ""}}
+                @elseif($salary_item->recovery)
+                    {{$salary_item->recovery ? $salary_item->recovery->name : ""}}
                 @elseif($salary_item->loan)
                 {{ $salary_item->loan->loan_number }} {{ $salary_item->loan->loan_type ? $salary_item->loan->loan_type->name : "" }}, Total: {{$salary_item->loan->currency ? $salary_item->loan->currency->name : ""}} {{$salary_item->loan->currency ? $salary_item->loan->currency->symbol : ""}}{{number_format($salary_item->loan->total ? $salary_item->loan->total : 0,2)}} Monthly Installments: {{$salary_item->loan->currency ? $salary_item->loan->currency->name : ""}} {{$salary_item->loan->currency ? $salary_item->loan->currency->symbol : ""}}{{number_format($salary_item->loan->payment_per_month ? $salary_item->loan->payment_per_month : 0,2)}}
                 @endif

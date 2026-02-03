@@ -4,13 +4,16 @@ namespace App\Http\Livewire\ReminderItems;
 
 use Livewire\Component;
 use App\Models\ReminderItem;
+use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
 
 class Index extends Component
 {
-    
+    use WithPagination;
+    protected $paginationTheme = 'bootstrap';
+    public $search;
     public $countries;
-    public $reminder_items;
+    protected $reminder_items;
     public $country_a;
     public $country_b;
     public $name;
@@ -20,7 +23,7 @@ class Index extends Component
     public $user_id;
 
     public function mount(){
-        $this->reminder_items = ReminderItem::latest()->get();
+        
     }
 
     public function updated($value){
@@ -103,9 +106,18 @@ class Index extends Component
 
     public function render()
     {
-        $this->reminder_items = ReminderItem::latest()->get();
-        return view('livewire.reminder-items.index',[
-            'reminder_items'=>   $this->reminder_items
+
+        $term = trim((string) $this->search);
+
+        $reminderItems = ReminderItem::query()
+            ->orderBy('name', 'asc')
+            ->when(filled($term), function ($q) use ($term) {
+                $q->where('name', 'like', "%{$term}%");
+            })
+            ->paginate(10);
+
+        return view('livewire.reminder-items.index', [
+            'reminder_items' => $reminderItems,
         ]);
     }
 }

@@ -159,10 +159,10 @@
                                                     <td class="text-center">
                                                         @if ($invoice_item->product)
                                                         {{$invoice_item->product ? $invoice_item->product->name : ""}}<br>
-                                                        @elseif ($invoice_item->trip)
+                                                        {{-- @elseif ($invoice_item->trip)
                                                             {{$invoice_item->trip ? $invoice_item->trip->trip_number : ""}}<br>
                                                         @elseif ($invoice_item->rental)
-                                                            {{$invoice_item->rental ? $invoice_item->rental->car_rental_number : ""}}<br>
+                                                            {{$invoice_item->rental ? $invoice_item->rental->car_rental_number : ""}}<br> --}}
                                                         @endif
                                                         {{$invoice_item->description}}
                                                     </td>

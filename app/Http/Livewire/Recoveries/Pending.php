@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Auth;
 
 class Pending extends Component
 {
-    public $recoveries;
+    protected $recoveries;
     public $recovery_id;
     public $trip_id;
     public $authorize;
@@ -16,14 +16,7 @@ class Pending extends Component
     public $recovery;
 
     public function mount(){
-        $period = Auth::user()->employee->company->period;
-        if (isset( $period)) {
-            if ($period != "all") {
-                $this->recoveries = Recovery::where('authorization', 'pending')->whereYear('created_at',$period)->latest()->get();
-            }else {
-                $this->recoveries = Recovery::where('authorization', 'pending')->latest()->get();
-            }
-        }
+       
 
     }
     public function authorize($id){
@@ -67,6 +60,8 @@ catch(\Exception $e){
       }
     public function render()
     {
-        return view('livewire.recoveries.pending');
+         return view('livewire.recoveries.pending',[
+            'recoveries' => $this->recoveries = Recovery::where('authorization', 'pending')->latest()->paginate(10)
+        ]);
     }
 }

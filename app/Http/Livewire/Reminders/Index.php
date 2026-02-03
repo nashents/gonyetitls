@@ -448,42 +448,40 @@ class Index extends Component
 
         $this->reminder_items = ReminderItem::orderBy('name','asc')->get();
         
-        if (isset($this->search) && filled($this->search)) {
-         
-            return view('livewire.reminders.index',[
-                'reminders' => Fitness::where('closed',false)->where('status',true)
-                ->where('user_id', Auth::user()->id)
-                ->whereHas('reminder_item', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('horse', function ($query) {
-                    return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('vehicle', function ($query) {
-                    return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('trailer', function ($query) {
-                    return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('employee', function ($query) {
-                    return $query->where(DB::raw("concat(name, ' ', surname)"), 'like', '%'.$this->search.'%');
-                })
-                ->orWhereDate('expires_at', 'like', '%'.$this->search.'%')
-                ->orWhereDate('issued_at', 'like', '%'.$this->search.'%')
-                ->orWhereDate('first_reminder_at', 'like', '%'.$this->search.'%')
-                ->orWhereDate('second_reminder_at', 'like', '%'.$this->search.'%')
-                ->orWhereDate('third_reminder_at', 'like', '%'.$this->search.'%')
-                ->orderBy('created_at','desc')
-                ->paginate(10),
-                'reminder_items' => $this->reminder_items
-            ]);
-        }else {
-            return view('livewire.reminders.index',[
-                'reminders' => Fitness::where('closed',false)->where('status',true)->where('user_id', Auth::user()->id)->orderBy('created_at','desc')->paginate(10),
-                'reminder_items' => $this->reminder_items
-            ]);
-        }
+        $term = trim((string) $this->search);
 
+        $query = Fitness::query()
+            ->with(['reminder_item', 'horse', 'vehicle', 'trailer', 'employee']) // avoid N+1
+            ->where('closed', false)
+            ->where('status', true)
+            ->where('user_id', Auth::id())
+            ->when(filled($term), function ($q) use ($term) {
+                // Optional: if user types a date like 2026-02-03, search dates properly
+                $isDate = preg_match('/^\d{4}-\d{2}-\d{2}$/', $term);
+                $q->where(function ($q) use ($term, $isDate) {
+                    // Relations
+                    $q->whereHas('reminder_item', fn ($r) => $r->where('name', 'like', "%{$term}%"))
+                    ->orWhereHas('horse', fn ($r) => $r->where('registration_number', 'like', "%{$term}%"))
+                    ->orWhereHas('vehicle', fn ($r) => $r->where('registration_number', 'like', "%{$term}%"))
+                    ->orWhereHas('trailer', fn ($r) => $r->where('registration_number', 'like', "%{$term}%"))
+                    ->orWhereHas('employee', function ($r) use ($term) {
+                        $r->whereRaw("concat_ws(' ', name, surname) like ?", ["%{$term}%"]);
+                    });
+                    // Dates: whereDate does NOT work with "like". Use equality when term is YYYY-MM-DD.
+                    if ($isDate) {
+                        $q->orWhereDate('expires_at', $term)
+                        ->orWhereDate('issued_at', $term)
+                        ->orWhereDate('first_reminder_at', $term)
+                        ->orWhereDate('second_reminder_at', $term)
+                        ->orWhereDate('third_reminder_at', $term);
+                    }
+                });
+            });
+
+        return view('livewire.reminders.index', [
+            'reminders'       => $query->latest()->paginate(10),
+            'reminder_items'  => $this->reminder_items,
+        ]);
        
     }
 }

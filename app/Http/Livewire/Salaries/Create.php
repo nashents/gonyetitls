@@ -375,10 +375,14 @@ class Create extends Component
             
                 $this->salary_id = $salary->id;
                 // Process Allowances
-                $this->total_allowances = $this->processSalaryItems($this->selectedAllowance, 'allowance_id', $this->allowance_amount, $this->selectedAllowanceCurrency, $this->allowanceExchangeRate);
-                $this->total_earning_recoveries = $this->processSalaryItems($this->selectedEarningRecovery, 'recovery_id', $this->earning_recovery_amount, $this->selectedEarningRecoveryCurrency, $this->earningRecoveryExchangeRate);
-                $this->total_recoveries = $this->processSalaryItems($this->selectedRecovery, 'recovery_id', $this->recovery_amount, $this->selectedAllowanceCurrency, $this->recoveryExchangeRate);
-                $this->total_deduction_recoveries = $this->processSalaryItems($this->selectedRecovery, 'recovery_id', $this->allowance_amount, $this->selectedAllowanceCurrency, $this->allowanceExchangeRate);
+                if (!empty($this->selectedEarningRecovery)) {
+                    $this->total_earning_recoveries = $this->processSalaryItems($this->selectedEarningRecovery, 'recovery_id', $this->earning_recovery_amount, $this->selectedEarningRecoveryCurrency, $this->earningRecoveryExchangeRate);
+                }
+                if (!empty($this->selectedRecovery)) {
+                   $this->total_recoveries = $this->processSalaryItems($this->selectedRecovery, 'recovery_id', $this->recovery_amount, $this->selectedRecoveryCurrency, $this->recoveryExchangeRate);
+                }
+                $this->total_allowances = $this->total_earning_recoveries + $this->processSalaryItems($this->selectedAllowance, 'allowance_id', $this->allowance_amount, $this->selectedAllowanceCurrency, $this->allowanceExchangeRate);
+                $this->total_deduction_recoveries = $this->total_recoveries + $this->processSalaryItems($this->selectedRecovery, 'recovery_id', $this->allowance_amount, $this->selectedAllowanceCurrency, $this->allowanceExchangeRate);
               
                 // Process Deductions
                 $this->total_deductions = $this->processSalaryItems($this->selectedDeduction, 'deduction_id', $this->deduction_amount, $this->selectedDeductionCurrency, $this->deductionExchangeRate);
@@ -413,7 +417,7 @@ class Create extends Component
                 }
                 
                 // Calculate Gross Salary
-                $gross = $this->basic + $this->total_allowances;
+                $gross = $this->basic + $this->total_allowances ;
                 
                 // Process PAYE & AIDS Levy
                 if ($this->paye) {

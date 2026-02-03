@@ -16,6 +16,9 @@ class SalaryItem extends Model implements Auditable
     public function user(){
         return $this->belongsTo('App\Models\User');
     }
+    public function recovery(){
+        return $this->belongsTo('App\Models\Recovery');
+    }
     public function inventory(){
         return $this->belongsTo('App\Models\Inventory');
     }
@@ -46,6 +49,8 @@ class SalaryItem extends Model implements Auditable
         'loan_id',
         'allowance_id',
         'deduction_id',
+        'recovery_id',
+        'movement',
         'amount',
         'percentage',
     ];

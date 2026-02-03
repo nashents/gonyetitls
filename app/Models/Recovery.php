@@ -33,6 +33,9 @@ class Recovery extends Model implements Auditable
     public function payments(){
         return $this->hasMany('App\Models\Payment');
     }
+    public function salary_items(){
+        return $this->hasMany('App\Models\SalaryItem');
+    }
     public function destination(){
         return $this->belongsTo('App\Models\Destination');
     }

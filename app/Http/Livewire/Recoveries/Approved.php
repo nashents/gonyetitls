@@ -9,21 +9,14 @@ use Illuminate\Support\Facades\Session;
 
 class Approved extends Component
 {
-    public $recoveries;
+    protected $recoveries;
     public $authorize;
     public $comments;
     public $recovery_id;
 
 
     public function mount(){
-        $period = Auth::user()->employee->company->period;
-        if (isset( $period)) {
-            if ($period != "all") {
-                $this->recoveries = Recovery::where('authorization', 'approved')->whereYear('created_at',$period)->latest()->get();
-            }else {
-                $this->recoveries = Recovery::where('authorization', 'approved')->latest()->get();
-            }
-        }
+       
       }
 
       public function authorize($id){
@@ -35,9 +28,9 @@ class Approved extends Component
       public function update(){
         
         $recovery = Recovery::find($this->recovery_id);
-        $trip->authorization = $this->authorize;
-        $trip->reason = $this->comments;
-        $trip->update();
+        $recovery->authorization = $this->authorize;
+        $recovery->reason = $this->comments;
+        $recovery->update();
         if ($this->authorize == 'approved') {
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
@@ -48,6 +41,9 @@ class Approved extends Component
       }
     public function render()
     {
-        return view('livewire.recoveries.approved');
+
+        return view('livewire.recoveries.approved',[
+            'recoveries' => $this->recoveries = Recovery::where('authorization', 'approved')->latest()->paginate(10)
+        ]);
     }
 }

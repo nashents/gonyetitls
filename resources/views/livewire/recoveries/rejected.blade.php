@@ -12,9 +12,7 @@
                           
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
-
-             
-                            <table id="recoveriesTable" class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
+                            <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
 
@@ -46,9 +44,9 @@
                                     </th>
                                   </tr>
                                 </thead>
-                                @if ($recoveries->count()>0)
+                                @if (isset($recoveries))
                                 <tbody>
-                                    @foreach ($recoveries as $recovery)
+                                    @forelse ($recoveries as $recovery)
                                   <tr>
                                     <td>{{$recovery->recovery_number}}</td>
                                     <td>{{$recovery->date}}</td>
@@ -82,18 +80,34 @@
                                             </button>
                                             <ul class="dropdown-menu">
                                                 <li><a href="{{ route('recoveries.show', $recovery->id) }}"  ><i class="fa fa-eye color-default"></i> View</a></li>
-                                                <li><a href="#" wire:click="authorize({{$recovery->id}})"><i class="fas fa-gavel color-success"></i> Authorization</a></li>
+                                                
                                             </ul>
                                         </div>
                                         @include('recoveries.delete')
                                 </td>
                                   </tr>
-                                  @endforeach
+                                  @empty
+                                  <tr>
+                                    <td colspan="11">
+                                        <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
+                                            No Recoveries Found ....
+                                        </div>
+                                       
+                                    </td>
+                                  </tr>
+                                  @endforelse
                                 </tbody>
                                 @else
                                     <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
                                  @endif
                               </table>
+                               <nav class="text-center" style="float: right">
+                                <ul class="pagination rounded-corners">
+                                    @if (isset($recoveries))
+                                        {{ $recoveries->links() }} 
+                                    @endif 
+                                </ul>
+                            </nav> 
 
                             <!-- /.col-md-12 -->
                         </div>

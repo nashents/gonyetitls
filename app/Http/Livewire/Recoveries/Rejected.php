@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Auth;
 
 class Rejected extends Component
 {
-    public $recoveries;
+    protected $recoveries;
     public $recovery_id;
     public $trip_id;
     public $authorize;
@@ -16,15 +16,7 @@ class Rejected extends Component
     public $recovery;
 
     public function mount(){
-        $period = Auth::user()->employee->company->period;
-        if (isset( $period)) {
-            if ($period != "all") {
-                $this->recoveries = Recovery::where('authorization', 'rejected')->whereYear('created_at',$period)->latest()->get();
-            }else {
-                $this->recoveries = Recovery::where('authorization', 'rejected')->latest()->get();
-            }
-        }
-
+    
     }
     public function authorize($id){
         $recovery = Recovery::find($id);
@@ -67,6 +59,8 @@ class Rejected extends Component
       }
     public function render()
     {
-        return view('livewire.recoveries.rejected');
+         return view('livewire.recoveries.rejected',[
+            'recoveries' => $this->recoveries = Recovery::where('authorization', 'rejected')->latest()->paginate(10)
+        ]);
     }
 }
