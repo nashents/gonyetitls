@@ -39,7 +39,6 @@ class Edit extends Component
 
     public $inventories;
     public $selectedInventory = [];
-    // public $trips;
     public $selectedTrip = [];
 
     public $fiscalize_invoice;
@@ -1888,12 +1887,7 @@ class Edit extends Component
                 $from = Carbon::parse($this->from)->startOfDay();
                 $to   = Carbon::parse($this->to)->endOfDay();
                 $query->whereBetween($this->trip_filter, [$from, $to]);
-            } else {
-                $query->whereBetween($this->trip_filter, [
-                    now()->startOfMonth(),
-                    now()->endOfMonth(),
-                ]);
-            }
+            } 
 
             if($this->selectedCustomer){
                 $query->where('customer_id', $this->selectedCustomer);

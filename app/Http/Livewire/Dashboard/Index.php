@@ -983,7 +983,6 @@ class Index extends Component
         $this->customer_count = Customer::where('status',true)->get()->count();
         $this->bill_count = Bill::whereYear('bill_date',date('Y'))->get()->count();
         $this->invoice_count = Invoice::whereYear('date',date('Y'))->get()->count();
-        $this->invoice_count = Invoice::whereYear('date',date('Y'))->get()->count();
         $this->employee_count = Employee::doesntHave('driver')->where('archive',false)->get()->count();
         $this->driver_count = Driver::where('archive',false)->get()->count();
         $this->tyre_count = Tyre::where('disposed',0)->where('status',1)->get()->count();
