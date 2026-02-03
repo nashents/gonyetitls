@@ -194,7 +194,9 @@
                                                             <strong>{{$item->trip ? $item->trip->trip_number : ""}}</strong>  
                                                         @elseif($item->rental)  
                                                             <strong>{{$item->rental ? $item->rental->car_rental_number : ""}}</strong>  
-                                                        @endif {{$item->description}} @ {{number_format($item->subtotal_incl,2)}} @if (!$loop->last),@endif
+                                                        @endif 
+                                                        {{-- {{$item->description}} --}}
+                                                         @ {{number_format($item->subtotal_incl,2)}} @if (!$loop->last),@endif
                                                     @endforeach
                                                 @endif
                                         </small>
