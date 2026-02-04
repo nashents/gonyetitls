@@ -16,6 +16,7 @@ use App\Models\ChecklistResult;
 use App\Models\CategoryChecklist;
 use App\Models\ChecklistCategory;
 use App\Models\VehicleAssignment;
+use Illuminate\Support\Facades\DB;
 use App\Models\ChecklistSubCategory;
 use Illuminate\Support\Facades\Auth;
 
@@ -210,101 +211,103 @@ class Edit extends Component
     ];
 
     public function update(){
+
+        DB::transaction(function () {
   
-        $checklist =  Checklist::find($this->checklist_id);
-        $checklist->checklist_category_id = $this->selectedChecklistCategory;
-        $checklist->employee_id = $this->employee_id;
-        $checklist->driver_id = $this->driver_id;
-        $checklist->vehicle_id = $this->vehicle_id;
-        $checklist->trailer_id = $this->trailer_id;
-        $checklist->horse_id = $this->horse_id;
-        $checklist->date = $this->date;
-        $checklist->next_inspection_at = $this->next_inspection_at;
-        $checklist->comments = $this->description;
-        $checklist->mileage = $this->mileage;
-        $checklist->update();
+            $checklist =  Checklist::find($this->checklist_id);
+            $checklist->checklist_category_id = $this->selectedChecklistCategory;
+            $checklist->employee_id = $this->employee_id;
+            $checklist->driver_id = $this->driver_id;
+            $checklist->vehicle_id = $this->vehicle_id;
+            $checklist->trailer_id = $this->trailer_id;
+            $checklist->horse_id = $this->horse_id;
+            $checklist->date = $this->date;
+            $checklist->next_inspection_at = $this->next_inspection_at;
+            $checklist->comments = $this->description;
+            $checklist->mileage = $this->mileage;
+            $checklist->update();
 
-        if ($this->checklist_category->name != "Tyre Inspection") {
-            if (isset($this->status)) {
+            if ($this->checklist_category->name != "Tyre Inspection") {
+                if (isset($this->status)) {
 
-                foreach ($this->status as $key => $value) {
-                 
-                    $category_checklist = CategoryChecklist::find($key);
-                       
-                    ChecklistResult::updateOrCreate(
-                    [
-                        'checklist_id'      => $checklist->id,
-                        'category_checklist_id' => $key,
-                    ],
-                    [
-                        'status'   => $this->status[$key],
-                        'comments' => $this->comments[$key],
-                        'checklist_item_id' => $category_checklist?->checklist_item_id,
-                    ]);
-            
-                }
-                
-            }
-              }else{
-
-                if (isset($this->tread_depth_mm)) {
-                    foreach ($this->tread_depth_mm as $key => $value) {
-
-                        $tyre_assignment = TyreAssignment::find($key);
-
+                    foreach ($this->status as $key => $value) {
+                    
+                        $category_checklist = CategoryChecklist::find($key);
+                        
                         ChecklistResult::updateOrCreate(
                         [
                             'checklist_id'      => $checklist->id,
-                            'tyre_assignment_id' => $key,
+                            'category_checklist_id' => $key,
                         ],
                         [
-                            'tread_depth_mm'   => $this->tread_depth_mm[$key],
-                            'tyre_id' => $tyre_assignment?->tyre_id,
-                            'pressure_psi' => $this->pressure_psi[$key],
-                            'valve_ok' => $this->valve_ok[$key],
-                            'sidewall_damage' => $this->sidewall_damage[$key],
-                            'wear_pattern' => $this->wear_pattern[$key],
-                            'rim_condition' => $this->rim_condition[$key],
-                            'wheel_nuts_torqued' => $this->wheel_nuts_torqued[$key],
-                            'axle_match' => $this->axle_match[$key],
-                            'action_required' => $this->action_required[$key],
-                            'rating' => $this->rating[$key],
-                            'notes' => $this->notes[$key],
+                            'status'   => $this->status[$key],
+                            'comments' => $this->comments[$key],
+                            'checklist_item_id' => $category_checklist?->checklist_item_id,
                         ]);
+                
+                    }
+                    
+                }
+                }else{
+
+                    if (isset($this->tread_depth_mm)) {
+                        foreach ($this->tread_depth_mm as $key => $value) {
+
+                            $tyre_assignment = TyreAssignment::find($key);
+
+                            ChecklistResult::updateOrCreate(
+                            [
+                                'checklist_id'      => $checklist->id,
+                                'tyre_assignment_id' => $key,
+                            ],
+                            [
+                                'tread_depth_mm'   => $this->tread_depth_mm[$key],
+                                'tyre_id' => $tyre_assignment?->tyre_id,
+                                'pressure_psi' => $this->pressure_psi[$key],
+                                'valve_ok' => $this->valve_ok[$key],
+                                'sidewall_damage' => $this->sidewall_damage[$key],
+                                'wear_pattern' => $this->wear_pattern[$key],
+                                'rim_condition' => $this->rim_condition[$key],
+                                'wheel_nuts_torqued' => $this->wheel_nuts_torqued[$key],
+                                'axle_match' => $this->axle_match[$key],
+                                'action_required' => $this->action_required[$key],
+                                'rating' => $this->rating[$key],
+                                'notes' => $this->notes[$key],
+                            ]);
+                        }
                     }
                 }
-            }
 
 
 
-            if ($this->type == "Horse") {
-                $horse = Horse::find($this->horse_id);
-                if ($this->mileage > $horse->mileage) {
-                    $horse->mileage = $this->mileage;
-                    $horse->update();
+                if ($this->type == "Horse") {
+                    $horse = Horse::find($this->horse_id);
+                    if ($this->mileage > $horse->mileage) {
+                        $horse->mileage = $this->mileage;
+                        $horse->update();
+                    }
+                }elseif($this->type == "Vehicle"){
+                    $vehicle = Vehicle::find($this->vehicle_id);
+                    if ($this->mileage > $vehicle->mileage) {
+                        $vehicle->mileage = $this->mileage;
+                        $vehicle->update();
+                    }
+                }elseif($this->type == "Trailer"){
+                    $trailer = Trailer::find($this->trailer_id);
+                    if ($this->mileage > $trailer->mileage) {
+                        $trailer->mileage = $this->mileage;
+                        $trailer->update();
+                    }
                 }
-            }elseif($this->type == "Vehicle"){
-                $vehicle = Vehicle::find($this->vehicle_id);
-                if ($this->mileage > $vehicle->mileage) {
-                    $vehicle->mileage = $this->mileage;
-                    $vehicle->update();
-                }
-            }elseif($this->type == "Trailer"){
-                $trailer = Trailer::find($this->trailer_id);
-                if ($this->mileage > $trailer->mileage) {
-                    $trailer->mileage = $this->mileage;
-                    $trailer->update();
-                }
-            }
-            $this->dispatchBrowserEvent('hide-checklistModal');
-            $this->resetInputFields();
-            $this->dispatchBrowserEvent('alert',[
-                'type'=>'success',
-                'message'=>"Checklist Completed Successfully!!"
-            ]);
+                $this->dispatchBrowserEvent('hide-checklistModal');
+                $this->resetInputFields();
+                $this->dispatchBrowserEvent('alert',[
+                    'type'=>'success',
+                    'message'=>"Checklist Completed Successfully!!"
+                ]);
 
-            return redirect(route('checklists.index'));
-     
+                return redirect(route('checklists.index'));
+        });
     }
 
     public function render()

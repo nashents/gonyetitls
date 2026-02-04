@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Attendance;
-use App\Http\Requests\StoreAttendanceRequest;
-use App\Http\Requests\UpdateAttendanceRequest;
+use App\Models\LoginAudit;
+use App\Http\Requests\StoreLoginAuditRequest;
+use App\Http\Requests\UpdateLoginAuditRequest;
 
-class AttendanceController extends Controller
+class LoginAuditController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -15,7 +15,7 @@ class AttendanceController extends Controller
      */
     public function index()
     {
-        return view('attendances.index');
+        //
     }
 
     /**
@@ -31,10 +31,10 @@ class AttendanceController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \App\Http\Requests\StoreAttendanceRequest  $request
+     * @param  \App\Http\Requests\StoreLoginAuditRequest  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(StoreAttendanceRequest $request)
+    public function store(StoreLoginAuditRequest $request)
     {
         //
     }
@@ -42,10 +42,10 @@ class AttendanceController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\Attendance  $attendance
+     * @param  \App\Models\LoginAudit  $loginAudit
      * @return \Illuminate\Http\Response
      */
-    public function show(Attendance $attendance)
+    public function show(LoginAudit $loginAudit)
     {
         //
     }
@@ -53,10 +53,10 @@ class AttendanceController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\Models\Attendance  $attendance
+     * @param  \App\Models\LoginAudit  $loginAudit
      * @return \Illuminate\Http\Response
      */
-    public function edit(Attendance $attendance)
+    public function edit(LoginAudit $loginAudit)
     {
         //
     }
@@ -64,11 +64,11 @@ class AttendanceController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \App\Http\Requests\UpdateAttendanceRequest  $request
-     * @param  \App\Models\Attendance  $attendance
+     * @param  \App\Http\Requests\UpdateLoginAuditRequest  $request
+     * @param  \App\Models\LoginAudit  $loginAudit
      * @return \Illuminate\Http\Response
      */
-    public function update(UpdateAttendanceRequest $request, Attendance $attendance)
+    public function update(UpdateLoginAuditRequest $request, LoginAudit $loginAudit)
     {
         //
     }
@@ -76,10 +76,10 @@ class AttendanceController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\Attendance  $attendance
+     * @param  \App\Models\LoginAudit  $loginAudit
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Attendance $attendance)
+    public function destroy(LoginAudit $loginAudit)
     {
         //
     }

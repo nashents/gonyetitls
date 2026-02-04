@@ -650,6 +650,7 @@ Route::resource('category_values','CategoryValueController');
 Route::resource('stocks','StockController');
 Route::resource('invoices','InvoiceController');
 Route::resource('sales','SaleController');
+Route::resource('attendances','AttendanceController');
 Route::resource('quotations','QuotationController');
 Route::resource('attributes','AttributeController');
 Route::resource('attribute_values','AttributeValueController');

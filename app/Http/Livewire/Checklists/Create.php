@@ -16,6 +16,7 @@ use App\Models\ChecklistResult;
 use App\Models\CategoryChecklist;
 use App\Models\ChecklistCategory;
 use App\Models\VehicleAssignment;
+use Illuminate\Support\Facades\DB;
 use App\Models\ChecklistSubCategory;
 use Illuminate\Support\Facades\Auth;
 
@@ -181,94 +182,96 @@ class Create extends Component
     ];
 
     public function store(){
+
+        DB::transaction(function () {
+
         try{
-        $checklist = new Checklist;
-        $checklist->user_id = Auth::user()->id;
-        $checklist->checklist_number = $this->checklistNumber();
-        $checklist->checklist_category_id = $this->selectedChecklistCategory;
-        $checklist->employee_id = $this->employee_id;
-        $checklist->driver_id = $this->driver_id;
-        $checklist->vehicle_id = $this->vehicle_id;
-        $checklist->trailer_id = $this->trailer_id;
-        $checklist->horse_id = $this->horse_id;
-        $checklist->date = $this->date;
-        $checklist->next_inspection_at = $this->next_inspection_at;
-        $checklist->comments = $this->description;
-        $checklist->mileage = $this->mileage;
-        $checklist->save();
 
-        if ($this->checklist_category->name != "Tyre Inspection") {
+            $checklist = new Checklist;
+            $checklist->user_id = Auth::user()->id;
+            $checklist->checklist_number = $this->checklistNumber();
+            $checklist->checklist_category_id = $this->selectedChecklistCategory;
+            $checklist->employee_id = $this->employee_id;
+            $checklist->driver_id = $this->driver_id;
+            $checklist->vehicle_id = $this->vehicle_id;
+            $checklist->trailer_id = $this->trailer_id;
+            $checklist->horse_id = $this->horse_id;
+            $checklist->date = $this->date;
+            $checklist->next_inspection_at = $this->next_inspection_at;
+            $checklist->comments = $this->description;
+            $checklist->mileage = $this->mileage;
+            $checklist->save();
 
-                if (isset($this->status)) {
-                    foreach ($this->status as $key => $value) {
+            if ($this->checklist_category->name != "Tyre Inspection") {
+
+                    if (isset($this->status)) {
+                        foreach ($this->status as $key => $value) {
+                            $result = new ChecklistResult;
+                            $result->checklist_id = $checklist->id;
+                            if (isset($this->status[$key])) {
+                                $result->status = $this->status[$key];
+                            }
+                            if (isset($this->comments[$key])) {
+                                $result->comments = $this->comments[$key];
+                            }
+                            $result->category_checklist_id = $key;
+                            $category_checklist = CategoryChecklist::find($key);
+                            $result->checklist_item_id = $category_checklist?->checklist_item_id;
+                            $result->save();
+                        }
+                    }
+            }else{
+            
+                if (isset($this->tread_depth_mm)) {
+                    foreach ($this->tread_depth_mm as $key => $value) {
+
                         $result = new ChecklistResult;
                         $result->checklist_id = $checklist->id;
-                        if (isset($this->status[$key])) {
-                            $result->status = $this->status[$key];
+                    
+                        if (isset($this->tread_depth_mm[$key])) {
+                            $result->tread_depth_mm = $this->tread_depth_mm[$key];
                         }
-                        if (isset($this->comments[$key])) {
-                            $result->comments = $this->comments[$key];
+                        if (isset($this->tyre_assignment_id[$key])) {
+                            $result->tyre_assignment_id = $this->tyre_assignment_id[$key];
                         }
-                        $result->category_checklist_id = $key;
-                        $category_checklist = CategoryChecklist::find($key);
-                        $result->checklist_item_id = $category_checklist?->checklist_item_id;
+                        if (isset($this->pressure_psi[$key])) {
+                            $result->pressure_psi = $this->pressure_psi[$key];
+                        }
+                        if (isset($this->valve_ok[$key])) {
+                            $result->valve_ok = $this->valve_ok[$key];
+                        }
+                        if (isset($this->sidewall_damage[$key])) {
+                            $result->sidewall_damage = $this->sidewall_damage[$key];
+                        }
+                        if (isset($this->wear_pattern[$key])) {
+                            $result->wear_pattern = $this->wear_pattern[$key];
+                        }
+                        if (isset($this->rim_condition[$key])) {
+                            $result->rim_condition = $this->rim_condition[$key];
+                        }
+                        if (isset($this->wheel_nuts_torqued[$key])) {
+                            $result->wheel_nuts_torqued = $this->wheel_nuts_torqued[$key];
+                        }
+                        if (isset($this->axle_match[$key])) {
+                            $result->axle_match = $this->axle_match[$key];
+                        }
+                        if (isset($this->action_required[$key])) {
+                            $result->action_required = $this->action_required[$key];
+                        }
+                        if (isset($this->rating[$key])) {
+                            $result->rating = $this->rating[$key];
+                        }
+                        if (isset($this->notes[$key])) {
+                            $result->notes = $this->notes[$key];
+                        }
+                        $result->tyre_assignment_id = $key;
+                        $tyre_assignment = TyreAssignment::find($key);
+                        $result->tyre_id = $tyre_assignment?->tyre_id;
                         $result->save();
                     }
                 }
-        }else{
-          
-             if (isset($this->tread_depth_mm)) {
-                foreach ($this->tread_depth_mm as $key => $value) {
-
-                    $result = new ChecklistResult;
-                    $result->checklist_id = $checklist->id;
-                  
-                    if (isset($this->tread_depth_mm[$key])) {
-                        $result->tread_depth_mm = $this->tread_depth_mm[$key];
-                    }
-                    if (isset($this->tyre_assignment_id[$key])) {
-                        $result->tyre_assignment_id = $this->tyre_assignment_id[$key];
-                    }
-                    if (isset($this->pressure_psi[$key])) {
-                        $result->pressure_psi = $this->pressure_psi[$key];
-                    }
-                    if (isset($this->valve_ok[$key])) {
-                        $result->valve_ok = $this->valve_ok[$key];
-                    }
-                    if (isset($this->sidewall_damage[$key])) {
-                        $result->sidewall_damage = $this->sidewall_damage[$key];
-                    }
-                    if (isset($this->wear_pattern[$key])) {
-                        $result->wear_pattern = $this->wear_pattern[$key];
-                    }
-                    if (isset($this->rim_condition[$key])) {
-                        $result->rim_condition = $this->rim_condition[$key];
-                    }
-                    if (isset($this->wheel_nuts_torqued[$key])) {
-                        $result->wheel_nuts_torqued = $this->wheel_nuts_torqued[$key];
-                    }
-                    if (isset($this->axle_match[$key])) {
-                        $result->axle_match = $this->axle_match[$key];
-                    }
-                    if (isset($this->action_required[$key])) {
-                        $result->action_required = $this->action_required[$key];
-                    }
-                    if (isset($this->rating[$key])) {
-                        $result->rating = $this->rating[$key];
-                    }
-                    if (isset($this->notes[$key])) {
-                        $result->notes = $this->notes[$key];
-                    }
-                    $result->tyre_assignment_id = $key;
-                    $tyre_assignment = TyreAssignment::find($key);
-                    $result->tyre_id = $tyre_assignment?->tyre_id;
-                    $result->save();
-                }
             }
-        }
      
-       
-
             if ($this->type == "Horse") {
                 $horse = Horse::find($this->horse_id);
                 if ($this->mileage > $horse->mileage) {
@@ -305,7 +308,8 @@ class Create extends Component
             'type'=>'error',
             'message'=>"Something goes wrong while creating checklist!!"
         ]);
-    }
+        }
+        });
     }
 
     public function render()

@@ -16,7 +16,6 @@
         "intervention/image": "^2.7",
         "kmlaravel/laravel-geographical-calculator": "^2.2",
         "laravel/framework": "^8.65",
-        "laravel/horizon": "^v5.9.7",
         "laravel/nexmo-notification-channel": "^2.5",
         "laravel/sanctum": "^2.11",
         "laravel/tinker": "^2.5",

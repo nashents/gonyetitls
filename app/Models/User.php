@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\LoginAudit;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Notifications\Notifiable;
+use OwenIt\Auditing\Contracts\Auditable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use OwenIt\Auditing\Contracts\Auditable;
 
 class User extends Authenticatable implements Auditable
 {
@@ -57,6 +58,11 @@ class User extends Authenticatable implements Auditable
             return false;
         }
 
+    }
+
+    public function login_audits()
+    {
+        return $this->hasMany(LoginAudit::class);
     }
     
     public function stores(){

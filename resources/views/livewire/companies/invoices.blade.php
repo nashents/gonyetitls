@@ -79,6 +79,8 @@
                     <div class="mb-10">
                         <input type="radio" wire:model.debounce.300ms="items_column" value="Items"  class="line-style"  />
                         <label for="one" class="radio-label">Items<small><i>(Default)</i></small></label>
+                        <input type="radio" wire:model.debounce.300ms="items_column" value="Description"  class="line-style"  />
+                        <label for="one" class="radio-label">Description</label>
                         <input type="radio" wire:model.debounce.300ms="items_column" value="Products"  class="line-style"  />
                         <label for="one" class="radio-label">Products</label>
                         <input type="radio" wire:model.debounce.300ms="items_column" value="Services"  class="line-style"  />

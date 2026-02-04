@@ -174,6 +174,36 @@
     </script>
 
     <script type="text/javascript">
+            window.addEventListener('show-attendanceDeleteModal', event => {
+                $('#attendanceDeleteModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-attendanceDeleteModal', event => {
+                $('#attendanceDeleteModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-attendanceModal', event => {
+                $('#attendanceModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-attendanceModal', event => {
+                $('#attendanceModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-attendanceEditModal', event => {
+                $('#attendanceEditModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-attendanceEditModal', event => {
+                $('#attendanceEditModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
             window.addEventListener('show-rentalDeleteModal', event => {
                 $('#rentalDeleteModal').modal('show');
             })

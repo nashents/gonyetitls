@@ -252,6 +252,23 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
             'route_name' => 'reminders.copy',
             'sort_order' => 20,
         ]);
+        // Attendance Register
+         $m = $upsertModule($g, [
+            'name' => 'Attendance Register',
+            'slug' => 'attendance-register',
+            'icon' => 'fas fa-calendar',
+            'sort_order' => 35,
+              'visibility' => null,
+        ]);
+     
+        $upsertSub($m, [
+            'name' => 'Manage Register',
+            'slug' => 'manage-reminders',
+            'icon' => 'fas fa-list',
+            'route_name' => 'attendances.index',
+            'sort_order' => 10,
+        ]);
+        
 
 
         // Inbox (was global)
@@ -903,14 +920,29 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
         $upsertSub($m, ['name'=>'Manage Incidents','slug'=>'manage-incidents','icon'=>'fas fa-list','route_name'=>'incidents.index','sort_order'=>20]);
         
         $m = $upsertModule($g, [
-            'name' => 'Waste Management',
-            'slug' => 'waste-management',
+            'name' => 'Waste Collection',
+            'slug' => 'waste-collection',
             'icon' => 'fas fa-trash',
             'route_name' => 'waste_collections.*',
             'sort_order' => 25,
         ]);
-        $upsertSub($m, ['name'=>'Waste Collection','slug'=>'waste-collection','icon'=>'fas fa-list','route_name'=>'waste_collections.index','sort_order'=>10]);
-        $upsertSub($m, ['name'=>'Waste Disposal','slug'=>'waste-disposal','icon'=>'fas fa-list','route_name'=>'waste_disposal.index','sort_order'=>20]);
+        $upsertSub($m, ['name'=>'Manage Collection','slug'=>'waste-collection','icon'=>'fas fa-list','route_name'=>'waste_collections.index','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Pending Collections','slug'=>'waste-collection','icon'=>'fas fa-list','route_name'=>'waste_collections.pending','sort_order'=>20]);
+        $upsertSub($m, ['name'=>'Approved Collections','slug'=>'waste-collection','icon'=>'fas fa-list','route_name'=>'waste_collections.approved','sort_order'=>30]);
+        $upsertSub($m, ['name'=>'Rejected Collections','slug'=>'waste-collection','icon'=>'fas fa-list','route_name'=>'waste_collections.rejected','sort_order'=>40]);
+        
+        $m = $upsertModule($g, [
+            'name' => 'Waste Disposal',
+            'slug' => 'waste-disposal',
+            'icon' => 'fas fa-trash',
+            'route_name' => 'waste_disposal.*',
+            'sort_order' => 26,
+        ]);
+        $upsertSub($m, ['name'=>'Manage Disposals','slug'=>'waste-disposals','icon'=>'fas fa-list','route_name'=>'waste_disposals.index','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Pending Disposals','slug'=>'waste-disposals','icon'=>'fas fa-list','route_name'=>'waste_disposals.pending','sort_order'=>20]);
+        $upsertSub($m, ['name'=>'Approved Disposals','slug'=>'waste-disposals','icon'=>'fas fa-list','route_name'=>'waste_disposals.approved','sort_order'=>30]);
+        $upsertSub($m, ['name'=>'Rejected Disposals','slug'=>'waste-disposals','icon'=>'fas fa-list','route_name'=>'waste_disposals.rejected','sort_order'=>40]);
+
 
         $m = $upsertModule($g, [
             'name' => 'Age Pyramid',
