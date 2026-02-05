@@ -106,7 +106,7 @@ class Rejected extends Component
         $attendances = Attendance::query()
             ->where('authorization', 'rejected')
 
-             // ✅ date filter on attendance_date when from/to provided
+             // ✅ date filter on date when from/to provided
             ->when($this->from || $this->to, function ($q) {
                 $from = $this->from
                     ? Carbon::parse($this->from)->startOfDay()
@@ -117,11 +117,11 @@ class Rejected extends Component
                     : null;
 
                 if ($from && $to) {
-                    $q->whereBetween('attendance_date', [$from, $to]);
+                    $q->whereBetween('date', [$from, $to]);
                 } elseif ($from) {
-                    $q->where('attendance_date', '>=', $from);
+                    $q->where('date', '>=', $from);
                 } else { // only $to
-                    $q->where('attendance_date', '<=', $to);
+                    $q->where('date', '<=', $to);
                 }
             })
             
