@@ -8,7 +8,7 @@
     @endif
 @endsection
 @section('title')
-    Bookings | @if (Auth::user()->employee->company)
+    Attendance Register | @if (Auth::user()->employee->company)
     {{Auth::user()->employee->company->name}}
     @elseif (Auth::user()->company)
     {{Auth::user()->company->name}}
@@ -33,8 +33,8 @@
                                 <div class="col-md-6">
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
-                                        <li><a href="{{route('bookings.index')}}"><i class="fa fa-list"></i> All Bookings</a></li>
-            							<li class="active"> <i class="fa fa-clock-o"></i> Pending Bookings</li>
+                                        <li><a href="{{route('attendances.index')}}"><i class="fa fa-list"></i> Attendance Registers</a></li>
+            							<li class="active"> <i class="fa fa-clock-o"></i> Pending Attendance Registers</li>
             						</ul>
                                 </div>
                                 <!-- /.col-md-6 -->
@@ -44,7 +44,7 @@
                         </div>
                         <!-- /.container-fluid -->
 
-                        @livewire('bookings.pending')
+                        @livewire('attendances.pending')
                         <!-- /.section -->
 
                     </div>
@@ -59,7 +59,7 @@
 @section('extra-js')
     <script>
     $(document).ready( function () {
-        $('#bookingsTable').DataTable();
+        $('#attendancesTable').DataTable();
     } );
     </script>
 @endsection

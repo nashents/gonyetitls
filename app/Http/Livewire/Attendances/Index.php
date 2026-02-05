@@ -2,13 +2,14 @@
 
 namespace App\Http\Livewire\Attendances;
 
+use Carbon\Carbon;
 use App\Models\Driver;
 use Livewire\Component;
 use App\Models\Employee;
 use App\Models\Attendance;
 use App\Models\Department;
 use Livewire\WithPagination;
-use App\Models\AttendanceEntry;
+use App\Models\AttendanceRegister;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
@@ -30,6 +31,7 @@ class Index extends Component
     public $selectedDriver;
     public $date;
     public $time;
+    public $user_id;
     public $notes;
     public $departments;
     public $selectedDepartment;
@@ -165,21 +167,21 @@ class Index extends Component
         $attendance->date = $this->date;
         $attendance->time = $this->time;
         $attendance->department_id = $this->selectedDepartment;
+        $attendance->is_drivers = $this->is_drivers;
         $attendance->save();
 
         if ($this->status) {
 
             foreach ($this->status as $key => $status) {
-                $attendance_entry = new AttendanceEntry;
-                $attendance_entry->attendance_id = $attendance->id;
-                $attendance_entry->driver_id = Null;
-                $attendance_entry->employee_id = $key;
-                $attendance_entry->status = $status ?? Null;
-                $attendance_entry->shift = $this->shift[$key] ?? Null;
-                $attendance_entry->start_time = $this->checkin[$key] ?? Null;
-                $attendance_entry->end_time = $this->checkout[$key] ?? Null;
-                $attendance_entry->notes = $this->notes[$key] ?? Null;
-                $attendance_entry->save();
+                $attendance_register = new AttendanceRegister;
+                $attendance_register->attendance_id = $attendance->id;
+                $attendance_register->employee_id = $key;
+                $attendance_register->status = $status ?? Null;
+                $attendance_register->shift = $this->shift[$key] ?? Null;
+                $attendance_register->checkin = $this->checkin[$key] ?? Null;
+                $attendance_register->checkout = $this->checkout[$key] ?? Null;
+                $attendance_register->notes = $this->notes[$key] ?? Null;
+                $attendance_register->save();
             }
 
         }
@@ -193,13 +195,127 @@ class Index extends Component
         
         });
     }
+    
+    public function edit($id){
+    
+        $attendance = Attendance::find($id);
+        $this->selectedDepartment = $attendance->department_id;
+        $this->selected_department = Department::find($attendance->department_id);
+        $this->loadEmployees();
+        $this->date = $attendance->date;
+        $this->time = $attendance->time;
+        $this->user_id = $attendance->user_id;
+        $this->is_drivers = $attendance->is_drivers ?? False;
+        $this->attendance_id = $attendance->id;
+        $attendance_registers = $attendance->attendance_registers;
+        if($attendance_registers){
+            foreach ($attendance_registers as $attendance_register) {
+                $id = $attendance_register->employee_id;
+                $this->shift[$id] = $attendance_register->shift ?? '';
+                $this->status[$id] = $attendance_register->status ?? '';
+                $this->checkin[$id] = $attendance_register->checkin ?? '';
+                $this->checkout[$id] = $attendance_register->checkout ?? '';
+                $this->notes[$id] = $attendance_register->notes ?? '';
+            }
+        }
+
+          $this->dispatchBrowserEvent('show-attendanceEditModal');
+    }
+
+    public function update(){
+
+        DB::transaction(function () {
+        
+        $this->validate();
+
+        $attendance = Attendance::find($this->attendance_id);
+        $attendance->date = $this->date;
+        $attendance->time = $this->time;
+        $attendance->department_id = $this->selectedDepartment;
+        $attendance->is_drivers = $this->is_drivers;
+        $attendance->update();
+
+        if ($this->status) {
+            foreach ($this->status as $employeeId => $status) {
+
+                AttendanceRegister::updateOrCreate(
+                    [
+                        'attendance_id' => $attendance->id,
+                        'employee_id'   => $employeeId,
+                    ],
+                    [
+                        'status'   => $status ?? null,
+                        'shift'    => $this->shift[$employeeId] ?? null,
+                        'checkin'  => $this->checkin[$employeeId] ?? null,
+                        'checkout' => $this->checkout[$employeeId] ?? null,
+                        'notes'    => $this->notes[$employeeId] ?? null,
+                    ]
+                );
+            }
+        }
+
+        $this->dispatchBrowserEvent('hide-attendanceEditModal');
+        $this->resetInputFields();
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Attendance Register Update Successfully!!"
+        ]);
+        
+        });
+    }
 
 
     public function render()
     {
-        $attendances = Attendance::query()->orderBy('created_at','desc')->paginate(10);
-        return view('livewire.attendances.index',[
-            'attendances' => $attendances
+       $search = trim($this->search);
+
+        $attendances = Attendance::query()
+           
+                 // ✅ date filter on attendance_date when from/to provided
+            ->when($this->from || $this->to, function ($q) {
+                $from = $this->from
+                    ? Carbon::parse($this->from)->startOfDay()
+                    : null;
+
+                $to = $this->to
+                    ? Carbon::parse($this->to)->endOfDay()
+                    : null;
+
+                if ($from && $to) {
+                    $q->whereBetween('attendance_date', [$from, $to]);
+                } elseif ($from) {
+                    $q->where('attendance_date', '>=', $from);
+                } else { // only $to
+                    $q->where('attendance_date', '<=', $to);
+                }
+            })
+            ->when($search !== '', function ($q) use ($search) {
+
+                $q->where(function ($qq) use ($search) {
+
+                    // department name
+                    $qq->whereHas('department', function ($d) use ($search) {
+                        $d->where('name', 'like', "%{$search}%");
+                    })
+
+                    // user name / surname / full name
+                    ->orWhereHas('user', function ($u) use ($search) {
+                        $u->where('name', 'like', "%{$search}%")
+                        ->orWhere('surname', 'like', "%{$search}%")
+                        ->orWhereRaw("CONCAT(name,' ',surname) LIKE ?", ["%{$search}%"]);
+                    })
+
+                    // date/time on created_at (works for "2026-02-05", "14:30", "2026-02-05 14")
+                    ->orWhereRaw("DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') LIKE ?", ["%{$search}%"])
+                    ->orWhereRaw("DATE_FORMAT(created_at, '%Y-%m-%d') LIKE ?", ["%{$search}%"])
+                    ->orWhereRaw("DATE_FORMAT(created_at, '%H:%i') LIKE ?", ["%{$search}%"]);
+                });
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+
+        return view('livewire.attendances.index', [
+            'attendances' => $attendances,
         ]);
     }
 }

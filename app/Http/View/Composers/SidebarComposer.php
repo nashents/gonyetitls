@@ -9,7 +9,7 @@ use  App\Models\{
     Allocation, Department, DepartmentHead, Leave, Loan,
     Payroll, Invoice, CreditNote, Bill, Requisition, TopUp,User,Purchase, Dispatch,
     GatePass, Fuel, FuelRequest, Trip, Transporter, Shift, TransportOrder, Recovery, Booking, Transfer, Retread, Customer, Agent, Company,
-    ModuleGroup,Rental
+    ModuleGroup,Rental,Attendance
     // ... add all models you need here
 };
 
@@ -71,6 +71,7 @@ class SidebarComposer
         $leavesPendingCount   = $weeklyCount(Leave::class,   ['status' => 'pending']);
         $leavesApprovedCount  = $weeklyCount(Leave::class,   ['status' => 'approved']);
         $leavesRejectedCount  = $weeklyCount(Leave::class,   ['status' => 'rejected']);
+        
         $leavesDeletedCount   = Leave::onlyTrashed()
             ->whereDate('created_at', now()->toDateString())
             ->count();
@@ -116,6 +117,10 @@ class SidebarComposer
         $sdepartment_head     = $employee && $sdepartment
             ? DepartmentHead::where('department_id', $sdepartment->id)
                   ->where('employee_id', $employee->id)
+                  ->first()
+            : null;
+        $isHOD = $employee
+            ? DepartmentHead::where('employee_id', $employee->id)
                   ->first()
             : null;
 
@@ -178,6 +183,17 @@ class SidebarComposer
         ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
         $leavesDeletedCount = Leave::onlyTrashed()
         ->whereDate('created_at', Carbon::today())->get()->count();
+
+        $attendancesPendingCount = Attendance::where('authorization','pending')
+        ->where('created_at', '>', Carbon::now()->startOfWeek())
+        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
+        $attendancesApprovedCount = Attendance::where('authorization','approved')
+        ->where('created_at', '>', Carbon::now()->startOfWeek())
+        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
+        $attendancesRejectedCount = Attendance::where('authorization','rejected')
+        ->where('created_at', '>', Carbon::now()->startOfWeek())
+        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
+
         $loansPendingCount = Loan::where('authorization','pending')
         ->where('created_at', '>', Carbon::now()->startOfWeek())
         ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
@@ -531,6 +547,7 @@ class SidebarComposer
              // roles / flags (use what you computed, not session())
             'isAdmin'       => (bool) $isAdmin,
             'isSuperAdmin'  => (bool) $isSuperAdmin,
+            'isHOD'  => (bool) $isHOD,
             'isUser'        => (bool) $isUser,
             'isManagement'  => (bool) $isManagement,
             'isEmployee'    => (bool) $isEmployee,
@@ -576,6 +593,10 @@ class SidebarComposer
         'leaves_pending_count'  => (int) ($leavesPendingCount ?? 0),
         'leaves_approved_count' => (int) ($leavesApprovedCount ?? 0),
         'leaves_rejected_count' => (int) ($leavesRejectedCount ?? 0),
+
+        'attendances_pending_count'  => (int) ($attendancesPendingCount ?? 0),
+        'attendances_approved_count' => (int) ($attendancesApprovedCount ?? 0),
+        'attendances_rejected_count' => (int) ($attendancesRejectedCount ?? 0),
 
         // Loans
         'loans_pending_count'   => (int) ($loansPendingCount ?? 0),
@@ -762,6 +783,7 @@ class SidebarComposer
             'inHR'          => $inHR,
             'isAdmin'          => $isAdmin,
             'isSuperAdmin'          => $isSuperAdmin,
+            'isHOD'          => $isHOD,
             'isUser'          => $isUser,
             'isEmployee'          => $isEmployee,
             'isManagement'          => $isManagement,
@@ -777,6 +799,10 @@ class SidebarComposer
             'isSystemAdmin'          => $isSystemAdmin,
             'is_admin'          => $is_admin,
 
+            'attendancesPendingCount'  => $attendancesPendingCount,
+            'attendancesApprovedCount' => $attendancesApprovedCount,
+            'attendancesRejectedCount' => $attendancesRejectedCount,
+
             'leavesPendingCount'  => $leavesPendingCount,
             'leavesApprovedCount' => $leavesApprovedCount,
             'leavesRejectedCount' => $leavesRejectedCount,
@@ -785,10 +811,7 @@ class SidebarComposer
             'billsRejectedCount'          => $billsRejectedCount,
             'billsApprovedCount'          => $billsApprovedCount,
             'billsPendingCount'          => $billsPendingCount,
-            'leavesDeletedCount'          => $leavesDeletedCount,
-            'leavesRejectedCount'          => $leavesRejectedCount,
-            'leavesApprovedCount'          => $leavesApprovedCount,
-            'leavesPendingCount'          => $leavesPendingCount,
+            
             'loansDeletedCount'          => $loansDeletedCount,
             'loansRejectedCount'          => $loansRejectedCount,
             'loansApprovedCount'          => $loansApprovedCount,

@@ -9,7 +9,7 @@
     @endif
 @endsection
 @section('title')
-    Booking |@if (Auth::user()->employee->company)
+    Attendance Register |@if (Auth::user()->employee->company)
     {{Auth::user()->employee->company->name}}
     @elseif (Auth::user()->company)
     {{Auth::user()->company->name}}
@@ -37,15 +37,15 @@
                                 <div class="col-md-6">
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
-            							<li><a href="{{route('bookings.index')}}"><i class="fa fa-list"></i> Bookings</a></li>
-            							<li class="active"> <i class="fa fa-eye"></i> Booking</li>
+            							<li><a href="{{route('attendances.index')}}"><i class="fa fa-list"></i> Attendance Registers</a></li>
+            							<li class="active"> <i class="fa fa-eye"></i> Attendance Register</li>
             						</ul>
                                 </div>
                                 <!-- /.col-md-6 -->
 
                                 <!-- /.col-md-6 -->
                             </div>
-                          @livewire('bookings.show', ['id' => $booking->id])
+                          @livewire('attendances.show', ['id' => $attendance->id])
                         </div>
                         <!-- /.container-fluid -->
 
@@ -61,7 +61,7 @@
 @section('extra-js')
     <script>
     $(document).ready( function () {
-        $('#tripsTable').DataTable();
+        $('#attendancesTable').DataTable();
     } );
     </script>
 

@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateAttendanceEntriesTable extends Migration
+class CreateAttendanceRegistersTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,11 +13,13 @@ class CreateAttendanceEntriesTable extends Migration
      */
     public function up()
     {
-        Schema::create('attendance_entries', function (Blueprint $table) {
+        Schema::create('attendance_registers', function (Blueprint $table) {
                 $table->id();
-                $table->foreignId('attendance_id')->constrained('attendances')->cascadeOnDelete();
-                $table->foreignId('driver_id')->constrained('drivers')->cascadeOnDelete();
-                $table->date('attendance_date');
+                $table->foreignId('attendance_id')->nullable()->constrained('attendances')->cascadeOnDelete();
+                $table->foreignId('user_id')->nullable()->constrained('users')->cascadeOnDelete();
+                $table->foreignId('updated_by_id')->nullable()->constrained('users');
+                $table->foreignId('employee_id')->nullable()->constrained('employees')->cascadeOnDelete();
+                $table->date('date');
                 $table->enum('status', [
                     'present',          // worked
                     'off',              // scheduled off/rest day
@@ -30,16 +32,13 @@ class CreateAttendanceEntriesTable extends Migration
                     'absent'            // no-show
                 ])->default('present');
                 $table->enum('shift', ['day','night'])->nullable(); // optional
-                $table->time('start_time')->nullable();             // optional
-                $table->time('end_time')->nullable();               // optional
+                $table->time('checkin')->nullable();             // optional
+                $table->time('checkout')->nullable();               // optional
                 $table->decimal('hours', 5, 2)->nullable();         // optional
                 $table->string('source')->default('manual');        // manual/import
                 $table->text('notes')->nullable();
-                $table->foreignId('created_by')->constrained('users');
-                $table->foreignId('updated_by')->nullable()->constrained('users');
                 $table->timestamps();
-
-               
+                $table->softDeletes();
         });
     }
 
@@ -50,6 +49,6 @@ class CreateAttendanceEntriesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('attendance_entries');
+        Schema::dropIfExists('attendance_registers');
     }
 }

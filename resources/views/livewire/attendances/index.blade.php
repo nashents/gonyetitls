@@ -53,14 +53,14 @@
                                         <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search attendance register...">
                                     </div>
                                 </div>
-                                <table  class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
+                                <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                     <thead >
                                         <tr>
                                         <th class="th-sm">Attendance#
                                         </th>
                                         <th class="th-sm">CreatedBy
                                         </th>
-                                        <th class="th-sm">Date
+                                        <th class="th-sm">Date & Time
                                         </th>
                                         <th class="th-sm">Department
                                         </th>
@@ -78,8 +78,8 @@
                                         <td>
                                             {{$attendance->attendance_number}}
                                         </td>
-                                        <td>{{ucfirst($attendance->employee ? $attendance->employee->name : "")}} {{ucfirst($attendance->employee ? $attendance->employee->surname : "")}}</td>
-                                        <td>{{$attendance->date}}</td>
+                                        <td>{{ucfirst($attendance->user ? $attendance->user->name : "")}} {{ucfirst($attendance->user ? $attendance->user->surname : "")}}</td>
+                                        <td>{{$attendance->date}} {{$attendance->time ? "@ ".$attendance->time : ""}}</td>
                                         <td>{{$attendance->department ? $attendance->department->name : ""}}</td>
                                         <td><span class="badge bg-{{($attendance->authorization == 'approved') ? 'success' : (($attendance->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($attendance->authorization == 'approved') ? 'approved' : (($attendance->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
                                       
@@ -92,7 +92,7 @@
                                                 <ul class="dropdown-menu">
                                                          
                                                     <li><a href="{{route('attendances.show', $attendance->id)}}"><i class="fa fa-eye color-default"></i>View</a></li>
-                                                    <li><a href="{{route('attendances.edit', $attendance->id)}}"><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                                    <li><a href="#" wire:click.prevent="edit({{$attendance->id}})"><i class="fa fa-edit color-success"></i> Edit</a></li>
                                                 
                                                 </ul>
                                             </div>
@@ -158,7 +158,7 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="bin_number">Time<span class="required" style="color: red">*</span></label>
-                                    <input type="date" class="form-control" wire:model.debounce.300ms="time" placeholder="Enter Time" required>
+                                    <input type="time" class="form-control" wire:model.debounce.300ms="time" placeholder="Enter Time" required>
                                     @error('time') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
@@ -212,7 +212,7 @@
                                     @foreach ($employees as $key => $employee)
                                         <tr>
                                             <td>
-                                                ({{$i++}}) {{$employee->name}} {{$employee->id}} {{$employee->surname}} {{$employee->post ? "(".$employee->post.")" : ""}} <small><strong>{{$employee->employee_number}}</strong></small>
+                                                {{$i++}}) {{$employee->name}} {{$employee->surname}}  <small><strong>{{$employee->post ? "(".$employee->post.")" : ""}}</strong></small>
                                             </td>
                                             <td>
                                                 <select class="form-control" wire:model.debounce.300ms="status.{{$employee->id}}" wire:key="{{ $employee->id }}" >
@@ -231,8 +231,8 @@
                                             <td>
                                                 <select class="form-control" wire:model.debounce.300ms="shift.{{$employee->id}}" wire:key="{{ $employee->id }}">
                                                     <option value="">Select Option</option>
-                                                    <option value="Day">Day</option>
-                                                    <option value="Night">Night</option>
+                                                    <option value="day">Day</option>
+                                                    <option value="night">Night</option>
                                                 </select>
                                             </td>
                                             <td>
@@ -263,6 +263,138 @@
                         <div class="btn-group" role="group">
                             <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
                             <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Save</button>
+                        </div>
+                        <!-- /.btn-group -->
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+ 
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="attendanceEditModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+        <div class="modal-dialog mw-100 w-70" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-edit"></i> Edit Attendance Register<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                </div>
+                <form wire:submit.prevent="update()" >
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="name">Date<span class="required" style="color: red">*</span></label>
+                                    <input type="date" class="form-control" wire:model.debounce.300ms="date" placeholder="Enter Date" required>
+                                    @error('date') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="bin_number">Time<span class="required" style="color: red">*</span></label>
+                                    <input type="time" class="form-control" wire:model.debounce.300ms="time" placeholder="Enter Time" required>
+                                    @error('time') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                        </div>     
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="name">Departments<span class="required" style="color: red">*</span></label>
+                                   <select class="form-control" wire:model.debounce.300ms="selectedDepartment" required>
+                                        <option value="">Select Department</option>
+                                        @foreach ($departments as $department)
+                                            <option value="{{$department->id}}">{{$department->name}}</option>
+                                        @endforeach
+                                   </select>
+                                    @error('selectedDepartment') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-10" style="margin-top: 30px;">
+                                    <input type="checkbox" wire:model.debounce.300ms="is_drivers" {{$selected_department?->name == "Transport & Logistics" ? "" : "disabled"}}  class="line-style" />
+                                    <label for="one" class="radio-label">Mark drivers attendance</label>
+                                    @error('is_drivers') <span class="text-danger error">{{ $message }}</span>@enderror
+                                </div>
+                            </div>
+                        </div>   
+                        @if (isset($selectedDepartment))
+                            <div  style="height: 500px; overflow: auto" >
+                        @endif 
+                            <table  class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%" >
+                                <caption><strong>{{$selected_department?->name}}</strong></caption>
+                                <thead>
+                                    <tr>
+                                    <th class="th-sm">Employee
+                                    </th>
+                                    <th class="th-sm">Status
+                                    </th>
+                                    <th class="th-sm">Shift
+                                    </th>
+                                    <th class="th-sm">Checkin Time
+                                    </th>
+                                    <th class="th-sm">Checkout Time
+                                    </th>
+                                    <th class="th-sm">Notes
+                                    </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @php
+                                        $i = 1;
+                                    @endphp
+                                    @foreach ($employees as $key => $employee)
+                                        <tr>
+                                            <td>
+                                                {{$i++}}) {{$employee->name}} {{$employee->surname}}  <small><strong>{{$employee->post ? "(".$employee->post.")" : ""}}</strong></small>
+                                            </td>
+                                            <td>
+                                                <select class="form-control" wire:model.debounce.300ms="status.{{$employee->id}}" wire:key="{{ $employee->id }}" >
+                                                    <option value="">Select Option</option>
+                                                    <option value="absent">Absent</option>
+                                                    <option value="annual_leave">Annual Leave</option>
+                                                    <option value="off">Off</option>
+                                                    <option value="present">Present</option>
+                                                    <option value="public_holiday">Public Holiday</option>
+                                                    <option value="sick_leave">Sick Leave</option>
+                                                    <option value="suspension">Suspension</option>
+                                                    <option value="training">Training</option>
+                                                    <option value="unpaid_leave">Unpaid Leave</option>
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <select class="form-control" wire:model.debounce.300ms="shift.{{$employee->id}}" wire:key="{{ $employee->id }}">
+                                                    <option value="">Select Option</option>
+                                                    <option value="day">Day</option>
+                                                    <option value="night">Night</option>
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <input type="time" class="form-control" wire:model.debounce.300ms="checkin.{{$employee->id}}" wire:key="{{ $employee->id }}">
+                                            </td>
+                                            <td>
+                                                <input type="time" class="form-control" wire:model.debounce.300ms="checkout.{{$employee->id}}" wire:key="{{ $employee->id }}">
+                                            </td>
+                                            <td>
+                                                <select class="form-control" wire:model.debounce.300ms="notes.{{$employee->id}}" wire:key="{{ $employee->id }}">
+                                                    <option value="">Select Option</option>
+                                                    <option value="early_arrival">Early Arrival</option>
+                                                    <option value="on_time">On time</option>
+                                                    <option value="slightly_late">Slightly Late</option>
+                                                    <option value="late_arrival">Late Arrival</option>
+                                                </select>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                    @if (isset($selectedDepartment))
+                        </div>
+                    @endif
+                    </div>
+
+                    <div class="modal-footer">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                            <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-refresh"></i>Update</button>
                         </div>
                         <!-- /.btn-group -->
                     </div>

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\WasteDisposal;
 
 class WasteDisposalController extends Controller
 {
@@ -13,7 +14,19 @@ class WasteDisposalController extends Controller
      */
     public function index()
     {
-        //
+        return view('waste_disposals.index');
+    }
+    public function pending()
+    {
+        return view('waste_disposals.pending');
+    }
+    public function approved()
+    {
+        return view('waste_disposals.approved');
+    }
+    public function rejected()
+    {
+        return view('waste_disposals.rejected');
     }
 
     /**
@@ -45,7 +58,10 @@ class WasteDisposalController extends Controller
      */
     public function show($id)
     {
-        //
+       $waste_disposal = WasteDisposal::find($id);
+        return view('waste_disposals.show',[
+            'waste_disposal' => $waste_disposal
+        ]);
     }
 
     /**

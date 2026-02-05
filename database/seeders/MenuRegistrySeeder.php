@@ -258,16 +258,25 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
             'slug' => 'attendance-register',
             'icon' => 'fas fa-calendar',
             'sort_order' => 35,
-              'visibility' => null,
+            'visibility' => $any([
+                    $all(['isHOD']),
+                    $all(['isSuperAdmin']),
+                ]),
         ]);
-     
-        $upsertSub($m, [
+
+           $upsertSub($m, [
             'name' => 'Manage Register',
             'slug' => 'manage-reminders',
             'icon' => 'fas fa-list',
-            'route_name' => 'attendances.index',
+             'is_active' => false,
+            'route_name' => '#',
             'sort_order' => 10,
         ]);
+     
+        $upsertSub($m, ['name'=>'Manage Attendances','slug'=>'manage-attendances','icon'=>'fas fa-list','route_name'=>'attendances.index','sort_order'=>15]);
+        $upsertSub($m, ['name'=>'Pending Attendances','slug'=>'pending-attendances','icon'=>'fas fa-clock','route_name'=>'attendances.pending','sort_order'=>20,'badge_key'=>'attendances_pending_count']);
+        $upsertSub($m, ['name'=>'Approved Attendances','slug'=>'approved-attendances','icon'=>'fas fa-check','route_name'=>'attendances.approved','sort_order'=>30,'badge_key'=>'attendances_approved_count']);
+        $upsertSub($m, ['name'=>'Rejected Attendances','slug'=>'rejected-attendances','icon'=>'fas fa-ban','route_name'=>'attendances.rejected','sort_order'=>40,'badge_key'=>'attendances_rejected_count']);
         
 
 
@@ -921,27 +930,27 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
         
         $m = $upsertModule($g, [
             'name' => 'Waste Collection',
-            'slug' => 'waste-collection',
-            'icon' => 'fas fa-trash',
+            'slug' => 'waste-collections',
+            'icon' => 'fas fa-tasks',
             'route_name' => 'waste_collections.*',
             'sort_order' => 25,
         ]);
-        $upsertSub($m, ['name'=>'Manage Collection','slug'=>'waste-collection','icon'=>'fas fa-list','route_name'=>'waste_collections.index','sort_order'=>10]);
-        $upsertSub($m, ['name'=>'Pending Collections','slug'=>'waste-collection','icon'=>'fas fa-list','route_name'=>'waste_collections.pending','sort_order'=>20]);
-        $upsertSub($m, ['name'=>'Approved Collections','slug'=>'waste-collection','icon'=>'fas fa-list','route_name'=>'waste_collections.approved','sort_order'=>30]);
-        $upsertSub($m, ['name'=>'Rejected Collections','slug'=>'waste-collection','icon'=>'fas fa-list','route_name'=>'waste_collections.rejected','sort_order'=>40]);
+        $upsertSub($m, ['name'=>'Manage Collection','slug'=>'manage-waste-collections','icon'=>'fas fa-list','route_name'=>'waste_collections.index','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Pending Collections','slug'=>'pending-waste-collections','icon'=>'fas fa-clock','route_name'=>'waste_collections.pending','sort_order'=>20,'badge_key'=>'waste_collections_pending_count']);
+        $upsertSub($m, ['name'=>'Approved Collections','slug'=>'approved-waste-collections','icon'=>'fas fa-check','route_name'=>'waste_collections.approved','sort_order'=>30,'badge_key'=>'waste_collections_approved_count']);
+        $upsertSub($m, ['name'=>'Rejected Collections','slug'=>'rejected-waste-collections','icon'=>'fas fa-ban','route_name'=>'waste_collections.rejected','sort_order'=>40,'badge_key'=>'waste_collections_rejected_count']);
         
         $m = $upsertModule($g, [
             'name' => 'Waste Disposal',
-            'slug' => 'waste-disposal',
-            'icon' => 'fas fa-trash',
+            'slug' => 'waste-disposals',
+            'icon' => 'fas fa-remove',
             'route_name' => 'waste_disposal.*',
             'sort_order' => 26,
         ]);
-        $upsertSub($m, ['name'=>'Manage Disposals','slug'=>'waste-disposals','icon'=>'fas fa-list','route_name'=>'waste_disposals.index','sort_order'=>10]);
-        $upsertSub($m, ['name'=>'Pending Disposals','slug'=>'waste-disposals','icon'=>'fas fa-list','route_name'=>'waste_disposals.pending','sort_order'=>20]);
-        $upsertSub($m, ['name'=>'Approved Disposals','slug'=>'waste-disposals','icon'=>'fas fa-list','route_name'=>'waste_disposals.approved','sort_order'=>30]);
-        $upsertSub($m, ['name'=>'Rejected Disposals','slug'=>'waste-disposals','icon'=>'fas fa-list','route_name'=>'waste_disposals.rejected','sort_order'=>40]);
+        $upsertSub($m, ['name'=>'Manage Disposals','slug'=>'manage-waste-disposals','icon'=>'fas fa-list','route_name'=>'waste_disposals.index','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Pending Disposals','slug'=>'pending-waste-disposals','icon'=>'fas fa-clock','route_name'=>'waste_disposals.pending','sort_order'=>20,'badge_key'=>'waste_disposals_pending_count']);
+        $upsertSub($m, ['name'=>'Approved Disposals','slug'=>'approved-waste-disposals','icon'=>'fas fa-check','route_name'=>'waste_disposals.approved','sort_order'=>30,'badge_key'=>'waste_disposals_pending_count']);
+        $upsertSub($m, ['name'=>'Rejected Disposals','slug'=>'rejected-waste-disposals','icon'=>'fas fa-ban','route_name'=>'waste_disposals.rejected','sort_order'=>40,'badge_key'=>'waste_disposals_pending_count']);
 
 
         $m = $upsertModule($g, [

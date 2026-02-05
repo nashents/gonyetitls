@@ -719,6 +719,18 @@ Route::get('requisitions/authorization/pending','RequisitionController@pending')
 Route::get('requisitions/authorization/approved','RequisitionController@approved')->name('requisitions.approved');
 Route::get('requisitions/authorization/rejected','RequisitionController@rejected')->name('requisitions.rejected');
 
+Route::get('attendances/authorization/pending','AttendanceController@pending')->name('attendances.pending');
+Route::get('attendances/authorization/approved','AttendanceController@approved')->name('attendances.approved');
+Route::get('attendances/authorization/rejected','AttendanceController@rejected')->name('attendances.rejected');
+
+Route::get('waste-collections/authorization/pending','WasteCollectionController@pending')->name('waste_collections.pending');
+Route::get('waste-collections/authorization/approved','WasteCollectionController@approved')->name('waste_collections.approved');
+Route::get('waste-collections/authorization/rejected','WasteCollectionController@rejected')->name('waste_collections.rejected');
+
+Route::get('waste-disposals/authorization/pending','WasteDisposalController@pending')->name('waste_disposals.pending');
+Route::get('waste-disposals/authorization/approved','WasteDisposalController@approved')->name('waste_disposals.approved');
+Route::get('waste-disposals/authorization/rejected','WasteDisposalController@rejected')->name('waste_disposals.rejected');
+
 Route::get('payrolls/authorization/pending','PayrollController@pending')->name('payrolls.pending');
 Route::get('payrolls/authorization/approved','PayrollController@approved')->name('payrolls.approved');
 Route::get('payrolls/authorization/rejected','PayrollController@rejected')->name('payrolls.rejected');

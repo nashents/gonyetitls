@@ -32,7 +32,7 @@
                                 <div class="col-md-6">
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
-                                        <li><a href="{{route('attendances.index')}}"><i class="fa fa-list"></i> Attendance Register</a></li>
+                                        <li><a href="{{route('attendances.index')}}"><i class="fa fa-list"></i> Attendance Registers</a></li>
             							<li class="active"> <i class="fa fa-check"></i> Approved Attendance Register</li>
             						</ul>
                                 </div>
@@ -43,7 +43,7 @@
                         </div>
                         <!-- /.container-fluid -->
 
-                        @livewire('attendances.index')
+                        @livewire('attendances.approved')
                         <!-- /.section -->
 
                     </div>

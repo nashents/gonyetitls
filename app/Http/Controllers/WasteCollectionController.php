@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\WasteCollection;
 
 class WasteCollectionController extends Controller
 {
@@ -11,9 +12,21 @@ class WasteCollectionController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+     public function index()
     {
-        //
+        return view('waste_collections.index');
+    }
+    public function pending()
+    {
+        return view('waste_collections.pending');
+    }
+    public function approved()
+    {
+        return view('waste_collections.approved');
+    }
+    public function rejected()
+    {
+        return view('waste_collections.rejected');
     }
 
     /**
@@ -45,7 +58,10 @@ class WasteCollectionController extends Controller
      */
     public function show($id)
     {
-        //
+        $waste_collection = WasteCollection::find($id);
+        return view('waste_collections.show',[
+            'waste_collection' => $waste_collection
+        ]);
     }
 
     /**

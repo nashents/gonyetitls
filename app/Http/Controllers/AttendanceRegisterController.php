@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\AttendanceEntry;
-use App\Http\Requests\StoreAttendanceEntryRequest;
-use App\Http\Requests\UpdateAttendanceEntryRequest;
+use App\Models\AttendanceRegister;
+use App\Http\Requests\StoreAttendanceRegisterRequest;
+use App\Http\Requests\UpdateAttendanceRegisterRequest;
 
-class AttendanceEntryController extends Controller
+class AttendanceRegisterController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -31,10 +31,10 @@ class AttendanceEntryController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \App\Http\Requests\StoreAttendanceEntryRequest  $request
+     * @param  \App\Http\Requests\StoreAttendanceRegisterRequest  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(StoreAttendanceEntryRequest $request)
+    public function store(StoreAttendanceRegisterRequest $request)
     {
         //
     }
@@ -42,10 +42,10 @@ class AttendanceEntryController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\AttendanceEntry  $attendanceEntry
+     * @param  \App\Models\AttendanceRegister  $attendanceRegister
      * @return \Illuminate\Http\Response
      */
-    public function show(AttendanceEntry $attendanceEntry)
+    public function show(AttendanceRegister $attendanceRegister)
     {
         //
     }
@@ -53,10 +53,10 @@ class AttendanceEntryController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\Models\AttendanceEntry  $attendanceEntry
+     * @param  \App\Models\AttendanceRegister  $attendanceRegister
      * @return \Illuminate\Http\Response
      */
-    public function edit(AttendanceEntry $attendanceEntry)
+    public function edit(AttendanceRegister $attendanceRegister)
     {
         //
     }
@@ -64,11 +64,11 @@ class AttendanceEntryController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \App\Http\Requests\UpdateAttendanceEntryRequest  $request
-     * @param  \App\Models\AttendanceEntry  $attendanceEntry
+     * @param  \App\Http\Requests\UpdateAttendanceRegisterRequest  $request
+     * @param  \App\Models\AttendanceRegister  $attendanceRegister
      * @return \Illuminate\Http\Response
      */
-    public function update(UpdateAttendanceEntryRequest $request, AttendanceEntry $attendanceEntry)
+    public function update(UpdateAttendanceRegisterRequest $request, AttendanceRegister $attendanceRegister)
     {
         //
     }
@@ -76,10 +76,10 @@ class AttendanceEntryController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\AttendanceEntry  $attendanceEntry
+     * @param  \App\Models\AttendanceRegister  $attendanceRegister
      * @return \Illuminate\Http\Response
      */
-    public function destroy(AttendanceEntry $attendanceEntry)
+    public function destroy(AttendanceRegister $attendanceRegister)
     {
         //
     }

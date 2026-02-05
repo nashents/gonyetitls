@@ -17,6 +17,7 @@ class Jobcard extends Component
     public $service_type;
     public $inspection_services;
     public $company; 
+    public $service_type_id; 
     public $closed_by; 
     public $ticket_inventories; 
     public $inspection_results; 
@@ -41,6 +42,7 @@ class Jobcard extends Component
         $this->in_time = $this->booking->in_time;
         $this->out_date = $this->booking->out_date;
         $this->out_time = $this->booking->out_time;
+        $this->service_type_id = $this->booking->service_type_id;
         $this->inspection = $this->booking->inspection;
         $this->inspection_results = InspectionResult::with('inspection_type')->where('inspection_id',$this->inspection->id)->get();
         $this->service_type = $this->booking->service_type;
@@ -48,9 +50,11 @@ class Jobcard extends Component
             ->select('inspection_services.*')
             ->join('inspection_types', 'inspection_types.id', '=', 'inspection_services.inspection_type_id')
             ->leftJoin('inspection_groups', 'inspection_groups.id', '=', 'inspection_types.inspection_group_id')
-            ->where('inspection_services.service_type_id', $this->service_type->id)   // 👈 added filter
-            ->orderBy('inspection_groups.name')   // group first
-            ->orderBy('inspection_types.name')    // then type
+            ->when($this->service_type_id, fn ($q) =>
+                $q->where('inspection_services.service_type_id', $this->service_type_id)
+            )
+            ->orderBy('inspection_groups.name')
+            ->orderBy('inspection_types.name')
             ->with([
                 'inspection_type:id,name,inspection_group_id',
                 'inspection_type.inspection_group:id,name'
