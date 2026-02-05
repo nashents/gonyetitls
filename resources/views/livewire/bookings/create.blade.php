@@ -114,7 +114,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                @if ($existing_bookings)
+                                @if ($existing_bookings?->isNotEmpty())
                                     <div class="form-group">
                                             <label for="">There are still open bookings for 
                                                 @if ($type == "Asset")

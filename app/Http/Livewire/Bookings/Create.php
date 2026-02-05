@@ -132,7 +132,7 @@ class Create extends Component
         if (!is_null($id)) {
            $horse = Horse::find($id);
            $this->selected_equipment = Horse::with('bookings')->find($id);
-           $this->existing_bookings = $this->selected_equipment->bookings->where('status', 1)->take(5)->sortByDesc('in_date');
+          
            $this->mileage = $horse ? $horse->mileage : "";
            $this->hours = $horse ? $horse->hours : "";
         }
@@ -140,9 +140,7 @@ class Create extends Component
 
     public function updatedSelectedAsset($id){
         if (!is_null($id)) {
-            $asset = Asset::find($id);
             $this->selected_equipment = Asset::with('bookings')->find($id);
-            $this->existing_bookings = $this->selected_equipment->bookings->where('status', 1)->take(5)->sortByDesc('in_date');
         }
 
     }
@@ -150,7 +148,6 @@ class Create extends Component
         if (!is_null($id)) {
            $trailer = Trailer::find($id);
             $this->selected_equipment = Trailer::with('bookings')->find($id);
-             $this->existing_bookings = $this->selected_equipment->bookings->where('status', 1)->take(5)->sortByDesc('in_date');
            $this->mileage = $trailer ? $trailer->mileage : "";
         }
 
@@ -159,7 +156,6 @@ class Create extends Component
         if (!is_null($id)) {
            $vehicle = Vehicle::find($id);
             $this->selected_equipment = Vehicle::with('bookings')->find($id);
-             $this->existing_bookings = $this->selected_equipment->bookings->where('status', 1)->take(5)->sortByDesc('in_date');
            $this->mileage = $vehicle ? $vehicle->mileage : "";
            $this->hours = $vehicle ? $vehicle->hours : "";
         }
@@ -340,6 +336,8 @@ class Create extends Component
     }
     public function render()
     {
+
+        $this->existing_bookings = $this->selected_equipment?->bookings->where('status', 1)->take(5)->sortByDesc('in_date');
 
         if (filled($this->searchHorse)) {
             $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('registration_number', 'like', '%'.$this->searchHorse.'%')->get();

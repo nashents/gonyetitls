@@ -10,6 +10,7 @@ use Livewire\Component;
 use App\Models\Container;
 use App\Models\BillExpense;
 use Livewire\WithPagination;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
 class Pending extends Component
@@ -92,6 +93,8 @@ class Pending extends Component
 
         public function authorizeSelectedRows(){
 
+        DB::transaction(function () {
+
         $selected_top_ups = TopUP::WhereIn('id',$this->selectedRows)->get();
         
         if (isset($selected_top_ups)) {
@@ -106,8 +109,13 @@ class Pending extends Component
                 if ($this->authorize == "approved") {
 
                     $container = Container::find($this->container->id);
-                    $container->balance = $container->balance + $this->top_up->quantity;
-                    $container->account_balance = $container->account_balance + $this->top_up->amount;
+                    if(($container && is_numeric($container->balance)) && ($this->top_up && is_numeric($this->top_up->quantity))){
+                        $container->balance = $container->balance + $this->top_up->quantity;
+                    }
+                    if(($container && is_numeric($container->account_balance)) && ($this->top_up && is_numeric($this->top_up->amount))){
+                        $container->account_balance = $container->account_balance + $this->top_up->amount;
+                    }
+                   
                     $container->update();
 
                     if (isset($top_up->amount) && $top_up->amount > 0) {
@@ -187,6 +195,8 @@ class Pending extends Component
 
         }
 
+        });
+
     }
 
     public function authorize($id){
@@ -198,6 +208,8 @@ class Pending extends Component
       }
 
       public function update(){
+
+      DB::transaction(function () {
    
             $top_up = TopUp::find($this->top_up_id);
             $top_up->authorized_by_id = Auth::user()->id;
@@ -208,8 +220,12 @@ class Pending extends Component
         if ($this->authorize == "approved") {
 
         $container = Container::find($this->container->id);
-        $container->balance = $container->balance + $this->top_up->quantity;
-        $container->account_balance = $container->account_balance + $this->top_up->amount;
+        if(($container && is_numeric($container->balance)) && ($this->top_up && is_numeric($this->top_up->quantity))){
+            $container->balance = $container->balance + $this->top_up->quantity;
+        }
+        if(($container && is_numeric($container->account_balance)) && ($this->top_up && is_numeric($this->top_up->amount))){
+            $container->account_balance = $container->account_balance + $this->top_up->amount;
+        }
         $container->update();
 
         if (isset($top_up->amount) && $top_up->amount > 0) {
@@ -275,6 +291,8 @@ class Pending extends Component
             ]);
             return redirect()->route('top_ups.rejected');
         }
+
+      });
 
       }
 

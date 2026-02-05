@@ -115,6 +115,26 @@
                                         </div>
                                     </div>
                                 </div>
+                                  @if ($existing_bookings?->isNotEmpty())
+                                    <div class="form-group">
+                                            <label for="">There are still open bookings for 
+                                                @if ($type == "Asset")
+                                                    Asset: {{$selected_equipment->product ? $selected_equipment->product->name : ""}}
+                                                @elseif($type == "Horse")
+                                                    Horse: {{$selected_equipment->registration_number}} {{$selected_equipment->fleet_number ? "(".$selected_equipment->fleet_number.")" : ''}}
+                                                @elseif($type == "Vehicle")
+                                                    Vehicle: {{$selected_equipment->registration_number}} {{$selected_equipment->fleet_number ? "(".$selected_equipment->fleet_number.")" : ''}}
+                                                @elseif($type == "Trailer")
+                                                    Trailer: {{$selected_equipment->registration_number}} {{$selected_equipment->fleet_number ? "(".$selected_equipment->fleet_number.")" : ''}}
+                                                @endif
+                                            </label>
+                                            @foreach ($existing_bookings as $booking)
+                                                <small>
+                                                    <a href="{{route('bookings.show',$booking->id)}}" target="_blank" style="color: blue"><strong>Booking#:</strong> {{$booking->booking_number}}  {{$booking->ticket ? "Ticket#: ".$booking->ticket->ticket_number : ""}} <strong>Job: </strong>{{$booking->service_type ? $booking->service_type->name : ""}} <strong>Date:</strong> {{$booking->in_date}} <strong>Reason: </strong> {{$booking->description}}</a>@if(!$loop->last), @endif <br>
+                                                </small>
+                                            @endforeach
+                                        </div>   
+                                @endif
                                  <label for="exampleInputEmail13">Assigned To<span class="required" style="color: red">*</span></label>
                                     <div class="mb-10">
                                         <input type="radio" wire:model.debounce.300ms="assigned_to" value="Mechanic"  class="line-style"  />

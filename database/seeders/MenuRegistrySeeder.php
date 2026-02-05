@@ -258,10 +258,7 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
             'slug' => 'attendance-register',
             'icon' => 'fas fa-calendar',
             'sort_order' => 35,
-            'visibility' => $any([
-                    $all(['isHOD']),
-                    $all(['isSuperAdmin']),
-                ]),
+            'visibility' => null,
         ]);
 
            $upsertSub($m, [
