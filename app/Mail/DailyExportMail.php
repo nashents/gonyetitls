@@ -7,9 +7,11 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Contracts\Queue\ShouldQueue;
 
 
-class DailyExportMail extends Mailable
+class DailyExportMail extends Mailable 
+implements ShouldQueue
 {
     use Queueable, SerializesModels;
     public $company;
