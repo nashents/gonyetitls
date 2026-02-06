@@ -18,6 +18,8 @@ use App\Models\TyreAssignment;
 use App\Models\TicketInventory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\AuthorizationNotificationMail;
 
 class Pending extends Component
 {
@@ -192,9 +194,17 @@ class Pending extends Component
 
             $dispatch->authorized_by_id = Auth::id();
             $dispatch->authorization = $this->authorize;
-            $dispatch->authorization_date = Carbon::today();
+            $dispatch->authorization_date = now();
             $dispatch->authorization_comments = $this->comments;
             $dispatch->save();
+
+            $company =  Auth::user()->employee->company;
+            $user = $dispatch->user;
+            $email = $user?->email ?? null;
+            $notification = "Dispatch Authorization";
+            if($email){
+                Mail::to($email)->send(new AuthorizationNotificationMail($company, $notification, $user, $dispatch));
+            }
 
             if ($this->authorize == "approved") {
 

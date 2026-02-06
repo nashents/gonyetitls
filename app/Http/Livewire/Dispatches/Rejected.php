@@ -29,8 +29,7 @@ class Rejected extends Component
         $this->company = Auth::user()->employee->company;
      
     }
-
-
+    
     public function render()
     {
          $base = Dispatch::query()->with(['ticket','horse','vehicle','trailer','employee','department','branch'])

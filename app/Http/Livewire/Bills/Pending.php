@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
+use App\Mail\AuthorizationNotificationMail;
 
 class Pending extends Component
 {
@@ -79,8 +80,17 @@ class Pending extends Component
                  
                 $bill->authorized_by_id = Auth::user()->id;
                 $bill->authorization = $this->authorize;
+                $bill->authorization_date = now();
                 $bill->comments = $this->comments;
                 $bill->update();
+
+                $company =  Auth::user()->employee->company;
+                $user = $bill->user;
+                $email = $user?->email ?? null;
+                $notification = "Bill Authorization";
+                if($email){
+                    Mail::to($email)->send(new AuthorizationNotificationMail($company, $notification, $user, $bill));
+                }
 
                 if ($this->authorize == "approved") {
 
@@ -289,12 +299,21 @@ class Pending extends Component
         ]);
 
           DB::transaction(function () {
-    //   try{
+    
             $bill = Bill::find($this->bill_id);
             $bill->authorized_by_id = Auth::user()->id;
             $bill->authorization = $this->authorize;
+            $bill->authorization_date = now();
             $bill->comments = $this->comments;
             $bill->update();
+
+            $company =  Auth::user()->employee->company;
+            $user = $bill->user;
+            $email = $user?->email ?? null;
+            $notification = "Bill Authorization";
+            if($email){
+                Mail::to($email)->send(new AuthorizationNotificationMail($company, $notification, $user, $bill));
+            }
 
         if ($this->authorize == "approved") {
 
@@ -377,14 +396,6 @@ class Pending extends Component
             ]);
             return redirect()->route('bills.rejected');
         }
-// }
-// catch(\Exception $e){
-//     $this->dispatchBrowserEvent('hide-billEditModal');
-//     $this->dispatchBrowserEvent('alert',[
-//         'type'=>'error',
-//         'message'=>"Something went wrong while trying to authorize an bill!!"
-//     ]);
-//     }
 
     });
 

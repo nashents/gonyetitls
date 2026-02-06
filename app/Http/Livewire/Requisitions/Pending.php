@@ -11,6 +11,8 @@ use App\Models\Requisition;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\AuthorizationNotificationMail;
 
 class Pending extends Component
 {
@@ -82,15 +84,21 @@ class Pending extends Component
       public function update(){
 
           DB::transaction(function () {
-            
-    //   try{
-    
+          
             $requisition = Requisition::find($this->requisition_id);
             $requisition->authorized_by_id = Auth::user()->id;
             $requisition->authorization = $this->authorize;
-            $requisition->authorization_date = Carbon::today()->format('Y-m-d');
+            $requisition->authorization_date = now();
             $requisition->reason = $this->comments;
             $requisition->update();
+
+            $company =  Auth::user()->employee->company;
+            $user = $requisition->user;
+            $email = $user?->email ?? null;
+            $notification = "Requisition Authorization";
+            if($email){
+                Mail::to($email)->send(new AuthorizationNotificationMail($company, $notification, $user, $requisition));
+            }
 
         if ($this->authorize == "approved") {
 
@@ -144,6 +152,9 @@ class Pending extends Component
 
             }
 
+
+          
+
             $this->dispatchBrowserEvent('hide-authorizationModal');
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
@@ -158,14 +169,7 @@ class Pending extends Component
             ]);
             return redirect()->route('requisitions.rejected');
         }
-// }
-// catch(\Exception $e){
-//     $this->dispatchBrowserEvent('hide-authorizationModal');
-//     $this->dispatchBrowserEvent('alert',[
-//         'type'=>'error',
-//         'message'=>"Something went wrong while trying to authorize requisition!!"
-//     ]);
-//     }
+
     });
 
       }

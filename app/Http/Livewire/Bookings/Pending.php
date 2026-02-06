@@ -16,6 +16,8 @@ use App\Models\Inspection;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\AuthorizationNotificationMail;
 
 class Pending extends Component
 {
@@ -150,9 +152,17 @@ class Pending extends Component
         
                 $booking->authorized_by_id = Auth::user()->id;
                 $booking->authorization = $this->authorize;
-                $booking->authorization_date = date('Y-m-d');
+                $booking->authorization_date = now();
                 $booking->comments = $this->comments;
                 $booking->update();
+
+                $company =  Auth::user()->employee->company;
+                $user = $booking->user;
+                $email = $user?->email ?? null;
+                $notification = "Garage Booking Authorization";
+                if($email){
+                    Mail::to($email)->send(new AuthorizationNotificationMail($company, $notification, $user, $booking));
+                }
 
                 if ($this->authorize == "approved") {
 
@@ -263,6 +273,10 @@ class Pending extends Component
                             }
                         }
 
+            
+                       
+                         
+
                 }
             }
 
@@ -294,16 +308,25 @@ class Pending extends Component
 
       public function update(){
 
-         $this->validate([
+        $this->validate([
             'authorize' => 'required',
         ]);
+
         $booking = Booking::find($this->booking_id);
        
         $booking->authorized_by_id = Auth::user()->id;
         $booking->authorization = $this->authorize;
-        $booking->authorization_date = date('Y-m-d');
+        $booking->authorization_date = now();
         $booking->comments = $this->comments;
         $booking->update();
+
+        $company =  Auth::user()->employee->company;
+        $user = $booking->user;
+        $email = $user?->email ?? null;
+        $notification = "Garage Booking Authorization";
+        if($email){
+            Mail::to($email)->send(new AuthorizationNotificationMail($company, $notification, $user, $booking));
+        }
 
         if ($this->authorize == 'approved') {
 
@@ -413,6 +436,8 @@ class Pending extends Component
                 $hours->save();
             }
         }
+
+       
 
         $this->dispatchBrowserEvent('hide-authorizationModal');
         $this->dispatchBrowserEvent('alert',[

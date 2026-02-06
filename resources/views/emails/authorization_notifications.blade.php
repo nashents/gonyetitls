@@ -1,6 +1,6 @@
 @extends('layouts.emails')
 @section('title')
-Pending Authorization | {{$company->name}}
+Authorization Notification | {{$company->name}}
 @endsection
 @section('content')
 
@@ -20,7 +20,7 @@ Pending Authorization | {{$company->name}}
 										<tr>
 											<td style="padding:0 0 15px 0;color:#153643;">
 												<h3 style="font-size:16px; margin:0 0 20px 0;font-family:Arial,sans-serif;">{{$company->name}}</h3>
-												<p style="margin:0 0 12px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">This is an automated {{$notification?->when == "Before" ? "Pending" : ""}} {{ $notification?->category }} Email</p>
+												<p style="margin:0 0 12px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">This is an automated {{ $notification }} Email</p>
 											</td>
 										</tr>
 										<tr>
@@ -30,55 +30,46 @@ Pending Authorization | {{$company->name}}
 													$baseUrl = rtrim($company->website ?? '', '/');
 												@endphp
 
-												@if ($notification->category == "Trip Authorization")
+												@if ($notification == "Trip Authorization")
 													<p style="margin:0 0 12px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">
-														Can you please authorize trip {{ $model->trip_number }}.
-														<a href="{{ $baseUrl }}/trips/{{ $model->id }}" target="_blank" style="color: blue">Click me to authorize</a>
+														Your trip {{ $model->trip_number }} has been authorized.
+														<a href="{{ $baseUrl }}/trips/{{ $model->id }}" target="_blank" style="color: blue">Click me to view</a>
 													</p>
 
-												@elseif ($notification->category == "Requisition Authorization")
+												@elseif ($notification == "Requisition Authorization")
 													<p style="margin:0 0 12px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">
-														Can you please authorize requisition {{ $model->requisition_number }}.
-														<a href="{{ $baseUrl }}/requisitions/{{ $model->id }}" target="_blank" style="color: blue">Click me to authorize</a>
+														Your requisition {{ $model->requisition_number }} has been authorized.
+														<a href="{{ $baseUrl }}/requisitions/{{ $model->id }}" target="_blank" style="color: blue">Click me to view</a>
 													</p>
 
-												@elseif ($notification->category == "Credit Note Authorization")
+												@elseif ($notification == "Credit Note Authorization")
 													<p style="margin:0 0 12px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">
-														Can you please authorize credit note {{ $model->credit_note_number }}.
-														<a href="{{ $baseUrl }}/credit_notes/{{ $model->id }}" target="_blank" style="color: blue">Click me to authorize</a>
+														Your credit note {{ $model->credit_note_number }} has been authorized.
+														<a href="{{ $baseUrl }}/credit_notes/{{ $model->id }}" target="_blank" style="color: blue">Click me to view</a>
 													</p>
 
-												@elseif ($notification->category == "Fuel Order Authorization")
+												@elseif ($notification == "Fuel Order Authorization")
 													<p style="margin:0 0 12px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">
-														Can you please authorize fuel order {{ $model->order_number }}.
-														<a href="{{ $baseUrl }}/fuels/{{ $model->id }}" target="_blank" style="color: blue">Click me to authorize</a>
+														Your fuel order {{ $model->order_number }} has been authorized.
+														<a href="{{ $baseUrl }}/fuels/{{ $model->id }}" target="_blank" style="color: blue">Click me to view</a>
 													</p>
 
-												@elseif ($notification->category == "Garage Booking Authorization")
+												@elseif ($notification == "Garage Booking Authorization")
 													<p style="margin:0 0 12px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">
-														Can you please authorize booking {{ $model->order_number }}.
-														<a href="{{ $baseUrl }}/bookings/{{ $model->id }}" target="_blank" style="color: blue">Click me to authorize</a>
+														Your booking {{ $model->order_number }} has been authorized.
+														<a href="{{ $baseUrl }}/bookings/{{ $model->id }}" target="_blank" style="color: blue">Click me to view</a>
 													</p>
 
-												@elseif ($notification->category == "Invoice Authorization")
+												@elseif ($notification == "Invoice Authorization")
 													<p style="margin:0 0 12px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">
-														Can you please authorize invoice {{ $model->invoice_number }}.
-														<a href="{{ $baseUrl }}/invoices/{{ $model->id }}" target="_blank" style="color: blue">Click me to authorize</a>
+														Your invoice {{ $model->invoice_number }} has been authorized.
+														<a href="{{ $baseUrl }}/invoices/{{ $model->id }}" target="_blank" style="color: blue">Click me to view</a>
 													</p>
-												@elseif ($notification->category == "Dispatch Authorization")
+
+												@elseif ($notification == "Purchase Order Authorization")
 													<p style="margin:0 0 12px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">
-														Can you please authorize dispatch {{ $model->dispatch_number }}.
-														<a href="{{ $baseUrl }}/dispatches/{{ $model->id }}" target="_blank" style="color: blue">Click me to authorize</a>
-													</p>
-												@elseif ($notification->category == "Fuel Top Up Authorization")
-													<p style="margin:0 0 12px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">
-														Can you please authorize fuel top-up {{ $model->order_number }}.
-														<a href="{{ $baseUrl }}/top_ups/{{ $model->id }}" target="_blank" style="color: blue">Click me to authorize</a>
-													</p>
-												@elseif ($notification->category == "Purchase Order Authorization")
-													<p style="margin:0 0 12px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">
-														Can you please authorize purchase order {{ $model->purchase_number }}.
-														<a href="{{ $baseUrl }}/purchases/{{ $model->id }}" target="_blank" style="color: blue">Click me to authorize</a>
+														Your purchase order {{ $model->purchase_number }} has been authorized.
+														<a href="{{ $baseUrl }}/purchases/{{ $model->id }}" target="_blank" style="color: blue">Click me to view</a>
 													</p>
 												@endif
 												<br>

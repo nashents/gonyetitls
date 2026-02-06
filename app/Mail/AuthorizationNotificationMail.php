@@ -7,21 +7,23 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class PendingNotificationEmails extends Mailable implements ShouldQueue
+class AuthorizationNotificationMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
-    public $notification;
+    public $user;
     public $company;
     public $model;
+    public $notification;
     /**
      * Create a new message instance.
      *
      * @return void
      */
-    public function __construct($company, $notification, $model)
+    public function __construct($company, $notification , $user, $model)
     {
-        $this->notification = $notification;
+        $this->user = $user;
         $this->company = $company;
+        $this->notification = $notification;
         $this->model = $model;
     }
 
@@ -32,8 +34,8 @@ class PendingNotificationEmails extends Mailable implements ShouldQueue
      */
     public function build()
     {
-        return $this->view('emails.pending_notifications')
+        return $this->view('emails.authorization_notifications')
         ->from($this->company->noreply)
-        ->subject('Pending '.$this->notification->category ?? '' .' Email');
+        ->subject($this->notification .' Email');
     }
 }

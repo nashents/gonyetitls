@@ -12,6 +12,8 @@ use App\Models\BillExpense;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\AuthorizationNotificationMail;
 
 class Pending extends Component
 {
@@ -103,8 +105,17 @@ class Pending extends Component
 
                 $top_up->authorized_by_id = Auth::user()->id;
                 $top_up->authorization = $this->authorize;
+                $top_up->authorization_date = now();
                 $top_up->reason = $this->comments;
                 $top_up->update();
+
+                $company =  Auth::user()->employee->company;
+                $user = $top_up->user;
+                $email = $user?->email ?? null;
+                $notification = "Fuel Top Up Authorization";
+                if($email){
+                    Mail::to($email)->send(new AuthorizationNotificationMail($company, $notification, $user, $top_up));
+                }
 
                 if ($this->authorize == "approved") {
 
@@ -214,8 +225,17 @@ class Pending extends Component
             $top_up = TopUp::find($this->top_up_id);
             $top_up->authorized_by_id = Auth::user()->id;
             $top_up->authorization = $this->authorize;
+            $top_up->authorization_date = now();
             $top_up->reason = $this->comments;
             $top_up->update();
+
+            $company =  Auth::user()->employee->company;
+            $user = $top_up->user;
+            $email = $user?->email ?? null;
+            $notification = "Fuel Top Up Authorization";
+            if($email){
+                Mail::to($email)->send(new AuthorizationNotificationMail($company, $notification, $user, $top_up));
+            }
 
         if ($this->authorize == "approved") {
 

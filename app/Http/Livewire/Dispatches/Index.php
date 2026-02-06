@@ -18,11 +18,14 @@ use App\Models\Employee;
 use App\Models\Inventory;
 use App\Models\Department;
 use App\Models\DispatchItem;
+use App\Models\Notification;
 use Livewire\WithPagination;
 use App\Models\PaymentMethod;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\PendingNotificationEmails;
 
 class Index extends Component
 {
@@ -605,6 +608,19 @@ class Index extends Component
         
         $dispatch->total = $dispatch_total;
         $dispatch->save();
+
+        $notifications = Notification::where('when','before')->where('category','Dispatch Authorization')->where('status',1)->get();
+                
+        if ($notifications->isNotEmpty()) {
+            foreach ($notifications as $notification) {
+                if($notification && isset($notification->category)){
+                $email = $notification->email ?? $notification->employee->email ?? null;
+                if($email){
+                    Mail::to($email)->send(new PendingNotificationEmails($this->company, $notification, $dispatch));
+                }
+                }
+            }
+        }
 
         $this->dispatchBrowserEvent('hide-dispatchModal');
         $this->resetInputFields();

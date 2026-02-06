@@ -7,7 +7,11 @@ use App\Models\TopUp;
 use Livewire\Component;
 use App\Models\Currency;
 use App\Models\Container;
+use Illuminate\Support\Str;
+use App\Models\Notification;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\PendingNotificationEmails;
 
 class Index extends Component
 {
@@ -24,6 +28,7 @@ class Index extends Component
     public $fuel_type;
     public $amount;
     public $balance;
+    public $company;
 
 
 
@@ -33,6 +38,7 @@ class Index extends Component
         $this->top_ups = TopUp::orderBy('created_at','desc')->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->containers = Container::orderBy('name','asc')->get();
+        $this->company = Auth::user()->employee->company;
     }
 
     public function updated($value){
@@ -59,11 +65,45 @@ class Index extends Component
         $this->amount = "";
     }
 
+      public function top_upNumber(){
+
+        if (isset(Auth::user()->company)) {
+            $str = Auth::user()->company->name;
+            $words = explode(' ', $str);
+            if (isset($words[1][0])) {
+                $initials = $words[0][0].$words[1][0];
+            }else {
+                $initials = $words[0][0];
+            }
+        }elseif (isset(Auth::user()->employee->company)) {
+            $str = Auth::user()->employee->company->name;
+            $words = explode(' ', $str);
+            if (isset($words[1][0])) {
+                $initials = $words[0][0].$words[1][0];
+            }else {
+                $initials = $words[0][0];
+            }
+        }
+
+        $top_up = TopUp::latest()->orderBy('id','desc')->first();
+
+        if (!$top_up) {
+            $top_up_number =  $initials .'FT'. str_pad(1, 5, "0", STR_PAD_LEFT);
+        }else {
+            $number = $top_up->id + 1;
+            $top_up_number =  $initials .'FT'. str_pad($number, 5, "0", STR_PAD_LEFT);
+        }
+
+        return  $top_up_number;
+
+
+    }
+
     public function store(){
         try{
         $top_up = new TopUp;
         $top_up->user_id = Auth::user()->id;
-        $top_up->order_number = 'TFT' . Str::random(5);
+        $top_up->order_number = $this->top_upNumber();
         $top_up->container_id = $this->container_id;
         $top_up->date = $this->date;
         $top_up->currency_id = $this->currency_id;
@@ -76,6 +116,19 @@ class Index extends Component
         $container = Container::find($this->container_id);
         $container->balance = $this->quantity;
         $container->update();
+
+        $notifications = Notification::where('when','before')->where('category','Fuel Top Up Authorization')->where('status',1)->get();
+                
+        if ($notifications->isNotEmpty()) {
+            foreach ($notifications as $notification) {
+                if($notification && isset($notification->category)){
+                $email = $notification->email ?? $notification->employee->email ?? null;
+                if($email){
+                    Mail::to($email)->send(new PendingNotificationEmails($this->company, $notification, $top_up));
+                }
+                }
+            }
+        }
 
         $this->dispatchBrowserEvent('hide-top_upModal');
         $this->resetInputFields();

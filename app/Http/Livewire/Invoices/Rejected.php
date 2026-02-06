@@ -11,7 +11,9 @@ use Livewire\WithPagination;
 use App\Models\TransportOrder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
+use App\Mail\AuthorizationNotificationMail;
 
 class Rejected extends Component
 {
@@ -67,8 +69,17 @@ class Rejected extends Component
                     
                     $invoice->authorized_by_id = Auth::user()->id;
                     $invoice->authorization = $this->authorize;
+                    $invoice->authorization_date = now();
                     $invoice->comments = $this->comments;
                     $invoice->update();
+
+                    $company =  Auth::user()->employee->company;
+                    $user = $invoice->user;
+                    $email = $user?->email ?? null;
+                    $notification = "Invoice Authorization";
+                    if($email){
+                        Mail::to($email)->send(new AuthorizationNotificationMail($company, $notification, $user, $invoice));
+                    }
 
                     if ($this->authorize == "approved") {
                             if (isset($invoice->customer_id, $invoice->currency_id)) {

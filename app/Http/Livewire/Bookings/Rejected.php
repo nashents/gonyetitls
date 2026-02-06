@@ -13,6 +13,8 @@ use Livewire\Component;
 use App\Models\Inspection;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\AuthorizationNotificationMail;
 
 class Rejected extends Component
 {
@@ -123,9 +125,17 @@ class Rejected extends Component
         $booking = Booking::find($this->booking_id);
         $booking->authorized_by_id = Auth::user()->id;
         $booking->authorization = $this->authorize;
-        $booking->authorization_date = date('Y-m-d');
+        $booking->authorization_date = now();
         $booking->comments = $this->comments;
         $booking->update();
+
+        $company =  Auth::user()->employee->company;
+        $user = $booking->user;
+        $email = $user?->email ?? null;
+        $notification = "Garage Booking Authorization";
+        if($email){
+            Mail::to($email)->send(new AuthorizationNotificationMail($company, $notification, $user, $booking));
+        }
 
         if ($this->authorize == "approved") {
             $inspection = new Inspection;
@@ -233,7 +243,9 @@ class Rejected extends Component
                 $hours->save();
             }
         }
-    
+
+       
+
             $this->dispatchBrowserEvent('hide-authorizationModal');
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',

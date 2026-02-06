@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
+use App\Mail\AuthorizationNotificationMail;
 
 class Pending extends Component
 {
@@ -167,7 +168,7 @@ class Pending extends Component
             'authorize' => 'required',
         ]);
 
-         DB::transaction(function () {
+        DB::transaction(function () {
 
         $selected_fuels = Fuel::WhereIn('id',$this->selectedRows)->get();
         
@@ -180,6 +181,14 @@ class Pending extends Component
                 $fuel->authorization = $this->authorize;
                 $fuel->reason = $this->comments;
                 $fuel->update();
+
+                $company =  Auth::user()->employee->company;
+                $user = $fuel->user;
+                $email = $user?->email ?? null;
+                $notification = "Fuel Order Authorization";
+                if($email){
+                    Mail::to($email)->send(new AuthorizationNotificationMail($company, $notification, $user, $fuel));
+                }
 
                 if ($this->authorize == "approved") {
         
@@ -391,14 +400,13 @@ class Pending extends Component
                        
                     }
 
-                }else{
-                    $this->dispatchBrowserEvent('hide-fuelAuthorizationModal');
-                    $this->dispatchBrowserEvent('alert',[
-                        'type'=>'error',
-                        'message'=>"Please select fueling station to proceed!!"
-                    ]);
-                }
-
+                    }else{
+                        $this->dispatchBrowserEvent('hide-fuelAuthorizationModal');
+                        $this->dispatchBrowserEvent('alert',[
+                            'type'=>'error',
+                            'message'=>"Please select fueling station to proceed!!"
+                        ]);
+                    }
          
                 }
             }
@@ -438,14 +446,23 @@ class Pending extends Component
             'authorize' => 'required',
         ]);
 
-         DB::transaction(function () {
+        DB::transaction(function () {
 
   
         $fuel = Fuel::find($this->fuel_id);
         $fuel->authorized_by_id = Auth::user()->id;
         $fuel->authorization = $this->authorize;
+        $fuel->authorization_date = now();
         $fuel->reason = $this->comments;
         $fuel->update();
+
+        $company =  Auth::user()->employee->company;
+        $user = $fuel->user;
+        $email = $user?->email ?? null;
+        $notification = "Fuel Order Authorization";
+        if($email){
+            Mail::to($email)->send(new AuthorizationNotificationMail($company, $notification, $user, $fuel));
+        }
 
         if ($this->authorize == "approved") {
 
@@ -628,6 +645,8 @@ class Pending extends Component
                     $this->checked_by = $fuel->user->employee->name . ' ' . $fuel->user->employee->surname;
                     $this->regnumber = $fuel->horse ? $fuel->horse->registration_number : "";
 
+                   
+
                     if ($this->station_email != "") {
                         if (filter_var($this->station_email, FILTER_VALIDATE_EMAIL)) {
                             $data = array(
@@ -683,6 +702,8 @@ class Pending extends Component
                     ]);
 
                     return redirect()->route('fuels.approved');
+
+
 
             }else{
                 $this->dispatchBrowserEvent('hide-fuelAuthorizationModal');

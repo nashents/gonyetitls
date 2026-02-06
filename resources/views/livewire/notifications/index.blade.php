@@ -159,11 +159,12 @@
                                    <option value="">Select Category</option>
                                    <option value="Bill Authorization">Bill Authorization</option>
                                    <option value="Credit Note Authorization">Credit Note Authorization</option>
+                                   <option value="Dispatch Authorization">Dispatch Authorization</option>
                                    <option value="Fuel Order Authorization">Fuel Order Authorization</option> 
+                                   <option value="Fuel Top Up Authorization">Fuel Top Up Authorization</option> 
                                    <option value="Garage Booking Authorization">Garage Booking Authorization</option>
                                    <option value="Invoice Authorization">Invoice Authorization</option>
                                    <option value="Purchase Order Authorization">Purchase Order Authorization</option>
-                                   <option value="Reminder Notification">Reminder Notification</option>
                                    <option value="Requisition Authorization">Requisition Authorization</option>
                                    <option value="Trip Authorization">Trip Authorization</option>
                                </select>
@@ -272,11 +273,12 @@
                                     <option value="">Select Category</option>
                                     <option value="Bill Authorization">Bill Authorization</option>
                                     <option value="Credit Note Authorization">Credit Note Authorization</option>
+                                    <option value="Dispatch Authorization">Dispatch Authorization</option>
                                     <option value="Fuel Order Authorization">Fuel Order Authorization</option> 
+                                    <option value="Fuel Top Up Authorization">Fuel Top Up Authorization</option> 
                                     <option value="Garage Booking Authorization">Garage Booking Authorization</option>
                                     <option value="Invoice Authorization">Invoice Authorization</option>
                                     <option value="Purchase Order Authorization">Purchase Order Authorization</option>
-                                    <option value="Reminder Notification">Reminder Notification</option>
                                     <option value="Requisition Authorization">Requisition Authorization</option>
                                     <option value="Trip Authorization">Trip Authorization</option>
                                 </select>

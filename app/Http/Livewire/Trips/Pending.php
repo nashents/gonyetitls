@@ -32,6 +32,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
+use App\Mail\AuthorizationNotificationMail;
 
 class Pending extends Component
 {
@@ -257,9 +258,17 @@ class Pending extends Component
         $trip = Trip::find($this->trip_id);
         $trip->authorized_by_id = Auth::user()->id;
         $trip->authorization = $this->authorize;
-        $trip->authorization_date = Carbon::today()->format('Y-m-d');
+        $trip->authorization_date = now();
         $trip->reason = $this->comments;
         $trip->update();
+
+        $company =  Auth::user()->employee->company;
+        $user = $trip->user;
+        $email = $user?->email ?? null;
+        $notification = "Trip Authorization";
+        if($email){
+            Mail::to($email)->send(new AuthorizationNotificationMail($company, $notification, $user, $trip));
+        }
 
         if ($this->authorize == 'approved') {  
 
@@ -873,9 +882,17 @@ class Pending extends Component
 
                     $trip->authorized_by_id = Auth::user()->id;
                     $trip->authorization = $this->authorize;
-                    $trip->authorization_date = Carbon::today()->format('Y-m-d');
+                    $trip->authorization_date = now();
                     $trip->reason = $this->comments;
                     $trip->update();
+
+                    $company =  Auth::user()->employee->company;
+                    $user = $trip->user;
+                    $email = $user?->email ?? null;
+                    $notification = "Trip Authorization";
+                    if($email){
+                        Mail::to($email)->send(new AuthorizationNotificationMail($company, $notification, $user, $trip));
+                    }
 
                     if ($this->authorize == 'approved') {  
 

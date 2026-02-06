@@ -5,6 +5,7 @@ Namespace App\Http\Livewire\Notifications;
 use Livewire\Component;
 use App\Models\Employee;
 use App\Models\Notification;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
 class Index extends Component
@@ -52,6 +53,7 @@ class Index extends Component
     protected $rules = [
         'category' => 'required',
         'when' => 'required',
+        'email' => 'nullable|email',
     ];
 
     private function resetInputFields(){
@@ -65,7 +67,12 @@ class Index extends Component
 
    
     public function store(){
-        // try{
+        
+
+        $this->validate();
+
+         DB::transaction(function () {
+
         $notification = new Notification;
         $notification->user_id = Auth::user()->id;
         $notification->employee_id = $this->employee_id;
@@ -82,36 +89,32 @@ class Index extends Component
             'message'=>"Notification Created Successfully!!"
         ]);
 
-        // return redirect()->route('notifications.index');
-
-    //     }
-    //     catch(\Exception $e){
-    //     // Set Flash Message
-    //     $this->dispatchBrowserEvent('alert',[
-    //         'type'=>'error',
-    //         'message'=>"Something goes wrong while creating notification!!"
-    //     ]);
-    // }
+         });
     }
 
     public function edit($id){
-    $notification = Notification::find($id);
-    $this->user_id = $notification->user_id;
-    $this->employee_id = $notification->employee_id;
-    $this->category = $notification->category;
-    $this->when = $notification->when;
-    $this->email = $notification->email;
-    $this->status = $notification->status;
-    $this->notification_id = $notification->id;
-    $this->dispatchBrowserEvent('show-notificationEditModal');
+        $notification = Notification::find($id);
+        $this->user_id = $notification->user_id;
+        $this->employee_id = $notification->employee_id;
+        $this->category = $notification->category;
+        $this->when = $notification->when;
+        $this->email = $notification->email;
+        $this->status = $notification->status;
+        $this->notification_id = $notification->id;
+        $this->dispatchBrowserEvent('show-notificationEditModal');
 
     }
 
 
     public function update()
     {
+
+        $this->validate();
+
+        DB::transaction(function () {
+
         if ($this->notification_id) {
-            // try{
+           
             $notification = Notification::find($this->notification_id);
             $notification->employee_id = $this->employee_id;
             $notification->category = $this->category;
@@ -128,16 +131,10 @@ class Index extends Component
             ]);
 
 
-            // return redirect()->route('notifications.index');
-        //     }
-        //     catch(\Exception $e){
-        //     $this->dispatchBrowserEvent('hide-notificationEditModal');
-        //     $this->dispatchBrowserEvent('alert',[
-        //         'type'=>'error',
-        //         'message'=>"Something goes wrong while creating notification!!"
-        //     ]);
-        //   }
+         
         }
+
+         });
     }
 
 
