@@ -33,6 +33,7 @@ class Index extends Component
     
     private $employees;
     public $employee_id;
+    public $selected_employee;
     public $departments;
     public $department_id;
     public $ranks;
@@ -206,10 +207,10 @@ class Index extends Component
         $this->resetPage();
     }
 
-
       public function changePosition($id){
         $this->employee_id = $id;
-        $employee = Employee::find($id);
+        
+        $this->selected_employee = Employee::find($id);
         $employee_position = EmployeePosition::where('employee_id',$id)->latest()->first();
         if( $employee_position){
             $this->grade_id = $employee_position->grade_id;
@@ -220,11 +221,11 @@ class Index extends Component
         }else{
            
 
-            $this->grade_id = $employee->grade_id;
-            $this->department_id = $employee->departments->first()?->id;
-            $this->branch_id = $employee->branch_id;
-            $this->job_title_id = JobTitle::where('title',$employee->post)->first()?->id;
-            $this->rank_id = $employee->ranks->first()?->id;
+            $this->grade_id = $this->selected_employee->grade_id;
+            $this->department_id = $this->selected_employee->departments->first()?->id;
+            $this->branch_id = $this->selected_employee->branch_id;
+            $this->job_title_id = JobTitle::where('title',$this->selected_employee->post)->first()?->id;
+            $this->rank_id = $this->selected_employee->ranks->first()?->id;
         }
         
         $this->dispatchBrowserEvent('show-changePositionModal');

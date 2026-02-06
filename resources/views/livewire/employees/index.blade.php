@@ -225,8 +225,8 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fas fa-edit"></i> Change 
-                        @if (isset($employee))
-                            {{$employee ? $employee->name : ""}} {{$employee ? $employee->surname."` " : ""}}
+                        @if (isset($selected_employee))
+                            {{$selected_employee ? $selected_employee->name : ""}} {{$selected_employee ? $selected_employee->surname."` " : ""}}
                         @endif
                         Position <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                 </div>

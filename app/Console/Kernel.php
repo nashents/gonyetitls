@@ -42,7 +42,8 @@ class Kernel extends ConsoleKernel
         });
 
         $schedule->command('reports:send-daily')
-        ->dailyAt('08:00')
+        ->dailyAt('10:00')
+        ->timezone('Africa/Harare')
         ->withoutOverlapping()
         ->onOneServer();
     }

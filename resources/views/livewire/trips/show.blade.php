@@ -175,6 +175,17 @@
                                                                     {{$trip->trip_number}}
                                                                 </td>
                                                             </tr>
+                                                            @php
+                                                                $pod_document   = App\Models\TripDocument::where('trip_id', $trip->id)
+                                                                ->where('title', 'POD')
+                                                                ->first();
+                                                            @endphp 
+                                                            <tr>
+                                                                <th scope="row">POD#</th>
+                                                                <td>
+                                                                    {{$pod_document?->document_number}}
+                                                                </td>
+                                                            </tr>
                                                             @if ($initial_fuel)
                                                             <tr>
                                                                 <th scope="row">Fuel Order#</th>
