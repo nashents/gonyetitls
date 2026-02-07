@@ -8,7 +8,7 @@
     @endif
 @endsection
 @section('title')
-    Waste Collections | @if (Auth::user()->employee->company)
+    Waste Disposal | @if (Auth::user()->employee->company)
     {{Auth::user()->employee->company->name}}
     @elseif (Auth::user()->company)
     {{Auth::user()->company->name}}
@@ -22,8 +22,6 @@
 @section('content')
 
 
-
-
                     <div class="main-page">
                         <div class="container-fluid">
                             <div class="row page-title-div">
@@ -34,8 +32,7 @@
                                 <div class="col-md-6">
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
-                                        <li><a href="{{route('waste_collections.index')}}"><i class="fa fa-list"></i> Waste Collections</a></li>
-            							<li class="active"> <i class="fa fa-ban"></i> Rejected Waste Collections</li>
+            							<li class="active"> <i class="fa fa-list"></i> Waste Disposals</li>
             						</ul>
                                 </div>
                                 <!-- /.col-md-6 -->
@@ -45,14 +42,13 @@
                         </div>
                         <!-- /.container-fluid -->
 
-                        @livewire('waste-collections.rejected')
+                        @livewire('waste-disposals.index')
                         <!-- /.section -->
 
                     </div>
                     <!-- /.main-page -->
 
-          
-
+             
 
         <!-- ========== PAGE JS FILES ========== -->
 
@@ -62,7 +58,7 @@
 @section('extra-js')
     <script>
     $(document).ready( function () {
-        $('#waste_collectionsTable').DataTable();
+        $('#waste_disposalsTable').DataTable();
     } );
     </script>
 @endsection

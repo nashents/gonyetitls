@@ -33,8 +33,8 @@
                                 <div class="col-md-6">
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
-                                        <li><a href="{{route('waste_collections.index')}}"><i class="fa fa-list"></i> Attendance Registers</a></li>
-            							<li class="active"> <i class="fa fa-clock-o"></i> Pending Waste Collection</li>
+                                        <li><a href="{{route('waste_collections.index')}}"><i class="fa fa-list"></i> Waste Collections</a></li>
+            							<li class="active"> <i class="fa fa-clock-o"></i> Pending Waste Collections</li>
             						</ul>
                                 </div>
                                 <!-- /.col-md-6 -->
@@ -44,7 +44,7 @@
                         </div>
                         <!-- /.container-fluid -->
 
-                        @livewire('waste_collections.pending')
+                        @livewire('waste-collections.pending')
                         <!-- /.section -->
 
                     </div>

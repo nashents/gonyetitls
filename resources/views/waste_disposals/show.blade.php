@@ -1,4 +1,5 @@
 @extends('layouts.app')
+@section('content')
 
 @section('extra-css')
     @if (Auth::user()->employee->company)
@@ -8,61 +9,60 @@
     @endif
 @endsection
 @section('title')
-    Waste Collections | @if (Auth::user()->employee->company)
+    Waste Disposal |@if (Auth::user()->employee->company)
     {{Auth::user()->employee->company->name}}
     @elseif (Auth::user()->company)
     {{Auth::user()->company->name}}
     @endif
 @endsection
 
-@section('body-id')
+@section('body-class')
 <body class="top-navbar-fixed">
 @endsection
-
-@section('content')
-
-
 
 
                     <div class="main-page">
                         <div class="container-fluid">
                             <div class="row page-title-div">
-                              @include('includes.top-message')
+                                <div class="col-md-6">
+                                    <h4 class="title">Waste Disposal </h4>
+
+                                </div>
+                                <!-- /.col-md-6 -->
+
+                                <!-- /.col-md-6 text-right -->
                             </div>
                             <!-- /.row -->
                             <div class="row breadcrumb-div">
                                 <div class="col-md-6">
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
-                                        <li><a href="{{route('waste_collections.index')}}"><i class="fa fa-list"></i> Waste Collections</a></li>
-            							<li class="active"> <i class="fa fa-ban"></i> Rejected Waste Collections</li>
+            							<li><a href="{{route('waste_disposals.index')}}"><i class="fa fa-list"></i> Waste Disposals</a></li>
+            							<li class="active"> <i class="fa fa-eye"></i> Waste Disposal</li>
             						</ul>
                                 </div>
                                 <!-- /.col-md-6 -->
 
+                                <!-- /.col-md-6 -->
                             </div>
-                            <!-- /.row -->
+                          @livewire('waste-disposals.show', ['id' => $waste_disposal->id])
                         </div>
                         <!-- /.container-fluid -->
 
-                        @livewire('waste-collections.rejected')
-                        <!-- /.section -->
 
                     </div>
-                    <!-- /.main-page -->
 
-          
+
 
 
         <!-- ========== PAGE JS FILES ========== -->
 
-
 @endsection
-
 @section('extra-js')
     <script>
     $(document).ready( function () {
-        $('#waste_collectionsTable').DataTable();
+        $('#waste_disposalsTable').DataTable();
     } );
     </script>
+
 @endsection

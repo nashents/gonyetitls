@@ -17,7 +17,7 @@ class TripUpdatesMail extends Mailable implements ShouldQueue
      *
      * @return void
      */
-    public $trip;
+    public $trip = Null;
     public $trips;
     public $company;
     public $customer;
@@ -32,23 +32,26 @@ class TripUpdatesMail extends Mailable implements ShouldQueue
 
     public function __construct($trip, $company)
     {
+
+        if(is_null($trip)){
+            return ;
+        }
      
         $this->trip = $trip;
-        $this->trip_group = $trip->trip_group;
-        if ( $this->trip_group) {
-            $this->trips = $this->trip_group->trips;
-        }
+       
+        $this->trip_group = $this->trip?->trip_group;
+         $this->trips = $this->trip_group?->trips;
       
-        $this->cargo = $trip->cargo;
-        $this->loading_point = $trip->loading_point;
-        $this->offloading_point = $trip->offloading_point;
-        $this->customer = $trip->customer;
+        $this->cargo = $this->trip?->cargo;
+        $this->loading_point = $this->trip?->loading_point;
+        $this->offloading_point = $this->trip?->offloading_point;
+        $this->customer = $this->trip?->customer;
         $this->company = $company;
 
         $this->origin = Destination::find($this->trip->from)->country ? Destination::find($this->trip->from)->country->name : "";
-        $this->origin_destination = Destination::find($this->trip->from)->city . ' ' . $this->origin ;
-        $this->destination = Destination::find($this->trip->to)->country ? Destination::find($this->trip->to)->country->name : "";
-        $this->final_destination = Destination::find($this->trip->to)->city . ' ' . $this->destination;
+        $this->origin_destination = Destination::find($this->trip->from)?->city . ' ' . $this->origin ;
+        $this->destination = Destination::find($this->trip->to)?->country ? Destination::find($this->trip->to)?->country->name : "";
+        $this->final_destination = Destination::find($this->trip->to)?->city . ' ' . $this->destination;
       
     }
 

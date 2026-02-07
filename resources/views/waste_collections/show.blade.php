@@ -37,15 +37,15 @@
                                 <div class="col-md-6">
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
-            							<li><a href="{{route('waste_collections.index')}}"><i class="fa fa-list"></i> Attendance Registers</a></li>
-            							<li class="active"> <i class="fa fa-eye"></i> Attendance Register</li>
+            							<li><a href="{{route('waste_collections.index')}}"><i class="fa fa-list"></i> Waste Collections</a></li>
+            							<li class="active"> <i class="fa fa-eye"></i> Waste Collection</li>
             						</ul>
                                 </div>
                                 <!-- /.col-md-6 -->
 
                                 <!-- /.col-md-6 -->
                             </div>
-                          @livewire('waste_collections.show', ['id' => $waste_collection->id])
+                          @livewire('waste-collections.show', ['id' => $waste_collection->id])
                         </div>
                         <!-- /.container-fluid -->
 
