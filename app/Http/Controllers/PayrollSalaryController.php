@@ -25,11 +25,15 @@ class PayrollSalaryController extends Controller
         $company = Auth::user()->employee->company;
         $payroll_salary_items = $payroll_salary->payroll_salary_items;
         $employee = $payroll_salary->employee;
+        $salary =  $payroll_salary?->salary;
+        $currency = $salary?->currency;
         return view('payroll_salaries.preview')->with([
             'payroll_salary' => $payroll_salary,
             'payroll_salary_items' => $payroll_salary_items,
             'employee' => $employee,
             'company' => $company,
+            'salary' => $salary,
+            'currency' => $currency,
         ]);
     }
 

@@ -77,9 +77,11 @@ class Pending extends Component
                                 $payroll_salary_item->loan_id = $salary_item->loan_id;
                                 $payroll_salary_item->deduction_id = $salary_item->deduction_id;
                                 $payroll_salary_item->allowance_id = $salary_item->allowance_id;
+                                $payroll_salary_item->currency_id = $salary_item->currency_id;
                                 $payroll_salary_item->amount = $salary_item->amount;
+                                $payroll_salary_item->exchange_amount = $salary_item->exchange_amount;
+                                $payroll_salary_item->exchange_rate = $salary_item->exchange_rate;
                                 $payroll_salary_item->save();
-
                             }
 
                         }
