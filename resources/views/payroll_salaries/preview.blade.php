@@ -92,9 +92,10 @@ Payslip | @if (Auth::user()->employee->company)
                                         </td>
                                     </tr>
                                     @foreach ($payroll_salary->payroll_salary_items as $payroll_salary_item)
-                                        @php
-                                            $item_currency  = $payroll_salary_item->salary_item?->currency;
-                                        @endphp
+                                    @if ($payroll_salary_item)
+                                         @php
+                                        $item_currency  = $payroll_salary_item->salary_item?->currency;
+                                    @endphp
                                     <tr>
                                         
                                         <td class="text-center">
@@ -116,6 +117,8 @@ Payslip | @if (Auth::user()->employee->company)
                                             @endif
                                         </td>
                                     </tr>
+                                   
+                                    @endif
                                    
                                     @endforeach
                                    
