@@ -110,7 +110,7 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
         // if ($companyId) $q->where('company_id', $companyId);
 
         // if you have "active" flag
-        // $q->where('is_active', true);
+        $q->where('status', true);
 
         // Optional: keep the old behavior by allowing caller to pass a list of names
         if (!empty($this->loadingPointFilterNames)) {
@@ -392,8 +392,7 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
             ->whereHas('trips', fn(Builder $t) => $t->where('haulage_type', 'short_haul'))
             ->avg($this->shiftFuelConsumptionColumn);
 
-        // ⚠️ You have a leading tab in your original concentrate name ('	Platinum Concentrate')
-        // Fix it to 'Platinum Concentrate' (below).
+       
         $concTrips = (clone $tripBase)->whereHas('cargo', fn(Builder $q) => $q->where('name', 'Platinum Concentrate'));
         $concLoads  = (clone $concTrips)->count();
         $concActual = (clone $concTrips)->sum($this->tripWeightColumn);

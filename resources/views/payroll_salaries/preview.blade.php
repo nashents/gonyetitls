@@ -19,12 +19,13 @@ Payslip | @if (Auth::user()->employee->company)
 <div class="container">
     <div class="card">
         <div class="card-body">
+             <div id="print-area">
             <div id="invoice">
                 <div class="toolbar hidden-print">
                     <div class="text-end">
                         <button type="button" onclick="goBack()" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-arrow-left"></i> Back</button>
-                        <a href="{{route('payslip.print',$payroll_salary->id)}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-print"></i> Print</a>
-                        <a href="{{route('payslip.pdf', $payroll_salary->id)}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-file-pdf-o"></i> Export as PDF</a>
+                         <a href="javascript:void(0)" onclick="printSection()" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-print" style="color: black"></i> Print</a>
+                        {{-- <a href="{{route('payslip.pdf', $payroll_salary->id)}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-file-pdf-o"></i> Export as PDF</a> --}}
                     </div>
                     <hr>
                 </div>
@@ -55,10 +56,10 @@ Payslip | @if (Auth::user()->employee->company)
                             <div class="row contacts">
                                 <div class="col invoice-to">
                                     <h6 class="to">Emp: {{$employee->employee_number }} {{$employee->name}} {{$employee->surname}} </h6>
-                                    <div class="text-gray-light">Dpt: {{$employee->departments->first()->name}}</div>
+                                    <div class="text-gray-light">Dpt: {{$employee->departments->first()?->name}}</div>
                                     <div class="text-gray-light">Title: {{$employee->post}}</div>
                                     <div class="address">Add.: {{$employee->street_address}} {{$employee->suburb}}, {{$employee->city}}, {{$employee->country}}</div>
-                                    <div class="email">Email.: <a href="mailto:{{$employee->email}}">{{$employee->email}}</a></div>
+                                    <div class="email">Email.: {{$employee->email}}</div>
                                     <div class="text-gray-light">ID.: {{$employee->idnumber}}</div>
                                     <div class="text-gray-light">Pay Date.: {{$company->pay_date}}</div>
                                 </div>
@@ -153,6 +154,7 @@ Payslip | @if (Auth::user()->employee->company)
                     <div></div>
                 </div>
             </div>
+        </div>
         </div>
     </div>
 </div>

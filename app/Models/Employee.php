@@ -19,6 +19,9 @@ class Employee extends Model implements Auditable
     public function goods_receiveds(){
         return $this->hasMany('App\Models\GoodsReceived');
     }
+    public function waste_collection_items(){
+        return $this->hasMany('App\Models\WasteCollectionItem');
+    }
    
     public function employee_positions(){
         return $this->hasMany('App\Models\EmployeePosition');

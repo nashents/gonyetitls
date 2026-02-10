@@ -488,6 +488,7 @@ Route::resource('inventory_transfers','InventoryTransferController');
 Route::resource('tyre_transfers','TyreTransferController');
 Route::resource('goods_receiveds','GoodsReceivedController');
 Route::resource('racks','RackController');
+Route::resource('waste_types','WasteTypeController');
 Route::resource('dependants','DependantController');
 Route::resource('shifts','ShiftController');
 Route::resource('rehandlings','RehandlingController');
@@ -748,9 +749,9 @@ Route::get('bills/{id}/print','BillController@print')->name('bills.print');
 Route::get('bills/{id}/preview','BillController@preview')->name('bills.preview');
 Route::get('bills/{bill}/export-to-pdf','BillController@generatePdf')->name('bills.pdf');
 
-Route::get('payrolls/salary/payslip/{id}/print','PayrollSalaryController@print')->name('payslip.print');
-Route::get('payrolls/salary/payslip/{id}/preview','PayrollSalaryController@preview')->name('payslip.preview');
-Route::get('payrolls/salary/payslip/{id}/export-to-pdf','PayrollSalaryController@generatePdf')->name('payslip.pdf');
+Route::get('payrolls/salary/payslip/{id}/print','PayrollSalaryController@print')->name('payslips.print');
+Route::get('payrolls/salary/payslip/{id}/preview','PayrollSalaryController@preview')->name('payslips.preview');
+Route::get('payrolls/salary/payslip/{id}/export-to-pdf','PayrollSalaryController@generatePdf')->name('payslips.pdf');
 
 Route::get('receipts/{id}/email','ReceiptController@email')->name('receipts.email');
 Route::get('receipts/{id}/print','ReceiptController@print')->name('receipts.print');

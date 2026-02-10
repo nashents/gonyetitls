@@ -131,6 +131,59 @@
 @stack('scripts')
     
     <script type="text/javascript">
+            window.addEventListener('show-waste_typeModal', event => {
+                $('#waste_typeModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-waste_typeModal', event => {
+                $('#waste_typeModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-waste_typeEditModal', event => {
+                $('#waste_typeEditModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-waste_typeEditModal', event => {
+                $('#waste_typeEditModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-waste_collectionModal', event => {
+                $('#waste_collectionModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-waste_collectionModal', event => {
+                $('#waste_collectionModal').modal('hide');
+            })
+    </script>
+
+    <script type="text/javascript">
+            window.addEventListener('show-waste_collectionEditModal', event => {
+                $('#waste_collectionEditModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-waste_collectionEditModal', event => {
+                $('#waste_collectionEditModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-waste_collectionDeleteModal', event => {
+                $('#waste_collectionDeleteModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-waste_collectionDeleteModal', event => {
+                $('#waste_collectionDeleteModal').modal('hide');
+            })
+    </script>
+
+
+    <script type="text/javascript">
             window.addEventListener('show-paymentDeleteModal', event => {
                 $('#paymentDeleteModal').modal('show');
             })

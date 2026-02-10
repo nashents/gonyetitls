@@ -35,7 +35,7 @@
                                                 <span class="caret"></span>
                                             </button>
                                             <ul class="dropdown-menu">
-                                                <li><a href="{{ route('payslip.preview', $payroll_salary->id) }}"><i class="fa fa-eye color-success"></i> Preview</a></li>
+                                                <li><a href="{{ route('payslips.preview', $payroll_salary->id) }}"><i class="fa fa-eye color-success"></i> Preview</a></li>
                                             </ul>
                                         </div>
                                      

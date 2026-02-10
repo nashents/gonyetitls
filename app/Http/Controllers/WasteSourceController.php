@@ -2,27 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Models\WasteSource;
+use App\Http\Requests\StoreWasteSourceRequest;
+use App\Http\Requests\UpdateWasteSourceRequest;
 
-class AuditController extends Controller
+class WasteSourceController extends Controller
 {
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function index($id = null,$category = null)
+    public function index()
     {
-        return view('audits.index')->with(
-            [
-                'id' => $id,
-                'category' => $category,
-            ]
-        );
-    }
-    public function all()
-    {
-        return view('audits.all');
+        //
     }
 
     /**
@@ -38,10 +31,10 @@ class AuditController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Http\Requests\StoreWasteSourceRequest  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(StoreWasteSourceRequest $request)
     {
         //
     }
@@ -49,10 +42,10 @@ class AuditController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  int  $id
+     * @param  \App\Models\WasteSource  $wasteSource
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(WasteSource $wasteSource)
     {
         //
     }
@@ -60,10 +53,10 @@ class AuditController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  int  $id
+     * @param  \App\Models\WasteSource  $wasteSource
      * @return \Illuminate\Http\Response
      */
-    public function edit($id)
+    public function edit(WasteSource $wasteSource)
     {
         //
     }
@@ -71,11 +64,11 @@ class AuditController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
+     * @param  \App\Http\Requests\UpdateWasteSourceRequest  $request
+     * @param  \App\Models\WasteSource  $wasteSource
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(UpdateWasteSourceRequest $request, WasteSource $wasteSource)
     {
         //
     }
@@ -83,10 +76,10 @@ class AuditController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  int  $id
+     * @param  \App\Models\WasteSource  $wasteSource
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(WasteSource $wasteSource)
     {
         //
     }

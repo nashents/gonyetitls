@@ -103,7 +103,6 @@ class AccountSeeder extends Seeder
             [ 'currency_id' => Null, 'account_type_group_id' =>  $business_owner_contribution_and_drawing->account_type_group->id,'account_type_id' => $business_owner_contribution_and_drawing ? $business_owner_contribution_and_drawing->id : "", 'name' => 'Common Shares', 'abbreviation' => '', 'rate' => '', 'description' => "Common shares of a corporation can be issued to business owners, investors, and employees.", 'hs_code' => ''],
             [ 'currency_id' => Null, 'account_type_group_id' =>  $retained_earnings_profit->account_type_group->id,'account_type_id' => $retained_earnings_profit ? $retained_earnings_profit->id : "",'name' => 'Retained Earnings/Deficit','abbreviation' => '','rate' => '', 'description' => "Retained earnings are the total net income your business has earned from its first day to the current date, minus any dividends you've already distributed. If the amount of retained earnings is negative, report it as a deficit.", 'hs_code' => ''],
         
-           
             //Income
 
             [ 'currency_id' => Null, 'account_type_group_id' =>  $income->account_type_group->id,'account_type_id' => $income ? $income->id : "",'name' => 'Sales','abbreviation' => '','rate' => '', 'description' => "Payments from your customers for products and services that your business sold.", 'hs_code' => ''],
@@ -126,7 +125,6 @@ class AccountSeeder extends Seeder
             [  'currency_id' => Null, 'account_type_group_id' =>  $other_short_term_asset->account_type_group->id,'account_type_id' => $other_short_term_asset->id, 'name' => 'Taxes Recoverable/Refundable','abbreviation' => '','rate' => '','description' => "A tax is recoverable if you can deduct the tax you've paid from the tax you've collected. Many sales taxes are considered recoverable.", 'hs_code' => ''],
             [  'currency_id' => Null, 'account_type_group_id' =>  $other_short_term_asset->account_type_group->id,'account_type_id' => $other_short_term_asset->id, 'name' => 'Sample Account','abbreviation' => '','rate' => '','description' => "", 'hs_code' => ''],
            
-        
         ];
 
            Account::insert($accounts);
