@@ -199,7 +199,7 @@
                                 // ],
                                 'topups' => [
                                     'label' => 'Top Up',
-                                    'route' => 'topups.pending',
+                                    'route' => 'top_ups.pending',
                                     'icon'  => 'fa-level-up',
                                 ],
                                 // 'fuel_requests' => [
