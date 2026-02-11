@@ -91,11 +91,11 @@ Payslip | @if (Auth::user()->employee->company)
                                             {{$currency?->symbol}}{{number_format($payroll_salary->basic,2)}}
                                         </td>
                                     </tr>
-                                    @foreach ($payroll_salary->payroll_salary_items as $payroll_salary_item)
-                                    @if ($payroll_salary_item)
-                                         @php
-                                        $item_currency  = $payroll_salary_item->salary_item?->currency;
-                                    @endphp
+                                    @foreach ($payroll_salary->payroll_salary_items as $item)
+                                    @if ($item)
+                                        @php
+                                            $item_currency  = $item?->currency;
+                                        @endphp
                                     <tr>
                                         
                                         <td class="text-center">

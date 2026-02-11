@@ -2,9 +2,9 @@
 
 namespace App\Console;
 
+use App\Console\Commands\AccrueEmployeeLeave;
 use Carbon\Carbon;
 use App\Console\Commands\SyncChangeLog;
-use App\Console\Commands\AccrueLeaveDays;
 use Illuminate\Console\Scheduling\Schedule;
 use App\Console\Commands\FitnessReminderCommand;
 use App\Console\Commands\SendDailyReports;
@@ -19,7 +19,7 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         FitnessReminderCommand::class,
-        AccrueLeaveDays::class,
+        AccrueEmployeeLeave::class,
         SendDailyReports::class,
         SyncChangeLog::class,
     ];
@@ -35,15 +35,16 @@ class Kernel extends ConsoleKernel
         $schedule->command('reminder:send')
         ->timezone('Africa/Harare');
      
-        $schedule->command('employee:accrue-leave')
-        ->daily()
-        ->when(function () {
-            return Carbon::today()->isSameDay(Carbon::now()->endOfMonth());
-        });
-
+      
         $schedule->command('reports:send-daily')
         ->dailyAt('08:00')
         ->timezone('Africa/Harare')
+        ->withoutOverlapping()
+        ->onOneServer();
+
+        $schedule->command('employees:accrue-leave')
+        ->monthlyOn(1, '00:05')            // 1st day of the month at 00:05
+        ->timezone('Africa/Harare')        // your timezone
         ->withoutOverlapping()
         ->onOneServer();
     }

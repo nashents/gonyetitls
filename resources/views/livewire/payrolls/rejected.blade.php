@@ -68,7 +68,7 @@
                                                 <li><a href="{{ route('payrolls.show', $payroll->id) }}" ><i class="fa fa-eye color-default"></i> View</a></li>
                                             </ul>
                                         </div>
-                                        @include('payrolls.delete')
+                                       
                                 </td>
                                   </tr>
                                   @endforeach

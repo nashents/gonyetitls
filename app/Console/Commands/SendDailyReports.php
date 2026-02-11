@@ -5,12 +5,14 @@ namespace App\Console\Commands;
 use Illuminate\Support\Str;
 use App\Exports\TripsExport;
 use App\Mail\DailyExportMail;
+use App\Exports\TicketsExport;
+use App\Exports\BookingsExport;
+
 use App\Exports\PaymentsExport;
 use Illuminate\Console\Command;
-
+// Your exports:
 use App\Exports\DailyReportExport;
 use App\Exports\ShiftsDailyExport;
-// Your exports:
 use App\Mail\DailyReportsDiskMail;
 use Illuminate\Support\Facades\Mail;
 use Maatwebsite\Excel\Facades\Excel;
@@ -48,6 +50,10 @@ class SendDailyReports extends Command
             [
                 'export' => new ShiftsDailyExport(),
                 'file'   => "shifts-{$date}.xlsx",
+            ],
+            [
+                'export' => new BookingsExport(),
+                'file'   => "garage_bookings-{$date}.xlsx",
             ],
            
         ];

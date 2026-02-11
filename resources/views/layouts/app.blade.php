@@ -131,6 +131,16 @@
 @stack('scripts')
     
     <script type="text/javascript">
+            window.addEventListener('show-payrollDeleteModal', event => {
+                $('#payrollDeleteModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-payrollDeleteModal', event => {
+                $('#payrollDeleteModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
             window.addEventListener('show-waste_typeModal', event => {
                 $('#waste_typeModal').modal('show');
             })

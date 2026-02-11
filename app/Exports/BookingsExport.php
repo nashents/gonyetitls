@@ -2,13 +2,13 @@
 
 namespace App\Exports;
 
+use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Booking;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Events\AfterSheet;
+use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\WithEvents;
@@ -17,6 +17,7 @@ use Maatwebsite\Excel\Concerns\WithDrawings;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
+use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithCustomStartCell;
 
 class BookingsExport implements
@@ -26,7 +27,8 @@ class BookingsExport implements
     WithHeadings,
     WithEvents,
     WithDrawings,
-    WithCustomStartCell
+    WithCustomStartCell,
+    WithColumnWidths
 {
     use Exportable;
 
@@ -120,6 +122,13 @@ class BookingsExport implements
         );
 
       
+    }
+
+    public function columnWidths(): array
+    {
+        return [
+            'D' => 35, // or 30 / 40 depending on how much you want
+        ];
     }
 
     /**
@@ -369,9 +378,10 @@ class BookingsExport implements
                     'startColor' => ['rgb' => 'FCE4D6'],
                 ],
             ]);
-            $sheet->getStyle("D8:D{$row}")
-                  ->getAlignment()
-                  ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+           $sheet->getStyle("D8:D{$row}")
+            ->getAlignment()
+            ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT)
+            ->setWrapText(true);  // 👈 this makes long lines go down instead of widening
         },
     ];
 }

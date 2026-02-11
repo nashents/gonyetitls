@@ -50,51 +50,12 @@ class Pending extends Component
             $payroll->save();
 
             if ($this->authorize == "Approved") {
-                
-                if (isset($this->salaries)) {
-
-                    if ($this->salaries->count()>0) {
-
-                        foreach ($this->salaries as $salary) {
-
-                            $payroll_salary = new PayrollSalary;
-                            $payroll_salary->payroll_id = $payroll->id;
-                            $payroll_salary->salary_id = $salary->id;
-                            $payroll_salary->currency_id = $salary->currency_id;
-                            $payroll_salary->employee_id = $salary->employee_id;
-                            $payroll_salary->basic = $salary->basic;
-                            $payroll_salary->gross = $salary->gross;
-                            $payroll_salary->net = $salary->net;
-                            $payroll_salary->total_deductions = $salary->total_deductions;
-                            $payroll_salary->total_allowances = $salary->total_allowances;
-                            $payroll_salary->save();
-                            
-                            foreach ($salary->salary_items as $salary_item) {
-
-                                $payroll_salary_item = new PayrollSalaryItem;
-                                $payroll_salary_item->payroll_salary_id = $payroll_salary->id;
-                                $payroll_salary_item->salary_item_id = $salary_item->id;
-                                $payroll_salary_item->loan_id = $salary_item->loan_id;
-                                $payroll_salary_item->deduction_id = $salary_item->deduction_id;
-                                $payroll_salary_item->allowance_id = $salary_item->allowance_id;
-                                $payroll_salary_item->currency_id = $salary_item->currency_id;
-                                $payroll_salary_item->amount = $salary_item->amount;
-                                $payroll_salary_item->exchange_amount = $salary_item->exchange_amount;
-                                $payroll_salary_item->exchange_rate = $salary_item->exchange_rate;
-                                $payroll_salary_item->save();
-                            }
-
-                        }
-                    }
-
-                }
-
-                  $this->dispatchBrowserEvent('hide-authorizationModal');
-                    $this->dispatchBrowserEvent('alert', [
-                        'type' => 'success',
-                        'message' => "Payroll Processed Successfully"
-                    ]);
-                    return redirect()->route('payrolls.approved');
+                $this->dispatchBrowserEvent('hide-authorizationModal');
+                $this->dispatchBrowserEvent('alert', [
+                    'type' => 'success',
+                    'message' => "Payroll Processed Successfully"
+                ]);
+                return redirect()->route('payrolls.approved');
             }
 
             

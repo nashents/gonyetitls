@@ -21,6 +21,9 @@ class Deduction extends Model implements Auditable
     public function recoveries(){
         return $this->hasMany('App\Models\Recovery');
     }
+    public function payroll_salary_items(){
+        return $this->hasMany('App\Models\PayrollSalaryItem');
+    }
     public function salary_items(){
         return $this->hasMany('App\Models\SalaryItem');
     }

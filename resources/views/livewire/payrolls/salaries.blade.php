@@ -49,10 +49,11 @@
                                     <span class="caret"></span>
                                 </button>
                                 <ul class="dropdown-menu">
-                                    <li><a href="{{ route('payslips.preview', $payroll_salary->id) }}"><i class="fa fa-file color-success"></i>Payslip</a></li>
+                                    @if ($payroll_salary->payroll->authorization == "approved")
+                                        <li><a href="{{ route('payslips.preview', $payroll_salary->id) }}"><i class="fa fa-eye color-success"></i> Preview</a></li>
+                                    @endif
                                 </ul>
                             </div>
-                        
                         </td>
                     </tr>
                   @endif

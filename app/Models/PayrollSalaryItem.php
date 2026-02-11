@@ -19,4 +19,16 @@ class PayrollSalaryItem extends Model implements Auditable
     public function salary_item(){
     return $this->belongsTo('App\Models\SalaryItem');
     }
+    public function deduction(){
+    return $this->belongsTo('App\Models\Deduction');
+    }
+    public function loan(){
+    return $this->belongsTo('App\Models\Loan');
+    }
+    public function currency(){
+    return $this->belongsTo('App\Models\Currency');
+    }
+    public function allowance(){
+    return $this->belongsTo('App\Models\Allowance');
+    }
 }

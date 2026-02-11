@@ -18,6 +18,9 @@ class Loan extends Model implements Auditable
     public function employee(){
         return $this->belongsTo('App\Models\Employee');
     }
+    public function payroll_salary_items(){
+        return $this->hasMany('App\Models\PayrollSalaryItem');
+    }
     public function currency(){
         return $this->belongsTo('App\Models\Currency');
     }
