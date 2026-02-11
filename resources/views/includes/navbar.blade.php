@@ -133,6 +133,171 @@
                             </ul>
                         </li>
 
+                      
+                        {{-- Operational Notifications (pending authorizations) --}}
+                        @if (in_array('Super Admin', $role_names))
+                            
+                       
+                        @php
+                            $pendingCounts = $pendingCounts ?? [];
+
+                            $pendingMap = [
+                                'trips' => [
+                                    'label' => 'Trip',
+                                    'route' => 'trips.pending',
+                                    'icon'  => 'fa-truck',
+                                ],
+                                'bookings' => [
+                                    'label' => 'Booking',
+                                    'route' => 'bookings.pending',
+                                    'icon'  => 'fa-calendar',
+                                ],
+                                'invoices' => [
+                                    'label' => 'Invoice',
+                                    'route' => 'invoices.pending',
+                                    'icon'  => 'fa-file-text-o',
+                                ],
+                                'bills' => [
+                                    'label' => 'Bill',
+                                    'route' => 'bills.pending',
+                                    'icon'  => 'fa-file-o',
+                                ],
+                                'credit_notes' => [
+                                    'label' => 'Credit Note',
+                                    'route' => 'credit-notes.pending', // adjust route name if different
+                                    'icon'  => 'fa-file-text',
+                                ],
+                                'purchases' => [
+                                    'label' => 'Purchase',
+                                    'route' => 'inventory_purchases.pending',
+                                    'icon'  => 'fa-shopping-cart',
+                                ],
+                                'transfers' => [
+                                    'label' => 'Transfer',
+                                    'route' => 'transfers.pending',
+                                    'icon'  => 'fa-exchange',
+                                ],
+                                'dispatches' => [
+                                    'label' => 'Dispatch',
+                                    'route' => 'inventory_dispatches.pending',
+                                    'icon'  => 'fa-send',
+                                ],
+                                'retreads' => [
+                                    'label' => 'Retread',
+                                    'route' => 'retreads.pending',
+                                    'icon'  => 'fa-circle-o-notch',
+                                ],
+                                'recoveries' => [
+                                    'label' => 'Recovery',
+                                    'route' => 'recoveries.pending',
+                                    'icon'  => 'fa-life-ring',
+                                ],
+                                // 'rentals' => [
+                                //     'label' => 'Rental',
+                                //     'route' => 'rentals.pending',
+                                //     'icon'  => 'fa-car',
+                                // ],
+                                'topups' => [
+                                    'label' => 'Top Up',
+                                    'route' => 'topups.pending',
+                                    'icon'  => 'fa-level-up',
+                                ],
+                                // 'fuel_requests' => [
+                                //     'label' => 'Fuel Request',
+                                //     'route' => 'fuel-requests.pending',
+                                //     'icon'  => 'fa-tint',
+                                // ],
+                                'gate_passes' => [
+                                    'label' => 'Gate Pass',
+                                    'route' => 'gate_passes.pending',
+                                    'icon'  => 'fa-sign-out',
+                                ],
+                                'waste_collections' => [
+                                    'label' => 'Waste Collection',
+                                    'route' => 'waste_collections.pending',
+                                    'icon'  => 'fa-recycle',
+                                ],
+                                'waste_disposals' => [
+                                    'label' => 'Waste Disposal',
+                                    'route' => 'waste_disposals.pending',
+                                    'icon'  => 'fa-trash',
+                                ],
+                                'requisitions' => [
+                                    'label' => 'Requisition',
+                                    'route' => 'requisitions.pending',
+                                    'icon'  => 'fa-list-alt',
+                                ],
+                                'payrolls' => [
+                                    'label' => 'Payroll',
+                                    'route' => 'payrolls.pending',
+                                    'icon'  => 'fa-money',
+                                ],
+                                'loans' => [
+                                    'label' => 'Loan',
+                                    'route' => 'loans.pending',
+                                    'icon'  => 'fa-credit-card',
+                                ],
+                                'leaves' => [
+                                    'label' => 'Leave',
+                                    'route' => 'leaves.pending',
+                                    'icon'  => 'fa-plane',
+                                ],
+                                'attendances' => [
+                                    'label' => 'Attendance',
+                                    'route' => 'attendances.pending',
+                                    'icon'  => 'fa-clock-o',
+                                ],
+                            ];
+
+                            $pendingTotal = 0;
+                            foreach ($pendingCounts as $k => $v) {
+                                $pendingTotal += (int) $v;
+                            }
+
+                              $sortedPendingMap = collect($pendingMap)
+                            ->sortBy(fn ($item) => $item['label'])
+                            ->toArray();
+                        @endphp
+
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown"
+                            role="button" aria-haspopup="true" aria-expanded="false">
+                                <i class="fa fa-tasks"></i>
+                                @if ($pendingTotal > 0)
+                                    <span class="badge badge-warning">{{ $pendingTotal }}</span>
+                                @endif
+                            </a>
+
+                            <ul class="dropdown-menu" style="max-height:400px; overflow-y:auto;">
+                                <li class="dropdown-header">
+                                    <strong>Pending Authorizations</strong>
+                                </li>
+
+                                @if ($pendingTotal === 0)
+                                    <li>
+                                        <a href="#">
+                                            <i class="fa fa-check text-success"></i>
+                                            No pending items
+                                        </a>
+                                    </li>
+                                @else
+                                    @foreach ($sortedPendingMap as $key => $meta)
+                                        @php $count = $pendingCounts[$key] ?? 0; @endphp
+                                        @if ($count > 0)
+                                            <li>
+                                                <a href="{{ route($meta['route']) }}">
+                                                    <i class="fa {{ $meta['icon'] }}"></i>
+                                                    {{ $count }}
+                                                    pending {{ $meta['label'] }}{{ $count > 1 ? 's' : '' }}
+                                                </a>
+                                            </li>
+                                        @endif
+                                    @endforeach
+                                @endif
+                            </ul>
+                        </li>
+                        @endif
+
                         {{-- Notifications / Reminders --}}
                         <li class="dropdown">
                             <a href="#" class="dropdown-toggle tour-one" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">

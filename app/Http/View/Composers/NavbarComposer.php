@@ -3,10 +3,32 @@
 namespace App\Http\View\Composers;
 
 use Carbon\Carbon;
-use App\Models\User;
-use App\Models\Fitness;
+use App\Models\Bill;
+use App\Models\Fuel;
 
+use App\Models\Loan;
+use App\Models\Trip;
+use App\Models\User;
+use App\Models\Leave;
+use App\Models\TopUp;
+use App\Models\Rental;
+use App\Models\Booking;
+use App\Models\Fitness;
+use App\Models\Invoice;
+use App\Models\Payroll;
+use App\Models\Retread;
+use App\Models\Dispatch;
+use App\Models\GatePass;
+use App\Models\Purchase;
+use App\Models\Recovery;
+use App\Models\Transfer;
 use Illuminate\View\View;
+use App\Models\Attendance;
+use App\Models\CreditNote;
+use App\Models\FuelRequest;
+use App\Models\Requisition;
+use App\Models\WasteDisposal;
+use App\Models\WasteCollection;
 use Illuminate\Support\Facades\Auth;
 
 class NavbarComposer
@@ -14,6 +36,30 @@ class NavbarComposer
     public function compose(View $view): void
     {
         $user = User::find(Auth::user()->id);
+
+              $pendingCounts = [
+            'trips'            => Trip::where('authorization', 'pending')->count(),
+            'bookings'         => Booking::where('authorization', 'pending')->count(),
+            'invoices'         => Invoice::where('authorization', 'pending')->count(),
+            'bills'            => Bill::where('authorization', 'pending')->count(),
+            'credit_notes'     => CreditNote::where('authorization', 'pending')->count(),
+            'purchases'        => Purchase::where('authorization', 'pending')->count(),
+            'transfers'        => Transfer::where('authorization', 'pending')->count(),
+            'dispatches'       => Dispatch::where('authorization', 'pending')->count(),
+            'retreads'         => Retread::where('authorization', 'pending')->count(),
+            'recoveries'       => Recovery::where('authorization', 'pending')->count(),
+            'rentals'          => Rental::where('authorization', 'pending')->count(),
+            'topups'           => TopUp::where('authorization', 'pending')->count(),
+            // 'fuel_requests'    => FuelRequest::where('authorization', 'pending')->count(),
+            'gate_passes'      => GatePass::where('authorization', 'pending')->count(),
+            'waste_collections'=> WasteCollection::where('authorization', 'pending')->count(),
+            'waste_disposals'  => WasteDisposal::where('authorization', 'pending')->count(),
+            'requisitions'     => Requisition::where('authorization', 'pending')->count(),
+            'payrolls'         => Payroll::where('authorization', 'pending')->count(),
+            'loans'            => Loan::where('authorization', 'pending')->count(),
+            'leaves'           => Leave::where('management_decision', 'pending')->count(),
+            'attendances'      => Attendance::where('authorization', 'pending')->count(),
+        ];
 
         // If guest, just share empties (prevents errors)
         if (! $user) {
@@ -140,6 +186,31 @@ class NavbarComposer
             'reminders' => $reminders,
             'expired_reminders' => $expired_reminders,
             'reminders_count' => $reminders_count,
+           
+            // Pending authorizations (Operations Control Tower)
+            'pendingCounts' => [
+                'trips'             => $pendingCounts['trips'] ?? 0,
+                'bookings'          => $pendingCounts['bookings'] ?? 0,
+                'invoices'          => $pendingCounts['invoices'] ?? 0,
+                'bills'             => $pendingCounts['bills'] ?? 0,
+                'credit_notes'      => $pendingCounts['credit_notes'] ?? 0,
+                'purchases'         => $pendingCounts['purchases'] ?? 0,
+                'transfers'         => $pendingCounts['transfers'] ?? 0,
+                'dispatches'        => $pendingCounts['dispatches'] ?? 0,
+                'retreads'          => $pendingCounts['retreads'] ?? 0,
+                'recoveries'        => $pendingCounts['recoveries'] ?? 0,
+                'rentals'           => $pendingCounts['rentals'] ?? 0,
+                'topups'            => $pendingCounts['topups'] ?? 0,
+                // 'fuel_requests'     => $pendingCounts['fuel_requests'] ?? 0,
+                'gate_passes'       => $pendingCounts['gate_passes'] ?? 0,
+                'waste_collections' => $pendingCounts['waste_collections'] ?? 0,
+                'waste_disposals'   => $pendingCounts['waste_disposals'] ?? 0,
+                'requisitions'      => $pendingCounts['requisitions'] ?? 0,
+                'payrolls'          => $pendingCounts['payrolls'] ?? 0,
+                'loans'             => $pendingCounts['loans'] ?? 0,
+                'leaves'            => $pendingCounts['leaves'] ?? 0,
+                'attendances'       => $pendingCounts['attendances'] ?? 0,
+            ],
         ]);
     }
 }
