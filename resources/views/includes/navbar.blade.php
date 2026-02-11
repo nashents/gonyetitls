@@ -285,11 +285,20 @@
                                         @php $count = $pendingCounts[$key] ?? 0; @endphp
                                         @if ($count > 0)
                                             <li>
-                                                <a href="{{ route($meta['route']) }}">
+                                                @if ($meta['route'] == "gate_passes.pending")
+                                                 <a href="{{ route($meta['route'],['department' => 'security']) }}">
                                                     <i class="fa {{ $meta['icon'] }}"></i>
                                                     {{ $count }}
                                                     pending {{ $meta['label'] }}{{ $count > 1 ? 's' : '' }}
                                                 </a>
+                                                @else
+                                                 <a href="{{ route($meta['route']) }}">
+                                                    <i class="fa {{ $meta['icon'] }}"></i>
+                                                    {{ $count }}
+                                                    pending {{ $meta['label'] }}{{ $count > 1 ? 's' : '' }}
+                                                </a>
+                                                @endif
+                                               
                                             </li>
                                         @endif
                                     @endforeach

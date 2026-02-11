@@ -50,6 +50,7 @@ class Pending extends Component
             $payroll->save();
 
             if ($this->authorize == "Approved") {
+                
                 $this->dispatchBrowserEvent('hide-authorizationModal');
                 $this->dispatchBrowserEvent('alert', [
                     'type' => 'success',
