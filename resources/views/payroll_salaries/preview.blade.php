@@ -99,21 +99,21 @@ Payslip | @if (Auth::user()->employee->company)
                                     <tr>
                                         
                                         <td class="text-center">
-                                            @if ($payroll_salary_item->salary_item->allowance)
-                                                {{$payroll_salary_item->salary_item->allowance->name}}
+                                            @if ($item->allowance)
+                                                {{$item->allowance->name}}
                                             @endif
                                         </td>
                                         <td class="text-center">
-                                            @if ($payroll_salary_item->salary_item->loan)
-                                            Loan : {{ $payroll_salary_item->salary_item->loan->loan_number }} {{ $payroll_salary_item->salary_item->loan->loan_type ? $payroll_salary_item->salary_item->loan->loan_type->name : "" }}
-                                            @elseif ($payroll_salary_item->salary_item->deduction)
-                                            {{$payroll_salary_item->salary_item->deduction->name}}
+                                            @if ($item->loan)
+                                            Loan : {{ $item->loan->loan_number }} {{ $item->loan->loan_type ? $item->loan->loan_type->name : "" }}
+                                            @elseif ($item->deduction)
+                                            {{$item->deduction->name}}
                                             @endif 
                                         </td>
                                         <td class="text-center">{{isset($item_currency) ? $item_currency->name : $currency?->name}}</td>
                                         <td class="text-right">
-                                            @if ($payroll_salary_item->amount)
-                                             {{isset($item_currency) ? $item_currency->symbol : $currency?->symbol}}{{number_format($payroll_salary_item->amount,2)}}        
+                                            @if ($item->amount)
+                                             {{isset($item_currency) ? $item_currency->symbol : $currency?->symbol}}{{number_format($item->amount,2)}}        
                                             @endif
                                         </td>
                                     </tr>
