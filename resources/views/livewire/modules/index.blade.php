@@ -197,6 +197,11 @@
                                                                     <i class="fa fa-ban"></i> Disable Module (Sub Modules)
                                                                 </a>
                                                             </li>
+                                                            <li>
+                                                                <a href="#" wire:click.prevent="deleteModuleWithItems({{ $module->id }}, false)">
+                                                                    <i class="fa fa-trash"></i> Delete Module (Sub Modules)
+                                                                </a>
+                                                            </li>
                                                         </ul>
                                                     </div>
                                                 </td>

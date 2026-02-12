@@ -3,9 +3,10 @@
 namespace App\Http\Livewire\Modules;
 
 use App\Models\Module;
-use Livewire\Component;
-use App\Models\SubModule;
 use App\Models\ModuleGroup;
+use App\Models\SubModule;
+use Illuminate\Support\Facades\DB;
+use Livewire\Component;
 use Livewire\WithPagination;
 
 class Index extends Component
@@ -134,7 +135,22 @@ public $inputs = [];
             'customized_at' => now(),
         ]);
     }
- 
+
+    public function deleteModuleWithItems(int $moduleId): void
+    {
+        DB::transaction(function () use ($moduleId) {
+
+            // Ensure module exists (throws 404 if not)
+            $module = Module::findOrFail($moduleId);
+
+            // Delete children first (safe even if no FK cascade)
+            SubModule::where('module_id', $moduleId)->delete();
+
+            // Then delete parent
+            $module->delete();
+        });
+    }
+    
     public function editGroup($groupId) { /* open group modal */ }
     public function editModule($moduleId) { /* open module modal */ }
     public function editSubmodule($submoduleId) { /* open submodule modal */ }
