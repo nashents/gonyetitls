@@ -89,7 +89,6 @@ class Myallocation extends Component
                 'amount' => $this->amount,
                 'balance' => $this->balance,
             ]);
-            $this->updateMode = false;
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Allocation Updated Successfully!!"

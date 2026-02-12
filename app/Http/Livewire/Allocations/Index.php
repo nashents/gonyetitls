@@ -26,6 +26,8 @@ class Index extends Component
     public $employees;
     public $selectedContainer = NULL;
     public $containers;
+    public $container;
+    public $currency_id;
  
     public $quantity = 0;
     public $rate;

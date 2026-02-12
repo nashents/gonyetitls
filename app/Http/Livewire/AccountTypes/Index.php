@@ -15,6 +15,7 @@ class Index extends Component
     public $account_type_id;
     public $account_type_group_id;
     public $account_type_groups;
+    public $user_id;
 
     public function mount(){
         $this->account_types = AccountType::latest()->get();

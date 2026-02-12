@@ -2,15 +2,16 @@
 
 namespace App\Http\Livewire\Allocations;
 
-use App\Models\Vehicle;
-use Livewire\Component;
-use App\Models\Employee;
-use App\Models\Container;
-use App\Models\Allocation;
-use Illuminate\Support\Str;
 use App\Http\Livewire\Employees;
+use App\Models\Allocation;
+use App\Models\Container;
+use App\Models\Employee;
+use App\Models\TopUp;
+use App\Models\Vehicle;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Str;
+use Livewire\Component;
 
 class Manage extends Component
 {
@@ -32,6 +33,8 @@ class Manage extends Component
     public $fuel_type;
     public $balance;
     public $expiry;
+    public $container;
+    public $currency_id;
 
     public $fuel_tank_capacity;
     public $container_balance;

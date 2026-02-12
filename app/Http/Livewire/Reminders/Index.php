@@ -141,7 +141,7 @@ class Index extends Component
             $userId    = Auth::id();
             $companyId = Auth::user()->employee?->company_id;
 
-            foreach ($this->reminder_item_id as $key => $reminderItemId) {
+          
 
                 // ----------------------------
                 // 1) Resolve type target keys
@@ -166,8 +166,8 @@ class Index extends Component
                 // ----------------------------
                 // 2) Parse dates safely (handles datetime-local: 2025-07-05T12:40)
                 // ----------------------------
-                $issuedAt  = $this->issued_at[$key]  ?? null;
-                $expiresAt = $this->expires_at[$key] ?? null;
+                $issuedAt  = $this->issued_at  ?? null;
+                $expiresAt = $this->expires_at ?? null;
 
                 $issuedAtDb  = $this->parseDateTimeLocalToDb($issuedAt);
                 $expiresAtDb = $this->parseDateTimeLocalToDb($expiresAt);
@@ -187,13 +187,13 @@ class Index extends Component
                 // 3) Build "where" for updateOrCreate
                 //    Option A: update by id if supplied (best for edits)
                 // ----------------------------
-                $fitnessId = $this->fitness_ids[$key] ?? null; // add this field on edit if you have it
+                $fitnessId = $this->fitness_ids ?? null; // add this field on edit if you have it
 
                 $where = $fitnessId
                     ? ['id' => $fitnessId]
                     : array_filter([
                         'company_id'        => $companyId,
-                        'reminder_item_id'  => $reminderItemId,
+                        'reminder_item_id'  => $this->reminder_item_id,
                         // type target (only one of these will be set)
                         'horse_id'          => $targets['horse_id'],
                         'vehicle_id'        => $targets['vehicle_id'],
@@ -214,8 +214,8 @@ class Index extends Component
                     'trailer_id'  => $targets['trailer_id'],
                     'employee_id' => $targets['employee_id'],
 
-                    'reminder_item_id' => $reminderItemId,
-                    'cc'               => $this->cc[$key] ?? null,
+                    'reminder_item_id' => $this->reminder_item_id,
+                    'cc'               => $this->cc ?? null,
 
                     'issued_at'  => $issuedAtDb,
                     'expires_at' => $expiresAtDb,
@@ -233,7 +233,7 @@ class Index extends Component
                 ];
 
                 Fitness::updateOrCreate($where, $data);
-            }
+          
 
             $this->dispatchBrowserEvent('hide-fitnessModal');
             $this->resetInputFields();
@@ -479,7 +479,7 @@ class Index extends Component
             });
 
         return view('livewire.reminders.index', [
-            'reminders'       => $query->latest()->paginate(10),
+            'reminders'       => $query->orderBy('created_at','desc')->paginate(10),
             'reminder_items'  => $this->reminder_items,
         ]);
        

@@ -849,9 +849,6 @@ class Edit extends Component
             'message'=>"Item Deleted Successfully!!"
         ]);
        
-
-   
-
     }
 
     public function mount($invoice){

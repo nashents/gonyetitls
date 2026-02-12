@@ -29,23 +29,34 @@ class Index extends Component
 
     protected $waste_collections;
     public $employees;
-    public $selectedEmployee;
-    public $date = [];
+
+  
     public $waste_types;
  
     public $waste_sources;
     public $waste_source_id;
-   
+    public $waste_collection_items;
+
+    public $current_date = [];
+    public $current_waste_type_id = [];
+    public $current_description = [];
+    public $current_qty = [];
+    public $current_unit_of_measure = [];
+    public $current_waste_receptacle = [];
+    public $current_selectedEmployee = [];
+
+    public $date = [];
     public $waste_type_id = [];
     public $description = [];
     public $qty = [];
     public $unit_of_measure = [];
     public $waste_receptacle = [];
+    public $selectedEmployee = [];
  
     public $waste_collection_id;
     public $waste_collection;
 
-        public $inputs = [];
+    public $inputs = [];
     public $i = 1;
     public $n = 1;
 
@@ -143,6 +154,84 @@ class Index extends Component
           $this->dispatchBrowserEvent('alert',[
               'type'=>'success',
               'message'=>"Waste Collection Record Created Successfully!!"
+          ]);
+
+     });
+    }
+
+     public function refresh($category){
+
+        if($category == "tracking_groups"){
+            $this->waste_types = WasteType::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Waste Types Refreshed Successfully!!."
+            ]);
+        }
+     }
+
+    public function edit($id){
+        $waste_collection = WasteCollection::find($id);
+        $this->waste_collection_id = $id;
+        $this->waste_collection_items = $waste_collection->waste_collection_items;
+        if ($this->waste_collection_items) {
+            foreach ($this->waste_collection_items as $item) {
+                $this->current_date[] = $item->date;
+                $this->current_unit_of_measure[] = $item->unit_of_measure;
+                $this->current_waste_receptacle[] = $item->waste_receptacle;
+                $this->current_waste_type_id[] = $item->waste_type_id;
+                $this->current_description[] = $item->description;
+                $this->current_qty[] = $item->qty;
+                $this->current_selectedEmployee[] = $item->collected_by_id;
+            }
+        }
+
+        $this->dispatchBrowserEvent('show-waste_collectionEditModal');
+    }
+
+
+    public function update(){
+
+     DB::transaction(function () {
+
+        $waste_collection =  WasteCollection::find($this->waste_collection_id);
+        $waste_collection->user_id = Auth::user()->id;
+        $waste_collection->waste_collection_number = $this->waste_collectionNumber();
+        $waste_collection->save();
+
+        if ($this->waste_type_id) {
+            foreach ($this->waste_type_id as $key => $typeId) {
+               $waste_collection_item = new WasteCollectionItem;
+               $waste_collection_item->waste_collection_id = $waste_collection->id;
+               $waste_collection_item->waste_type_id = $typeId;
+               $waste_collection_item->description = $this->description[$key] ?? Null;
+               $waste_collection_item->qty = $this->qty[$key] ?? Null;
+               $waste_collection_item->unit_of_measure = $this->unit_of_measure[$key] ?? Null;
+               $waste_collection_item->collected_by_id = $this->selectedEmployee[$key] ?? Null;
+               $waste_collection_item->waste_receptacle = $this->waste_receptacle[$key] ?? Null;
+               $waste_collection_item->date = $this->date[$key] ?? Null;
+               $waste_collection_item->save();
+            }
+        }
+        if ($this->waste_collection_items) {
+            foreach ($this->waste_collection_items as $key => $item) {
+               $waste_collection_item = WasteCollectionItem::find($item->id);
+               $waste_collection_item->waste_type_id =  $this->current_waste_type_id[$key] ?? Null;
+               $waste_collection_item->description = $this->current_description[$key] ?? Null;
+               $waste_collection_item->qty = $this->current_qty[$key] ?? Null;
+               $waste_collection_item->unit_of_measure = $this->current_unit_of_measure[$key] ?? Null;
+               $waste_collection_item->collected_by_id = $this->current_selectedEmployee[$key] ?? Null;
+               $waste_collection_item->waste_receptacle = $this->current_waste_receptacle[$key] ?? Null;
+               $waste_collection_item->date = $this->current_date[$key] ?? Null;
+               $waste_collection_item->update();
+            }
+        }
+
+         $this->dispatchBrowserEvent('hide-waste_collectionEditModal');
+          $this->resetInputFields();
+          $this->dispatchBrowserEvent('alert',[
+              'type'=>'success',
+              'message'=>"Waste Collection Record Updated Successfully!!"
           ]);
 
      });

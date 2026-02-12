@@ -36,6 +36,7 @@ class Index extends Component
     public $selectedEmployee;
     public $date;
     public $waste_types;
+    public $waste_disposal_items;
  
 
    
@@ -46,6 +47,14 @@ class Index extends Component
     public $amount = [];
     public $unit_of_measure = [];
     public $waste_receptacle = [];
+   
+    public $current_waste_type_id = [];
+    public $current_description = [];
+    public $current_qty = [];
+    public $current_use = [];
+    public $current_amount = [];
+    public $current_unit_of_measure = [];
+    public $current_selectedEmployee = [];
  
     public $waste_disposal_id;
     public $waste_disposal;
@@ -158,6 +167,97 @@ class Index extends Component
 
      });
     }
+
+      public function edit($id){
+        $waste_disposal = WasteDisposal::find($id);
+        $this->waste_disposal_id = $id;
+        $this->selectedEmployee = $waste_disposal->employee_id;
+        $this->movement = $waste_disposal->movement;
+        $this->date = $waste_disposal->date;
+        $this->currency_id = $waste_disposal->currency_id;
+        $this->customer_id = $waste_disposal->customer_id;
+        $this->waste_disposal_items = $waste_disposal->waste_disposal_items;
+        if ($this->waste_disposal_items) {
+            foreach ($this->waste_disposal_items as $item) {
+                $this->current_amount[] = $item->amount;
+                $this->current_unit_of_measure[] = $item->unit_of_measure;
+                $this->current_waste_type_id[] = $item->waste_type_id;
+                $this->current_description[] = $item->description;
+                $this->current_qty[] = $item->qty;
+                $this->current_selectedEmployee[] = $item->collected_by_id;
+            }
+        }
+
+        $this->dispatchBrowserEvent('show-waste_disposalEditModal');
+    }
+
+     public function refresh($category){
+
+        if($category == "tracking_groups"){
+            $this->waste_types = WasteType::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Waste Types Refreshed Successfully!!."
+            ]);
+        }
+     }
+       
+
+    public function update(){
+
+     DB::transaction(function () {
+
+        $waste_disposal = WasteDisposal::find($this->waste_disposal_id);
+        $waste_disposal->user_id = Auth::user()->id;
+        $waste_disposal->waste_disposal_number = $this->waste_disposalNumber();
+        $waste_disposal->employee_id = $this->selectedEmployee;
+        $waste_disposal->date = $this->date;
+        $waste_disposal->currency_id = $this->currency_id;
+        $waste_disposal->customer_id = $this->customer_id;
+        $waste_disposal->movement = $this->movement;
+        $waste_disposal->update();
+
+        if ($this->waste_disposal_items) {
+            foreach ($this->waste_disposal_items as $key => $item) {
+               $waste_disposal_item =  WasteDisposalItem::find($item->id);
+               $waste_disposal_item->waste_disposal_id = $waste_disposal->id;
+               $waste_disposal_item->waste_type_id = $this->current_waste_type_id[$key] ?? Null;
+               $waste_disposal_item->description = $this->current_description[$key] ?? Null;
+               $waste_disposal_item->qty = $this->current_qty[$key] ?? Null;
+               $waste_disposal_item->unit_of_measure = $this->current_unit_of_measure[$key] ?? Null;
+               $waste_disposal_item->use = $this->current_use[$key] ?? Null;
+               $waste_disposal_item->amount = $this->current_amount[$key] ?? Null;
+               $waste_disposal_item->currency_id = $this->currency_id;
+               $waste_disposal_item->update();
+            }
+        }
+      
+        if ($this->waste_type_id) {
+            foreach ($this->waste_type_id as $key => $typeId) {
+               $waste_disposal_item = new WasteDisposalItem;
+               $waste_disposal_item->waste_disposal_id = $waste_disposal->id;
+               $waste_disposal_item->waste_type_id = $typeId;
+               $waste_disposal_item->description = $this->description[$key] ?? Null;
+               $waste_disposal_item->qty = $this->qty[$key] ?? Null;
+               $waste_disposal_item->unit_of_measure = $this->unit_of_measure[$key] ?? Null;
+               $waste_disposal_item->use = $this->use[$key] ?? Null;
+               $waste_disposal_item->amount = $this->amount[$key] ?? Null;
+               $waste_disposal_item->currency_id = $this->currency_id;
+               $waste_disposal_item->save();
+            }
+        }
+
+         $this->dispatchBrowserEvent('hide-waste_disposalEditModal');
+          $this->resetInputFields();
+          $this->dispatchBrowserEvent('alert',[
+              'type'=>'success',
+              'message'=>"Waste disposal Record Updated Successfully!!"
+          ]);
+
+     });
+    }
+
+
     public function render()
     {
         $query = WasteDisposal::query()->with('waste_disposal_items');

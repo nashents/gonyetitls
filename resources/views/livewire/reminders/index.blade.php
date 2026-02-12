@@ -96,7 +96,7 @@
                                 @if ((preg_match($pattern, $reminder->issued_at)) )
                                     {{ $fmt($reminder->issued_at) }}
                                 @else
-                                    
+                                    {{$reminder->issued_at}}
                                 @endif
                             </td>
                             <td>
@@ -241,6 +241,7 @@
                                             @error('employee_id') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     @endif
+
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
