@@ -2,15 +2,20 @@
 
 namespace App\Http\Livewire\Bins;
 
-use App\Models\Bin;
-use Livewire\Component;
 use App\Exports\BinsExport;
-use Maatwebsite\Excel\Excel;
+use App\Models\Bin;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
+use Livewire\WithPagination;
+use Maatwebsite\Excel\Excel;
 
 class Index extends Component
 {
-    public $bins;
+    use WithPagination;
+    protected $paginationTheme = 'bootstrap';
+    public $search;
+    protected $queryString = ['search'];
+    private $bins;
     public $name;
     public $bin_number;
     public $description;
@@ -118,9 +123,22 @@ class Index extends Component
 
     public function render()
     {
-        $this->bins = Bin::all();
+        $search = trim($this->search);
+
+        $query = Bin::query()
+            ->when($search !== '', function ($q) use ($search) {
+                $q->where(function ($w) use ($search) {
+                    $w->where('name', 'like', "%{$search}%")
+                    ->orWhere('part_number', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('unit_of_measure', 'like', "%{$search}%");
+                });
+            })
+        ->orderBy('name', 'asc')
+        ->paginate(10);
+
         return view('livewire.bins.index',[
-            'bins' => $this->bins
+            'bins' => $query
         ]);
     }
 }
