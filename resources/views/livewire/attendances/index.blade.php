@@ -91,7 +91,7 @@
                                                 </button>
                                                 <ul class="dropdown-menu">
                                                     <li><a href="{{route('attendances.show', $attendance->id)}}"><i class="fa fa-eye color-default"></i>View</a></li>
-                                                    @if ($attendance->user_id == Auth::user()->id)
+                                                    @if ($attendance->user_id == Auth::user()->id && $attendance->authorization == "pending")
                                                         <li><a href="#" wire:click.prevent="edit({{$attendance->id}})"><i class="fa fa-edit color-success"></i> Edit</a></li>
                                                     @endif
                                                 </ul>

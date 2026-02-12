@@ -16,6 +16,7 @@
                                             <select wire:model.debounce.300ms="shift_filter" class="form-control" aria-label="..." >
                                                 <option value="created_at">Shift Created At</option>
                                                 <option value="date">Shift Date</option>
+                                                <option value="shift_start_time">Shift Start Time</option>
                                             </select>
                                         </div>
                                         <!-- /input-group -->

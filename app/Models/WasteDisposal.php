@@ -13,8 +13,18 @@ class WasteDisposal extends Model
     public function user(){
         return $this->belongsTo('App\Models\User');
     }
+    public function customer(){
+        return $this->belongsTo('App\Models\Customer');
+    }
 
-    public function waste_disposals(){
-        return $this->hasMany('App\Models\WasteDisposal');
+    public function currency(){
+        return $this->belongsTo('App\Models\Currency');
+    }
+    public function employee(){
+        return $this->belongsTo('App\Models\Employee');
+    }
+
+    public function waste_disposal_items(){
+        return $this->hasMany('App\Models\WasteDisposalItem');
     }
 }

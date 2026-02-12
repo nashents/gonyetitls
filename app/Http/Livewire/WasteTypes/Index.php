@@ -128,6 +128,24 @@ class Index extends Component
   
     }
 
+    public function delete($id){
+       
+        $this->waste_type_id = $id;
+        $this->dispatchBrowserEvent('show-waste_typeDeleteModal');
+       
+    }
+    public function destroy(){
+        $waste_type = WasteType::find($this->waste_type_id);;
+        $waste_type->delete();
+
+        $this->dispatchBrowserEvent('hide-waste_typeDeleteModal');
+        $this->resetInputFields();
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Waste Type Deleted Successfully!!"
+        ]);
+    }
+
 
     public function render()
     {

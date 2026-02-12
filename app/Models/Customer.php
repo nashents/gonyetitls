@@ -19,6 +19,9 @@ class Customer extends Model implements Auditable
      public function rentals(){
         return $this->hasMany('App\Models\Rental');
     }
+      public function waste_disposals(){
+        return $this->hasMany('App\Models\WasteDisposal');
+    }
     public function shifts(){
         return $this->hasMany('App\Models\Shift');
     }

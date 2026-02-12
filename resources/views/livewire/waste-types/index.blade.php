@@ -11,9 +11,9 @@
                             </div>
                             <div class="panel-title">
                                 <a href="" data-toggle="modal" data-target="#waste_typeModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Waste Type</a>
-                                <a href="#" wire:click="exportwaste_typesExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
+                                {{-- <a href="#" wire:click="exportwaste_typesExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
                                 <a href="#" wire:click="exportwaste_typesCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
-                                <a href="#" wire:click="exportwaste_typesPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
+                                <a href="#" wire:click="exportwaste_typesPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a> --}}
                             </div>
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
@@ -55,7 +55,7 @@
                                             </button>
                                             <ul class="dropdown-menu">
                                                 <li><a href="#"  wire:click="edit({{$waste_type->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
-                                                {{-- <li><a href="#" data-toggle="modal" data-target="#waste_typeDeleteModal{{ $waste_type->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li> --}}
+                                                <li><a href="#" wire:click.prevent="delete({{$waste_type->id}})" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                             </ul>
                                         </div>
                                       
@@ -95,6 +95,25 @@
         </div>
         <!-- /.container-fluid -->
     </section>
+
+    <div data-backdrop="static" data-keyboard="false" class="modal fade" id="waste_typeDeleteModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content bg-danger">
+                <div class="modal-body">
+                <center> <strong>Are you sure you want to delete this Waste Type?</strong> </center> 
+                </div>
+                <form wire:submit.prevent="destroy()" >
+                <div class="modal-footer no-border">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn bg-white btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                        <button type="submit" class="btn bg-black btn-wide btn-rounded" ><i class="fa fa-trash"></i>Delete</button>
+                    </div>
+                    <!-- /.btn-group -->
+                </div>
+            </form>
+            </div>
+        </div>
+    </div>
     
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="waste_typeModal" tawaste_typedex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
         <div class="modal-dialog mw-100 w-50" role="document">
@@ -178,7 +197,7 @@
         <div class="modal-dialog mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-edit"></i> Edit waste_type <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-edit"></i> Edit Waste Type <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                 </div>
                 <form wire:submit.prevent="update()" >
                 <input type="hidden" wire:model="waste_type_id">

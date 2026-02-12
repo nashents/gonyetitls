@@ -49,12 +49,12 @@ WithBatchInserts
 
             $bin = Bin::firstOrNew(['bin_number' => $row->get('bin_number')]);
 
-            if (! $bin->exists) {
+            if (!$bin->exists) {
                 $bin->user_id = Auth::id();
             }
 
             $bin->product_id        = $product?->id ?? null;
-            $bin->name        = $row->get('store_name');
+            $bin->name        = $row->get('name');
             $bin->part_number = $row->get('part_number');
             $bin->unit_of_measure = $row->get('unit_of_measure');
             $bin->description = $row->get('description');

@@ -22,6 +22,9 @@ class Currency extends Model implements Auditable
     public function earnings(){
         return $this->hasMany('App\Models\Earning');
     }
+    public function waste_disposals(){
+        return $this->hasMany('App\Models\WasteDisposal');
+    }
      public function payroll_salary_items(){
         return $this->hasMany('App\Models\PayrollSalaryItem');
     }

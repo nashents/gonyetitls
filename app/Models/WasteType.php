@@ -10,8 +10,11 @@ class WasteType extends Model
 {
     use HasFactory, SoftDeletes;
 
-     public function waste_collections(){
-        return $this->hasMany('App\Models\WasteCollection');
+    public function waste_collection_items(){
+        return $this->hasMany('App\Models\WasteCollectionItem');
+    }
+    public function waste_disposal_items(){
+        return $this->hasMany('App\Models\WasteDisposalItem');
     }
 
      protected $fillable = [

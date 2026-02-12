@@ -56,6 +56,9 @@ class Employee extends Model implements Auditable
     public function payroll_salaries(){
         return $this->hasMany('App\Models\PayrollSalary');
     }
+     public function waste_disposals(){
+        return $this->hasMany('App\Models\WasteDisposal');
+    }
     public function notifications(){
         return $this->hasMany('App\Models\Notifications');
     }
