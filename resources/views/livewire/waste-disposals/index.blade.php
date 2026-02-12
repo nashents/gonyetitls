@@ -31,13 +31,11 @@
                                         <tr>
                                         <th class="th-sm">Disposal#
                                         </th>
-                                        <th class="th-sm">DisposedBy
+                                        <th class="th-sm">Disposal
                                         </th>
-                                        <th class="th-sm">DisposedOn
+                                        <th class="th-sm">Type
                                         </th>
-                                        <th class="th-sm">Movement
-                                        </th>
-                                        <th class="th-sm">Currency
+                                        <th class="th-sm">Ccy
                                         </th>
                                         <th class="th-sm">Items
                                         </th>
@@ -60,19 +58,23 @@
                                                 <strong>CreatedOn:</strong> {{$waste_disposal->created_at}}
                                             </small>
                                         </td>  
-                                        <td>{{ucfirst($waste_disposal->employee ? $waste_disposal->employee->name : "")}} {{ucfirst($waste_disposal->employee ? $waste_disposal->employee->surname : "")}}</td>
-                                        <td>{{$waste_disposal->date}}</td>
+                                        <td>
+                                            <small><strong>DisposedBy: </strong>{{ucfirst($waste_disposal->employee ? $waste_disposal->employee->name : "")}} {{ucfirst($waste_disposal->employee ? $waste_disposal->employee->surname : "")}}</small>
+                                            <br>
+                                            <small><strong>DisposedOn: </strong>{{$waste_disposal->date}}</small>
+                                        </td>
                                         <td>
                                             {{$waste_disposal->movement}}
                                             @if ($waste_disposal->customer)
-                                                {{$waste_disposal->customer ? $waste_disposal->customer->name : ""}}
+                                                <br>
+                                                <small><strong>TransferTo: </strong>{{$waste_disposal->customer ? $waste_disposal->customer->name : ""}}</small>
                                             @endif
                                         </td>
                                         <td>{{$waste_disposal->currency ? $waste_disposal->currency->name : ""}}</td>
                                         <td>
                                             @if ($waste_disposal->waste_disposal_items)
                                                 @foreach ($waste_disposal->waste_disposal_items as $item)
-                                                    {{$item->waste_type->name}} {{$item->qty}} {{$item->unit_of_measure}}@if (!$loop->last), @endif
+                                                    {{$item->waste_type ? $item->waste_type->name : ""}} X ({{$item->qty}} {{$item->unit_of_measure}}) {{$item->currency ? $item->currency->symbol : ""}}{{number_format($item->amount ? $item->amount : 0,2)}} @if (!$loop->last), @endif
                                                 @endforeach
                                             @endif
                                         </td>
@@ -88,6 +90,7 @@
                                                     @if ($waste_disposal->user_id == Auth::user()->id)
                                                         <li><a href="#" wire:click.prevent="edit({{$waste_disposal->id}})"><i class="fa fa-edit color-success"></i> Edit</a></li>
                                                     @endif
+                                                     <li><a href="#" wire:click.prevent="delete({{$waste_disposal->id}})" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                                 </ul>
                                             </div>
                                         </td>
@@ -129,6 +132,26 @@
             </div>
             <!-- /.container-fluid -->
         </section>
+
+    <div data-backdrop="static" data-keyboard="false" class="modal fade" id="waste_disposalDeleteModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content bg-danger">
+                <div class="modal-body">
+                <center> <strong>Are you sure you want to delete this Waste Disposal Record?</strong> </center> 
+                </div>
+                <form wire:submit.prevent="destroy()" >
+                <div class="modal-footer no-border">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn bg-white btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                        <button type="submit" class="btn bg-black btn-wide btn-rounded" ><i class="fa fa-trash"></i>Delete</button>
+                    </div>
+                    <!-- /.btn-group -->
+                </div>
+            </form>
+            </div>
+        </div>
+    </div>
+
  <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="waste_disposalModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
         <div class="modal-dialog mw-100 w-70" role="document">
             <div class="modal-content">

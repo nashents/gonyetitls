@@ -2,44 +2,46 @@
 
 namespace App\Http\Livewire\Documents;
 
-use Carbon\Carbon;
-use App\Models\Bill;
-use App\Models\Trip;
-use App\Models\Tyre;
 use App\Models\Agent;
 use App\Models\Asset;
-use App\Models\Horse;
-use App\Models\Route;
+use App\Models\Bill;
 use App\Models\Broker;
-use App\Models\Folder;
-use App\Models\Ticket;
-use App\Models\Vendor;
-use App\Models\Company;
-use App\Models\Payment;
-use App\Models\Retread;
-use App\Models\Trailer;
-use App\Models\Vehicle;
-use Livewire\Component;
+use App\Models\cash_flow;
 use App\Models\CashFlow;
+use App\Models\ClearingAgent;
+use App\Models\Company;
+use App\Models\Consignee;
 use App\Models\Customer;
+use App\Models\Department;
 use App\Models\Document;
 use App\Models\Employee;
+use App\Models\Folder;
+use App\Models\Horse;
 use App\Models\Incident;
+use App\Models\Inventory;
+use App\Models\LoadingPoint;
+use App\Models\OffloadingPoint;
+use App\Models\Payment;
 use App\Models\Purchase;
 use App\Models\Recovery;
-use App\Models\cash_flow;
-use App\Models\Consignee;
-use App\Models\Inventory;
-use App\Models\TruckStop;
-use App\Models\Department;
 use App\Models\Requisition;
+use App\Models\Retread;
+use App\Models\Route;
+use App\Models\Ticket;
+use App\Models\Trailer;
 use App\Models\Transporter;
-use App\Models\LoadingPoint;
-use App\Models\ClearingAgent;
-use Livewire\WithFileUploads;
-use App\Models\OffloadingPoint;
+use App\Models\Trip;
+use App\Models\TruckStop;
+use App\Models\Tyre;
+use App\Models\Vehicle;
+use App\Models\Vendor;
+use App\Models\WasteCollection;
+use App\Models\WasteDisposal;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class Index extends Component
 {
@@ -54,6 +56,10 @@ class Index extends Component
     public $ticket_id;
     public $offloading_point;
     public $offloading_point_id;
+    public $waste_collection;
+    public $waste_collection_id;
+    public $waste_disposal;
+    public $waste_disposal_id;
     public $truck_stop;
     public $truck_stop_id;
     public $horse;
@@ -222,6 +228,18 @@ class Index extends Component
         $this->folders = Folder::where('category', $this->category)->latest()->get();
         $this->documents = Document::where('category', $this->category)
         ->where('offloading_point_id', $this->offloading_point->id)->latest()->get();
+    }
+    elseif ($this->category == "waste_disposal") {
+        $this->waste_disposal = WasteDisposal::find($id);
+        $this->folders = Folder::where('category', $this->category)->latest()->get();
+        $this->documents = Document::where('category', $this->category)
+        ->where('waste_disposal_id', $this->waste_disposal->id)->latest()->get();
+    }
+    elseif ($this->category == "waste_collection") {
+        $this->waste_collection = WasteCollection::find($id);
+        $this->folders = Folder::where('category', $this->category)->latest()->get();
+        $this->documents = Document::where('category', $this->category)
+        ->where('waste_collection_id', $this->waste_collection->id)->latest()->get();
     }
     elseif ($this->category == "route") {
         $this->route = Route::find($id);
@@ -418,6 +436,20 @@ class Index extends Component
                 $this->offloading_point = OffloadingPoint::find($this->item_id);
                 $this->documents = Document::where('category', $this->category)
                 ->where('offloading_point_id', $this->offloading_point->id)
+                ->where('folder_id', $selected_folder_id)
+                ->latest()->get();
+            }
+            elseif ($this->category == "waste_disposal") {
+                $this->waste_disposal = WasteDisposal::find($this->item_id);
+                $this->documents = Document::where('category', $this->category)
+                ->where('waste_disposal_id', $this->waste_disposal->id)
+                ->where('folder_id', $selected_folder_id)
+                ->latest()->get();
+            }
+            elseif ($this->category == "waste_collection") {
+                $this->waste_collection = WasteCollection::find($this->item_id);
+                $this->documents = Document::where('category', $this->category)
+                ->where('waste_collection_id', $this->waste_collection->id)
                 ->where('folder_id', $selected_folder_id)
                 ->latest()->get();
             }
@@ -696,6 +728,12 @@ class Index extends Component
             elseif (isset($this->offloading_point)) {
                 $document->offloading_point_id = $this->offloading_point->id;
             }
+            elseif (isset($this->waste_disposal)) {
+                $document->waste_disposal_id = $this->waste_disposal->id;
+            }
+            elseif (isset($this->waste_collection)) {
+                $document->waste_collection_id = $this->waste_collection->id;
+            }
             elseif (isset($this->loading_point)) {
                 $document->loading_point_id = $this->loading_point->id;
             }
@@ -817,6 +855,8 @@ class Index extends Component
         $this->customer_id = $document->customer_id;
         $this->folder_id = $document->folder_id;
         $this->offloading_point_id = $document->offloading_point_id;
+        $this->waste_disposal_id = $document->waste_disposal_id;
+        $this->waste_collection_id = $document->waste_collection_id;
         $this->loading_point_id = $document->loading_point_id;
         $this->recovery_id = $document->recovery_id;
         $this->department_id = $document->department_id;
@@ -917,6 +957,12 @@ class Index extends Component
                 }
                 elseif (isset($this->offloading_point_id)) {
                     $document->offloading_point_id = $this->offloading_point_id;
+                }
+                elseif (isset($this->waste_disposal_id)) {
+                    $document->waste_disposal_id = $this->waste_disposal_id;
+                }
+                elseif (isset($this->waste_collection_id)) {
+                    $document->waste_collection_id = $this->waste_collection_id;
                 }
                 elseif (isset($this->requisition_id)) {
                     $document->requisition_id = $this->requisition_id;
@@ -1058,6 +1104,16 @@ class Index extends Component
             $this->folders = Folder::where('category', $this->category)->latest()->get();
             $this->documents = Document::where('category', $this->category)
             ->where('offloading_point_id', $this->offloading_point->id)->latest()->get();
+        }
+        elseif ($this->category == "waste_disposal") {
+            $this->folders = Folder::where('category', $this->category)->latest()->get();
+            $this->documents = Document::where('category', $this->category)
+            ->where('waste_disposal_id', $this->waste_disposal->id)->latest()->get();
+        }
+        elseif ($this->category == "waste_collection") {
+            $this->folders = Folder::where('category', $this->category)->latest()->get();
+            $this->documents = Document::where('category', $this->category)
+            ->where('waste_collection_id', $this->waste_collection->id)->latest()->get();
         }
         elseif ($this->category == "truck_stop") {
             $this->folders = Folder::where('category', $this->category)->latest()->get();

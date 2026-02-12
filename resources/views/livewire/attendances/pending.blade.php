@@ -64,8 +64,6 @@
                                                 <li><a href="#" wire:click="authorize({{$attendance->id}})"><i class="fas fa-gavel color-success"></i> Authorization</a></li>
                                                 </ul>
                                             </div>
-                                         
-
                                     </td>
                                       </tr>
                                       @empty

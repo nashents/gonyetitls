@@ -9,7 +9,7 @@ use  App\Models\{
     Allocation, Department, DepartmentHead, Leave, Loan,
     Payroll, Invoice, CreditNote, Bill, Requisition, TopUp,User,Purchase, Dispatch,
     GatePass, Fuel, FuelRequest, Trip, Transporter, Shift, TransportOrder, Recovery, Booking, Transfer, Retread, Customer, Agent, Company,
-    ModuleGroup,Rental,Attendance
+    ModuleGroup,Rental,Attendance, WasteCollection, WasteDisposal
     // ... add all models you need here
 };
 
@@ -191,6 +191,26 @@ class SidebarComposer
         ->where('created_at', '>', Carbon::now()->startOfWeek())
         ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
         $attendancesRejectedCount = Attendance::where('authorization','rejected')
+        ->where('created_at', '>', Carbon::now()->startOfWeek())
+        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
+     
+        $waste_disposalsPendingCount = WasteDisposal::where('authorization','pending')
+        ->where('created_at', '>', Carbon::now()->startOfWeek())
+        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
+        $waste_disposalsApprovedCount = WasteDisposal::where('authorization','approved')
+        ->where('created_at', '>', Carbon::now()->startOfWeek())
+        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
+        $waste_disposalsRejectedCount = WasteDisposal::where('authorization','rejected')
+        ->where('created_at', '>', Carbon::now()->startOfWeek())
+        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
+       
+        $waste_collectionsPendingCount = WasteCollection::where('authorization','pending')
+        ->where('created_at', '>', Carbon::now()->startOfWeek())
+        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
+        $waste_collectionsApprovedCount = WasteCollection::where('authorization','approved')
+        ->where('created_at', '>', Carbon::now()->startOfWeek())
+        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
+        $waste_collectionsRejectedCount = WasteCollection::where('authorization','rejected')
         ->where('created_at', '>', Carbon::now()->startOfWeek())
         ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
 
@@ -597,6 +617,14 @@ class SidebarComposer
         'attendances_pending_count'  => (int) ($attendancesPendingCount ?? 0),
         'attendances_approved_count' => (int) ($attendancesApprovedCount ?? 0),
         'attendances_rejected_count' => (int) ($attendancesRejectedCount ?? 0),
+        
+        'waste_collections_pending_count'  => (int) ($waste_collectionsPendingCount ?? 0),
+        'waste_collections_approved_count' => (int) ($waste_collectionsApprovedCount ?? 0),
+        'waste_collections_rejected_count' => (int) ($waste_collectionsRejectedCount ?? 0),
+        
+        'waste_disposals_pending_count'  => (int) ($waste_disposalsPendingCount ?? 0),
+        'waste_disposals_approved_count' => (int) ($waste_disposalsApprovedCount ?? 0),
+        'waste_disposals_rejected_count' => (int) ($waste_disposalsRejectedCount ?? 0),
 
         // Loans
         'loans_pending_count'   => (int) ($loansPendingCount ?? 0),
@@ -802,6 +830,14 @@ class SidebarComposer
             'attendancesPendingCount'  => $attendancesPendingCount,
             'attendancesApprovedCount' => $attendancesApprovedCount,
             'attendancesRejectedCount' => $attendancesRejectedCount,
+            
+            'waste_disposalsPendingCount'  => $waste_disposalsPendingCount,
+            'waste_disposalsApprovedCount' => $waste_disposalsApprovedCount,
+            'waste_disposalsRejectedCount' => $waste_disposalsRejectedCount,
+            
+            'waste_collectionsPendingCount'  => $waste_collectionsPendingCount,
+            'waste_collectionsApprovedCount' => $waste_collectionsApprovedCount,
+            'waste_collectionsRejectedCount' => $waste_collectionsRejectedCount,
 
             'leavesPendingCount'  => $leavesPendingCount,
             'leavesApprovedCount' => $leavesApprovedCount,

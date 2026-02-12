@@ -16,4 +16,7 @@ class WasteDisposalItem extends Model
     public function waste_disposal(){
         return $this->belongsTo('App\Models\WasteDisposal');
     }
+    public function currency(){
+        return $this->belongsTo('App\Models\Currency');
+    }
 }

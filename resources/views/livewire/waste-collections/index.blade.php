@@ -24,7 +24,7 @@
                                 </div>
                                 <div class="col-md-5" style="float: right; padding-right:2px">
                                     <div class="form-group">
-                                        <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search waste_collection register...">
+                                        <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search waste collections...">
                                     </div>
                                 </div>
                                 <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
@@ -57,7 +57,7 @@
                                         <td>
                                             @if ($waste_collection->waste_collection_items)
                                                 @foreach ($waste_collection->waste_collection_items as $item)
-                                                    {{$item->waste_type->name}} {{$item->qty}} {{$item->unit_of_measure}}@if (!$loop->last), @endif
+                                                    {{$item->waste_type ? $item->waste_type->name : ""}} {{$item->qty}} {{$item->unit_of_measure}}@if (!$loop->last), @endif
                                                 @endforeach
                                             @endif
                                         </td>
@@ -73,6 +73,7 @@
                                                     @if ($waste_collection->user_id == Auth::user()->id)
                                                         <li><a href="#" wire:click.prevent="edit({{$waste_collection->id}})"><i class="fa fa-edit color-success"></i> Edit</a></li>
                                                     @endif
+                                                     <li><a href="#" wire:click.prevent="delete({{$waste_collection->id}})" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                                 </ul>
                                             </div>
                                         </td>
@@ -114,6 +115,25 @@
             </div>
             <!-- /.container-fluid -->
         </section>
+
+         <div data-backdrop="static" data-keyboard="false" class="modal fade" id="waste_collectionDeleteModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content bg-danger">
+                <div class="modal-body">
+                <center> <strong>Are you sure you want to delete this Waste Collection Record?</strong> </center> 
+                </div>
+                <form wire:submit.prevent="destroy()" >
+                <div class="modal-footer no-border">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn bg-white btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                        <button type="submit" class="btn bg-black btn-wide btn-rounded" ><i class="fa fa-trash"></i>Delete</button>
+                    </div>
+                    <!-- /.btn-group -->
+                </div>
+            </form>
+            </div>
+        </div>
+    </div>
  <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="waste_collectionModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
         <div class="modal-dialog mw-100 w-70" role="document">
             <div class="modal-content">
