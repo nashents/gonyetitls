@@ -2,15 +2,15 @@
 
 namespace App\Http\Livewire\Tyres;
 
-use App\Models\Tyre;
+use App\Exports\TyresExport;
+use App\Models\ChecklistResult;
 use App\Models\Dispose;
 use App\Models\Product;
-use Livewire\Component;
-use App\Models\TyreDetail;
-use Livewire\WithPagination;
-use App\Models\TyreAssignment;
-use App\Models\ChecklistResult;
+use App\Models\Tyre;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
+use Livewire\WithPagination;
+use Maatwebsite\Excel\Excel;
 
 class Index extends Component
 {
@@ -56,6 +56,17 @@ class Index extends Component
         $this->products = Product::where('department','tyre')->get();
         $this->resetPage();
     }
+
+    public function exportTyresCSV(Excel $excel){
+        return $excel->download(new TyresExport($this->search), 'tyres_'.now()->format('Y-m-d').'.csv', Excel::CSV);
+    }
+    public function exportTyresPDF(Excel $excel){
+        return $excel->download(new TyresExport($this->search), 'tyres_'.now()->format('Y-m-d').'.pdf', Excel::DOMPDF);
+    }
+    public function exportTyresExcel(Excel $excel){
+        return $excel->download(new TyresExport($this->search), 'tyres_'.now()->format('Y-m-d').'.xlsx');
+    }
+    
     public function updated($value){
         $this->validateOnly($value);
     }
@@ -194,42 +205,53 @@ class Index extends Component
 
     public function render()
     {
-        if(filled($this->search)){
-            return view('livewire.tyres.index',[
-                'tyres' => Tyre::with('product.brand')
-                ->where('disposed', 0)
-                ->where('retread', 0)
-                ->where('tyre_number','like', '%'.$this->search.'%')
-                ->orWhere('serial_number','like', '%'.$this->search.'%')
-                ->orWhere('purchase_date','like', '%'.$this->search.'%')
-                ->orWhere('type','like', '%'.$this->search.'%')
-                ->orWhereHas('product', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('product.brand', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('currency', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('store', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('vendor', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orderBy('created_at','desc')
-                ->paginate(10)
-            ]);
-        }else{
-            return view('livewire.tyres.index',[
-                'tyres' => Tyre::with('product.brand')
-                ->where('disposed',0)
-                ->where('retread',0)
-                ->orderBy('created_at','desc')
-                ->paginate(10)
-            ]);
-        }
+
+        $search = trim((string) $this->search);
+        $tyres = Tyre::query()
+            ->with([
+                'product.brand',
+                // load active assignment + its asset relations if you show them in the list
+                'tyre_assignments' => function ($q) {
+                    $q->where('status', 1)
+                    ->latest()
+                    ->with(['horse', 'vehicle', 'trailer']);
+                },
+            ])
+            ->where('disposed', 0)
+            ->where('retread', 0)
+            ->when($search !== '', function ($q) use ($search) {
+                $like = "%{$search}%";
+
+                $q->where(function ($qq) use ($like) {
+
+                    // Tyre fields
+                    $qq->where('tyre_number', 'like', $like)
+                    ->orWhere('serial_number', 'like', $like)
+                    ->orWhere('purchase_date', 'like', $like)
+                    ->orWhere('type', 'like', $like);
+
+                    // Related models
+                    $qq->orWhereHas('product', fn ($p) => $p->where('name', 'like', $like))
+                    ->orWhereHas('product.brand', fn ($b) => $b->where('name', 'like', $like))
+                    ->orWhereHas('currency', fn ($c) => $c->where('name', 'like', $like))
+                    ->orWhereHas('store', fn ($s) => $s->where('name', 'like', $like))
+                    ->orWhereHas('vendor', fn ($v) => $v->where('name', 'like', $like));
+
+                    // ✅ Search in active assignments by asset registration_number
+                    $qq->orWhereHas('tyre_assignments', function ($ta) use ($like) {
+                        $ta->where('status', 1)
+                        ->where(function ($x) use ($like) {
+                            $x->whereHas('horse', fn ($h) => $h->where('registration_number', 'like', $like))
+                                ->orWhereHas('vehicle', fn ($v) => $v->where('registration_number', 'like', $like))
+                                ->orWhereHas('trailer', fn ($t) => $t->where('registration_number', 'like', $like));
+                        });
+                    });
+                });
+            })
+            ->orderByDesc('created_at')
+            ->paginate(10);
+
+        return view('livewire.tyres.index', compact('tyres'));
       
     }
 }

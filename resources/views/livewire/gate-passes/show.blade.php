@@ -31,28 +31,29 @@
                                 <th class="w-10 text-center line-height-35">For</th>
                                 <td class="w-20 line-height-35">{{$gate_pass->for}}</td>
                             </tr>
-                            @if ($gate_pass->group)
-                                <tr>
-                                    <th class="w-10 text-center line-height-35">Group</th>
-                                    <td class="w-20 line-height-35">{{$gate_pass->group ? $gate_pass->group->name : ""}}</td>
-                                </tr>
-                            @endif
-                            @if ($gate_pass->visitor)
-                                <tr>
-                                    <th class="w-10 text-center line-height-35">Group</th>
-                                    <td class="w-20 line-height-35">
-                                        {{$gate_pass->visitor ? $gate_pass->visitor->name : ""}}
-                                        @if ($gate_pass->vrn)
-                                            <br>
-                                            {{$gate_pass->make}} {{$gate_pass->vrn}}
-                                        @endif
-                                    </td>
-                                </tr>
-                            @endif
+                            @if ($gate_pass->type == "Individual")
+                                @if ($gate_pass->group)
+                                    <tr>
+                                        <th class="w-10 text-center line-height-35">Group</th>
+                                        <td class="w-20 line-height-35">{{$gate_pass->group ? $gate_pass->group->name : ""}}</td>
+                                    </tr>
+                                @endif
+                                @if ($gate_pass->visitor)
+                                    <tr>
+                                        <th class="w-10 text-center line-height-35">Group</th>
+                                        <td class="w-20 line-height-35">
+                                            {{$gate_pass->visitor ? $gate_pass->visitor->name : ""}}
+                                            @if ($gate_pass->vrn)
+                                                <br>
+                                                {{$gate_pass->make}} {{$gate_pass->vrn}}
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endif
                           
-                            @php
-                                 $invited_by = App\Models\Employee::find($gate_pass->invited_by_id);
-                            @endphp
+                                @php
+                                    $invited_by = App\Models\Employee::find($gate_pass->invited_by_id);
+                                @endphp
                                 <tr>
                                     <th class="w-10 text-center line-height-35">Invited By</th>
                                     <td class="w-20 line-height-35">
@@ -63,6 +64,8 @@
                                         @endif
                                     </td>
                                 </tr>
+                            @endif
+                    
                           
                             @if ($gate_pass->trip)
                                 <tr>
@@ -101,16 +104,21 @@
                                 <th class="w-10 text-center line-height-35">Exit</th>
                                 <td class="w-20 line-height-35">{{$gate_pass->exit}}</td>
                             </tr>
+
                             <tr>
                                 <th class="w-10 text-center line-height-35">Purpose of visit</th>
                                 <td class="w-20 line-height-35">{{$gate_pass->reason}}</td>
                             </tr>
                             <tr>
                                 <th class="w-10 text-center line-height-35">Signature</th>
-                                <td class="w-20 line-height-35"><img src="{{ asset('images/uploads/' . $gate_pass->signature) }}" style="width: 25%; height:25%" alt="Signature" /></td>
+                                <td class="w-20 line-height-35">
+                                    @if ($gate_pass->signature)
+                                        <img src="{{ asset('images/uploads/' . $gate_pass->signature) }}" style="width: 25%; height:25%" alt="Signature" />
+                                    @endif
+                                </td>
                             </tr>
                             <tr>
-                                <th class="w-10 text-center line-height-35">Authorization</th>
+                                <th class="w-10 text-center line-height-35">Security Authorization</th>
                                 <td class="w-20 line-height-35"><span class="badge bg-{{($gate_pass->authorization == 'approved') ? 'success' : (($gate_pass->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($gate_pass->authorization == 'approved') ? 'approved' : (($gate_pass->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
                             </tr>
                               

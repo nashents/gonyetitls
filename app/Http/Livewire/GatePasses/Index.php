@@ -2,7 +2,7 @@
 
 namespace App\Http\Livewire\GatePasses;
 
-use Storage;
+
 use App\Models\Gate;
 use App\Models\Trip;
 use App\Models\Group;
@@ -64,6 +64,8 @@ class Index extends Component
     public $make;
     
 
+    public $gate_pass_id;
+    public $authorization;
     public $gate_name;
     public $group_name;
     public $name;
@@ -373,6 +375,7 @@ class Index extends Component
 
 
     public function edit($id){
+
         $gate_pass = GatePass::find($id);
         $this->entry = $gate_pass->entry;
         $this->exit = $gate_pass->exit;
@@ -437,6 +440,7 @@ class Index extends Component
 
         if (isset($this->from) && isset($this->to)) {
             if (filled($this->search)) {
+                
                  return view('livewire.gate-passes.index',[
                 'individual_gate_passes' => GatePass::with('branch:id,name')
                 ->whereBetween('created_at',[$this->from, $this->to])

@@ -181,12 +181,13 @@
                         </thead>
 
                         <tbody>
-                            @if ($trips->count()>0)
+                          
+                            @if (isset($trips) && $trips->count()>0)
                            
                             @foreach ($trips as $trip)
                             @php
-                            $to = App\Models\Destination::find($trip->to);
-                            $from = App\Models\Destination::find($trip->from);
+                                $to = App\Models\Destination::find($trip->to);
+                                $from = App\Models\Destination::find($trip->from);
                             @endphp
                           <tr>
                             <td>{{$trip->trip_number}}</td>
@@ -200,9 +201,9 @@
                                     {{$trip->driver->employee ? $trip->driver->employee->name : ""}} {{$trip->driver->employee ? $trip->driver->employee->surname : ""}}
                                 @endif
                             </td>
-                            <td>{{$from->country ? $from->country->name : ""}} {{$from->city}}</td>
-                            <td>{{$to->country ? $to->country->name : ""}} {{$to->city}}</td>
-                            <td>${{$trip->freight}}</td>
+                            <td>{{$from?->country ? $from?->country->name : ""}} {{$from?->city}}</td>
+                            <td>{{$to?->country ? $to?->country->name : ""}} {{$to?->city}}</td>
+                            <td>{{$trip->currency ? $trip->currency->symbol : ""}}{{$trip->freight}}</td>
                             @if ($trip->trip_status == "Offloaded")
                             <td ><span class="label label-success label-wide">{{$trip->trip_status}}</span></td>
                             @elseif($trip->trip_status == "Scheduled")

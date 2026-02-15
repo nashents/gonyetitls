@@ -37,7 +37,7 @@ class NavbarComposer
     {
         $user = User::find(Auth::user()->id);
 
-              $pendingCounts = [
+        $pendingCounts = [
             'trips'            => Trip::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
             'bookings'         => Booking::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
             'invoices'         => Invoice::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),

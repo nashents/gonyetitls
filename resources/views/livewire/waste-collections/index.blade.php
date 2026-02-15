@@ -56,8 +56,11 @@
                                         <td>{{$waste_collection->created_at}}</td>
                                         <td>
                                             @if ($waste_collection->waste_collection_items)
+                                            @php
+                                                $i = 1
+                                            @endphp
                                                 @foreach ($waste_collection->waste_collection_items as $item)
-                                                    {{$item->waste_type ? $item->waste_type->name : ""}} {{$item->qty}} {{$item->unit_of_measure}}@if (!$loop->last), @endif
+                                                   {{$i++}}) {{$item->waste_type ? $item->waste_type->name : ""}} {{$item->description}} {{$item->qty}} {{$item->unit_of_measure}}@if (!$loop->last), <br> @endif
                                                 @endforeach
                                             @endif
                                         </td>
@@ -70,7 +73,7 @@
                                                 </button>
                                                 <ul class="dropdown-menu">
                                                     <li><a href="{{route('waste_collections.show', $waste_collection->id)}}"><i class="fa fa-eye color-default"></i>View</a></li>
-                                                    @if ($waste_collection->user_id == Auth::user()->id)
+                                                    @if ($waste_collection->user_id == Auth::user()->id && $waste_collection->authorization == 'pending')
                                                         <li><a href="#" wire:click.prevent="edit({{$waste_collection->id}})"><i class="fa fa-edit color-success"></i> Edit</a></li>
                                                     @endif
                                                      <li><a href="#" wire:click.prevent="delete({{$waste_collection->id}})" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
@@ -180,34 +183,33 @@
                             <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="name">Unit of measure<span class="required" style="color: red">*</span></label>
-                                    <select class="form-control" wire:model.debounce.300ms="unit_of_measure.0" >
+                                   <select class="form-control" wire:model.debounce.300ms="unit_of_measure.0" required>
                                         <option value="">Select Option</option>
-                                        <option value="Cubic">Cubic</option>
-                                        <option value="Litres">Litres</option>
-                                        <option value="Kgs">Kgs</option>
-                                        <option value="Meters">Meters</option>
-                                        <option value="Tons">Tons</option>
+                                        @foreach ($unit_of_measures as $unit_of_measure)
+                                             <option value="{{$unit_of_measure->name}}">{{$unit_of_measure->name}} ({{$unit_of_measure->abbreviation}})</option>
+                                         @endforeach
                                     </select>
                                     @error('unit_of_measure.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="form-group">
-                                    <label for="name">Waste Recepticle</label>
-                                    <input type="text" class="form-control" wire:model.debounce.300ms="waste_receptacle.0" placeholder="Enter Receptacle">
-                                    @error('waste_receptacle.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    <label for="name">Waste Recepticles</label>
+                                    <select class="form-control" wire:model.debounce.300ms="waste_receptacle_id.0" >
+                                        <option value="">Select Option</option>
+                                        @foreach ($waste_receptacles as $waste_receptacle)
+                                             <option value="{{$waste_receptacle->id}}">{{$waste_receptacle->name}}</option>
+                                        @endforeach
+                                    </select>
+                                     <small><a href="{{ route('waste_receptacles.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Waste Receptacle</a></small> <a href="#" wire:click.prevent="refresh('waste_receptacles')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                    @error('waste_receptacle_id.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label for="name">CollectedBy<span class="required" style="color: red">*</span></label>
-                                    <select class="form-control" wire:model.debounce.300ms="selectedEmployee.0" >
-                                        <option value="">Select Option</option>
-                                        @foreach ($employees as $employee)
-                                             <option value="{{$employee->id}}">{{$employee->name}} {{$employee->surname}}</option>
-                                        @endforeach
-                                    </select>
-                                    @error('selectedEmployee.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    <label for="name">Collected From<span class="required" style="color: red">*</span></label>
+                                   <input type="text" class="form-control" wire:model.debounce.300ms="collected_from.0" placeholder="Enter Collection Point" required>
+                                    @error('collected_from.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                         </div>
@@ -252,11 +254,9 @@
                                     <label for="name">Unit of measure<span class="required" style="color: red">*</span></label>
                                     <select class="form-control" wire:model.debounce.300ms="unit_of_measure.{{$value}}" required>
                                         <option value="">Select Option</option>
-                                        <option value="Cubic">Cubic</option>
-                                        <option value="Litres">Litres</option>
-                                        <option value="Kgs">Kgs</option>
-                                        <option value="Meters">Meters</option>
-                                        <option value="Tons">Tons</option>
+                                        @foreach ($unit_of_measures as $unit_of_measure)
+                                            <option value="{{$unit_of_measure->name}}">{{$unit_of_measure->name}} ({{$unit_of_measure->abbreviation}})</option>
+                                        @endforeach
                                     </select>
                                     @error('unit_of_measure.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
@@ -264,20 +264,21 @@
                             <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="name">Waste Recepticle</label>
-                                    <input type="text" class="form-control" wire:model.debounce.300ms="waste_receptacle.{{$value}}" placeholder="Enter Receptacle" >
-                                    @error('waste_receptacle.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    <select class="form-control" wire:model.debounce.300ms="waste_receptacle_id.{{$value}}" >
+                                        <option value="">Select Option</option>
+                                        @foreach ($waste_receptacles as $waste_receptacle)
+                                             <option value="{{$waste_receptacle->id}}">{{$waste_receptacle->name}}</option>
+                                        @endforeach
+                                    </select>
+                                     <small><a href="{{ route('waste_receptacles.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Waste Receptacle</a></small> <a href="#" wire:click.prevent="refresh('waste_receptacles')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                    @error('waste_receptacle_id.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                              <div class="col-md-4">
                                 <div class="form-group">
-                                    <label for="name">CollectedBy<span class="required" style="color: red">*</span></label>
-                                    <select class="form-control" wire:model.debounce.300ms="selectedEmployee.{{$value}}" >
-                                        <option value="">Select Option</option>
-                                        @foreach ($employees as $employee)
-                                             <option value="{{$employee->id}}">{{$employee->name}} {{$employee->surname}}</option>
-                                        @endforeach
-                                    </select>
-                                    @error('selectedEmployee.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    <label for="name">Collected From<span class="required" style="color: red">*</span></label>
+                                   <input type="text" class="form-control" wire:model.debounce.300ms="collected_from.{{$value}}" placeholder="Enter Collection Point" required>
+                                    @error('collected_from.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                             <div class="col-md-1">
@@ -353,16 +354,21 @@
                                     @error('current_qty.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label for="name">Balance<span class="required" style="color: red">*</span></label>
+                                    <input type="number" step="any" class="form-control" wire:model.debounce.300ms="current_balance.{{$key}}" placeholder="Enter Balance" required>
+                                    @error('current_balance.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-2">
                                 <div class="form-group">
                                     <label for="name">Unit of measure<span class="required" style="color: red">*</span></label>
                                     <select class="form-control" wire:model.debounce.300ms="current_unit_of_measure.{{$key}}" >
                                         <option value="">Select Option</option>
-                                        <option value="Cubic">Cubic</option>
-                                        <option value="Litres">Litres</option>
-                                        <option value="Kgs">Kgs</option>
-                                        <option value="Meters">Meters</option>
-                                        <option value="Tons">Tons</option>
+                                        @foreach ($unit_of_measures as $unit_of_measure)
+                                            <option value="{{$unit_of_measure->name}}">{{$unit_of_measure->name}} ({{$unit_of_measure->abbreviation}})</option>
+                                        @endforeach
                                     </select>
                                     @error('current_unit_of_measure.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
@@ -370,20 +376,21 @@
                             <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="name">Waste Recepticle</label>
-                                    <input type="text" class="form-control" wire:model.debounce.300ms="current_waste_receptacle.{{$key}}" placeholder="Enter Receptacle">
-                                    @error('current_waste_receptacle.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="name">CollectedBy<span class="required" style="color: red">*</span></label>
-                                    <select class="form-control" wire:model.debounce.300ms="current_selectedEmployee.{{$key}}" >
+                                    <select class="form-control" wire:model.debounce.300ms="current_waste_receptacle_id.{{$key}}" >
                                         <option value="">Select Option</option>
-                                        @foreach ($employees as $employee)
-                                             <option value="{{$employee->id}}">{{$employee->name}} {{$employee->surname}}</option>
+                                        @foreach ($waste_receptacles as $waste_receptacle)
+                                             <option value="{{$waste_receptacle->id}}">{{$waste_receptacle->name}}</option>
                                         @endforeach
                                     </select>
-                                    @error('current_selectedEmployee.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                     <small><a href="{{ route('waste_receptacles.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Waste Receptacle</a></small> <a href="#" wire:click.prevent="refresh('waste_receptacles')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                    @error('current_waste_receptacle_id.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                               <div class="form-group">
+                                    <label for="name">Collected From<span class="required" style="color: red">*</span></label>
+                                   <input type="text" class="form-control" wire:model.debounce.300ms="current_collected_from.{{$key}}" placeholder="Enter Collection Point" required>
+                                    @error('current_collected_from.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                         </div>
@@ -432,32 +439,31 @@
                                     <label for="name">Unit of measure<span class="required" style="color: red">*</span></label>
                                     <select class="form-control" wire:model.debounce.300ms="unit_of_measure.{{$value}}" required>
                                         <option value="">Select Option</option>
-                                        <option value="Cubic">Cubic</option>
-                                        <option value="Litres">Litres</option>
-                                        <option value="Kgs">Kgs</option>
-                                        <option value="Meters">Meters</option>
-                                        <option value="Tons">Tons</option>
+                                        @foreach ($unit_of_measures as $unit_of_measure)
+                                            <option value="{{$unit_of_measure->name}}">{{$unit_of_measure->name}} ({{$unit_of_measure->abbreviation}})</option>
+                                        @endforeach
                                     </select>
                                     @error('unit_of_measure.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                             <div class="col-md-3">
-                                <div class="form-group">
+                              <div class="form-group">
                                     <label for="name">Waste Recepticle</label>
-                                    <input type="text" class="form-control" wire:model.debounce.300ms="waste_receptacle.{{$value}}" placeholder="Enter Receptacle" >
-                                    @error('waste_receptacle.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    <select class="form-control" wire:model.debounce.300ms="waste_receptacle_id.{{$value}}" >
+                                        <option value="">Select Option</option>
+                                        @foreach ($waste_receptacles as $waste_receptacle)
+                                             <option value="{{$waste_receptacle->id}}">{{$waste_receptacle->name}}</option>
+                                        @endforeach
+                                    </select>
+                                     <small><a href="{{ route('waste_receptacles.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Waste Receptacle</a></small> <a href="#" wire:click.prevent="refresh('waste_receptacles')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                    @error('waste_receptacle_id.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                              <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="name">CollectedBy<span class="required" style="color: red">*</span></label>
-                                    <select class="form-control" wire:model.debounce.300ms="selectedEmployee.{{$value}}" >
-                                        <option value="">Select Option</option>
-                                        @foreach ($employees as $employee)
-                                             <option value="{{$employee->id}}">{{$employee->name}} {{$employee->surname}}</option>
-                                        @endforeach
-                                    </select>
-                                    @error('selectedEmployee.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                               <div class="form-group">
+                                    <label for="name">Collected From<span class="required" style="color: red">*</span></label>
+                                   <input type="text" class="form-control" wire:model.debounce.300ms="collected_from.{{$key}}" placeholder="Enter Collection Point" required>
+                                    @error('collected_from.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                             <div class="col-md-1">

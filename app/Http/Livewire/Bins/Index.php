@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Http\Livewire\Bins;
-
 use App\Exports\BinsExport;
 use App\Models\Bin;
 use Illuminate\Support\Facades\Auth;

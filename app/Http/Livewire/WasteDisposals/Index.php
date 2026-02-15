@@ -87,6 +87,20 @@ class Index extends Component
     }
 
 
+    public function updatedWasteTypeId($id, $key){
+
+        if (is_null($id) && is_null($key)) {
+      
+            return;
+        }
+
+        $waste_type = WasteType::find($id);
+        $available_qty = 0;
+        $available_qty = WasteDisposalItem::where('waste_type_id', $id)->get()->sum('qty');
+        $this->qty[$key] = $available_qty;
+        
+    }
+
     public function mount(){
         $this->waste_types = WasteType::orderBy('name','asc')->get();
         $this->customers = Customer::orderBy('name','asc')->get();
@@ -193,7 +207,7 @@ class Index extends Component
 
      public function refresh($category){
 
-        if($category == "tracking_groups"){
+        if($category == "waste_types"){
             $this->waste_types = WasteType::orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',

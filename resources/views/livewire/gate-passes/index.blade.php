@@ -159,7 +159,7 @@
                                   </tr>
                                   @empty
                                     <tr>
-                                        <td colspan="8">
+                                        <td colspan="10">
                                             <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                                 No Individual Gate Passes Found ....
                                             </div>
@@ -185,6 +185,8 @@
                                 <caption>Trip Gatepass</caption>
                                 <thead>
                                   <tr>
+                                    <th class="th-sm">GatePass#
+                                    </th>
                                     <th class="th-sm">Trip
                                     </th>
                                      <th class="th-sm">Entry
@@ -195,7 +197,7 @@
                                     </th>
                                     <th class="th-sm">Logistics
                                     </th>
-                                    <th class="th-sm">Auth
+                                    <th class="th-sm">Security
                                     </th>
                                     <th class="th-sm">Action
                                     </th>

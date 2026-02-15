@@ -2,7 +2,6 @@
 
 // use App\Http\Livewire\Shifts\Preview;
 use Illuminate\Support\Facades\Route;
-use App\Http\Livewire\Pyramids\Horses;
 use App\Http\Controllers\SmsController;
 use App\Http\Controllers\ShiftController;
 
@@ -489,6 +488,7 @@ Route::resource('tyre_transfers','TyreTransferController');
 Route::resource('goods_receiveds','GoodsReceivedController');
 Route::resource('racks','RackController');
 Route::resource('waste_types','WasteTypeController');
+Route::resource('waste_receptacles','WasteReceptacleController');
 Route::resource('dependants','DependantController');
 Route::resource('shifts','ShiftController');
 Route::resource('rehandlings','RehandlingController');

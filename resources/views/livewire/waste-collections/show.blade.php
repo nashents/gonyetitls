@@ -33,6 +33,8 @@
                                 </th>
                                 <th class="th-sm">Qty
                                 </th>
+                                <th class="th-sm">Bal
+                                </th>
                                 <th class="th-sm">Collection
                                 </th>
                             </tr>
@@ -44,9 +46,10 @@
                                         <td>{{$waste_collection_item->waste_type ? $waste_collection_item->waste_type->name : ""}} {{$waste_collection_item->waste_type ? $waste_collection_item->waste_type->category : ""}} {{$waste_collection_item->waste_type ? $waste_collection_item->waste_type->composition : ""}}</td>
                                         <td>{{$waste_collection_item->description}}</td>
                                         <td>{{$waste_collection_item->qty}} {{$waste_collection_item->unit_of_measure}}</td>
+                                        <td>{{$waste_collection_item->balance}} {{$waste_collection_item->unit_of_measure}}</td>
                                         <td>
-                                            <small><strong>CollectedBy: </strong> {{$waste_collection_item->employee ? $waste_collection_item->employee->name : ""}} {{$waste_collection_item->employee ? $waste_collection_item->employee->surname : ""}}</small>
-                                            <small><strong>CollectedOn: </strong> {{$waste_collection_item->date}}</small>
+                                            <small><strong>From: </strong> {{$waste_collection_item->collected_from}}</small> <br>
+                                            <small><strong>On: </strong> {{$waste_collection_item->date}}</small>
                                         </td>
                                        
                                     </tr>

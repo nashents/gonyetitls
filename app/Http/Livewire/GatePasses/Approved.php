@@ -124,18 +124,18 @@ class Approved extends Component
     {
         if ($this->department == "logistics") {
             return view('livewire.gate-passes.approved',[
-                'trip_gate_passes' => GatePass::with('trip:id,trip_number','horse:id,registration_number','driver','driver.employee:id,name,surname','branch:id,name')->where('logistics_authorization', 'approved')->where('type','Trip')->orderBy('gate_pass_number','desc')->take(100)->paginate(10),
+                'trip_gate_passes' => GatePass::with('trip:id,trip_number','horse:id,registration_number','driver','driver.employee:id,name,surname','branch:id,name')->where('logistics_authorization', 'approved')->where('type','Trip')->orderBy('created_at','desc')->take(100)->paginate(10),
                 'department' => $this->department
             ]);
         }elseif($this->department == "workshop"){
             return view('livewire.gate-passes.approved',[
-                'trip_gate_passes' => GatePass::with('trip:id,trip_number','horse:id,registration_number','driver','driver.employee:id,name,surname','branch:id,name')->where('workshop_authorization', 'approved')->where('type','Trip')->orderBy('gate_pass_number','desc')->take(100)->paginate(10),
+                'trip_gate_passes' => GatePass::with('trip:id,trip_number','horse:id,registration_number','driver','driver.employee:id,name,surname','branch:id,name')->where('workshop_authorization', 'approved')->where('type','Trip')->orderBy('created_at','desc')->take(100)->paginate(10),
                 'department' => $this->department
             ]);
         }elseif($this->department == "security"){
             return view('livewire.gate-passes.approved',[
-                'trip_gate_passes' => GatePass::with('trip:id,trip_number','horse:id,registration_number','driver','driver.employee:id,name,surname','branch:id,name')->where('authorization', 'approved')->where('type','Trip')->orderBy('gate_pass_number','desc')->take(100)->paginate(10),
-                'individual_gate_passes' => GatePass::with('trip:id,trip_number','horse:id,registration_number','driver','driver.employee:id,name,surname','branch:id,name')->where('authorization', 'approved')->where('type','Individual')->orderBy('gate_pass_number','desc')->take(100)->paginate(10),
+                'trip_gate_passes' => GatePass::with('trip:id,trip_number','horse:id,registration_number','driver','driver.employee:id,name,surname','branch:id,name')->where('authorization', 'approved')->where('type','Trip')->orderBy('created_at','desc')->take(100)->paginate(10),
+                'individual_gate_passes' => GatePass::with('trip:id,trip_number','horse:id,registration_number','driver','driver.employee:id,name,surname','branch:id,name')->where('authorization', 'approved')->where('type','Individual')->orderBy('created_at','desc')->take(100)->paginate(10),
                 'department' => $this->department
             ]);
         }

@@ -34,6 +34,7 @@
                                 <div class="col-md-6">
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
+                                        <li><a href="{{route('gate_passes.pending',['department' => $department])}}"><i class="fa fa-list"></i> Pending Gate Passes</a></li>
             							<li class="active"> <i class="fas fa-ban"></i> Rejected Gate Passes</li>
             						</ul>
                                 </div>

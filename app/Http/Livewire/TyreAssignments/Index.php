@@ -9,7 +9,6 @@ use App\Models\Trailer;
 use App\Models\Vehicle;
 use Livewire\Component;
 use App\Models\Movement;
-use App\Models\TyreDetail;
 use App\Models\TyreDispatch;
 use Livewire\WithPagination;
 use App\Models\TyreAssignment;

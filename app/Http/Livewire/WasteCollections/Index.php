@@ -2,16 +2,17 @@
 
 namespace App\Http\Livewire\WasteCollections;
 
-use Livewire\Component;
 use App\Models\Employee;
-use App\Models\WasteType;
-use App\Models\WasteSource;
-use Livewire\WithPagination;
-use Livewire\WithFileUploads;
+use App\Models\UnitsOfMeasure;
 use App\Models\WasteCollection;
-use Illuminate\Support\Facades\DB;
 use App\Models\WasteCollectionItem;
+use App\Models\WasteReceptacle;
+use App\Models\WasteType;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Livewire\Component;
+use Livewire\WithFileUploads;
+use Livewire\WithPagination;
 
 class Index extends Component
 {
@@ -32,29 +33,30 @@ class Index extends Component
 
   
     public $waste_types;
- 
-    public $waste_sources;
-    public $waste_source_id;
     public $waste_collection_items;
 
     public $current_date = [];
     public $current_waste_type_id = [];
     public $current_description = [];
     public $current_qty = [];
+    public $current_balance = [];
     public $current_unit_of_measure = [];
-    public $current_waste_receptacle = [];
-    public $current_selectedEmployee = [];
+    public $current_waste_receptacle_id = [];
+    public $current_collected_from = [];
 
     public $date = [];
     public $waste_type_id = [];
     public $description = [];
     public $qty = [];
     public $unit_of_measure = [];
-    public $waste_receptacle = [];
-    public $selectedEmployee = [];
+    public $waste_receptacle_id = [];
+    public $collected_from = [];
  
     public $waste_collection_id;
     public $waste_collection;
+
+    public $unit_of_measures;
+    public $waste_receptacles;
 
     public $inputs = [];
     public $i = 1;
@@ -75,9 +77,9 @@ class Index extends Component
 
      private function resetInputFields(){
         $this->date = [];
-        $this->selectedEmployee = [];
+        $this->collected_from = [];
         $this->qty = [];
-        $this->waste_receptacle = [];
+        $this->waste_receptacle_id = [];
         $this->inputs = [];
         $this->unit_of_measure = [];
         $this->description = [];
@@ -87,6 +89,8 @@ class Index extends Component
 
     public function mount(){
         $this->waste_types = WasteType::orderBy('name','asc')->get();
+        $this->waste_receptacles = WasteReceptacle::orderBy('name','asc')->get();
+        $this->unit_of_measures = UnitsOfMeasure::orderBy('name','asc')->get();
         $this->employees = Employee::orderBy('name','asc')->orderBy('surname','asc')->get();
      
     }
@@ -141,9 +145,10 @@ class Index extends Component
                $waste_collection_item->waste_type_id = $typeId;
                $waste_collection_item->description = $this->description[$key] ?? Null;
                $waste_collection_item->qty = $this->qty[$key] ?? Null;
+               $waste_collection_item->balance = $this->qty[$key] ?? Null;
                $waste_collection_item->unit_of_measure = $this->unit_of_measure[$key] ?? Null;
-               $waste_collection_item->collected_by_id = $this->selectedEmployee[$key] ?? Null;
-               $waste_collection_item->waste_receptacle = $this->waste_receptacle[$key] ?? Null;
+               $waste_collection_item->collected_from = $this->collected_from[$key] ?? Null;
+               $waste_collection_item->waste_receptacle_id = $this->waste_receptacle_id[$key] ?? Null;
                $waste_collection_item->date = $this->date[$key] ?? Null;
                $waste_collection_item->save();
             }
@@ -161,7 +166,7 @@ class Index extends Component
 
      public function refresh($category){
 
-        if($category == "tracking_groups"){
+        if($category == "waste_types"){
             $this->waste_types = WasteType::orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
@@ -178,11 +183,12 @@ class Index extends Component
             foreach ($this->waste_collection_items as $item) {
                 $this->current_date[] = $item->date;
                 $this->current_unit_of_measure[] = $item->unit_of_measure;
-                $this->current_waste_receptacle[] = $item->waste_receptacle;
+                $this->current_waste_receptacle_id[] = $item->waste_receptacle_id;
                 $this->current_waste_type_id[] = $item->waste_type_id;
                 $this->current_description[] = $item->description;
                 $this->current_qty[] = $item->qty;
-                $this->current_selectedEmployee[] = $item->collected_by_id;
+                $this->current_balance[] = $item->balance;
+                $this->current_collected_from[] = $item->collected_from;
             }
         }
 
@@ -206,9 +212,10 @@ class Index extends Component
                $waste_collection_item->waste_type_id = $typeId;
                $waste_collection_item->description = $this->description[$key] ?? Null;
                $waste_collection_item->qty = $this->qty[$key] ?? Null;
+               $waste_collection_item->balance = $this->qty[$key] ?? Null;
                $waste_collection_item->unit_of_measure = $this->unit_of_measure[$key] ?? Null;
-               $waste_collection_item->collected_by_id = $this->selectedEmployee[$key] ?? Null;
-               $waste_collection_item->waste_receptacle = $this->waste_receptacle[$key] ?? Null;
+               $waste_collection_item->collected_from = $this->collected_from[$key] ?? Null;
+               $waste_collection_item->waste_receptacle_id = $this->waste_receptacle_id[$key] ?? Null;
                $waste_collection_item->date = $this->date[$key] ?? Null;
                $waste_collection_item->save();
             }
@@ -219,9 +226,10 @@ class Index extends Component
                $waste_collection_item->waste_type_id =  $this->current_waste_type_id[$key] ?? Null;
                $waste_collection_item->description = $this->current_description[$key] ?? Null;
                $waste_collection_item->qty = $this->current_qty[$key] ?? Null;
+               $waste_collection_item->balance = $this->current_balance[$key] ?? Null;
                $waste_collection_item->unit_of_measure = $this->current_unit_of_measure[$key] ?? Null;
-               $waste_collection_item->collected_by_id = $this->current_selectedEmployee[$key] ?? Null;
-               $waste_collection_item->waste_receptacle = $this->current_waste_receptacle[$key] ?? Null;
+               $waste_collection_item->collected_from = $this->current_collected_from[$key] ?? Null;
+               $waste_collection_item->waste_receptacle_id = $this->current_waste_receptacle_id[$key] ?? Null;
                $waste_collection_item->date = $this->current_date[$key] ?? Null;
                $waste_collection_item->update();
             }

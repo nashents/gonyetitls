@@ -19,7 +19,7 @@ class Pending extends Component
     public $to;
 
 
-    // private $trip_gate_passes;
+  
     public $gate_pass_id;
     public $authorize;
     public $comments;
@@ -53,11 +53,11 @@ class Pending extends Component
       public function getTripGatePassesProperty(){
 
         if ($this->department == "logistics") {
-            return  GatePass::with('trip:id,trip_number','horse:id,registration_number','driver','driver.employee:id,name,surname','branch:id,name')->where('logistics_authorization', 'pending')->where('type','Trip')->orderBy('gate_pass_number','desc')->take(100)->paginate(10);
+            return  GatePass::with('trip:id,trip_number','horse:id,registration_number','driver','driver.employee:id,name,surname','branch:id,name')->where('logistics_authorization', 'pending')->where('type','Trip')->orderBy('created_at','desc')->take(100)->paginate(10);
         }elseif($this->department == "workshop"){
-            return GatePass::with('trip:id,trip_number','horse:id,registration_number','driver','driver.employee:id,name,surname','branch:id,name')->where('workshop_authorization', 'pending')->where('type','Trip')->orderBy('gate_pass_number','desc')->take(100)->paginate(10);
+            return GatePass::with('trip:id,trip_number','horse:id,registration_number','driver','driver.employee:id,name,surname','branch:id,name')->where('workshop_authorization', 'pending')->where('type','Trip')->orderBy('created_at','desc')->take(100)->paginate(10);
         }elseif($this->department == "security"){
-            return GatePass::with('trip:id,trip_number','horse:id,registration_number','driver','driver.employee:id,name,surname','branch:id,name')->where('authorization', 'pending')->where('type','Trip')->orderBy('gate_pass_number','desc')->take(10)->paginate(10);
+            return GatePass::with('trip:id,trip_number','horse:id,registration_number','driver','driver.employee:id,name,surname','branch:id,name')->where('authorization', 'pending')->where('type','Trip')->orderBy('created_at','desc')->take(10)->paginate(10);
         }
 
     }

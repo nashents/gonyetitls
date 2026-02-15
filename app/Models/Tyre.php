@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
+use App\Models\ChecklistResult;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Model;
-use OwenIt\Auditing\Contracts\Auditable;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use OwenIt\Auditing\Contracts\Auditable;
 
 class Tyre extends Model implements Auditable
 {
@@ -85,6 +86,27 @@ class Tyre extends Model implements Auditable
     }
     public function user(){
         return $this->belongsTo('App\Models\User');
+    }
+
+    public function activeAssignment()
+    {
+        // latest active assignment
+        return $this->hasOne(TyreAssignment::class, 'tyre_id')
+            ->where('status', 1)
+            ->latestOfMany();
+    }
+
+     public function checklistResults()
+    {
+        return $this->hasMany(ChecklistResult::class, 'tyre_id');
+    }
+
+    public function latestChecklistResult()
+    {
+        // Laravel 8+ supports this.
+        return $this->hasOne(ChecklistResult::class, 'tyre_id')->latestOfMany();
+        // If your "latest" should be by a specific date column, you can do:
+        // return $this->hasOne(ChecklistResult::class, 'tyre_id')->latestOfMany('created_at');
     }
 
      protected $dates = ['purchase_date'];

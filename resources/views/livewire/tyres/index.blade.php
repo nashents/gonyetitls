@@ -12,6 +12,9 @@
                             <div class="panel-title">
                                 <a href="{{route('tyres.create')}}"  class="btn btn-default"><i class="fa fa-plus-square-o"></i>Tyre</a>
                                 <a href="" data-toggle="modal" data-target="#tyresImportModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import</a>
+                                <a href="#" wire:click="exportTyresExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
+                                <a href="#" wire:click="exportTyresCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
+                                <a href="#" wire:click="exportTyresPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a> 
                             </div>
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
@@ -131,7 +134,7 @@
                                     </td>
                                     <td>
                                         @php
-                                                $checklist_result = App\Models\ChecklistResult::where('tyre_id',$tyre->id)->first();
+                                                $checklist_result = App\Models\ChecklistResult::where('tyre_id',$tyre->id)->latest()->first();
                                                 if ($checklist_result) {
                                                     $tread_depth_mm = $checklist_result->tread_depth_mm;
                                                     $pressure_psi = $checklist_result->pressure_psi;
@@ -202,7 +205,7 @@
                                   </tr>
                                   @empty
                                   <tr>
-                                    <td colspan="10">
+                                    <td colspan="12">
                                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                             No Tyres Found ....
                                         </div>

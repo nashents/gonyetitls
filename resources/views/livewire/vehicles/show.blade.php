@@ -275,73 +275,9 @@
                 <div role="tabpanel" class="tab-pane" id="fitness">
              @livewire('fitnesses.index', ['id' => $vehicle->id,'type' => "Vehicle"])
                 </div>
-                <div role="tabpanel" class="tab-pane" id="tyres">
-                    <div class="panel-title">
-                        <a href="#" wire:click="exportTyreAssignmentsExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
-                        <a href="#" wire:click="exportTyreAssignmentsCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
-                        <a href="#" wire:click="exportTyreAssignmentsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a> 
-                    </div>
-                    <br>
-                    <table  class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
-                        <thead >
-                            <th class="th-sm">Tyre#
-                            </th>
-                            <th class="th-sm">Product
-                            </th>
-                            <th class="th-sm">Serial#
-                            </th>
-                            <th class="th-sm">Specifications
-                            </th>
-                            <th class="th-sm">Axle
-                            </th>
-                            <th class="th-sm">Position
-                            </th>
-                            <th class="th-sm">Fitting Mileage
-                            </th>
-                            <th class="th-sm">Ending Mileage
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          
-                            @forelse ($tyre_assignments as $tyre_assignment)
-                            <tr>
-                                <td>{{$tyre_assignment->tyre ? $tyre_assignment->tyre->tyre_number : ""}}</td>
-                                <td>
-                                    @if ($tyre_assignment->tyre)
-                                    {{$tyre_assignment->tyre->product ? $tyre_assignment->tyre->product->name : ""}} {{$tyre_assignment->tyre->product->brand ? $tyre_assignment->tyre->product->brand->name : ""}}
-                                    @endif
-                                </td>
-                                <td>{{$tyre_assignment->tyre ? $tyre_assignment->tyre->serial_number : ""}}</td>
-                                <td>{{$tyre_assignment->tyre ? $tyre_assignment->tyre->width : ""}} / {{$tyre_assignment->tyre ? $tyre_assignment->tyre->aspect_ratio : ""}} R {{$tyre_assignment->tyre ? $tyre_assignment->tyre->diameter : ""}}</td>
-                                <td>{{$tyre_assignment->position}}</td>
-                                <td>{{$tyre_assignment->axle}}</td>
-                                <td>{{$tyre_assignment->starting_odometer ? $tyre_assignment->starting_odometer." Kms" : ""}}</td>
-                                 <td>{{$tyre_assignment->vehicle->mileage ? $tyre_assignment->vehicle->mileage." Kms" : ""}}</td>
-                            </tr>
-                            @empty
-                            <tr>
-                              <td colspan="8">
-                                  <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
-                                      No tyres assigned to horse found ....
-                                  </div>
-                                 
-                              </td>
-                            </tr> 
-                            @endforelse
-                      
-                      </tbody>
-                    </table>
-                    <nav class="text-center" style="float: right">
-                      <ul class="pagination rounded-corners">
-                          @if (isset($tyre_assignments))
-                              @if ($tyre_assignments->count()>0)
-                                  {{ $tyre_assignments->links() }} 
-                              @endif
-                          @endif 
-                      </ul>
-                  </nav>   
-                </div>
+                 <div role="tabpanel" class="tab-pane" id="tyres">
+                @livewire('tyres.tyre-assignments', ['id' => $vehicle->id, 'type' => "Vehicle"])
+            </div>
                 <div role="tabpanel" class="tab-pane" id="trips">
                     @livewire('vehicles.trips', ['id' => $vehicle->id])
                 </div>

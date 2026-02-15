@@ -131,6 +131,51 @@
 @stack('scripts')
     
     <script type="text/javascript">
+            window.addEventListener('show-waste_receptacleModal', event => {
+                $('#waste_receptacleModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-waste_receptacleModal', event => {
+                $('#waste_receptacleModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-waste_receptacleDeleteModal', event => {
+                $('#waste_receptacleDeleteModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-waste_receptacleDeleteModal', event => {
+                $('#waste_receptacleDeleteModal').modal('hide');
+            })
+    </script>
+        <script type="text/javascript">
+                window.addEventListener('show-waste_receptacleEditModal', event => {
+                    $('#waste_receptacleEditModal').modal('show');
+                })
+        </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-waste_receptacleEditModal', event => {
+                $('#waste_receptacleEditModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-waste_disposalDeleteModal', event => {
+                $('#waste_disposalDeleteModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-waste_disposalDeleteModal', event => {
+                $('#waste_disposalDeleteModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-waste_disposalDeleteModal', event => {
+                $('#waste_disposalDeleteModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
             window.addEventListener('show-waste_disposalDeleteModal', event => {
                 $('#waste_disposalDeleteModal').modal('show');
             })

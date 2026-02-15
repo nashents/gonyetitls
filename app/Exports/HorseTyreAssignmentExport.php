@@ -2,98 +2,205 @@
 
 namespace App\Exports;
 
-use App\Models\User;
+use App\Models\ChecklistResult;
+use App\Models\Tyre;
 use App\Models\TyreAssignment;
-use Illuminate\Support\Facades\Auth;
-use Maatwebsite\Excel\Events\AfterSheet;
-use Maatwebsite\Excel\Concerns\FromQuery;
-use Maatwebsite\Excel\Concerns\Exportable;
-use Maatwebsite\Excel\Concerns\WithEvents;
-use Maatwebsite\Excel\Concerns\WithMapping;
-use Maatwebsite\Excel\Concerns\WithDrawings;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
-use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
-use Maatwebsite\Excel\Concerns\WithCustomStartCell;
 
-class HorseTyreAssignmentExport implements FromQuery,
-ShouldAutoSize,
-WithMapping,
-WithHeadings,
-WithEvents,
-WithDrawings,
-WithCustomStartCell
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+
+use Maatwebsite\Excel\Concerns\Exportable;
+use Maatwebsite\Excel\Concerns\FromQuery;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithCustomStartCell;
+use Maatwebsite\Excel\Concerns\WithDrawings;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithMapping;
+
+use Maatwebsite\Excel\Events\AfterSheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
+
+class HorseTyreAssignmentExport implements
+    FromQuery,
+    ShouldAutoSize,
+    WithMapping,
+    WithHeadings,
+    WithEvents,
+    WithDrawings,
+    WithCustomStartCell
 {
     use Exportable;
-    /**
-    * return \Illuminate\Support\Collection
-    */
 
     public $horse_id;
+    public $trailer_id;
+    public $vehicle_id;
+    public $type;
 
-
-    public function __construct($horse_id = null) {
-        $this->horse_id = $horse_id;
+    public function __construct($id = null, $type = null)
+    {
+        
+        $this->type = $type;
+        if ($type == "Horse") {
+            $this->horse_id = $id;
+        } elseif ($type == "Trailer") {
+            $this->trailer_id = $id;
+        } elseif ($type == "Vehicle") {
+            $this->vehicle_id = $id;
+        }
     }
 
     public function query()
     {
-        return TyreAssignment::query()->with('horse')->where('horse_id',$this->horse_id)
-        ->whereYear('created_at', date('Y'))->orderBy('created_at','desc');
-         
-     
+        $baseQuery = TyreAssignment::query()
+            ->where('status', 1)
+            ->with([
+                'horse',
+                'tyre.product.brand',
+                'tyre.latestChecklistResult',
+            ]);
+
+            if ($this->type == "Horse") {
+                $baseQuery->where('horse_id', $this->horse_id);
+            } elseif ($this->type == "Trailer") {
+                $baseQuery->where('trailer_id', $this->trailer_id);
+            } elseif ($this->type == "Vehicle") {
+                $baseQuery->where('vehicle_id', $this->vehicle_id);
+            }
+
+            $baseQuery->orderBy('created_at', 'desc');
+        
+
+        return $baseQuery;
+            
     }
-    public function map($tyre_assignment): array{
-           
-            $product_name = $tyre_assignment->tyre->product ? $tyre_assignment->tyre->product->name : "";
-            $brand_name = $tyre_assignment->tyre->product->brand ? $tyre_assignment->tyre->product->brand->name : "";
-             $width = $tyre_assignment->tyre ? $tyre_assignment->tyre->width : "";
-             $ratio = $tyre_assignment->tyre ? $tyre_assignment->tyre->aspect_ratio : "";
-             $diameter = $tyre_assignment->tyre ? $tyre_assignment->tyre->diameter : "";                             
 
+    public function map($tyre_assignment): array
+    {
+        $tyre = $tyre_assignment->tyre;
 
-            return   [
-               $tyre_assignment->tyre ? $tyre_assignment->tyre->tyre_number : "",
-               $product_name." ".$brand_name,
-               $tyre_assignment->tyre ? $tyre_assignment->tyre->serial_number : "",
-                $width."/".$ratio."R".$diameter,
-                $tyre_assignment->position,
-                $tyre_assignment->axle,
-               $tyre_assignment->starting_odometer ? $tyre_assignment->starting_odometer." Kms" : "",
-               $tyre_assignment->ending_odometer ? $tyre_assignment->ending_odometer."Kms" : ""
-                 ];
+        $product_name = $tyre?->product?->name ?? '';
+        $brand_name   = $tyre?->product?->brand?->name ?? '';
 
+        $width    = $tyre?->width ?? '';
+        $ratio    = $tyre?->aspect_ratio ?? '';
+        $diameter = $tyre?->diameter ?? '';
+        $specs    = trim($width . '/' . $ratio . 'R' . $diameter);
 
+        // ---------------- Usage column ----------------
+        $purchaseDate = $tyre?->purchase_date
+            ? \Carbon\Carbon::parse($tyre->purchase_date)->format('d M Y')
+            : '-';
+
+        $age = $tyre?->age ?? '-';
+
+        $fitted  = number_format((float)($tyre_assignment->starting_odometer ?? 0));
+        $current = $tyre_assignment->ending_odometer
+            ? number_format((float)$tyre_assignment->ending_odometer)
+            : number_format((float)($tyre_assignment->horse?->mileage ?? 0));
+
+        $travelled = number_format((float)($tyre_assignment->travelled_km ?? 0)) . ' km';
+        $lifeStd   = number_format((float)($tyre?->life_span ?? 0)) . ' km';
+
+        $rem = $tyre_assignment->remaining_km;
+        $pct = $tyre_assignment->remaining_pct;
+
+        $remaining = is_null($rem) ? '-' : number_format((float)$rem) . ' km';
+        if (!is_null($pct)) {
+            $remaining .= " ({$pct}%)";
+        }
+
+        $usageText = implode("\n", [
+            "Acquisition: {$purchaseDate}",
+            "Age: {$age}",
+            "Fitted: {$fitted}",
+            "Current: {$current}",
+            "Travelled: {$travelled}",
+            "Life(Standard): {$lifeStd}",
+            "Remaining: {$remaining}",
+        ]);
+
+        // ---------------- Health column ----------------
+        $healthText = '-';
+
+        $checklist = $tyre?->latestChecklistResult; // ✅ already eager-loaded
+
+        if ($tyre && $checklist) {
+            $depthBadge    = $this->badgeFromModels($tyre, $checklist, 'depth');
+            $pressureBadge = $this->badgeFromModels($tyre, $checklist, 'pressure');
+
+            $stars = $this->stars((int)($checklist->rating ?? 0));
+            $notes = Str::limit((string)($checklist->notes ?? ''), 30, '...');
+
+            $healthText = implode("\n", [
+                "Tread Depth(mm): {$checklist->tread_depth_mm} ({$depthBadge})",
+                "Tyre Pressure(psi): {$checklist->pressure_psi} ({$pressureBadge})",
+                "Valve: " . ((int)$checklist->valve_ok === 1 ? 'Air Tight' : 'Leaking'),
+                "Sidewall Damage: " . ($checklist->sidewall_damage ?? '-'),
+                "Rim Condition: " . ($checklist->rim_condition ?? '-'),
+                "Wheelnuts Torqued: " . ((int)$checklist->wheel_nuts_torqued === 1 ? 'Yes' : 'No'),
+                "Axle Match: " . ((int)$checklist->axle_match === 1 ? 'Match' : 'Not Matching'),
+                "Overall Rating: {$stars}",
+                "Notes: {$notes}",
+                "Action: " . ($checklist->action_required ?? '-'),
+            ]);
+        }
+
+        // NOTE: Headings are 8 columns, so map MUST return 8 columns.
+        return [
+            $tyre?->tyre_number ?? '',
+            trim($product_name . ' ' . $brand_name),
+            $tyre?->serial_number ?? '',
+            $specs,
+            $tyre_assignment->axle,      // Axle
+            $tyre_assignment->position,  // Position
+            $usageText,                  // Usage
+            $healthText,                 // Health
+        ];
     }
-    public function headings(): array{
-            return[
-                'Tyre#',
-                'Product ',
-                'Serial#',
-                'Specifications',
-                'Axle',
-                'Position',
-                'Starting Mileage',
-                'Ending Mileage',
-            ];
 
-
+    public function headings(): array
+    {
+        return [
+            'Tyre#',
+            'Product',
+            'Serial#',
+            'Specifications',
+            'Axle',
+            'Position',
+            'Usage',
+            'Health',
+        ];
     }
-    public function registerEvents(): array{
-        return[
-            AfterSheet::class    => function(AfterSheet $event) {
-                $event->sheet->getStyle('A7:J7')->applyFromArray([
-                    'font' => [
-                        'bold' => true
-                    ],
+
+    public function registerEvents(): array
+    {
+        return [
+            AfterSheet::class => function (AfterSheet $event) {
+
+                // ✅ Your header row is A7:H7 (8 columns) not J
+                $event->sheet->getStyle('A7:H7')->applyFromArray([
+                    'font' => ['bold' => true],
                     'borders' => [
                         'outline' => [
                             'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THICK,
                             'color' => ['argb' => 'FFFF0000'],
                         ],
-                    ]
+                    ],
                 ]);
+
+                // ✅ Wrap text for Usage + Health columns so multi-line displays properly
+                $highestRow = $event->sheet->getHighestRow();
+
+                $event->sheet->getStyle("G8:H{$highestRow}")
+                    ->getAlignment()
+                    ->setWrapText(true)
+                    ->setVertical(Alignment::VERTICAL_TOP);
+
+                // Optional but highly recommended for readability
+                $event->sheet->getColumnDimension('G')->setWidth(40);
+                $event->sheet->getColumnDimension('H')->setWidth(45);
             },
         ];
     }
@@ -101,22 +208,58 @@ WithCustomStartCell
     public function drawings()
     {
         $drawing = new Drawing();
+
         if (isset(Auth::user()->employee->company)) {
             $drawing->setName(Auth::user()->employee->company->name);
             $drawing->setDescription(Auth::user()->employee->company->name . 'Logo');
-          if (file_exists(public_path('/images/uploads/'.Auth::user()->employee->company->logo))){
-            $drawing->setPath(public_path('/images/uploads/'.Auth::user()->employee->company->logo));
-        }else{
-            $drawing->setPath(public_path('/images/uploads/logo.png'));
+
+            if (file_exists(public_path('/images/uploads/' . Auth::user()->employee->company->logo))) {
+                $drawing->setPath(public_path('/images/uploads/' . Auth::user()->employee->company->logo));
+            } else {
+                $drawing->setPath(public_path('/images/uploads/logo.png'));
+            }
         }
-            } 
+
         $drawing->setHeight(90);
         $drawing->setCoordinates('A2');
 
         return $drawing;
     }
 
-    public function startCell(): string{
+    public function startCell(): string
+    {
         return 'A7';
+    }
+
+    /**
+     * Badge logic but without extra DB queries (fast).
+     */
+    private function badgeFromModels(Tyre $tyre, ChecklistResult $checklist, string $category): string
+    {
+        $badge = 'active';
+
+        if ($category === 'pressure') {
+            $standard = (float)($tyre->pressure_psi ?? 0);
+            $current  = (float)($checklist->pressure_psi ?? 0);
+        } else { // depth
+            $standard = (float)($tyre->thread_depth ?? 0);
+            $current  = (float)($checklist->tread_depth_mm ?? 0);
+        }
+
+        $pct = $standard > 0 ? ($current / $standard) * 100 : 0;
+
+        if ($pct >= 90) {
+            return 'success';
+        }
+        if ($pct >= 50) {
+            return 'warning';
+        }
+        return 'danger';
+    }
+
+    private function stars(int $rating): string
+    {
+        $rating = max(0, min(5, $rating));
+        return str_repeat('★', $rating) . str_repeat('☆', 5 - $rating);
     }
 }

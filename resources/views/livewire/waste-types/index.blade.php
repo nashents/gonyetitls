@@ -31,7 +31,7 @@
                                     </th>
                                     <th class="th-sm">Impact
                                     </th>
-                                    <th class="th-sm">Control
+                                    <th class="th-sm">Qty Collected
                                     </th>
                                     <th class="th-sm">Action
                                     </th>
@@ -47,6 +47,7 @@
                                     <td>{{$waste_type->generation_area}}</td>
                                     <td>{{$waste_type->impact}}</td>
                                     <td>{{$waste_type->control_methods}}</td>
+                                    <td>{{$waste_type->waste_collection_items->sum('balance') ?? 0}}</td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

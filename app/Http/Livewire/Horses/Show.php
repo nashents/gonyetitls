@@ -90,17 +90,7 @@ class Show extends Component
         return $excel->download(new HorseFuelExport($this->horse_id), 'horse_fuel_orders.xlsx');
     }
 
-    public function exportTyreAssignmentsCSV(Excel $excel){
-
-        return $excel->download(new HorseTyreAssignmentExport($this->horse_id), 'horse_assigned_tyres.csv', Excel::CSV);
-    }
-    public function exportTyreAssignmentsPDF(Excel $excel){
-
-        return $excel->download(new HorseTyreAssignmentExport($this->horse_id), 'horse_assigned_tyres.pdf', Excel::DOMPDF);
-    }
-    public function exportTyreAssignmentsExcel(Excel $excel){
-        return $excel->download(new HorseTyreAssignmentExport($this->horse_id), 'horse_assigned_tyres.xlsx');
-    }
+  
 
     public function exportBillsCSV(Excel $excel){
 
@@ -230,7 +220,6 @@ class Show extends Component
             'bookings' =>  $this->bookings,
             'bills' =>  $this->bills,
             'fuels' =>  $this->fuels,
-            'tyre_assignments' =>  $this->tyre_assignments
         ]);
     }
 }

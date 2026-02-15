@@ -22,24 +22,18 @@ use App\Models\Mileage;
 use App\Models\Trailer;
 use App\Models\Vehicle;
 use Livewire\Component;
-use App\Models\CashFlow;
 use App\Models\Currency;
 use App\Models\Customer;
-use App\Models\Distance;
-use App\Models\Employee;
 use App\Models\EmptyRun;
 use App\Models\TripType;
 use App\Models\Allowance;
 use App\Models\Consignee;
 use App\Models\Container;
-use App\Models\FuelCount;
 use App\Models\Quotation;
-use App\Models\TripCount;
 use App\Models\TripGroup;
 use App\Models\TruckStop;
 use App\Models\Assignment;
 use App\Models\Commission;
-use App\Models\TripReturn;
 use App\Models\Destination;
 use App\Models\Measurement;
 use App\Models\Transporter;
@@ -53,17 +47,15 @@ use App\Models\ClearingAgent;
 use App\Models\PaymentMethod;
 use Livewire\WithFileUploads;
 use App\Models\AllowanceDriver;
-use App\Models\ExpenseCategory;
 use App\Models\OffloadingPoint;
-use App\Models\TrailerAssignment;
 use App\Models\VehicleAssignment;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\PendingNotificationEmails;
-use Illuminate\Support\Facades\Session;
-use KMLaravel\GeographicalCalculator\Facade\GeoFacade;
+// use Illuminate\Support\Facades\Session;
+
 
 class Create extends Component
 {
@@ -1784,7 +1776,7 @@ class Create extends Component
 
                 $this->dispatchBrowserEvent('alert',[
                     'type'=>'success',
-                    'message'=>"Trip Scheduled Successfully!!"
+                    'message'=>"Trip Created Successfully!!"
                 ]);
                 return redirect()->route('trips.index');
 
