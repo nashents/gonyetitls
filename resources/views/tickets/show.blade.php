@@ -40,11 +40,7 @@
 
                         @livewire('tickets.show',['id' => $ticket->id])
 
-
                     </div>
-
-
-
 
 @endsection
 

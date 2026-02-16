@@ -18,6 +18,9 @@ class Ticket extends Model implements Auditable
     public function vehicle(){
         return $this->belongsTo('App\Models\Vehicle');
     }
+     public function work_dones(){
+        return $this->hasMany('App\Models\WorkDone');
+    }
     public function horse(){
         return $this->belongsTo('App\Models\Horse');
     }

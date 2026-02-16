@@ -19,6 +19,9 @@ class Booking extends Model implements Auditable
     public function mileage(){
         return $this->hasOne('App\Models\Mileage');
     }
+     public function work_dones(){
+        return $this->hasMany('App\Models\WorkDone');
+    }
     public function requisitions(){
         return $this->hasMany('App\Models\Requisition');
     }

@@ -131,6 +131,16 @@
 @stack('scripts')
     
     <script type="text/javascript">
+            window.addEventListener('show-workDoneModal', event => {
+                $('#workDoneModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-workDoneModal', event => {
+                $('#workDoneModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
             window.addEventListener('show-waste_receptacleModal', event => {
                 $('#waste_receptacleModal').modal('show');
             })

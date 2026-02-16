@@ -119,7 +119,7 @@
             <!-- /.container-fluid -->
         </section>
 
-         <div data-backdrop="static" data-keyboard="false" class="modal fade" id="waste_collectionDeleteModal" tabindex="-1" role="dialog">
+    <div data-backdrop="static" data-keyboard="false" class="modal fade" id="waste_collectionDeleteModal" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content bg-danger">
                 <div class="modal-body">

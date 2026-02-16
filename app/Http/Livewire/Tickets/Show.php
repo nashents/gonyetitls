@@ -7,9 +7,12 @@ use App\Models\InspectionGroup;
 use App\Models\InspectionResult;
 use App\Models\Ticket;
 use App\Models\TicketImage;
+use App\Models\UnitsOfMeasure;
 use App\Models\WasteCollection;
 use App\Models\WasteCollectionItem;
+use App\Models\WasteReceptacle;
 use App\Models\WasteType;
+use App\Models\WorkDone;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -52,18 +55,44 @@ class Show extends Component
     public $waste_types;
     public $waste_collection_items;
 
+    public $work_dones;
+    public $artisan = [];
+    public $job_description = [];
+    public $spares = [];
+    public $work_start_time = [];
+    public $work_end_time = [];
+   
+    public $current_artisan = [];
+    public $current_job_description = [];
+    public $current_spares = [];
+    public $current_work_start_time = [];
+    public $current_work_end_time = [];
+
 
     public $date = [];
     public $waste_type_id = [];
+    public $collected_from = [];
     public $description = [];
     public $qty = [];
     public $unit_of_measure = [];
-    public $waste_receptacle = [];
+    public $waste_receptacle_id = [];
     public $selectedEmployee = [];
+    
+    public $current_date = [];
+    public $current_waste_type_id = [];
+    public $current_collected_from = [];
+    public $current_description = [];
+    public $current_qty = [];
+    public $current_balance = [];
+    public $current_unit_of_measure = [];
+    public $current_waste_receptacle_id = [];
+    public $current_selectedEmployee = [];
  
     public $waste_collection_id;
     public $waste_collection;
     private $waste_collections;
+     public $unit_of_measures;
+     public $waste_receptacles;
 
     public $employees;
     public $employee_ids = [];
@@ -83,16 +112,33 @@ class Show extends Component
         $this->timeframe = '';
         $this->image = '';
     }
+   
+    private function resetWorkDoneInputFields(){
+        $this->current_artisan = [];
+        $this->current_job_description = [];
+        $this->current_spares = [];
+        $this->current_work_start_time = [];
+        $this->current_work_end_time = [];
+        $this->artisan = [];
+        $this->job_description = [];
+        $this->spares = [];
+        $this->work_start_time = [];
+        $this->work_end_time = [];
+    }
 
     private function resetWasteCollectionInputFields(){
         $this->date = [];
         $this->selectedEmployee = [];
         $this->qty = [];
-        $this->waste_receptacle = [];
+        $this->waste_receptacle_id = [];
         $this->inputs = [];
         $this->unit_of_measure = [];
         $this->description = [];
         $this->waste_type_id = [];
+        $this->collected_from = [];
+        $this->work_inputs = [];
+        $this->w = 1;
+        $this->v = 1;
     }
 
     public $inputs = [];
@@ -110,8 +156,58 @@ class Show extends Component
     {
         unset($this->inputs[$i]);
     }
+ 
+    public $work_inputs = [];
+    public $w = 1;
+    public $v = 1;
+
+    public function workAdd($w)
+    {
+        $w = $w + 1;
+        $this->w = $w;
+        array_push($this->work_inputs ,$w);
+    }
+   
+    public function workRemove($w)
+    {
+        unset($this->work_inputs[$w]);
+    }
 
 
+    public function storeWorkDone(){
+
+        $this->validate([
+            'job_description.*' => 'required',
+            'artisan.*' => 'required',
+        ],[
+            'job_description.*.required' => 'The work done field is required.',
+            'artisan.*.required' => 'The artisan field is required.',
+        ]);
+
+        $id = $this->ticket->id;
+        $booking_id = $this->ticket->booking_id;
+
+        if ($this->job_description) {   
+            foreach ($this->job_description as $key => $description) {
+                $work_done = new WorkDone;
+                $work_done->employee_id = Auth::user()->employee->id;
+                $work_done->ticket_id = $id;
+                $work_done->booking_id = $booking_id;
+                $work_done->artisan = $this->artisan[$key] ?? Null;
+                $work_done->job_description = $description ?? Null;
+                $work_done->spares = $this->spares[$key] ?? Null;
+                $work_done->start_time = $this->work_start_time[$key] ?? Carbon::now();
+                $work_done->end_time = $this->work_end_time[$key] ?? Carbon::now();
+                $work_done->save();
+            }
+        }
+
+        $this->resetWorkDoneInputFields();        
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Work Done Record Created Successfully!!"
+        ]);
+    }
 
       public function waste_collectionNumber(){
 
@@ -164,9 +260,10 @@ class Show extends Component
                $waste_collection_item->waste_type_id = $typeId;
                $waste_collection_item->description = $this->description[$key] ?? Null;
                $waste_collection_item->qty = $this->qty[$key] ?? Null;
+                $waste_collection_item->balance = $this->qty[$key] ?? Null;
                $waste_collection_item->unit_of_measure = $this->unit_of_measure[$key] ?? Null;
-               $waste_collection_item->collected_by_id = $this->selectedEmployee[$key] ?? Null;
-               $waste_collection_item->waste_receptacle = $this->waste_receptacle[$key] ?? Null;
+               $waste_collection_item->waste_receptacle_id = $this->waste_receptacle_id[$key] ?? Null;
+               $waste_collection_item->collected_from = $this->collected_from[$key] ?? Null;
                $waste_collection_item->date = $this->date[$key] ?? Null;
                $waste_collection_item->save();
             }
@@ -201,11 +298,12 @@ class Show extends Component
             foreach ($this->waste_collection_items as $item) {
                 $this->current_date[] = $item->date;
                 $this->current_unit_of_measure[] = $item->unit_of_measure;
-                $this->current_waste_receptacle[] = $item->waste_receptacle;
+                $this->current_waste_receptacle_id[] = $item->waste_receptacle_id;
                 $this->current_waste_type_id[] = $item->waste_type_id;
+                $this->current_collected_from[] = $item->collected_from;
                 $this->current_description[] = $item->description;
                 $this->current_qty[] = $item->qty;
-                $this->current_selectedEmployee[] = $item->collected_by_id;
+                $this->current_balance[] = $item->balance;
             }
         }
 
@@ -229,9 +327,10 @@ class Show extends Component
                $waste_collection_item->waste_type_id = $typeId;
                $waste_collection_item->description = $this->description[$key] ?? Null;
                $waste_collection_item->qty = $this->qty[$key] ?? Null;
+                $waste_collection_item->balance = $this->qty[$key] ?? Null;
                $waste_collection_item->unit_of_measure = $this->unit_of_measure[$key] ?? Null;
-               $waste_collection_item->collected_by_id = $this->selectedEmployee[$key] ?? Null;
-               $waste_collection_item->waste_receptacle = $this->waste_receptacle[$key] ?? Null;
+               $waste_collection_item->collected_from = $this->collected_from[$key] ?? Null;
+               $waste_collection_item->waste_receptacle_id = $this->waste_receptacle_id[$key] ?? Null;
                $waste_collection_item->date = $this->date[$key] ?? Null;
                $waste_collection_item->save();
             }
@@ -242,9 +341,10 @@ class Show extends Component
                $waste_collection_item->waste_type_id =  $this->current_waste_type_id[$key] ?? Null;
                $waste_collection_item->description = $this->current_description[$key] ?? Null;
                $waste_collection_item->qty = $this->current_qty[$key] ?? Null;
+                $waste_collection_item->balance = $this->current_balance[$key] ?? Null;
                $waste_collection_item->unit_of_measure = $this->current_unit_of_measure[$key] ?? Null;
-               $waste_collection_item->collected_by_id = $this->current_selectedEmployee[$key] ?? Null;
-               $waste_collection_item->waste_receptacle = $this->current_waste_receptacle[$key] ?? Null;
+                $waste_collection_item->collected_from = $this->current_collected_from[$key] ?? Null;
+               $waste_collection_item->waste_receptacle_id = $this->current_waste_receptacle_id[$key] ?? Null;
                $waste_collection_item->date = $this->current_date[$key] ?? Null;
                $waste_collection_item->update();
             }
@@ -415,6 +515,8 @@ class Show extends Component
 
         $equipment = null;
         $this->waste_types = WasteType::orderBy('name','asc')->get();
+        $this->waste_receptacles = WasteReceptacle::orderBy('name','asc')->get();
+        $this->unit_of_measures = UnitsOfMeasure::orderBy('name','asc')->get();
         $this->user = Auth::user();
         $this->employee = $this->user->employee;
         $this->company = $this->employee->company;
@@ -474,6 +576,7 @@ class Show extends Component
     public function render()
     {
         $this->ticket;
+        $this->work_dones = WorkDone::where('ticket_id', $this->ticket->id)->get();
         $this->after_attachments = TicketImage::where('ticket_id',$this->ticket->id)
         ->where('timeframe','After')->latest()->get();
         $this->before_attachments = TicketImage::where('ticket_id',$this->ticket->id)
@@ -486,6 +589,7 @@ class Show extends Component
             'notes' => $this->notes,
             'ticket' => $this->ticket,
             'waste_collections' => $waste_collections,
+            'work_dones' => $this->work_dones,
         ]);
     }
 }
