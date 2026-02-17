@@ -2,21 +2,22 @@
 
 namespace App\Http\Livewire\TicketExpenses;
 
-use App\Models\Bill;
-use App\Models\Vendor;
 use App\Models\Account;
-use App\Models\Expense;
-use App\Models\Product;
-use Livewire\Component;
-use App\Models\Currency;
+use App\Models\Bill;
 use App\Models\BillExpense;
+use App\Models\Currency;
+use App\Models\Expense;
 use App\Models\PaymentMethod;
+use App\Models\Product;
 use App\Models\TicketExpense;
+use App\Models\Vendor;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class Index extends Component
 {
-    
+    use WithPagination;
     public $ticket;
     public $ticket_id;
     public $accounts;
@@ -30,7 +31,7 @@ class Index extends Component
     public $expenses;
     public $bill_expense;
     public $selectedExpense;
-    public $ticket_expenses;
+    protected $ticket_expenses;
     public $ticket_expense_id;
     public $qty;
     public $amount;
@@ -80,6 +81,11 @@ class Index extends Component
     public $sell = False;
     public $buy = True;
 
+    public $employee_ids = [];
+    public $employees;
+    public $user;
+    public $employee;
+
     public $inputs = [];
     public $i = 1;
     public $n = 1;
@@ -101,19 +107,13 @@ class Index extends Component
     public function mount($ticket){
         $this->company = Auth::user()->employee->company;
         $this->ticket = $ticket;
-
-        $this->currencies = Currency::orderBy('name','asc')->get();
-        $this->products = Product::where('buy',True)->orderBy('name','asc')->get();
-        $this->payment_methods = PaymentMethod::orderBy('name','asc')->get();
-        $this->tax_accounts = Account::whereHas('account_type', function ($query) {
-            return $query->where('name','Sales Taxes');
-        })->orderBy('name','asc')->get();
-        $this->accounts = Account::whereHas('account_type.account_type_group', function ($query) {
-            return $query->where('name','Expenses');
-        })->orderBy('name','asc')->get();
-        $this->vendors = Vendor::orderBy('name','asc')->get();
-
-        $this->ticket_expenses = TicketExpense::where('ticket_id', $this->ticket->id)->latest()->get();
+         $this->user = Auth::user();
+        $this->employee = $this->user->employee;
+        $this->employees = $this->ticket->booking->employees;
+        foreach ($this->employees as $employee) {
+            $this->employee_ids[] = $employee->id;
+        }
+    
     }
 
     public function billDate(){
@@ -511,23 +511,10 @@ class Index extends Component
     public function render()
     {
 
-        if ((isset($this->exchange_rate) && $this->exchange_rate > 0)  &&  ( isset($this->total) && $this->total > 0 )) {
-            $this->exchange_amount = $this->total * $this->exchange_rate;
-            }
-            $this->products = Product::where('buy',True)->orderBy('name','asc')->get();
-            $this->currencies = Currency::orderBy('name','asc')->get();
-            $this->accounts = Account::whereHas('account_type.account_type_group', function ($query) {
-                return $query->where('name','Expenses');
-            })->orderBy('name','asc')->get();
-            $this->vendors = Vendor::orderBy('name','asc')->get();
-
-        $this->ticket_expenses = TicketExpense::where('ticket_id', $this->ticket->id)->latest()->get();
+        $this->ticket_expenses = TicketExpense::where('ticket_id', $this->ticket->id)->latest()->paginate(10);
         return view('livewire.ticket-expenses.index',[
             'ticket_expenses' => $this->ticket_expenses,
-            'accounts' => $this->accounts,
-            'currencies' => $this->currencies,
-            'vendors' => $this->vendors,
-            'products' => $this->products,
+          
         ]);
     }
 }

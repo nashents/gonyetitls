@@ -369,7 +369,7 @@ class Index extends Component
     public function showTicket($id){
         $this->ticket_id = $id;
         $this->ticket = Ticket::find($id);
-        $this->status = $this->ticket->status;
+        $this->status = 0;
         $this->dispatchBrowserEvent('show-closeTicketModal');
     }
 

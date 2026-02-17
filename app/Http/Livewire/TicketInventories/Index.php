@@ -2,20 +2,22 @@
 
 namespace App\Http\Livewire\TicketInventories;
 
-use App\Models\Bill;
-use App\Models\Tyre;
 use App\Models\Account;
-use App\Models\Product;
-use Livewire\Component;
-use App\Models\Inventory;
+use App\Models\Bill;
 use App\Models\BillExpense;
-use App\Models\TicketInventory;
+use App\Models\Inventory;
 use App\Models\InventoryDispatch;
 use App\Models\InventoryRequisition;
+use App\Models\Product;
+use App\Models\TicketInventory;
+use App\Models\Tyre;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class Index extends Component
 {
+    use WithPagination;
     public $search_inventory;
     public $search_tyres;
     protected $queryString = ['search_inventory','search_tyres'];
@@ -30,7 +32,7 @@ class Index extends Component
     public $tyre;
     public $selectedInventory;
     public $selectedTyre;
-    public $ticket_inventories;
+    protected $ticket_inventories;
     public $ticket_inventory_id;
     public $qty;
     public $amount;
@@ -45,6 +47,10 @@ class Index extends Component
     public $horse_id;
     public $currency_id;
     public $trailer_id;
+    public $employee_ids = [];
+    public $employees;
+    public $user;
+    public $employee;
 
  
     public function mount($ticket){
@@ -55,7 +61,12 @@ class Index extends Component
       
         $this->inventories = collect();
         $this->tyres = collect();
-        $this->ticket_inventories = TicketInventory::where('ticket_id', $this->ticket->id)->latest()->get();
+       $this->user = Auth::user();
+        $this->employee = $this->user->employee;
+          $this->employees = $this->ticket->booking->employees;
+        foreach ($this->employees as $employee) {
+            $this->employee_ids[] = $employee->id;
+        }
     }
 
     public function updatedSelectedProduct($id){
@@ -486,48 +497,10 @@ class Index extends Component
 
     public function render()
     {
-        if (filled($this->search_inventory)) {
-            $this->inventory_products = Product::query()->with('brand')
-                                        ->where('department','inventory')
-                                        ->where('status', 1)
-                                        ->whereHas('inventories', function ($query) {
-                                            return $query->where('status',true)->where('balance','>',0);
-                                        })
-                                     ->where('product_number', 'like', '%'.$this->search_inventory.'%')
-                                     ->orWhere('name', 'like', '%'.$this->search_inventory.'%')
-                                     ->orWhereHas('brand', function ($query) {
-                                        return $query->where('name', 'like', '%'.$this->search_inventory.'%');
-                                     })->get();
-            
-        }else{
-            $this->inventory_products = Product::where('department','inventory')->whereHas('inventories', function ($query) {
-                return $query->where('status',true)->where('balance','>',0);
-            })->get()->sortBy('name')->sortBy('product.brand.name');
-           
-        }
-        if (isset($this->search_tyres)) {
-            $this->tyre_products = Product::query()->with('brand')
-            ->where('department','inventory')
-            ->where('status', 1)
-            ->whereHas('inventories', function ($query) {
-                return $query->where('status',true)->where('balance','>',0);
-            })
-            ->where('product_number', 'like', '%'.$this->search_tyres.'%')
-            ->orWhere('name', 'like', '%'.$this->search_tyres.'%')
-            ->orWhereHas('brand', function ($query) {
-                return $query->where('name', 'like', '%'.$this->search_tyres.'%');
-            })->get();
-            
-        }else{
-            $this->tyre_products = Product::where('department','tyre')->whereHas('tyres', function ($query) {
-                return $query->where('status',true);
-            })->get()->sortBy('name')->sortBy('product.brand.name');
-        }
-
-        $this->ticket_inventories = TicketInventory::where('ticket_id', $this->ticket->id)->latest()->get();
+    
+        $this->ticket_inventories = TicketInventory::where('ticket_id', $this->ticket->id)->latest()->paginate(10);
         return view('livewire.ticket-inventories.index',[
             'ticket_inventories' => $this->ticket_inventories,
-            'inventory_quantity' => $this->inventory_qty,
         ]);
     }
 }

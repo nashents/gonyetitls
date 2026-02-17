@@ -2,21 +2,22 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Support\Str;
-use App\Exports\TripsExport;
-use App\Mail\DailyExportMail;
-use App\Exports\TicketsExport;
+use App\Exports\AttendanceRegisterExport;
 use App\Exports\BookingsExport;
-
-use App\Exports\PaymentsExport;
-use Illuminate\Console\Command;
-// Your exports:
 use App\Exports\DailyReportExport;
+use App\Exports\PaymentsExport;
 use App\Exports\ShiftsDailyExport;
+
+use App\Exports\TicketsExport;
+use App\Exports\TripsExport;
+// Your exports:
+use App\Mail\DailyExportMail;
 use App\Mail\DailyReportsDiskMail;
+use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
-use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 
 class SendDailyReports extends Command
 {
@@ -54,6 +55,15 @@ class SendDailyReports extends Command
             [
                 'export' => new BookingsExport(),
                 'file'   => "garage_bookings-{$date}.xlsx",
+            ],
+            [
+                'export' => new AttendanceRegisterExport(
+                    now()->subDay()->toDateString(), // from = yesterday
+                    now()->subDay()->toDateString(), // to   = yesterday
+                    null,                            // department_id
+                    null                             // search
+                ),
+                'file'   => "attendance_register-{$date}.xlsx",
             ],
            
         ];

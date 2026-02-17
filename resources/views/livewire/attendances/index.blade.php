@@ -47,6 +47,9 @@
                            
                                 <div class="panel-title">
                                     <a href="#" data-toggle="modal" data-target="#attendanceModal"  class="btn btn-default"><i class="fa fa-plus-square-o"></i>Attendance Register</a>
+                                      <a href="#" wire:click="exportAttendanceRegisterExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
+                                        <a href="#" wire:click="exportAttendanceRegisterCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
+                                        <a href="#" wire:click="exportAttendanceRegisterPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
                                 </div>
                                 <div class="col-md-5" style="float: right; padding-right:2px">
                                     <div class="form-group">

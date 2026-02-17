@@ -1,9 +1,10 @@
-<div>
-                    <a href="" data-toggle="modal" data-target="#ticket_requestModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Item</a>
+<div>         @if (isset($employee_ids) || $ticket->booking->vendor)
+                @if ((in_array($employee->id, $employee_ids)) || ($user->id == $ticket->booking->user_id && $ticket->booking->vendor) )
+                    <a href="" data-toggle="modal" data-target="#ticket_requestModal" class="btn btn-default mb-10"><i class="fa fa-plus-square-o"></i>Request Items</a>
+                  @endif
+             @endif
                     <br>
-                    <br>
-                    <br>
-                    <table id="requestsTable" class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
+                    <table class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                         <thead >
                          <tr>
                             <th class="th-sm">RequestedBy
@@ -14,19 +15,22 @@
                             </th>
                             <th class="th-sm">Measurement
                             </th>
+                            @if (isset($employee_ids) || $ticket->booking->vendor)
+                            @if ((in_array($employee->id, $employee_ids)) || ($user->id == $ticket->booking->user_id && $ticket->booking->vendor) )
                             <th class="th-sm">Actions
                             </th>
+                            @endif
+                            @endif
                           </tr>
                         </thead>
-                        @if ($ticket_requests->count()>0)
+                        @if (isset($ticket_requests))
                         <tbody>
-                           @foreach ($ticket_requests as  $ticket_request)
+                           @forelse ($ticket_requests as  $ticket_request)
                             <tr>
                                 <td>
                                     @if ($ticket_request->user)
                                          {{$ticket_request->user ? $ticket_request->user->name  : "" }} {{$ticket_request->user ? $ticket_request->user->surname  : "" }} <small>{{$ticket_request->user->employee->job_title ? $ticket_request->user->employee->job_title->name  : "" }}</small>
                                     @endif
-                                   
                                 </td>
                                 <td>
                                     @if ($ticket_request->product)
@@ -40,6 +44,8 @@
                                     {{$ticket_request->qty}} 
                                 </td>
                                 <td>{{$ticket_request->measurement}}</td>
+                                @if (isset($employee_ids) || $ticket->booking->vendor)
+                                @if ((in_array($employee->id, $employee_ids)) || ($user->id == $ticket->booking->user_id && $ticket->booking->vendor) )
                                 <td class="w-10 line-height-35 table-dropdown">
                                     <div class="dropdown">
                                         <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -52,15 +58,35 @@
                                         </ul>
                                     </div>
                                 </td> 
+                                @endif
+                                @endif
                             </tr>
-                            @endforeach
+                            @empty
+                            <tr>
+                            <td colspan="5">
+                                <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
+                                    No Requested Items Found ....
+                                </div>
+                            </td>
+                            </tr> 
+                            @endforelse
                         </tbody>
                         @else
                         <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
                      @endif
-                      </table>
+                    </table>
 
-                      <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="ticket_requestModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+                    <nav class="text-center" style="float: right">
+                        <ul class="pagination rounded-corners">
+                            @if (isset($ticket_requests))
+                                @if ($ticket_requests->count()>0)
+                                    {{ $ticket_requests->links() }} 
+                                @endif
+                            @endif 
+                        </ul>
+                    </nav>
+
+                    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="ticket_requestModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
                         <div class="modal-dialog mw-100 w-90" role="document">
                             <div class="modal-content">
                                 <div class="modal-header">

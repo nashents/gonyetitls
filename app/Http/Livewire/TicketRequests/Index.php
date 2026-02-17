@@ -3,14 +3,17 @@
 namespace App\Http\Livewire\TicketRequests;
 
 
-use App\Models\Product;
-use Livewire\Component;
 use App\Models\Measurement;
+use App\Models\Product;
 use App\Models\TicketRequest;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class Index extends Component
 {
+    use WithPagination;
+
     public $search_products;
     protected $queryString = ['search_products'];
     public $ticket;
@@ -20,7 +23,7 @@ class Index extends Component
     public $products;
     public $selectedProduct;
     public $requests;
-    public $ticket_requests;
+    protected $ticket_requests;
     public $ticket_request_id;
     public $qty;
     public $tyres;
@@ -28,14 +31,24 @@ class Index extends Component
     public $horse_id;
     public $trailer_id;
     public $product_name;
+    public $employee_ids = [];
+    public $employees;
+    public $user;
+    public $employee;
+
 
  
     public function mount($ticket){
         $this->ticket = $ticket;
         $this->products = Product::whereIn('department',['inventory','tyre'])->orderBy('name','asc')->get();
-        $this->ticket_requests = TicketRequest::where('ticket_id', $this->ticket->id)->latest()->get();
         $this->measurements = Measurement::orderBy('name','asc')->get();
-         $this->reset(['search_products']);
+        $this->reset(['search_products']);
+        $this->user = Auth::user();
+        $this->employee = $this->user->employee;
+        $this->employees = $this->ticket->booking->employees;
+        foreach ($this->employees as $employee) {
+            $this->employee_ids[] = $employee->id;
+        }
     }
 
     public function updated($value){
@@ -70,6 +83,8 @@ class Index extends Component
             $ticket_request->measurement =  $this->measurement;
             $ticket_request->product_id =  $this->selectedProduct;
             $ticket_request->save();
+
+            $this->reset(['search_products']);
             
         $this->dispatchBrowserEvent('hide-ticket_requestModal');
         $this->resetInputFields();
@@ -108,6 +123,8 @@ class Index extends Component
         $ticket_request->product_id =  $this->selectedProduct;
         $ticket_request->update();
 
+        $this->reset(['search_products']);
+
         $this->dispatchBrowserEvent('hide-ticket_requestEditModal');
         $this->resetInputFields();
         $this->dispatchBrowserEvent('alert',[
@@ -132,7 +149,7 @@ class Index extends Component
             
         }
      
-        $this->ticket_requests = TicketRequest::where('ticket_id', $this->ticket->id)->latest()->get();
+        $this->ticket_requests = TicketRequest::where('ticket_id', $this->ticket->id)->latest()->paginate(10);
         return view('livewire.ticket-requests.index',[
             'ticket_requests' => $this->ticket_requests,
             'products' => $this->products,

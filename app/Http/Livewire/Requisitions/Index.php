@@ -1049,6 +1049,7 @@ class Index extends Component
             $rank_names[] = $rank->name;
         }
         if (in_array('Finance', $department_names) || in_array('Super Admin', $role_names)){
+            
             if (isset($this->from) && isset($this->to)) {
                 if (filled($this->search)) {
                     return view('livewire.requisitions.index',[

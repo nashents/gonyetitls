@@ -2,16 +2,18 @@
 
 namespace App\Http\Livewire\Attendances;
 
-use Carbon\Carbon;
-use App\Models\Driver;
-use Livewire\Component;
-use App\Models\Employee;
+use App\Exports\AttendanceRegisterExport;
 use App\Models\Attendance;
-use App\Models\Department;
-use Livewire\WithPagination;
 use App\Models\AttendanceRegister;
-use Illuminate\Support\Facades\DB;
+use App\Models\Department;
+use App\Models\Driver;
+use App\Models\Employee;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Livewire\Component;
+use Livewire\WithPagination;
+use Maatwebsite\Excel\Excel;
 
 class Index extends Component
 {
@@ -48,6 +50,16 @@ class Index extends Component
         $this->departments = Department::orderBy('name','asc')->get();
         $this->drivers = collect();
         $this->employees = collect();
+    }
+
+    public function exportAttendanceRegisterCSV(Excel $excel){
+        return $excel->download(new AttendanceRegisterExport($this->from, $this->to, $this->attendance_id), 'attendance_register_' .time().'.csv', Excel::CSV);
+    }
+    public function exportAttendanceRegisterPDF(Excel $excel){
+        return $excel->download(new AttendanceRegisterExport($this->from, $this->to, $this->attendance_id), 'attendance_register_' .time().'.pdf', Excel::DOMPDF);
+    }
+    public function exportAttendanceRegisterExcel(Excel $excel){
+        return $excel->download(new AttendanceRegisterExport($this->from, $this->to, $this->attendance_id), 'attendance_register_' .time().'.xlsx');
     }
 
 
