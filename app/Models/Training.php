@@ -15,13 +15,14 @@ class Training extends Model implements Auditable
     public function employee(){
         return $this->belongsTo('App\Models\Employee');
     }
-
     public function driver(){
         return $this->belongsTo('App\Models\Driver');
     }
-  
     public function training_item(){
         return $this->belongsTo('App\Models\TrainingItem');
+    }
+    public function documents(){
+        return $this->hasMany('App\Models\Document');
     }
 
 }

@@ -2,16 +2,25 @@
 
 namespace App\Http\Livewire\Trainings;
 
-use App\Models\Driver;
-use Livewire\Component;
+
 use App\Models\Employee;
 use App\Models\Training;
 use App\Models\TrainingItem;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class Index extends Component
 {
-    public $trainings;
+
+    use WithPagination;
+    protected $paginationTheme = 'bootstrap';
+    public $search;
+    protected $queryString = ['search','search_from','search_to'];
+    public $search_from;
+    public $search_to;
+    protected $trainings;
     public $training_id;
     public $training;
     public $training_items;
@@ -22,14 +31,17 @@ class Index extends Component
     public $date;
     public $participation;
     public $comments;
+    public $day_event = false;
+    public $from;
+    public $to;
   
 
   
 
     public function mount(){
-        $this->trainings = Training::latest()->get();
-        $this->training_items = TrainingItem::latest()->get();
-        $this->employees = Employee::orderBy('name','asc')->get();
+       
+        $this->training_items = TrainingItem::orderBy('name','asc')->get();
+        $this->employees = Employee::orderBy('name','asc')->orderBy('surname','asc')->get();
     }
 
     public function updated($value){
@@ -48,38 +60,54 @@ class Index extends Component
         $this->date = '';
         $this->participation = '';
         $this->comments = '';
+        $this->day_event = false;
+        $this->from = '';
+        $this->to = '';
      
     }
 
-   
+    public function refresh($category){
+
+        if($category == "training_items"){
+            $this->training_items = TrainingItem::orderBy('name','asc')->where('status',1)->latest()->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Training Items Refreshed Successfully!!."
+            ]);
+        }
+       
+        elseif($category == "employees"){
+            $this->employees = Employee::orderBy('name','asc')->orderBy('surname','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Employees Refreshed Successfully!!."
+            ]);
+        }
+    }
 
     public function store(){
-        try{
 
-        $training = new Training;
-        $training->user_id = Auth::user()->id;
-        $training->date = $this->date;
-        $training->training_item_id = $this->training_item_id;
-        $training->employee_id = $this->employee_id;
-        $training->participation = $this->participation;
-        $training->comments = $this->comments;
-        $training->save();
+        DB::transaction(function () {
+            $training = new Training;
+            $training->user_id = Auth::user()->id;
+            $training->date = $this->date;
+            $training->from = $this->from;
+            $training->to = $this->to;
+            $training->day_event = $this->day_event;
+            $training->training_item_id = $this->training_item_id;
+            $training->employee_id = $this->employee_id;
+            $training->participation = $this->participation;
+            $training->comments = $this->comments;
+            $training->save();
 
-        $this->dispatchBrowserEvent('hide-trainingModal');
-        $this->resetInputFields();
-        $this->dispatchBrowserEvent('alert',[
-            'type'=>'success',
-            'message'=>"Training Requirement Created Successfully!!"
-        ]);
+            $this->dispatchBrowserEvent('hide-trainingModal');
+            $this->resetInputFields();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Training Record Created Successfully!!"
+            ]);
 
-        }
-        catch(\Exception $e){
-        // Set Flash Message
-        $this->dispatchBrowserEvent('alert',[
-            'type'=>'error',
-            'message'=>"Something goes wrong while creating training requirement!!"
-        ]);
-    }
+        });
     }
 
     public function edit($id){
@@ -88,6 +116,9 @@ class Index extends Component
     $this->training_item_id = $training->training_item_id;
     $this->employee_id = $training->employee_id;
     $this->participation = $training->participation;
+    $this->from = $training->from;
+    $this->to = $training->to;
+    $this->day_event = $training->day_event;
     $this->comments = $training->comments;
     $this->training_id = $training->id;
     $this->dispatchBrowserEvent('show-trainingEditModal');
@@ -98,46 +129,35 @@ class Index extends Component
     public function update()
     {
         if ($this->training_id) {
-            try{
-            $training = Training::find($this->training_id);
-            $training->date = $this->date;
-            $training->training_item_id = $this->training_item_id;
-            $training->employee_id = $this->employee_id;
-            $training->comments = $this->comments;
-            $training->participation = $this->participation;
-            $training->update();
+            DB::transaction(function () {
+                $training = Training::find($this->training_id);
+                $training->date = $this->date;
+                $training->training_item_id = $this->training_item_id;
+                $training->employee_id = $this->employee_id;
+                $training->from = $this->from;
+                $training->to = $this->to;
+                $training->day_event = $this->day_event;
+                $training->comments = $this->comments;
+                $training->participation = $this->participation;
+                $training->update();
 
-            $this->dispatchBrowserEvent('hide-trainingEditModal');
-            $this->resetInputFields();
-            $this->dispatchBrowserEvent('alert',[
-                'type'=>'success',
-                'message'=>"Training Requirement Updated Successfully!!"
-            ]);
-
-
-            // return redirect()->route('trainings.index');
-            }
-            catch(\Exception $e){
-            $this->dispatchBrowserEvent('hide-trainingEditModal');
-            $this->dispatchBrowserEvent('alert',[
-                'type'=>'error',
-                'message'=>"Something goes wrong while creating training requirement!!"
-            ]);
-          }
+                $this->dispatchBrowserEvent('hide-trainingEditModal');
+                $this->resetInputFields();
+                $this->dispatchBrowserEvent('alert',[
+                    'type'=>'success',
+                    'message'=>"Training Record Updated Successfully!!"
+                ]);
+            });
         }
     }
 
 
     public function render()
     {
-        $this->trainings = Training::latest()->get();
-        $this->training_items = TrainingItem::orderBy('name','asc')->get();
-        $this->employees = Employee::orderBy('name','asc')->get();
-      
+       
+        $trainings = Training::latest()->paginate(10);
         return view('livewire.trainings.index',[
-            'trainings' =>   $this->trainings,
-            'training_items' =>   $this->training_items,
-            'employees' =>   $this->employees,
+            'trainings' =>   $trainings,
         ]);
     }
 }

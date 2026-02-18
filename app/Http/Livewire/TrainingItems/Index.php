@@ -2,13 +2,20 @@
 
 namespace App\Http\Livewire\TrainingItems;
 
-use Livewire\Component;
 use App\Models\TrainingItem;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class Index extends Component
 {
-    public $training_items;
+      use WithPagination;
+    protected $paginationTheme = 'bootstrap';
+    public $search;
+    protected $queryString = ['search','search_from','search_to'];
+    public $search_from;
+    public $search_to;
+    protected $training_items;
     public $training_item_id;
     public $training_item;
     public $name;
@@ -17,7 +24,7 @@ class Index extends Component
   
 
     public function mount(){
-        $this->training_items = TrainingItem::orderBy('name','asc')->get();
+        
     }
 
     public function updated($value){
@@ -62,7 +69,6 @@ class Index extends Component
 
     public function edit($id){
     $training_item = TrainingItem::find($id);
-    $this->user_id = $training_item->user_id;
     $this->name = $training_item->name;
     $this->training_item_id = $training_item->id;
     $this->dispatchBrowserEvent('show-training_itemEditModal');
@@ -101,9 +107,9 @@ class Index extends Component
 
     public function render()
     {
-        $this->training_items = TrainingItem::orderBy('name','asc')->get();
+        $training_items = TrainingItem::orderBy('name','asc')->paginate(10);
         return view('livewire.training-items.index',[
-            'training_items' =>   $this->training_items
+            'training_items' =>   $training_items
         ]);
     }
 }

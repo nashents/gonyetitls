@@ -2,10 +2,11 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use OwenIt\Auditing\Contracts\Auditable;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\TripDocument;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use OwenIt\Auditing\Contracts\Auditable;
 
 class Trip extends Model implements Auditable
 {
@@ -202,7 +203,7 @@ class Trip extends Model implements Auditable
 
     public function pod()
     {
-        return $this->hasOne(\App\Models\TripDocument::class, 'trip_id')
+        return $this->hasOne(TripDocument::class, 'trip_id')
             ->where('title', 'POD')
             ->latestOfMany(); // requires created_at; otherwise remove this line
     }

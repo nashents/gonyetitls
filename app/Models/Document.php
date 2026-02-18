@@ -13,6 +13,15 @@ class Document extends Model implements Auditable
 
     use \OwenIt\Auditing\Auditable;
 
+    public function waste_collection(){
+        return $this->belongsTo('App\Models\WasteCollection');
+    }
+    public function waste_disposal(){
+        return $this->belongsTo('App\Models\WasteDisposal');
+    }
+    public function training(){
+        return $this->belongsTo('App\Models\Training');
+    }
     public function retread(){
         return $this->belongsTo('App\Models\Retread');
     }

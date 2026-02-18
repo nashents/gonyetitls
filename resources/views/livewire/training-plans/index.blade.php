@@ -11,27 +11,27 @@
                             </div>
 
                             <div class="panel-title">
-                                <a href="#" data-toggle="modal" data-target="#training_planModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Plan</a>
+                                <a href="#" data-toggle="modal" data-target="#training_planModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Training Plan</a>
                             </div>
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
 
-                            <table id="training_plansTable" class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
+                            <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
                                     <th class="th-sm">Item
                                     </th>
                                     <th class="th-sm">Period
                                     </th>
-                                    <th class="th-sm">Participant
+                                    <th class="th-sm">Participants
                                     </th>
                                     <th class="th-sm">Action
                                     </th>
                                   </tr>
                                 </thead>
-                                @if ($training_plans->count()>0)
+                                @if (isset($training_plans))
                                 <tbody>
-                                    @foreach ($training_plans as $training_plan)
+                                    @forelse ($training_plans as $training_plan)
                                   <tr>
                                     <td>{{$training_plan->training_item ? $training_plan->training_item->name : ""}}</td>
                                     <td>{{$training_plan->period}}</td>
@@ -50,13 +50,28 @@
                                         @include('training_plans.delete')
                                 </td>
                                   </tr>
-                                  @endforeach
+                                   @empty
+                                        <tr>
+                                            <td colspan="6">
+                                                <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
+                                                    No Training Plans Found ....
+                                                </div>
+                                            
+                                            </td>
+                                        </tr>  
+                                     @endforelse
                                 </tbody>
                                 @else
                                     <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
                                  @endif
                               </table>
-
+                            <nav class="text-center" style="float: right">
+                                <ul class="pagination rounded-corners">
+                                    @if (isset($training_plans) && $training_plans->count()>0)
+                                        {{ $training_plans->links() }} 
+                                    @endif 
+                                </ul>
+                            </nav>  
                             <!-- /.col-md-12 -->
                         </div>
                     </div>
@@ -87,6 +102,7 @@
                             <option value="{{$item->id}}">{{$item->name}}</option>
                         @endforeach
                       </select>
+                      <small><a href="{{ route('training_items.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Training Item</a></small> <a href="#" wire:click.prevent="refresh('training_items')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                         @error('training_item_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
                     <div class="row">
@@ -137,6 +153,7 @@
                             <option value="{{$item->id}}">{{$item->name}}</option>
                         @endforeach
                       </select>
+                       <small><a href="{{ route('training_items.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Training Item</a></small> <a href="#" wire:click.prevent="refresh('training_items')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                         @error('training_item_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
                     <div class="row">

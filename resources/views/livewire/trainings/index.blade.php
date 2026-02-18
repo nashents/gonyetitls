@@ -16,14 +16,14 @@
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
 
-                            <table id="trainingsTable" class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
+                            <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
-                                    <th class="th-sm">Participant
+                                    <th class="th-sm">Employee
                                     </th>
-                                    <th class="th-sm">Item
+                                    <th class="th-sm">Training Item
                                     </th>
-                                    <th class="th-sm">Date
+                                    <th class="th-sm">Duration
                                     </th>
                                     <th class="th-sm">Participation
                                     </th>
@@ -33,9 +33,9 @@
                                     </th>
                                   </tr>
                                 </thead>
-                                @if ($trainings->count()>0)
+                                @if (isset($trainings))
                                 <tbody>
-                                    @foreach ($trainings as $training)
+                                    @forelse ($trainings as $training)
                                   <tr>
                                     <td>
                                         @if ($training->employee)
@@ -46,7 +46,13 @@
                                         @endif
                                     </td>
                                     <td>{{$training->training_item ? $training->training_item->name : ""}}</td>
-                                    <td>{{$training->date}}</td>
+                                    <td>
+                                        @if ($training->day_event == False)
+                                            {{$training->from}} - {{$training->to}}
+                                        @else
+                                            {{$training->date}}
+                                        @endif
+                                    </td>
                                     <td>{{$training->participation}}</td>
                                     <td>{{$training->comments}}</td>
                                     <td class="w-10 line-height-35 table-dropdown">
@@ -63,12 +69,28 @@
                                         @include('trainings.delete')
                                 </td>
                                   </tr>
-                                  @endforeach
+                                 @empty
+                                        <tr>
+                                            <td colspan="6">
+                                                <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
+                                                    No Training Records Found ....
+                                                </div>
+                                            
+                                            </td>
+                                        </tr>  
+                                     @endforelse
                                 </tbody>
                                 @else
                                     <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
                                  @endif
                               </table>
+                              <nav class="text-center" style="float: right">
+                                    <ul class="pagination rounded-corners">
+                                        @if (isset($trainings) && $trainings->count()>0)
+                                            {{ $trainings->links() }} 
+                                        @endif 
+                                    </ul>
+                                </nav>  
 
                             <!-- /.col-md-12 -->
                         </div>
@@ -84,10 +106,10 @@
 
   
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="trainingModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-plus"></i> Add Requirement <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-plus"></i> Add Training Record <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                 </div>
                 <form wire:submit.prevent="store()" >
                 <div class="modal-body">
@@ -108,24 +130,48 @@
                             <div class="form-group">
                                 <label for="name">Training Item<span class="required" style="color: red">*</span></label>
                                 <select wire:model.debounce.300ms="training_item_id" class="form-control" required>
-                                    <option value="">Select Employee</option>
+                                    <option value="">Select Item</option>
                                     @foreach ($training_items as $item)
                                         <option value="{{$item->id}}">{{$item->name}}</option>
                                     @endforeach
                                 </select>
+                                 <small><a href="{{ route('training_items.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Training Item</a></small> <a href="#" wire:click.prevent="refresh('training_items')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 @error('training_item_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
                     </div>
-                   
+                    <div class="mb-10">
+                        <input type="checkbox" wire:model.debounce.300ms="day_event"   class="line-style" />
+                        <label for="one" class="radio-label">Day Event?</label>
+                        @error('day_event') <span class="text-danger error">{{ $message }}</span>@enderror
+                    </div>
                     <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="name">Date<span class="required" style="color: red">*</span></label>
-                                <input type="datetime-local" wire:model.debounce.300ms="date" class="form-control" required>
-                                @error('date') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        @if ($day_event == True)
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="name">Date<span class="required" style="color: red">*</span></label>
+                                    <input type="datetime-local" wire:model.debounce.300ms="date" class="form-control" required>
+                                    @error('date') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
                             </div>
-                        </div>
+                        @else
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="name">Start Date<span class="required" style="color: red">*</span></label>
+                                    <input type="datetime-local" wire:model.debounce.300ms="from" class="form-control" required>
+                                    @error('from') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="name">End Date<span class="required" style="color: red">*</span></label>
+                                    <input type="datetime-local" wire:model.debounce.300ms="to" class="form-control" required>
+                                    @error('to') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                        @endif
+                       
+                        
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="name">Participation</label>
@@ -159,10 +205,10 @@
         </div>
     </div>
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="trainingEditModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog  mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-edit"></i> Edit Training  <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-edit"></i> Edit Training Record <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                 </div>
                 <form wire:submit.prevent="update()" >
 
@@ -190,19 +236,37 @@
                                         <option value="{{$item->id}}">{{$item->name}}</option>
                                     @endforeach
                                 </select>
+                                 <small><a href="{{ route('training_items.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Training Item</a></small> <a href="#" wire:click.prevent="refresh('training_items')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 @error('training_item_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
                     </div>
                    
                     <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="name">Date<span class="required" style="color: red">*</span></label>
-                                <input type="datetime-local" wire:model.debounce.300ms="date" class="form-control" required>
-                                @error('date') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                         @if ($day_event == True)
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="name">Date<span class="required" style="color: red">*</span></label>
+                                    <input type="datetime-local" wire:model.debounce.300ms="date" class="form-control" required>
+                                    @error('date') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
                             </div>
-                        </div>
+                        @else
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="name">Start Date<span class="required" style="color: red">*</span></label>
+                                    <input type="datetime-local" wire:model.debounce.300ms="from" class="form-control" required>
+                                    @error('from') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="name">End Date<span class="required" style="color: red">*</span></label>
+                                    <input type="datetime-local" wire:model.debounce.300ms="to" class="form-control" required>
+                                    @error('to') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                        @endif
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="name">Participation</label>

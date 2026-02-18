@@ -16,7 +16,7 @@
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
 
-                            <table id="training_itemsTable" class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
+                            <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
                                     <th class="th-sm">Name
@@ -25,9 +25,9 @@
                                     </th>
                                   </tr>
                                 </thead>
-                                @if ($training_items->count()>0)
+                                @if (isset($training_items) && $training_items->count()>0)
                                 <tbody>
-                                    @foreach ($training_items as $training_item)
+                                    @forelse ($training_items as $training_item)
                                   <tr>
                                     <td>{{$training_item->name}}</td>
                                     <td class="w-10 line-height-35 table-dropdown">
@@ -45,12 +45,28 @@
                                         @include('training_items.delete')
                                 </td>
                                   </tr>
-                                  @endforeach
+                                  @empty
+                                        <tr>
+                                            <td colspan="6">
+                                                <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
+                                                    No Training Items Found ....
+                                                </div>
+                                            
+                                            </td>
+                                        </tr>  
+                                     @endforelse
                                 </tbody>
                                 @else
                                     <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
                                  @endif
                               </table>
+                               <nav class="text-center" style="float: right">
+                                <ul class="pagination rounded-corners">
+                                    @if (isset($training_items) && $training_items->count()>0)
+                                        {{ $training_items->links() }} 
+                                    @endif 
+                                </ul>
+                            </nav>  
 
                             <!-- /.col-md-12 -->
                         </div>

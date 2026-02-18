@@ -2,14 +2,21 @@
 
 namespace App\Http\Livewire\TrainingPlans;
 
-use Livewire\Component;
 use App\Models\TrainingItem;
 use App\Models\TrainingPlan;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class Index extends Component
 {
-    public $training_plans;
+    use WithPagination;
+    protected $paginationTheme = 'bootstrap';
+    public $search;
+    protected $queryString = ['search','search_from','search_to'];
+    public $search_from;
+    public $search_to;
+    protected $training_plans;
     public $training_plan_id;
     public $training_plan;
     public $training_items;
@@ -22,7 +29,7 @@ class Index extends Component
   
 
     public function mount(){
-        $this->training_plans = TrainingPlan::latest()->get();
+      
         $this->training_items = TrainingItem::orderBy('name','asc')->get();
     }
 
@@ -41,6 +48,19 @@ class Index extends Component
         $this->period = '';
         $this->participants = '';
      
+    }
+
+        public function refresh($category){
+
+        if($category == "training_items"){
+            $this->training_items = TrainingItem::orderBy('name','asc')->where('status',1)->latest()->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Training Items Refreshed Successfully!!."
+            ]);
+        }
+       
+      
     }
 
    
@@ -119,11 +139,9 @@ class Index extends Component
 
     public function render()
     {
-        $this->training_plans = TrainingPlan::latest()->get();
-        $this->training_items = TrainingItem::orderBy('name','asc')->get();
+        $training_plans = TrainingPlan::latest()->paginate(10);
         return view('livewire.training-plans.index',[
-            'training_plans' =>   $this->training_plans,
-            'training_items' =>   $this->training_items,
+            'training_plans' =>   $training_plans,
         ]);
     }
 }

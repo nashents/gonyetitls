@@ -16,6 +16,9 @@ class WasteCollection extends Model
     public function waste_collection_items(){
         return $this->hasMany('App\Models\WasteCollectionItem');
     }
+    public function documents(){
+        return $this->hasMany('App\Models\Document');
+    }
     
 
 }

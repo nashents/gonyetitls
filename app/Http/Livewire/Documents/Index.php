@@ -6,7 +6,6 @@ use App\Models\Agent;
 use App\Models\Asset;
 use App\Models\Bill;
 use App\Models\Broker;
-use App\Models\cash_flow;
 use App\Models\CashFlow;
 use App\Models\ClearingAgent;
 use App\Models\Company;
@@ -29,6 +28,7 @@ use App\Models\Retread;
 use App\Models\Route;
 use App\Models\Ticket;
 use App\Models\Trailer;
+use App\Models\Training;
 use App\Models\Transporter;
 use App\Models\Trip;
 use App\Models\TruckStop;
@@ -52,6 +52,8 @@ class Index extends Component
     public $retread_id;
     public $loading_point;
     public $loading_point_id;
+    public $training;
+    public $training_id;
     public $ticket;
     public $ticket_id;
     public $offloading_point;
@@ -258,6 +260,12 @@ class Index extends Component
         $this->folders = Folder::where('category', $this->category)->latest()->get();
         $this->documents = Document::where('category', $this->category)
         ->where('ticket_id', $this->ticket->id)->latest()->get();
+    }
+    elseif ($this->category == "training") {
+        $this->training = Training::find($id);
+        $this->folders = Folder::where('category', $this->category)->latest()->get();
+        $this->documents = Document::where('category', $this->category)
+        ->where('training_id', $this->training->id)->latest()->get();
     }
     elseif ($this->category == "trailer") {
         $this->trailer = Trailer::find($id);
@@ -471,6 +479,13 @@ class Index extends Component
                 $this->ticket = Ticket::find($this->item_id);
                 $this->documents = Document::where('category', $this->category)
                 ->where('ticket_id', $this->ticket->id)
+                ->where('folder_id', $selected_folder_id)
+                ->latest()->get();
+            }
+            elseif ($this->category == "training") {
+                $this->training = Training::find($this->item_id);
+                $this->documents = Document::where('category', $this->category)
+                ->where('training_id', $this->training->id)
                 ->where('folder_id', $selected_folder_id)
                 ->latest()->get();
             }
@@ -746,6 +761,9 @@ class Index extends Component
             elseif (isset($this->horse)) {
                 $document->horse_id = $this->horse->id;
             }
+            elseif (isset($this->training)) {
+                $document->training_id = $this->training->id;
+            }
             elseif (isset($this->ticket)) {
                 $document->ticket_id = $this->ticket->id;
             }
@@ -874,6 +892,7 @@ class Index extends Component
         $this->requisition_id = $document->requisition_id;
         $this->horse_id = $document->horse_id;
         $this->ticket_id = $document->ticket_id;
+        $this->training_id = $document->training_id;
         $this->cash_flow_id = $document->cash_flow_id;
         $this->employee_id = $document->employee_id;
         $this->vendor_id = $document->vendor_id;
@@ -924,6 +943,9 @@ class Index extends Component
                 }
                 elseif (isset($this->horse_id)) {
                     $document->horse_id = $this->horse_id;
+                }
+                elseif (isset($this->training_id)) {
+                    $document->training_id = $this->training_id;
                 }
                 elseif (isset($this->ticket_id)) {
                     $document->ticket_id = $this->ticket_id;
@@ -1169,6 +1191,11 @@ class Index extends Component
             $this->folders = Folder::where('category', $this->category)->latest()->get();
             $this->documents = Document::where('category', $this->category)
             ->where('ticket_id', $this->ticket->id)->latest()->get();
+        }
+        elseif ($this->category == "training") {
+            $this->folders = Folder::where('category', $this->category)->latest()->get();
+            $this->documents = Document::where('category', $this->category)
+            ->where('training_id', $this->training->id)->latest()->get();
         }
         elseif ($this->category == "trailer") {
             $this->folders = Folder::where('category', $this->category)->latest()->get();

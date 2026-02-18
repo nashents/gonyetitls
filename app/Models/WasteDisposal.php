@@ -27,4 +27,7 @@ class WasteDisposal extends Model
     public function waste_disposal_items(){
         return $this->hasMany('App\Models\WasteDisposalItem');
     }
+    public function documents(){
+        return $this->hasMany('App\Models\Document');
+    }
 }
