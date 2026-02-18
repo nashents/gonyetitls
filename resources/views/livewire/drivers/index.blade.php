@@ -50,6 +50,8 @@
                                         </th>
                                         <th class="th-sm">Experience
                                         </th>
+                                            <th class="th-sm">Work Details
+                                        </th>
                                         <th class="th-sm">Availability
                                         </th>
                                         <th class="th-sm">Account
@@ -101,6 +103,25 @@
                                         <td>{{$driver->license_number}}</td>
                                         <td>{{$driver->class}}</td>
                                         <td>{{$driver->experience}}</td>
+                                        <td>
+                                            <strong>Deparments:</strong>
+                                            @foreach ($employee->departments as $department)
+                                                {{$department->name}} @if (!$loop->last),@endif
+                                            @endforeach
+                                            <br>
+                                            <strong>Post: </strong>{{$employee->post}} <br>
+                                            @if ($employee->department_head)
+                                                <strong>HOD: </strong>{{$employee->department_head?->department->name}} <br>
+                                            @endif
+                                            <strong>Branch: </strong>{{$employee->branch ? $employee->branch->name : ""}} <br>
+                                            <strong>Rank: </strong>{{$employee->ranks ? $employee->ranks->first()->name : ""}} <br>
+                                            <strong>Role(s):</strong> 
+                                                @if ($employee->user->roles)
+                                                    @foreach ($employee->user->roles as $role)
+                                                        {{$role->name}} @if (!$loop->last),@endif
+                                                    @endforeach
+                                                @endif
+                                        </td>
                                         <td><span class="badge bg-{{$driver->status == 1 ? "success" : "danger"}}">{{$driver->status == 1 ? "Available" : "Unavailable"}}</span></td>
                                          <td>
                                                 @if ($driver->user)
@@ -127,7 +148,7 @@
                                                 <ul class="dropdown-menu">
                                                     <li><a href="{{route('employees.show', $driver->employee->id)}}"><i class="fa fa-eye color-default"></i>View</a></li>
                                                     <li><a href="{{route('drivers.edit', $driver->id)}}"><i class="fa fa-edit color-success"></i> Edit</a></li>
-                                                     <li><a href="#" wire:click.prevent="changePosition({{$driver->employee->id}})"><i class="fa fa-edit color-success"></i> Change Position</a></li>
+                                                    <li><a href="#" wire:click.prevent="changePosition({{$employee->id}})"><i class="fa fa-edit color-success"></i> Change Position</a></li>
                                                     <li><a href="#" data-toggle="modal" data-target="#driverDeleteModal{{$driver->id}}"><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                                     @if ($driver->status == 1)
                                                     <li><a href="{{route('drivers.deactivate',$driver->id)}}"  ><i class="fa fa-toggle-on color-danger"></i>Deactivate</a></li>
@@ -212,12 +233,15 @@
             </div>
         </div>
           <!-- Modal -->
-
-                  <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="changePositionModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+  <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="changePositionModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
         <div class="modal-dialog mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-edit"></i> Change {{$employee ? $employee->name : ""}} {{$employee ? $employee->surname."` " : ""}} Position <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-edit"></i> Change 
+                        @if (isset($selected_employee))
+                            {{$selected_employee ? $selected_employee->name : ""}} {{$selected_employee ? $selected_employee->surname."` " : ""}}
+                        @endif
+                        Position <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                 </div>
                 <div style="padding-left: 20px; padding-right:10px;">
                     <small style="color:green"> PS: if the user has access to modules in different departments after this change you have to add more departments to the user`s account via employees -> employee view -> departments tab -> add department</small>
@@ -235,7 +259,7 @@
                                         <option value="{{$job_title->id}}">{{$job_title->title}}</option>
                                     @endforeach
                                 </select>
-                                {{-- <small><a href="{{ route('job_titles.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Job Title</a></small>  --}}
+                                <small><a href="{{ route('job_titles.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Job Title</a></small> <a href="#" wire:click.prevent="refresh('job_titles')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 @error('job_title_id') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
                         </div>
@@ -248,7 +272,7 @@
                                         <option value="{{ $grade->id }}">{{ $grade->grade_code }} {{ $grade->grade_name }}</option>
                                     @endforeach
                                 </select>
-                                {{-- <small><a href="{{ route('grades.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Grade</a></small>  --}}
+                                 <small><a href="{{ route('grades.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Grade</a></small> <a href="#" wire:click.prevent="refresh('grades')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 @error('grade_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -288,6 +312,7 @@
                                         <option value="{{ $branch->id }}"> {{$branch->name }} </option>
                                     @endforeach
                                 </select>
+                                 <small><a href="{{ route('branches.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Branch</a></small> <a href="#" wire:click.prevent="refresh('branches')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 @error('branch_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -295,15 +320,15 @@
                     <div class="row">
                          <div class="col-md-6">
                             <div class="form-group">
-                                <label for="start_date">End Date<span class="required" style="color: red">*</span></label>
-                                <input type="date" class="form-control" wire:model.debounce.300ms="end_date" placeholder="Previous position end date" required/>
+                                <label for="start_date">End Date</label>
+                                <input type="date" class="form-control" wire:model.debounce.300ms="end_date" placeholder="Previous position end date"/>
                                 @error('end_date') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="start_date">Start Date<span class="required" style="color: red">*</span></label>
-                                <input type="date" class="form-control" wire:model.debounce.300ms="start_date" placeholder="New position start date" required/>
+                                <label for="start_date">Start Date</label>
+                                <input type="date" class="form-control" wire:model.debounce.300ms="start_date" placeholder="New position start date"/>
                                 @error('start_date') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
                         </div>
@@ -314,11 +339,12 @@
                                 <label for="country">Change Reason<span class="required" style="color: red">*</span></label>
                                 <select wire:model.debounce.300ms="change_reason" class="form-control" required>
                                     <option value="">Select Option</option>
-                                    <option value="Promotion">Promotion</option>
-                                    <option value="Demotion">Demotion</option>
-                                    <option value="Transfer">Transfer</option>
-                                    <option value="Appointment">Appointment</option>
                                     <option value="Acting">Acting</option>
+                                    <option value="Appointment">Appointment</option>
+                                    <option value="Demotion">Demotion</option>
+                                    <option value="Update">Information Update</option>
+                                    <option value="Promotion">Promotion</option>
+                                    <option value="Transfer">Transfer</option>
                                 </select>
                                 @error('change_reason') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>

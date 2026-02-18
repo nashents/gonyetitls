@@ -25,32 +25,48 @@
                                     </th>
                                   </tr>
                                 </thead>
-                                @if ($training_departments->count()>0)
-                                <tbody>
-                                    @foreach ($training_departments as $training_department)
-                                  <tr>
-                                    <td>{{$training_department->name}}</td>
-                                    <td class="w-10 line-height-35 table-dropdown">
-                                        <div class="dropdown">
-                                            <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                <i class="fa fa-bars"></i>
-                                                <span class="caret"></span>
-                                            </button>
-                                            <ul class="dropdown-menu">
-                                                <li><a href="{{ route('training_departments.show', $training_department->id) }}" ><i class="fa fa-eye color-default"></i> View</a></li>
-                                                <li><a href="#"  wire:click="edit({{$training_department->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
-                                                <li><a href="#" data-toggle="modal" data-target="#training_departmentDeleteModal{{ $training_department->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
-                                            </ul>
-                                        </div>
-                                        @include('training_departments.delete')
-                                </td>
-                                  </tr>
-                                  @endforeach
-                                </tbody>
+                                @if (isset($training_departments) && $training_departments->count()>0)
+                                    <tbody>
+                                        @forelse ($training_departments as $training_department)
+                                            <tr>
+                                                <td>{{$training_department->name}}</td>
+                                                <td class="w-10 line-height-35 table-dropdown">
+                                                    <div class="dropdown">
+                                                        <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                            <i class="fa fa-bars"></i>
+                                                            <span class="caret"></span>
+                                                        </button>
+                                                        <ul class="dropdown-menu">
+                                                            <li><a href="{{ route('training_departments.show', $training_department->id) }}" ><i class="fa fa-eye color-default"></i> View</a></li>
+                                                            <li><a href="#"  wire:click="edit({{$training_department->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                                            <li><a href="#" data-toggle="modal" data-target="#training_departmentDeleteModal{{ $training_department->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                                                        </ul>
+                                                    </div>
+                                                    @include('training_departments.delete')
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="6">
+                                                    <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
+                                                        No Training Departments Found ....
+                                                    </div>
+                                                
+                                                </td>
+                                            </tr>  
+                                        @endforelse
+                                    </tbody>
                                 @else
                                     <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
                                  @endif
                               </table>
+                               <nav class="text-center" style="float: right">
+                                <ul class="pagination rounded-corners">
+                                    @if (isset($training_departments) && $training_departments->count()>0)
+                                        {{ $training_departments->links() }} 
+                                    @endif 
+                                </ul>
+                            </nav>  
 
                             <!-- /.col-md-12 -->
                         </div>

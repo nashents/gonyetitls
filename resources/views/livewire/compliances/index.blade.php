@@ -16,7 +16,7 @@
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
 
-                            <table id="compliancesTable" class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
+                            <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
                                     <th class="th-sm">CreatedBy
@@ -35,9 +35,9 @@
                                     </th>
                                   </tr>
                                 </thead>
-                                @if ($compliances->count()>0)
+                                @if (isset($compliances))
                                 <tbody>
-                                    @foreach ($compliances as $compliance)
+                                    @forelse ($compliances as $compliance)
                                   <tr>
                                     <td>{{$compliance->user ? $compliance->user->name : ""}} {{$compliance->user ? $compliance->user->surname : ""}}</td>
                                     <td>{{$compliance->customer ? $compliance->customer->name : ""}}</td>
@@ -59,12 +59,28 @@
                                         @include('compliances.delete')
                                 </td>
                                   </tr>
-                                  @endforeach
+                                  @empty
+                                        <tr>
+                                            <td colspan="7">
+                                                <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
+                                                    No Compliance Records Found ....
+                                                </div>
+                                            
+                                            </td>
+                                        </tr>  
+                                    @endforelse
                                 </tbody>
                                 @else
                                     <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
                                  @endif
                               </table>
+                                <nav class="text-center" style="float: right">
+                                <ul class="pagination rounded-corners">
+                                    @if (isset($compliances) && $compliances->count()>0)
+                                        {{ $compliances->links() }} 
+                                    @endif 
+                                </ul>
+                            </nav>  
 
                             <!-- /.col-md-12 -->
                         </div>
@@ -80,7 +96,7 @@
 
   
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="complianceModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fas fa-plus"></i> Add Compliance <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -90,13 +106,14 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="country">Customers<span class="required" style="color: red">*</span></label>
-                               <select wire:model.debounce.300ms="customer_id" class="form-control" required >
+                                <label for="country">Customers</label>
+                               <select wire:model.debounce.300ms="customer_id" class="form-control"  >
                                    <option value="">Select Customer</option>
                                    @foreach ($customers as $customer)
                                         <option value="{{$customer->id}}">{{$customer->name}}</option>
                                    @endforeach  
                                </select>
+                               <small><a href="{{ route('customers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Customer</a></small> <a href="#" wire:click.prevent="refresh('customers')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 @error('customer_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -109,6 +126,7 @@
                                         <option value="{{$driver->id}}">{{$driver->employee ? $driver->employee->name : ""}} {{$driver->employee ? $driver->employee->surname : ""}}</option>
                                    @endforeach  
                                </select>
+                               <small><a href="{{ route('drivers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Driver</a></small> <a href="#" wire:click.prevent="refresh('drivers')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 @error('driver_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -124,6 +142,7 @@
                                     <option value="{{$route->id}}">{{$route->name}}</option>
                                @endforeach  
                            </select>
+                           <small><a href="{{ route('routes.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Route</a></small> <a href="#" wire:click.prevent="refresh('routes')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                             @error('route_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                         </div>
                     </div>
@@ -163,10 +182,10 @@
         </div>
     </div>
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="complianceEditModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-edit"></i> Edit Cargo <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-edit"></i> Edit Compliance <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                 </div>
                 <form wire:submit.prevent="update()" >
 
@@ -175,13 +194,14 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="country">Customers<span class="required" style="color: red">*</span></label>
-                               <select wire:model.debounce.300ms="customer_id" class="form-control" required >
+                                <label for="country">Customers</label>
+                               <select wire:model.debounce.300ms="customer_id" class="form-control" >
                                    <option value="">Select Customer</option>
                                    @foreach ($customers as $customer)
                                         <option value="{{$customer->id}}">{{$customer->name}}</option>
                                    @endforeach  
                                </select>
+                               <small><a href="{{ route('customers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Customer</a></small> <a href="#" wire:click.prevent="refresh('customers')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 @error('customer_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -194,6 +214,7 @@
                                         <option value="{{$driver->id}}">{{$driver->employee ? $driver->employee->name : ""}} {{$driver->employee ? $driver->employee->surname : ""}}</option>
                                    @endforeach  
                                </select>
+                               <small><a href="{{ route('drivers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Driver</a></small> <a href="#" wire:click.prevent="refresh('drivers')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 @error('driver_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -209,6 +230,7 @@
                                     <option value="{{$route->id}}">{{$route->name}}</option>
                                @endforeach  
                            </select>
+                           <small><a href="{{ route('routes.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Route</a></small> <a href="#" wire:click.prevent="refresh('routes')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                             @error('route_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                         </div>
                     </div>

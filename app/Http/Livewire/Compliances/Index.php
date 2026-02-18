@@ -2,18 +2,23 @@
 
 namespace App\Http\Livewire\Compliances;
 
-use App\Models\Route;
-use App\Models\Driver;
-use Livewire\Component;
-use App\Models\Customer;
-use App\Models\Employee;
 use App\Models\Compliance;
+use App\Models\Customer;
+use App\Models\Driver;
+use App\Models\Employee;
+use App\Models\Route;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class Index extends Component
 {
     
-    public $compliances;
+    use WithPagination;
+    protected $paginationTheme = 'bootstrap';
+    public $search;
+    protected $queryString = ['search'];
+    protected $compliances;
     public $compliance;
     public $compliance_id;
     public $routes;
@@ -46,7 +51,7 @@ class Index extends Component
     }
 
     public function mount(){
-        $this->compliances = Compliance::orderBy('created_at','desc')->get();
+      
         $this->routes = Route::orderBy('name','asc')->get();
         $this->customers = Customer::orderBy('name','asc')->get();
         $this->drivers = Driver::where('archive',0)->get();
@@ -73,6 +78,52 @@ class Index extends Component
         $this->driver_id = '';
     }
 
+
+      public function refresh($category){
+
+        if($category == "routes"){
+            $this->routes = Route::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Routes Refreshed Successfully!!."
+            ]);
+        }
+       
+        elseif($category == "employees"){
+            $this->employees = Employee::orderBy('name','asc')->orderBy('surname','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Employees Refreshed Successfully!!."
+            ]);
+        }
+       
+        elseif($category == "customers"){
+            $this->customers = Customer::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Customers Refreshed Successfully!!."
+            ]);
+        }
+       
+       elseif ($category == "drivers") {
+            $this->drivers = Driver::query()
+                ->where('archive', 0)
+                ->whereHas('employee') // optional safety: only drivers that actually have an employee
+                ->with('employee:id,name,surname') // eager load to avoid N+1
+                ->join('employees', 'employees.id', '=', 'drivers.employee_id') // adjust FK if yours differs
+                ->orderBy('employees.name')
+                ->orderBy('employees.surname')
+                ->select('drivers.*') // avoid column collisions
+                ->get();
+
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'success',
+                'message' => "Drivers Refreshed Successfully!!."
+            ]);
+        }
+       
+       
+    }
   
 
     public function store(){
@@ -144,8 +195,6 @@ class Index extends Component
                 'message'=>"Compliance Updated Successfully!!"
             ]);
 
-
-            // return redirect()->route('compliances.index');
             }
             catch(\Exception $e){
             $this->dispatchBrowserEvent('hide-complianceEditModal');
@@ -160,17 +209,56 @@ class Index extends Component
 
     public function render()
     {
-        $this->compliances = Compliance::latest()->get();
-        $this->routes = Route::orderBy('name','asc')->get();
-        $this->customers = Customer::orderBy('name','asc')->get();
-        $this->drivers = Driver::where('archive',0)->get();
-        $this->employees = Employee::where('archive',0)->orderBy('name','asc')->get();
-        return view('livewire.compliances.index',[
-            'compliances'=>   $this->compliances,
-            'routes'=>   $this->routes,
-            'customers'=>   $this->customers,
-            'drivers'=>   $this->drivers,
-            'employees'=>   $this->employees,
+        
+        $base = Compliance::query()
+        ->with([
+            'user:id,name,surname',
+            'employee:id,name,surname',
+            'driver:id,employee_id', // driver itself has no name
+            'route:id,name',
+            'customer:id,name,surname',
         ]);
+
+    $search = trim($this->search);
+
+    $compliances = $base
+        ->when($search !== '', function ($q) use ($search) {
+            $q->where(function ($q) use ($search) {
+
+                // ✅ direct columns on compliances table
+                $q->where('comments', 'like', "%{$search}%")
+                ->orWhere('compliant', 'like', "%{$search}%");
+
+                // ✅ relations
+                $q->orWhereHas('user', function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('surname', 'like', "%{$search}%");
+                });
+
+                $q->orWhereHas('employee', function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('surname', 'like', "%{$search}%");
+                });
+                $q->orWhereHas('driver.employee', function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('surname', 'like', "%{$search}%");
+                });
+
+                $q->orWhereHas('route', function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%");
+                });
+
+                $q->orWhereHas('customer', function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('surname', 'like', "%{$search}%");
+                });
+            });
+        })
+        ->latest()
+        ->paginate(10); // ✅ keeps search in pagination links
+
+    return view('livewire.compliances.index', [
+        'compliances' => $compliances,
+    ]);
     }
 }

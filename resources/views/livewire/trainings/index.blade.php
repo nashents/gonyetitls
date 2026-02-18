@@ -62,6 +62,7 @@
                                                 <span class="caret"></span>
                                             </button>
                                             <ul class="dropdown-menu">
+                                                <li><a href="{{ route('trainings.show', $training->id) }}" ><i class="fa fa-eye color-default"></i> View</a></li>
                                                 <li><a href="#"  wire:click="edit({{$training->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
                                                 <li><a href="#" data-toggle="modal" data-target="#trainingDeleteModal{{ $training->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                             </ul>

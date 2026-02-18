@@ -76,7 +76,7 @@ class Index extends Component
         $grade = new Grade;
         $grade->grade_name = $this->grade_name;
         $grade->grade_code = $this->grade_code;
-        $grade->grade_level = $this->grade_level;
+        $grade->grade_level = $this->grade_level ?? 1;
         $grade->min_salary = $this->min_salary;
         $grade->currency_id = $this->currency_id;
         $grade->max_salary = $this->max_salary;

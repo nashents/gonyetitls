@@ -45,6 +45,7 @@ class Index extends Component
     public $change_reason;
     public $remarks;
     public $employee_id;
+    public $selected_employee;
 
     public function exportDriversCSV(Excel $excel){
 
@@ -86,30 +87,34 @@ class Index extends Component
         $this->resetPage();
     }
 
-     public function changePosition($id){
-        $this->employee_id = $id;
-        $employee = Employee::find($id);
-        $employee_position = EmployeePosition::where('employee_id',$id)->latest()->first();
-        if( $employee_position){
-            $this->grade_id = $employee_position->grade_id;
-            $this->department_id = $employee_position->department_id;
-            $this->branch_id = $employee_position->branch_id;
-            $this->job_title_id = $employee_position->job_title_id;
-            $this->rank_id = $employee_position->rank_id;
-        }else{
-           
+       public function refresh($category){
 
-            $this->grade_id = $employee->grade_id;
-            $this->department_id = $employee->departments->first()?->id;
-            $this->branch_id = $employee->branch_id;
-            $this->job_title_id = JobTitle::where('title',$employee->post)->first()?->id;
-            $this->rank_id = $employee->ranks->first()?->id;
+        if($category == "job_titles"){
+            $this->job_titles = JobTitle::orderBy('title','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Jop Titles Refreshed Successfully!!."
+            ]);
         }
-        
-        $this->dispatchBrowserEvent('show-changePositionModal');
+        elseif($category == "grades"){
+            $this->grades = Grade::orderBy('grade_name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Grades Refreshed Successfully!!."
+            ]);
+        }
+        elseif($category == "branches"){
+            $this->branches = Branch::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Branches Refreshed Successfully!!."
+            ]);
+        }
        
-
       }
+
+
+ 
 
        public function sendCredentials($id){
         $employee = Employee::find($id);
@@ -125,6 +130,32 @@ class Index extends Component
             ]);
         }
     }
+      
+     public function changePosition($id){
+        $this->employee_id = $id;
+        
+        $this->selected_employee = Employee::find($id);
+        $employee_position = EmployeePosition::where('employee_id',$id)->latest()->first();
+        if( $employee_position){
+            $this->grade_id = $employee_position->grade_id;
+            $this->department_id = $employee_position->department_id;
+            $this->branch_id = $employee_position->branch_id;
+            $this->job_title_id = $employee_position->job_title_id;
+            $this->rank_id = $employee_position->rank_id;
+        }else{
+           
+
+            $this->grade_id = $this->selected_employee->grade_id;
+            $this->department_id = $this->selected_employee->departments->first()?->id;
+            $this->branch_id = $this->selected_employee->branch_id;
+            $this->job_title_id = JobTitle::where('title',$this->selected_employee->post)->first()?->id;
+            $this->rank_id = $this->selected_employee->ranks->first()?->id;
+        }
+        
+        $this->dispatchBrowserEvent('show-changePositionModal');
+       
+
+      }
       
       public function changeUpdate(){
         
@@ -157,7 +188,7 @@ class Index extends Component
         $this->resetInputFields();
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
-            'message'=>"Employee Position Changed Successfully!!"
+            'message'=>"Driver Position Changed Successfully!!"
         ]);
 
       }
