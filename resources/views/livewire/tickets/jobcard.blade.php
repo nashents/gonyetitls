@@ -174,7 +174,7 @@
         </tr>
         <tr data-row>
           <td class="center" data-field="labour.index"></td>
-          <td data-field="labour.description">Mechanic</td>
+          <td data-field="labour.description">Auto Mechanic</td>
           <td data-field="labour.description"></td>
           <td data-field="labour.assignee"></td>
           <td data-field="labour.start"></td>
@@ -186,19 +186,7 @@
         </tr>
         <tr data-row>
           <td class="center" data-field="labour.index"></td>
-          <td data-field="labour.description">Mechanic</td>
-          <td data-field="labour.description"></td>
-          <td data-field="labour.assignee"></td>
-          <td data-field="labour.start"></td>
-          <td data-field="labour.end"></td>
-          <td class="right" data-field="labour.hours"></td>
-          <td class="right" data-field="labour.rate"></td>
-          <td class="right" data-field="labour.amount"></td>
-          <td data-field="labour.remarks"></td>
-        </tr>
-        <tr data-row>
-          <td class="center" data-field="labour.index"></td>
-          <td data-field="labour.description">Mechanic</td>
+          <td data-field="labour.description">Auto Mechanic</td>
           <td data-field="labour.description"></td>
           <td data-field="labour.assignee"></td>
           <td data-field="labour.start"></td>
