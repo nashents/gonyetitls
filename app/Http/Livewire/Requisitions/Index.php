@@ -271,8 +271,11 @@ class Index extends Component
         if (is_null($id) || is_null($key)) {
             return;
         }
-
-        $this->exchange_amount[$key] = $this->amount[$key] * $this->exchange_rate[$key];
+        if((isset($this->amount[$key]) && is_numeric($this->amount[$key])) && (isset($this->exchange_rate[$key]) && is_numeric($this->exchange_rate[$key]))){
+            $this->exchange_amount[$key] = $this->amount[$key] * $this->exchange_rate[$key];
+        }
+          
+        
     }
 
     public function updatedSelectedPurchase($id)
