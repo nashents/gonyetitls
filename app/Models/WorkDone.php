@@ -21,4 +21,7 @@ class WorkDone extends Model implements Auditable
     public function employee(){
         return $this->belongsTo('App\Models\Employee');
     }
+    public function currency(){
+        return $this->belongsTo('App\Models\Currency');
+    }
 }

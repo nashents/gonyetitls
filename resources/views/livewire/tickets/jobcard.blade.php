@@ -117,42 +117,97 @@
     <thead>
       <tr>
         <th class="center" style="width:4%">#</th>
+        <th class="center" style="width:4%">Artisan</th>
         <th style="width:28%">Task Description</th>
-        <th style="width:18%">Assigned To</th>
+        <th style="width:18%">Done By</th>
         <th style="width:10%">Start</th>
         <th style="width:10%">End</th>
         <th class="right" style="width:8%">Hours</th>
         <th class="right" style="width:8%">Rate</th>
         <th class="right" style="width:10%">Amount</th>
-        <th style="width:14%">Remarks</th>
       </tr>
     </thead>
     <tbody data-collection="labour">
-      @if ($ticket->work_dones)
+      @if ($ticket->work_dones && $ticket->work_dones->count() > 0)
         @php
             $i = 1;
         @endphp
           @foreach ($ticket->work_dones as $work_done)
               <tr data-row>
                 <td class="center" data-field="labour.index">{{$i++}}</td>
-                <td data-field="labour.description">{{$booking->description}}</td>
                 <td data-field="labour.assignee">
-                  @if (isset($ticket->booking->employees) && $ticket->booking->employees->count() > 0)
-                      @foreach ($ticket->booking->employees as $mechanic)
-                          {{ $mechanic->name }} {{ $mechanic->surname }}@if(!$loop->last),@endif
-                      @endforeach
-                  @elseif(isset($ticket->booking->vendor))
-                      {{ ucfirst($ticket->booking->vendor->name) }}
-                  @endif
+                  {{$work_done->artisan}}
                 </td>
-                <td data-field="labour.start">{{$booking->in_date}} @ {{$booking->in_time}}</td>
-                <td data-field="labour.end">{{$booking->out_date}} {{$booking->out_time ? "@".$booking->out_time : ""}}</td>
-                <td class="right" data-field="labour.hours">{{$booking->service_hours}}</td>
-                <td class="right" data-field="labour.rate">{{$booking->currency ? $booking->currency->symbol : ""}} {{number_format($booking->rate,2)}}</td>
-                <td class="right" data-field="labour.amount">{{$booking->currency ? $booking->currency->symbol : ""}} {{number_format($booking->total,2)}}</td>
-                <td data-field="labour.remarks">{{$booking->remarks}}</td>
+                <td data-field="labour.description">{{$work_done->job_description}}</td>
+                <td data-field="labour.assignee">{{$work_done->employee ? $work_done->employee->name : ""}} {{$work_done->employee ? $work_done->employee->surname : ""}}</td>
+                <td data-field="labour.start">{{$work_done->start_time}}</td>
+                <td data-field="labour.end">{{$work_done->end_time}} </td>
+                <td class="right" data-field="labour.hours">{{$work_done->service_hours}}</td>
+                <td class="right" data-field="labour.rate">{{$work_done->currency ? $work_done->currency->symbol : ""}} {{number_format($work_done->rate,2)}}</td>
+                <td class="right" data-field="labour.amount">{{$work_done->currency ? $work_done->currency->symbol : ""}} {{number_format($work_done->amount,2)}}</td>
               </tr>
           @endforeach
+      @else
+        <tr data-row>
+          <td class="center" data-field="labour.index"></td>
+          <td data-field="labour.description">Mechanic</td>
+          <td data-field="labour.description"></td>
+          <td data-field="labour.assignee"></td>
+          <td data-field="labour.start"></td>
+          <td data-field="labour.end"></td>
+          <td class="right" data-field="labour.hours"></td>
+          <td class="right" data-field="labour.rate"></td>
+          <td class="right" data-field="labour.amount"></td>
+          <td data-field="labour.remarks"></td>
+        </tr>
+        <tr data-row>
+          <td class="center" data-field="labour.index"></td>
+          <td data-field="labour.description">Mechanic</td>
+          <td data-field="labour.description"></td>
+          <td data-field="labour.assignee"></td>
+          <td data-field="labour.start"></td>
+          <td data-field="labour.end"></td>
+          <td class="right" data-field="labour.hours"></td>
+          <td class="right" data-field="labour.rate"></td>
+          <td class="right" data-field="labour.amount"></td>
+          <td data-field="labour.remarks"></td>
+        </tr>
+        <tr data-row>
+          <td class="center" data-field="labour.index"></td>
+          <td data-field="labour.description">Mechanic</td>
+          <td data-field="labour.description"></td>
+          <td data-field="labour.assignee"></td>
+          <td data-field="labour.start"></td>
+          <td data-field="labour.end"></td>
+          <td class="right" data-field="labour.hours"></td>
+          <td class="right" data-field="labour.rate"></td>
+          <td class="right" data-field="labour.amount"></td>
+          <td data-field="labour.remarks"></td>
+        </tr>
+        <tr data-row>
+          <td class="center" data-field="labour.index"></td>
+          <td data-field="labour.description">Mechanic</td>
+          <td data-field="labour.description"></td>
+          <td data-field="labour.assignee"></td>
+          <td data-field="labour.start"></td>
+          <td data-field="labour.end"></td>
+          <td class="right" data-field="labour.hours"></td>
+          <td class="right" data-field="labour.rate"></td>
+          <td class="right" data-field="labour.amount"></td>
+          <td data-field="labour.remarks"></td>
+        </tr>
+        <tr data-row>
+          <td class="center" data-field="labour.index"></td>
+          <td data-field="labour.description">Mechanic</td>
+          <td data-field="labour.description"></td>
+          <td data-field="labour.assignee"></td>
+          <td data-field="labour.start"></td>
+          <td data-field="labour.end"></td>
+          <td class="right" data-field="labour.hours"></td>
+          <td class="right" data-field="labour.rate"></td>
+          <td class="right" data-field="labour.amount"></td>
+          <td data-field="labour.remarks"></td>
+        </tr>
       @endif
   
     </tbody>
