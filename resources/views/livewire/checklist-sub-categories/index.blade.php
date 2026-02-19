@@ -29,9 +29,9 @@
                                     </th>
                                   </tr>
                                 </thead>
-                                @if ($checklist_sub_categories->count()>0)
+                                @if (isset($checklist_sub_categories))
                                 <tbody>
-                                    @foreach ($checklist_sub_categories as $checklist_sub_category)
+                                    @forelse ($checklist_sub_categories as $checklist_sub_category)
                                   <tr>
                                     <td>{{$checklist_sub_category->name}}</td>
                                     <td class="w-10 line-height-35 table-dropdown">

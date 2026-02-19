@@ -98,17 +98,16 @@ class Index extends Component
 
     public function render()
     {
+        $query = ChecklistSubCategory::query();
 
-        if (filled($this->search)) {
-            return view('livewire.checklist-sub-categories.index',[
-                'checklist_sub_categories' => ChecklistSubCategory::where('name','like', '%'.$this->search.'%')
-                ->orderBy('name','asc')->paginate(10),
+        $query->when($this->search, function ($q) {
+            $q->where('name', 'like', '%' . $this->search . '%');
+        });
+        $checklist_sub_categories = $query->orderBy('name', 'asc')->paginate(10);
+       
+        return view('livewire.checklist-sub-categories.index',[
+                'checklist_sub_categories' => $checklist_sub_categories,
             ]);
-        }else{
-            return view('livewire.checklist-sub-categories.index',[
-                'checklist_sub_categories' => ChecklistSubCategory::orderBy('name','asc')->paginate(10),
-            ]);
-        }
        
         
     }
