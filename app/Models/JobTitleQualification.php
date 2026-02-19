@@ -27,4 +27,6 @@ class JobTitleQualification extends Model implements Auditable
         'weight',
         'min_score',
     ];
+
+    
 }
