@@ -271,6 +271,30 @@ class Index extends Component
      });
     }
 
+       public function delete($id){
+        $this->waste_disposal = WasteDisposal::find($id);
+        $this->waste_disposal_id = $id;
+        $this->dispatchBrowserEvent('show-waste_disposalDeleteModal');
+    }
+   
+    public function destroy(){
+        $waste_disposal = WasteDisposal::find($this->waste_disposal_id);
+        if ($waste_disposal) {
+            $waste_disposal_items = $waste_disposal->waste_disposal_items;
+            if ($waste_disposal_items) {
+                foreach ($waste_disposal_items as $item) {
+                    $item->delete();
+                }
+            }
+            $waste_disposal->delete();
+            $this->dispatchBrowserEvent('hide-waste_disposalDeleteModal');
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Waste Disposal Record Deleted Successfully!!"
+            ]);
+        }
+    }
+
 
     public function render()
     {

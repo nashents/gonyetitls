@@ -244,6 +244,31 @@ class Index extends Component
 
      });
     }
+
+    public function delete($id){
+        $this->waste_collection = WasteCollection::find($id);
+        $this->waste_collection_id = $id;
+        $this->dispatchBrowserEvent('show-waste_collectionDeleteModal');
+    }
+   
+    public function destroy(){
+        $waste_collection = WasteCollection::find($this->waste_collection_id);
+        if ($waste_collection) {
+            $waste_collection_items = $waste_collection->waste_collection_items;
+            if ($waste_collection_items) {
+                foreach ($waste_collection_items as $item) {
+                    $item->delete();
+                }
+            }
+            $waste_collection->delete();
+            $this->dispatchBrowserEvent('hide-waste_collectionDeleteModal');
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Waste Collection Record Deleted Successfully!!"
+            ]);
+        }
+    }
+
     public function render()
     {
         $query = WasteCollection::query()->with('waste_collection_items');

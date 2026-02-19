@@ -163,6 +163,8 @@
                                 'loans' => ['label' => 'Loan', 'route' => 'loans.pending', 'icon'  => 'fa-credit-card'],
                                 'leaves' => ['label' => 'Leave', 'route' => 'leaves.pending', 'icon'  => 'fa-plane'],
                                 'attendances' => ['label' => 'Attendance', 'route' => 'attendances.pending', 'icon'  => 'fa-clock-o'],
+                                'overdue_tickets' => ['label' => 'Overdue Ticket','route' => 'tickets.index', 'icon'  => 'fa-wrench'],
+
                             ];
 
                             // Departments are ONLY for visibility (not data filtering)
@@ -171,7 +173,7 @@
                                 'Finance' => ['bills', 'invoices', 'credit_notes', 'requisitions'],
                                 'Transport & Logistics' => ['trips', 'bookings', 'gate_passes', 'topups', 'recoveries' /*, 'fuel_requests'*/],
                                 'Stores' => ['purchases', 'transfers', 'dispatches', 'retreads', 'topups' /*, 'fuel_requests'*/],
-                                'Workshop' => ['bookings'],
+                                'Workshop' => ['bookings','overdue_tickets'],
                                 'HSEQ' => [ 'waste_collections', 'waste_disposals'],
                             ];
 
@@ -235,6 +237,9 @@
                                                     $routeParams = [];
                                                     if ($meta['route'] === 'gate_passes.pending') {
                                                         $routeParams = ['department' => 'security'];
+                                                    }
+                                                    if ($key === 'overdue_tickets') {
+                                                        $routeParams['overdue'] = 1;
                                                     }
                                                 @endphp
                                                 <li>

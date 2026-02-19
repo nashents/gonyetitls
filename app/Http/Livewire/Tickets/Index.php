@@ -27,7 +27,8 @@ class Index extends Component
     public $selectPageRows = false;
     protected $paginationTheme = 'bootstrap';
     public $search;
-    protected $queryString = ['search'];
+    public bool $overdueOnly = false;
+    protected $queryString = ['search', 'overdueOnly' => ['as' => 'overdue', 'except' => false]];
     public $from;
     public $to;
 
@@ -58,9 +59,12 @@ class Index extends Component
     public $station_id;
     public $employees;
     public $employee_id;
+   
 
 
     public function mount(){
+        
+        $this->overdueOnly = request()->boolean('overdue', false);
         $this->resetPage();
         $this->user = Auth::user();
         $this->employee = $this->user->employee;

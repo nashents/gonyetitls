@@ -170,21 +170,7 @@
                 $('#waste_receptacleEditModal').modal('hide');
             })
     </script>
-    <script type="text/javascript">
-            window.addEventListener('show-waste_disposalDeleteModal', event => {
-                $('#waste_disposalDeleteModal').modal('show');
-            })
-    </script>
-    <script type="text/javascript">
-            window.addEventListener('show-waste_disposalDeleteModal', event => {
-                $('#waste_disposalDeleteModal').modal('show');
-            })
-    </script>
-    <script type="text/javascript">
-            window.addEventListener('show-waste_disposalDeleteModal', event => {
-                $('#waste_disposalDeleteModal').modal('show');
-            })
-    </script>
+ 
     <script type="text/javascript">
             window.addEventListener('show-waste_disposalDeleteModal', event => {
                 $('#waste_disposalDeleteModal').modal('show');
@@ -205,6 +191,7 @@
                 $('#waste_collectionDeleteModal').modal('hide');
             })
     </script>
+   
     <script type="text/javascript">
             window.addEventListener('show-waste_typeDeleteModal', event => {
                 $('#waste_typeDeleteModal').modal('show');
@@ -267,16 +254,7 @@
                 $('#waste_collectionEditModal').modal('hide');
             })
     </script>
-    <script type="text/javascript">
-            window.addEventListener('show-waste_collectionDeleteModal', event => {
-                $('#waste_collectionDeleteModal').modal('show');
-            })
-    </script>
-    <script type="text/javascript">
-            window.addEventListener('hide-waste_collectionDeleteModal', event => {
-                $('#waste_collectionDeleteModal').modal('hide');
-            })
-    </script>
+  
  
  <script type="text/javascript">
             window.addEventListener('show-waste_disposalModal', event => {
@@ -299,16 +277,7 @@
                 $('#waste_disposalEditModal').modal('hide');
             })
     </script>
-    <script type="text/javascript">
-            window.addEventListener('show-waste_disposalDeleteModal', event => {
-                $('#waste_disposalDeleteModal').modal('show');
-            })
-    </script>
-    <script type="text/javascript">
-            window.addEventListener('hide-waste_disposalDeleteModal', event => {
-                $('#waste_disposalDeleteModal').modal('hide');
-            })
-    </script>
+    
 
 
     <script type="text/javascript">

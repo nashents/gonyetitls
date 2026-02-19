@@ -2,40 +2,45 @@
 
 namespace App\Http\View\Composers;
 
-use Carbon\Carbon;
+use App\Models\Attendance;
 use App\Models\Bill;
-use App\Models\Fuel;
-
-use App\Models\Loan;
-use App\Models\Trip;
-use App\Models\User;
-use App\Models\Leave;
-use App\Models\TopUp;
-use App\Models\Rental;
 use App\Models\Booking;
-use App\Models\Fitness;
-use App\Models\Invoice;
-use App\Models\Payroll;
-use App\Models\Retread;
+
+use App\Models\CreditNote;
 use App\Models\Dispatch;
+use App\Models\Fitness;
+use App\Models\Fuel;
+use App\Models\FuelRequest;
 use App\Models\GatePass;
+use App\Models\Invoice;
+use App\Models\Leave;
+use App\Models\Loan;
+use App\Models\Payroll;
 use App\Models\Purchase;
 use App\Models\Recovery;
-use App\Models\Transfer;
-use Illuminate\View\View;
-use App\Models\Attendance;
-use App\Models\CreditNote;
-use App\Models\FuelRequest;
+use App\Models\Rental;
 use App\Models\Requisition;
-use App\Models\WasteDisposal;
+use App\Models\Retread;
+use App\Models\Ticket;
+use App\Models\TopUp;
+use App\Models\Transfer;
+use App\Models\Trip;
+use App\Models\User;
 use App\Models\WasteCollection;
+use App\Models\WasteDisposal;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 
 class NavbarComposer
 {
     public function compose(View $view): void
     {
         $user = User::find(Auth::user()->id);
+
+        $now         = now();                     // uses app timezone (Africa/Harare)
+        $today       = $now->toDateString();      // 'Y-m-d'
+        $currentTime = $now->toTimeString();
 
         $pendingCounts = [
             'trips'            => Trip::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
@@ -59,6 +64,17 @@ class NavbarComposer
             'loans'            => Loan::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
             'leaves'           => Leave::where('management_decision', 'pending')->whereYear('created_at',date('Y'))->count(),
             'attendances'      => Attendance::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
+            'over_due_tickets' => Booking::query()
+                                        ->where('status', 1)   // adjust statuses to match your enums
+                                        ->whereNotNull('estimated_out_date')
+                                        ->whereNotNull('estimated_out_time')
+                                        ->where(function ($q) use ($today, $currentTime) {
+                                            $q->where('estimated_out_date', '<', $today)
+                                            ->orWhere(function ($qq) use ($today, $currentTime) {
+                                                $qq->where('estimated_out_date', $today)
+                                                    ->where('estimated_out_time', '<', $currentTime);
+                                            });
+                                        })->count()
         ];
 
         // If guest, just share empties (prevents errors)

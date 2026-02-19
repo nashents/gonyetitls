@@ -18,4 +18,13 @@ class JobTitleQualification extends Model implements Auditable
     public function qualification(){
         return $this->belongsTo('App\Models\Qualification');
     } 
+
+    protected $fillable = [
+        'job_title_id',
+        'qualification_id',
+        'mandatory',
+        'min_level',
+        'weight',
+        'min_score',
+    ];
 }
