@@ -42,9 +42,9 @@ class CreateEmployeesTable extends Migration
             $table->string('end_date')->nullable();
             $table->string('duration')->nullable();
             $table->string('expiration')->nullable();
-            $table->integer('leave_days')->nullable();
-            $table->integer('accrual_rate')->nullable();
-            $table->integer('maximum_leave_days')->nullable();
+            $table->decimal('leave_days', 10, 2)->nullable();
+            $table->decimal('accrual_rate', 10, 2)->nullable();
+            $table->decimal('maximum_leave_days', 10, 2)->nullable();
             $table->string('next_of_kin')->nullable();
             $table->string('relationship')->nullable();
             $table->string('contact')->nullable();

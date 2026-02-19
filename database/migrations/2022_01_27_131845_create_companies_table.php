@@ -46,8 +46,8 @@ class CreateCompaniesTable extends Migration
             $table->string('vat_number')->nullable();
             $table->string('tin_number')->nullable();
             $table->string('interest')->nullable();
-            $table->integer('maximum_leave_days')->nullable()->default(90);
-            $table->integer('accrual_rate')->nullable()->default(2.5);
+            $table->decimal('maximum_leave_days', 10, 2)->nullable();
+            $table->decimal('accrual_rate', 10, 2)->nullable();
             $table->boolean('rates_managed_by_finance')->default(0);
             $table->string('logo')->default('logo.png');
             $table->boolean('offloading_details')->default(0);

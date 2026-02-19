@@ -111,7 +111,12 @@
                                         </td>
                                         <td>
                                              @if ($requisition->requisition_items)
-                                                @foreach ($requisition->requisition_items as $requisition_item)
+                                             <small>
+                                                @php   
+                                                    $i = 1;
+                                                @endphp
+                                                    @foreach ($requisition->requisition_items as $requisition_item)
+                                                    <strong>{{$i++}}) </strong>
                                                     @if ($requisition_item->expense)
                                                         {{$requisition_item->expense ? $requisition_item->expense->name : ""}} 
                                                     @elseif($requisition_item->allowance)
@@ -121,13 +126,19 @@
                                                     @elseif($requisition_item->inventory)
                                                         {{ $requisition_item->inventory->product->brand ? $requisition_item->inventory->product->brand->name : ""}} {{ $requisition_item->inventory->product ? $requisition_item->inventory->product->name : ""}}
                                                     @endif
-                                                    {{$requisition_item->qty ? "(".$requisition_item->qty.")" : ""}}
+                                                    {{$requisition_item->qty ? " X (".$requisition_item->qty.")" : ""}}
                                                     @if ($requisition_item->amount)
                                                          @ {{ $requisition_item->currency ? $requisition_item->currency->name : ""}} {{ $requisition_item->currency ? $requisition_item->currency->symbol : ""}}{{ number_format($requisition_item->amount,2)}}
+                                                         @if ($requisition_item->currency_id != $company->currency_id)
+                                                            {{ " (".$company->currency->symbol.number_format($requisition_item->exchange_amount,2).")" }} at {{$requisition_item->exchange_rate}}
+                                                             
+                                                         @endif
                                                     @endif
                                                     {{$requisition_item->payment_method ? $requisition_item->payment_method->name : ""}}
                                                     @if (!$loop->last), @endif <br>
                                                 @endforeach
+                                             </small>
+                                               
                                             @endif
                                            
                                         </td>
@@ -418,23 +429,23 @@
                                 <div class="form-group">
                                     <label for="country">Trips</label>
                                     <input type="text" wire:model.debounce.300ms="searchTrip" placeholder="Search with trip#, trip ref, horse reg#..." class="form-control">
-                                <select wire:model.debounce.300ms="selectedTrip" class="form-control" size="8">
-                                    <option value="">Select Trip</option>
-                                    @if (isset($trips))
-                                        @foreach ($trips as $trip)
-                                            <option value="{{ $trip->id }}">
-                                                    {{ $trip->trip_number }}{{ $trip->trip_ref ? "/".$trip->trip_ref : "" }} | {{ $trip->start_date }}
-                                                @if ($trip->horse)
-                                                    | {{ $trip->horse ? $trip->horse->registration_number : "" }} {{ $trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : "" }} 
-                                                @endif
-                                                @if ($trip->driver)
-                                                    | {{ $trip->driver->employee ? $trip->driver->employee->name : "" }} {{ $trip->driver->employee ? $trip->driver->employee->surname : "" }}
-                                                @endif
-                                                    | {{ $trip->customer ? $trip->customer->name : "" }} | {{ $trip->loading_point ? $trip->loading_point->name : "" }} - {{ $trip->offloading_point ? $trip->offloading_point->name : "" }}
-                                            </option>
-                                        @endforeach
-                                    @endif
-                                </select>
+                                    <select wire:model.debounce.300ms="selectedTrip" class="form-control" size="8">
+                                        <option value="">Select Trip</option>
+                                        @if (isset($trips))
+                                            @foreach ($trips as $trip)
+                                                <option value="{{ $trip->id }}">
+                                                        {{ $trip->trip_number }}{{ $trip->trip_ref ? "/".$trip->trip_ref : "" }} | {{ $trip->start_date }}
+                                                    @if ($trip->horse)
+                                                        | {{ $trip->horse ? $trip->horse->registration_number : "" }} {{ $trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : "" }} 
+                                                    @endif
+                                                    @if ($trip->driver)
+                                                        | {{ $trip->driver->employee ? $trip->driver->employee->name : "" }} {{ $trip->driver->employee ? $trip->driver->employee->surname : "" }}
+                                                    @endif
+                                                        | {{ $trip->customer ? $trip->customer->name : "" }} | {{ $trip->loading_point ? $trip->loading_point->name : "" }} - {{ $trip->offloading_point ? $trip->offloading_point->name : "" }}
+                                                </option>
+                                            @endforeach
+                                        @endif
+                                    </select>
                                     @error('selectedTrip') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             @elseif($requisition_for == "Booking")

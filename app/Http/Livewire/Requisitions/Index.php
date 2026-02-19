@@ -145,22 +145,21 @@ class Index extends Component
         unset($this->selectedProduct[$i]);
         unset($this->amount[$i]);
         unset($this->qty[$i]);
+        unset($this->payment_method_id[$i]);
         unset($this->exchange_rate[$i]);
         unset($this->exchange_amount[$i]);
     }
 
     private function resetInputFields(){
+
         $this->requisition = Null;
         $this->selectedTrip = '';
         $this->employee_id = '';
         $this->department_id = '';
         $this->date = '';
-        $this->selectedCurrency = '';
         $this->expense_id = '';
         $this->allowance_id = '';
         $this->selectedAccount = '';
-        $this->qty = '';
-        $this->amount = '';
         $this->description = '';
         $this->subject = '';
         $this->total = Null;
@@ -187,6 +186,7 @@ class Index extends Component
         $this->allowance_id = [];
         $this->qty = [];
         $this->amount = [];
+        $this->payment_method_id = [];
         
         $this->current_selectedProduct = [];
         $this->current_selectedCurrency = [];
@@ -197,6 +197,7 @@ class Index extends Component
         $this->current_allowance_id = [];
         $this->current_qty = [];
         $this->current_amount = [];
+        $this->current_payment_method_id = [];
         
     }
     
@@ -263,6 +264,15 @@ class Index extends Component
                 $this->i = $index - 1;
             }
         }
+    }
+
+    public function updatedAmount($id, $key){
+      
+        if (is_null($id) || is_null($key)) {
+            return;
+        }
+
+        $this->exchange_amount[$key] = $this->amount[$key] * $this->exchange_rate[$key];
     }
 
     public function updatedSelectedPurchase($id)
@@ -397,6 +407,7 @@ class Index extends Component
 
 
     public function mount(){
+
         $this->resetPage();
         $this->reset(['search', 'searchTrip', 'searchBooking', 'searchPurchase']);
         $employee_departments = Auth::user()->employee->departments;
@@ -413,12 +424,17 @@ class Index extends Component
             return $query->where('name','Expenses');
         })->orderBy('name','asc')->get();
 
+        $this->expenses = Expense::orderBy('name','asc')->where('status',1)->get();
+        $this->allowances = Allowance::orderBy('name','asc')->where('status',1)->get();
+        $this->products = Product::where('buy',True)->where('status',True)->orderBy('name','asc')->get();
+
         $this->tax_accounts = Account::whereHas('account_type', function ($query) {
             return $query->where('name','Sales Taxes');
         })->orderBy('name','asc')->get();
         $this->accounts = Account::whereHas('account_type.account_type_group', function ($query) {
             return $query->where('name','Expenses');
         })->orderBy('name','asc')->get();
+
     }
 
     public function updated($value){
@@ -463,7 +479,7 @@ class Index extends Component
                 $initials = $words[0][0];
             }
         }
-
+        
         $requisition = Requisition::latest()->orderBy('id','desc')->first();
 
         if (!$requisition) {
@@ -481,7 +497,7 @@ class Index extends Component
       public function refresh($category){
 
         if($category == "products"){
-           $this->products = Product::where('buy',True)->where('status',True)->orderBy('name','asc')->get();
+            $this->products = Product::where('buy',True)->where('status',True)->orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
                 'message'=>"Products Refreshed Successfully!!."
@@ -583,9 +599,9 @@ class Index extends Component
         $requisition_total = 0;
        
 
-        if ($this->amount) {
+        if ($this->qty) {
 
-            foreach ($this->amount as $key => $value) {
+            foreach ($this->qty as $key => $value) {
               
                
                 $requisition_item = new RequisitionItem;
@@ -600,7 +616,7 @@ class Index extends Component
                 $expense_id = $this->expense_id[$key] ?? Null;
                 $allowance_id = $this->allowance_id[$key] ?? Null;
                 $payment_method_id = $this->payment_method_id[$key] ?? Null;
-                $qty = $this->qty[$key] ?? 0;
+                $qty = $value ?? 0;
                 $amount = $this->amount[$key] ?? 0;
                 $currency_id = $this->selectedCurrency[$key] ?? 0;
                 $exchange_rate = $this->exchange_rate[$key] ?? 0;
@@ -828,9 +844,9 @@ class Index extends Component
        
 
    
-         if ($this->amount) {
+         if ($this->qty) {
 
-            foreach ($this->amount as $key => $value) {
+            foreach ($this->qty as $key => $value) {
               
                
                 $requisition_item = new RequisitionItem;
@@ -845,7 +861,7 @@ class Index extends Component
                 $expense_id = $this->expense_id[$key] ?? Null;
                 $allowance_id = $this->allowance_id[$key] ?? Null;
                 $payment_method_id = $this->payment_method_id[$key] ?? Null;
-                $qty = $this->qty[$key] ?? 0;
+                $qty = $value ?? 0;
                 $amount = $this->amount[$key] ?? 0;
                 $currency_id = $this->selectedCurrency[$key] ?? 0;
                 $exchange_rate = $this->exchange_rate[$key] ?? 0;
@@ -914,15 +930,8 @@ class Index extends Component
 
     }
 
-    public function updatingSearch()
-    {
-        $this->resetPage();
-    }
-
-    public function render()
-    {
-
-        if($this->requisition_for == 'Trip'){
+    public function updatedRequisitionFor(){
+          if($this->requisition_for == 'Trip'){
 
             $tripQuery = Trip::query()
                     ->select('id', 'trip_number', 'trip_ref','start_date', 'customer_id', 'driver_id', 'horse_id', 'from', 'to', 'loading_point_id', 'offloading_point_id')
@@ -1028,199 +1037,216 @@ class Index extends Component
                     ->get();
             
         }
+    }
+
+    public function updatingSearch()
+    {
+        $this->resetPage();
+        
+    }
+
+    public function updatingSearchTrip()
+    {
+        $this->resetPage();
+        
+    }
+
+    public function updatedSearchTrip()
+    {
+       $tripQuery = Trip::query()
+                    ->select('id', 'trip_number', 'trip_ref','start_date', 'customer_id', 'driver_id', 'horse_id', 'from', 'to', 'loading_point_id', 'offloading_point_id')
+                    ->with([
+                        'customer:id,name',
+                        'driver',
+                        'horse:id,registration_number,fleet_number',
+                        'loading_point:id,name',
+                        'offloading_point:id,name'
+                    ])
+                    ->whereYear('start_date', date('Y'))
+                    ->where('authorization', 'approved')
+                    ->where('trip_status', '!=', 'Cancelled');
+
+            if (filled($this->searchTrip)) {
+                $term = '%'.$this->searchTrip.'%';
+
+                $tripQuery->where(function ($q) use ($term) {
+                    $q->where('trip_number', 'like', $term)
+                    ->orWhere('trip_ref', 'like', $term)
+                    ->orWhereHas('horse', function ($qq) use ($term) {
+                        $qq->where('registration_number', 'like', $term);
+                    });
+                });
+            }
+
+            $this->trips = $tripQuery
+                ->orderBy('id', 'desc')
+                ->get();
+        
+    }
+
+    public function updatingSearchBooking()
+    {
+        $this->resetPage();
+        
+    }
+
+    public function updatedSearchBooking()
+    {
+         $bookingQuery = Booking::query()
+            ->with([
+                'ticket',
+                'horse:id,registration_number,fleet_number',
+                'trailer:id,registration_number,fleet_number',
+                'vehicle:id,registration_number,fleet_number',
+                'employees:id,name,surname',
+                'employee:id,name,surname',
+            ])
+            ->whereYear('in_date', date('Y'))
+            ->where('authorization', 'approved')
+            ->where('status', true);
+
+        if (filled($this->searchBooking)) {
+
+            $term = '%'.$this->searchBooking.'%';
+
+            $bookingQuery->where(function ($q) use ($term) {
+                $q->where('booking_number', 'like', $term)
+                ->orWhereHas('ticket', function ($qq) use ($term) {
+                    $qq->where('ticket_number', 'like', $term);
+                })
+                ->orWhereHas('service_type', function ($qq) use ($term) {
+                    $qq->where('name', 'like', $term);
+                })
+                ->orWhereHas('horse', function ($qq) use ($term) {
+                    $qq->where('registration_number', 'like', $term);
+                })
+                ->orWhereHas('trailer', function ($qq) use ($term) {
+                    $qq->where('registration_number', 'like', $term);
+                })
+                ->orWhereHas('vehicle', function ($qq) use ($term) {
+                    $qq->where('registration_number', 'like', $term);
+                })
+                ->orWhereHas('employee', function ($qq) use ($term) {
+                    $qq->where(DB::raw("concat(name, ' ', surname)"), 'like', $term);
+                });
+            });
+        }
+
+        $this->bookings = $bookingQuery
+            ->orderBy('id', 'desc')
+            ->get(); 
+        
+    }
+
+    public function updatingSearchPurchase()
+    {
+        $this->resetPage();
+        
+    }
+    public function updatedSearchPurchase()
+    {
+          $purchaseQuery = Purchase::query()
+                    ->with(['vendor', 'currency'])
+                    ->whereYear('date', date('Y'))
+                    ->where('authorization', 'approved')
+                    ->where('status', true);
+
+                if (filled($this->searchPurchase)) {
+                    $term = '%'.$this->searchPurchase.'%';
+
+                    $purchaseQuery->where(function ($q) use ($term) {
+                        $q->where('purchase_number', 'like', $term)
+                        ->orWhere('date', 'like', $term)
+                        ->orWhere('total', 'like', $term)
+                        ->orWhereHas('vendor', function ($qq) use ($term) {
+                            $qq->where('name', 'like', $term);
+                        })
+                        ->orWhereHas('currency', function ($qq) use ($term) {
+                            $qq->where('name', 'like', $term);
+                        });
+                    });
+                }
+
+                $this->purchases = $purchaseQuery
+                    ->orderBy('id', 'desc')
+                    ->get();
+        
+    }
 
 
-        $user = Auth::user();
-        $employee = $user->employee;
+
+    public function render()
+    {
       
-        $this->expenses = Expense::orderBy('name','asc')->where('status',1)->get();
-        $this->allowances = Allowance::orderBy('name','asc')->where('status',1)->get();
-        $this->products = Product::where('buy',True)->where('status',True)->orderBy('name','asc')->get();
-        $employee_departments = $employee->departments;
-        foreach($employee_departments as $department){
-            $department_names[] = $department->name;
-        }
-        $roles = $user->roles;
-        foreach($roles as $role){
-            $role_names[] = $role->name;
-        }
-        $ranks = $employee->ranks;
-        foreach($ranks as $rank){
-            $rank_names[] = $rank->name;
-        }
-        if (in_array('Finance', $department_names) || in_array('Super Admin', $role_names)){
-            
-            if (isset($this->from) && isset($this->to)) {
-                if (filled($this->search)) {
-                    return view('livewire.requisitions.index',[
-                        'requisitions' => Requisition::query()->with('employee','department','trip','currency','payments')->whereBetween($this->requisition_filter,[$this->from, $this->to] )
-                        ->where('requisition_number','like', '%'.$this->search.'%')
-                        ->orWhere('subject','like', '%'.$this->search.'%')
-                        ->orWhere('description','like', '%'.$this->search.'%')
-                        ->orWhere('status','like', '%'.$this->search.'%')
-                        ->orWhere('date','like', '%'.$this->search.'%')
-                        ->orWhere('total','like', '%'.$this->search.'%')
-                        ->orWhereHas('requisition_items', function ($query) {
-                            $query->whereHas('expense', function ($q) {
-                                $q->where('name', 'like', '%' . $this->search . '%');
-                            });
-                        })
-                        ->orWhereHas('trip', function ($query) {
-                            $query->where('trip_number', 'like', '%' . $this->search . '%')
-                                  ->orWhereHas('horse', function ($q) {
-                                      $q->where('registration_number', 'like', '%' . $this->search . '%');
-                                  });
-                        })
-                        ->orWhereHas('employee', function ($query) {
-                            return $query->where(DB::raw("concat(name, ' ', surname)"), 'LIKE', "%".$this->search."%");
-                        })
-                        ->orWhereHas('currency', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                        })
-                        ->orderBy($this->requisition_filter,'desc')->paginate(10),
-                      
-                    ]);
-                }else {
-                    return view('livewire.requisitions.index',[
-                        'requisitions' => requisition::query()->with('employee','department','trip','currency','payments')->whereBetween($this->requisition_filter,[$this->from, $this->to] )->orderBy($this->requisition_filter,'desc')->paginate(10),
-                      
-                    ]);
-                }
-               
-            }
-            elseif (filled($this->search)) {
-               
-                return view('livewire.requisitions.index',[
-                    'requisitions' => Requisition::query()->with('employee','department','trip','currency','payments')->whereMonth($this->requisition_filter, date('m'))
-                    ->whereYear($this->requisition_filter, date('Y'))
-                    ->where('requisition_number','like', '%'.$this->search.'%')
-                    ->orWhere('subject','like', '%'.$this->search.'%')
-                    ->orWhere('description','like', '%'.$this->search.'%')
-                    ->orWhere('status','like', '%'.$this->search.'%')
-                    ->orWhere('date','like', '%'.$this->search.'%')
-                    ->orWhere('total','like', '%'.$this->search.'%')
-                    ->orWhereHas('requisition_items', function ($query) {
-                        $query->whereHas('expense', function ($q) {
-                            $q->where('name', 'like', '%' . $this->search . '%');
-                        });
-                    })
-                    ->orWhereHas('trip', function ($query) {
-                        $query->where('trip_number', 'like', '%' . $this->search . '%')
-                              ->orWhereHas('horse', function ($q) {
-                                  $q->where('registration_number', 'like', '%' . $this->search . '%');
-                              });
-                    })
-                    ->orWhereHas('employee', function ($query) {
-                        return $query->where(DB::raw("concat(name, ' ', surname)"), 'LIKE', "%".$this->search."%");
-                    })
-                    ->orWhereHas('currency', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orderBy($this->requisition_filter,'desc')->paginate(10),
-                  
-                   
-                ]);
-            }
-            else {
-               
-                return view('livewire.requisitions.index',[
-                    'requisitions' => Requisition::query()->with('employee','department','trip','currency','payments')->whereMonth($this->requisition_filter, date('m'))
-                    ->whereYear($this->requisition_filter, date('Y'))->orderBy($this->requisition_filter,'desc')->paginate(10),
-                ]);
-              
-            }
-           
-        }else{
 
-            //not super admin
-            if (isset($this->from) && isset($this->to)) {
-                if (filled($this->search)) {
-                    return view('livewire.requisitions.index',[
-                        'requisitions' => Requisition::query()->with('employee','department','trip','currency','payments')->whereBetween($this->requisition_filter,[$this->from, $this->to] )
-                        ->whereIn('department_id', $this->department_ids)
-                        ->where('requisition_number','like', '%'.$this->search.'%')
-                        ->orWhere('subject','like', '%'.$this->search.'%')
-                        ->orWhere('description','like', '%'.$this->search.'%')
-                        ->orWhere('status','like', '%'.$this->search.'%')
-                        ->orWhere('date','like', '%'.$this->search.'%')
-                        ->orWhere('total','like', '%'.$this->search.'%')
-                        ->orWhereHas('requisition_items', function ($query) {
-                            $query->whereHas('expense', function ($q) {
-                                $q->where('name', 'like', '%' . $this->search . '%');
-                            });
-                        })
-                        ->orWhereHas('trip', function ($query) {
-                            $query->where('trip_number', 'like', '%' . $this->search . '%')
-                                  ->orWhereHas('horse', function ($q) {
-                                      $q->where('registration_number', 'like', '%' . $this->search . '%');
-                                  });
-                        })
-                        ->orWhereHas('employee', function ($query) {
-                            return $query->where(DB::raw("concat(name, ' ', surname)"), 'LIKE', "%".$this->search."%");
-                        })
-                        ->orWhereHas('currency', function ($query) {
-                            return $query->where('name', 'like', '%'.$this->search.'%');
-                        })
-                        ->orderBy($this->requisition_filter,'desc')->paginate(10),
-                       
-                       
-                    ]);
-                }else {
-                    return view('livewire.requisitions.index',[
-                        'requisitions' => Requisition::query()->with('employee','department','trip','currency','payments')
-                        ->whereIn('department_id', $this->department_ids)
-                        ->whereBetween($this->requisition_filter,[$this->from, $this->to] )->orderBy($this->requisition_filter,'desc')->paginate(10),
-                       
-                     
-                    ]);
-                }
-               
-            }
-            elseif (filled($this->search)) {
-               
-                return view('livewire.requisitions.index',[
-                    'requisitions' => Requisition::query()->with('employee','department','trip','currency','payments')->whereMonth($this->requisition_filter, date('m'))
-                    ->whereYear($this->requisition_filter, date('Y'))
-                    ->whereIn('department_id', $this->department_ids)
-                    ->where('requisition_number','like', '%'.$this->search.'%')
-                    ->orWhere('subject','like', '%'.$this->search.'%')
-                    ->orWhere('description','like', '%'.$this->search.'%')
-                    ->orWhere('status','like', '%'.$this->search.'%')
-                    ->orWhere('date','like', '%'.$this->search.'%')
-                    ->orWhere('total','like', '%'.$this->search.'%')
-                    ->orWhereHas('requisition_items', function ($query) {
-                        $query->whereHas('expense', function ($q) {
-                            $q->where('name', 'like', '%' . $this->search . '%');
-                        });
-                    })
-                    ->orWhereHas('trip', function ($query) {
-                        $query->where('trip_number', 'like', '%' . $this->search . '%')
-                              ->orWhereHas('horse', function ($q) {
-                                  $q->where('registration_number', 'like', '%' . $this->search . '%');
-                              });
-                    })
-                    ->orWhereHas('employee', function ($query) {
-                        return $query->where(DB::raw("concat(name, ' ', surname)"), 'LIKE', "%".$this->search."%");
-                    })
-                    ->orWhereHas('currency', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orderBy($this->requisition_filter,'desc')->paginate(10),
-                   
-                ]);
-            }
-            else {
-               
-                return view('livewire.requisitions.index',[
-                    'requisitions' => Requisition::query()->with('employee','department','trip','currency','payments')
-                    ->whereIn('department_id', $this->department_ids)
-                    ->whereMonth($this->requisition_filter, date('m'))
-                    ->whereYear($this->requisition_filter, date('Y'))->orderBy($this->requisition_filter,'desc')->paginate(10),
-                ]);
-              
-            }
-           
-        }
+     // ✅ Force an Eloquent user model instance
+    $user = User::query()
+        ->with(['employee.departments', 'roles', 'employee.ranks'])
+        ->findOrFail(Auth::id());
+
+    $employee        = $user->employee;
+
+    $departmentNames = $employee?->departments?->pluck('name')->all() ?? [];
+    $roleNames       = $user->roles->pluck('name')->all();
+
+    $isFinanceOrSuper = in_array('Finance', $departmentNames, true)
+        || in_array('Super Admin', $roleNames, true);
+
+    $base = Requisition::query()
+        ->with(['employee', 'department', 'trip', 'currency', 'payments'])
+        ->orderBy($this->requisition_filter, 'desc');
+
+    // Non-finance/non-super: restrict to their departments
+    if (! $isFinanceOrSuper) {
+        $base->whereIn('department_id', (array) $this->department_ids);
+    }
+
+    // Date filter: range OR default current month/year
+    if (filled($this->from) && filled($this->to)) {
+        $base->whereBetween($this->requisition_filter, [$this->from, $this->to]);
+    } else {
+        $base->whereMonth($this->requisition_filter, now()->month)
+             ->whereYear($this->requisition_filter, now()->year);
+    }
+
+    // Search (GROUPED OR CONDITIONS) — critical fix
+    if (filled($this->search)) {
+        $term = trim($this->search);
+
+        $base->where(function ($q) use ($term) {
+            $like = "%{$term}%";
+
+            $q->where('requisition_number', 'like', $like)
+              ->orWhere('subject', 'like', $like)
+              ->orWhere('description', 'like', $like)
+              ->orWhere('status', 'like', $like)
+              ->orWhere('date', 'like', $like)
+              ->orWhere('total', 'like', $like)
+
+              ->orWhereHas('requisition_items.expense', function ($qq) use ($like) {
+                  $qq->where('name', 'like', $like);
+              })
+
+              ->orWhereHas('trip', function ($qq) use ($like) {
+                  $qq->where('trip_number', 'like', $like)
+                     ->orWhereHas('horse', function ($hhh) use ($like) {
+                         $hhh->where('registration_number', 'like', $like);
+                     });
+              })
+
+              ->orWhereHas('employee', function ($qq) use ($term) {
+                  $qq->where(DB::raw("concat(name, ' ', surname)"), 'LIKE', "%{$term}%");
+              })
+
+              ->orWhereHas('currency', function ($qq) use ($like) {
+                  $qq->where('name', 'like', $like);
+              });
+        });
+    }
+
+    return view('livewire.requisitions.index', [
+        'requisitions' => $base->paginate(10),
+    ]);
       
   
    

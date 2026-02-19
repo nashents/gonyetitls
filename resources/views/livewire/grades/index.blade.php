@@ -152,8 +152,8 @@
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="name">Level</label>
-                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="grade_level" placeholder="Grade Numerical Number" />
+                                <label for="name">Level<span class="required" style="color: red">*</span></label>
+                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="grade_level" placeholder="Grade Numerical Number" required/>
                                 @error('grade_level') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -332,8 +332,8 @@
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="name">Level</label>
-                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="grade_level" placeholder="Grade Numerical Number" />
+                                <label for="name">Level<span class="required" style="color: red">*</span></label>
+                                <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="grade_level" placeholder="Grade Numerical Number" required/>
                                 @error('grade_level') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
