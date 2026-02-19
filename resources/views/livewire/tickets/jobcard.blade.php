@@ -128,25 +128,33 @@
       </tr>
     </thead>
     <tbody data-collection="labour">
-      <tr data-row>
-        <td class="center" data-field="labour.index">1</td>
-        <td data-field="labour.description">{{$booking->description}}</td>
-        <td data-field="labour.assignee">
-          @if (isset($ticket->booking->employees) && $ticket->booking->employees->count() > 0)
-              @foreach ($ticket->booking->employees as $mechanic)
-                  {{ $mechanic->name }} {{ $mechanic->surname }}@if(!$loop->last),@endif
-              @endforeach
-          @elseif(isset($ticket->booking->vendor))
-              {{ ucfirst($ticket->booking->vendor->name) }}
-          @endif
-        </td>
-        <td data-field="labour.start">{{$booking->in_date}} @ {{$booking->in_time}}</td>
-        <td data-field="labour.end">{{$booking->out_date}} {{$booking->out_time ? "@".$booking->out_time : ""}}</td>
-        <td class="right" data-field="labour.hours">{{$booking->service_hours}}</td>
-        <td class="right" data-field="labour.rate">{{$booking->currency ? $booking->currency->symbol : ""}} {{number_format($booking->rate,2)}}</td>
-        <td class="right" data-field="labour.amount">{{$booking->currency ? $booking->currency->symbol : ""}} {{number_format($booking->total,2)}}</td>
-        <td data-field="labour.remarks">{{$booking->remarks}}</td>
-      </tr>
+      @if ($ticket->work_dones)
+        @php
+            $i = 1;
+        @endphp
+          @foreach ($ticket->work_dones as $work_done)
+              <tr data-row>
+                <td class="center" data-field="labour.index">{{$i++}}</td>
+                <td data-field="labour.description">{{$booking->description}}</td>
+                <td data-field="labour.assignee">
+                  @if (isset($ticket->booking->employees) && $ticket->booking->employees->count() > 0)
+                      @foreach ($ticket->booking->employees as $mechanic)
+                          {{ $mechanic->name }} {{ $mechanic->surname }}@if(!$loop->last),@endif
+                      @endforeach
+                  @elseif(isset($ticket->booking->vendor))
+                      {{ ucfirst($ticket->booking->vendor->name) }}
+                  @endif
+                </td>
+                <td data-field="labour.start">{{$booking->in_date}} @ {{$booking->in_time}}</td>
+                <td data-field="labour.end">{{$booking->out_date}} {{$booking->out_time ? "@".$booking->out_time : ""}}</td>
+                <td class="right" data-field="labour.hours">{{$booking->service_hours}}</td>
+                <td class="right" data-field="labour.rate">{{$booking->currency ? $booking->currency->symbol : ""}} {{number_format($booking->rate,2)}}</td>
+                <td class="right" data-field="labour.amount">{{$booking->currency ? $booking->currency->symbol : ""}} {{number_format($booking->total,2)}}</td>
+                <td data-field="labour.remarks">{{$booking->remarks}}</td>
+              </tr>
+          @endforeach
+      @endif
+  
     </tbody>
     <tfoot>
       <tr>

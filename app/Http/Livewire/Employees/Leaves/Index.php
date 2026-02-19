@@ -65,7 +65,7 @@ class Index extends Component
     }
 
     public function update(){
-        dd($this->accrual_rate);
+      
         if (!is_null($this->employee_id)) {
 
             $employee = Employee::find($this->employee_id);
