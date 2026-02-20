@@ -985,7 +985,7 @@
                                     <div class="col-md-12">
                                         <div class="btn-group pull-right mt-10" >
                                            <a onclick="goBack()" class="btn bg-gray btn-wide btn-rounded"><i class="fa fa-arrow-left"></i>Back</a>
-                                            <button type="submit" class="btn bg-success btn-wide btn-rounded" > <i class="fa fa-save"></i>Save</button>
+                                            <button type="submit" class="btn bg-success btn-wide btn-rounded" > <i class="fa fa-refresh"></i>Update</button>
                                         </div>
                                     </div>
                                     </div>

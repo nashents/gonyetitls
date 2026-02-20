@@ -106,8 +106,8 @@
                                                 </button>
                                                 <ul class="dropdown-menu">
                                                     <li><a href="{{route('incidents.show', $incident->id)}}"><i class="fa fa-eye color-default"></i>View</a></li>
-                                                    {{-- <li><a href="{{route('incidents.edit', $incident->id)}}"><i class="fa fa-edit color-success"></i> Edit</a></li>
-                                                    <li><a href="#"  wire:click="showincident({{$incident->id}})"><i class="fa fa-window-close color-success"></i> Close Incident</a></li> --}}
+                                                    <li><a href="{{route('incidents.edit', $incident->id)}}"><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                                    {{-- <li><a href="#"  wire:click="showincident({{$incident->id}})"><i class="fa fa-window-close color-success"></i> Close Incident</a></li> --}}
                                                     {{-- @if ($incident->authorization == "pending" || $incident->authorization == "rejected") --}}
                                                     <li><a href="#" data-toggle="modal" data-target="#incidentDeleteModal{{$incident->id}}"><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                                     {{-- @endif --}}

@@ -204,6 +204,7 @@
                                                 $s = $statusMap[$trip->trip_status] ?? ['row' => null, 'cell' => '', 'badge' => 'secondary'];
                                                 $offloadedDate = $trip->delivery_note?->offloaded_date;
                                                 $pod = $trip->pod;
+                                                $proofOfDelivery = App\Models\TripDocument::where('trip_id', $trip->id)->where('title', 'POD')->first();
                                             @endphp
 
                                             <tr @if($s['row']) style="background-color: {{ $s['row'] }}" @endif>
@@ -315,14 +316,18 @@
                                                     @endif
 
                                                     <hr class="my-1">
-
-                                                    <span class="label label-{{ $pod ? 'success' : 'warning' }}">
-                                                        {{ $pod ? "Submitted On: {$pod->date}" : "pending" }}
-                                                    </span>
-
-                                                    @if($pod?->document_number)
-                                                        <div class="text-center">POD#: {{ $pod->document_number }}</div>
+                                                    @if (isset($pod))
+                                                        <span class="label label-{{ $pod ? 'success' : 'warning' }}">
+                                                            {{ $pod ? "Submitted On: {$pod->date}" : "pending" }}
+                                                        </span>
+                                                       <div class="text-center"> {{ $pod->document_number ? "POD#: ".$pod->document_number : "" }}</div>
+                                                    @elseif (isset($proofOfDelivery))
+                                                        <span class="label label-{{ $proofOfDelivery ? 'success' : 'warning' }}">
+                                                            {{ $proofOfDelivery ? "Submitted On: {$proofOfDelivery->date}" : "pending" }}
+                                                        </span>
+                                                        <div class="text-center"> {{ $proofOfDelivery->document_number ? "POD#: ".$proofOfDelivery->document_number : "" }}</div>
                                                     @endif
+                                                   
                                                 </td>
 
                                                 <td>

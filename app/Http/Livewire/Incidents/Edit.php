@@ -28,7 +28,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
-class Create extends Component
+class Edit extends Component
 {
     use WithFileUploads;
 
@@ -61,11 +61,11 @@ class Create extends Component
     public $currencies;
     public $currency_id;
     public $incident_type;
-    public $category = "Other";
+    public $category ;
     public $trips;
     public $trip;
     public $selectedTrip;
-    public $create_trip = false;
+    public $create_trip;
 
   
 
@@ -125,6 +125,14 @@ class Create extends Component
     public $cost;
     public $other_currency_id;
     public $other_object;
+
+    public $basic_causes;
+    public $immediate_causes;
+    public $incident_injuries;
+    public $incident_damages;
+    public $incident_others;
+    public $contacts;
+    public $incident_dates;
    
     // contacts
 
@@ -283,9 +291,122 @@ class Create extends Component
     }
 
 
-    public function mount(){
+    public function mount($id){
+        $incident = Incident::find($id);
+        $this->incident_number = $incident->incident_number;
+        $this->description = $incident->description;
+        $this->date = $incident->date;
+        $this->report_date = $incident->report_date;
+        $this->report = $incident->report;
+        $this->location = $incident->location;
+        $this->loss_potential = $incident->loss_potential;
+        $this->occurance = $incident->occurance;
+        $this->occupation = $incident->occupation;
+        $this->experience = $incident->experience;
+        $this->controling_activity = $incident->controling_activity;
+        $this->media_coverage = $incident->media_coverage;
+        $this->incident_type = $incident->incident_type;
+        $this->category = $incident->category;
+        $this->create_trip = $incident->create_trip;
+        $this->selectedHorse = $incident->horse_id;
+        $this->selectedVehicle = $incident->vehicle_id;
+        $this->employee_id = $incident->employee_id;
+        $this->driver_id = $incident->driver_id;
+        $this->corrections = $incident->corrections;
+        $this->customer_id = $incident->customer_id;
+        $this->selectedTransporter = $incident->transporter_id;
+        $this->selectedCargo = $incident->cargo_id;
+        $this->cargo_type = $incident->cargo ? $incident->cargo->type : Null;
+        $this->weight = $incident->weight;
+        $this->authorities = $incident->authorities;
+        $this->quantity = $incident->quantity;
+        $this->litreage = $incident->litreage;
+        $this->litreage_at_20 = $incident->litreage_at_20;
+        $this->measurement_id = $incident->measurement_id;
+        $this->destination_id = $incident->destination_id;
+        $this->trip = $incident->trip;
+        $this->selectedTrip = $incident->trip_id;
+        $this->type = $incident->type;
+        $this->assigned_to = $incident->assigned_to;
 
-        $this->horses = collect();
+        $this->basic_causes = $incident->basic_causes;
+        if (isset($this->basic_causes)) {
+            foreach ($this->basic_causes as $key => $cause) {
+                $this->basic_cause_id[$key] = $cause->loss_id;
+            }
+        }
+        
+        $this->immediate_causes = $incident->immediate_causes;
+        if (isset($this->immediate_causes)) {
+            foreach ($this->immediate_causes as $key => $cause) {
+                $this->immediate_cause_id[$key] = $cause->loss_id;
+            }
+        }
+
+        $this->incident_injuries = $incident->incident_injuries;
+        if (isset($this->incident_injuries)) {
+            foreach ($this->incident_injuries as $key => $injury) {
+                $this->name[$key] = $injury->name;
+                $this->taken_to[$key] = $injury->taken_to;
+                $this->body_part[$key] = $injury->body_part;
+                $this->days_lost[$key] = $injury->days_lost;
+                $this->nature_of_injury[$key] = $injury->nature_of_injury;
+                $this->injury_object[$key] = $injury->object;
+            }
+        }
+
+        $this->incident_damages = $incident->incident_damages;
+        if (isset($this->incident_damages)) {
+            foreach ($this->incident_damages as $key => $damage) {
+                $this->damage[$key] = $damage->damage;
+                $this->nature_of_damage[$key] = $damage->nature_of_damage;
+                $this->estimated_cost[$key] = $damage->estimated_cost;
+                $this->actual_cost[$key] = $damage->actual_cost;
+                $this->damage_currency_id[$key] = $damage->currency_id;
+                $this->damage_object[$key] = $damage->object;
+            }
+        }
+
+        $this->contacts = $incident->contacts;
+        if (isset($this->contacts)) {
+            foreach ($this->contacts as $key => $contact) {
+                $this->contact_name[$key] = $contact->name;
+                $this->contact_surname[$key] = $contact->surname;
+                $this->contact_email[$key] = $contact->email;
+                $this->contact_phonenumber[$key] = $contact->phonenumber;
+                $this->department[$key] = $contact->department;
+            }
+        }
+
+        $this->incident_others = $incident->incident_others;
+        if (isset($this->incident_others)) {
+            foreach ($this->incident_others as $key => $other) {
+                $this->other_type[$key] = $other->type;
+                $this->nature_of_loss[$key] = $other->nature_of_loss;
+                $this->cost[$key] = $other->cost;
+                $this->other_currency_id[$key] = $other->currency_id;
+                $this->other_object[$key] = $other->object_other;
+            }
+        }
+
+
+        $this->incident_dates = $incident->incident_dates;
+        if (isset($this->incident_dates)) {
+            foreach ($this->incident_dates as $key => $date) {
+                $this->followup_date[$key] = $date->date;
+            }
+        }
+
+         if (isset($this->selectedTransporter)) {
+            $this->horses = Horse::where('transporter_id', $this->selectedTransporter)->where('service', 0)->get();
+            $this->vehicles = Vehicle::where('transporter_id', $this->selectedTransporter)->where('service', 0)->get(); 
+            $this->drivers = Driver::withAggregate('employee','name')->where('transporter_id',$this->selectedTransporter)
+                    ->orderBy('employee_name','asc')->latest()->get();
+        } else {
+            $this->vehicles = collect();
+            $this->drivers = collect();
+            $this->horses = collect();
+        }
 
         $this->employees = Employee::orderBy('surname','asc')->get()->sortBy('name');
         $this->drivers = collect();
@@ -392,39 +513,6 @@ class Create extends Component
 
     ];
 
-    public function incidentNumber(){
-       
-        if (isset(Auth::user()->company)) {
-            $str = Auth::user()->company->name;
-            $words = explode(' ', $str);
-            if (isset($words[1][0])) {
-                $initials = $words[0][0].$words[1][0];
-            }else {
-                $initials = $words[0][0];
-            }
-        }elseif (isset(Auth::user()->employee->company)) {
-            $str = Auth::user()->employee->company->name;
-            $words = explode(' ', $str);
-            if (isset($words[1][0])) {
-                $initials = $words[0][0].$words[1][0];
-            }else {
-                $initials = $words[0][0];
-            }
-        }
-
-            $incident = incident::orderBy('id', 'desc')->first();
-
-        if (!$incident) {
-            $incident_number =  $initials .'B'. str_pad(1, 5, "0", STR_PAD_LEFT);
-        }else {
-            $number = $incident->id + 1;
-            $incident_number =  $initials .'B'. str_pad($number, 5, "0", STR_PAD_LEFT);
-        }
-
-        return  $incident_number;
-
-
-    }
 
     public function updatedSelectedCargo($id)
     {
@@ -506,9 +594,9 @@ class Create extends Component
             }
     }
 
-    public function store(){
+    public function update(){
         
-        $incident = new Incident;
+        $incident = Incident::find($this->incident_id);
         $incident->incident_number = $this->incidentNumber();
         $incident->user_id = Auth::user()->id;
         $incident->horse_id = $this->selectedHorse ? $this->selectedHorse : Null;
@@ -544,11 +632,11 @@ class Create extends Component
         $incident->authorities = $this->authorities;
         $incident->report = $this->report;
         $incident->status = 1;
-        $incident->save();
+        $incident->update();
 
-        if (isset($this->contact_name)) {
-            foreach ($this->contact_name as $key => $value) {
-               $contact = new Contact;
+        if (isset($this->contacts)) {
+            foreach ($this->contacts as $key => $id) {
+               $contact = Contact::find($id);
                $contact->incident_id = $incident->id;
                $contact->category = 'incident';
                if (isset($this->contact_name[$key])) {
@@ -567,13 +655,13 @@ class Create extends Component
                     $contact->department = $this->department[$key];
                 }
               
-               $contact->save();
+               $contact->update();
             }
         }
 
-        if (isset($this->name)) {
-            foreach ($this->name as $key => $value) {
-               $injury = new IncidentInjury;
+        if (isset($this->incident_injuries)) {
+            foreach ($this->incident_injuries as $key => $id) {
+               $injury = IncidentInjury::find($id);
                $injury->incident_id = $incident->id;
                if (isset($this->name[$key])) {
                 $injury->name = $this->name[$key];
@@ -593,14 +681,13 @@ class Create extends Component
                 if (isset($this->injury_object[$key])) {
                     $injury->object = $this->injury_object[$key];
                 }
-               $injury->save();
+               $injury->update();
             }
         }
    
-        if (isset($this->damage)) {
-            foreach ($this->damage as $key => $value) {
-               $damage = new IncidentDamage;
-               $damage->incident_id = $incident->id;
+        if (isset($this->incident_damages)) {
+            foreach ($this->incident_damages as $key => $id) {
+               $damage = IncidentDamage::find($id);
                if (isset($this->damage[$key])) {
                 $damage->damage = $this->damage[$key];
                }
@@ -619,14 +706,13 @@ class Create extends Component
                 if (isset($this->damage_object[$key])) {
                     $damage->object = $this->damage_object[$key];
                 }
-               $damage->save();
+               $damage->update();
             }
         }
 
-        if (isset($this->other_type)) {
-            foreach ($this->other_type as $key => $value) {
-               $other = new IncidentOther;
-               $other->incident_id = $incident->id;
+        if (isset($this->incident_others)) {
+            foreach ($this->incident_others as $key => $id) {
+               $other = IncidentOther::find($id);
                if (isset($this->other_type[$key])) {
                 $other->type = $this->other_type[$key];
                }
@@ -643,43 +729,40 @@ class Create extends Component
                     $other->object_other = $this->other_object[$key];
                 }
                
-               $other->save();
+               $other->update();
             }
         }
 
-        if (isset($this->followup_date)) {
-            foreach ($this->followup_date as $key => $value) {
-               $date = new IncidentDate;
-               $date->incident_id = $incident->id;
+        if (isset($this->incident_dates)) {
+            foreach ($this->incident_dates as $key => $id) {
+               $date = IncidentDate::find($id);
                if (isset($this->followup_date[$key])) {
                 $date->date = $this->followup_date[$key];
                }
-               $date->save();
+               $date->update();
             }
         }
    
-        if (isset($this->immediate_cause_id)) {
-            foreach ($this->immediate_cause_id as $key => $value) {
-               $immediate_cause = new ImmediateCause;
-               $immediate_cause->incident_id = $incident->id;
+        if (isset($this->immediate_causes)) {
+            foreach ($this->immediate_causes as $key => $id) {
+               $immediate_cause = ImmediateCause::find($id);
                if (isset($this->immediate_cause_id[$key])) {
                 $immediate_cause->loss_id = $this->immediate_cause_id[$key];
                }
-               $immediate_cause->save();
+               $immediate_cause->update();
             }
         }
-        if (isset($this->basic_cause_id)) {
-            foreach ($this->basic_cause_id as $key => $value) {
-               $basic_cause = new BasicCause;
-               $basic_cause->incident_id = $incident->id;
+        if (isset($this->basic_causes)) {
+            foreach ($this->basic_causes as $key => $id) {
+               $basic_cause = BasicCause::find($id);
                if (isset($this->basic_cause_id[$key])) {
                 $basic_cause->loss_id = $this->basic_cause_id[$key];
                }
-               $basic_cause->save();
+               $basic_cause->update();
             }
         }
 
-        Session::flash('success','Incident Created Successfully!!');
+        Session::flash('success','Incident Updated Successfully!!');
         return redirect()->route('incidents.index');
     }
 
@@ -703,6 +786,6 @@ class Create extends Component
             ->get();
         }
        
-        return view('livewire.incidents.create');
+        return view('livewire.incidents.edit');
     }
 }

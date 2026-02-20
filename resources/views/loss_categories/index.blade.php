@@ -9,7 +9,7 @@
     @endif
 @endsection
 @section('title')
-    Loss Cause Categories |@if (isset(Auth::user()->employee->company))
+    Loss Categories |@if (isset(Auth::user()->employee->company))
     {{Auth::user()->employee->company->name}}
     @elseif (Auth::user()->company)
     {{Auth::user()->company->name}}

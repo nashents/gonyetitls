@@ -3,26 +3,30 @@
 namespace App\Http\Livewire\Losses;
 
 use App\Models\Loss;
-use Livewire\Component;
-use App\Models\LossGroup;
 use App\Models\LossCategory;
+use App\Models\LossGroup;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class Index extends Component
 {
+    use WithPagination;
+    protected $paginationTheme = 'bootstrap';
+    public $search;
+    protected $queryString = ['search'];
     public $loss_categories;
     public $selectedLossCategory;
     public $loss_groups;
     public $loss_group_id;
-    public $losses;
+    protected $losses;
     public $loss_id;
     public $name;
     public $user_id;
 
 
     public function mount(){
-        $this->losses = Loss::latest()->get();
-        $this->loss_categories = LossCategory::latest()->get();
+        $this->loss_categories = LossCategory::orderBy('name','asc')->get();
         $this->loss_groups = collect();
     }
 
@@ -30,7 +34,7 @@ class Index extends Component
     public function updatedSelectedLossCategory($id){
         if (!is_null($id)) {
             $loss_category= LossCategory::find($id);
-            $this->loss_groups = $loss_category->loss_groups;
+            $this->loss_groups = $loss_category->loss_groups->orderBy('name','asc')->get();
         }
     }
    
@@ -96,11 +100,30 @@ class Index extends Component
     }
     public function render()
     {
-        $this->losses = Loss::latest()->get();
-        $this->loss_categories = LossCategory::latest()->get();
-        return view('livewire.losses.index',[
+        $baseQuery = Loss::query()
+            ->with(['loss_category', 'loss_group']);
+
+        if ($this->search) {
+            $search = trim($this->search);
+
+            $baseQuery->where(function ($q) use ($search) {
+                // Search on losses.name
+                $q->where('name', 'like', "%{$search}%")
+                // Search on related loss_category.name
+                ->orWhereHas('loss_category', function ($qq) use ($search) {
+                    $qq->where('name', 'like', "%{$search}%");
+                })
+                // Search on related loss_group.name
+                ->orWhereHas('loss_group', function ($qq) use ($search) {
+                    $qq->where('name', 'like', "%{$search}%");
+                });
+            });
+        }
+
+        $this->losses = $baseQuery->paginate(10);
+
+        return view('livewire.losses.index', [
             'losses' => $this->losses,
-            'loss_categories' => $this->loss_categories
         ]);
     }
 }

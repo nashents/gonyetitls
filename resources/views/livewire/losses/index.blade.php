@@ -15,13 +15,17 @@
                             </div>
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
-
-                            <table id="lossesTable" class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
+                            <div class="col-md-3" style="float: right; padding-right:0px">
+                                <div class="form-group">
+                                    <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search loss causes...">
+                                </div>
+                            </div>
+                            <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
-                                    <th class="th-sm">Loss Cause Category
+                                    <th class="th-sm">Category
                                     </th>
-                                    <th class="th-sm">Loss Cause Group
+                                    <th class="th-sm">Group
                                     </th>
                                     <th class="th-sm">Name
                                     </th>
@@ -29,9 +33,9 @@
                                     </th>
                                   </tr>
                                 </thead>
-                                @if ($losses->count()>0)
+                                @if (isset($losses))
                                 <tbody>
-                                    @foreach ($losses as $loss)
+                                    @forelse ($losses as $loss)
                                   <tr>
                                     <td>{{$loss->loss_category ? $loss->loss_category->name : ""}}</td>
                                     <td>{{$loss->loss_group ? $loss->loss_group->name : ""}}</td>
@@ -43,19 +47,38 @@
                                                 <span class="caret"></span>
                                             </button>
                                             <ul class="dropdown-menu">
-                                                <li><a href="#"  wire:click="edit({{$loss->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
-                                                <li><a href="#" data-toggle="modal" data-target="#lossDeleteModal{{ $loss->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                                                @if ($loss->user_id != Null)
+                                                    <li><a href="#"  wire:click="edit({{$loss->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                                    <li><a href="#" data-toggle="modal" data-target="#lossDeleteModal{{ $loss->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                                                @endif
                                             </ul>
                                         </div>
                                         @include('losses.delete')
                                 </td>
                                   </tr>
-                                  @endforeach
+                                  @empty
+                                  <tr>
+                                    <td colspan="2">
+                                        <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
+                                            No Loss Causes Found ....
+                                        </div>
+                                       
+                                    </td>
+                                  </tr>  
+                                @endforelse
                                 </tbody>
                                 @else
                                     <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
                                  @endif
                               </table>
+                               <nav class="text-center" style="float: right">
+                                    <ul class="pagination rounded-corners">
+                                        @if (isset($losses))
+                                            {{ $losses->links() }} 
+                                        @endif
+                                    </ul>
+                                </nav>
+                                     
 
                             <!-- /.col-md-12 -->
                         </div>

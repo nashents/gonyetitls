@@ -8,7 +8,7 @@
     @endif
 @endsection
 @section('title')
-    Bookings | @if (Auth::user()->employee->company)
+    Incidents | @if (Auth::user()->employee->company)
     {{Auth::user()->employee->company->name}}
     @elseif (Auth::user()->company)
     {{Auth::user()->company->name}}
@@ -34,7 +34,8 @@
                                 <div class="col-md-6">
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
-            							<li class="active"> <i class="fa fa-clock-o"></i> Pending Bookings</li>
+            							<li><a href="{{route('incidents.index')}}"><i class="fa fa-list"></i> All Incidents</a></li>
+            							<li class="active"> <i class="fa fa-clock-o"></i> Pending Incidents</li>
             						</ul>
                                 </div>
                                 <!-- /.col-md-6 -->
@@ -44,7 +45,7 @@
                         </div>
                         <!-- /.container-fluid -->
 
-                        @livewire('bookings.pending')
+                        @livewire('incidents.pending')
                         <!-- /.section -->
 
                     </div>
@@ -59,7 +60,7 @@
 @section('extra-js')
     <script>
     $(document).ready( function () {
-        $('#bookingsTable').DataTable();
+        $('#IncidentsTable').DataTable();
     } );
     </script>
 @endsection

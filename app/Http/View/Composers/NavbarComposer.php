@@ -39,8 +39,6 @@ class NavbarComposer
         $user = User::find(Auth::user()->id);
 
         $now         = now();                     // uses app timezone (Africa/Harare)
-        $today       = $now->toDateString();      // 'Y-m-d'
-        $currentTime = $now->toTimeString();
 
         $pendingCounts = [
             'trips'            => Trip::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
@@ -64,17 +62,17 @@ class NavbarComposer
             'loans'            => Loan::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
             'leaves'           => Leave::where('management_decision', 'pending')->whereYear('created_at',date('Y'))->count(),
             'attendances'      => Attendance::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
-            'over_due_tickets' => Booking::query()
-                                        ->where('status', 1)   // adjust statuses to match your enums
-                                        ->whereNotNull('estimated_out_date')
-                                        ->whereNotNull('estimated_out_time')
-                                        ->where(function ($q) use ($today, $currentTime) {
-                                            $q->where('estimated_out_date', '<', $today)
-                                            ->orWhere(function ($qq) use ($today, $currentTime) {
-                                                $qq->where('estimated_out_date', $today)
-                                                    ->where('estimated_out_time', '<', $currentTime);
-                                            });
-                                        })->count()
+            'overdue_tickets' => Booking::query()
+                ->where('status', 1)   // or whatever your "open" status is
+                ->where('authorization', 'approved') // only approved bookings
+                ->whereYear('in_date', date('Y'))
+                ->whereNotNull('estimated_out_date')
+                ->whereNotNull('estimated_out_time')
+                ->whereRaw(
+                    "TIMESTAMP(estimated_out_date, estimated_out_time) < ?",
+                    [$now]  // Carbon is cast to 'Y-m-d H:i:s'
+                )
+                ->count()
         ];
 
         // If guest, just share empties (prevents errors)
@@ -226,6 +224,7 @@ class NavbarComposer
                 'loans'             => $pendingCounts['loans'] ?? 0,
                 'leaves'            => $pendingCounts['leaves'] ?? 0,
                 'attendances'       => $pendingCounts['attendances'] ?? 0,
+                'overdue_tickets'       => $pendingCounts['overdue_tickets'] ?? 0,
             ],
         ]);
     }

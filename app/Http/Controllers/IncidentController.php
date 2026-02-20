@@ -18,6 +18,20 @@ class IncidentController extends Controller
     {
         return view('incidents.index');
     }
+    public function pending()
+    {
+        return view('incidents.pending');
+    }
+    public function approved()
+    {
+        return view('incidents.approved');
+    }
+    public function rejected()
+    {
+        return view('incidents.rejected');
+    }
+       
+   
 
     /**
      * Show the form for creating a new resource.
@@ -59,7 +73,7 @@ class IncidentController extends Controller
      */
     public function edit(Incident $incident)
     {
-        //
+        return view('incidents.edit')->with('incident',$incident);
     }
 
     /**

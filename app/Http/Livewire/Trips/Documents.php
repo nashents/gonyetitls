@@ -76,6 +76,8 @@ class Documents extends Component
     $this->documents = $this->trip->trip_documents;
     }
 
+   
+
     public function store(){
    
             if (isset($this->file)) {
@@ -165,7 +167,7 @@ class Documents extends Component
                 }
 
                 $document = TripDocument::find($this->document_id);
-                $document->user_id = Auth::user()->id;
+                // $document->user_id = Auth::user()->id;
                 $document->trip_id = $this->trip->id;
                 $document->document_number = $this->document_number;
                 $document->title = $this->title;

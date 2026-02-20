@@ -219,7 +219,7 @@
 
                                 <ul class="dropdown-menu" style="max-height:400px; overflow-y:auto;">
                                     <li class="dropdown-header">
-                                        <strong>Pending Authorizations</strong>
+                                        <strong>Operational Notifications</strong>
                                     </li>
 
                                     @if ($pendingTotal === 0)

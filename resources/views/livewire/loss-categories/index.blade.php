@@ -11,12 +11,16 @@
                             </div>
 
                             <div class="panel-title">
-                                <a href="" data-toggle="modal" data-target="#loss_categoryModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Loss Category</a>
+                                <a href="" data-toggle="modal" data-target="#loss_categoryModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Loss Cause Category</a>
                             </div>
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
-
-                            <table id="loss_categoriesTable" class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
+                            <div class="col-md-3" style="float: right; padding-right:0px">
+                                <div class="form-group">
+                                    <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search loss cause categories...">
+                                </div>
+                            </div>
+                            <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
                                     <th class="th-sm">Name
@@ -25,9 +29,9 @@
                                     </th>
                                   </tr>
                                 </thead>
-                                @if ($loss_categories->count()>0)
+                                @if (isset($loss_categories))
                                 <tbody>
-                                    @foreach ($loss_categories as $loss_category)
+                                    @forelse ($loss_categories as $loss_category)
                                   <tr>
                                     <td>{{$loss_category->name}}</td>
                                     <td class="w-10 line-height-35 table-dropdown">
@@ -37,19 +41,37 @@
                                                 <span class="caret"></span>
                                             </button>
                                             <ul class="dropdown-menu">
-                                                <li><a href="#"  wire:click="edit({{$loss_category->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
-                                                <li><a href="#" data-toggle="modal" data-target="#loss_categoryDeleteModal{{ $loss_category->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                                                @if ($loss_category != Null)
+                                                    <li><a href="#"  wire:click="edit({{$loss_category->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                                    <li><a href="#" data-toggle="modal" data-target="#loss_categoryDeleteModal{{ $loss_category->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                                                @endif
                                             </ul>
                                         </div>
                                         @include('loss_categories.delete')
                                 </td>
                                   </tr>
-                                  @endforeach
+                                @empty
+                                  <tr>
+                                    <td colspan="2">
+                                        <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
+                                            No Loss Categories Found ....
+                                        </div>
+                                       
+                                    </td>
+                                  </tr>  
+                                @endforelse
                                 </tbody>
                                 @else
                                     <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
                                  @endif
                               </table>
+                                <nav class="text-center" style="float: right">
+                                <ul class="pagination rounded-corners">
+                                    @if (isset($loss_categories))
+                                        {{ $loss_categories->links() }} 
+                                    @endif 
+                                </ul>
+                            </nav>    
 
                             <!-- /.col-md-12 -->
                         </div>

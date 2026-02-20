@@ -720,6 +720,10 @@ Route::get('requisitions/authorization/pending','RequisitionController@pending')
 Route::get('requisitions/authorization/approved','RequisitionController@approved')->name('requisitions.approved');
 Route::get('requisitions/authorization/rejected','RequisitionController@rejected')->name('requisitions.rejected');
 
+Route::get('incidents/authorization/pending','IncidentController@pending')->name('incidents.pending');
+Route::get('incidents/authorization/approved','IncidentController@approved')->name('incidents.approved');
+Route::get('incidents/authorization/rejected','IncidentController@rejected')->name('incidents.rejected');
+
 Route::get('attendances/authorization/pending','AttendanceController@pending')->name('attendances.pending');
 Route::get('attendances/authorization/approved','AttendanceController@approved')->name('attendances.approved');
 Route::get('attendances/authorization/rejected','AttendanceController@rejected')->name('attendances.rejected');

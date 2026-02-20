@@ -2,21 +2,26 @@
 
 namespace App\Http\Livewire\LossCategories;
 
-use Livewire\Component;
 use App\Models\LossCategory;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class Index extends Component
 {
    
-    public $loss_categories;
+    use WithPagination;
+    protected $paginationTheme = 'bootstrap';
+    public $search;
+    protected $queryString = ['search'];
+    protected $loss_categories;
     public $loss_category_id;
     public $name;
     public $user_id;
 
 
     public function mount(){
-        $this->loss_categories = LossCategory::latest()->get();
+       
       
     }
 
@@ -31,8 +36,6 @@ class Index extends Component
 
     private function resetInputFields(){
         $this->name = '';
-        $this->selectedCategory= '';
-        $this->category_value_id = '';
     }
 
     public function store(){
@@ -78,9 +81,15 @@ class Index extends Component
     }
     public function render()
     {
-        $this->loss_categories = LossCategory::latest()->get();
+        $term = trim((string) $this->search);
+
+        $query = LossCategory::query()
+            ->when(filled($term), function ($q) use ($term) {
+                $q->where('name', 'like', "%{$term}%");
+            })->orderBy('name', 'asc');
+
         return view('livewire.loss-categories.index',[
-            'loss_categories' => $this->loss_categories
+            'loss_categories' => $query->paginate(10)
         ]);
     }
 }

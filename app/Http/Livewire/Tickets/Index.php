@@ -280,46 +280,68 @@ class Index extends Component
 
     public function getTicketsProperty()
     {
-
         $query = Ticket::query()
-            ->with(['booking', 'inspection', 'horse', 'trailer', 'vehicle','service_type']);
+            ->with(['booking', 'inspection', 'horse', 'trailer', 'vehicle', 'service_type']);
 
-             // ✅ Date filter
-       if (!empty($this->from) && !empty($this->to)) {
-            $from = Carbon::parse($this->from)->startOfDay();
-            $to   = Carbon::parse($this->to)->endOfDay();
+        // ✅ Status vs overdue logic
+        if ($this->overdueOnly) {
+            // All overdue logic lives on ticket.booking
+            $now = now();
 
-            $query->whereBetween('created_at', [$from, $to]);
-        } else {
-            $query->whereBetween('created_at', [
-                now()->startOfMonth(),
-                now()->endOfMonth(),
-            ]);
-        }
-
-       if ($this->station_id) {
-            $query->whereHas('booking', function ($q) {
-                $q->where('station_id', $this->station_id);
+            $query->whereHas('booking', function ($q) use ($now) {
+                $q->where('status', 1)                      // booking status = open
+                ->where('authorization', 'approved')      // only approved bookings
+                ->whereYear('in_date', $now->year)        // same year as now
+                ->whereNotNull('estimated_out_date')
+                ->whereNotNull('estimated_out_time')
+                ->whereRaw(
+                    "TIMESTAMP(estimated_out_date, estimated_out_time) < ?",
+                    [$now->toDateTimeString()]           // 'Y-m-d H:i:s'
+                );
             });
+
+        } else {
+
+            // ✅ Date filter by created_at (normal mode only)
+            if (!empty($this->from) && !empty($this->to)) {
+                $from = Carbon::parse($this->from)->startOfDay();
+                $to   = Carbon::parse($this->to)->endOfDay();
+
+                $query->whereBetween('created_at', [$from, $to]);
+            } else {
+                $query->whereBetween('created_at', [
+                    now()->startOfMonth(),
+                    now()->endOfMonth(),
+                ]);
+            }
+
+            // ✅ Normal status filter (on ticket)
+            if ($this->ticket_status !== 'all') {
+                $query->where('status', $this->ticket_status);
+            }
         }
-       
+
+        // ✅ Service type filter (ticket column)
         if ($this->service_type_id) {
             $query->where('service_type_id', $this->service_type_id);
         }
-       if ($this->employee_id) {
+
+        // ✅ Employee filter (via booking.employees)
+        if ($this->employee_id) {
             $query->whereHas('booking.employees', function ($q) {
                 $q->where('employees.id', $this->employee_id);
             });
         }
 
-        // ✅ Status filter
-        if ($this->ticket_status !== 'all') {
-            $query->where('status', $this->ticket_status);
+        // ✅ Station filter (via booking)
+        if ($this->station_id) {
+            $query->whereHas('booking', function ($q) {
+                $q->where('station_id', $this->station_id);
+            });
         }
 
-        // ✅ Extra filters
+        // ✅ Extra filters (horse / trailer / asset / vehicle)
         if (!empty($this->filter)) {
-
             switch ($this->filter) {
                 case "horse":
                     $query->where('horse_id', $this->selectedHorse);
@@ -334,37 +356,32 @@ class Index extends Component
                     $query->where('vehicle_id', $this->selectedVehicle);
                     break;
             }
-
         }
 
-       
-
         // ✅ Search filter
-       if (($search = trim((string) $this->search)) !== '') {
-
-        $query->where(function ($q) use ($search) {
-            $q->where('ticket_number', 'like', "%{$search}%")
-            ->orWhere('in_date', 'like', "%{$search}%")
-            ->orWhere('in_time', 'like', "%{$search}%")
-            ->orWhere('out_date', 'like', "%{$search}%")
-            ->orWhere('out_time', 'like', "%{$search}%")
-            ->orWhere('description', 'like', "%{$search}%")
-            ->orWhere('station', 'like', "%{$search}%")
-            ->orWhereHas('inspection', function ($q2) use ($search) {
-                $q2->where('inspection_number', 'like', "%{$search}%");
-            })
-            ->orWhereHas('service_type', function ($q2) use ($search) {
-                $q2->where('name', 'like', "%{$search}%");
-            })
-            ->orWhereHas('booking', function ($q2) use ($search) {
-                $q2->where('booking_number', 'like', "%{$search}%")
-                    ->orWhereHas('employees', function ($q3) use ($search) {
-                        $q3->where(DB::raw("concat(name, ' ', surname)"), 'like', "%{$search}%");
+        if (($search = trim((string) $this->search)) !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('ticket_number', 'like', "%{$search}%")
+                    ->orWhere('in_date', 'like', "%{$search}%")
+                    ->orWhere('in_time', 'like', "%{$search}%")
+                    ->orWhere('out_date', 'like', "%{$search}%")
+                    ->orWhere('out_time', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('station', 'like', "%{$search}%")
+                    ->orWhereHas('inspection', function ($q2) use ($search) {
+                        $q2->where('inspection_number', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('service_type', function ($q2) use ($search) {
+                        $q2->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('booking', function ($q2) use ($search) {
+                        $q2->where('booking_number', 'like', "%{$search}%")
+                            ->orWhereHas('employees', function ($q3) use ($search) {
+                                $q3->where(DB::raw("concat(name, ' ', surname)"), 'like', "%{$search}%");
+                            });
                     });
             });
-        });
-
-    }
+        }
 
         // ✅ Order + paginate
         return $query->orderByDesc('created_at')->paginate(10);
