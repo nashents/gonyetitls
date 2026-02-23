@@ -2,14 +2,20 @@
 
 namespace App\Http\Livewire\LossGroups;
 
-use Livewire\Component;
-use App\Models\LossGroup;
 use App\Models\LossCategory;
+use App\Models\LossGroup;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class Index extends Component
 {
-    public $loss_groups;
+
+    use WithPagination;
+    protected $paginationTheme = 'bootstrap';
+    public $search;
+    protected $queryString = ['search'];
+    protected $loss_groups;
     public $loss_group_id;
     public $loss_categories;
     public $loss_category_id;
@@ -18,8 +24,7 @@ class Index extends Component
 
 
     public function mount(){
-        $this->loss_groups = LossGroup::latest()->get();
-        $this->loss_categories = LossCategory::latest()->get();
+        $this->loss_categories = LossCategory::orderBy('name','asc')->get();
     }
 
    
@@ -33,6 +38,19 @@ class Index extends Component
 
     private function resetInputFields(){
         $this->name = '';
+        $this->loss_category_id = '';
+    }
+
+    public function refresh($category){
+
+        if($category == "loss_categories"){
+            $this->loss_categories = LossCategory::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Loss Categories Refreshed Successfully!!."
+            ]);
+        }
+       
     }
 
     public function store(){
@@ -46,8 +64,9 @@ class Index extends Component
         $this->resetInputFields();
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
-            'message'=>"Loss Group Added Successfully!!"
+            'message'=>"Cause Group Added Successfully!!"
         ]);
+        
         return redirect(request()->header('Referer'));
     }
 
@@ -74,16 +93,34 @@ class Index extends Component
         $this->resetInputFields();
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
-            'message'=>"Loss Cause Category Updated Successfully!!"
+            'message'=>"Cause Group Updated Successfully!!"
         ]);
 
         }
     }
     public function render()
     {
-        $this->loss_groups = LossGroup::latest()->get();
-        return view('livewire.loss-groups.index',[
-            'loss_groups' => $this->loss_groups
+        $baseQuery = LossGroup::query()
+            ->with(['loss_category']);
+
+        if ($this->search) {
+            $search = trim($this->search);
+
+            $baseQuery->where(function ($q) use ($search) {
+                // Search on loss_groups.name
+                $q->where('name', 'like', "%{$search}%")
+                // Search on related loss_category.name
+                ->orWhereHas('loss_category', function ($qq) use ($search) {
+                    $qq->where('name', 'like', "%{$search}%");
+                });
+                
+            });
+        }
+
+        $this->loss_groups = $baseQuery->paginate(10);
+
+        return view('livewire.loss-groups.index', [
+            'loss_groups' => $this->loss_groups,
         ]);
     }
 }

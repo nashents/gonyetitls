@@ -92,7 +92,7 @@
         <!-- /.container-fluid -->
     </section>
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="lossModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fas fa-plus"></i> Add Loss Cause <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -109,7 +109,7 @@
                                    <option value="{{$loss_category->id}}">{{$loss_category->name}}</option> 
                                 @endforeach
                                </select>
-                               <small>  <a href="{{ route('loss_categories.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Loss Cause Category</a></small> 
+                              <small>  <a href="{{ route('loss_categories.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Category</a></small> <a href="#" wire:click.prevent="refresh('loss_categories')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 @error('selectedLossCategory') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -122,7 +122,7 @@
                                    <option value="{{$loss_group->id}}">{{$loss_group->name}}</option> 
                                 @endforeach
                                </select>
-                               <small>  <a href="{{ route('loss_groups.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Loss Cause Group</a></small> 
+                              <small>  <a href="{{ route('loss_groups.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Group</a></small> <a href="#" wire:click.prevent="refresh('loss_groups')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 @error('loss_group_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -146,14 +146,14 @@
         </div>
     </div>
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="lossEditModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fas fa-edit"></i> Edit Loss Cause <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                 </div>
                 <form wire:submit.prevent="update()" >
                 <div class="modal-body">
-                    <div class="row">
+                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="name">Loss Cause Categories<span class="required" style="color: red">*</span></label>
@@ -163,6 +163,7 @@
                                    <option value="{{$loss_category->id}}">{{$loss_category->name}}</option> 
                                 @endforeach
                                </select>
+                              <small>  <a href="{{ route('loss_categories.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Category</a></small> <a href="#" wire:click.prevent="refresh('loss_categories')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 @error('selectedLossCategory') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -175,6 +176,7 @@
                                    <option value="{{$loss_group->id}}">{{$loss_group->name}}</option> 
                                 @endforeach
                                </select>
+                              <small>  <a href="{{ route('loss_groups.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Group</a></small> <a href="#" wire:click.prevent="refresh('loss_groups')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 @error('loss_group_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>

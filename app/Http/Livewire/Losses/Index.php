@@ -34,7 +34,7 @@ class Index extends Component
     public function updatedSelectedLossCategory($id){
         if (!is_null($id)) {
             $loss_category= LossCategory::find($id);
-            $this->loss_groups = $loss_category->loss_groups->orderBy('name','asc')->get();
+            $this->loss_groups = LossGroup::where('loss_category_id',$id)->orderBy('name','asc')->get();
         }
     }
    
@@ -48,6 +48,25 @@ class Index extends Component
 
     private function resetInputFields(){
         $this->name = '';
+    }
+
+     public function refresh($category){
+
+        if($category == "loss_categories"){
+            $this->loss_categories = LossCategory::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Loss Categories Refreshed Successfully!!."
+            ]);
+        }
+       
+        elseif($category == "loss_groups"){
+            $this->loss_groups = LossGroup::with('loss_category')->orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Loss Groups Refreshed Successfully!!."
+            ]);
+        }
     }
 
     public function store(){
@@ -81,9 +100,10 @@ class Index extends Component
 
     public function update()
     {
-        if ($this->loss_group_id) {
+      
+        if ($this->loss_id) {
 
-            $loss = Loss::find($this->loss_group_id);
+            $loss = Loss::find($this->loss_id);
             $loss->name = $this->name;
             $loss->loss_category_id = $this->selectedLossCategory;
             $loss->loss_group_id = $this->loss_group_id;
@@ -120,7 +140,7 @@ class Index extends Component
             });
         }
 
-        $this->losses = $baseQuery->paginate(10);
+        $this->losses = $baseQuery->orderBy('name','asc')->paginate(10);
 
         return view('livewire.losses.index', [
             'losses' => $this->losses,

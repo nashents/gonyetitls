@@ -18,8 +18,14 @@ class JobTitle extends Model implements Auditable
     public function department(){
         return $this->belongsTo('App\Models\Department');
     }
+    public function rank(){
+        return $this->belongsTo('App\Models\Rank');
+    }
     public function job_title_qualifications(){
         return $this->hasMany('App\Models\JobTitleQualification');
+    }
+    public function job_postings(){
+        return $this->hasMany('App\Models\JobPosting');
     }
 
     public function grades(){

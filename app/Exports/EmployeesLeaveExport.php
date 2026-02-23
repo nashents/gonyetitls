@@ -37,8 +37,7 @@ WithCustomStartCell
        
             return   [
                 $employee->employee_number,
-                $employee->name,
-                $employee->surname,
+                $employee->name." ". $employee->surname,
                 $employee->accrual_rate,
                 $employee->leave_days,
                 $employee->maximum_leave_days,
@@ -49,8 +48,7 @@ WithCustomStartCell
     public function headings(): array{
             return[
                 'Employee#',
-                'Name',
-                'Surname',
+                'Fullname',
                 'Accrual Rate',
                 'Available Leave Days',
                 'Maximum Leave Days',
@@ -61,7 +59,7 @@ WithCustomStartCell
     public function registerEvents(): array{
         return[
             AfterSheet::class    => function(AfterSheet $event) {
-                $event->sheet->getStyle('A7:L7')->applyFromArray([
+                $event->sheet->getStyle('A7:E7')->applyFromArray([
                     'font' => [
                         'bold' => true
                     ],

@@ -2,10 +2,11 @@
 
 namespace App\Http\Livewire\Qualifications;
 
-use Livewire\Component;
-use Livewire\WithPagination;
 use App\Models\Qualification;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class Index extends Component
 {
@@ -23,6 +24,7 @@ class Index extends Component
     public $is_expiring = False;
     public $validity_months;
     public $description;
+    public $user_id;
 
     public function mount(){
         $this->resetPage();
@@ -50,6 +52,12 @@ class Index extends Component
         'name' => 'required|unique:qualifications,name,NULL,id,deleted_at,NULL',
         'code' => 'required|unique:qualifications,code,NULL,id,deleted_at,NULL',
     ];
+
+    public function updatedName($value){
+        if ($this->code == "") {
+            $this->code = Str::slug($value);
+        }
+    }
 
     public function store(){
 

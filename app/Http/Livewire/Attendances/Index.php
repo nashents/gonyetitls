@@ -27,7 +27,8 @@ class Index extends Component
     public $from;
     public $to;
     protected $attendances;
-    public $attendance;
+    public $attendance; 
+    public $attendance_filter; 
     public $attendance_id;
     public $drivers;
     public $selectedDriver;
@@ -37,6 +38,7 @@ class Index extends Component
     public $notes;
     public $departments;
     public $selectedDepartment;
+    public $department_id;
     public $selected_department;
     public $employees;
     public $status = [];
@@ -50,16 +52,17 @@ class Index extends Component
         $this->departments = Department::orderBy('name','asc')->get();
         $this->drivers = collect();
         $this->employees = collect();
+        $this->attendance_filter = "created_at";
     }
 
     public function exportAttendanceRegisterCSV(Excel $excel){
-        return $excel->download(new AttendanceRegisterExport($this->from, $this->to, $this->attendance_id), 'attendance_register_' .time().'.csv', Excel::CSV);
+        return $excel->download(new AttendanceRegisterExport($this->from, $this->to, $this->department_id, $this->search, $this->attendance_filter), 'attendance_register_' .time().'.csv', Excel::CSV);
     }
     public function exportAttendanceRegisterPDF(Excel $excel){
-        return $excel->download(new AttendanceRegisterExport($this->from, $this->to, $this->attendance_id), 'attendance_register_' .time().'.pdf', Excel::DOMPDF);
+        return $excel->download(new AttendanceRegisterExport($this->from, $this->to, $this->department_id, $this->search, $this->attendance_filter), 'attendance_register_' .time().'.pdf', Excel::DOMPDF);
     }
     public function exportAttendanceRegisterExcel(Excel $excel){
-        return $excel->download(new AttendanceRegisterExport($this->from, $this->to, $this->attendance_id), 'attendance_register_' .time().'.xlsx');
+        return $excel->download(new AttendanceRegisterExport($this->from, $this->to, $this->department_id, $this->search, $this->attendance_filter), 'attendance_register_' .time().'.xlsx');
     }
 
 
@@ -301,6 +304,9 @@ class Index extends Component
                     $q->where('date', '<=', $to);
                 }
             })
+            ->when($this->department_id, function($q){
+                 $q->where('department_id', $this->department_id);
+            })
             ->when($search !== '', function ($q) use ($search) {
 
                 $q->where(function ($qq) use ($search) {
@@ -323,7 +329,7 @@ class Index extends Component
                     ->orWhereRaw("DATE_FORMAT(created_at, '%H:%i') LIKE ?", ["%{$search}%"]);
                 });
             })
-            ->orderBy('created_at', 'desc')
+            ->orderBy($this->attendance_filter, 'desc')
             ->paginate(10);
 
         return view('livewire.attendances.index', [

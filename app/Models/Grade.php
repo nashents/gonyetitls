@@ -18,6 +18,9 @@ class Grade extends Model implements Auditable
     public function job_titles(){
         return $this->belongsToMany('App\Models\JobTitle');
     }
+      public function job_postings(){
+        return $this->hasMany('App\Models\JobPosting');
+    }
     public function currency(){
         return $this->belongsTo('App\Models\Currency');
     }

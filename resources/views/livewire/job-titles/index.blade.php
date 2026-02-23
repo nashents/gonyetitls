@@ -25,7 +25,7 @@
                                   <tr>
                                     <th class="th-sm">Title
                                     </th>
-                                    <th class="th-sm">Description
+                                    <th class="th-sm">About
                                     </th>
                                     <th class="th-sm">Qualifications
                                     </th>
@@ -44,9 +44,16 @@
                                             <strong>Grade: </strong> @foreach ($job_title->grades as $grade)
                                                 {{$grade->grade_name}} {{ $grade->grade_code}} @if(!$loop->last), @endif
                                             @endforeach
+                                            <br>
+                                            <strong>Rank: </strong>{{$job_title->rank ? $job_title->rank->name : ""}} <br>
                                         </small>
                                     </td>
-                                    <td>{{$job_title->description}}</td>
+                                    <td>
+                                        <small><strong>Description: </strong>{{$job_title->description}}</small> <br>
+                                        <small><strong>Requirements: </strong>{{$job_title->requirements}}</small> <br>
+                                        <small><strong>Duties: </strong>{{$job_title->duties}}</small> <br>
+                                        <small><strong>Instructions: </strong>{{$job_title->instructions}}</small>
+                                    </td>
                                     <td>
                                         <button class="btn btn-success btn-rounded btn-xs" wire:click.prevent="showQualification({{$job_title->id}})"> <i class="fa fa-plus"></i> {{$job_title->title}} Qualification(s)</button>
                                         @if ($job_title->job_title_qualifications->count() > 0)
@@ -130,12 +137,13 @@
                                         <option value="{{$qualification->id}}">{{$qualification->name}}</option>
                                         @endforeach
                                     </select>
+                                     <small>  <a href="{{ route('qualifications.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Qualification</a></small> <a href="#" wire:click.prevent="refresh('qualifications')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                     @error('qualification_id.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-10" style="padding-top:28px; ">
-                                <input type="checkbox" wire:model.debounce.300ms="mandatory.0"   class="line-style" required />
+                                <input type="checkbox" wire:model.debounce.300ms="mandatory.0"   class="line-style" />
                                 <label for="one" class="radio-label">Mandatory</label>
                                 @error('mandatory.0') <span class="text-danger error">{{ $message }}</span>@enderror
                                 </div>   
@@ -182,12 +190,13 @@
                                             <option value="{{$qualification->id}}">{{$qualification->name}}</option>
                                             @endforeach
                                         </select>
+                                         <small>  <a href="{{ route('qualifications.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Qualification</a></small> <a href="#" wire:click.prevent="refresh('qualifications')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         @error('qualification_id.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="mb-10" style="padding-top:28px; ">
-                                    <input type="checkbox" wire:model.debounce.300ms="mandatory.{{$value}}"   class="line-style" required />
+                                    <input type="checkbox" wire:model.debounce.300ms="mandatory.{{$value}}"   class="line-style" />
                                     <label for="one" class="radio-label">Mandatory</label>
                                     @error('mandatory.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>   
@@ -270,12 +279,13 @@
                                             <option value="{{$qualification->id}}">{{$qualification->name}}</option>
                                             @endforeach
                                         </select>
+                                        <small>  <a href="{{ route('qualifications.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Qualification</a></small> <a href="#" wire:click.prevent="refresh('qualifications')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         @error('qualification_id.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="mb-10" style="padding-top:28px; ">
-                                    <input type="checkbox" wire:model.debounce.300ms="mandatory.{{$key}}"   class="line-style" required />
+                                    <input type="checkbox" wire:model.debounce.300ms="mandatory.{{$key}}"   class="line-style" />
                                     <label for="one" class="radio-label">Mandatory</label>
                                     @error('mandatory.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>   
@@ -360,14 +370,14 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="title">Job Title<span class="required" style="color: red">*</span></label>
+                                    <label for="title">Title<span class="required" style="color: red">*</span></label>
                                     <input type="text" class="form-control" wire:model.debounce.300ms="title" placeholder="Enter Job Title"required >
                                     @error('title') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="country">Department</label>
+                                    <label for="country">Departments</label>
                                     <select wire:model.debounce.300ms="department_id" class="form-control">
                                         <option value="">Select Department</option>
                                         @foreach ($departments as $department)
@@ -377,31 +387,75 @@
                                     @error('department_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
+                        
                         </div>
-                           <div class="row">
-                            <div class="col-md-6">
-                                <div class="form">
-                                    <div class="form-group">
-                                        <label for="description">Description</label>
-                                        <textarea class="form-control" wire:model.debounce.300ms="description" rows="3" placeholder="Enter Job Title Description"></textarea>
-                                        @error('description') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                    </div>
-                                </div>
-                            </div>
+                        <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
+                                    <label for="country">Ranks</label>
+                                    <select wire:model.debounce.300ms="rank_id" class="form-control">
+                                        <option value="">Select Rank</option>
+                                        @foreach ($ranks as $rank)
+                                        <option value="{{$rank->id}}">{{$rank->name}}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('rank_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                             <div class="col-md-6">
+                                <div class="form-group">
                                     <label for="country">Grades</label>
-                                    <select wire:model.debounce.300ms="grade_id" class="form-control">
+                                    <select wire:model.debounce.300ms="grade_id" class="form-control" multiple>
                                         <option value="">Select Grade</option>
                                         @foreach ($grades as $grade)
                                         <option value="{{$grade->id}}">{{$grade->grade_name}} {{$grade->grade_code}}</option>
                                         @endforeach
                                     </select>
+                                     <small>  <a href="{{ route('grades.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Grade</a></small> <a href="#" wire:click.prevent="refresh('grades')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                     @error('grade_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                         </div>
-                       
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form">
+                                    <div class="form-group">
+                                        <label for="description">Description</label>
+                                        <textarea class="form-control" wire:model.debounce.300ms="description" rows="2" placeholder="Enter Description"></textarea>
+                                        @error('description') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form">
+                                    <div class="form-group">
+                                        <label for="description">Requirements</label>
+                                        <textarea class="form-control" wire:model.debounce.300ms="requirements" rows="2" placeholder="Enter Requirements"></textarea>
+                                        @error('requirements') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form">
+                                    <div class="form-group">
+                                        <label for="duties">Duties</label>
+                                        <textarea class="form-control" wire:model.debounce.300ms="duties" rows="2" placeholder="Enter Duties"></textarea>
+                                        @error('duties') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form">
+                                    <div class="form-group">
+                                        <label for="instructions">Instructions</label>
+                                        <textarea class="form-control" wire:model.debounce.300ms="instructions" rows="2" placeholder="Enter Instructions"></textarea>
+                                        @error('instructions') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>    
                 <div class="modal-footer">
                     <div class="btn-group" role="group">
@@ -425,7 +479,7 @@
                      <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="title">Job Title<span class="required" style="color: red">*</span></label>
+                                    <label for="title">Title<span class="required" style="color: red">*</span></label>
                                     <input type="text" class="form-control" wire:model.debounce.300ms="title" placeholder="Enter Job Title"required >
                                     @error('title') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
@@ -442,27 +496,72 @@
                                     @error('department_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
+                        
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="country">Ranks</label>
+                                    <select wire:model.debounce.300ms="rank_id" class="form-control">
+                                        <option value="">Select Rank</option>
+                                        @foreach ($ranks as $rank)
+                                        <option value="{{$rank->id}}">{{$rank->name}}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('rank_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                             <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="country">Grades</label>
+                                    <select wire:model.debounce.300ms="grade_id" class="form-control" multiple>
+                                        <option value="">Select Grade</option>
+                                        @foreach ($grades as $grade)
+                                        <option value="{{$grade->id}}">{{$grade->grade_name}} {{$grade->grade_code}}</option>
+                                        @endforeach
+                                    </select>
+                                    <small>  <a href="{{ route('grades.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Grade</a></small> <a href="#" wire:click.prevent="refresh('grades')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                    @error('grade_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
                         </div>
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form">
                                     <div class="form-group">
                                         <label for="description">Description</label>
-                                        <textarea class="form-control" wire:model.debounce.300ms="description" rows="3" placeholder="Enter Job Title Description"></textarea>
+                                        <textarea class="form-control" wire:model.debounce.300ms="description" rows="2" placeholder="Enter Description"></textarea>
                                         @error('description') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="country">Grades</label>
-                                    <select wire:model.debounce.300ms="grade_id" class="form-control">
-                                        <option value="">Select Grade</option>
-                                        @foreach ($grades as $grade)
-                                        <option value="{{$grade->id}}">{{$grade->grade_name}} {{$grade->grade_code}}</option>
-                                        @endforeach
-                                    </select>
-                                    @error('grade_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                <div class="form">
+                                    <div class="form-group">
+                                        <label for="description">Requirements</label>
+                                        <textarea class="form-control" wire:model.debounce.300ms="requirements" rows="2" placeholder="Enter Requirements"></textarea>
+                                        @error('requirements') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form">
+                                    <div class="form-group">
+                                        <label for="duties">Duties</label>
+                                        <textarea class="form-control" wire:model.debounce.300ms="duties" rows="2" placeholder="Enter Duties"></textarea>
+                                        @error('duties') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form">
+                                    <div class="form-group">
+                                        <label for="instructions">Instructions</label>
+                                        <textarea class="form-control" wire:model.debounce.300ms="instructions" rows="2" placeholder="Enter Instructions"></textarea>
+                                        @error('instructions') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
                                 </div>
                             </div>
                         </div>

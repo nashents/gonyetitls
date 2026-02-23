@@ -642,6 +642,8 @@ Route::resource('documents','DocumentController');
 Route::resource('vehicle_documents','VehicleDocumentController');
 Route::resource('horse_documents','HorseDocumentController');
 Route::resource('trip_documents','TripDocumentController');
+Route::resource('job_postings','JobPostingController');
+Route::resource('applications','ApplicationController');
 Route::resource('locations','LocationController');
 Route::resource('brands','BrandController');
 Route::resource('trip_locations','TripLocationController');

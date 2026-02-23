@@ -4,15 +4,9 @@ namespace App\Console\Commands;
 
 use App\Exports\AttendanceRegisterExport;
 use App\Exports\BookingsExport;
-use App\Exports\DailyReportExport;
-use App\Exports\PaymentsExport;
+use App\Exports\EmployeesLeaveExport;
 use App\Exports\ShiftsDailyExport;
-
-use App\Exports\TicketsExport;
-use App\Exports\TripsExport;
-// Your exports:
 use App\Mail\DailyExportMail;
-use App\Mail\DailyReportsDiskMail;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
@@ -57,11 +51,16 @@ class SendDailyReports extends Command
                 'file'   => "garage_bookings-{$date}.xlsx",
             ],
             [
+                'export' => new EmployeesLeaveExport(),
+                'file'   => "employee_leaves-{$date}.xlsx",
+            ],
+            [
                 'export' => new AttendanceRegisterExport(
                     now()->subDay()->toDateString(), // from = yesterday
                     now()->subDay()->toDateString(), // to   = yesterday
-                    null,                            // department_id
-                    null                             // search
+                    null,                           // department_id
+                    null,                           // search
+                    "date"                             // attendance_filter
                 ),
                 'file'   => "attendance_register-{$date}.xlsx",
             ],

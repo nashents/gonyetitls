@@ -2,19 +2,22 @@
 
 namespace App\Http\Livewire\JobTitles;
 
-use App\Models\Grade;
-use Livewire\Component;
-use App\Models\JobTitle;
 use App\Models\Department;
-use Livewire\WithPagination;
-use App\Models\Qualification;
-use Illuminate\Support\Facades\Auth;
+use App\Models\Grade;
+use App\Models\JobTitle;
 use App\Models\JobTitleQualification;
-use Illuminate\Support\Facades\Session;
+use App\Models\Qualification;
+use App\Models\Rank;
+use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
+use Livewire\WithPagination;
+
 
 class Index extends Component
 {
 
+    public $ranks;
+    public $rank_id;
     public $departments;
     public $department_id;
     public $title;
@@ -32,7 +35,7 @@ class Index extends Component
     protected $paginationTheme = 'bootstrap';
     public $search;
     protected $queryString = ['search'];
-    private $job_titles;
+    protected $job_titles;
     public $job_title_id;
     public $user_id;
     public $qualification;
@@ -40,6 +43,10 @@ class Index extends Component
     public $job_title_qualifications;
     public $job_title_qualification;
     public $job_title_qualification_id;
+
+    public $duties;
+    public $instructions;
+    public $requirements;
 
     public $inputs = [];
     public $i = 1;
@@ -59,6 +66,7 @@ class Index extends Component
 
     public function mount(){
         $this->departments = Department::orderBy('name','asc')->get();
+        $this->ranks = Rank::orderBy('name','asc')->get();
         $this->job_title = Null;
         $this->qualification = Null;
         $this->qualifications = collect();
@@ -68,6 +76,14 @@ class Index extends Component
     }
     private function resetInputFields(){
         $this->title = '';
+        $this->description = '';
+        $this->duties = '';
+        $this->instructions = '';
+        $this->requirements = '';
+        $this->department_id = Null;
+        $this->grade_id = Null;
+        $this->rank_id = Null;
+       
     }
    
     private function resetQualificationInputFields(){
@@ -78,12 +94,10 @@ class Index extends Component
         $this->validateOnly($value);
     }
     protected $messages =[
-        'department_id.required' => "Department field is required",
-        'grade_id.required' => "Department field is required"
+      
     ];
     protected $rules = [
-        'department_id' => 'nullable',
-        'grade_id' => 'nullable',
+       
         'title' => 'required|unique:job_titles,title,NULL,id,deleted_at,NULL|string|min:2',
     ];
 
@@ -94,6 +108,10 @@ class Index extends Component
         $job_title->title = $this->title;
         $job_title->department_id = $this->department_id;
         $job_title->description = $this->description;
+        $job_title->rank_id = $this->rank_id;
+        $job_title->duties = $this->duties;
+        $job_title->instructions = $this->instructions;
+        $job_title->requirements = $this->requirements;
         $job_title->save();
         $job_title->grades()->attach($this->grade_id);
 
@@ -103,8 +121,6 @@ class Index extends Component
             'type'=>'success',
             'message'=>"Job Title Created Successfully!!"
         ]);
-        return redirect(request()->header('Referer'));
-
    
     }
 
@@ -113,10 +129,23 @@ class Index extends Component
     $this->user_id = $job_title->user_id;
     $this->title = $job_title->title;
     $this->department_id = $job_title->department_id;
+    $this->rank_id = $job_title->rank_id;
+    $this->requirements = $job_title->requirements;
+    $this->duties = $job_title->duties;
+    $this->instructions = $job_title->instructions;
+    $this->description = $job_title->description;
     $this->job_title_id = $job_title->id;
+    $grades = $job_title->grades;
+    if ($grades) {
+        foreach ($grades as $grade) {
+            $this->grade_id[] = $grade->id;
+        }
+    }
     $this->dispatchBrowserEvent('show-job_titleEditModal');
 
     }
+
+    
 
 
     public function update()
@@ -127,6 +156,10 @@ class Index extends Component
             $job_title->title = $this->title;
             $job_title->department_id = $this->department_id;
             $job_title->description = $this->description;
+            $job_title->rank_id = $this->rank_id;
+            $job_title->duties = $this->duties;
+            $job_title->instructions = $this->instructions;
+            $job_title->requirements = $this->requirements;
             $job_title->update();
             $job_title->grades()->detach();
             $job_title->grades()->attach($this->grade_id);
@@ -277,6 +310,25 @@ class Index extends Component
     }
 
 
+       public function refresh($category){
+
+        if($category == "qualifications"){
+            $this->qualifications = Qualification::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Qualifications Refreshed Successfully!!."
+            ]);
+        }elseif($category == "grades"){
+              $this->grades = Grade::orderBy('grade_code','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Grades Refreshed Successfully!!."
+            ]);
+        }
+       
+      
+    }
+
 
     public function render()
     {
@@ -287,9 +339,18 @@ class Index extends Component
             ->when(filled($term), function ($q) use ($term) {
                 $q->where(function ($q) use ($term) {
                     $q->where('title', 'like', "%{$term}%")
+                    ->orWhere('description', 'like', "%{$term}%")
+                    ->orWhere('duties', 'like', "%{$term}%")
+                    ->orWhere('requirements', 'like', "%{$term}%")
+                    ->orWhere('instructions', 'like', "%{$term}%")
                     ->orWhereHas('grades', function ($q) use ($term) {
                         $q->where('grade_code', 'like', "%{$term}%")
                             ->orWhere('grade_name', 'like', "%{$term}%");
+                    })
+                    ->orWhereHas('job_title_qualifications', function ($q) use ($term) {
+                        $q->orWhereHas('qualification', function ($q) use ($term) {
+                            $q->where('name', 'like', "%{$term}%");
+                        });
                     })
                     ->orWhereHas('department', function ($q) use ($term) {
                         $q->where('name', 'like', "%{$term}%");

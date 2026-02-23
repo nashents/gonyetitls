@@ -19,6 +19,9 @@ class Department extends Model implements Auditable
     public function employee_positions(){
         return $this->hasMany('App\Models\EmployeePosition');
     }
+    public function job_postings(){
+        return $this->hasMany('App\Models\JobPosting');
+    }
     public function dispatches(){
         return $this->hasMany('App\Models\Dispatch');
     }

@@ -684,7 +684,23 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
             $i += 10;
         }
 
-        // Employees
+      
+        $m = $upsertModule($g, [
+            'name' => 'Recruitment',
+            'slug' => 'recruitment',
+            'icon' => 'fas fa-user-tie',
+            'sort_order' => 15,
+            'route_name' => Null,
+            'visibility' => $any([
+                $all(['inHR']),
+                $all(['isSuperAdmin']),
+            ]),
+        ]);
+
+        $upsertSub($m, ['name'=>'Manage Postings','slug'=>'manage-job-postings','icon'=>'fas fa-list','route_name'=>'job_postings.index','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Manage Applications','slug'=>'manage-applications','icon'=>'fas fa-list','route_name'=>'applications.index','sort_order'=>20]);
+    
+
         $m = $upsertModule($g, [
             'name' => 'Employees',
             'slug' => 'employees',

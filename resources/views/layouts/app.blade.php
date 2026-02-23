@@ -131,6 +131,36 @@
 @stack('scripts')
     
     <script type="text/javascript">
+            window.addEventListener('show-job_postingModal', event => {
+                $('#job_postingModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-job_postingModal', event => {
+                $('#job_postingModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-job_postingEditModal', event => {
+                $('#job_postingEditModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-job_postingEditModal', event => {
+                $('#job_postingEditModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-job_postingDeleteModal', event => {
+                $('#job_postingDeleteModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-job_postingDeleteModal', event => {
+                $('#job_postingDeleteModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
             window.addEventListener('show-workDoneModal', event => {
                 $('#workDoneModal').modal('show');
             })

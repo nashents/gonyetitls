@@ -36,15 +36,17 @@ class AttendanceRegisterExport implements
 
     public $from;
     public $to;
+    public $attendance_filter;
     public $department_id;
     public $search;
 
     public $totals;
     public $notesTotals;
 
-    public function __construct($from, $to, $department_id = null, $search = null)
+    public function __construct($from = null, $to = null, $department_id = null, $search = null, $attendance_filter)
     {
         $this->from = $from;
+        $this->attendance_filter = $attendance_filter;
         $this->to = $to;
         $this->department_id = $department_id;
         $this->search = $search;
@@ -155,7 +157,7 @@ class AttendanceRegisterExport implements
 
         // Sorting: most recent attendance first, then employee
         return $baseQuery
-            ->orderByDesc('id');
+            ->orderByDesc($this->attendance_filter);
     }
 
     public function map($row): array

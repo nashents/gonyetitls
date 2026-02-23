@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Models\Attendance;
 use App\Models\LoginAudit;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Notifications\Notifiable;
@@ -59,6 +58,26 @@ class User extends Authenticatable implements Auditable
             return false;
         }
 
+    }
+
+    public function created_andidates()
+    {
+        return $this->hasMany(RecruitmentCandidate::class, 'created_by');
+    }
+
+    public function recruitment_checks()
+    {
+        return $this->hasMany(RecruitmentCheck::class, 'checked_by');
+    }
+
+    public function recruitment_scores()
+    {
+        return $this->hasMany(RecruitmentScore::class, 'scored_by');
+    }
+
+    public function recruitment_decisions()
+    {
+        return $this->hasMany(RecruitmentDecision::class, 'decided_by');
     }
 
     public function login_audits()
