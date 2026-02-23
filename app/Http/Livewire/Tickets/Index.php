@@ -12,7 +12,6 @@ use App\Models\Vehicle;
 use Livewire\Component;
 use App\Models\Employee;
 use App\Models\ServiceType;
-use App\Models\TripExpense;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Excel;
 use App\Exports\TicketsExport;
@@ -113,7 +112,7 @@ class Index extends Component
     public function updatedSelectPageRows($value){
 
         if ($value) {
-            $this->selectedRows = $this->bookings->pluck('id')->map(function ($id){
+            $this->selectedRows = $this->tickets->pluck('id')->map(function ($id){
                 return (string) $id;
             });
         }else {
