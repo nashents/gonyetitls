@@ -14,8 +14,10 @@ use Database\Seeders\CategorySeeder;
 use Database\Seeders\ChecklistCategorySeeder;
 use Database\Seeders\ChecklistItemSeeder;
 use Database\Seeders\ChecklistSubCategorySeeder;
+use Database\Seeders\CheckSeeder;
 use Database\Seeders\CompanySeeder;
 use Database\Seeders\CountrySeeder;
+use Database\Seeders\CriterionSeeder;
 use Database\Seeders\CurrencySeeder;
 use Database\Seeders\DeductionSeeder;
 use Database\Seeders\DepartmentSeeder;
@@ -33,6 +35,7 @@ use Database\Seeders\JobTypeSeeder;
 use Database\Seeders\LeaveTypeSeeder;
 use Database\Seeders\LoanTypeSeeder;
 use Database\Seeders\LossCategorySeeder;
+use Database\Seeders\LossCauseSeeder;
 use Database\Seeders\LossGroupSeeder;
 use Database\Seeders\MeasurementSeeder;
 use Database\Seeders\MenuRegistrySeeder;
@@ -43,6 +46,7 @@ use Database\Seeders\RoleSeeder;
 use Database\Seeders\SalaryItemSeeder;
 use Database\Seeders\ServiceSeeder;
 use Database\Seeders\ServiceTypeSeeder;
+use Database\Seeders\StageSeeder;
 use Database\Seeders\TaxBracketSeeder;
 use Database\Seeders\TaxSeeder;
 use Database\Seeders\TrailerTypeSeeder;
@@ -112,6 +116,10 @@ class DatabaseSeeder extends Seeder
         $this->call(PaymentMethodSeeder::class);
         $this->call(WasteTypeSeeder::class);
         $this->call(UnitsOfMeasureSeeder::class);
+        $this->call(LossCauseSeeder::class);
+        $this->call(StageSeeder::class);
+        $this->call(CriterionSeeder::class);
+        $this->call(CheckSeeder::class);
      
     }
 }

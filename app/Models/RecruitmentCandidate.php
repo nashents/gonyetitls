@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Application;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -48,6 +49,10 @@ class RecruitmentCandidate extends Model
 
     // --- Relations ---
 
+    public function application()
+    {
+        return $this->belongsTo(Application::class);
+    }
     public function company()
     {
         return $this->belongsTo(Company::class);

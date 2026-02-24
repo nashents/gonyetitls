@@ -131,6 +131,126 @@
 @stack('scripts')
     
     <script type="text/javascript">
+            window.addEventListener('show-stageModal', event => {
+                $('#stageModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-stageModal', event => {
+                $('#stageModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-stageEditModal', event => {
+                $('#stageEditModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-stageEditModal', event => {
+                $('#stageEditModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-stageDeleteModal', event => {
+                $('#stageDeleteModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-stageDeleteModal', event => {
+                $('#stageDeleteModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-checkModal', event => {
+                $('#checkModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-checkModal', event => {
+                $('#checkModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-checkEditModal', event => {
+                $('#checkEditModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-checkEditModal', event => {
+                $('#checkEditModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-checkDeleteModal', event => {
+                $('#checkDeleteModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-checkDeleteModal', event => {
+                $('#checkDeleteModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-criterionModal', event => {
+                $('#criterionModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-criterionModal', event => {
+                $('#criterionModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-criterionEditModal', event => {
+                $('#criterionEditModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-criterionEditModal', event => {
+                $('#criterionEditModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-criterionDeleteModal', event => {
+                $('#criterionDeleteModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-criterionDeleteModal', event => {
+                $('#criterionDeleteModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-applicationModal', event => {
+                $('#applicationModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-applicationModal', event => {
+                $('#applicationModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-applicationEditModal', event => {
+                $('#applicationEditModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-applicationEditModal', event => {
+                $('#applicationEditModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-applicationDeleteModal', event => {
+                $('#applicationDeleteModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-applicationDeleteModal', event => {
+                $('#applicationDeleteModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
             window.addEventListener('show-job_postingModal', event => {
                 $('#job_postingModal').modal('show');
             })

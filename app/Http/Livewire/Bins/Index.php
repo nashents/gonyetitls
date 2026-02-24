@@ -22,7 +22,7 @@ class Index extends Component
     public $user_id;
 
     public function mount(){
-        $this->bins = Bin::orderBy('name','asc')->get();
+        
     }
     public function exportBinsCSV(Excel $excel){
 

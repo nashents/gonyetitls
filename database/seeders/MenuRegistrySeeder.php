@@ -2,11 +2,14 @@
 
 namespace Database\Seeders;
 
+use App\Models\Check;
+use App\Models\Criterion;
 use App\Models\Loss;
 use App\Models\LossCategory;
 use App\Models\LossGroup;
 use App\Models\Module;
 use App\Models\ModuleGroup;
+use App\Models\Stage;
 use App\Models\SubModule;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
@@ -365,6 +368,27 @@ class MenuRegistrySeeder extends Seeder
         }
   
 
+        $checks = ['Criminal Record', 'Reference', 'Medical', 'License Verification'];
+        foreach($checks as $check){
+            Check::firstOrCreate([
+                'name' => $check
+            ]);
+        }
+
+         $criterions = ['Attitude', 'Communication', 'Experience', 'Defensive Driving'];
+        foreach($criterions as $criterion){
+            Criterion::firstOrCreate([
+                'name' => $criterion
+            ]);
+        }
+
+        $stages = ['Screening', 'Road Test', 'Final', 'Psychometric'];
+        foreach($stages as $stage){
+            Stage::firstOrCreate([
+                'name' => $stage
+            ]);
+        }
+
        
 // ---------------------------------
 // Helpers: visibility builders
@@ -665,8 +689,11 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
             ['Earnings','earnings.index','fas fa-list'],
             ['Grades','grades.index','fas fa-list'],
             ['Job Titles','job_titles.index','fas fa-list'],
-            ['Qualifications','qualifications.index','fas fa-list'],
             ['Leave Types','leave_types.index','fas fa-list'],
+            ['Qualifications','qualifications.index','fas fa-list'],
+            ['Recruitment Checks','recruitment-checks.index','fas fa-list'],
+            ['Recruitment Criterions','recruitment-criterions.index','fas fa-list'],
+            ['Recruitment Stages','recruitment-stages.index','fas fa-list'],
         ];
 
         $i = 10;

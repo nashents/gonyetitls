@@ -4,8 +4,8 @@ namespace App\Http\Livewire\Applications;
 
 use App\Exports\ApplicationsExport;
 use App\Models\Application;
-use App\Models\Employee;
 use App\Models\JobPosting;
+use App\Models\RecruitmentCandidate;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -28,27 +28,28 @@ class Index extends Component
     public $application; 
     public $application_filter; 
     public $application_id;
-    public $drivers;
-    public $selectedDriver;
     public $date;
-    public $time;
-    public $user_id;
     public $notes;
+    public $name;
+    public $surname;
+    public $email;
+    public $phonenumber;
+    public $gender;
+    public $dob;
+    public $idnumber;
+    public $license_number;
+    public $years_experience;
+    public $source;
+    public $status;
+    public $screening_impression;
+    public $next_step;
     public $job_postings;
-    public $selectedjob_posting;
+
     public $job_posting_id;
-    public $selected_job_posting;
-    public $employees;
-    public $status = [];
-    public $shift = [];
-    public $employee_id = [];
-    public $checkin = [];
-    public $checkout = [];
-    public $is_drivers = False;
+  
 
     public function mount(){
         $this->job_postings = JobPosting::orderBy('created_at','desc')->get();
-        $this->employees = Employee::orderBy('name','asc')->orderBy('surname','asc')->get();
         $this->application_filter = "created_at";
     }
 
@@ -68,17 +69,24 @@ class Index extends Component
     }
     private function resetInputFields(){
         $this->date = "";
-        $this->time = "";
         $this->notes = "";
-        $this->selectedjob_posting = Null;
-        $this->selected_job_posting = Null;
-        $this->is_drivers = False;
+        $this->source = "";
+        $this->dob = "";
+        $this->gender = "";
+        $this->name = "";
+        $this->surname = "";
+        $this->email = "";
+        $this->phonenumber = "";
+        $this->license_number = "";
+        $this->idnumber = "";
+        $this->job_posting_id = "";
+        $this->years_experience = "";
+        $this->next_step = "";
+        $this->screening_impression = "";
+        $this->status = "";
     }
     protected $rules = [
-        'date' => 'required',
-        'time' => 'required',
-        'selectedjob_posting' => 'required',
-        
+        'date' => 'required', 
     ];
 
        public function applicationNumber(){
@@ -125,18 +133,37 @@ class Index extends Component
         $application->application_number = $this->applicationNumber();
         $application->user_id = Auth::user()->id;
         $application->date = $this->date;
-        $application->time = $this->time;
-        $application->job_posting_id = $this->selectedjob_posting;
-        $application->is_drivers = $this->is_drivers;
+        $application->notes = $this->notes;
+        $application->job_posting_id = $this->job_posting_id;
         $application->save();
 
+        $recruitment_candidate = new RecruitmentCandidate;
+        $recruitment_candidate->company_id = Auth::user()->employee->company_id;
+        $recruitment_candidate->created_by = Auth::user()->id;
+        $recruitment_candidate->application_id = $application->id;
+        $recruitment_candidate->applied_at = $this->date;
+        $recruitment_candidate->first_name = $this->name;
+        $recruitment_candidate->last_name = $this->surname;
+        $recruitment_candidate->gender = $this->gender;
+        $recruitment_candidate->dob = $this->dob;
+        $recruitment_candidate->email = $this->email;
+        $recruitment_candidate->phone = $this->phonenumber;
+        $recruitment_candidate->source = $this->source;
+        $recruitment_candidate->national_id = $this->idnumber;
+        $recruitment_candidate->drivers_license_number = $this->license_number;
+        $recruitment_candidate->years_experience = $this->years_experience;
+        $recruitment_candidate->next_step = $this->next_step;
+        $recruitment_candidate->status = $this->status;
+        $recruitment_candidate->screening_impression = $this->screening_impression;
+        $recruitment_candidate->notes = $this->notes;
+        $recruitment_candidate->save();
         
 
         $this->dispatchBrowserEvent('hide-applicationModal');
         $this->resetInputFields();
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
-            'message'=>"application Register Marked Successfully!!"
+            'message'=>"Application Created Successfully!!"
         ]);
         
         });
@@ -145,13 +172,9 @@ class Index extends Component
     public function edit($id){
     
         $application = Application::find($id);
-        $this->selectedjob_posting = $application->job_posting_id;
+     
         $this->date = $application->date;
-        $this->time = $application->time;
-        $this->user_id = $application->user_id;
-        $this->is_drivers = $application->is_drivers ?? False;
         $this->application_id = $application->id;
-        $application_registers = $application->application_registers;
        
 
           $this->dispatchBrowserEvent('show-applicationEditModal');
@@ -165,9 +188,7 @@ class Index extends Component
 
         $application = Application::find($this->application_id);
         $application->date = $this->date;
-        $application->time = $this->time;
         $application->job_posting_id = $this->selectedjob_posting;
-        $application->is_drivers = $this->is_drivers;
         $application->update();
 
         
@@ -187,7 +208,7 @@ class Index extends Component
     {
        $search = trim($this->search);
 
-        $applications = Application::query()
+        $applications = Application::query()->with(['job_posting','recruitment_candidate','recruitment_candidate.checks','recruitment_candidate.decisions'])
            
                  // ✅ date filter on date when from/to provided
             ->when($this->from || $this->to, function ($q) {

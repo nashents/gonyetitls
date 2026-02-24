@@ -119,21 +119,21 @@ class Index extends Component
             $this->reset(['selectedRows','selectPageRows']);
         }
      
-      }
+    }
 
-      public function calTotals($relation, $ticket, $defaultColumn, $defaultCurrencyId){
+    public function calTotals($relation, $ticket, $defaultColumn, $defaultCurrencyId){
 
-            $default = $ticket->$relation()
-                ->where('currency_id', $defaultCurrencyId)
-                ->sum($defaultColumn);
+        $default = $ticket->$relation()
+            ->where('currency_id', $defaultCurrencyId)
+            ->sum($defaultColumn);
 
-            $exchange = $ticket->$relation()
-                ->where('currency_id', '!=', $defaultCurrencyId)
-                ->sum('exchange_amount');
+        $exchange = $ticket->$relation()
+            ->where('currency_id', '!=', $defaultCurrencyId)
+            ->sum('exchange_amount');
 
-            return (float) $default + (float) $exchange;
+        return (float) $default + (float) $exchange;
 
-      }
+    }
 
       public function attachBreakdownExpenseIfAny($booking, float $total): ?\App\Models\TripExpense
         {
