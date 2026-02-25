@@ -24,6 +24,10 @@
                                   <tr>
                                     <th class="th-sm">Name
                                     </th>
+                                    <th class="th-sm">Description
+                                    </th>
+                                    <th class="th-sm">Status
+                                    </th>
                                     <th class="th-sm">Action
                                     </th>
                                   </tr>
@@ -33,6 +37,8 @@
                                     @forelse ($stages as $stage)
                                   <tr>
                                     <td>{{$stage->name}}</td>
+                                    <td>{{$stage->description}}</td>
+                                    <td><span class="badge bg-{{$stage->status == 1 ? "success" : "danger"}}">{{$stage->status == 1 ? "Active" : "Inactive"}}</span></td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -92,11 +98,33 @@
                 </div>
                 <form wire:submit.prevent="store()" >
                 <div class="modal-body">
-                    <div class="form-group">
-                        <label for="name">Name</label>
-                        <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter stage Name">
-                        @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="name">Name<span class="required" style="color: red">*</span></label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter stage Name" required>
+                                @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="name">Description</label>
+                                <textarea class="form-control" wire:model.debounce.300ms="description" rows="2"></textarea>
+                                @error('description') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="name">Status</label>
+                               <select class="form-control" wire:model.debounce.300ms="status">
+                                    <option value="1">Active</option>
+                                    <option value="0">InActive</option>
+                               </select>
+                                @error('status') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
                     </div>
+                    
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">
@@ -118,10 +146,31 @@
                 <form wire:submit.prevent="update()" >
               
                 <div class="modal-body">
-                    <div class="form-group">
-                        <label for="name">Name</label>
-                        <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter stage Name">
-                        @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="name">Name<span class="required" style="color: red">*</span></label>
+                                <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter stage Name" required>
+                                @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="name">Description</label>
+                                <textarea class="form-control" wire:model.debounce.300ms="description" rows="2"></textarea>
+                                @error('description') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="name">Status</label>
+                               <select class="form-control" wire:model.debounce.300ms="status">
+                                    <option value="1">Active</option>
+                                    <option value="0">InActive</option>
+                               </select>
+                                @error('status') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">

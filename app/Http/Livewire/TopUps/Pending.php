@@ -29,6 +29,7 @@ class Pending extends Component
     public $comments;
     public $top_up;
     public $container;
+    public $container_id;
 
     public $selectedRows = [];
     public $selectPageRows = false;
@@ -119,7 +120,7 @@ class Pending extends Component
 
                 if ($this->authorize == "approved") {
 
-                    $container = Container::find($this->container->id);
+                    $container = Container::find($this->container_id);
                     if(($container && is_numeric($container->balance)) && ($this->top_up && is_numeric($this->top_up->quantity))){
                         $container->balance = $container->balance + $this->top_up->quantity;
                     }
@@ -214,7 +215,7 @@ class Pending extends Component
         $top_up = TopUp::find($id);
         $this->top_up_id = $top_up->id;
         $this->top_up = $top_up;
-        $this->container = $top_up->container;
+        $this->container_id = $top_up->container_id;
         $this->dispatchBrowserEvent('show-authorizationModal');
       }
 
@@ -239,7 +240,7 @@ class Pending extends Component
 
         if ($this->authorize == "approved") {
 
-        $container = Container::find($this->container->id);
+        $container = Container::find($this->container_id);
         if(($container && is_numeric($container->balance)) && ($this->top_up && is_numeric($this->top_up->quantity))){
             $container->balance = $container->balance + $this->top_up->quantity;
         }

@@ -15,6 +15,8 @@ class Index extends Component
     protected $queryString = ['search'];
     private $criterions;
     public $name;
+    public $description;
+    public $status = 1;
     public $criterion_id;
     public $user_id;
 
@@ -27,6 +29,8 @@ class Index extends Component
     }
     private function resetInputFields(){
         $this->name = "";
+        $this->status = "";
+        $this->description = "";
       
     }
     protected $rules = [
@@ -40,6 +44,8 @@ class Index extends Component
         $criterion = new Criterion;
         $criterion->user_id = Auth::user()->id;
         $criterion->name = $this->name;
+        $criterion->description = $this->description;
+        $criterion->status = $this->status;
         $criterion->save();
 
         $this->dispatchBrowserEvent('hide-criterionModal');
@@ -56,11 +62,30 @@ class Index extends Component
 
     $criterion = criterion::find($id);
     $this->name = $criterion->name;
+    $this->description = $criterion->description;
+    $this->status = $criterion->status;
     $this->criterion_id = $criterion->id;
     $this->dispatchBrowserEvent('show-criterionEditModal');
 
     }
 
+    public function delete($id){
+
+        $criterion = Criterion::find($id);
+        $this->criterion_id = $criterion->id;
+        $this->dispatchBrowserEvent('show-criterionDeleteModal');
+
+    }
+    public function destroy(){
+
+        $criterion = Criterion::find($this->criterion_id);
+        $criterion->delete();
+        $this->dispatchBrowserEvent('hide-criterionDeleteModal');
+        $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Recruitment Criterion Deleted Successfully!!"
+            ]);
+    }
 
     public function update()
     {
@@ -69,7 +94,8 @@ class Index extends Component
 
             $criterion = Criterion::find($this->criterion_id);
             $criterion->name = $this->name;
-            $criterion->criterion_number = $this->criterion_number;
+            $criterion->description = $this->description;
+            $criterion->status = $this->status;
             $criterion->update();
 
             $this->dispatchBrowserEvent('hide-criterionEditModal');

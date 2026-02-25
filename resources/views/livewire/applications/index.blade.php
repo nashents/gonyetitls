@@ -75,6 +75,8 @@
                                         </th>
                                         <th class="th-sm">Checks
                                         </th>
+                                        <th class="th-sm">Scores
+                                        </th>
                                         <th class="th-sm">Decision
                                         </th>
                                         <th class="th-sm">Status
@@ -117,8 +119,63 @@
                                                             <strong>Experience:</strong> {{$candidate->years_experience}} <br>
                                                         </small>
                                                     </td>
-                                                    <td></td>
-                                                    <td></td>
+                                                    <td>
+                                                        <button class="btn btn-success btn-rounded btn-xs" wire:click.prevent="showChecks({{$candidate->id}})"> <i class="fa fa-plus"></i> Checks</button> <br>
+                                                        @php
+                                                            $i = 1;
+                                                        @endphp
+                                                        <small>
+                                                            @foreach ($candidate->checks as $check)
+                                                                {{$i++}}) {{$check->type}} 
+                                                                @if ($check->result)
+                                                                    <span class="badge bg-warning">{{$check->result}} </span>
+                                                                @endif
+                                                                @if (!$loop->last), <br> @endif
+                                                                @if ($loop->last)
+                                                                    <a href="#"  wire:click.prevent="showEditChecks({{$candidate->id}})"> <i class="fa fa-edit"></i></a>
+                                                                @endif
+                                                            @endforeach
+                                                        </small>
+                                                        
+                                                    </td>
+                                                    <td>
+                                                        <button class="btn btn-success btn-rounded btn-xs" wire:click.prevent="showScores({{$candidate->id}})"> <i class="fa fa-plus"></i> Stages</button> <br>
+                                                        @php
+                                                            $i = 1;
+                                                        @endphp
+                                                        <small>
+                                                            @foreach ($candidate->scores as $score)
+                                                                {{$i++}}) {{$score->stage}} {{$score->criterion}} {{$score->weight}}
+                                                                @if ($score->score_percent)
+                                                                    <span class="badge bg-info">{{$score->score_percent}} % </span>
+                                                                @endif
+                                                                @if (!$loop->last), <br> @endif
+                                                                @if ($loop->last)
+                                                                    <a href="#"  wire:click.prevent="showEditScores({{$candidate->id}})"> <i class="fa fa-edit"></i></a>
+                                                                @endif
+                                                            @endforeach
+                                                        </small>
+                                                        
+                                                    </td>
+                                                    <td>
+                                                        <button class="btn btn-success btn-rounded btn-xs" wire:click.prevent="showDecisions({{$candidate->id}})"> <i class="fa fa-plus"></i> Decision</button> <br>
+                                                        @php
+                                                            $i = 1;
+                                                        @endphp
+                                                        <small>
+                                                            @foreach ($candidate->decisions as $decision)
+                                                                {{$i++}}) {{$decision->stage}} 
+                                                                @if ($decision->decision)
+                                                                    <span class="badge bg-warning">{{$decision->decision}} </span>
+                                                                @endif
+                                                                @if (!$loop->last), <br> @endif
+                                                                @if ($loop->last)
+                                                                    <a href="#"  wire:click.prevent="showEditDecisions({{$candidate->id}})"> <i class="fa fa-edit"></i></a>
+                                                                @endif
+                                                            @endforeach
+                                                        </small>
+                                                        
+                                                    </td>
                                                     <td>{{$candidate->status}}</td>
                                                     <td class="w-10 line-height-35 table-dropdown">
                                                         <div class="dropdown">
@@ -175,6 +232,805 @@
             </div>
             <!-- /.container-fluid -->
         </section>
+
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="decisionModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+        <div class="modal-dialog  mw-100 w-50" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modal4Label"><i class="fa fa-plus"></i> Add Recruitment Decisions <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                </div>
+                <form wire:submit.prevent="addDecisions()" >
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="country">Recruitement Stages<span class="required" style="color: red">*</span></label>
+                                    <select wire:model.debounce.300ms="stage_name.0" class="form-control" required>
+                                        <option value="">Select Option</option>
+                                        @foreach ($stages as $stage)
+                                        <option value="{{$stage->name}}">{{$stage->name}}</option>
+                                        @endforeach
+                                    </select>
+                                     <small>  <a href="{{ route('recruitment-stages.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Stage</a></small> <a href="#" wire:click.prevent="refresh('stages')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                    @error('stage_name.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group" >
+                                    <label for="one" class="radio-label">Decision</label>
+                                    <select wire:model.debounce.300ms="decision.0" class="form-control" required>
+                                        <option value="">Select Option</option>
+                                        <option value="Contracted">Contracted</option>
+                                        <option value="Decline">Decline</option>
+                                        <option value="Engage">Engage</option>
+                                         <option value="Hired">Hired</option>
+                                        <option value="Impressed">Impressed</option>
+                                        <option value="Unimpressed">Unimpressed</option>
+                                        <option value="Road Test">Road Test</option>
+                                    </select>
+                                    @error('decision.0') <span class="text-danger error">{{ $message }}</span>@enderror
+                                </div>   
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="description">Comments</label>
+                            <textarea class="form-control" wire:model.debounce.300ms="comments.0" cols="30" rows="2"></textarea>
+                            @error('comments.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        </div>
+                        
+                        @foreach($inputs as $key => $value)
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="country">Recruitement Stages<span class="required" style="color: red">*</span></label>
+                                        <select wire:model.debounce.300ms="stage_name.{{$value}}" class="form-control" required>
+                                            <option value="">Select Option</option>
+                                            @foreach ($stages as $stage)
+                                            <option value="{{$stage->name}}">{{$stage->name}}</option>
+                                            @endforeach
+                                        </select>
+                                        <small>  <a href="{{ route('recruitment-stages.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Stage</a></small> <a href="#" wire:click.prevent="refresh('stages')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                        @error('stage_name.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group" >
+                                        <label for="one" class="radio-label">Decision</label>
+                                        <select wire:model.debounce.300ms="decision.{{$value}}" class="form-control" required>
+                                            <option value="">Select Option</option>
+                                            <option value="Contracted">Contracted</option>
+                                            <option value="Decline">Decline</option>
+                                            <option value="Engage">Engage</option>
+                                            <option value="Hired">Hired</option>
+                                            <option value="Impressed">Impressed</option>
+                                            <option value="Unimpressed">Unimpressed</option>
+                                            <option value="Road Test">Road Test</option>
+                                        </select>
+                                        @error('decision.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
+                                    </div>   
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="description">Comments</label>
+                                <textarea class="form-control" wire:model.debounce.300ms="comments.{{$value}}" cols="30" rows="2"></textarea>
+                                @error('comments.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        @endforeach
+                        <div class="row mt-10">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <button class="btn btn-success btn-rounded btn-xs" style="float: right" wire:click.prevent="add({{$i}})"> <i class="fa fa-plus"></i> Decision</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>    
+                    <div class="modal-footer">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                            <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Save</button>
+                        </div>
+                        <!-- /.btn-group -->
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="decisionEditModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+        <div class="modal-dialog  mw-100 w-50" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modal4Label"><i class="fa fa-edit"></i> Edit Recruitment Decision <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                </div>
+                <form wire:submit.prevent="updateDecisions()" >
+                    <div class="modal-body">
+                        @foreach ($existing_decisions as $key => $value)
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="country">Recruitement Stages<span class="required" style="color: red">*</span></label>
+                                        <select wire:model.debounce.300ms="current_stage_name.{{$key}}" class="form-control" required>
+                                            <option value="">Select Option</option>
+                                            @foreach ($stages as $stage)
+                                            <option value="{{$stage->name}}">{{$stage->name}}</option>
+                                            @endforeach
+                                        </select>
+                                        <small>  <a href="{{ route('recruitment-stages.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Stage</a></small> <a href="#" wire:click.prevent="refresh('stages')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                        @error('current_stage_name.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group" >
+                                        <label for="one" class="radio-label">Decision</label>
+                                        <select wire:model.debounce.300ms="current_decision.{{$key}}" class="form-control" required>
+                                            <option value="">Select Option</option>
+                                            <option value="Contracted">Contracted</option>
+                                            <option value="Decline">Decline</option>
+                                            <option value="Engage">Engage</option>
+                                            <option value="Hired">Hired</option>
+                                            <option value="Impressed">Impressed</option>
+                                            <option value="Unimpressed">Unimpressed</option>
+                                            <option value="Road Test">Road Test</option>
+                                        </select>
+                                        @error('current_decision.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
+                                    </div>   
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="description">Comments</label>
+                                <textarea class="form-control" wire:model.debounce.300ms="current_comments.{{$key}}" cols="30" rows="2"></textarea>
+                                @error('current_comments.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        @endforeach
+                        @foreach($inputs as $key => $value)
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="country">Recruitement Stages<span class="required" style="color: red">*</span></label>
+                                        <select wire:model.debounce.300ms="stage_name.{{$value}}" class="form-control" required>
+                                            <option value="">Select Option</option>
+                                            @foreach ($stages as $stage)
+                                            <option value="{{$stage->name}}">{{$stage->name}}</option>
+                                            @endforeach
+                                        </select>
+                                        <small>  <a href="{{ route('recruitment-stages.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Stage</a></small> <a href="#" wire:click.prevent="refresh('stages')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                        @error('stage_name.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group" >
+                                        <label for="one" class="radio-label">Decision</label>
+                                        <select wire:model.debounce.300ms="decision.{{$value}}" class="form-control" required>
+                                            <option value="">Select Option</option>
+                                            <option value="Contracted">Contracted</option>
+                                            <option value="Decline">Decline</option>
+                                            <option value="Engage">Engage</option>
+                                            <option value="Hired">Hired</option>
+                                            <option value="Impressed">Impressed</option>
+                                            <option value="Unimpressed">Unimpressed</option>
+                                            <option value="Road Test">Road Test</option>
+                                        </select>
+                                        @error('decision.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
+                                    </div>   
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="description">Comments</label>
+                                <textarea class="form-control" wire:model.debounce.300ms="comments.{{$value}}" cols="30" rows="2"></textarea>
+                                @error('comments.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        @endforeach
+                        <div class="row mt-10">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <button class="btn btn-success btn-rounded btn-xs" style="float: right" wire:click.prevent="add({{$i}})"> <i class="fa fa-plus"></i> Decision</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>    
+                    <div class="modal-footer">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                            <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-refresh"></i>Update</button>
+                        </div>
+                        <!-- /.btn-group -->
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="stageModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+        <div class="modal-dialog  mw-100 w-50" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modal4Label"><i class="fa fa-plus"></i> Add Recruitment Score <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                </div>
+                <form wire:submit.prevent="addScores()" >
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-5">
+                                <div class="form-group">
+                                    <label for="country">Recruitement Stages<span class="required" style="color: red">*</span></label>
+                                    <select wire:model.debounce.300ms="stage_name.0" class="form-control" required>
+                                        <option value="">Select Option</option>
+                                        @foreach ($stages as $stage)
+                                        <option value="{{$stage->name}}">{{$stage->name}}</option>
+                                        @endforeach
+                                    </select>
+                                     <small>  <a href="{{ route('recruitment-stages.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Stage</a></small> <a href="#" wire:click.prevent="refresh('stages')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                    @error('stage_name.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group" >
+                                    <label for="one" class="radio-label">Criterion</label>
+                                    <select wire:model.debounce.300ms="criterion.0" class="form-control" required>
+                                        <option value="">Select Option</option>
+                                        @foreach ($criterions as $criterion)
+                                            <option value="{{$criterion->name}}">{{$criterion->name}}</option>
+                                        @endforeach
+                                    </select>
+                                    <small>  <a href="{{ route('recruitment-criterions.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Stage</a></small> <a href="#" wire:click.prevent="refresh('stages')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                    @error('criterion.0') <span class="text-danger error">{{ $message }}</span>@enderror
+                                </div>   
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form">
+                                    <div class="form-group">
+                                        <label for="description">Criterion Weight</label>
+                                       <input type="number" step="any" class="form-control" wire:model.debounce.300ms="weight.0">
+                                        @error('weight.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form">
+                                    <div class="form-group">
+                                        <label for="description">Score</label>
+                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="score.0" placeholder="Score Percentage">
+                                        @error('score.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form">
+                                    <div class="form-group">
+                                        <label for="description">Comments</label>
+                                        <textarea class="form-control" wire:model.debounce.300ms="comments.0" cols="30" rows="2"></textarea>
+                                        @error('comments.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @foreach($inputs as $key => $value)
+                            <div class="row">
+                                <div class="col-md-5">
+                                    <div class="form-group">
+                                        <label for="country">Recruitement Stages<span class="required" style="color: red">*</span></label>
+                                        <select wire:model.debounce.300ms="stage_name.{{$value}}" class="form-control" required>
+                                            <option value="">Select Option</option>
+                                            @foreach ($stages as $stage)
+                                            <option value="{{$stage->name}}">{{$stage->name}}</option>
+                                            @endforeach
+                                        </select>
+                                        <small>  <a href="{{ route('recruitment-stages.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Stage</a></small> <a href="#" wire:click.prevent="refresh('stages')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                        @error('stage_name.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group" >
+                                        <label for="one" class="radio-label">Criterion</label>
+                                        <select wire:model.debounce.300ms="criterion.{{$value}}" class="form-control" required>
+                                            <option value="">Select Option</option>
+                                            @foreach ($criterions as $criterion)
+                                                <option value="{{$criterion->name}}">{{$criterion->name}}</option>
+                                            @endforeach
+                                        </select>
+                                        <small>  <a href="{{ route('recruitment-criterions.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Stage</a></small> <a href="#" wire:click.prevent="refresh('stages')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                        @error('criterion.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
+                                    </div>   
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form">
+                                        <div class="form-group">
+                                            <label for="description">Criterion Weight</label>
+                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="weight.{{$value}}">
+                                            @error('weight.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form">
+                                        <div class="form-group">
+                                            <label for="description">Score</label>
+                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="score.{{$value}}" placeholder="Score Percentage">
+                                            @error('score.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-7">
+                                    <div class="form">
+                                        <div class="form-group">
+                                            <label for="description">Comments</label>
+                                            <textarea class="form-control" wire:model.debounce.300ms="comments.{{$value}}" cols="30" rows="2"></textarea>
+                                            @error('comments.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-1">
+                                    <div class="form-group" style="padding-top:28px; ">
+                                        <label for=""></label>
+                                        <button class="btn btn-danger btn-rounded btn-xs" wire:click.prevent="remove({{$key}})"> <i class="fa fa-times"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+
+                        <div class="row mt-10">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <button class="btn btn-success btn-rounded btn-xs" style="float: right" wire:click.prevent="add({{$i}})"> <i class="fa fa-plus"></i> Check</button>
+                                </div>
+                            </div>
+                        </div>
+                       
+                    </div>    
+                    <div class="modal-footer">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                            <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Save</button>
+                        </div>
+                        <!-- /.btn-group -->
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="stageEditModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+        <div class="modal-dialog  mw-100 w-50" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modal4Label"><i class="fa fa-edit"></i> Edit Recruitment Scores <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                </div>
+                <form wire:submit.prevent="updateScores()" >
+                    <div class="modal-body">
+                        @foreach ($existing_scores as $key => $value)
+                           <div class="row">
+                            <div class="col-md-5">
+                                <div class="form-group">
+                                    <label for="country">Recruitement Stages<span class="required" style="color: red">*</span></label>
+                                    <select wire:model.debounce.300ms="current_stage_name.{{$key}}" class="form-control" required>
+                                        <option value="">Select Option</option>
+                                        @foreach ($stages as $stage)
+                                        <option value="{{$stage->name}}">{{$stage->name}}</option>
+                                        @endforeach
+                                    </select>
+                                     <small>  <a href="{{ route('recruitment-stages.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Stage</a></small> <a href="#" wire:click.prevent="refresh('stages')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                    @error('current_stage_name.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group" >
+                                    <label for="one" class="radio-label">Criterion</label>
+                                    <select wire:model.debounce.300ms="current_criterion.{{$key}}" class="form-control" required>
+                                        <option value="">Select Option</option>
+                                        @foreach ($criterions as $criterion)
+                                            <option value="{{$criterion->name}}">{{$criterion->name}}</option>
+                                        @endforeach
+                                    </select>
+                                    <small>  <a href="{{ route('recruitment-criterions.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Stage</a></small> <a href="#" wire:click.prevent="refresh('stages')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                    @error('current_criterion.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
+                                </div>   
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form">
+                                    <div class="form-group">
+                                        <label for="description">Criterion Weight</label>
+                                       <input type="number" step="any" class="form-control" wire:model.debounce.300ms="current_weight.{{$key}}">
+                                        @error('current_weight.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form">
+                                    <div class="form-group">
+                                        <label for="description">Score</label>
+                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="current_score.{{$key}}" placeholder="Score Percentage">
+                                        @error('current_score.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form">
+                                    <div class="form-group">
+                                        <label for="description">Comments</label>
+                                        <textarea class="form-control" wire:model.debounce.300ms="current_comments.{{$key}}" cols="30" rows="2"></textarea>
+                                        @error('current_comments.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        @endforeach
+                        @foreach($inputs as $key => $value)
+                            <div class="row">
+                                <div class="col-md-5">
+                                    <div class="form-group">
+                                        <label for="country">Recruitement Stages<span class="required" style="color: red">*</span></label>
+                                        <select wire:model.debounce.300ms="stage_name.{{$value}}" class="form-control" required>
+                                            <option value="">Select Option</option>
+                                            @foreach ($stages as $stage)
+                                            <option value="{{$stage->name}}">{{$stage->name}}</option>
+                                            @endforeach
+                                        </select>
+                                        <small>  <a href="{{ route('recruitment-stages.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Stage</a></small> <a href="#" wire:click.prevent="refresh('stages')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                        @error('stage_name.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group" >
+                                        <label for="one" class="radio-label">Criterion</label>
+                                        <select wire:model.debounce.300ms="criterion.{{$value}}" class="form-control" required>
+                                            <option value="">Select Option</option>
+                                            @foreach ($criterions as $criterion)
+                                                <option value="{{$criterion->name}}">{{$criterion->name}}</option>
+                                            @endforeach
+                                        </select>
+                                        <small>  <a href="{{ route('recruitment-criterions.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Stage</a></small> <a href="#" wire:click.prevent="refresh('stages')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                        @error('criterion.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
+                                    </div>   
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form">
+                                        <div class="form-group">
+                                            <label for="description">Criterion Weight</label>
+                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="weight.{{$value}}">
+                                            @error('weight.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form">
+                                        <div class="form-group">
+                                            <label for="description">Score</label>
+                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="score.{{$value}}" placeholder="Score Percentage">
+                                            @error('score.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-7">
+                                    <div class="form">
+                                        <div class="form-group">
+                                            <label for="description">Comments</label>
+                                            <textarea class="form-control" wire:model.debounce.300ms="comments.{{$value}}" cols="30" rows="2"></textarea>
+                                            @error('comments.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-1">
+                                    <div class="form-group" style="padding-top:28px; ">
+                                        <label for=""></label>
+                                        <button class="btn btn-danger btn-rounded btn-xs" wire:click.prevent="remove({{$key}})"> <i class="fa fa-times"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+
+                        <div class="row mt-10">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <button class="btn btn-success btn-rounded btn-xs" style="float: right" wire:click.prevent="add({{$i}})"> <i class="fa fa-plus"></i> Check</button>
+                                </div>
+                            </div>
+                        </div>
+                       
+                    </div>    
+                    <div class="modal-footer">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                            <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Save</button>
+                        </div>
+                        <!-- /.btn-group -->
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="checkModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+        <div class="modal-dialog  mw-100 w-50" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modal4Label"><i class="fa fa-plus"></i> Add Recruitment Check <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                </div>
+                <form wire:submit.prevent="addChecks()" >
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="country">Recruitement Checks<span class="required" style="color: red">*</span></label>
+                                    <select wire:model.debounce.300ms="check_name.0" class="form-control" required>
+                                        <option value="">Select Option</option>
+                                        @foreach ($checks as $check)
+                                        <option value="{{$check->name}}">{{$check->name}}</option>
+                                        @endforeach
+                                    </select>
+                                     <small>  <a href="{{ route('recruitment-checks.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Check</a></small> <a href="#" wire:click.prevent="refresh('checks')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                    @error('check_name.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group" >
+                                    <label for="one" class="radio-label">Result</label>
+                                    <select wire:model.debounce.300ms="result.0" class="form-control" required>
+                                        <option value="">Select Option</option>
+                                        <option value="Available">Available</option>
+                                        <option value="Fail">Fail</option>
+                                        <option value="None">None</option>
+                                        <option value="Pass">Pass</option>
+                                        <option value="Pending">Pending</option>
+                                        <option value="Present">Present</option>
+                                    </select>
+                                    @error('result.0') <span class="text-danger error">{{ $message }}</span>@enderror
+                                </div>   
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form">
+                                    <div class="form-group">
+                                        <label for="description">Comments</label>
+                                        <textarea  class="form-control" wire:model.debounce.300ms="comments.0" cols="30" rows="2"></textarea>
+                                        @error('comments.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form">
+                                    <div class="form-group">
+                                        <label for="description">Attach Document</label>
+                                          <input type="file" class="form-control" wire:model.debounce.300ms="check_attachment.0" placeholder="Select Attachement" >
+                                        @error('check_attachment.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @foreach($inputs as $key => $value)
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="country">Recruitement Checks<span class="required" style="color: red">*</span></label>
+                                        <select wire:model.debounce.300ms="check_name.{{$value}}" class="form-control" required>
+                                            <option value="">Select Option</option>
+                                            @foreach ($checks as $check)
+                                            <option value="{{$check->name}}">{{$check->name}}</option>
+                                            @endforeach
+                                        </select>
+                                        <small>  <a href="{{ route('recruitment-checks.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Check</a></small> <a href="#" wire:click.prevent="refresh('checks')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                        @error('check_name.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group" >
+                                        <label for="one" class="radio-label">Result</label>
+                                        <select wire:model.debounce.300ms="result.{{$value}}" class="form-control" required>
+                                            <option value="">Select Option</option>
+                                            <option value="Available">Available</option>
+                                            <option value="Fail">Fail</option>
+                                            <option value="None">None</option>
+                                            <option value="Pass">Pass</option>
+                                            <option value="Pending">Pending</option>
+                                            <option value="Present">Present</option>
+                                        </select>
+                                        @error('result.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
+                                    </div>   
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-5">
+                                    <div class="form">
+                                        <div class="form-group">
+                                            <label for="description">Comments</label>
+                                            <textarea  class="form-control" wire:model.debounce.300ms="comments.{{$value}}" cols="30" rows="2"></textarea>
+                                            @error('comments.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-5">
+                                    <div class="form">
+                                        <div class="form-group">
+                                            <label for="description">Attach Document</label>
+                                            <input type="file" class="form-control" wire:model.debounce.300ms="check_attachment.{{$value}}" placeholder="Select Attachement" >
+                                            @error('check_attachment.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-1">
+                                    <div class="form-group" style="padding-top:28px; ">
+                                        <label for=""></label>
+                                        <button class="btn btn-danger btn-rounded btn-xs" wire:click.prevent="remove({{$key}})"> <i class="fa fa-times"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+
+                        <div class="row mt-10">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <button class="btn btn-success btn-rounded btn-xs" style="float: right" wire:click.prevent="add({{$i}})"> <i class="fa fa-plus"></i> Check</button>
+                                </div>
+                            </div>
+                        </div>
+                       
+                    </div>    
+                    <div class="modal-footer">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                            <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Save</button>
+                        </div>
+                        <!-- /.btn-group -->
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="checkEditModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+        <div class="modal-dialog  mw-100 w-50" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modal4Label"><i class="fa fa-plus"></i> Edit Recruitment Checks <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                </div>
+                <form wire:submit.prevent="updateChecks()" >
+                    <div class="modal-body">
+                        @foreach ($existing_checks as $key => $value)
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="country">Recruitement Checks<span class="required" style="color: red">*</span></label>
+                                    <select wire:model.debounce.300ms="current_check_name.{{$key}}" class="form-control" required>
+                                        <option value="">Select Option</option>
+                                        @foreach ($checks as $check)
+                                        <option value="{{$check->name}}">{{$check->name}}</option>
+                                        @endforeach
+                                    </select>
+                                     <small>  <a href="{{ route('recruitment-checks.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Check</a></small> <a href="#" wire:click.prevent="refresh('checks')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                    @error('current_check_name.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group" >
+                                    <label for="one" class="radio-label">Result</label>
+                                    <select wire:model.debounce.300ms="current_result.{{$key}}" class="form-control" required>
+                                        <option value="">Select Option</option>
+                                        <option value="Available">Available</option>
+                                        <option value="Fail">Fail</option>
+                                        <option value="None">None</option>
+                                        <option value="Pass">Pass</option>
+                                        <option value="Pending">Pending</option>
+                                        <option value="Present">Present</option>
+                                    </select>
+                                    @error('current_result.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
+                                </div>   
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form">
+                                    <div class="form-group">
+                                        <label for="description">Comments</label>
+                                        <textarea  class="form-control" wire:model.debounce.300ms="current_comments.{{$key}}" cols="30" rows="2"></textarea>
+                                        @error('current_comments.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form">
+                                    <div class="form-group">
+                                        <label for="description">Attach Document</label>
+                                        @if (isset($old_attachment[$key]))
+                                            <small>Attachment: <a href="">{{isset($old_attachment[$key]) ? $old_attachment[$key] : ""}}</a></small>
+                                        @endif
+                                        <input type="file" class="form-control" wire:model.debounce.300ms="current_check_attachment.{{$key}}" placeholder="Select Attachement" >
+                                        @error('current_check_attachment.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        @endforeach
+                        
+
+                        @foreach($inputs as $key => $value)
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="country">Recruitement Checks<span class="required" style="color: red">*</span></label>
+                                        <select wire:model.debounce.300ms="check_name.{{$value}}" class="form-control" required>
+                                            <option value="">Select Option</option>
+                                            @foreach ($checks as $check)
+                                            <option value="{{$check->name}}">{{$check->name}}</option>
+                                            @endforeach
+                                        </select>
+                                        <small>  <a href="{{ route('recruitment-checks.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Check</a></small> <a href="#" wire:click.prevent="refresh('checks')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                        @error('check_name.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group" >
+                                        <label for="one" class="radio-label">Result</label>
+                                        <select wire:model.debounce.300ms="result.{{$value}}" class="form-control" required>
+                                            <option value="">Select Option</option>
+                                            <option value="Available">Available</option>
+                                            <option value="Fail">Fail</option>
+                                            <option value="None">None</option>
+                                            <option value="Pass">Pass</option>
+                                            <option value="Pending">Pending</option>
+                                            <option value="Present">Present</option>
+                                        </select>
+                                        @error('result.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
+                                    </div>   
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-5">
+                                    <div class="form">
+                                        <div class="form-group">
+                                            <label for="description">Comments</label>
+                                            <textarea  class="form-control" wire:model.debounce.300ms="comments.{{$value}}" cols="30" rows="2"></textarea>
+                                            @error('comments.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-5">
+                                    <div class="form">
+                                        <div class="form-group">
+                                            <label for="description">Attach Document</label>
+                                            <input type="file" class="form-control" wire:model.debounce.300ms="check_attachment.{{$value}}" placeholder="Select Attachement" >
+                                            @error('check_attachment.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-1">
+                                    <div class="form-group" style="padding-top:28px; ">
+                                        <label for=""></label>
+                                        <button class="btn btn-danger btn-rounded btn-xs" wire:click.prevent="remove({{$key}})"> <i class="fa fa-times"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+
+                        <div class="row mt-10">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <button class="btn btn-success btn-rounded btn-xs" style="float: right" wire:click.prevent="add({{$i}})"> <i class="fa fa-plus"></i> Check</button>
+                                </div>
+                            </div>
+                        </div>
+                       
+                    </div>    
+                    <div class="modal-footer">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                            <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-save"></i>Save</button>
+                        </div>
+                        <!-- /.btn-group -->
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
  <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="applicationModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
         <div class="modal-dialog mw-100 w-70" role="document">
             <div class="modal-content">

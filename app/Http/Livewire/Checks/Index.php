@@ -15,6 +15,8 @@ class Index extends Component
     protected $queryString = ['search'];
     private $checks;
     public $name;
+    public $description;
+    public $status = 1;
     public $check_id;
     public $user_id;
 
@@ -27,6 +29,8 @@ class Index extends Component
     }
     private function resetInputFields(){
         $this->name = "";
+        $this->description = "";
+        $this->status = "";
       
     }
     protected $rules = [
@@ -40,6 +44,8 @@ class Index extends Component
         $check = new Check;
         $check->user_id = Auth::user()->id;
         $check->name = $this->name;
+        $check->description = $this->description;
+        $check->status = $this->status;
         $check->save();
 
         $this->dispatchBrowserEvent('hide-checkModal');
@@ -54,11 +60,30 @@ class Index extends Component
 
     public function edit($id){
 
-    $check = Check::find($id);
-    $this->name = $check->name;
-    $this->check_id = $check->id;
-    $this->dispatchBrowserEvent('show-checkEditModal');
+        $check = Check::find($id);
+        $this->name = $check->name;
+        $this->description = $check->description;
+        $this->status = $check->status;
+        $this->check_id = $check->id;
+        $this->dispatchBrowserEvent('show-checkEditModal');
 
+    }
+    public function delete($id){
+
+        $check = Check::find($id);
+        $this->check_id = $check->id;
+        $this->dispatchBrowserEvent('show-checkDeleteModal');
+
+    }
+    public function destroy(){
+
+        $check = Check::find($this->check_id);
+        $check->delete();
+        $this->dispatchBrowserEvent('hide-checkDeleteModal');
+        $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Recruitment Check Deleted Successfully!!"
+            ]);
     }
 
 
@@ -69,7 +94,8 @@ class Index extends Component
 
             $check = Check::find($this->check_id);
             $check->name = $this->name;
-            $check->check_number = $this->check_number;
+            $check->description = $this->description;
+            $check->status = $this->status;
             $check->update();
 
             $this->dispatchBrowserEvent('hide-checkEditModal');
@@ -78,8 +104,6 @@ class Index extends Component
                 'type'=>'success',
                 'message'=>"Check Updated Successfully!!"
             ]);
-            // return redirect()->route('checks.index');
-       
 
         }
     }

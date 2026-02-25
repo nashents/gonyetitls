@@ -3,6 +3,7 @@
 namespace App\Http\Livewire\Documents;
 
 use App\Models\Agent;
+use App\Models\Application;
 use App\Models\Asset;
 use App\Models\Bill;
 use App\Models\Broker;
@@ -50,6 +51,8 @@ class Index extends Component
     public $category;
     public $retread;
     public $retread_id;
+    public $application;
+    public $application_id;
     public $loading_point;
     public $loading_point_id;
     public $training;
@@ -188,6 +191,12 @@ class Index extends Component
         $this->folders = Folder::where('category', $this->category)->latest()->get();
         $this->documents = Document::where('category', $this->category)
         ->where('retread_id', $this->retread->id)->latest()->get();
+    }
+    elseif ($this->category == "application") {
+        $this->application = Application::find($id);
+        $this->folders = Folder::where('category', $this->category)->latest()->get();
+        $this->documents = Document::where('category', $this->category)
+        ->where('application_id', $this->application->id)->latest()->get();
     }
     elseif ($this->category == "bill") {
         $this->bill = Bill::find($id);
@@ -402,6 +411,13 @@ class Index extends Component
                 $this->retread = Retread::find($this->item_id);
                 $this->documents = Document::where('category', $this->category)
                 ->where('retread_id', $this->retread->id)
+                ->where('folder_id', $selected_folder_id)
+                ->latest()->get();
+            }
+            elseif ($this->category == "application") {
+                $this->application = Application::find($this->item_id);
+                $this->documents = Document::where('category', $this->category)
+                ->where('application_id', $this->application->id)
                 ->where('folder_id', $selected_folder_id)
                 ->latest()->get();
             }
@@ -722,6 +738,9 @@ class Index extends Component
             elseif (isset($this->retread)) {
                 $document->retread_id = $this->retread->id;
             }
+            elseif (isset($this->application)) {
+                $document->application_id = $this->application->id;
+            }
             elseif (isset($this->trip)) {
                 $document->trip_id = $this->trip->id;
             }
@@ -884,6 +903,7 @@ class Index extends Component
         $this->route_id = $document->route_id;
         $this->bill_id = $document->bill_id;
         $this->retread_id = $document->retread_id;
+        $this->application_id = $document->application_id;
         $this->incident_id = $document->incident_id;
         $this->truck_stop_id = $document->truck_stop_id;
         $this->company_id = $document->company_id;
@@ -955,6 +975,9 @@ class Index extends Component
                 }
                 elseif (isset($this->retread_id)) {
                     $document->retread_id = $this->retread_id;
+                }
+                elseif (isset($this->application_id)) {
+                    $document->application_id = $this->application_id;
                 }
                 elseif (isset($this->incident_id)) {
                     $document->incident_id = $this->incident_id;
@@ -1096,6 +1119,11 @@ class Index extends Component
             $this->folders = Folder::where('category', $this->category)->latest()->get();
             $this->documents = Document::where('category', $this->category)
             ->where('retread_id', $this->retread->id)->latest()->get();
+        }
+        elseif ($this->category == "application") {
+            $this->folders = Folder::where('category', $this->category)->latest()->get();
+            $this->documents = Document::where('category', $this->category)
+            ->where('application_id', $this->application->id)->latest()->get();
         }
         elseif ($this->category == "bill") {
             $this->folders = Folder::where('category', $this->category)->latest()->get();

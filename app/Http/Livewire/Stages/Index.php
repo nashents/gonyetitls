@@ -15,6 +15,8 @@ class Index extends Component
     protected $queryString = ['search'];
     private $stages;
     public $name;
+    public $description;
+    public $status = 1;
     public $stage_id;
     public $user_id;
 
@@ -27,6 +29,8 @@ class Index extends Component
     }
     private function resetInputFields(){
         $this->name = "";
+        $this->status = "";
+        $this->description = "";
       
     }
     protected $rules = [
@@ -40,6 +44,8 @@ class Index extends Component
         $stage = new Stage;
         $stage->user_id = Auth::user()->id;
         $stage->name = $this->name;
+        $stage->description = $this->description;
+        $stage->status = $this->status;
         $stage->save();
 
         $this->dispatchBrowserEvent('hide-stageModal');
@@ -56,6 +62,8 @@ class Index extends Component
 
     $stage = stage::find($id);
     $this->name = $stage->name;
+    $this->description = $stage->description;
+    $this->status = $stage->status;
     $this->stage_id = $stage->id;
     $this->dispatchBrowserEvent('show-stageEditModal');
 
@@ -69,7 +77,8 @@ class Index extends Component
 
             $stage = Stage::find($this->stage_id);
             $stage->name = $this->name;
-            $stage->stage_number = $this->stage_number;
+            $stage->description = $this->description;
+            $stage->status = $this->status;
             $stage->update();
 
             $this->dispatchBrowserEvent('hide-stageEditModal');
@@ -84,6 +93,23 @@ class Index extends Component
         }
     }
 
+       public function delete($id){
+
+        $stage = Stage::find($id);
+        $this->stage_id = $stage->id;
+        $this->dispatchBrowserEvent('show-stageDeleteModal');
+
+    }
+    public function destroy(){
+
+        $stage = Stage::find($this->stage_id);
+        $stage->delete();
+        $this->dispatchBrowserEvent('hide-stageDeleteModal');
+        $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Recruitment Stage Deleted Successfully!!"
+            ]);
+    }
 
     public function render()
     {

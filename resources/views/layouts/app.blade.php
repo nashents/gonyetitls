@@ -131,6 +131,36 @@
 @stack('scripts')
     
     <script type="text/javascript">
+            window.addEventListener('show-decisionModal', event => {
+                $('#decisionModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-decisionModal', event => {
+                $('#decisionModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-decisionEditModal', event => {
+                $('#decisionEditModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-decisionEditModal', event => {
+                $('#decisionEditModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-decisionDeleteModal', event => {
+                $('#decisionDeleteModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-decisionDeleteModal', event => {
+                $('#decisionDeleteModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
             window.addEventListener('show-stageModal', event => {
                 $('#stageModal').modal('show');
             })
