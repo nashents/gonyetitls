@@ -258,6 +258,7 @@ class Index extends Component
         }
      
         $this->leave_types = LeaveType::orderBy('name','asc')->get();
+        
         if (filled($this->search)) {
              return view('livewire.leaves.index',[
                 'leaves' => Leave::where('days', 'like', '%' . $this->search . '%')

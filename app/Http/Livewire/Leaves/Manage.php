@@ -133,8 +133,10 @@ class Manage extends Component
                 $leave->hod_decision = 'approved';
                 $leave->management_decision = 'pending';
             }else {
+
                 $department_heads = DepartmentHead::all();
-                $department_with_department_head = DepartmentHead::where('department_id',$employee_department->id)->first();
+                $employee_department = $this->employee_departments->first();
+                $department_with_department_head = DepartmentHead::where('department_id', $employee_department?->id)->first();
              
                 if ($department_heads->count()>0) {
                     

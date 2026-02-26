@@ -78,6 +78,10 @@ class RecruitmentCandidate extends Model
         return $this->belongsTo(JobPosting::class);
     }
 
+    public function qualifications()
+    {
+        return $this->hasMany(RecruitmentQualification::class, 'candidate_id');
+    }
     public function checks()
     {
         return $this->hasMany(RecruitmentCheck::class, 'candidate_id');

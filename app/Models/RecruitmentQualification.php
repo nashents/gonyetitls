@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\RecruitmentCandidate;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class EmployeeQualification extends Model
+class RecruitmentQualification extends Model
 {
     use HasFactory, SoftDeletes;
 
@@ -28,7 +30,11 @@ class EmployeeQualification extends Model
 
     public function candidate()
     {
-        return $this->belongsTo(Employee::class, 'candidate_id');
+        return $this->belongsTo(RecruitmentCandidate::class, 'candidate_id');
+    }
+    public function qualification()
+    {
+        return $this->belongsTo(Qualification::class);
     }
 
     public function verified_by()

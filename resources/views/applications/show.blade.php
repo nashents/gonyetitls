@@ -45,7 +45,7 @@
 
                                 <!-- /.col-md-6 -->
                             </div>
-                          @livewire('applications.show', ['id' => $application->id])
+                          @livewire('applications.show', ['application' => $application])
                         </div>
                         <!-- /.container-fluid -->
 

@@ -19,4 +19,7 @@ class Qualification extends Model implements Auditable
     public function job_title_qualifications(){
         return $this->hasMany('App\Models\JobTitleQualification');
     }
+    public function recruitment_qualifications(){
+        return $this->hasMany('App\Models\RecruitmentQualification');
+    }
 }

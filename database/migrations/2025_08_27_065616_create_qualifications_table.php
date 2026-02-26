@@ -13,6 +13,8 @@ class CreateQualificationsTable extends Migration
      */
     public function up()
     {
+
+        
        Schema::create('qualifications', function (Blueprint $table) {
             $table->id();
             $table->string('code')->unique();            // e.g., "ACCA", "CIS-1"

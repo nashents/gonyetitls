@@ -17,9 +17,9 @@
                             </div>
                             <div class="panel-body p-20">
                                 <div class="panel-title">
-                                    <h5>Date Range</h5>
+                                 
                                     <div class="row">
-                                        <div class="col-lg-2" style="margin-right: 7px">
+                                        <div class="col-lg-3" >
                                             <div class="input-group">
                                                 <span class="input-group-addon">
                                                     From
@@ -28,7 +28,7 @@
                                             </div>
                                             <!-- /input-group -->
                                         </div>
-                                        <div class="col-lg-2" style="margin-left: 7px">
+                                        <div class="col-lg-3" >
                                             <div class="input-group">
                                                 <span class="input-group-addon">
                                                     To
@@ -38,9 +38,7 @@
                                             <!-- /input-group -->
                                         </div>
                                         <!-- /input-group -->
-                                    </div>
-                                          <div class="row">
-                                        <div class="col-md-3">
+                                         <div class="col-md-3">
                                             <div class="input-group">
                                                 <span class="input-group-addon">Ticket Status</span>
                                                 <select wire:model.debounce.300ms="ticket_status" class="form-control" aria-label="..." >
@@ -51,7 +49,7 @@
                                             </div>
                                             <!-- /input-group -->
                                         </div>
-                                        <div class="col-md-3">
+                                         <div class="col-md-3">
                                             <div class="input-group">
                                                 <span class="input-group-addon">Job Types</span>
                                                 <select wire:model.debounce.300ms="service_type_id" class="form-control" aria-label="..." >
@@ -63,7 +61,10 @@
                                             </div>
                                             <!-- /input-group -->
                                         </div>
-                                        <div class="col-md-3">
+                                    </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-3">
                                             <div class="input-group">
                                                 <span class="input-group-addon">Stations</span>
                                                 <select wire:model.debounce.300ms="station_id" class="form-control" aria-label="..." >
@@ -87,9 +88,6 @@
                                             </div>
                                             <!-- /input-group -->
                                         </div>
-                                      
-                                </div>
-                                <div class="row">
                                       <div class="col-md-3">
                                             <div class="input-group">
                                                 <span class="input-group-addon">Equipment</span>

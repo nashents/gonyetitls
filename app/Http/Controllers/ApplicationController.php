@@ -47,7 +47,7 @@ class ApplicationController extends Controller
      */
     public function show(Application $application)
     {
-        //
+        return view('applications.show')->with('application',$application);
     }
 
     /**

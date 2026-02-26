@@ -7,14 +7,17 @@ use App\Models\Application;
 use App\Models\Check;
 use App\Models\Criterion;
 use App\Models\JobPosting;
+use App\Models\Qualification;
 use App\Models\RecruitmentCandidate;
 use App\Models\RecruitmentCheck;
 use App\Models\RecruitmentDecision;
+use App\Models\RecruitmentQualification;
 use App\Models\RecruitmentScore;
 use App\Models\Stage;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -56,18 +59,26 @@ class Index extends Component
 
     public $job_posting_id;
 
+    public $item_id;
+    public $score_id;
+    public $decision_id;
     public $check_id;
+    public $category;
+    public $selected_qualification_id;
     public $checks;
     public $criterions;
     public $criterion_id;
     public $stages;
     public $stage_id;
+    public $qualifications;
+
 
     public $comments = [];
     public $check_attachment = [];
     public $check_name = [];
     public $result = [];
     
+    public $existing_qualifications = [];
     public $existing_scores = [];
     public $existing_decisions  = [];
     public $existing_checks = [];
@@ -82,13 +93,28 @@ class Index extends Component
     public $stage_name = [];
     public $weight = [];
     public $decision = [];
-    
+
+    public $level = [];
+    public $expires_at = [];
+    public $certificate_path = [];
+    public $date_awarded = [];
+    public $qualification_id = [];
+    public $qualification_status = [];
+    public $old_certificate = [];
+  
   
     public $current_criterion = [];
     public $current_score = [];
     public $current_stage_name = [];
     public $current_weight = [];
     public $current_decision = [];
+
+    public $current_level = [];
+    public $current_expires_at = [];
+    public $current_certificate_path = [];
+    public $current_date_awarded = [];
+    public $current_qualification_id = [];
+    public $current_qualification_status = [];
  
 
     public $inputs = [];
@@ -113,6 +139,7 @@ class Index extends Component
         $this->checks = collect();
         $this->criterions = Criterion::orderBy('name','asc')->get();
         $this->stages = collect();
+        $this->qualifications = collect();
         $this->application_filter = "created_at";
     }
 
@@ -147,6 +174,7 @@ class Index extends Component
         $this->next_step = "";
         $this->screening_impression = "";
         $this->status = "";
+        $this->item_id = Null;
 
         $this->check_name = [];
         $this->result = [];
@@ -157,6 +185,21 @@ class Index extends Component
         $this->criterion = [];
         $this->weight = [];
         $this->decision = [];
+
+        $this->level = [];
+        $this->date_awarded = [];
+        $this->expires_at = [];
+        $this->qualification_id = [];
+        $this->qualification_status = [];
+        $this->certificate_path = [];
+      
+        $this->current_level = [];
+        $this->current_date_awarded = [];
+        $this->current_expires_at = [];
+        $this->current_qualification_id = [];
+        $this->current_qualification_status = [];
+        $this->current_certificate_path = [];
+        $this->old_certificate = [];
    
         $this->current_check_name = [];
         $this->current_result = [];
@@ -171,6 +214,7 @@ class Index extends Component
         $this->existing_checks = [];
         $this->existing_decisions = [];
         $this->existing_scores = [];
+        $this->existing_qualifications = [];
 
         $this->inputs = [];
 
@@ -233,6 +277,13 @@ class Index extends Component
                 'message'=>"Stages Refreshed Successfully!!."
             ]);
         }
+        elseif($category == "qualifications"){
+            $this->qualifications = Qualification::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Qualifications Refreshed Successfully!!."
+            ]);
+        }
         elseif($category == "criterions"){
               $this->criterions = Criterion::orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert',[
@@ -244,6 +295,247 @@ class Index extends Component
       
     }
 
+     public function removeShow($id, $category){
+        $this->category = $category;
+        $this->item_id = $id;
+        $this->dispatchBrowserEvent('show-removeModal');
+    }
+
+    public function removeItem(){ 
+
+        if(!isset($this->category)){
+            return ;
+        }
+
+        if($this->category == "checks"){
+            $check = RecruitmentCheck::find($this->item_id);
+            $check?->delete();
+        }
+        elseif($this->category == "scores"){
+            $score = RecruitmentScore::find($this->item_id);
+            $score?->delete();
+        }
+        elseif($this->category == "decisions"){
+            $decision = RecruitmentDecision::find($this->item_id);
+            $decision?->delete();
+        }
+        elseif($this->category == "qualifications"){
+            
+            $qualification = RecruitmentQualification::find($this->item_id);
+            $qualification?->delete();
+        }
+
+     
+        $this->resetInputFields();
+        $this->dispatchBrowserEvent('hide-removeModal');
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Item Deleted Successfully!!"
+        ]);
+       
+    }
+
+     public function showQualifications($id){
+
+        $this->recruitment_candidate_id = $id;
+        
+         // Get qualification IDs already linked to this job title
+        $existingQualifications = RecruitmentQualification::where('candidate_id', $id)
+            ->pluck('qualification_id')
+            ->toArray();
+
+        // Fetch only qualifications NOT already assigned
+        $this->qualifications = Qualification::whereNotIn('id', $existingQualifications)
+            ->orderBy('name', 'asc')
+            ->get();
+
+        $this->dispatchBrowserEvent('show-qualificationModal');
+    }
+
+    public function addQualifications(){
+
+        $this->validate([
+            // This just ensures the candidate exists — NOT unique
+        
+            'qualification_id' => [
+                'required',
+                'exists:qualifications,id',
+
+                // 👇 This is the ONLY uniqueness rule: (candidate_id + qualification_id) among active rows
+                Rule::unique('recruitment_qualifications')
+                    ->where(fn ($query) => $query
+                        ->where('candidate_id', $this->recruitment_candidate_id)
+                        ->whereNull('deleted_at')
+                    ),
+            ],
+        ]);
+       
+        if(isset($this->qualification_id)){
+            foreach ($this->qualification_id as $key => $id) {
+             
+                $quali_id = $id;
+                $level = $this->level[$key] ?? Null;
+                $date_awarded = $this->date_awarded[$key] ?? Null;
+                $expires_at = $this->expires_at[$key] ?? Null;
+                $certificate_path = $this->certificate_path[$key] ?? Null;
+                $status = $this->qualification_status[$key] ?? Null;
+               
+            
+                $recruitment_qualification = new RecruitmentQualification;
+                $recruitment_qualification->candidate_id = $this->recruitment_candidate_id;
+                $recruitment_qualification->qualification_id = $quali_id;
+                $recruitment_qualification->verified_by = Auth::user()->id;
+                $recruitment_qualification->verified_at = now();
+                $recruitment_qualification->level = $level;
+                $recruitment_qualification->date_awarded = $date_awarded;
+                $recruitment_qualification->expires_at = $expires_at;
+                $recruitment_qualification->status = $status;
+                if($certificate_path){
+
+                    $file = $certificate_path;
+                    // get file with ext
+                    $fileNameWithExt = $file->getClientOriginalName();
+                    //get filename
+                    $filename = pathinfo($fileNameWithExt, PATHINFO_FILENAME);
+                    //get extention
+                    $extention = $file->getClientOriginalExtension();
+                    //file name to store
+                    $fileNameToStore= $filename.'_'.time().'.'.$extention;
+                    $file->storeAs('/documents', $fileNameToStore, 'my_files');
+
+                    $recruitment_qualification->certificate_path = $fileNameToStore;
+                }
+
+                $recruitment_qualification->save();
+                  
+                $this->dispatchBrowserEvent('hide-qualificationModal');
+                $this->resetInputFields();
+                $this->dispatchBrowserEvent('alert',[
+                    'type'=>'success',
+                    'message'=>"Recruitment Qualifications Added Successfully!!"
+                ]);
+                
+            }
+
+        }
+       
+    }
+
+      public function showEditQualifications($id){
+
+        $this->recruitment_candidate_id = $id;
+        $candidate = RecruitmentCandidate::find($id);
+        $this->existing_qualifications = $candidate->qualifications;
+        if ($this->existing_qualifications) {
+            foreach ($this->existing_qualifications as $qualification) {
+                $this->current_qualification_id[] = $qualification->qualification_id;
+                $this->current_level[] = $qualification->level;
+                $this->current_date_awarded[] = $qualification->date_awarded;
+                $this->current_expires_at[] = $qualification->expires_at;
+                $this->current_qualification_status[] = $qualification->status;
+                $this->current_certificate_path[] = $qualification->certificate_path;
+                $this->old_certificate[] = $qualification->certificate_path;
+            }
+        }
+        $this->qualifications = Qualification::orderBy('name', 'asc')->get();
+
+        $this->dispatchBrowserEvent('show-qualificationEditModal');
+    }
+    
+    public function updateQualificaitions(){
+
+        if(isset($this->existing_qualifications)){
+            foreach ($this->existing_qualifications as $key => $existing_qualification) {
+
+                $qualification_id = $this->current_qualification_id[$key] ?? Null;;
+                $status = $this->current_qualification_status[$key] ?? Null;
+                $level = $this->current_level[$key] ?? Null;
+                $date_awarded = $this->current_date_awarded[$key] ?? Null;
+                $expires_at = $this->current_expires_at[$key] ?? Null;
+                $certificate_path = $this->current_certificate_path[$key] ?? Null;
+
+                $recruitment_qualification = RecruitmentQualification::find($existing_qualification->id);
+                $recruitment_qualification->candidate_id = $this->recruitment_candidate_id;
+                $recruitment_qualification->qualification_id = $this->qualification_id;
+                $recruitment_qualification->verified_by = Auth::user()->id;
+                $recruitment_qualification->verified_at = now();
+                $recruitment_qualification->level = $level;
+                $recruitment_qualification->date_awarded = $date_awarded;
+                $recruitment_qualification->expires_at = $expires_at;
+                $recruitment_qualification->status = $status;
+                if($certificate_path){
+
+                    $file = $certificate_path;
+                    // get file with ext
+                    $fileNameWithExt = $file->getClientOriginalName();
+                    //get filename
+                    $filename = pathinfo($fileNameWithExt, PATHINFO_FILENAME);
+                    //get extention
+                    $extention = $file->getClientOriginalExtension();
+                    //file name to store
+                    $fileNameToStore= $filename.'_'.time().'.'.$extention;
+                    $file->storeAs('/documents', $fileNameToStore, 'my_files');
+
+                    $recruitment_qualification->certificate_path = $fileNameToStore;
+                }
+
+                $recruitment_qualification->update();
+                   
+            }
+        }
+      
+        if(isset($this->qualification_id)){
+            foreach ($this->qualification_id as $key => $id) {
+
+                $qualification_id = $id;
+                $level = $this->level[$key] ?? Null;
+                $date_awarded = $this->date_awarded[$key] ?? Null;
+                $expires_at = $this->expires_at[$key] ?? Null;
+                $certificate_path = $this->certificate_path[$key] ?? Null;
+                $status = $this->qualification_status[$key] ?? Null;
+             
+
+                $recruitment_qualification = new RecruitmentQualification;
+                $recruitment_qualification->candidate_id = $this->recruitment_candidate_id;
+                $recruitment_qualification->qualification_id = $qualification_id;
+                $recruitment_qualification->verified_by = Auth::user()->id;
+                $recruitment_qualification->verified_at = now();
+                $recruitment_qualification->level = $level;
+                $recruitment_qualification->date_awarded = $date_awarded;
+                $recruitment_qualification->expires_at = $expires_at;
+                $recruitment_qualification->status = $status;
+                if($certificate_path){
+
+                    $file = $certificate_path;
+                    // get file with ext
+                    $fileNameWithExt = $file->getClientOriginalName();
+                    //get filename
+                    $filename = pathinfo($fileNameWithExt, PATHINFO_FILENAME);
+                    //get extention
+                    $extention = $file->getClientOriginalExtension();
+                    //file name to store
+                    $fileNameToStore= $filename.'_'.time().'.'.$extention;
+                    $file->storeAs('/documents', $fileNameToStore, 'my_files');
+
+                    $recruitment_qualification->certificate_path = $fileNameToStore;
+                }
+
+                $recruitment_qualification->save();
+                  
+               
+                
+            }
+
+        }
+
+        $this->dispatchBrowserEvent('hide-qualificationEditModal');
+                $this->resetInputFields();
+                $this->dispatchBrowserEvent('alert',[
+                    'type'=>'success',
+                    'message'=>"Recruitment Qualifications Updated Successfully!!"
+                ]);
+       
+    }
      public function showScores($id){
 
         $this->recruitment_candidate_id = $id;
@@ -305,10 +597,10 @@ class Index extends Component
                 $this->current_criterion[] = $score->criterion;
                 $this->current_comments[] = $score->comment;
                 $this->current_weight[] = $score->weight;
-                $this->current_score[] = $score->score_percentage;
+                $this->current_score[] = $score->score_percent;
             }
         }
-        $this->checks = Check::orderBy('name', 'asc')->get();
+        $this->stages = Stage::orderBy('name', 'asc')->get();
 
         $this->dispatchBrowserEvent('show-stageEditModal');
     }
@@ -679,7 +971,9 @@ class Index extends Component
         $recruitment_candidate->first_name = $this->name;
         $recruitment_candidate->last_name = $this->surname;
         $recruitment_candidate->gender = $this->gender;
+        $age = $age = Carbon::parse($this->dob)->age;
         $recruitment_candidate->dob = $this->dob;
+        $recruitment_candidate->age = $age;
         $recruitment_candidate->email = $this->email;
         $recruitment_candidate->phone = $this->phonenumber;
         $recruitment_candidate->source = $this->source;
