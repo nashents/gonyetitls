@@ -38,6 +38,7 @@ class Index extends Component
     public $searchTrip;
     public $searchBooking;
     public $searchPurchase;
+    
     protected $queryString = ['search','searchTrip','searchBooking' ,'searchPurchase'];
     public $from;
     public $to;
@@ -48,6 +49,8 @@ class Index extends Component
     public $account;
     public $selectedAccount;
     public $requisition_for;
+   
+    
     public $trips;
     public $selectedTrip;
     public $purchases;
@@ -410,7 +413,7 @@ class Index extends Component
 
 
     public function mount(){
-
+      
         $this->resetPage();
         $this->reset(['search', 'searchTrip', 'searchBooking', 'searchPurchase']);
         $employee_departments = Auth::user()->employee->departments;
@@ -1204,13 +1207,14 @@ class Index extends Component
         $base->whereIn('department_id', (array) $this->department_ids);
     }
 
-    // Date filter: range OR default current month/year
-    if (filled($this->from) && filled($this->to)) {
-        $base->whereBetween($this->requisition_filter, [$this->from, $this->to]);
-    } else {
-        $base->whereMonth($this->requisition_filter, now()->month)
-             ->whereYear($this->requisition_filter, now()->year);
-    }
+  
+     // Date filter: range OR default current month/year
+        if (filled($this->from) && filled($this->to)) {
+            $base->whereBetween($this->requisition_filter, [$this->from, $this->to]);
+        } else {
+            $base->whereMonth($this->requisition_filter, now()->month)
+                ->whereYear($this->requisition_filter, now()->year);
+        }
 
     // Search (GROUPED OR CONDITIONS) — critical fix
     if (filled($this->search)) {

@@ -2,31 +2,32 @@
 
 namespace App\Http\Livewire\Drivers;
 
-use Carbon\Carbon;
-use App\Models\Rank;
-use App\Models\Role;
-use App\Models\User;
-use App\Models\Count;
-use App\Models\Grade;
+use App\Models\BankAccount;
 use App\Models\Branch;
-use App\Models\Driver;
+use App\Models\Company;
+use App\Models\Count;
 use App\Models\Country;
-use Livewire\Component;
 use App\Models\Currency;
+use App\Models\Department;
+use App\Models\DepartmentHead;
 use App\Models\Document;
+use App\Models\Driver;
 use App\Models\Employee;
+use App\Models\Grade;
 use App\Models\JobTitle;
 use App\Models\Province;
-use App\Models\Department;
-use App\Models\BankAccount;
+use App\Models\Rank;
+use App\Models\Role;
 use App\Models\Transporter;
-use Livewire\WithFileUploads;
-use App\Models\DepartmentHead;
-use Illuminate\Support\Facades\DB;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
+use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class Edit extends Component
 {
@@ -64,6 +65,8 @@ class Edit extends Component
     public $departments;
     public $transporters;
     public $transporter_id;
+    public $companies;
+    public $company_id;
     public $branch_id;
     public $branches;
     public $role_id;
@@ -102,6 +105,8 @@ class Edit extends Component
     public $employee;
     public $documents;
     public $employee_number;
+    public $custom_ref;
+    public $driver_number;
     public $pin;
     public $selected_departments;
 
@@ -178,7 +183,8 @@ class Edit extends Component
       }
 
     public function mount($id){
-        $this->departments = Department::all();
+        $this->companies = Company::where('type','!=','admin')->orderBy('name','asc')->get();
+        $this->departments = Department::orderBy('name','asc')->get();
         $this->transporters = Transporter::orderBy('name','asc')->get();
         $this->branches = Branch::orderBy('name','asc')->get();
          $this->grades = Grade::orderBy('grade_code','asc')->get();
@@ -187,7 +193,7 @@ class Edit extends Component
         $this->countries = Country::orderBy('name','asc')->get();
         $this->provinces = Province::orderBy('name','asc')->get();
         $driver = Driver::find($id);
-        $this->currencies = Currency::latest()->get();
+        $this->currencies = Currency::orderBy('name','asc')->get();
         $this->driver = $driver;
         $this->driver_id = $driver->id;
         $employee = Employee::find($driver->employee->id);
@@ -224,12 +230,15 @@ class Edit extends Component
         $this->user_id = $driver->user->id;
         $this->user_id = $employee->user_id;
         $this->license_number = $driver->license_number;
+        $this->driver_number = $driver->driver_number;
         $this->class = $driver->class;
         $this->transporter_id = $driver->transporter_id;
         $this->experience = $driver->experience;
         $this->reference_phonenumber = $driver->reference_phonenumber;
         $this->reference = $driver->reference;
         $this->employee_number = $employee->employee_number;
+        $this->custom_ref = $employee->custom_ref;
+        $this->company_id = $employee->company_id;
         $this->grade_id = $employee->grade_id;
         $this->name = $employee->name ;
         $this->middle_name = $employee->middle_name ;
@@ -343,6 +352,9 @@ class Edit extends Component
           $employee = Employee::find($this->employee_id);
           $employee->user_id = $user->id;
           $employee->name = $this->name;
+          $employee->company_id = $this->company_id;
+          $employee->employee_number = $this->employee_number;
+          $employee->custom_ref = $this->custom_ref;
           $employee->middle_name = $this->middle_name;
           $employee->surname = $this->surname;
           $employee->phonenumber = $this->phonenumber;
@@ -429,6 +441,7 @@ class Edit extends Component
           }
           $driver = Driver::find($this->driver_id);
           $driver->user_id = $user->id;
+          $driver->driver_number = $this->driver_number;
           $driver->transporter_id = $this->transporter_id;
           $driver->employee_id = $employee->id;
           $driver->license_number = $this->license_number;

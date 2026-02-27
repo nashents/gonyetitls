@@ -13,16 +13,35 @@
                         <div class="panel-body">
                             <form wire:submit.prevent="update()" class="p-20" enctype="multipart/form-data">
                                 <h5 class="underline mt-n">Employee Details</h5>
-                                <div class="form-group">
-                                    <label for="exampleInputEmail13">Company<span class="required" style="color: red">*</span></label>
-                                   <select wire:model.debounce.300ms="company_id" class="form-control" required>
-                                       <option value="" selected> Select Company</option>
-                                       @foreach ($companies as $company)
-                                           <option value="{{$company->id}}">{{$company->name}}</option>
-                                       @endforeach
-                                   </select>
-                                   @error('company_id') <span class="text-danger error">{{ $message }}</span>@enderror
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="exampleInputEmail13">Company<span class="required" style="color: red">*</span></label>
+                                            <select wire:model.debounce.300ms="company_id" class="form-control" required>
+                                                <option value="" selected> Select Company</option>
+                                                @foreach ($companies as $company)
+                                                    <option value="{{$company->id}}">{{$company->name}}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('company_id') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                         <div class="form-group">
+                                            <label for="middlename">Employee#<span class="required" style="color: red">*</span></label>
+                                            <input type="text" class="form-control" wire:model.debounce.300ms="employee_number" placeholder="Enter Employee#" {{Auth::user()->is_admin() ? "" : "disabled"}} required>
+                                            @error('employee_number') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                         <div class="form-group">
+                                            <label for="middlename">Custom Reference#</label>
+                                            <input type="text" class="form-control" wire:model.debounce.300ms="custom_ref" placeholder="Enter Custom Reference#" >
+                                            @error('custom_ref') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                    </div>
                                 </div>
+                               
                                 <div class="row">
                                     <div class="col-md-4">
                                         <div class="form-group">

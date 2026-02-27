@@ -68,6 +68,7 @@ class Edit extends Component
     public $user;
     public $user_id;
     public $employee_number;
+    public $custom_ref;
     public $leave_days ;
     public $accrual_rate ;
     public $duration;
@@ -153,6 +154,7 @@ class Edit extends Component
         $this->job_title = $employee->post;
         $this->user_id = $employee->user_id;
         $this->employee_number = $employee->employee_number;
+        $this->custom_ref = $employee->custom_ref;
         $this->name = $employee->name ;
 
         if($employee->bank_account){
@@ -331,6 +333,8 @@ class Edit extends Component
 
           $employee = Employee::find($this->employee_id);
           $employee->company_id = $this->company_id;
+          $employee->employee_number = $this->employee_number;
+          $employee->custom_ref = $this->custom_ref;
           $employee->name = $this->name;
           $employee->middle_name = $this->middle_name;
           $employee->surname = $this->surname;

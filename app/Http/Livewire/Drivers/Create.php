@@ -2,33 +2,34 @@
 
 namespace App\Http\Livewire\Drivers;
 
-use Carbon\Carbon;
-use App\Models\Rank;
-use App\Models\Role;
-use App\Models\User;
-use App\Models\Count;
-use App\Models\Grade;
+use App\Mail\AccountCreationMail;
+use App\Models\BankAccount;
 use App\Models\Branch;
-use App\Models\Driver;
+use App\Models\Company;
+use App\Models\Count;
 use App\Models\Country;
-use Livewire\Component;
 use App\Models\Currency;
+use App\Models\Department;
+use App\Models\DepartmentHead;
 use App\Models\Document;
+use App\Models\Driver;
 use App\Models\Employee;
+use App\Models\EmployeePosition;
+use App\Models\Grade;
 use App\Models\JobTitle;
 use App\Models\Province;
-use App\Models\Department;
-use App\Models\BankAccount;
+use App\Models\Rank;
+use App\Models\Role;
 use App\Models\Transporter;
-use Livewire\WithFileUploads;
-use App\Models\DepartmentHead;
-use App\Models\EmployeePosition;
-use App\Mail\AccountCreationMail;
-use Illuminate\Support\Facades\DB;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
+use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class Create extends Component
 {
@@ -53,6 +54,8 @@ class Create extends Component
 
     public $transporters;
     public $transporter_id;
+    public $companies;
+    public $company_id;
     public $class;
     public $email;
     public $personal_email;
@@ -89,6 +92,7 @@ class Create extends Component
     public $bank_currency_id;
     public $branch_code;
     public $swift_code;
+    public $custom_ref;
 
     public $city;
     public $suburb;
@@ -126,7 +130,7 @@ class Create extends Component
     }
 
     public function mount(){
-
+        $this->companies = Company::where('type','!=','admin')->orderBy('name','asc')->get();
         $this->grades = Grade::orderBy('grade_code','asc')->get();
         $this->departments = Department::orderBy('name','asc')->get();
         $this->transporters = Transporter::orderBy('name','asc')->get();
@@ -177,39 +181,9 @@ class Create extends Component
         }
         return $pin;
     }
-    public function employeeNumber(){
-
-        if (isset(Auth::user()->company)) {
-            $str = Auth::user()->company->name;
-            $words = explode(' ', $str);
-            if (isset($words[1][0])) {
-                $initials = $words[0][0].$words[1][0];
-            }else {
-                $initials = $words[0][0];
-            }
-        }elseif (isset(Auth::user()->employee->company)) {
-            $str = Auth::user()->employee->company->name;
-            $words = explode(' ', $str);
-            if (isset($words[1][0])) {
-                $initials = $words[0][0].$words[1][0];
-            }else {
-                $initials = $words[0][0];
-            }
-        }
-
-            $employee = Employee::orderBy('id', 'desc')->first();
-
-        if (!$employee) {
-            $employee_number =  $initials .'E'. str_pad(1, 5, "0", STR_PAD_LEFT);
-        }else {
-            $number = $employee->id + 1;
-            $employee_number =  $initials .'E'. str_pad($number, 5, "0", STR_PAD_LEFT);
-        }
-
-        return  $employee_number;
 
 
-    }
+    
 
         public function refresh($category){
 
@@ -250,9 +224,28 @@ class Create extends Component
         }
       }
 
-    public function driverNumber(){
 
-        if (isset(Auth::user()->company)) {
+    public function updatedTransporterId($id){
+        $this->transporter_id = $id;
+    }
+    public function updatedCompanyId($id){
+        $this->company_id = $id;
+    }
+
+    public function employeeNumber(){
+
+        if ($this->company_id) {
+            $company = Company::find($this->company_id);
+            $str = $company?->name;
+            $words = explode(' ', $str);
+            if (isset($words[1][0])) {
+                $initials = $words[0][0].$words[1][0];
+            }else {
+                $initials = $words[0][0];
+            }
+
+        }else{
+             if (isset(Auth::user()->company)) {
             $str = Auth::user()->company->name;
             $words = explode(' ', $str);
             if (isset($words[1][0])) {
@@ -268,6 +261,56 @@ class Create extends Component
             }else {
                 $initials = $words[0][0];
             }
+        }
+        }
+       
+
+            $employee = Employee::orderBy('id', 'desc')->first();
+
+        if (!$employee) {
+            $employee_number =  $initials .'E'. str_pad(1, 5, "0", STR_PAD_LEFT);
+        }else {
+            $number = $employee->id + 1;
+            $employee_number =  $initials .'E'. str_pad($number, 5, "0", STR_PAD_LEFT);
+        }
+
+        return  $employee_number;
+
+
+    }
+
+    public function driverNumber(){
+
+
+      if ($this->transporter_id) {
+        
+            $transporter = Transporter::find($this->transporter_id);
+            $str = $transporter?->name;
+            $words = explode(' ', $str);
+            if (isset($words[1][0])) {
+                $initials = $words[0][0].$words[1][0];
+            }else {
+                $initials = $words[0][0];
+            }
+
+        }else{
+             if (isset(Auth::user()->company)) {
+            $str = Auth::user()->company->name;
+            $words = explode(' ', $str);
+            if (isset($words[1][0])) {
+                $initials = $words[0][0].$words[1][0];
+            }else {
+                $initials = $words[0][0];
+            }
+        }elseif (isset(Auth::user()->employee->company)) {
+            $str = Auth::user()->employee->company->name;
+            $words = explode(' ', $str);
+            if (isset($words[1][0])) {
+                $initials = $words[0][0].$words[1][0];
+            }else {
+                $initials = $words[0][0];
+            }
+        }
         }
 
             $driver = Driver::orderBy('id', 'desc')->first();
@@ -329,14 +372,11 @@ class Create extends Component
     Mail::to($this->email)->send(new AccountCreationMail($user, $company,$pin));
 
       $employee = new Employee;
-      if (isset(Auth::user()->company)) {
-        $employee->company_id = Auth::user()->company->id;
-      } else {
-        $employee->company_id = Auth::user()->employee->company->id;
-      }
+      $employee->company_id = $this->company_id;
       $employee->creator_id = Auth::user()->id;
       $employee->user_id = $user->id;
       $employee->employee_number = $this->employeeNumber();
+      $employee->custom_ref = $this->custom_ref;
       $employee->name = $this->name;
       $employee->middle_name = $this->middle_name;
       $employee->surname = $this->surname;

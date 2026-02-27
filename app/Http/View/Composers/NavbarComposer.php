@@ -57,6 +57,7 @@ class NavbarComposer
             'gate_passes'      => GatePass::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
             'waste_collections'=> WasteCollection::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
             'waste_disposals'  => WasteDisposal::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
+            
             'requisitions'     => Requisition::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
             'payrolls'         => Payroll::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
             'loans'            => Loan::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),

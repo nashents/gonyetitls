@@ -70,6 +70,7 @@ class Create extends Component
     public $swift_code;
 
 
+    public $custom_ref;
     public $companies;
     public $company_id;
 
@@ -172,7 +173,18 @@ class Create extends Component
     }
     public function employeeNumber(){
 
-        if (isset(Auth::user()->company)) {
+        if ($this->company_id) {
+            $company = Company::find($this->company_id);
+            $str = $company?->name;
+            $words = explode(' ', $str);
+            if (isset($words[1][0])) {
+                $initials = $words[0][0].$words[1][0];
+            }else {
+                $initials = $words[0][0];
+            }
+
+        }else{
+             if (isset(Auth::user()->company)) {
             $str = Auth::user()->company->name;
             $words = explode(' ', $str);
             if (isset($words[1][0])) {
@@ -189,6 +201,8 @@ class Create extends Component
                 $initials = $words[0][0];
             }
         }
+        }
+       
 
             $employee = Employee::orderBy('id', 'desc')->first();
 
@@ -202,6 +216,9 @@ class Create extends Component
         return  $employee_number;
 
 
+    }
+    public function updatedCompanyId($id){
+        $this->company_id = $id;
     }
 
       public function refresh($category){
@@ -290,6 +307,7 @@ class Create extends Component
           $employee->name = $this->name;
           $employee->middle_name = $this->middle_name;
           $employee->surname = $this->surname;
+          $employee->custom_ref = $this->custom_ref;
           $employee->phonenumber = $this->phonenumber;
           $employee->email = $this->email;
           $employee->grade_id = $this->grade_id;

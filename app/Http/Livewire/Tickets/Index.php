@@ -26,6 +26,7 @@ class Index extends Component
     public $selectPageRows = false;
     protected $paginationTheme = 'bootstrap';
     public $search;
+    
     public bool $overdueOnly = false;
     protected $queryString = ['search', 'overdueOnly' => ['as' => 'overdue', 'except' => false]];
     public $from;

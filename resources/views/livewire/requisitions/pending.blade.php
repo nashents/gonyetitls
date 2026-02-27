@@ -94,7 +94,13 @@
                                     <tbody>
                                         @forelse ($requisitions as $requisition)
                                       <tr>
-                                                          <td>{{ucfirst($requisition->requisition_number)}}</td>
+                                        <td>
+                                            {{$requisition->requisition_number}} <br>
+                                             <small>
+                                                <strong>CreatedBy:</strong> {{ucfirst($requisition->user->name)}} {{ucfirst($requisition->user->surname)}} <br>
+                                                <strong>CreatedOn:</strong> {{$requisition->created_at}}
+                                            </small>
+                                        </td>
                                         <td>{{ucfirst($requisition->user->name)}} {{ucfirst($requisition->user->surname)}}</td>
                                         <td>
                                             {{ucfirst($requisition->employee ? $requisition->employee->name : "")}} {{ucfirst($requisition->employee ? $requisition->employee->surname : "")}}

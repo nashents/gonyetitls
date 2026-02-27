@@ -240,6 +240,8 @@
                                                     }
                                                     if ($key === 'overdue_tickets') {
                                                         $routeParams['overdue'] = 1;
+                                                    }else {
+                                                        $routeParams['notifications'] = 1;
                                                     }
                                                 @endphp
                                                 <li>

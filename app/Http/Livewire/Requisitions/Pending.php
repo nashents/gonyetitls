@@ -21,7 +21,8 @@ class Pending extends Component
 
     protected $paginationTheme = 'bootstrap';
     public $search;
-    protected $queryString = ['search'];
+    public bool $notificationsOnly = false;
+    protected $queryString = ['search', 'notificationsOnly' => ['as' => 'notifications', 'except' => false]];
     public $from;
     public $to;
     public $requisition_filter;
@@ -35,6 +36,8 @@ class Pending extends Component
     public $company;
 
     public function mount(){
+
+        $this->notificationsOnly = request()->boolean('notifications', false);
         $this->company = Auth::user()->employee->company;
         $this->requisition_filter = 'created_at';
         $this->resetPage();
@@ -182,56 +185,50 @@ class Pending extends Component
 
     public function render()
     {
-        if (isset($this->from) && isset($this->to)) {
-            if (isset($this->search)) {
-                return view('livewire.requisitions.pending',[
-                    'requisitions' => Requisition::query()->with('employee','department','trip','currency','payments')->where('authorization','pending')->whereBetween($this->requisition_filter,[$this->from, $this->to] )
-                    ->where('requisition_number','like', '%'.$this->search.'%')
-                    ->orWhere('status','like', '%'.$this->search.'%')
-                    ->orWhere('date','like', '%'.$this->search.'%')
-                    ->orWhereHas('trip', function ($query) {
-                        return $query->where('trip_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('currency', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orderBy('requisition_number','desc')->paginate(10),
-                    'requisition_filter' => $this->requisition_filter,
-                ]);
-            }else {
-                return view('livewire.requisitions.pending',[
-                    'requisitions' => Requisition::query()->with('employee','department','trip','currency','payments')->where('authorization','pending')->whereBetween($this->requisition_filter,[$this->from, $this->to] )->orderBy('requisition_number','desc')->paginate(10),
-                    'requisition_filter' => $this->requisition_filter,
-                ]);
+        $query = Requisition::query()
+        ->with('employee', 'department', 'trip', 'currency', 'payments')
+        ->where('authorization', 'pending');
+        
+        if ($this->notificationsOnly) {
+            $query->whereYear('created_at', now()->year);
+        }else{
+             // 1. Date range / default period
+            if (!empty($this->from) && !empty($this->to)) {
+                // Use the selected column in $this->requisition_filter
+                $query->whereBetween($this->requisition_filter, [$this->from, $this->to]);
+            } else {
+                // Default to current month & year on created_at
+                $query->whereMonth('created_at', now()->month)
+                    ->whereYear('created_at', now()->year);
             }
-           
         }
-        elseif (isset($this->search)) {
-           
-            return view('livewire.requisitions.pending',[
-                'requisitions' => Requisition::query()->with('employee','department','trip','currency','payments')->where('authorization','pending')->whereMonth('created_at', date('m'))
-                ->whereYear('created_at', date('Y'))
-                ->where('requisition_number','like', '%'.$this->search.'%')
-                ->orWhere('status','like', '%'.$this->search.'%')
-                ->orWhere('date','like', '%'.$this->search.'%')
-                ->orWhereHas('trip', function ($query) {
-                    return $query->where('trip_number', 'like', '%'.$this->search.'%');
+       
+
+        // 2. Search block (applied on top of whatever date filter is active)
+        if (!empty($this->search)) {
+            $search = $this->search;
+
+            $query->where(function ($q) use ($search) {
+                $q->where('requisition_number', 'like', "%{$search}%")
+                ->orWhere('status', 'like', "%{$search}%")
+                ->orWhere('date', 'like', "%{$search}%")
+                ->orWhereHas('trip', function ($tripQ) use ($search) {
+                    $tripQ->where('trip_number', 'like', "%{$search}%");
                 })
-                ->orWhereHas('currency', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orderBy('requisition_number','desc')->paginate(10),
-                'requisition_filter' => $this->requisition_filter,
-            ]);
+                ->orWhereHas('currency', function ($currencyQ) use ($search) {
+                    $currencyQ->where('name', 'like', "%{$search}%");
+                });
+            });
         }
-        else {
-           
-            return view('livewire.requisitions.pending',[
-                'requisitions' => Requisition::query()->with('employee','department','trip','currency','payments')->where('authorization','pending')->whereMonth('created_at', date('m'))
-                ->whereYear($this->requisition_filter, date('Y'))->orderBy('requisition_number','desc')->paginate(10),
-                'requisition_filter' => $this->requisition_filter,
-            ]);
-          
-        }
+
+        // 3. Final query
+        $requisitions = $query
+            ->orderBy('requisition_number', 'desc')
+            ->paginate(10);
+
+        return view('livewire.requisitions.pending', [
+            'requisitions'        => $requisitions,
+            'requisition_filter'  => $this->requisition_filter,
+        ]);
     }
 }
