@@ -234,6 +234,18 @@ class Index extends Component
 
     public function destroy(){
         $job_posting = JobPosting::find($this->job_posting_id);
+        $applications = $job_posting->applications;
+        if ($applications) {
+            foreach ($applications as $application) {
+                $recruitment_candidate = $application->recruitment_candidate;
+                $recruitment_candidate->checks()->delete();
+                $recruitment_candidate->decisions()->delete();
+                $recruitment_candidate->qualifications()->delete();
+                $recruitment_candidate->scores()->delete();
+                $recruitment_candidate?->delete();
+                $application?->delete();
+            }
+        }
         $job_posting->delete();
         $this->dispatchBrowserEvent('hide-job_postingDeleteModal');
         $this->resetInputFields();

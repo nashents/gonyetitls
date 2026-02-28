@@ -48,7 +48,7 @@
                                         <li><a href="#" data-toggle="modal"  wire:click="removeShow({{$inspection_service->id}})" ><i class="fa fa-remove color-danger"></i>Remove</a></li>
                                     </ul>
                                 </div>
-                                @include('inspection_services.delete')
+                              
                         </td>
                           </tr>
                            @empty

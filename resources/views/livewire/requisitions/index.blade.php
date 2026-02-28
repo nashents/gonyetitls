@@ -116,10 +116,10 @@
                                              @if ($requisition->requisition_items)
                                              <small>
                                                 @php   
-                                                    $i = 1;
+                                                    $count = 1;
                                                 @endphp
                                                     @foreach ($requisition->requisition_items as $requisition_item)
-                                                    <strong>{{$i++}}) </strong>
+                                                    <strong>{{$count++}}) </strong>
                                                     @if ($requisition_item->expense)
                                                         {{$requisition_item->expense ? $requisition_item->expense->name : ""}} 
                                                     @elseif($requisition_item->allowance)
@@ -657,28 +657,28 @@
                                     <div class="col-md-4">
                                         @if ($requisition_for == "Trip")
                                             @if (isset($expense_id[$value]))
-                                            <div class="form-group">
-                                                <label for="country">Expenses<span class="required" style="color: red">*</span></label>
-                                                <select wire:model.debounce.300ms="expense_id.{{ $value }}" {{in_array($this->requisition_for, ['Trip', 'Purchase']) ? "disabled" : ""}} class="form-control" required >
-                                                    <option value="">Select Expense</option>
-                                                    @foreach ($expenses as $expense)
-                                                    <option value="{{ $expense->id }}">{{ $expense->name }}</option>
-                                                    @endforeach
-                                                </select>
-                                                @error('expense_id.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                            </div>
-                                        @else
-                                            <div class="form-group">
-                                                <label for="country">Allowances<span class="required" style="color: red">*</span></label>
-                                                <select wire:model.debounce.300ms="allowance_id.{{ $value }}" {{in_array($this->requisition_for, ['Trip', 'Purchase']) ? "disabled" : ""}} class="form-control" required >
-                                                    <option value="">Select Allowance</option>
-                                                    @foreach ($allowances as $allowance)
-                                                    <option value="{{ $allowance->id }}">{{ $allowance->name }}</option>
-                                                    @endforeach
-                                                </select>
-                                                @error('allowance_id.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                            </div>
-                                        @endif
+                                                <div class="form-group">
+                                                    <label for="country">Expenses<span class="required" style="color: red">*</span></label>
+                                                    <select wire:model.debounce.300ms="expense_id.{{ $value }}" {{in_array($this->requisition_for, ['Trip', 'Purchase']) ? "disabled" : ""}} class="form-control" required >
+                                                        <option value="">Select Expense</option>
+                                                        @foreach ($expenses as $expense)
+                                                        <option value="{{ $expense->id }}">{{ $expense->name }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                    @error('expense_id.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                </div>
+                                            @else
+                                                <div class="form-group">
+                                                    <label for="country">Allowances<span class="required" style="color: red">*</span></label>
+                                                    <select wire:model.debounce.300ms="allowance_id.{{ $value }}" {{in_array($this->requisition_for, ['Trip', 'Purchase']) ? "disabled" : ""}} class="form-control" required >
+                                                        <option value="">Select Allowance</option>
+                                                        @foreach ($allowances as $allowance)
+                                                        <option value="{{ $allowance->id }}">{{ $allowance->name }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                    @error('allowance_id.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                </div>
+                                            @endif
                                         @else
                                             <div class="form-group">
                                                 <label for="country">Items<span class="required" style="color: red">*</span></label>

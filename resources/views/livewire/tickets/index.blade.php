@@ -252,8 +252,8 @@
                                             <strong>Out: </strong> {{$ticket->booking ? $ticket->booking->workshop_out_date : ""}} {{$ticket->booking ? $ticket->booking->workshop_out_time : ""}} <br>
                                         </td>
                                         <td>
-                                            <strong>Job Type: </strong> {{$ticket->service_type ? $ticket->service_type->name : ""}}  <br>
-                                            {{Str::limit($ticket->booking ? $ticket->booking->description : "",100,'...')}}
+                                            <strong>Job Type: </strong> {{$ticket->service_type ? $ticket->service_type->name : ""}} <br>
+                                            <small><strong>Description: </strong>{{Str::limit($ticket->booking ? $ticket->booking->description : "",100,'...')}}</small>
                                         </td>
                                         <td>{{ optional(\App\Models\Station::find($ticket->booking->station_id))->name ?? $ticket->booking->station }}</td>
                                         <td><span class="badge bg-{{$ticket->status == 1 ? "warning" : "success"}}">{{$ticket->status == 1 ? "Open" : "Closed"}}</span></td>

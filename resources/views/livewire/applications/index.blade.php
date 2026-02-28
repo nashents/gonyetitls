@@ -64,173 +64,197 @@
                                         <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search applications...">
                                     </div>
                                 </div>
-                                <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
-                                    <thead>
-                                        <tr>
-                                        <th class="th-sm" style="width: 15%">Application#
-                                        </th>
-                                        <th class="th-sm" style="width: 20%">Job Title
-                                        </th>
-                                        <th class="th-sm">Candidate
-                                        </th>
-                                        <th class="th-sm">Qualification
-                                        </th>
-                                        <th class="th-sm">Checks
-                                        </th>
-                                        <th class="th-sm">Scores
-                                        </th>
-                                        <th class="th-sm">Decision
-                                        </th>
-                                        <th class="th-sm">Status
-                                        </th>
-                                        <th class="th-sm">Actions
-                                        </th>
-                                      </tr>
-                                    </thead>
-                                    @if (isset($applications))
-                                    <tbody>
-                                        @forelse  ($applications as $application)
-                                            @if ($application->recruitment_candidate)
-                                                @php
-                                                    $candidate = $application->recruitment_candidate;
-                                                @endphp
-                                                <tr>
-                                                    <td>
-                                                        {{$application->application_number}} <br>
-                                                        <small>
-                                                            <strong>AppliedOn: </strong>{{$application->date}} <br>
-                                                            <strong>CreatedBy: </strong>{{ucfirst($application->user ? $application->user->name : "")}} {{ucfirst($application->user ? $application->user->surname : "")}} <br>
-                                                            <strong>CreatedOn: </strong>{{Carbon\Carbon::parse($application->created_at)->format('Y-m-d')}}
-                                                        </small>
-                                                    </td>
-                                                    <td>
-                                                        {{$application?->job_posting?->job_title ? $application?->job_posting?->job_title->title : ""}}
-                                                        <br>
-                                                        <small>
-                                                            <strong>JD: </strong>{{Str::limit($application?->job_posting?->description,100,'...')}}
-                                                        </small>
-                                                    </td>
-                                                    <td>
-                                                        {{$candidate->first_name}} {{$candidate->last_name}} <br>
-                                                        <small>
-                                                            <strong>Phonenumber:</strong> {{$candidate->phone}} <br>
-                                                            <strong>Email:</strong> {{$candidate->email}} <br>
-                                                            <strong>DOB:</strong> {{$candidate->dob}} <br>
-                                                            <strong>ID#:</strong> {{$candidate->national_id}} <br>
-                                                            <strong>License#:</strong> {{$candidate->drivers_license_number}} <br>
-                                                            <strong>Experience:</strong> {{$candidate->years_experience}} <br>
-                                                        </small>
-                                                    </td>
-                                                    <td>
-                                                        <button class="btn btn-success btn-rounded btn-xs" wire:click.prevent="showQualifications({{$candidate->id}})"> <i class="fa fa-plus"></i> Qualifications</button> <br>
-                                                        @php
-                                                            $i = 1;
-                                                        @endphp
-                                                        <small>
-                                                            @foreach ($candidate->qualifications as $qualification)
-                                                                {{$i++}}) {{$qualification->qualification ? $qualification->qualification->name : ""}} 
-                                                                {{$qualification->level}}
-                                                                @if ($qualification->status)
-                                                                    <span class="badge bg-warning">{{$qualification->status}} </span>
-                                                                @endif
-                                                                @if (!$loop->last), <br> @endif
-                                                                @if ($loop->last)
-                                                                    <a href="#"  wire:click.prevent="showEditQualifications({{$candidate->id}})"> <i class="fa fa-edit"></i></a>
-                                                                @endif
-                                                            @endforeach
-                                                        </small>
-                                                        
-                                                    </td>
-                                                    <td>
-                                                        <button class="btn btn-success btn-rounded btn-xs" wire:click.prevent="showChecks({{$candidate->id}})"> <i class="fa fa-plus"></i> Checks</button> <br>
-                                                        @php
-                                                            $i = 1;
-                                                        @endphp
-                                                        <small>
-                                                            @foreach ($candidate->checks as $check)
-                                                                {{$i++}}) {{$check->type}} 
-                                                                @if ($check->result)
-                                                                    <span class="badge bg-warning">{{$check->result}} </span>
-                                                                @endif
-                                                                @if (!$loop->last), <br> @endif
-                                                                @if ($loop->last)
-                                                                    <a href="#"  wire:click.prevent="showEditChecks({{$candidate->id}})"> <i class="fa fa-edit"></i></a>
-                                                                @endif
-                                                            @endforeach
-                                                        </small>
-                                                        
-                                                    </td>
-                                                    <td>
-                                                        <button class="btn btn-success btn-rounded btn-xs" wire:click.prevent="showScores({{$candidate->id}})"> <i class="fa fa-plus"></i> Stages</button> <br>
-                                                        @php
-                                                            $i = 1;
-                                                        @endphp
-                                                        <small>
-                                                            @foreach ($candidate->scores as $score)
-                                                                {{$i++}}) {{$score->stage}} {{$score->criterion}} {{$score->weight}}
-                                                                @if ($score->score_percent)
-                                                                    <span class="badge bg-info">{{$score->score_percent}} % </span>
-                                                                @endif
-                                                                @if (!$loop->last), <br> @endif
-                                                                @if ($loop->last)
-                                                                    <a href="#"  wire:click.prevent="showEditScores({{$candidate->id}})"> <i class="fa fa-edit"></i></a>
-                                                                @endif
-                                                            @endforeach
-                                                        </small>
-                                                        
-                                                    </td>
-                                                    <td>
-                                                        <button class="btn btn-success btn-rounded btn-xs" wire:click.prevent="showDecisions({{$candidate->id}})"> <i class="fa fa-plus"></i> Decision</button> <br>
-                                                        @php
-                                                            $i = 1;
-                                                        @endphp
-                                                        <small>
-                                                            @foreach ($candidate->decisions as $decision)
-                                                                {{$i++}}) {{$decision->stage}} 
-                                                                @if ($decision->decision)
-                                                                    <span class="badge bg-warning">{{$decision->decision}} </span>
-                                                                @endif
-                                                                @if (!$loop->last), <br> @endif
-                                                                @if ($loop->last)
-                                                                    <a href="#"  wire:click.prevent="showEditDecisions({{$candidate->id}})"> <i class="fa fa-edit"></i></a>
-                                                                @endif
-                                                            @endforeach
-                                                        </small>
-                                                        
-                                                    </td>
-                                                    <td>{{$candidate->status}}</td>
-                                                    <td class="w-10 line-height-35 table-dropdown">
-                                                        <div class="dropdown">
-                                                            <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                                <i class="fa fa-bars"></i>
-                                                                <span class="caret"></span>
-                                                            </button>
-                                                            <ul class="dropdown-menu">
-                                                                <li><a href="{{route('applications.show', $application->id)}}"><i class="fa fa-eye color-default"></i>View</a></li>
-                                                                @if ($application->user_id == Auth::user()->id && $application->authorization == "pending")
-                                                                    <li><a href="#" wire:click.prevent="edit({{$application->id}})"><i class="fa fa-edit color-success"></i> Edit</a></li>
-                                                                @endif
-                                                            </ul>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            @endif
-                                        @empty
-                                            <tr>
-                                                <td colspan="11">
-                                                    <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
-                                                        No Applications Found ....
-                                                    </div>
-                                                
-                                                </td>
-                                            </tr> 
-                                        @endforelse
-                                    </tbody>
-                                    @else
-                                        <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
-                                    @endif
+                                <table class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
+    <thead>
+        <tr>
+            <th style="width:12%">Application</th>
+            <th style="width:12%">Job Title</th>
+            <th style="width:14%">Candidate</th>
+            <th>Qualifications</th>
+            <th>Checks</th>
+            <th>Scores</th>
+            <th>Decision</th>
+            <th style="width:8%">Status</th>
+            <th style="width:6%">Actions</th>
+        </tr>
+    </thead>
 
-                                </table>
+    @if (isset($applications))
+    <tbody>
+        @forelse ($applications as $application)
+            @if ($application->recruitment_candidate)
+                @php $candidate = $application->recruitment_candidate; @endphp
+                <tr>
+
+                    {{-- Application --}}
+                    <td>
+                        <strong>{{ $application->application_number }}</strong><br>
+                        <small class="text-muted">
+                            <i class="fa fa-calendar"></i> {{ $application->date }}<br>
+                            <i class="fa fa-user"></i> {{ ucfirst($application->user?->name) }} {{ ucfirst($application->user?->surname) }}<br>
+                            <i class="fa fa-clock-o"></i> {{ Carbon\Carbon::parse($application->created_at)->format('d M Y') }}
+                        </small>
+                    </td>
+
+                    {{-- Job Title --}}
+                    <td>
+                        <strong>{{ $application?->job_posting?->job_title?->title ?? 'N/A' }}</strong>
+                        @if ($application?->job_posting?->description)
+                            <br><small class="text-muted">{{ Str::limit($application->job_posting->description, 60, '...') }}</small>
+                        @endif
+                    </td>
+
+                    {{-- Candidate --}}
+                    <td>
+                        <strong>{{ $candidate->first_name }} {{ $candidate->last_name }}</strong><br>
+                        <small class="text-muted">
+                            <i class="fa fa-phone"></i> {{ $candidate->phone }}<br>
+                            <i class="fa fa-envelope"></i> {{ $candidate->email }}<br>
+                            <i class="fa fa-birthday-cake"></i> {{ $candidate->dob?->format('d M Y') }}<br>
+                            <i class="fa fa-id-card"></i> {{ $candidate->national_id }}<br>
+                            <i class="fa fa-car"></i> {{ $candidate->drivers_license_number ?? 'N/A' }}<br>
+                            <i class="fa fa-briefcase"></i> {{ $candidate->years_experience }} yr(s)
+                        </small>
+                    </td>
+
+                    {{-- Qualifications --}}
+                    <td>
+                        <button class="btn btn-success btn-rounded btn-xs mb-1" wire:click.prevent="showQualifications({{ $candidate->id }})">
+                            <i class="fa fa-plus"></i> Add
+                        </button><br>
+                        <small>
+                            @forelse ($candidate->qualifications as $qualification)
+                                {{ $loop->iteration }}) {{ $qualification->qualification?->name }} {{ $qualification->level }}
+                                @if ($qualification->status)
+                                    <span class="badge bg-warning">{{ $qualification->status }}</span>
+                                @endif
+                                @if ($loop->last)
+                                    &nbsp;<a href="#" wire:click.prevent="showEditQualifications({{ $candidate->id }})"><i class="fa fa-edit"></i></a>
+                                @else
+                                    <br>
+                                @endif
+                            @empty
+                                <span class="text-muted">None added</span>
+                            @endforelse
+                        </small>
+                    </td>
+
+                    {{-- Checks --}}
+                    <td>
+                        <button class="btn btn-success btn-rounded btn-xs mb-1" wire:click.prevent="showChecks({{ $candidate->id }})">
+                            <i class="fa fa-plus"></i> Add
+                        </button><br>
+                        <small>
+                            @forelse ($candidate->checks as $check)
+                                {{ $loop->iteration }}) {{ $check->type }}
+                                @if ($check->result)
+                                    <span class="badge bg-warning">{{ $check->result }}</span>
+                                @endif
+                                @if ($loop->last)
+                                    &nbsp;<a href="#" wire:click.prevent="showEditChecks({{ $candidate->id }})"><i class="fa fa-edit"></i></a>
+                                @else
+                                    <br>
+                                @endif
+                            @empty
+                                <span class="text-muted">None added</span>
+                            @endforelse
+                        </small>
+                    </td>
+
+                    {{-- Scores --}}
+                    <td>
+                        <button class="btn btn-success btn-rounded btn-xs mb-1" wire:click.prevent="showScores({{ $candidate->id }})">
+                            <i class="fa fa-plus"></i> Add
+                        </button><br>
+                        <small>
+                            @forelse ($candidate->scores as $score)
+                                {{ $loop->iteration }}) {{ $score->stage }} &mdash; {{ $score->criterion }}
+                                @if ($score->score_percent)
+                                    <span class="badge bg-info">{{ $score->score_percent }}%</span>
+                                @endif
+                                @if ($loop->last)
+                                    &nbsp;<a href="#" wire:click.prevent="showEditScores({{ $candidate->id }})"><i class="fa fa-edit"></i></a>
+                                @else
+                                    <br>
+                                @endif
+                            @empty
+                                <span class="text-muted">None added</span>
+                            @endforelse
+                        </small>
+                    </td>
+
+                    {{-- Decision --}}
+                    <td>
+                        <button class="btn btn-success btn-rounded btn-xs mb-1" wire:click.prevent="showDecisions({{ $candidate->id }})">
+                            <i class="fa fa-plus"></i> Add
+                        </button><br>
+                        <small>
+                            @forelse ($candidate->decisions as $decision)
+                                {{ $loop->iteration }}) {{ $decision->stage }}
+                                @if ($decision->decision)
+                                    <span class="badge bg-warning">{{ $decision->decision }}</span>
+                                @endif
+                                @if ($loop->last)
+                                    &nbsp;<a href="#" wire:click.prevent="showEditDecisions({{ $candidate->id }})"><i class="fa fa-edit"></i></a>
+                                @else
+                                    <br>
+                                @endif
+                            @empty
+                                <span class="text-muted">None added</span>
+                            @endforelse
+                        </small>
+                    </td>
+
+                    {{-- Status --}}
+                    <td class="text-center">
+                        <span class="badge bg-{{ match($candidate->status) {
+                            'Applied'    => 'primary',
+                            'Engaged'    => 'info',
+                            'Declined'   => 'danger',
+                            'Contracted' => 'warning',
+                            'Hired'      => 'success',
+                            default      => 'dark'
+                        } }}">
+                            {{ $candidate->status }}
+                        </span>
+                    </td>
+
+                    {{-- Actions --}}
+                    <td class="text-center">
+                        <div class="dropdown">
+                            <button class="btn btn-default btn-xs dropdown-toggle" type="button" data-toggle="dropdown">
+                                <i class="fa fa-bars"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-right">
+                                <li><a href="{{ route('applications.show', $application->id) }}"><i class="fa fa-eye color-default"></i> View</a></li>
+                                <li><a href="#" wire:click="edit({{ $application->id }})"><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                <li role="separator" class="divider"></li>
+                                <li><a href="#" wire:click="delete({{ $application->id }})"><i class="fa fa-trash color-danger"></i> Delete</a></li>
+                            </ul>
+                        </div>
+                    </td>
+
+                </tr>
+            @endif
+        @empty
+            <tr>
+                <td colspan="9" class="text-center text-muted" style="padding: 30px 0;">
+                    <i class="fa fa-folder-open-o" style="font-size:24px; display:block; margin-bottom:8px;"></i>
+                    No applications found.
+                </td>
+            </tr>
+        @endforelse
+    </tbody>
+    @else
+        <tbody>
+            <tr>
+                <td colspan="9" class="text-center" style="padding:40px 0;">
+                    <img src="{{ asset('images/nodata.png') }}" alt="No data" style="max-width:200px;">
+                </td>
+            </tr>
+        </tbody>
+    @endif
+</table>
 
                                 <nav class="text-center" style="float: right">
                                     <ul class="pagination rounded-corners">
@@ -1462,7 +1486,7 @@
                                    <select class="form-control" wire:model.debounce.300ms="job_posting_id" required>
                                         <option value="">Select Job Posting</option>
                                         @foreach ($job_postings as $job_posting)
-                                            <option value="{{$job_posting->id}}">{{$job_posting->job_title ? $job_posting->job_title->title : ""}}</option>
+                                            <option value="{{$job_posting->id}}">{{$job_posting->job_title ? $job_posting->job_title->title : ""}} Due: {{$job_posting->due_date}} Start: {{$job_posting->start_date}}</option>
                                         @endforeach
                                    </select>
                                     @error('job_posting_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -1473,15 +1497,15 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="name">Name</label>
-                                    <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Applicant Name">
+                                    <label for="name">Name<span class="required" style="color: red">*</span></label>
+                                    <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Applicant Name" required>
                                     @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="name">Surname</label>
-                                    <input type="text" class="form-control" wire:model.debounce.300ms="surname" placeholder="Enter Applicant Surname">
+                                    <label for="name">Surname<span class="required" style="color: red">*</span></label>
+                                    <input type="text" class="form-control" wire:model.debounce.300ms="surname" placeholder="Enter Applicant Surname" required>
                                     @error('surname') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
@@ -1497,8 +1521,8 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="name">Phonenumber</label>
-                                    <input type="text" class="form-control" wire:model.debounce.300ms="phonenumber" placeholder="Enter Phonenumber">
+                                    <label for="name">Phonenumber<span class="required" style="color: red">*</span></label>
+                                    <input type="text" class="form-control" wire:model.debounce.300ms="phonenumber" placeholder="Enter Phonenumber" required>
                                     @error('phonenumber') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
@@ -1527,8 +1551,8 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="name">DOB</label>
-                                    <input type="date" class="form-control" wire:model.debounce.300ms="dob" placeholder="Enter DOB">
+                                    <label for="name">DOB<span class="required" style="color: red">*</span></label>
+                                    <input type="date" class="form-control" wire:model.debounce.300ms="dob" placeholder="Enter DOB" required>
                                     @error('dob') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
@@ -1537,8 +1561,8 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="name">ID#</label>
-                                    <input type="text" class="form-control" wire:model.debounce.300ms="idnumber" placeholder="Enter ID#">
+                                    <label for="name">ID#<span class="required" style="color: red">*</span></label>
+                                    <input type="text" class="form-control" wire:model.debounce.300ms="idnumber" placeholder="Enter ID#" required>
                                     @error('idnumber') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
@@ -1550,18 +1574,18 @@
                                 </div>
                             </div>
                         </div> 
-                        <div class="row">
-                            <div class="col-md-6">
+                          <div class="row">
+                            <div class="col-md-2">
                                 <div class="form-group">
-                                    <label for="name">Year of experience</label>
-                                    <input type="number" step="any" class="form-control" wire:model.debounce.300ms="years_experience" placeholder="Enter years of experience">
+                                    <label for="name">Experience<span class="required" style="color: red">*</span></label>
+                                    <input type="number" step="any" class="form-control" wire:model.debounce.300ms="years_experience" placeholder="Enter years of experience" required>
                                     @error('years_experience') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-3">
                                <div class="form-group">
-                                    <label for="name">Source</label>
-                                    <select class="form-control" wire:model.debounce.300ms="source">
+                                    <label for="name">Source<span class="required" style="color: red">*</span></label>
+                                    <select class="form-control" wire:model.debounce.300ms="source" required>
                                         <option value="">Select Option</option>
                                         <option value="Walk In">Walk In</option>
                                         <option value="Referral">Referral</option>
@@ -1569,17 +1593,13 @@
                                     @error('source') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
-                        </div> 
-                          <h5 class="underline mt-10">Recruitment Details</h5>
-                        <div class="row">
-                            <div class="col-md-4">
+                            
+                            <div class="col-md-3">
                                 <div class="form-group">
-                                    <label for="name">Application Status</label>
-                                    <select class="form-control" wire:model.debounce.300ms="status">
+                                    <label for="name">Application Status<span class="required" style="color: red">*</span></label>
+                                    <select class="form-control" wire:model.debounce.300ms="status" required>
                                         <option value="">Select Option</option>
                                         <option value="Applied">Applied</option>
-                                        <option value="Screened">Screened</option>
-                                        <option value="Road Test">Road Test</option>
                                         <option value="Engaged">Engaged</option>
                                         <option value="Declined">Declined</option>
                                         <option value="Contracted">Contracted</option>
@@ -1590,36 +1610,14 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label for="name">Screening Impression</label>
-                                   <select class="form-control" wire:model.debounce.300ms="screening_impression">
-                                        <option value="">Select Option</option>
-                                        <option value="Impressed">Impressed</option>
-                                        <option value="Unimpressed">Unimpressed</option>
-                                   </select>
-                                    @error('screening_impression') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    <label for="name">Notes</label>
+                                    <textarea class="form-control" wire:model.debounce.300ms="notes" cols="30" rows="2"></textarea>
+                                    @error('notes') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="name">Next Step</label>
-                                   <select class="form-control" wire:model.debounce.300ms="next_step">
-                                        <option value="">Select Option</option>
-                                        <option value="Road Test">Road Test</option>
-                                        <option value="Decline">Decline</option>
-                                        <option value="Engage">Engage</option>
-                                   </select>
-                                    @error('next_step') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                </div>
-                            </div>
-                
                         </div> 
-                        <div class="form-group">
-                            <label for="name">Notes</label>
-                            <textarea class="form-control" wire:model.debounce.300ms="notes" cols="30" rows="2"></textarea>
-                            @error('notes') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                        </div>
+                     
                     </div>
-
 
                     <div class="modal-footer">
                         <div class="btn-group" role="group">
@@ -1632,7 +1630,188 @@
             </div>
         </div>
     </div>
- 
+ <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="applicationEditModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+        <div class="modal-dialog mw-100 w-70" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-edit"></i> Edit Application <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                </div>
+                <form wire:submit.prevent="update()" >
+                    <div class="modal-body">
+                            <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="name">Application Date<span class="required" style="color: red">*</span></label>
+                                    <input type="date" class="form-control" wire:model.debounce.300ms="date" placeholder="Enter Date" required>
+                                    @error('date') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="name">Job Postings<span class="required" style="color: red">*</span></label>
+                                   <select class="form-control" wire:model.debounce.300ms="job_posting_id" required>
+                                        <option value="">Select Job Posting</option>
+                                        @foreach ($job_postings as $job_posting)
+                                            <option value="{{$job_posting->id}}">{{$job_posting->job_title ? $job_posting->job_title->title : ""}}</option>
+                                        @endforeach
+                                   </select>
+                                    @error('job_posting_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                        </div>   
+                        <h5 class="underline mt-10">Applicant Details</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="name">Name<span class="required" style="color: red">*</span></label>
+                                    <input type="text" class="form-control" wire:model.debounce.300ms="name" placeholder="Enter Applicant Name" required>
+                                    @error('name') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="name">Surname<span class="required" style="color: red">*</span></label>
+                                    <input type="text" class="form-control" wire:model.debounce.300ms="surname" placeholder="Enter Applicant Surname" required>
+                                    @error('surname') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                
+                        </div> 
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="name">Email</label>
+                                    <input type="email" class="form-control" wire:model.debounce.300ms="email" placeholder="Enter Email">
+                                    @error('email') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="name">Phonenumber<span class="required" style="color: red">*</span></label>
+                                    <input type="text" class="form-control" wire:model.debounce.300ms="phonenumber" placeholder="Enter Phonenumber" required>
+                                    @error('phonenumber') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                
+                        </div> 
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="gender">Gender<span class="required" style="color: red">*</span></label>
+                                        <div class="col-sm-10">
+                                        <div class="radio">
+                                            <label>
+                                            <input type="radio" wire:model.debounce.300ms="gender" id="optionsRadios1" value="Male" required >
+                                            Male
+                                            </label>
+                                        </div>
+                                        <div class="radio">
+                                            <label>
+                                            <input type="radio"  wire:model.debounce.300ms="gender" id="optionsRadios2" value="Female" required>
+                                            Female
+                                            </label>
+                                        </div>
+                                    </div>
+                                    @error('gender') <span class="text-danger error">{{ $message }}</span>@enderror
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="name">DOB<span class="required" style="color: red">*</span></label>
+                                    <input type="date" class="form-control" wire:model.debounce.300ms="dob" placeholder="Enter DOB" required>
+                                    @error('dob') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                
+                        </div> 
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="name">ID#<span class="required" style="color: red">*</span></label>
+                                    <input type="text" class="form-control" wire:model.debounce.300ms="idnumber" placeholder="Enter ID#" required>
+                                    @error('idnumber') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="name">License#</label>
+                                    <input type="text" class="form-control" wire:model.debounce.300ms="license_number" placeholder="Enter License#">
+                                    @error('license_number') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                        </div> 
+                          <div class="row">
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label for="name">Experience<span class="required" style="color: red">*</span></label>
+                                    <input type="number" step="any" class="form-control" wire:model.debounce.300ms="years_experience" placeholder="Enter years of experience" required>
+                                    @error('years_experience') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                               <div class="form-group">
+                                    <label for="name">Source<span class="required" style="color: red">*</span></label>
+                                    <select class="form-control" wire:model.debounce.300ms="source" required>
+                                        <option value="">Select Option</option>
+                                        <option value="Walk In">Walk In</option>
+                                        <option value="Referral">Referral</option>
+                                    </select>
+                                    @error('source') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="name">Application Status<span class="required" style="color: red">*</span></label>
+                                    <select class="form-control" wire:model.debounce.300ms="status" required>
+                                        <option value="">Select Option</option>
+                                        <option value="Applied">Applied</option>
+                                        <option value="Engaged">Engaged</option>
+                                        <option value="Declined">Declined</option>
+                                        <option value="Contracted">Contracted</option>
+                                        <option value="Hired">Hired</option>
+                                    </select>
+                                    @error('status') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="name">Notes</label>
+                                    <textarea class="form-control" wire:model.debounce.300ms="notes" cols="30" rows="2"></textarea>
+                                    @error('notes') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                        </div> 
+                    </div>
+                    <div class="modal-footer">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-gray btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                            <button type="submit" class="btn bg-success btn-wide btn-rounded"><i class="fa fa-refresh"></i>Update</button>
+                        </div>
+                        <!-- /.btn-group -->
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+  <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal fade" id="deleteModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content bg-danger">
+                <div class="modal-body">
+                   <center> <strong>Are you sure you want to delete Application</strong> </center>
+                </div>
+                <form wire:submit.prevent="destroy()" >
+                <div class="modal-footer no-border">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn bg-white btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                        <button type="submit" class="btn bg-black btn-wide btn-rounded" ><i class="fa fa-trash"></i>Remove</button>
+                    </div>
+                    <!-- /.btn-group -->
+                </div>
+            </form>
+            </div>
+        </div>
+    </div>
 
 
     </div>

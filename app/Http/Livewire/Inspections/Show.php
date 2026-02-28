@@ -34,32 +34,11 @@ class Show extends Component
     public $status = [];
     public $inputs = [];
 
+
     public function mount($id){
         $this->inspection = Inspection::find($id);
-        $horse = $this->inspection->horse;
-        $vehicle = $this->inspection->vehicle;
-        $trailer = $this->inspection->trailer;
-        if (isset($horse)) {
-            $this->service_type = $this->inspection->service_type;
-            if (isset( $this->service_type)) {
-                $this->inspection_services = $this->service_type->inspection_services->where('category','Horse');
-            }
-            
-        }elseif (isset($vehicle)) {
-            $this->service_type = $this->inspection->service_type;
-            if ($this->service_type) {
-                $this->inspection_services = $this->service_type->inspection_services->where('category','Vehicle');
-            }
-           
-        }elseif (isset($trailer)) {
-            $this->service_type = $this->inspection->service_type;
-            if (isset( $this->service_type)) {
-                $this->inspection_services = $this->service_type->inspection_services->where('category','Trailer');
-            }
-           
-        }
-        
-       
+        $this->service_type = $this->inspection->service_type;
+        $this->inspection_services = $this->service_type->inspection_services;
         $this->inspection_groups = InspectionGroup::latest()->get();
     }
 

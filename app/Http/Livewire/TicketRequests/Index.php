@@ -40,9 +40,9 @@ class Index extends Component
  
     public function mount($ticket){
         $this->ticket = $ticket;
-        $this->products = Product::whereIn('department',['inventory','tyre'])->orderBy('name','asc')->get();
         $this->measurements = Measurement::orderBy('name','asc')->get();
         $this->reset(['search_products']);
+         $this->loadProducts();
         $this->user = Auth::user();
         $this->employee = $this->user->employee;
         $this->employees = $this->ticket->booking->employees;
@@ -55,15 +55,18 @@ class Index extends Component
         $this->validateOnly($value);
     }
     protected $rules = [
-        'selectedProduct' => 'required',
+    
         'qty' => 'required',
         'measurement' => 'required',
     ];
 
     private function resetInputFields(){
-        $this->selectedProduct = '';
-        $this->measurement = '';
-        $this->qty = '';
+        $this->selectedProduct = Null;
+        $this->measurement = Null;
+        $this->qty = Null;
+        $this->product_name = Null;
+        $this->reset(['search_products']);
+        $this->loadProducts();
     }
 
 
@@ -84,7 +87,7 @@ class Index extends Component
             $ticket_request->product_id =  $this->selectedProduct;
             $ticket_request->save();
 
-            $this->reset(['search_products']);
+            
             
         $this->dispatchBrowserEvent('hide-ticket_requestModal');
         $this->resetInputFields();
@@ -106,6 +109,7 @@ class Index extends Component
         $this->vehicle_id = $ticket_request->vehicle_id;
         $this->qty = $ticket_request->qty;
         $this->measurement = $ticket_request->measurement;
+        $this->product_name = $ticket_request->product_name;
         $this->ticket_request_id = $ticket_request->id;
         $this->dispatchBrowserEvent('show-ticket_requestEditModal');
     }
@@ -123,8 +127,6 @@ class Index extends Component
         $ticket_request->product_id =  $this->selectedProduct;
         $ticket_request->update();
 
-        $this->reset(['search_products']);
-
         $this->dispatchBrowserEvent('hide-ticket_requestEditModal');
         $this->resetInputFields();
         $this->dispatchBrowserEvent('alert',[
@@ -134,21 +136,25 @@ class Index extends Component
         
     }
 
+    private function loadProducts(){
+        $this->products = Product::whereIn('department',['inventory','tyre'])->orderBy('name','asc')->get();
+    }
+
+    public function updatedSearchProducts($value){
+        $this->products = Product::query()->with('brand')
+                        ->whereIn('department',['inventory','tyre'])
+                            ->where('product_number', 'like', '%'.$value.'%')
+                            ->orWhere('identification_number', 'like', '%'.$value.'%')
+                            ->orWhere('name', 'like', '%'.$value.'%')
+                            ->orWhereHas('brand', function ($query) use($value) {
+                            return $query->where('name', 'like', '%'.$value.'%');
+                            })->get();
+    }
+
  
     public function render()
     {
-        if (filled($this->search_products)) {
-            $this->products = Product::query()->with('brand')
-                                    ->whereIn('department',['inventory','tyre'])
-                                     ->where('product_number', 'like', '%'.$this->search_products.'%')
-                                     ->orWhere('identification_number', 'like', '%'.$this->search_products.'%')
-                                     ->orWhere('name', 'like', '%'.$this->search_products.'%')
-                                     ->orWhereHas('brand', function ($query) {
-                                        return $query->where('name', 'like', '%'.$this->search_products.'%');
-                                     })->get();
-            
-        }
-     
+        
         $this->ticket_requests = TicketRequest::where('ticket_id', $this->ticket->id)->latest()->paginate(10);
         return view('livewire.ticket-requests.index',[
             'ticket_requests' => $this->ticket_requests,

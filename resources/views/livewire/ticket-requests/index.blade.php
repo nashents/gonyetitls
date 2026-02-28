@@ -161,7 +161,8 @@
                                 </div>
                                 <form wire:submit.prevent="update()" >
                                     <div class="modal-body">
-                                        <div class="col-md-5">
+                                        <div class="row">
+                                             <div class="col-md-5">
                                             <div class="form-group">
                                                 <label for="products">Products<span class="required" style="color: red">*</span></label>
                                                 <input type="text" wire:model.debounce.300ms="search_products" placeholder="Search products..." class="form-control" >
@@ -206,6 +207,8 @@
                                                 @error('measurement') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         </div>
+                                        </div>
+                                       
                                     </div>
                                     <div class="modal-footer">
                                         <div class="btn-group" role="group">

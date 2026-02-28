@@ -284,6 +284,13 @@ class Create extends Component
 
     }
 
+    public function updatedSerialNumber($value, $key)
+    {
+        if (filled($value)) {
+            $this->qty[$key] = 1;
+        }
+    }
+
     public function inventoryNumber(){
        
         if (isset(Auth::user()->company)) {

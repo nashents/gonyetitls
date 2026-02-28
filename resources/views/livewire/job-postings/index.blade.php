@@ -93,7 +93,7 @@
                                                 @endif
                                             </ul>
                                         </div>
-                                        @include('job_postings.delete')
+                                      
                                 </td>
                                   </tr>
                                 @empty

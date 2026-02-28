@@ -211,33 +211,30 @@
                                     @error('measurement') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
-                          
                         </div>
         
                         <div class="row">
                             <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="name">Serial#</label>
-                                    <input type="text" class="form-control" wire:model.debounce.300ms="serial_number" placeholder="Serial#/UniqueID"/>
+                                    <input type="text" class="form-control"
+                                        wire:model.debounce.300ms="serial_number"
+                                        @if((int)$qty > 1) disabled @endif
+                                        placeholder="Serial#/UniqueID" />
                                     @error('serial_number') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
+                            </div>
+
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label for="name">Qty <span class="required" style="color: red">*</span></label>
+                                    <input type="number" step="any" min="1" class="form-control"
+                                        wire:model.debounce.300ms="qty"
+                                        @if(filled($serial_number)) disabled @endif
+                                        required />
+                                    @error('qty') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
-                                <div class="col-md-2">
-                                    @if (filled($serial_number))
-                                    <div class="form-group">
-                                        <label for="name">Qty<span class="required" style="color: red">*</span></label>
-                                        <input type="number" step="any" min="1" class="form-control" wire:model.debounce.300ms="qty"  disabled required/>
-                                        @error('qty') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                    </div>
-                                    @else
-                                    <div class="form-group">
-                                        <label for="name">Qty<span class="required" style="color: red">*</span></label>
-                                        <input type="number" step="any" min="1" class="form-control" wire:model.debounce.300ms="qty"  required/>
-                                        @error('qty') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                    </div>
-                                    @endif
-                                   
-                                </div>
+                            </div>
                                 <div class="col-md-2">
                                     <div class="form-group">
                                         <label for="name">Rate</label>

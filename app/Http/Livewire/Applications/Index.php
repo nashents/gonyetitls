@@ -50,9 +50,9 @@ class Index extends Component
     public $dob;
     public $idnumber;
     public $license_number;
-    public $years_experience;
+    public $years_experience = 0;
     public $source;
-    public $status;
+    public $status = "Applied";
     public $screening_impression;
     public $next_step;
     public $job_postings;
@@ -980,9 +980,7 @@ class Index extends Component
         $recruitment_candidate->national_id = $this->idnumber;
         $recruitment_candidate->drivers_license_number = $this->license_number;
         $recruitment_candidate->years_experience = $this->years_experience;
-        $recruitment_candidate->next_step = $this->next_step;
         $recruitment_candidate->status = $this->status;
-        $recruitment_candidate->screening_impression = $this->screening_impression;
         $recruitment_candidate->notes = $this->notes;
         $recruitment_candidate->save();
         
@@ -1000,9 +998,23 @@ class Index extends Component
     public function edit($id){
     
         $application = Application::find($id);
-     
+        $candidate = $application?->recruitment_candidate;
         $this->date = $application->date;
         $this->application_id = $application->id;
+        $this->job_posting_id = $application->job_posting_id;
+        $this->notes = $application->notes;
+        $this->name = $candidate->first_name;
+        $this->surname = $candidate->last_name;
+        $this->idnumber = $candidate->national_id;
+        $this->license_number = $candidate->drivers_license_number;
+        $this->years_experience = $candidate->years_experience;
+        $this->phonenumber = $candidate->phone;
+        $this->email = $candidate->email;
+        $this->dob = $candidate->dob->format('Y-m-d');
+        $this->gender = $candidate->gender;
+        $this->source = $candidate->source;
+        $this->status = $candidate->status;
+
        
 
           $this->dispatchBrowserEvent('show-applicationEditModal');
@@ -1016,19 +1028,61 @@ class Index extends Component
 
         $application = Application::find($this->application_id);
         $application->date = $this->date;
-        $application->job_posting_id = $this->selectedjob_posting;
-        $application->update();
+        $application->notes = $this->notes;
+        $application->job_posting_id = $this->job_posting_id;
+        $application->save();
 
-        
+        $recruitment_candidate =  RecruitmentCandidate::where('application_id', $application->id)->first();
+        if($recruitment_candidate){
+            $recruitment_candidate->application_id = $application->id;
+            $recruitment_candidate->applied_at = $this->date;
+            $recruitment_candidate->first_name = $this->name;
+            $recruitment_candidate->last_name = $this->surname;
+            $recruitment_candidate->gender = $this->gender;
+            $age = $age = Carbon::parse($this->dob)->age;
+            $recruitment_candidate->dob = $this->dob;
+            $recruitment_candidate->age = $age;
+            $recruitment_candidate->email = $this->email;
+            $recruitment_candidate->phone = $this->phonenumber;
+            $recruitment_candidate->source = $this->source;
+            $recruitment_candidate->national_id = $this->idnumber;
+            $recruitment_candidate->drivers_license_number = $this->license_number;
+            $recruitment_candidate->years_experience = $this->years_experience;
+            $recruitment_candidate->status = $this->status;
+            $recruitment_candidate->notes = $this->notes;
+            $recruitment_candidate->update();
+        }
 
         $this->dispatchBrowserEvent('hide-applicationEditModal');
         $this->resetInputFields();
         $this->dispatchBrowserEvent('alert',[
             'type'=>'success',
-            'message'=>"application Register Update Successfully!!"
+            'message'=>"Application Register Update Successfully!!"
         ]);
         
         });
+    }
+
+    public function delete($id){
+        $this->application_id = $id;
+        $this->dispatchBrowserEvent('show-deleteModal');
+    }
+
+    public function destroy(){
+        $application = Application::find($this->application_id);
+        $recruitment_candidate = $application?->recruitment_candidate;
+        $recruitment_candidate?->checks()->delete();
+        $recruitment_candidate?->decisions()->delete();
+        $recruitment_candidate?->qualifications()->delete();
+        $recruitment_candidate?->scores()->delete();
+        $recruitment_candidate?->delete();
+        $application?->delete();
+        $this->dispatchBrowserEvent('hide-deleteModal');
+        $this->resetInputFields();
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Application Deleted Successfully!!"
+        ]);
     }
 
 

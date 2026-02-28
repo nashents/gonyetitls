@@ -24,6 +24,7 @@ class Show extends Component
     public $checklist_sub_categories;
     public $checklist_sub_category_id;
     private $category_checklists;
+    public $category_checklist;
     public $category_checklist_id;
     public $checklist_category;
     public $checklist_category_id;
@@ -81,6 +82,25 @@ class Show extends Component
         $this->checklist_sub_categories = ChecklistSubCategory::orderBy('name','asc')->get();
         $this->checklist_items = ChecklistItem::orderBy('name','asc')->get();
         
+    }
+
+      public function removeShow($id){
+        $this->category_checklist_id = $id;
+        $this->category_checklist = CategoryChecklist::find($id);
+        $this->dispatchBrowserEvent('show-removeModal');
+    }
+
+    public function removeItem(){
+         
+        $category_checklist = CategoryChecklist::find($this->category_checklist_id);
+        $category_checklist->delete();
+        $this->resetInputFields();
+        $this->dispatchBrowserEvent('hide-removeModal');
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Item Removed Successfully!!"
+        ]);
+       
     }
 
     public function store(){

@@ -123,7 +123,6 @@ class Index extends Component
     public $buy = True;
     public $item_key;
 
-  
 
     public $inputs = [];
     public $i = 1;

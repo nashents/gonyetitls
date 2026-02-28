@@ -502,6 +502,20 @@ class Edit extends Component
         }
     }
 
+    public function updatedSerialNumber($value)
+    {
+        if (filled($value)) {
+            $this->qty = 1;
+        }
+    }
+
+    public function updatedQty($value)
+    {
+        if ((int)$value > 1) {
+            $this->serial_number = null; // clear it if qty goes above 1
+        }
+    }
+
 
     public function update(){
 

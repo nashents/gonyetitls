@@ -42,10 +42,10 @@
                                     </button>
                                     <ul class="dropdown-menu">
                                         <li><a href="#"  wire:click="edit({{$category_checklist->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
-                                        <li><a href="#" data-toggle="modal" data-target="#category_checklistDeleteModal{{ $category_checklist->id }}" ><i class="fa fa-remove color-danger"></i>Remove</a></li>
+                                         <li><a href="#" data-toggle="modal"  wire:click="removeShow({{$category_checklist->id}})" ><i class="fa fa-remove color-danger"></i>Remove</a></li>
                                     </ul>
                                 </div>
-                                @include('category_checklists.delete')
+                               
                         </td>
                           </tr>
                             @empty
@@ -84,6 +84,25 @@
         </div>
         <!-- /.col-md-9 -->
     </div>
+
+    <div data-backdrop="static" data-keyboard="false" class="modal fade" id="removeModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content bg-danger">
+            <div class="modal-body">
+               <center> <strong>Are you sure you want to remove this Item from {{ $category_checklist?->checklist_category ? $category_checklist?->checklist_category->name : ""}} Checklist?</strong> </center> 
+            </div>
+            <form wire:submit.prevent="removeItem()" >
+            <div class="modal-footer no-border">
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn bg-white btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                    <button type="submit" class="btn bg-black btn-wide btn-rounded" ><i class="fa fa-trash"></i>Delete</button>
+                </div>
+                <!-- /.btn-group -->
+            </div>
+        </form>
+        </div>
+    </div>
+</div>
 
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="category_checklistModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
         <div class="modal-dialog mw-100 w-50" role="transporter">

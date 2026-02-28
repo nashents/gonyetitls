@@ -22,5 +22,8 @@ class JobPosting extends Model
     public function grade(){
         return $this->belongsTo('App\Models\Grade');
     }
+    public function applications(){
+        return $this->hasMany('App\Models\Application');
+    }
 
 }
