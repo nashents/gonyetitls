@@ -125,8 +125,8 @@ class NavbarComposer
         $license = null;
 
         if ($employee && optional($employee->company)->exists) {
-            $expiresRaw  = $employee->company->expiry_date;
-            $expiry_date = $expiresRaw ? Carbon::parse($expiresRaw) : Carbon::now()->endOfMonth();
+          
+            $expiry_date = Carbon::now()->endOfMonth();
 
             // signed diff (negative => already expired)
             $diff = Carbon::today()->diffInDays($expiry_date, false);

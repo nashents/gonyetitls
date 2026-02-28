@@ -24,7 +24,7 @@ class Index extends Component
     use WithPagination;
     protected $paginationTheme = 'bootstrap';
     public $search;
-  
+
     private $reminders;
     public $type;
     public $name;

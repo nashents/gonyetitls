@@ -60,7 +60,7 @@
                                   <tr>
                                     <td colspan="8">
                                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
-                                            No Copy List Found ....
+                                            No Email Copies Found ....
                                         </div>
                                        
                                     </td>
@@ -92,15 +92,15 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title" id="modal4Label"><i class="fa fa-plus"></i> Add Copy User <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                    <h4 class="modal-title" id="modal4Label"><i class="fa fa-plus"></i> Add Email Copy <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                 </div>
                 <form wire:submit.prevent="store()" >
                     <div class="modal-body">
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="name">Employees<span class="required" style="color: red">*</span></label>
-                                    <select wire:model.debounce.300ms="selectedEmployee" class="form-control" required>
+                                    <label for="name">Employees</label>
+                                    <select wire:model.debounce.300ms="selectedEmployee" class="form-control">
                                         <option value="">Select Employee</option>
                                         @foreach ($employees as $employee)
                                             <option value="{{ $employee->id }}">{{ $employee->name }} {{ $employee->surname }} <{{ $employee->email }}></option>
@@ -166,19 +166,19 @@
             </div>
         </div>
     </div>
-      <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="fitnessEditModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
+      <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="reminderCopyEditModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title" id="modal4Label"><i class="fa fa-edit"></i> Edit Reminder <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                    <h4 class="modal-title" id="modal4Label"><i class="fa fa-edit"></i> Edit Email Copy <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                 </div>
                 <form wire:submit.prevent="update()" >
                     <div class="modal-body">
-                          <div class="row">
+                        <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="name">Employees<span class="required" style="color: red">*</span></label>
-                                    <select wire:model.debounce.300ms="selectedEmployee" class="form-control" required>
+                                    <label for="name">Employees</label>
+                                    <select wire:model.debounce.300ms="selectedEmployee" class="form-control" >
                                         <option value="">Select Employee</option>
                                         @foreach ($employees as $employee)
                                             <option value="{{ $employee->id }}">{{ $employee->name }} {{ $employee->surname }} <{{ $employee->email }}></option>
@@ -190,7 +190,7 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="number">Email<span class="required" style="color: red">*</span></label>
-                                    <input type="email" class="form-control"  wire:model.debounce.300ms="email" placeholder="Email" required>
+                                    <input type="email" class="form-control"  wire:model.debounce.300ms="email" placeholder="Email" {{isset($selectedEmployee) ? "disabled" : ""}} required>
                                     @error('email') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
@@ -244,6 +244,26 @@
             </div>
         </div>
     </div>
+
+    <div data-backdrop="static" data-keyboard="false" class="modal fade" id="reminderCopyDeleteModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content bg-danger">
+            <div class="modal-body">
+               <center> <strong>Are you sure you want to delete this Email Copy?</strong> </center>
+            </div>
+            <form wire:submit.prevent="destroy()"  >
+            <div class="modal-footer no-border">
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn bg-white btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                    <button type="submit" class="btn bg-black btn-wide btn-rounded" ><i class="fa fa-trash"></i>Delete</button>
+                </div>
+                <!-- /.btn-group -->
+            </div>
+        </form>
+        </div>
+    </div>
+</div>
+
 
 
 

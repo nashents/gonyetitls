@@ -115,9 +115,11 @@
                                     <option value="">Select Inspection Item</option>
                                     @foreach ($checklist_items as $checklist_item)
                                         <option value="{{ $checklist_item->id }}"
-                                             @if(in_array($checklist_item->id, $checklist_item_id ?? []) && ($checklist_item_id[0] ?? null) != $checklist_item->id) 
-                                                            disabled 
+                                            @if(is_array($checklist_item_id))
+                                                @if(in_array($checklist_item->id, $checklist_item_id ?? []) && ($checklist_item_id[0] ?? null) != $checklist_item->id) 
+                                                                disabled 
                                                 @endif
+                                            @endif
                                             >{{ $checklist_item->name }}</option>
                                     @endforeach
                                 </select>
@@ -148,8 +150,10 @@
                                         <option value="">Select Inspection Item</option>
                                         @foreach ($checklist_items as $checklist_item)
                                             <option value="{{ $checklist_item->id }}"
-                                                 @if(in_array($checklist_item->id, $checklist_item_id ?? []) && ($checklist_item_id[$value] ?? null) != $checklist_item->id) 
-                                                            disabled 
+                                                @if(is_array($checklist_item_id))
+                                                    @if(in_array($checklist_item->id, $checklist_item_id ?? []) && ($checklist_item_id[$value] ?? null) != $checklist_item->id) 
+                                                                disabled 
+                                                    @endif
                                                 @endif
                                                 >{{ $checklist_item->name }}</option>
                                         @endforeach

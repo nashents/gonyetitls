@@ -110,7 +110,7 @@
                                          @endforeach
                                        </select>
                                             @error('service_type_id') <span class="text-danger error">{{ $message }}</span>@enderror
-                                            <small><a href="{{ route('service_types.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Service Type</a></small> <a href="#" wire:click.prevent="refresh('service_types')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                            <small><a href="{{ route('service_types.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Job Type</a></small> <a href="#" wire:click.prevent="refresh('service_types')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         </div>
                                     </div>
                                 </div>

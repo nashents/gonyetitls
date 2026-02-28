@@ -24,9 +24,11 @@ class Show extends Component
     public $inspection_groups;
     public $inspection_group_id;
     private $inspection_services;
+    public $existing_inspection_services = [];
     public $inspection_service_id;
     public $service_type;
     public $service_type_id;
+    public $inspection_service;
     public $category;
 
 
@@ -47,8 +49,10 @@ class Show extends Component
     }
 
     private function resetInputFields(){
-        $this->inspection_group_id = "" ;
-        $this->inspection_type_id = "" ;
+        $this->inspection_group_id = [] ;
+        $this->inspection_type_id = [] ;
+        $this->existing_inspection_services = [] ;
+        $this->inputs = [] ;
     }
 
 
@@ -60,6 +64,23 @@ class Show extends Component
         $this->inspection_types = InspectionType::orderBy('name','asc')->get();
     }
 
+       public function removeShow($id){
+        $this->inspection_service_id = $id;
+        $this->inspection_service = InspectionService::find($id);
+        $this->dispatchBrowserEvent('show-removeModal');
+    }
+
+    public function removeItem(){ 
+        $inspection_service = InspectionService::find($this->inspection_service_id);
+        $inspection_service->delete();
+        $this->resetInputFields();
+        $this->dispatchBrowserEvent('hide-removeModal');
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Item Removed Successfully!!"
+        ]);
+       
+    }
 
     public function store(){
 
@@ -123,7 +144,7 @@ class Show extends Component
             $this->resetInputFields();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
-                'message'=>"Category Checklist Item Added Successfully!!"
+                'message'=>"Item(s) Added To Checklist Successfully!!"
             ]);
         }
     }
@@ -134,7 +155,7 @@ class Show extends Component
             $this->inspection_types = InspectionType::orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
-                'message'=>"Checklist Items Refreshed Successfully!!."
+                'message'=>"Items Refreshed Successfully!!."
             ]);
         }
         elseif($category == "inspection_groups"){
@@ -147,36 +168,38 @@ class Show extends Component
     }
 
     public function edit($id){
+        $this->inspection_type_id = Null;
+        $this->inspection_group_id = Null;
         $inspection_service = InspectionService::find($id);
-        $this->service_type_id = $inspection_service->service_type_id;
+        $this->inspection_service_id = $id;
         $this->inspection_group_id = $inspection_service->inspection_group_id;
         $this->inspection_type_id = $inspection_service->inspection_type_id;
-        $this->inspection_service_id = $inspection_service->id;
+
         $this->dispatchBrowserEvent('show-inspection_serviceEditModal');
     }
 
     public function update(){
 
-        if (isset($this->inspection_service_id)) {
-            $inspection_service = InspectionService::find($this->inspection_service_id);
-            $inspection_service->service_type_id = $this->service_type_id;
-            $inspection_service->inspection_group_id = $this->inspection_group_id;
-            $inspection_service->inspection_type_id = $this->inspection_type_id;
-            $inspection_service->update();
+        $inspection_service = InspectionService::find($this->inspection_service_id);
+        $inspection_service->service_type_id = $this->service_type_id;
+        $inspection_service->inspection_group_id = $this->inspection_group_id;
+        $inspection_service->inspection_type_id = $this->inspection_type_id;
+        $inspection_service->update();
+       
 
-            $this->dispatchBrowserEvent('hide-inspection_serviceEditModal');
-            $this->resetInputFields();
-            $this->dispatchBrowserEvent('alert',[
-                'type'=>'success',
-                'message'=>"Category Checklist Item Updated Successfully!!"
-            ]);
-        }
+        $this->dispatchBrowserEvent('hide-inspection_serviceEditModal');
+        $this->resetInputFields();
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Checklist Item Updated Successfully!!"
+        ]);
+
     }
 
     public function render()
     {
 
-             $base = InspectionService::query()
+            $base = InspectionService::query()
             ->with(['service_type', 'inspection_type', 'inspection_group'])
             ->where('inspection_services.service_type_id', $this->service_type_id)
             ->leftJoin(

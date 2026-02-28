@@ -45,7 +45,7 @@
                                     </button>
                                     <ul class="dropdown-menu">
                                         <li><a href="#"  wire:click="edit({{$inspection_service->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
-                                        <li><a href="#" data-toggle="modal" data-target="#inspection_serviceDeleteModal{{ $inspection_service->id }}" ><i class="fa fa-remove color-danger"></i>Remove</a></li>
+                                        <li><a href="#" data-toggle="modal"  wire:click="removeShow({{$inspection_service->id}})" ><i class="fa fa-remove color-danger"></i>Remove</a></li>
                                     </ul>
                                 </div>
                                 @include('inspection_services.delete')
@@ -88,6 +88,27 @@
         <!-- /.col-md-9 -->
     </div>
 
+    <div data-backdrop="static" data-keyboard="false" class="modal fade" id="removeModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content bg-danger">
+            <div class="modal-body">
+               <center> <strong>Are you sure you want to remove this Inspection Item from {{ $inspection_service?->service_type ? $inspection_service?->service_type->name : ""}} Checklist ?</strong> </center>
+            </div>
+            <form  wire:submit.prevent="removeItem()">
+              
+            <div class="modal-footer no-border">
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn bg-white btn-wide btn-rounded" data-dismiss="modal"><i class="fa fa-times"></i>Close</button>
+                    <button type="submit" class="btn bg-black btn-wide btn-rounded" ><i class="fa fa-trash"></i>Delete</button>
+                </div>
+                <!-- /.btn-group -->
+            </div>
+        </form>
+        </div>
+    </div>
+</div>
+
+
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="inspection_serviceModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
         <div class="modal-dialog mw-100 w-50" role="transporter">
             <div class="modal-content">
@@ -110,6 +131,7 @@
                                 @error('inspection_group_id.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
+
                         <div class="col-md-6">
                              <div class="form-group">
                                 <label for="title">Inspection Item(s)<span class="required" style="color: red">*</span></label>
@@ -117,9 +139,11 @@
                                     <option value="">Select Inspection Item</option>
                                     @foreach ($inspection_types as $inspection_type)
                                         <option value="{{ $inspection_type->id }}"
+                                            @if(is_array($inspection_type_id))
                                                 @if(in_array($inspection_type->id, $inspection_type_id ?? []) && ($inspection_type_id[0] ?? null) != $inspection_type->id) 
                                                     disabled 
                                                 @endif
+                                            @endif
                                             >{{ $inspection_type->name }}</option>
                                     @endforeach
                                 </select>
@@ -130,7 +154,7 @@
                     </div>
                         @foreach ($inputs as $key => $value)
                         <div class="row">
-                             <div class="col-md-5">
+                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="title">Inspection Item Groups</label>
                                     <select class="form-control" wire:model.debounce.300ms="inspection_group_id.{{ $value }}">
@@ -149,8 +173,10 @@
                                         <option value="">Select Inspection Item</option>
                                         @foreach ($inspection_types as $inspection_type)
                                             <option value="{{ $inspection_type->id }}"
-                                                 @if(in_array($inspection_type->id, $inspection_type_id ?? []) && ($inspection_type_id[$value] ?? null) != $inspection_type->id) 
-                                                            disabled 
+                                                @if(is_array($inspection_type_id))
+                                                    @if(in_array($inspection_type->id, $inspection_type_id ?? []) && ($inspection_type_id[$value] ?? null) != $inspection_type->id) 
+                                                                disabled 
+                                                    @endif
                                                 @endif
                                                 >{{ $inspection_type->name }}</option>
                                         @endforeach
@@ -161,7 +187,7 @@
                            
                              <div class="col-md-1">
                                 <div class="form-group">
-                                    <button class="btn btn-danger btn-rounded xs" style="margin-top:23px"  wire:click.prevent="remove({{$key}})"> <i class="fa fa-times"></i></button>
+                                    <button class="btn btn-danger btn-rounded btn-xs" style="margin-top:23px"  wire:click.prevent="remove({{$key}})"> <i class="fa fa-times"></i></button>
                                 </div>
                             </div>
                             
@@ -171,7 +197,7 @@
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="form-group">
-                                    <button class="btn btn-success btn-rounded" style="float: right" wire:click.prevent="add({{$i}})"> <i class="fa fa-plus"></i> Checklist Item</button>
+                                    <button class="btn btn-success btn-rounded btn-xs" style="float: right" wire:click.prevent="add({{$i}})"> <i class="fa fa-plus"></i> Checklist Item</button>
                                 </div>
                             </div>
                         </div>
@@ -196,6 +222,7 @@
                 </div>
                 <form wire:submit.prevent="update()" >
                 <div class="modal-body">
+                 
                         <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
@@ -210,6 +237,7 @@
                                 @error('inspection_group_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
+
                         <div class="col-md-6">
                              <div class="form-group">
                                 <label for="title">Inspection Item(s)<span class="required" style="color: red">*</span></label>
@@ -224,6 +252,7 @@
                             </div>
                         </div>
                     </div>
+                
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">

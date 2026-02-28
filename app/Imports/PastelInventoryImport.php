@@ -2,28 +2,29 @@
 
 namespace App\Imports;
 
-use Carbon\Carbon;
 use App\Models\Bin;
-use App\Models\Rack;
 use App\Models\Brand;
-use App\Models\Store;
-use App\Models\Product;
 use App\Models\Category;
+use App\Models\CategoryValue;
+use App\Models\Company;
 use App\Models\Currency;
 use App\Models\Inventory;
-use App\Models\CategoryValue;
+use App\Models\Product;
+use App\Models\Rack;
+use App\Models\Store;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
-use Maatwebsite\Excel\Concerns\ToCollection;
-use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
-use Maatwebsite\Excel\Concerns\WithLimit;
-use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Maatwebsite\Excel\Concerns\SkipsOnError;
-use Maatwebsite\Excel\Concerns\WithValidation;
-use Maatwebsite\Excel\Concerns\WithChunkReading;
-use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\Importable;
+use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 use Maatwebsite\Excel\Concerns\SkipsErrors;
+use Maatwebsite\Excel\Concerns\SkipsOnError;
+use Maatwebsite\Excel\Concerns\ToCollection;
+use Maatwebsite\Excel\Concerns\WithBatchInserts;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
+use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Concerns\WithLimit;
+use Maatwebsite\Excel\Concerns\WithValidation;
 
 class PastelInventoryImport implements ToCollection, SkipsEmptyRows, WithLimit,
     WithHeadingRow, SkipsOnError, WithValidation, WithChunkReading, WithBatchInserts
@@ -40,7 +41,8 @@ class PastelInventoryImport implements ToCollection, SkipsEmptyRows, WithLimit,
     {
         $this->department = $department;
         $this->company = Auth::user()->employee->company;
-        $this->default_currency = $this->company->currency;
+        $company = Company::where('type','!=','Admin')->orderBy('created_at','desc')->first();
+        $this->default_currency = $company?->currency;
         $this->initialInventoryId = Inventory::max('id') ?? 0;
         $this->initialProductId = Product::max('id') ?? 0;
     }
@@ -99,37 +101,31 @@ class PastelInventoryImport implements ToCollection, SkipsEmptyRows, WithLimit,
                     'buy' => 1,
                     'price' => $unitPrice,
                     'product_number' => $this->generateNumber('P', ++$this->initialProductId),
-                    'department' => $this->department,
                     'identification_number' => $row->get('code'),
                 ])->save();
             }
 
-           
-         
-            for ($i = 0; $i < $quantity; $i++) {
-
-                if ($this->department == "inventory") {
+             
 
                     $inventory = new Inventory;
                     $inventory->fill([
                         'user_id' => Auth::id(),
                         'inventory_number' => $this->generateNumber('I', ++$this->initialInventoryId),
                         'product_id' => $product->id,
-                        'department' => $this->department,
                         'amount' => $unitPrice,
                         'subtotal' => $unitPrice,
-                        'qty' => 1,
+                        'qty' => $quantity,
                         'subtotal_incl' => $unitPrice,
                         'total' => $unitPrice,
                         'currency_id' => $this->default_currency->id,
                         'weight' => 1,
-                        'balance' => 1,
+                        'balance' => $quantity,
                         'status' => 1,
                         'cost' => $unitPrice,
                     ])->save();
-                }
+            
               
-            }
+          
         }
     }
 

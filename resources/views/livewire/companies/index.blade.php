@@ -105,7 +105,7 @@
                             <select wire:model.debounce.300ms="selectedType" class="form-control" required>
                                 <option value="">Select Type</option>
                                 @if (Auth::user()->is_admin())
-                                <option value="Admin">Admin</option> 
+                                    <option value="Admin">Admin</option> 
                                 @endif
                                 <option value="Rental">Car Rental</option>
                                 <option value="Broker">Broker</option>

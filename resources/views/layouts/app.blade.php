@@ -131,6 +131,36 @@
 @stack('scripts')
     
     <script type="text/javascript">
+            window.addEventListener('show-reminderCopyDeleteModal', event => {
+                $('#reminderCopyDeleteModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-reminderCopyDeleteModal', event => {
+                $('#reminderCopyDeleteModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-reminderCopyModal', event => {
+                $('#reminderCopyModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-reminderCopyModal', event => {
+                $('#reminderCopyModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('show-reminderCopyEditModal', event => {
+                $('#reminderCopyEditModal').modal('show');
+            })
+    </script>
+    <script type="text/javascript">
+            window.addEventListener('hide-reminderCopyEditModal', event => {
+                $('#reminderCopyEditModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
             window.addEventListener('show-decisionModal', event => {
                 $('#decisionModal').modal('show');
             })

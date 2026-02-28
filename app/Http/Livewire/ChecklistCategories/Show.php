@@ -47,6 +47,7 @@ class Show extends Component
     }
 
     private function resetInputFields(){
+        $this->updated = False;
         $this->checklist_sub_category_id = $this->updated == False ?  []  : "" ;
         $this->checklist_item_id = $this->updated == False ?  []  : "";
     }
@@ -142,12 +143,14 @@ class Show extends Component
             $this->resetInputFields();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
-                'message'=>"Checklist Item Added Successfully!!"
+                'message'=>"Item(s) Added To Checklist Successfully!!"
             ]);
         }
     }
 
     public function edit($id){
+        $this->checklist_item_id = Null;
+        $this->checklist_sub_category_id = Null;
         $category_checklist = CategoryChecklist::find($id);
         $this->checklist_category_id = $category_checklist->checklist_category_id;
         $this->checklist_sub_category_id = $category_checklist->checklist_sub_category_id;

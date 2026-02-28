@@ -2,13 +2,18 @@
 
 namespace App\Http\Livewire\Reminders;
 
-use Livewire\Component;
 use App\Models\Employee;
 use App\Models\ReminderCopy;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class Copy extends Component
 {
 
+    use WithPagination;
+    protected $paginationTheme = 'bootstrap';
+    public $search;
+    protected $queryString = ['search'];
     protected $copies;
     public $user_id;
     public $selectedEmployee;
@@ -27,6 +32,7 @@ class Copy extends Component
         $this->email = '';
         $this->phonenumber = '';
         $this->status = '';
+        $this->selectedEmployee = '';
     }
 
     public function updatedSelectedEmployee($id)
@@ -58,22 +64,33 @@ class Copy extends Component
             'status' => $this->status,
         ]);
 
-        session()->flash('message', 'Reminder Copy Created Successfully.');
+        
+        $this->dispatchBrowserEvent('hide-reminderCopyModal');
+        $this->resetInputFields();
+        $this->dispatchBrowserEvent('alert', [
+            'type' => 'success',
+            'message' => "Email Copy Created Successfully!!"
+        ]);
 
      
     }
 
     public function delete($id)
     {
-        $copy = ReminderCopy::find($id);
-        $copy->delete();
-        session()->flash('message', 'Reminder Copy Deleted Successfully.');
+        $this->copy_id = $id;
+        $this->dispatchBrowserEvent('show-reminderCopyDeleteModal');
+        
     }
-    public function destroy($id)
+    public function destroy()
     {
-        $copy = ReminderCopy::find($id);
+        $copy = ReminderCopy::find($this->copy_id);
         $copy->delete();
-        session()->flash('message', 'Reminder Copy Deleted Successfully.');
+        $this->resetInputFields();
+        $this->dispatchBrowserEvent('hide-reminderCopyDeleteModal');
+        $this->dispatchBrowserEvent('alert', [
+            'type' => 'success',
+            'message' => "Email Copy Deleted Successfully!!"
+        ]);
     }
 
     public function edit($id)
@@ -107,13 +124,32 @@ class Copy extends Component
         $this->resetInputFields();
         $this->dispatchBrowserEvent('alert', [
             'type' => 'success',
-            'message' => "Copy Listing Updated Successfully!!"
+            'message' => "Email Copy Updated Successfully!!"
         ]);
     }
     public function render()
     {
-        return view('livewire.reminders.copy',[
-            'copies' => ReminderCopy::where('user_id', $this->user_id)->get()
-        ]);
+        $baseQuery = ReminderCopy::query()
+        ->with('employee') // if you need employee data in the view
+        ->where('user_id', $this->user_id)
+        ->when($this->search, function ($query) {
+            $search = '%'.$this->search.'%';
+
+            $query->where(function ($q) use ($search) {
+                // Employee name & surname
+                $q->whereHas('employee', function ($emp) use ($search) {
+                    $emp->where('name', 'like', $search)
+                        ->orWhere('surname', 'like', $search);
+                })
+                // Email
+                ->orWhere('email', 'like', $search)
+                // Phone number
+                ->orWhere('phone_number', 'like', $search);
+            });
+        })
+        ->orderBy('email','asc')->paginate(10);
+        return view('livewire.reminders.copy', [
+        'copies' => $baseQuery,
+]);
     }
 }
