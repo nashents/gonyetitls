@@ -127,10 +127,11 @@
                                 <table style="margin-top:50px;">
                                     <thead>
                                         <tr>
-                                            <th class="text-center"> <strong>HS Code</strong></th>
+                                          
                                             @if ($company->hide_description == False)
                                                 <th class="text-center"> <strong>{{$company->items_column}}</strong></th>
                                             @endif
+                                              <th class="text-center"> <strong>HS Code</strong></th>
                                             @if ($company->hide_quantity == False)
                                                 <th class="text-right"><strong>{{$company->units_column}}</strong></th>
                                             @endif
@@ -150,11 +151,7 @@
                                                 @php
                                                     $tax = App\Models\Account::find($invoice_item->tax_id);
                                                 @endphp
-                                                <td class="unit text-center"> 
-                                                    @if ($tax && $tax->hs_code)
-                                                        {{$tax->hs_code}}
-                                                    @endif
-                                                </td>
+                                               
                                                 @if ($company->hide_description == False)
                                                     <td class="text-center">
                                                         @if ($invoice_item->product)
@@ -167,6 +164,11 @@
                                                         {{$invoice_item->description}}
                                                     </td>
                                                 @endif
+                                                <td class="unit text-center"> 
+                                                    @if ($tax && $tax->hs_code)
+                                                        {{$tax->hs_code}}
+                                                    @endif
+                                                </td>
                                                 @if ($company->hide_quantity == False)
                                                     <td class="unit text-right"> {{$invoice_item->qty}}</td>
                                                 @endif

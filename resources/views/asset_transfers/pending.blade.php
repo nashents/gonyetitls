@@ -22,6 +22,7 @@
 @section('content')
 
 
+
                     <div class="main-page">
                         <div class="container-fluid">
                             <div class="row page-title-div">
@@ -32,8 +33,8 @@
                                 <div class="col-md-6">
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
-                                        <li><a href="{{route('tyre_transfers.index')}}"><i class="fa fa-list"></i> All Tyre Transfers</a></li>
-            							<li class="active"> <i class="fa fa-check"></i> Approved Tyre Transfers</li>
+                                        <li><a href="{{route('asset_transfers.index')}}"><i class="fa fa-list"></i> All Asset Transfers</a></li>
+            							<li class="active"> <i class="fa fa-clock-o"></i> Pending Asset Transfers</li>
             						</ul>
                                 </div>
                                 <!-- /.col-md-6 -->
@@ -43,11 +44,12 @@
                         </div>
                         <!-- /.container-fluid -->
 
-                        @livewire('transfers.approved',['department' => "tyre"])
+                        @livewire('transfers.pending',['department' => "asset"])
                         <!-- /.section -->
 
                     </div>
                     <!-- /.main-page -->
+
 
         <!-- ========== PAGE JS FILES ========== -->
 

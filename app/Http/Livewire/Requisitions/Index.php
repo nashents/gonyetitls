@@ -38,6 +38,8 @@ class Index extends Component
     public $searchTrip;
     public $searchBooking;
     public $searchPurchase;
+    public $filter = "created_at";
+    public $search_from, $search_to;
     
     protected $queryString = ['search','searchTrip','searchBooking' ,'searchPurchase'];
     public $from;
@@ -936,36 +938,49 @@ class Index extends Component
     }
 
     public function updatedRequisitionFor(){
+
           if($this->requisition_for == 'Trip'){
 
-            $tripQuery = Trip::query()
-                    ->select('id', 'trip_number', 'trip_ref','start_date', 'customer_id', 'driver_id', 'horse_id', 'from', 'to', 'loading_point_id', 'offloading_point_id')
-                    ->with([
-                        'customer:id,name',
-                        'driver',
-                        'horse:id,registration_number,fleet_number',
-                        'loading_point:id,name',
-                        'offloading_point:id,name'
-                    ])
-                    ->whereYear('start_date', date('Y'))
-                    ->where('authorization', 'approved')
-                    ->where('trip_status', '!=', 'Cancelled');
+           $tripQuery = Trip::query()
+                        ->select('id', 'trip_number', 'trip_ref', 'start_date', 'customer_id',
+                         'driver_id', 'horse_id', 'from', 'to', 'loading_point_id', 'offloading_point_id')
+                        ->with([
+                            'customer:id,name',
+                            'driver',
+                            'horse:id,registration_number,fleet_number',
+                            'loading_point:id,name',
+                            'offloading_point:id,name'
+                        ])
+                        ->where('authorization', 'approved')
+                        ->where('trip_status', '!=', 'Cancelled');
 
-            if (filled($this->searchTrip)) {
-                $term = '%'.$this->searchTrip.'%';
+                    // Date range filter (replaces whereYear)
+                    if (filled($this->search_from) && filled($this->search_to)) {
+                        $tripQuery->whereBetween($this->filter, [$this->search_from, $this->search_to]);
+                    } elseif (filled($this->search_from)) {
+                        $tripQuery->whereDate($this->filter, '>=', $this->search_from);
+                    } elseif (filled($this->search_to)) {
+                        $tripQuery->whereDate($this->filter, '<=', $this->search_to);
+                    } else {
+                        // Fallback: current year if both are cleared
+                        $tripQuery->whereYear($this->filter, date('Y'))->whereYear($this->filter, date('m'));
+                    }
 
-                $tripQuery->where(function ($q) use ($term) {
-                    $q->where('trip_number', 'like', $term)
-                    ->orWhere('trip_ref', 'like', $term)
-                    ->orWhereHas('horse', function ($qq) use ($term) {
-                        $qq->where('registration_number', 'like', $term);
-                    });
-                });
-            }
+                    if (filled($this->searchTrip)) {
+                        $term = '%' . $this->searchTrip . '%';
 
-            $this->trips = $tripQuery
-                ->orderBy('id', 'desc')
-                ->get();
+                        $tripQuery->where(function ($q) use ($term) {
+                            $q->where('trip_number', 'like', $term)
+                                ->orWhere('trip_ref', 'like', $term)
+                                ->orWhereHas('horse', function ($qq) use ($term) {
+                                    $qq->where('registration_number', 'like', $term);
+                                });
+                        });
+                    }
+
+                    $this->trips = $tripQuery
+                        ->orderBy($this->filter, 'desc')
+                        ->get();
 
         }elseif($this->requisition_for == 'Booking'){
            
@@ -978,9 +993,20 @@ class Index extends Component
                 'employees:id,name,surname',
                 'employee:id,name,surname',
             ])
-            ->whereYear('in_date', date('Y'))
+           
             ->where('authorization', 'approved')
             ->where('status', true);
+        // Date range filter (replaces whereYear)
+            if (filled($this->search_from) && filled($this->search_to)) {
+                $bookingQuery->whereBetween($this->filter, [$this->search_from, $this->search_to]);
+            } elseif (filled($this->search_from)) {
+                $bookingQuery->whereDate($this->filter, '>=', $this->search_from);
+            } elseif (filled($this->search_to)) {
+                $bookingQuery->whereDate($this->filter, '<=', $this->search_to);
+            } else {
+                // Fallback: current year if both are cleared
+                $bookingQuery->whereYear($this->filter, date('Y'))->whereYear($this->filter, date('m'));
+            }
 
         if (filled($this->searchBooking)) {
 
@@ -1010,16 +1036,29 @@ class Index extends Component
         }
 
         $this->bookings = $bookingQuery
-            ->orderBy('id', 'desc')
+            ->orderBy($this->filter, 'desc')
             ->get(); 
 
         }elseif($this->requisition_for == 'Purchase'){
            
                $purchaseQuery = Purchase::query()
                     ->with(['vendor', 'currency'])
-                    ->whereYear('date', date('Y'))
+                   
                     ->where('authorization', 'approved')
                     ->where('status', true);
+
+                     // Date range filter (replaces whereYear)
+                if (filled($this->search_from) && filled($this->search_to)) {
+                    $purchaseQuery->whereBetween($this->filter, [$this->search_from, $this->search_to]);
+                } elseif (filled($this->search_from)) {
+                    $purchaseQuery->whereDate($this->filter, '>=', $this->search_from);
+                } elseif (filled($this->search_to)) {
+                    $purchaseQuery->whereDate($this->filter, '<=', $this->search_to);
+                } else {
+                    // Fallback: current year if both are cleared
+                    $purchaseQuery->whereYear($this->filter, date('Y'))->whereYear($this->filter, date('m'));
+                }
+
 
                 if (filled($this->searchPurchase)) {
                     $term = '%'.$this->searchPurchase.'%';
@@ -1038,7 +1077,7 @@ class Index extends Component
                 }
 
                 $this->purchases = $purchaseQuery
-                    ->orderBy('id', 'desc')
+                    ->orderBy($this->filter, 'desc')
                     ->get();
             
         }
@@ -1056,36 +1095,14 @@ class Index extends Component
         
     }
 
+    public function updatedFilter()
+    {
+       $this->updatedRequisitionFor($this->requisition_for);
+        
+    }
     public function updatedSearchTrip()
     {
-       $tripQuery = Trip::query()
-                    ->select('id', 'trip_number', 'trip_ref','start_date', 'customer_id', 'driver_id', 'horse_id', 'from', 'to', 'loading_point_id', 'offloading_point_id')
-                    ->with([
-                        'customer:id,name',
-                        'driver',
-                        'horse:id,registration_number,fleet_number',
-                        'loading_point:id,name',
-                        'offloading_point:id,name'
-                    ])
-                    ->whereYear('start_date', date('Y'))
-                    ->where('authorization', 'approved')
-                    ->where('trip_status', '!=', 'Cancelled');
-
-            if (filled($this->searchTrip)) {
-                $term = '%'.$this->searchTrip.'%';
-
-                $tripQuery->where(function ($q) use ($term) {
-                    $q->where('trip_number', 'like', $term)
-                    ->orWhere('trip_ref', 'like', $term)
-                    ->orWhereHas('horse', function ($qq) use ($term) {
-                        $qq->where('registration_number', 'like', $term);
-                    });
-                });
-            }
-
-            $this->trips = $tripQuery
-                ->orderBy('id', 'desc')
-                ->get();
+       $this->updatedRequisitionFor($this->requisition_for);
         
     }
 
@@ -1097,49 +1114,17 @@ class Index extends Component
 
     public function updatedSearchBooking()
     {
-         $bookingQuery = Booking::query()
-            ->with([
-                'ticket',
-                'horse:id,registration_number,fleet_number',
-                'trailer:id,registration_number,fleet_number',
-                'vehicle:id,registration_number,fleet_number',
-                'employees:id,name,surname',
-                'employee:id,name,surname',
-            ])
-            ->whereYear('in_date', date('Y'))
-            ->where('authorization', 'approved')
-            ->where('status', true);
-
-        if (filled($this->searchBooking)) {
-
-            $term = '%'.$this->searchBooking.'%';
-
-            $bookingQuery->where(function ($q) use ($term) {
-                $q->where('booking_number', 'like', $term)
-                ->orWhereHas('ticket', function ($qq) use ($term) {
-                    $qq->where('ticket_number', 'like', $term);
-                })
-                ->orWhereHas('service_type', function ($qq) use ($term) {
-                    $qq->where('name', 'like', $term);
-                })
-                ->orWhereHas('horse', function ($qq) use ($term) {
-                    $qq->where('registration_number', 'like', $term);
-                })
-                ->orWhereHas('trailer', function ($qq) use ($term) {
-                    $qq->where('registration_number', 'like', $term);
-                })
-                ->orWhereHas('vehicle', function ($qq) use ($term) {
-                    $qq->where('registration_number', 'like', $term);
-                })
-                ->orWhereHas('employee', function ($qq) use ($term) {
-                    $qq->where(DB::raw("concat(name, ' ', surname)"), 'like', $term);
-                });
-            });
-        }
-
-        $this->bookings = $bookingQuery
-            ->orderBy('id', 'desc')
-            ->get(); 
+         $this->updatedRequisitionFor($this->requisition_for);
+        
+    }
+    public function updatedSearchFrom()
+    {
+         $this->updatedRequisitionFor($this->requisition_for);
+        
+    }
+    public function updatedSearchTo()
+    {
+         $this->updatedRequisitionFor($this->requisition_for);
         
     }
 
@@ -1150,32 +1135,7 @@ class Index extends Component
     }
     public function updatedSearchPurchase()
     {
-          $purchaseQuery = Purchase::query()
-                    ->with(['vendor', 'currency'])
-                    ->whereYear('date', date('Y'))
-                    ->where('authorization', 'approved')
-                    ->where('status', true);
-
-                if (filled($this->searchPurchase)) {
-                    $term = '%'.$this->searchPurchase.'%';
-
-                    $purchaseQuery->where(function ($q) use ($term) {
-                        $q->where('purchase_number', 'like', $term)
-                        ->orWhere('date', 'like', $term)
-                        ->orWhere('total', 'like', $term)
-                        ->orWhereHas('vendor', function ($qq) use ($term) {
-                            $qq->where('name', 'like', $term);
-                        })
-                        ->orWhereHas('currency', function ($qq) use ($term) {
-                            $qq->where('name', 'like', $term);
-                        });
-                    });
-                }
-
-                $this->purchases = $purchaseQuery
-                    ->orderBy('id', 'desc')
-                    ->get();
-        
+         $this->updatedRequisitionFor($this->requisition_for);
     }
 
 

@@ -2,18 +2,19 @@
 
 namespace App\Http\Livewire\Transfers;
 
-use Carbon\Carbon;
-use App\Models\Tyre;
-use App\Models\Store;
-use App\Models\Product;
-use Livewire\Component;
-use App\Models\Transfer;
+use App\Models\Asset;
 use App\Models\Inventory;
+use App\Models\Product;
+use App\Models\Store;
+use App\Models\Transfer;
 use App\Models\TransferItem;
-use Livewire\WithPagination;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
+use App\Models\Tyre;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class Index extends Component
 {
@@ -22,26 +23,43 @@ class Index extends Component
     protected $paginationTheme = 'bootstrap';
     public $search;
     public $searchInventory;
-    protected $queryString = ['search','searchInventory'];
+    public $searchProducts;
+    public $searchTyre;
+    public $searchAsset;
+    protected $queryString = ['search','searchInventory','searchInventory','searchAsset','searchProducts'];
     public $from;
     public $to;
     private $transfers;
     public $old_transfer;
     public $old_transfer_id;
+    public $transfer_item;
     public $date;
     public $comments;
+    public $notes;
     public $selectedStore;
     public $to_store_id;
     public $stores;
-    public $products;
-    public $selectedProduct;
+    public $products; 
+    public $transfer_filter = "created_at"; 
     public $inventories;
-    public $selectedInventory;
+    public $assets;
     public $tyres;
-    public $selectedTyre;
-    public $qty;
+    public $selectedInventory = [];
+    public $selectedTyre = [];
+    public $selectedAsset = [];
+    public $selectedProduct = [];
+    public $qty = [];
+   
+    public $current_selectedInventory = [];
+    public $current_selectedTyre = [];
+    public $current_selectedAsset = [];
+    public $current_selectedProduct = [];
+    public $current_qty = [];
     public $max;
     public $department;
+    public $transfer_id;
+    public $transfer_items = [];
+    public $expand = False;
 
     public $inputs = [];
     public $i = 1;
@@ -61,15 +79,15 @@ class Index extends Component
     
 
     public function mount($department){
+       
         $this->department = $department;
         $this->stores = Store::orderBy('name','asc')->where('status',1)->get();
         $this->products = collect();
         $this->tyres = collect();
         $this->inventories = collect();
+        $this->assets = collect();
         $this->resetPage();
-        $this->search = "";
-        $this->searchInventory = "";
-    
+        $this->reset(['search','searchInventory','searchAsset','searchTyre','searchProducts']);
     }
 
        public function transferNumber(){
@@ -110,14 +128,22 @@ class Index extends Component
     public function updatedselectedProduct($id, $key){
         if (!is_null($id) && !is_null($key) ) {
         
+            if ($this->expand == False) {
+                  $this->qty[$key] = 1;
+            }
             $product = Product::find($id);
             $this->inventories = Inventory::where('product_id',$id)->where('status',1)->where('balance','>',0)->orderBy('created_at','asc')->get();
+            $this->assets = Asset::where('product_id',$id)->where('status',1)->where('balance','>',0)->orderBy('created_at','asc')->get();
             $this->tyres = Tyre::where('product_id',$id)->where('status',1)->where('balance','>',0)->orderBy('created_at','asc')->get();
         
             if ($product && $this->department == "inventory") {
                 $this->max[$key] = $product->inventories->where('status',1)->where('balance','>',0)->sum('balance');
-            }elseif ($product && $this->department == "tyre") {
+            }
+            elseif ($product && $this->department == "tyre") {
                 $this->max[$key] = $product->tyres->where('status',1)->sum('balance');
+            }
+            elseif ($product && $this->department == "asset") {
+                $this->max[$key] = $product->assets->where('status',1)->sum('balance');
             }
 
 
@@ -127,9 +153,20 @@ class Index extends Component
      public function updatedSelectedInventory($id, $key){
         if (!is_null($id)) {
             $inventory = Inventory::find($id);
-            if ($inventory) {
+            if ($inventory && $this->expand == True) {
                 $this->qty[$key] = $inventory->balance;
                 $this->max[$key] = $inventory->balance;
+            }
+        }
+         
+    }
+    
+    public function updatedSelectedAsset($id, $key){
+        if (!is_null($id)) {
+            $asset = Asset::find($id);
+            if ($asset && $this->expand == True) {
+                $this->qty[$key] = $asset->balance;
+                $this->max[$key] = $asset->balance;
             }
         }
          
@@ -138,7 +175,7 @@ class Index extends Component
     public function updatedSelectedTyre($id, $key){
         if (!is_null($id)) {
             $tyre = Tyre::find($id);
-            if ($tyre) {
+            if ($tyre && $this->expand == True) {
                 $this->qty[$key] = $tyre->balance;
                 $this->max[$key] = $tyre->balance;
             }
@@ -152,7 +189,7 @@ class Index extends Component
         }
     }
 
-    public function loadProducts($store_id = null)
+  public function loadProducts($store_id = null)
     {
         $map = [
             'asset'     => 'assets',
@@ -168,17 +205,29 @@ class Index extends Component
         }
 
         $this->products = Product::with(['brand', $relation])
-            ->where('status', 1)
             ->where('department', $this->department)
+            ->where('status', 1)
             ->whereHas($relation, function ($q) use ($store_id) {
                 $q->where('status', 1)
                 ->where('balance', '>', 0)
-                ->when(!is_null($store_id), function ($qq) use ($store_id) {
-                    $qq->where('store_id', $store_id);
+                ->when(! is_null($store_id), fn($qq) => $qq->where('store_id', $store_id));
+            })
+            ->when($this->searchProducts, function ($q) {
+                $search = $this->searchProducts;
+                $q->where(function ($inner) use ($search) {
+                    $inner->where('product_number', 'like', '%'.$search.'%')
+                        ->orWhere('identification_number', 'like', '%'.$search.'%')
+                        ->orWhere('name', 'like', '%'.$search.'%')
+                        ->orWhereHas('brand', fn($bq) => $bq->where('name', 'like', '%'.$search.'%'));
                 });
             })
             ->orderBy('name', 'asc')
             ->get();
+    }
+
+    public function updatedSearchProducts($value)
+    {
+        $this->loadProducts($this->selectedStore ?? null);
     }
 
 
@@ -195,10 +244,25 @@ class Index extends Component
     ];
 
     private function resetInputFields(){
-        $this->to_store_id = '';
-        $this->selectedStore = '';
+        $this->to_store_id = Null;
+        $this->selectedStore = Null;
         $this->date = '';
         $this->comments = '';
+        $this->notes = '';
+        $this->inputs = [];
+        $this->expand = false;
+        $this->transfer_items = [];
+        $this->selectedAsset = [];
+        $this->selectedProduct = [];
+        $this->selectedTyre = [];
+        $this->selectedInventory = [];
+        $this->qty = [];
+        $this->current_selectedAsset = [];
+        $this->current_selectedProduct = [];
+        $this->current_selectedTyre = [];
+        $this->current_selectedInventory = [];
+        $this->current_qty = [];
+        $this->reset(['search','searchInventory','searchAsset','searchTyre','searchProducts']);
     }
 
     public function store(){
@@ -212,24 +276,27 @@ class Index extends Component
             $transfer->to = $this->to_store_id;
             $transfer->department = $this->department;
             $transfer->date = $this->date;
+            $transfer->expand = $this->expand;
             $transfer->comments = $this->comments;
+            $transfer->notes = $this->notes;
             $transfer->authorization = "pending";
             $transfer->save();
 
-            if (isset($this->selectedInventory)) {
-                foreach ($this->selectedInventory as $key => $value) {
+            if (isset($this->selectedProduct)) {
+                foreach ($this->selectedProduct as $key => $productId) {
                 
                     $transfer_item = new TransferItem;
                     $transfer_item->transfer_id = $transfer->id;
 
-                    if (isset($this->selectedProduct[$key])) {
-                        $transfer_item->product_id = $this->selectedProduct[$key];
-                    }
+                    $transfer_item->product_id = $productId;
                     if (isset($this->selectedInventory[$key])) {
                         $transfer_item->inventory_id = $this->selectedInventory[$key];
                     }
                     if (isset($this->selectedTyre[$key])) {
                         $transfer_item->tyre_id = $this->selectedTyre[$key];
+                    }
+                    if (isset($this->selectedAsset[$key])) {
+                        $transfer_item->asset_id = $this->selectedAsset[$key];
                     }
                     if (isset($this->qty[$key])) {
                         $transfer_item->qty = $this->qty[$key];
@@ -242,65 +309,186 @@ class Index extends Component
             $this->resetInputFields();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
-                'message'=>"Item(s) Transfered Successfully!!"
+                'message'=>"Transfer Record Created Successfully!!"
             ]);
 
         });
     
     }
 
-    public function reverse(){
-
-     
-                $transfer = new Transfer;
-                $transfer->user_id = Auth::user()->id;
-                $transfer->inventory_id = $this->old_transfer->inventory_id;
-                $transfer->from = $this->old_transfer->to;
-                $transfer->to = $this->old_transfer->from;
-                $transfer->date = date('Y-m-d');
-                $transfer->comments = 'reversal';
-                $transfer->reversal = 1;
-                $transfer->save();
-        
-                $inventory = $this->old_transfer->inventory;
-                $inventory->store_id = $this->old_transfer->from;
-                $inventory->update();
-
-       
-
-        $this->dispatchBrowserEvent('hide-reverseModal');
-        $this->dispatchBrowserEvent('alert',[
-            'type'=>'success',
-            'message'=>"Item Transfer Reversed Successfully!!"
-        ]);
-    
+    public function delete($id){
+        $this->transfer_id = $id;
+        $this->dispatchBrowserEvent('show-deleteModal');
     }
    
+    public function destroy(){
+        $transfer = Transfer::find($this->transfer_id);
+        $transfer->transfer_items()?->delete();
+        $transfer?->delete();
+        $this->dispatchBrowserEvent('hide-deleteModal');
+      
+        $this->resetInputFields();
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Transfer Record Deleted Successfully!!"
+        ]);
+    }
+
+    public function edit($id){
+        $this->transfer_id = $id;
+        $transfer = Transfer::find($id);
+        $this->selectedStore = $transfer->from;
+        $this->to_store_id = $transfer->to;
+        $this->date = $transfer->date;
+        $this->comments = $transfer->comments;
+        $this->expand = $transfer->expand;
+        $this->notes = $transfer->notes;
+        $this->transfer_items = $transfer->transfer_items;
+        $this->loadProducts($this->selectedStore);
+        if ($this->transfer_items) {
+            foreach($this->transfer_items as $key => $item){
+                $this->current_selectedProduct[] = $item->product_id;
+                $this->current_selectedInventory[] = $item->inventory_id;
+                $this->current_selectedTyre[] = $item->tyre_id;
+                $this->current_selectedAsset[] = $item->asset_id;
+                $this->current_qty[] = $item->qty;
+                $this->inventories = Inventory::where('product_id',$item->product_id)->where('status',1)->where('balance','>',0)->orderBy('created_at','asc')->get();
+                $this->assets = Asset::where('product_id',$item->product_id)->where('status',1)->where('balance','>',0)->orderBy('created_at','asc')->get();
+                $this->tyres = Tyre::where('product_id',$item->product_id)->where('status',1)->where('balance','>',0)->orderBy('created_at','asc')->get();
+                $product = Product::find($item->product_id);
+                    if ($product && $this->department == "inventory") {
+                        $this->max[$key] = $product->inventories->where('status',1)->where('balance','>',0)->sum('balance');
+                    }
+                    elseif ($product && $this->department == "tyre") {
+                        $this->max[$key] = $product->tyres->where('status',1)->sum('balance');
+                    }
+                    elseif ($product && $this->department == "asset") {
+                        $this->max[$key] = $product->assets->where('status',1)->sum('balance');
+                    }
+            }
+        }
+
+        
+        $this->dispatchBrowserEvent('show-editModal');
+    }
+   
+        public function removeShow($id){
+        $this->transfer_item = TransferItem::find($id);
+        $this->dispatchBrowserEvent('show-removeModal');
+    }
+
+    public function removeItem(){ 
+
+  
+        $this->transfer_item->delete();
+      
+        $this->resetInputFields();
+        $this->dispatchBrowserEvent('hide-removeModal');
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Item Deleted Successfully!!"
+        ]);
+       
+    }
+  
+    public function update(){
+
+        DB::transaction(function () {
+
+            $transfer =  Transfer::find($this->transfer_id);
+            $transfer->from = $this->selectedStore;
+            $transfer->to = $this->to_store_id;
+            $transfer->department = $this->department;
+            $transfer->date = $this->date;
+            $transfer->comments = $this->comments;
+            $transfer->expand = $this->expand;
+            $transfer->notes = $this->notes;
+            $transfer->authorization = "pending";
+            $transfer->update();
+
+            if (isset($this->selectedProduct)) {
+                foreach ($this->selectedProduct as $key => $productId) {
+                
+                    $transfer_item = new TransferItem;
+                    $transfer_item->transfer_id = $transfer->id;
+                    $transfer_item->product_id = $productId;
+
+                    if (isset($this->selectedInventory[$key])) {
+                        $transfer_item->inventory_id = $this->selectedInventory[$key];
+                    }
+                    if (isset($this->selectedTyre[$key])) {
+                        $transfer_item->tyre_id = $this->selectedTyre[$key];
+                    }
+                    if (isset($this->selectedAsset[$key])) {
+                        $transfer_item->asset_id = $this->selectedAsset[$key];
+                    }
+                    if (isset($this->qty[$key])) {
+                        $transfer_item->qty = $this->qty[$key];
+                    }
+                    $transfer_item->save();   
+                }
+            }
+           
+            if (isset($this->transfer_items)) {
+                foreach ($this->transfer_items as $key => $item) {
+                
+                    $transfer_item = TransferItem::find($item->id);
+                    $transfer_item->transfer_id = $transfer->id;
+
+                    if (isset($this->current_selectedProduct[$key])) {
+                        $transfer_item->product_id = $this->current_selectedProduct[$key];
+                    }
+                    if (isset($this->current_selectedInventory[$key])) {
+                        $transfer_item->inventory_id = $this->current_selectedInventory[$key];
+                    }
+                    if (isset($this->current_selectedTyre[$key])) {
+                        $transfer_item->tyre_id = $this->current_selectedTyre[$key];
+                    }
+                    if (isset($this->current_selectedAsset[$key])) {
+                        $transfer_item->asset_id = $this->current_selectedAsset[$key];
+                    }
+                    if (isset($this->current_qty[$key])) {
+                        $transfer_item->qty = $this->current_qty[$key];
+                    }
+                    $transfer_item->update();   
+                }
+            }
+
+            $this->dispatchBrowserEvent('hide-editModal');
+            $this->resetInputFields();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Transfer Record Updated Successfully!!"
+            ]);
+
+        });
+    
+    }
 
     public function updatingSearch()
     {
         $this->resetPage();
     }
    
-    public function showReverse($id)
-    {
-
-        $this->old_transfer = Transfer::find($id);
-        $this->old_transfer_id = $id;
-        $this->selectedProduct = $this->old_transfer->inventory->id;
-        $this->dispatchBrowserEvent('show-reverseModal');
-
-    }
-   
+    
     public function updatingSearchInventory()
     {
         $this->resetPage();
     }
+    public function updatingSearchTyre()
+    {
+        $this->resetPage();
+    }
+    public function updatingSearchAsset()
+    {
+        $this->resetPage();
+    }
+   
 
     public function render()
     {
       
-         $from   = filled($this->from) ? Carbon::parse($this->from)->startOfDay() : null;
+            $from   = filled($this->from) ? Carbon::parse($this->from)->startOfDay() : null;
             $to     = filled($this->to)   ? Carbon::parse($this->to)->endOfDay()   : null;
             $search = trim((string) ($this->search ?? ''));
 
@@ -308,9 +496,11 @@ class Index extends Component
                 ->with([
                     'inventory.product.brand',
                     'tyre.product.brand',
+                    'asset.product.brand',
                 ])
-                ->when($from && $to, fn (Builder $q) => $q->whereBetween('created_at', [$from, $to]))
-                ->when(!($from && $to), fn (Builder $q) => $q->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year))
+                ->where('department',$this->department)
+                ->when($from && $to, fn (Builder $q) => $q->whereBetween($this->transfer_filter, [$from, $to]))
+                ->when(!($from && $to), fn (Builder $q) => $q->whereMonth($this->transfer_filter, now()->month)->whereYear($this->transfer_filter, now()->year))
                 ->when($search !== '', function (Builder $q) use ($search) {
                     // IMPORTANT: group OR conditions so they don't break your date filters
                     $q->where(function (Builder $qq) use ($search) {
@@ -325,10 +515,12 @@ class Index extends Component
                                     ->orWhere('serial_number', 'like', $like);
                             });
                         })
-
-                        ->orWhereHas('inventory.product', fn (Builder $p) => $p->where('name', 'like', $like))
-                        ->orWhereHas('inventory.product.brand', fn (Builder $b) => $b->where('name', 'like', $like))
-
+                        ->orWhereHas('asset', function (Builder $inv) use ($like) {
+                            $inv->where(function (Builder $i) use ($like) {
+                                $i->where('asset_number', 'like', $like)
+                                    ->orWhere('serial_number', 'like', $like);
+                            });
+                        })
                         ->orWhereHas('tyre', function (Builder $t) use ($like) {
                             $t->where(function (Builder $tt) use ($like) {
                                 $tt->where('tyre_number', 'like', $like)
@@ -339,11 +531,15 @@ class Index extends Component
                             });
                         })
 
+                        ->orWhereHas('inventory.product', fn (Builder $p) => $p->where('name', 'like', $like))
+                        ->orWhereHas('inventory.product.brand', fn (Builder $b) => $b->where('name', 'like', $like))
+                        ->orWhereHas('asset.product', fn (Builder $p) => $p->where('name', 'like', $like))
+                        ->orWhereHas('asset.product.brand', fn (Builder $b) => $b->where('name', 'like', $like))
                         ->orWhereHas('tyre.product', fn (Builder $p) => $p->where('name', 'like', $like))
                         ->orWhereHas('tyre.product.brand', fn (Builder $b) => $b->where('name', 'like', $like));
                     });
                 })
-                ->orderByDesc('created_at');
+                ->orderByDesc($this->transfer_filter);
 
             return view('livewire.transfers.index', [
                 'transfers' => $query->paginate(10),

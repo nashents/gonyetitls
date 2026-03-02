@@ -56,7 +56,7 @@
                                     <thead >
                                         <th class="th-sm">Incident#
                                         </th>
-                                        <th class="th-sm">CreatedBy
+                                        <th class="th-sm">Type
                                         </th>
                                         <th class="th-sm">IncidentFor
                                         </th>
@@ -77,22 +77,25 @@
                                         @forelse  ($incidents as $incident)
                                         
                                       <tr>
-                                        <td>{{ucfirst($incident->incident_number)}}</td>
-                                        <td>{{ucfirst($incident->user ? $incident->user->name : "")}} {{ucfirst($incident->user ? $incident->user->surname : "")}}</td>
                                         <td>
-                                            @if ($incident->driver)
-                                            {{ucfirst($incident->driver->employee ? $incident->driver->employee->name : "")}} {{ucfirst($incident->driver->employee ? $incident->driver->employee->surname : "")}}        
-                                            @elseif($incident->employee)
-                                            {{ucfirst($incident->employee ? $incident->employee->name : "")}} {{ucfirst($incident->employee ? $incident->employee->surname : "")}}        
-                                            @endif
+                                            {{$incident->incident_number}}
+                                            <br>
+                                            <small>
+                                                <strong>CreatedBy</strong> {{ucfirst($incident->user ? $incident->user->name : "")}} {{ucfirst($incident->user ? $incident->user->surname : "")}}<br>
+                                                <strong>CreatedOn</strong> {{$incident->created_at}}
+                                            </small>
+                                        </td>
+                                        <td> {{$incident->incident_type}}</td>
+                                        <td>
+                                             {{ucfirst($incident->employee ? $incident->employee->name : "")}} {{ucfirst($incident->employee ? $incident->employee->surname : "")}}        
                                         </td>
                                         <td>
                                             @if (isset($incident->horse))
-                                            Horse | {{ucfirst($incident->horse->horse_make ? $incident->horse->horse_make->name : "")}} {{ucfirst($incident->horse->horse_model ? $incident->horse->horse_model->name : "" )}} {{ucfirst($incident->horse ? $incident->horse->registration_number : "")}} {{ucfirst($incident->horse ? "| ".$incident->horse->fleet_number : "")}}
+                                                Horse |  {{$incident->horse ? $incident->horse->registration_number : ""}} {{ucfirst($incident->horse ? "(".$incident->horse->fleet_number.")" : "")}}
                                             @elseif(isset($incident->vehicle))
-                                            Vehicle | {{ucfirst($incident->vehicle->vehicle_make ? $incident->vehicle->vehicle_make->name : "")}} {{ucfirst($incident->vehicle->vehicle_model ? $incident->vehicle->vehicle_model->name : "")}} {{ucfirst($incident->vehicle ? $incident->vehicle->registration_number : "")}} {{ucfirst($incident->vehicle ? "| ".$incident->vehicle->fleet_number : "")}}
+                                                Vehicle | {{$incident->vehicle ? $incident->vehicle->registration_number : ""}} {{$incident->vehicle ? "(".$incident->vehicle->fleet_number.")" : ""}}
                                             @elseif(isset($incident->trailer))
-                                            Trailer | {{ucfirst($incident->trailer ? $incident->trailer->make : "")}} {{ucfirst($incident->trailer ? $incident->trailer->model : "")}} {{ucfirst($incident->trailer ? $incident->trailer->registration_number : "")}} {{ucfirst($incident->trailer ? "| ".$incident->trailer->fleet_number : "")}}
+                                                Trailer | {{$incident->trailer ? $incident->trailer->registration_number : ""}} {{$incident->trailer ? "(".$incident->trailer->fleet_number.")" : ""}}
                                             @endif
                                         </td>
                                         <td>{{$incident->date}}</td>

@@ -1216,7 +1216,18 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
         $upsertSub($m, ['name'=>'Manage Brands','slug'=>'asset-brands','icon'=>'fas fa-list','route_name'=>'brands.index','sort_order'=>30]);
 
         $m = $upsertModule($g, [
-            'name' => 'Products',
+            'name' => 'Transfers (Assets)',
+            'slug' => 'asset-transfers',
+            'icon' => 'fas fa-exchange',
+            'sort_order' => 15,
+        ]);
+        $upsertSub($m, ['name'=>'Manage Transfers','slug'=>'manage-asset-transfers','icon'=>'fas fa-list','route_name'=>'asset_transfers.index','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Pending Transfers','slug'=>'pending-asset-transfers','icon'=>'fas fa-clock','route_name'=>'asset_transfers.pending','sort_order'=>20,'badge_key'=>'asset_transfers_pending_count']);
+        $upsertSub($m, ['name'=>'Approved Transfers','slug'=>'approved-asset-transfers','icon'=>'fas fa-check','route_name'=>'asset_transfers.approved','sort_order'=>30,'badge_key'=>'asset_transfers_approved_count']);
+        $upsertSub($m, ['name'=>'Rejected Transfers','slug'=>'rejected-asset-transfers','icon'=>'fas fa-ban','route_name'=>'asset_transfers.rejected','sort_order'=>40,'badge_key'=>'asset_transfers_rejected_count']);
+
+        $m = $upsertModule($g, [
+            'name' => 'Products (Assets)',
             'slug' => 'asset-products',
             'icon' => 'fas fa-boxes',
             'route_name' => 'products.*',
@@ -2074,7 +2085,7 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
         $upsertSub($m, ['name'=>'Stores','slug'=>'stores','icon'=>'fas fa-list','route_name'=>'stores.index','sort_order'=>60]);
 
         $m = $upsertModule($g, [
-            'name' => 'Inventory Transfers',
+            'name' => 'Transfers(Inventory)',
             'slug' => 'inventory-transfers',
             'icon' => 'fas fa-exchange',
             'sort_order' => 20,
@@ -2085,7 +2096,7 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
         $upsertSub($m, ['name'=>'Rejected Transfers','slug'=>'rejected-inventory-transfers','icon'=>'fas fa-ban','route_name'=>'inventory_transfers.rejected','sort_order'=>40,'badge_key'=>'inventory_transfers_rejected_count']);
 
         $m = $upsertModule($g, [
-            'name' => 'Products',
+            'name' => 'Products(Inventory)',
             'slug' => 'inventory-products',
             'icon' => 'fas fa-boxes',
             'route_name' => 'inventory_products.*',
@@ -2158,19 +2169,18 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
         ]);
 
         $m = $upsertModule($g, [
-            'name' => 'Tyre Transfers',
+            'name' => 'Transfers (Tyres)',
             'slug' => 'tyre-transfers',
             'icon' => 'fas fa-exchange',
             'sort_order' => 10,
         ]);
         $upsertSub($m, ['name'=>'Manage Transfers','slug'=>'manage-tyre-transfers','icon'=>'fas fa-list','route_name'=>'tyre_transfers.index','sort_order'=>10]);
-
         $upsertSub($m, ['name'=>'Pending Transfers','slug'=>'pending-tyre-transfers','icon'=>'fas fa-clock','route_name'=>'tyre_transfers.pending','sort_order'=>20,'badge_key'=>'tyre_transfers_pending_count','visibility'=>$invDispatchVis]);
         $upsertSub($m, ['name'=>'Approved Transfers','slug'=>'approved-tyre-transfers','icon'=>'fas fa-check','route_name'=>'tyre_transfers.approved','sort_order'=>30,'badge_key'=>'tyre_transfers_approved_count','visibility'=>$invDispatchVis]);
         $upsertSub($m, ['name'=>'Rejected Transfers','slug'=>'rejected-tyre-transfers','icon'=>'fas fa-ban','route_name'=>'tyre_transfers.rejected','sort_order'=>40,'badge_key'=>'tyre_transfers_rejected_count','visibility'=>$invDispatchVis]);
 
         $m = $upsertModule($g, [
-            'name' => 'Products',
+            'name' => 'Products (Tyres)',
             'slug' => 'tyre-products',
             'icon' => 'fas fa-boxes',
             'route_name' => 'tyre_products.*',

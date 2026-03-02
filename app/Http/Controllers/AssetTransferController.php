@@ -2,47 +2,45 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\TyreTransfer;
-use App\Http\Requests\StoreTyreTransferRequest;
-use App\Http\Requests\UpdateTyreTransferRequest;
+use Illuminate\Http\Request;
 
-class TyreTransferController extends Controller
+class AssetTransferController extends Controller
 {
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
-       public function index()
+      public function index()
     {
        
-        return view('tyre_transfers.index')->with(
+        return view('asset_transfers.index')->with(
             [
-                'department' => 'tyre'
+                'department' => 'asset'
             ]
         );
     }
         public function pending()
     {
-        return view('tyre_transfers.pending')->with(
+        return view('asset_transfers.pending')->with(
             [
-                'department' => 'tyre'
+                'department' => 'asset'
             ]
         );
     }
     public function approved()
     {
-        return view('tyre_transfers.approved')->with(
+        return view('asset_transfers.approved')->with(
             [
-                'department' => 'tyre'
+                'department' => 'asset'
             ]
         );
     }
     public function rejected()
     {
-        return view('tyre_transfers.rejected')->with(
+        return view('asset_transfers.rejected')->with(
             [
-                'department' => 'tyre'
+                'department' => 'asset'
             ]
         );
     }
@@ -59,10 +57,10 @@ class TyreTransferController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \App\Http\Requests\StoreTyreTransferRequest  $request
+     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(StoreTyreTransferRequest $request)
+    public function store(Request $request)
     {
         //
     }
@@ -70,10 +68,10 @@ class TyreTransferController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\TyreTransfer  $tyreTransfer
+     * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show(TyreTransfer $tyreTransfer)
+    public function show($id)
     {
         //
     }
@@ -81,10 +79,10 @@ class TyreTransferController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\Models\TyreTransfer  $tyreTransfer
+     * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit(TyreTransfer $tyreTransfer)
+    public function edit($id)
     {
         //
     }
@@ -92,11 +90,11 @@ class TyreTransferController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \App\Http\Requests\UpdateTyreTransferRequest  $request
-     * @param  \App\Models\TyreTransfer  $tyreTransfer
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(UpdateTyreTransferRequest $request, TyreTransfer $tyreTransfer)
+    public function update(Request $request, $id)
     {
         //
     }
@@ -104,10 +102,10 @@ class TyreTransferController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\TyreTransfer  $tyreTransfer
+     * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy(TyreTransfer $tyreTransfer)
+    public function destroy($id)
     {
         //
     }

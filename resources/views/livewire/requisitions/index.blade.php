@@ -427,7 +427,46 @@
                             </label>
                         </div>
                         @if (isset($requisition_for))
-
+                            <div class="row">
+                                    <div class="col-lg-3">
+                                        <div class="input-group">
+                                            <span class="input-group-addon">
+                                            Filter By
+                                            </span>
+                                            <select wire:model.debounce.300ms="filter" class="form-control" aria-label="..." >
+                                                <option value="created_at">Created At</option>
+                                                @if ($requisition_for == "Trip")
+                                                    <option value="start_date">Date</option>
+                                                @elseif($requisition_for == "Booking")
+                                                    <option value="in_date">Date</option>
+                                                @elseif($requisition_for == "Purchase")
+                                                    <option value="date">Date</option>
+                                                @endif
+                                               
+                                            </select>
+                                        </div>
+                                        <!-- /input-group -->
+                                    </div>
+                                    <div class="col-lg-3" >
+                                        <div class="input-group">
+                                            <span class="input-group-addon">
+                                                From
+                                            </span>
+                                            <input type="date" wire:model.debounce.300ms="search_from"  class="form-control" aria-label="...">
+                                        </div>
+                                        <!-- /input-group -->
+                                    </div>
+                                    <div class="col-lg-3">
+                                        <div class="input-group">
+                                            <span class="input-group-addon">
+                                                To
+                                            </span>
+                                            <input type="date" wire:model.debounce.300ms="search_to"  class="form-control" aria-label="...">
+                                        </div>
+                                        <!-- /input-group -->
+                                    </div>
+                                    <!-- /input-group -->
+                                </div>
                             @if ($requisition_for == "Trip")
                                 <div class="form-group">
                                     <label for="country">Trips</label>

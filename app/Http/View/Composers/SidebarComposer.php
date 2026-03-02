@@ -2,16 +2,15 @@
 
 namespace App\Http\View\Composers;
 
-use Illuminate\View\View;
-use Illuminate\Support\Facades\Auth;
-use Carbon\Carbon;
-use  App\Models\{
-    Allocation, Department, DepartmentHead, Leave, Loan,
-    Payroll, Invoice, CreditNote, Bill, Requisition, TopUp,User,Purchase, Dispatch,
-    GatePass, Fuel, FuelRequest, Trip, Transporter, Shift, TransportOrder, Recovery, Booking, Transfer, Retread, Customer, Agent, Company,
-    ModuleGroup,Rental,Attendance, WasteCollection, WasteDisposal
-    // ... add all models you need here
+use App\Models\{
+    Allocation, Attendance, Agent, Bill, Booking, Company, CreditNote, Customer, Department, DepartmentHead, Dispatch, Fuel, FuelRequest,
+    GatePass, Incident, Invoice, Leave, Loan, ModuleGroup, Payroll, Purchase, Recovery, Rental, Requisition, Retread, Shift, TopUp, Transfer,
+    Transporter, TransportOrder, Trip, User, WasteCollection, WasteDisposal,
 };
+
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 
 class SidebarComposer
 {
@@ -193,6 +192,17 @@ class SidebarComposer
         $attendancesRejectedCount = Attendance::where('authorization','rejected')
         ->where('created_at', '>', Carbon::now()->startOfWeek())
         ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
+        
+        $incidentsPendingCount = Incident::where('authorization','pending')
+        ->where('created_at', '>', Carbon::now()->startOfWeek())
+        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
+        $incidentsApprovedCount = Incident::where('authorization','approved')
+        ->where('created_at', '>', Carbon::now()->startOfWeek())
+        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
+        $incidentsRejectedCount = Incident::where('authorization','rejected')
+        ->where('created_at', '>', Carbon::now()->startOfWeek())
+        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
+       
      
         $waste_disposalsPendingCount = WasteDisposal::where('authorization','pending')
         ->where('created_at', '>', Carbon::now()->startOfWeek())
@@ -460,9 +470,21 @@ class SidebarComposer
         ->where('department','inventory')
         ->where('created_at', '>', Carbon::now()->startOfWeek())
         ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
-        $inventory_transfersDeletedCount = Transfer::onlyTrashed()
-        ->where('department','inventory')
-        ->whereDate('created_at', Carbon::today())->get()->count();
+       
+        $asset_transfersPendingCount = Transfer::where('authorization','pending')
+        ->where('department','asset')
+        ->where('created_at', '>', Carbon::now()->startOfWeek())
+        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
+        // ->whereDate('created_at', Carbon::today())->get()->count();
+        $asset_transfersApprovedCount = Transfer::where('authorization','approved')
+        ->where('department','asset')
+        ->where('created_at', '>', Carbon::now()->startOfWeek())
+        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
+        $asset_transfersRejectedCount = Transfer::where('authorization','rejected')
+        ->where('department','asset')
+        ->where('created_at', '>', Carbon::now()->startOfWeek())
+        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
+     
         $inventory_purchasesPendingCount = Purchase::where('authorization','pending')
         ->where('department','inventory')
         ->where('created_at', '>', Carbon::now()->startOfWeek())
@@ -617,6 +639,10 @@ class SidebarComposer
         'attendances_pending_count'  => (int) ($attendancesPendingCount ?? 0),
         'attendances_approved_count' => (int) ($attendancesApprovedCount ?? 0),
         'attendances_rejected_count' => (int) ($attendancesRejectedCount ?? 0),
+
+        'incidents_pending_count'  => (int) ($incidentsPendingCount ?? 0),
+        'incidents_approved_count' => (int) ($incidentsApprovedCount ?? 0),
+        'incidents_rejected_count' => (int) ($incidentsRejectedCount ?? 0),
         
         'waste_collections_pending_count'  => (int) ($waste_collectionsPendingCount ?? 0),
         'waste_collections_approved_count' => (int) ($waste_collectionsApprovedCount ?? 0),
@@ -736,6 +762,11 @@ class SidebarComposer
         'inventory_transfers_pending_count'  => (int) ($inventory_transfersPendingCount ?? 0),
         'inventory_transfers_approved_count' => (int) ($inventory_transfersApprovedCount ?? 0),
         'inventory_transfers_rejected_count' => (int) ($inventory_transfersRejectedCount ?? 0),
+     
+        // Asset Transfers
+        'asset_transfers_pending_count'  => (int) ($asset_transfersPendingCount ?? 0),
+        'asset_transfers_approved_count' => (int) ($asset_transfersApprovedCount ?? 0),
+        'asset_transfers_rejected_count' => (int) ($asset_transfersRejectedCount ?? 0),
 
         // Inventory Purchases
         'inventory_purchases_pending_count'  => (int) ($inventory_purchasesPendingCount ?? 0),
@@ -830,6 +861,10 @@ class SidebarComposer
             'attendancesPendingCount'  => $attendancesPendingCount,
             'attendancesApprovedCount' => $attendancesApprovedCount,
             'attendancesRejectedCount' => $attendancesRejectedCount,
+          
+            'incidentsPendingCount'  => $incidentsPendingCount,
+            'incidentsApprovedCount' => $incidentsApprovedCount,
+            'incidentsRejectedCount' => $incidentsRejectedCount,
             
             'waste_disposalsPendingCount'  => $waste_disposalsPendingCount,
             'waste_disposalsApprovedCount' => $waste_disposalsApprovedCount,
@@ -934,10 +969,15 @@ class SidebarComposer
             'bookingsRejectedCount'          => $bookingsRejectedCount,
             'bookingsApprovedCount'          => $bookingsApprovedCount,
             'bookingsPendingCount'          => $bookingsPendingCount,
-            'inventory_transfersDeletedCount'          => $inventory_transfersDeletedCount,
+           
             'inventory_transfersRejectedCount'          => $inventory_transfersRejectedCount,
             'inventory_transfersApprovedCount'          => $inventory_transfersApprovedCount,
             'inventory_transfersPendingCount'          => $inventory_transfersPendingCount,
+           
+            'asset_transfersRejectedCount'          => $asset_transfersRejectedCount,
+            'asset_transfersApprovedCount'          => $asset_transfersApprovedCount,
+            'asset_transfersPendingCount'          => $asset_transfersPendingCount,
+
             'tyre_purchasesDeletedCount'          => $tyre_purchasesDeletedCount,
             'tyre_purchasesRejectedCount'          => $tyre_purchasesRejectedCount,
             'tyre_purchasesApprovedCount'          => $tyre_purchasesApprovedCount,

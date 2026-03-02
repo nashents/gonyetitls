@@ -89,6 +89,7 @@ class Index extends Component
     public $stores;
     public $selectedStore;
     public $expand = False;
+    
 
     public $payment_methods;
     public $payment_method_id;

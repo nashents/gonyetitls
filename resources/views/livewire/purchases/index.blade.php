@@ -248,7 +248,7 @@
                                       </tr>
                                   @empty
                                   <tr>
-                                    <td colspan="12">
+                                    <td colspan="13">
                                         <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                             No Purchase Orders Found ....
                                         </div>

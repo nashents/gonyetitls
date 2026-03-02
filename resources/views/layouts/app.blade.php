@@ -1272,6 +1272,17 @@
             })
     </script>
     <script type="text/javascript">
+            window.addEventListener('show-editModal', event => {
+                $('#editModal').modal('show');
+            })
+    </script>
+
+    <script type="text/javascript">
+            window.addEventListener('hide-editModal', event => {
+                $('#editModal').modal('hide');
+            })
+    </script>
+    <script type="text/javascript">
             window.addEventListener('show-transferModal', event => {
                 $('#transferModal').modal('show');
             })

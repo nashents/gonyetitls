@@ -79,6 +79,9 @@ Route::get('inventory_dispatches/approved','InventoryDispatchController@approved
 Route::get('inventory_dispatches/rejected','InventoryDispatchController@rejected')->name('inventory_dispatches.rejected');
 Route::get('inventory_dispatches/pending','InventoryDispatchController@pending')->name('inventory_dispatches.pending');
 
+Route::get('asset_transfers/approved','AssetTransferController@approved')->name('asset_transfers.approved');
+Route::get('asset_transfers/rejected','AssetTransferController@rejected')->name('asset_transfers.rejected');
+Route::get('asset_transfers/pending','AssetTransferController@pending')->name('asset_transfers.pending');
 
 Route::get('inventory_transfers/approved','InventoryTransferController@approved')->name('inventory_transfers.approved');
 Route::get('inventory_transfers/rejected','InventoryTransferController@rejected')->name('inventory_transfers.rejected');
