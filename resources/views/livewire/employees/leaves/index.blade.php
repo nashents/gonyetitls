@@ -32,6 +32,8 @@
                                     <thead >
                                         <th class="th-sm">Employee
                                         </th>
+                                        <th class="th-sm">Leave Taken
+                                        </th>
                                         <th class="th-sm">Leave Day(s)
                                         </th>
                                         <th class="th-sm">Accrual Rate
@@ -54,6 +56,7 @@
                                                     <strong>Post: </strong>{{ucfirst($employee->post)}}
                                                 </small>
                                             </td>
+                                            <td>{{$this->getLeavesTaken($employee->id)}}</td>
                                             <td>{{$employee->leave_days}}</td>
                                             <td>{{$employee->accrual_rate}}</td>
                                             <td>{{$employee->maximum_leave_days}}</td>

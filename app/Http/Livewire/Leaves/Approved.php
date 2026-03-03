@@ -101,18 +101,32 @@ class Approved extends Component
 
     public function render()
     {
+        // Define readable flags first
+        $inHrDept      = in_array('Human Resources', $this->department_names ?? []);
+        $isAdmin       = in_array('Admin', $this->role_names ?? []);
+        $isSuperAdmin  = in_array('Super Admin', $this->role_names ?? []);
+        $isManagement  = in_array('Management', $this->rank_names ?? []);
 
-           if ((in_array('Admin', $this->role_names) && in_array('Human Resources', $this->department_names)) || (in_array('Management', $this->rank_names) && in_array('Human Resources', $this->department_names)) || in_array('Super Admin', $this->role_names)) {
-            return view('livewire.leaves.approved',[
-                'leaves' => Leave::where('status','approved')
-                ->latest()->paginate(10),
-            ]);
-        }elseif(isset($this->hod)){
-            return view('livewire.leaves.approved',[
-                'leaves' => Leave::where('status','approved')
-                ->where('department_id' , $this->hod->department->id)
-                ->latest()->paginate(10),
-            ]);
+        // Who can see ALL pending leaves (management level)
+        $canSeeAllPending =
+            $isSuperAdmin ||
+            ($isAdmin && $inHrDept) ||
+            ($isManagement && $inHrDept);
+
+        // Base query
+        $query = Leave::query();
+
+        if ($canSeeAllPending) {
+            $query->where('management_decision', 'approved');
+        } elseif (isset($this->hod)) {
+            $query->where('hod_decision', 'approved')
+                ->where('department_id', $this->hod->department->id);
+            // or $this->hod->department_id if you have the FK on the model
         }
+
+        // Single return
+        return view('livewire.leaves.approved', [
+            'leaves' => $query->latest()->paginate(10),
+        ]);
     }
 }

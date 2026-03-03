@@ -170,18 +170,72 @@ class SidebarComposer
         $billsDeletedCount = Bill::onlyTrashed()
         ->whereDate('created_at', Carbon::today())->get()->count();
 
-        $leavesPendingCount = Leave::where('status','pending')
-        ->where('created_at', '>', Carbon::now()->startOfWeek())
-        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
-        // ->whereDate('created_at', Carbon::today())->get()->count();
-        $leavesApprovedCount = Leave::where('status','approved')
-        ->where('created_at', '>', Carbon::now()->startOfWeek())
-        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
-        $leavesRejectedCount = Leave::where('status','rejected')
-        ->where('created_at', '>', Carbon::now()->startOfWeek())
-        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
-        $leavesDeletedCount = Leave::onlyTrashed()
-        ->whereDate('created_at', Carbon::today())->get()->count();
+        // Dates
+        $startOfWeek = Carbon::now()->startOfWeek();
+        $endOfWeek   = Carbon::now()->endOfWeek();
+        $today       = Carbon::today();
+
+        // Flags
+        $inHrDept      = in_array('Human Resources', $this->department_names ?? []);
+        $isAdmin       = in_array('Admin', $this->role_names ?? []);
+        $isSuperAdmin  = in_array('Super Admin', $this->role_names ?? []);
+        $isManagement  = in_array('Management', $this->rank_names ?? []);
+
+        // Permission: who can see ALL leaves
+        $canSeeAllLeaves =
+            $isSuperAdmin ||
+            ($isAdmin && $inHrDept) ||
+            ($isManagement && $inHrDept);
+
+        // Decide which decision column to use
+        $decisionColumn = $canSeeAllLeaves ? 'management_decision' : 'hod_decision';
+
+        // Helper: base query for this user’s visibility + week range
+        $weeklyLeavesQuery = function () use ($canSeeAllLeaves, $isHOD, $startOfWeek, $endOfWeek) {
+            $query = Leave::query();
+
+            if ($canSeeAllLeaves) {
+                // Management: all leaves
+                // Optionally enforce that management_decision is not null:
+                // $query->whereNotNull('management_decision');
+            } elseif (isset($isHOD)) {
+                // HOD: only their department
+                $query->where('department_id', $isHOD->department->id);
+            } else {
+                // No access → always zero results
+                return Leave::query()->whereRaw('1 = 0');
+            }
+
+            return $query->whereBetween('created_at', [$startOfWeek, $endOfWeek]);
+        };
+
+        // Counts by decision (weekly)
+        $leavesPendingCount = $weeklyLeavesQuery()
+            ->where($decisionColumn, 'pending')
+            ->count();
+
+        $leavesApprovedCount = $weeklyLeavesQuery()
+            ->where($decisionColumn, 'approved')
+            ->count();
+
+        $leavesRejectedCount = $weeklyLeavesQuery()
+            ->where($decisionColumn, 'rejected')
+            ->count();
+
+        // Deleted leaves (today), still respecting visibility
+        $deletedQuery = Leave::onlyTrashed();
+
+        if ($canSeeAllLeaves) {
+            // management sees all deleted
+        } elseif (isset($isHOD)) {
+            $deletedQuery->where('department_id', $isHOD->department->id);
+        } else {
+            $deletedQuery->whereRaw('1 = 0');
+        }
+
+        $leavesDeletedCount = $deletedQuery
+            ->whereDate('deleted_at', $today)   // better than created_at for deletions
+            ->count();
 
         $attendancesPendingCount = Attendance::where('authorization','pending')
         ->where('created_at', '>', Carbon::now()->startOfWeek())

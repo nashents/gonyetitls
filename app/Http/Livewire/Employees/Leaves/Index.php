@@ -2,12 +2,13 @@
 
 namespace App\Http\Livewire\Employees\Leaves;
 
-use Livewire\Component;
+use App\Exports\EmployeesLeaveExport;
 use App\Models\Employee;
+use App\Models\Leave;
+use Illuminate\Support\Facades\DB;
+use Livewire\Component;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Excel;
-use Illuminate\Support\Facades\DB;
-use App\Exports\EmployeesLeaveExport;
 
 class Index extends Component
 {
@@ -22,6 +23,7 @@ class Index extends Component
     public $leave_days;
     public $accrual_rate;
     public $maximum_leave_days;
+    public $leave_count;
 
     public function mount(){
         $this->resetPage();
@@ -80,6 +82,16 @@ class Index extends Component
                 'message'=>"Leave Details Updated Successfully!!"
             ]);
         }
+    }
+
+    public function getLeavesTaken($id){
+      
+        $this->leave_count = Leave::where('employee_id',$id)
+                        ->whereYear('from',date('Y'))
+                        ->where('hod_decision','approved')
+                        ->where('management_decision','approved')->sum('days');
+
+        return $this->leave_count;
     }
 
     public function updatingSearch()

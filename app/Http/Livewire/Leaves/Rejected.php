@@ -2,11 +2,13 @@
 
 namespace App\Http\Livewire\Leaves;
 
+use App\Mail\LeaveApplicationMail;
+use App\Models\DepartmentHead;
 use App\Models\Leave;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Models\DepartmentHead;
-use Illuminate\Support\Facades\Auth;
 
 class Rejected extends Component
 {
@@ -112,17 +114,33 @@ class Rejected extends Component
 
     public function render()
     {
-           if ((in_array('Admin', $this->role_names) && in_array('Human Resources', $this->department_names)) || (in_array('Management', $this->rank_names) && in_array('Human Resources', $this->department_names)) || in_array('Super Admin', $this->role_names)) {
-            return view('livewire.leaves.rejected',[
-                'leaves' => Leave::where('status','rejected')
-                ->latest()->paginate(10),
-            ]);
-        }elseif(isset($this->hod)){
-            return view('livewire.leaves.rejected',[
-                'leaves' => Leave::where('status','rejected')
-                ->where('department_id' , $this->hod->department->id)
-                ->latest()->paginate(10),
-            ]);
+            
+        // Define readable flags first
+        $inHrDept      = in_array('Human Resources', $this->department_names ?? []);
+        $isAdmin       = in_array('Admin', $this->role_names ?? []);
+        $isSuperAdmin  = in_array('Super Admin', $this->role_names ?? []);
+        $isManagement  = in_array('Management', $this->rank_names ?? []);
+
+        // Who can see ALL pending leaves (management level)
+        $canSeeAllPending =
+            $isSuperAdmin ||
+            ($isAdmin && $inHrDept) ||
+            ($isManagement && $inHrDept);
+
+        // Base query
+        $query = Leave::query();
+
+        if ($canSeeAllPending) {
+            $query->where('management_decision', 'rejected');
+        } elseif (isset($this->hod)) {
+            $query->where('hod_decision', 'rejected')
+                ->where('department_id', $this->hod->department->id);
+            // or $this->hod->department_id if you have the FK on the model
         }
+
+        // Single return
+        return view('livewire.leaves.rejected', [
+            'leaves' => $query->latest()->paginate(10),
+        ]);
     }
 }
