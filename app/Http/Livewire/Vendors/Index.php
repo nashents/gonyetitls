@@ -32,7 +32,6 @@ class Index extends Component
     protected $queryString = ['search'];
 
     private $vendors;
-    public $vendor_types;
     public $contact_name;
     public $contact_surname;
     public $contact_email;
@@ -54,7 +53,6 @@ class Index extends Component
     public $street_address;
 
     public $vendor_id;
-    public $vendor_type_id;
     public $user_id;
     public $state = Null;
 
@@ -146,7 +144,6 @@ class Index extends Component
     public function mount(){
         $this->vendors = Vendor::latest()->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
-        $this->vendor_types = VendorType::orderBy('name','asc')->get();
     }
 
     public function updated($value){
@@ -177,7 +174,6 @@ class Index extends Component
         $this->street_address = "";
         $this->vat_number = "";
         $this->tin_number = "";
-        $this->vendor_type_id = "";
         $this->title = "";
         $this->file = "";
         $this->expires_at = "";
@@ -223,7 +219,6 @@ class Index extends Component
         $vendor->creator_id = Auth::user()->id;
         $vendor->company_id = Auth::user()->employee->company->id;
         $vendor->vendor_number = $this->vendorNumber();
-        $vendor->vendor_type_id = $this->vendor_type_id;
         $vendor->name = $this->name;
         $vendor->email = $this->email;
         $vendor->custom_ref = $this->custom_ref;
@@ -325,7 +320,6 @@ class Index extends Component
 
     public function edit($id){
     $vendor = Vendor::find($id);
-    $this->vendor_type_id = $vendor->vendor_type_id;
     $this->name = $vendor->name;
     $this->email = $vendor->email;
     $this->phonenumber = $vendor->phonenumber;
@@ -353,7 +347,6 @@ class Index extends Component
         if ($this->vendor_id) {
 
             $vendor = Vendor::find($this->vendor_id);
-            $vendor->vendor_type_id = $this->vendor_type_id;
             $vendor->currency_id = $this->currency_id;
             $vendor->name = $this->name;
             $vendor->phonenumber = $this->phonenumber;
