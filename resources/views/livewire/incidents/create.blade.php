@@ -15,12 +15,11 @@
                                             <label for="exampleInputEmail13">Incident Type<span class="required" style="color: red">*</span></label>
                                             <select wire:model.debounce.300ms="incident_type" class="form-control"  required>
                                                 <option value="">Select Incident Type</option>
-                                                <option value="LTI">LTI (Lost Time Injury)</option>
-                                                <option value="RTA">RTA (Road Traffic Accident)</option>
-                                                <option value="MTC">MTC (Medical Treatment Case)</option>
-                                                <option value="Property Damage">Property Damage/Loss</option>
+                                                <option value="LTI (Lost Time Injury)">LTI (Lost Time Injury)</option>
+                                                <option value="RTA (Road Traffic Accident)">RTA (Road Traffic Accident)</option>
+                                                <option value="MTC (Medical Treatment Case)">MTC (Medical Treatment Case)</option>
+                                                <option value="Property Damage/Loss">Property Damage/Loss</option>
                                                 <option value="Near Miss">Near Miss</option>
-
                                             </select>
                                             @error('incident_type') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>

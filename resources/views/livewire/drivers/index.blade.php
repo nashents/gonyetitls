@@ -70,7 +70,7 @@
                                       <tr>
                                         @php
                                             $user = App\Models\User::find($driver->user_id);
-                                              $lastLogin = $user?->last_login_at;
+                                            $lastLogin = $user?->last_login_at;
                                             $employee = App\Models\Employee::find($driver->employee_id);
                                             $assignments  = $driver->assignments->where('status', 1);
                                         @endphp
@@ -82,6 +82,12 @@
                                         <td>
                                             {{ucfirst($driver->employee ? $driver->employee->name : "")}} {{ucfirst($driver->employee ?$driver->employee->surname : "")}} <br>
                                              <small><strong>Emp#: </strong> {{ucfirst($employee->employee_number)}}</small>
+                                             @if ($employee->custom_ref)
+                                                        <br>
+                                                        <small>
+                                                            <strong>CustomRef#: </strong> {{ucfirst($employee->custom_ref)}}
+                                                        </small>
+                                                    @endif 
                                             @if ($assignments && $assignments->count() > 0)
                                                 <br>
                                                 @foreach ($assignments as $assignment)

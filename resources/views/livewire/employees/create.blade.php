@@ -14,7 +14,7 @@
 
                             <form wire:submit.prevent="store()" class="p-20" enctype="multipart/form-data">
                                 <h5 class="underline mt-n">Employee Details</h5>
-                                            <div class="row">
+                                <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="exampleInputEmail13">Company<span class="required" style="color: red">*</span></label>

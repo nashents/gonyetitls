@@ -76,6 +76,12 @@
                                                     <small>
                                                         <strong>Emp#: </strong> {{ucfirst($employee->employee_number)}}
                                                     </small>
+                                                    @if ($employee->custom_ref)
+                                                        <br>
+                                                        <small>
+                                                            <strong>CustomRef#: </strong> {{ucfirst($employee->custom_ref)}}
+                                                        </small>
+                                                    @endif 
                                                 </td>
                                                 <td>{{ucfirst(strtolower($employee->gender))}}</td>
                                                 <td>

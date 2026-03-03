@@ -55,6 +55,33 @@ class VehicleController extends Controller
         Session::flash('success','Vehicle Archived Successfully!!');
         return redirect(route('vehicles.archived'));
     }
+    public function service(Vehicle $vehicle){
+        
+        $bookings = $vehicle->bookings->where('status', 1);
+
+        if (isset($bookings)) {
+           foreach ($bookings as $booking) {
+            $booking->status = 0;
+            $booking->update();
+
+            // $ticket = $booking->ticket;
+            // if (isset($ticket)) {
+            //     $ticket->closed_by_id = Auth::user()->id;
+            //     $ticket->status = 0;
+            //     $ticket->update();
+            // }
+
+           }
+        }
+    
+        $vehicle->service = 0 ;
+        $vehicle->update();
+
+
+        Session::flash('success','Vehicle Ticket Closed Successfully');
+        return redirect(route('vehicles.index'));
+    }
+
     public function age()
     {
         return view('vehicles.age');

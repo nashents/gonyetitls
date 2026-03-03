@@ -139,7 +139,6 @@
                                                     @if ($vehicle->archive == 0 && $vehicle->status == 0)
                                                         <li><a href="{{route('vehicles.archive', $vehicle->id)}}"  ><i class="fa fa-archive color-primary"></i>Archive</a></li>
                                                     @endif
-
                                                 </ul>
                                             </div>
                                             @include('vehicles.delete')

@@ -773,6 +773,7 @@ Route::get('receipts/delete','ReceiptController@delete')->name('receipts.deleted
 
 
 
+Route::get('/vehicles/{vehicle}/service','VehicleController@service')->name('vehicles.service');
 Route::get('/vehicles/{vehicle}/activate','VehicleController@activate')->name('vehicles.activate');
 Route::get('/vehicles/{vehicle}/deactivate','VehicleController@deactivate')->name('vehicles.deactivate');
 

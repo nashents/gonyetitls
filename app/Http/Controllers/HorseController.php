@@ -61,6 +61,8 @@ class HorseController extends Controller
     public $total_trips;
     public $total_fuel;
     public $total_fuel_orders;
+    public $accounts;
+    public $account_types;
     /**
      * Display a listing of the resource.
      *

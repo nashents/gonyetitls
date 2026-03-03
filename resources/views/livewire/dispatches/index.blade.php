@@ -284,8 +284,16 @@
                             </div>
                         </div>
                     </div>
+             
+                   <div class="mb-20 mt-20">
+                        <input type="checkbox" wire:model.debounce.300ms="attach"   class="line-style"  />
+                        <label for="one" class="radio-label">Attach a ticket to dispatch. </label>
+                        @error('attach') <span class="text-danger error">{{ $message }}</span>@enderror
+                    </div>
+                    @if (isset($attach) && $attach == true)
+                
                     @if (in_array($department,['inventory','tyre']))
-                    
+                        
                         <div class="form-group">
                             <label for="country">Tickets<span class="required" style="color: red">*</span></label>
                             <input type="text" wire:model.debounce.300ms="searchTicket" placeholder="Search tickets by ticket#, booking#, registration#, fleet#, driver..." class="form-control">
@@ -320,8 +328,8 @@
                         </div>
                          
                     @endif
-                    @if($department == "asset")
-                        <h5 class="underline mt-30">Dispatch destination</h5>
+                    @endif
+                           <h5 class="underline mt-10">Destination Details</h5>
                         <div class="row">
                             <div class="col-md-4">
                                 <div class="form-group">
@@ -340,8 +348,8 @@
                                     <label for="purchase_date">Department</label>
                                     <select class="form-control" wire:model.debounce.300ms="asset_department_id">
                                         <option value="">Select Department</option>
-                                        @foreach ($all_departments as $department)
-                                            <option value="{{$department->id}}">{{$department->name}}</option>
+                                        @foreach ($all_departments as $all_department)
+                                            <option value="{{$all_department->id}}">{{$all_department->name}}</option>
                                         @endforeach
                                     </select>
                                     @error('asset_department_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -360,31 +368,35 @@
                                 </div>
                             </div>
                         </div>
-                    @endif
-                    <div class="form-group" >
-                        <label for="name">Select what to dispatch</label>
-                        <label class="radio-inline">
-                            <input type="radio" wire:model.debounce.300ms="dispatch_for" value="inventory" name="optradio">Inventory Items
-                        </label>
-                        <label class="radio-inline">
-                            <input type="radio" wire:model.debounce.300ms="dispatch_for" value="expenses" name="optradio">Non Inventory Items
-                        </label>
+
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group" >
+                            <label for="name">Select what to dispatch</label>
+                            <label class="radio-inline">
+                                <input type="radio" wire:model.debounce.300ms="dispatch_for" value="inventory" name="optradio">Inventory Items
+                            </label>
+                            <label class="radio-inline">
+                                <input type="radio" wire:model.debounce.300ms="dispatch_for" value="expenses" name="optradio">Non Inventory Items
+                            </label>
+                        </div>
                     </div>
-
-                @if (!empty($dispatch_for) && $dispatch_for == "inventory")
-                  
-
-                     {{-- <h5 class="underline mt-30">Select store to dispatch from</h5> --}}
-                    <div class="form-group">
-                        <label for="purchase_date">Select store to dispatch from</label>
-                            <select class="form-control" wire:model.debounce.300ms="selectedStore" >
+                    <div class="col-md-8">
+                        <div class="form-group">
+                            <label for="purchase_date">Select store to dispatch from<span class="required" style="color: red">*</span></label>
+                            <select class="form-control" wire:model.debounce.300ms="selectedStore" {{$dispatch_for == "expenses" ? "disabled" : ""}} required>
                                 <option value="">Select Store </option>
                                 @foreach ($stores as $store)
                                     <option value="{{$store->id}}">{{$store->name}} </option>
                                 @endforeach
                             </select>
-                        @error('selectedStore') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            @error('selectedStore') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        </div>
                     </div>
+                </div>
+
+                @if (!empty($dispatch_for) && $dispatch_for == "inventory")
+                  
                     <div class="mb-10">
                         <input type="checkbox" wire:model.debounce.300ms="expand"   class="line-style"  @if(count($inputs) > 0) disabled @endif />
                         <label for="one" class="radio-label">Select specific items to dispatch </label>
@@ -428,7 +440,7 @@
                                                         @if(in_array($product->id, $selectedProduct ?? []) && ($selectedProduct[0] ?? null) != $product->id) 
                                                             disabled 
                                                         @endif
-                                                        >  {{$product->name}} {{$product->brand ? $product->brand->name : ""}}, {{$product->product_number ? "Inventory#:  ".$product->product_number : ""}}, {{$product->identification_number ? "ID#: ".$product->identification_number : ""}} 
+                                                        >  {{$product->name}} {{$product->brand ? $product->brand->name : ""}} {{$product->identification_number ? "ID#: ".$product->identification_number : ""}} 
                                                       
                                                     @php
                                                         $relation = match ($department) {
@@ -511,7 +523,7 @@
                                                             disabled 
                                                         @endif
                                                     > 
-                                                    {{$product->name}} {{$product->brand ? $product->brand->name : ""}}, {{$product->product_number ? "Code: ".$product->product_number : ""}}, {{$product->identification_number ? "Part/ID#, ".$product->identification_number : ""}} 
+                                                     {{$product->name}} {{$product->brand ? $product->brand->name : ""}} {{$product->identification_number ? "ID#: ".$product->identification_number : ""}} 
                                                            @php
                                                         $relation = match ($department) {
                                                             'inventory' => 'inventories',
@@ -553,7 +565,7 @@
                                     </div>
                                     <div class="col-md-1">
                                         <div class="form-group">
-                                            <button class="btn btn-danger btn-rounded xs" style="margin-top:23px"  wire:click.prevent="remove({{$key}})"> <i class="fa fa-times"></i></button>
+                                            <button class="btn btn-danger btn-rounded btn-sm" style="margin-top:23px"  wire:click.prevent="remove({{$key}})"> <i class="fa fa-times"></i></button>
                                         </div>
                                     </div>
                                 </div>
@@ -562,8 +574,8 @@
                         @endforeach
                         <div class="row">
                             <div class="col-md-12">
-                                <div class="form-group">
-                                    <button class="btn btn-success btn-rounded" style="float: right" wire:click.prevent="add({{$i}})"> <i class="fa fa-plus"></i> Product</button>
+                                <div class="form-group mt-20">
+                                    <button class="btn btn-success btn-rounded btn-sm" style="float: right" wire:click.prevent="add({{$i}})"> <i class="fa fa-plus"></i> Product</button>
                                 </div>
                             </div>
                         </div>
@@ -600,7 +612,7 @@
                                         <select wire:model.debounce.300ms="selectedProduct.0" class="form-control" required size="4">
                                             <option value="" selected>Select Products</option>
                                             @foreach ($products as $product)
-                                                <option value="{{$product->id}}"> {{$product->name}} {{$product->brand ? $product->brand->name : ""}}, {{$product->product_number ? "Code: ".$product->product_number : ""}}, {{$product->identification_number ? "Part/ID#, ".$product->identification_number : ""}} 
+                                                <option value="{{$product->id}}">  {{$product->name}} {{$product->brand ? $product->brand->name : ""}} {{$product->identification_number ? "ID#: ".$product->identification_number : ""}} 
                                                         @php
                                                         $relation = match ($department) {
                                                             'inventory' => 'inventories',
@@ -745,7 +757,7 @@
                                                 <select wire:model.debounce.300ms="selectedProduct.{{$value}}" class="form-control" required size="4">
                                                     <option value="" selected>Select Products</option>
                                                     @foreach ($products as $product)
-                                                        <option value="{{$product->id}}"> {{$product->name}} {{$product->brand ? $product->brand->name : ""}}, {{$product->product_number ? "Code: ".$product->product_number : ""}}, {{$product->identification_number ? "Part/ID#, ".$product->identification_number : ""}} 
+                                                        <option value="{{$product->id}}">  {{$product->name}} {{$product->brand ? $product->brand->name : ""}} {{$product->identification_number ? "ID#: ".$product->identification_number : ""}} 
                                                                 @php
                                                                     $relation = match ($department) {
                                                                         'inventory' => 'inventories',
@@ -856,7 +868,7 @@
                                       
                                         <div class="col-md-1">
                                             <div class="form-group">
-                                                <button class="btn btn-danger btn-rounded xs" style="margin-top:23px"  wire:click.prevent="remove({{$key}})"> <i class="fa fa-times"></i></button>
+                                                <button class="btn btn-danger btn-rounded btn-sm" style="margin-top:23px"  wire:click.prevent="remove({{$key}})"> <i class="fa fa-times"></i></button>
                                             </div>
                                         </div>
                                     </div>
@@ -867,8 +879,8 @@
                         @if ($expand == False)
                             <div class="row">
                                 <div class="col-md-12">
-                                    <div class="form-group">
-                                        <button class="btn btn-success btn-rounded" style="float: right" wire:click.prevent="add({{$i}})"> <i class="fa fa-plus"></i> Product</button>
+                                    <div class="form-group mt-20">
+                                        <button class="btn btn-success btn-rounded btn-sm" style="float: right" wire:click.prevent="add({{$i}})"> <i class="fa fa-plus"></i> Product</button>
                                     </div>
                                 </div>
                             </div>
@@ -919,7 +931,7 @@
                         </div>
                     </div>
                    
-             
+                    <div style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">
                     <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
@@ -985,8 +997,9 @@
                             </div>
                         </div>      
                     </div>  
+                    </div>
                     @foreach ($expenses_inputs as $key => $value)
-
+                    <div style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">
                     <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
@@ -1053,20 +1066,21 @@
                         </div>     
                          <div class="col-md-1">
                             <div class="form-group">
-                                <button class="btn btn-danger btn-rounded xs" style="margin-top:23px"  wire:click.prevent="removeExpense({{$key}})"> <i class="fa fa-times"></i></button>
+                                <button class="btn btn-danger btn-rounded btn-sm" style="margin-top:23px"  wire:click.prevent="removeExpense({{$key}})"> <i class="fa fa-times"></i></button>
                             </div>
                         </div> 
+                    </div>
                     </div>
                         
                     @endforeach
                     <div class="row">
                         <div class="col-md-12">
-                            <div class="form-group">
-                                <button class="btn btn-success btn-rounded" style="float: right" wire:click.prevent="addExpense({{$e}})"> <i class="fa fa-plus"></i> Expense</button>
+                            <div class="form-group mt-20">
+                                <button class="btn btn-success btn-rounded btn-sm" style="float: right" wire:click.prevent="addExpense({{$e}})"> <i class="fa fa-plus"></i> Item</button>
                             </div>
                         </div>
                     </div>
-    @endif
+                @endif
                 
                 <div class="form-group">
                     <label for="comment">Comments/Notes</label>
@@ -1095,7 +1109,7 @@
                 </div>
                 <form wire:submit.prevent="update()" >
                 <div class="modal-body">
-                        @if ($company->valuation_method)
+                                  @if ($company->valuation_method)
                            <p style="color: green"> {{$company->valuation_method == 'AVCO' ? 'Weighted Average Cost (AVCO)' : 'First In First Out(FIFO)'}} Inventory Valuation Method Selected </p> 
                         @endif
                     <div class="row">
@@ -1119,7 +1133,16 @@
                             </div>
                         </div>
                     </div>
+             
+                   <div class="mb-20 mt-20">
+                        <input type="checkbox" wire:model.debounce.300ms="attach"   class="line-style"  />
+                        <label for="one" class="radio-label">Attach a ticket to dispatch. </label>
+                        @error('attach') <span class="text-danger error">{{ $message }}</span>@enderror
+                    </div>
+                    @if (isset($attach) && $attach == true)
+                
                     @if (in_array($department,['inventory','tyre']))
+                        
                         <div class="form-group">
                             <label for="country">Tickets<span class="required" style="color: red">*</span></label>
                             <input type="text" wire:model.debounce.300ms="searchTicket" placeholder="Search tickets by ticket#, booking#, registration#, fleet#, driver..." class="form-control">
@@ -1154,8 +1177,8 @@
                         </div>
                          
                     @endif
-                    @if($department == "asset")
-                        <h5 class="underline mt-30">Dispatch destination</h5>
+                    @endif
+                           <h5 class="underline mt-10">Destination Details</h5>
                         <div class="row">
                             <div class="col-md-4">
                                 <div class="form-group">
@@ -1174,8 +1197,8 @@
                                     <label for="purchase_date">Department</label>
                                     <select class="form-control" wire:model.debounce.300ms="asset_department_id">
                                         <option value="">Select Department</option>
-                                        @foreach ($all_departments as $department)
-                                            <option value="{{$department->id}}">{{$department->name}}</option>
+                                        @foreach ($all_departments as $all_department)
+                                            <option value="{{$all_department->id}}">{{$all_department->name}}</option>
                                         @endforeach
                                     </select>
                                     @error('asset_department_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
@@ -1194,25 +1217,35 @@
                                 </div>
                             </div>
                         </div>
-                    @endif
 
-                    
-
-                     {{-- <h5 class="underline mt-30">Select store to dispatch from</h5> --}}
-                    <div class="form-group">
-                        <label for="purchase_date">Select store to dispatch from</label>
-                            <select class="form-control" wire:model.debounce.300ms="selectedStore" >
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group" >
+                            <label for="name">Select what to dispatch</label>
+                            <label class="radio-inline">
+                                <input type="radio" wire:model.debounce.300ms="dispatch_for" value="inventory" name="optradio">Inventory Items
+                            </label>
+                            <label class="radio-inline">
+                                <input type="radio" wire:model.debounce.300ms="dispatch_for" value="expenses" name="optradio">Non Inventory Items
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="form-group">
+                            <label for="purchase_date">Select store to dispatch from<span class="required" style="color: red">*</span></label>
+                            <select class="form-control" wire:model.debounce.300ms="selectedStore" {{$dispatch_for == "expenses" ? "disabled" : ""}} required>
                                 <option value="">Select Store </option>
                                 @foreach ($stores as $store)
                                     <option value="{{$store->id}}">{{$store->name}} </option>
                                 @endforeach
                             </select>
-                        @error('selectedStore') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            @error('selectedStore') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                        </div>
                     </div>
+                </div>
 
-                    
-
-                    
+                @if (!empty($dispatch_for) && $dispatch_for == "inventory")
+                  
                     <div class="mb-10">
                         <input type="checkbox" wire:model.debounce.300ms="expand"   class="line-style"  @if(count($inputs) > 0) disabled @endif />
                         <label for="one" class="radio-label">Select specific items to dispatch </label>
@@ -1256,7 +1289,7 @@
                                                         @if(in_array($product->id, $selectedProduct ?? []) && ($selectedProduct[0] ?? null) != $product->id) 
                                                             disabled 
                                                         @endif
-                                                        >  {{$product->name}} {{$product->brand ? $product->brand->name : ""}}, {{$product->product_number ? "Inventory#:  ".$product->product_number : ""}}, {{$product->identification_number ? "ID#: ".$product->identification_number : ""}} 
+                                                        >  {{$product->name}} {{$product->brand ? $product->brand->name : ""}} {{$product->identification_number ? "ID#: ".$product->identification_number : ""}} 
                                                       
                                                     @php
                                                         $relation = match ($department) {
@@ -1339,7 +1372,7 @@
                                                             disabled 
                                                         @endif
                                                     > 
-                                                    {{$product->name}} {{$product->brand ? $product->brand->name : ""}}, {{$product->product_number ? "Code: ".$product->product_number : ""}}, {{$product->identification_number ? "Part/ID#, ".$product->identification_number : ""}} 
+                                                     {{$product->name}} {{$product->brand ? $product->brand->name : ""}} {{$product->identification_number ? "ID#: ".$product->identification_number : ""}} 
                                                            @php
                                                         $relation = match ($department) {
                                                             'inventory' => 'inventories',
@@ -1381,7 +1414,7 @@
                                     </div>
                                     <div class="col-md-1">
                                         <div class="form-group">
-                                            <button class="btn btn-danger btn-rounded xs" style="margin-top:23px"  wire:click.prevent="remove({{$key}})"> <i class="fa fa-times"></i></button>
+                                            <button class="btn btn-danger btn-rounded btn-sm" style="margin-top:23px"  wire:click.prevent="remove({{$key}})"> <i class="fa fa-times"></i></button>
                                         </div>
                                     </div>
                                 </div>
@@ -1391,7 +1424,7 @@
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="form-group">
-                                    <button class="btn btn-success btn-rounded" style="float: right" wire:click.prevent="add({{$i}})"> <i class="fa fa-plus"></i> Product</button>
+                                    <button class="btn btn-success btn-rounded btn-sm" style="float: right" wire:click.prevent="add({{$i}})"> <i class="fa fa-plus"></i> Product</button>
                                 </div>
                             </div>
                         </div>
@@ -1428,7 +1461,7 @@
                                         <select wire:model.debounce.300ms="selectedProduct.0" class="form-control" required size="4">
                                             <option value="" selected>Select Products</option>
                                             @foreach ($products as $product)
-                                                <option value="{{$product->id}}"> {{$product->name}} {{$product->brand ? $product->brand->name : ""}}, {{$product->product_number ? "Code: ".$product->product_number : ""}}, {{$product->identification_number ? "Part/ID#, ".$product->identification_number : ""}} 
+                                                <option value="{{$product->id}}">  {{$product->name}} {{$product->brand ? $product->brand->name : ""}} {{$product->identification_number ? "ID#: ".$product->identification_number : ""}} 
                                                         @php
                                                         $relation = match ($department) {
                                                             'inventory' => 'inventories',
@@ -1472,7 +1505,7 @@
                                                             >
                                                             {{$inventory->inventory_number}} {{$inventory->serial_number ? "SN#: ".$inventory->serial_number : ""}} {{$inventory->balance ? "Bal: ".$inventory->balance: ""}} {{ $inventory->measurement ?? optional($inventory->product)->unit_of_measure ?? 'unit' }}
                                                             @if ($inventory->total)
-                                                                {{$inventory->currency ? $inventory->currency->name : ""}} {{$inventory->currency ? $inventory->currency->symbol : ""}}{{number_format($inventory->total,2)}}  
+                                                                {{$inventory->currency ? $inventory->currency->name : ""}} {{$inventory->currency ? $inventory->currency->symbol : ""}} {{ number_format((float)($inventory->balance ?? 0) * (float)($inventory->amount ?? 0),2)}}
                                                             @endif
                                                         </option>
                                                     @endforeach
@@ -1492,7 +1525,7 @@
                                                             >
                                                             {{$asset->asset_number}} {{$asset->serial_number ? "SN#: ".$asset->serial_number : ""}} {{$asset->balance ? "Bal: ".$asset->balance: ""}} {{ $asset->measurement ?? optional($asset->product)->unit_of_measure ?? 'unit' }}
                                                             @if ($asset->total)
-                                                                {{$asset->currency ? $asset->currency->name : ""}} {{$asset->currency ? $asset->currency->symbol : ""}}{{number_format($asset->total,2)}}  
+                                                                {{$asset->currency ? $asset->currency->name : ""}} {{$asset->currency ? $asset->currency->symbol : ""}}{{ number_format((float)($asset->balance ?? 0) * (float)($asset->amount ?? 0),2)}}  
                                                             @endif
                                                         </option>
                                                     @endforeach
@@ -1515,7 +1548,7 @@
                                                             >
                                                             {{$tyre->tyre_number}} {{$tyre->serial_number ? "SN#: ".$tyre->serial_number : ""}} {{$tyre->balance ? "Bal: ".$tyre->balance: ""}} {{ $tyre->measurement ?? optional($tyre->product)->unit_of_measure ?? 'unit' }}
                                                             @if ($tyre->total)
-                                                                {{$tyre->currency ? $tyre->currency->name : ""}} {{$tyre->currency ? $tyre->currency->symbol : ""}}{{number_format($tyre->total,2)}}  
+                                                                {{$tyre->currency ? $tyre->currency->name : ""}} {{$tyre->currency ? $tyre->currency->symbol : ""}}{{ number_format((float)($tyre->balance ?? 0) * (float)($tyre->amount ?? 0),2)}} 
                                                             @endif
                                                         </option>
                                                     @endforeach
@@ -1527,8 +1560,8 @@
                                 <div class="col-md-1">
                                     <div class="form-group">
                                         <label for="weight">Qty<span class="required" style="color: red">*</span></label>
-                                        @if ($max_weight)
-                                            <input type="number" step="any" min="0"  max="{{ $max_weight[0] ?? '' }}"  class="form-control" wire:model.debounce.300ms="qty.0" placeholder="Enter Qty" required>
+                                        @if ($max)
+                                            <input type="number" step="any" min="0"  max="{{ $max[0] ?? '' }}"  class="form-control" wire:model.debounce.300ms="qty.0" placeholder="Enter Qty" required>
                                         @else
                                             <input type="number" step="any" min="0"  class="form-control" wire:model.debounce.300ms="qty.0" placeholder="Enter Qty" required>
                                         @endif
@@ -1573,7 +1606,7 @@
                                                 <select wire:model.debounce.300ms="selectedProduct.{{$value}}" class="form-control" required size="4">
                                                     <option value="" selected>Select Products</option>
                                                     @foreach ($products as $product)
-                                                        <option value="{{$product->id}}"> {{$product->name}} {{$product->brand ? $product->brand->name : ""}}, {{$product->product_number ? "Code: ".$product->product_number : ""}}, {{$product->identification_number ? "Part/ID#, ".$product->identification_number : ""}} 
+                                                        <option value="{{$product->id}}">  {{$product->name}} {{$product->brand ? $product->brand->name : ""}} {{$product->identification_number ? "ID#: ".$product->identification_number : ""}} 
                                                                 @php
                                                                     $relation = match ($department) {
                                                                         'inventory' => 'inventories',
@@ -1617,7 +1650,7 @@
                                                                     >
                                                                     {{$inventory->inventory_number}} {{$inventory->serial_number ? "SN#: ".$inventory->serial_number : ""}} {{$inventory->balance ? "Bal: ".$inventory->balance: ""}} {{ $inventory->measurement ?? optional($inventory->product)->unit_of_measure ?? 'unit' }}
                                                                     @if ($inventory->total)
-                                                                        {{$inventory->currency ? $inventory->currency->name : ""}} {{$inventory->currency ? $inventory->currency->symbol : ""}}{{number_format($inventory->total,2)}}  
+                                                                        {{$inventory->currency ? $inventory->currency->name : ""}} {{$inventory->currency ? $inventory->currency->symbol : ""}}{{ number_format((float)($inventory->balance ?? 0) * (float)($inventory->amount ?? 0),2)}}
                                                                     @endif
                                                                 </option>
                                                             @endforeach
@@ -1637,7 +1670,7 @@
                                                                     >
                                                                     {{$asset->asset_number}} {{$asset->serial_number ? "SN#: ".$asset->serial_number : ""}} {{$asset->balance ? "Bal: ".$asset->balance: ""}} {{ $asset->measurement ?? optional($asset->product)->unit_of_measure ?? 'unit' }}
                                                                     @if ($asset->total)
-                                                                        {{$asset->currency ? $asset->currency->name : ""}} {{$asset->currency ? $asset->currency->symbol : ""}}{{number_format($asset->total,2)}}  
+                                                                        {{$asset->currency ? $asset->currency->name : ""}} {{$asset->currency ? $asset->currency->symbol : ""}}{{ number_format((float)($asset->balance ?? 0) * (float)($asset->amount ?? 0),2)}} 
                                                                     @endif
                                                                 </option>
                                                             @endforeach
@@ -1661,7 +1694,7 @@
                                                                 >
                                                                 {{$tyre->tyre_number}} {{$tyre->serial_number ? "SN#: ".$tyre->serial_number : ""}} {{$tyre->balance ? "Bal: ".$tyre->balance: ""}} {{ $tyre->measurement ?? optional($tyre->product)->unit_of_measure ?? 'unit' }}
                                                                 @if ($tyre->total)
-                                                                    {{$tyre->currency ? $tyre->currency->name : ""}} {{$tyre->currency ? $tyre->currency->symbol : ""}}{{number_format($tyre->total,2)}}  
+                                                                    {{$tyre->currency ? $tyre->currency->name : ""}} {{$tyre->currency ? $tyre->currency->symbol : ""}}{{ number_format((float)($tyre->balance ?? 0) * (float)($tyre->amount ?? 0),2)}}
                                                                 @endif
                                                             </option>
                                                         @endforeach
@@ -1673,18 +1706,18 @@
                                          <div class="col-md-1">
                                             <div class="form-group">
                                                 <label for="weight">Qty<span class="required" style="color: red">*</span></label>
-                                                @if ($max_weight)
-                                                    <input type="number" step="any" min="0"  max="{{ $max_weight[$value] ?? '' }}"  class="form-control" wire:model.debounce.300ms="weight.{{$value}}" placeholder="Enter Qty" required>
+                                                @if ($max)
+                                                    <input type="number" step="any" min="0"  max="{{ $max[$value] ?? '' }}"  class="form-control" wire:model.debounce.300ms="qty.{{$value}}" placeholder="Enter Qty" required>
                                                 @else
-                                                    <input type="number" step="any" min="0"  class="form-control" wire:model.debounce.300ms="weight.{{$value}}" placeholder="Enter Qty" required>
+                                                    <input type="number" step="any" min="0"  class="form-control" wire:model.debounce.300ms="qty.{{$value}}" placeholder="Enter Qty" required>
                                                 @endif
-                                                @error('weight.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                @error('qty.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         </div>
                                       
                                         <div class="col-md-1">
                                             <div class="form-group">
-                                                <button class="btn btn-danger btn-rounded xs" style="margin-top:23px"  wire:click.prevent="remove({{$key}})"> <i class="fa fa-times"></i></button>
+                                                <button class="btn btn-danger btn-rounded btn-sm" style="margin-top:23px"  wire:click.prevent="remove({{$key}})"> <i class="fa fa-times"></i></button>
                                             </div>
                                         </div>
                                     </div>
@@ -1695,13 +1728,207 @@
                         @if ($expand == False)
                             <div class="row">
                                 <div class="col-md-12">
-                                    <div class="form-group">
-                                        <button class="btn btn-success btn-rounded" style="float: right" wire:click.prevent="add({{$i}})"> <i class="fa fa-plus"></i> Product</button>
+                                    <div class="form-group mt-20">
+                                        <button class="btn btn-success btn-rounded btn-sm" style="float: right" wire:click.prevent="add({{$i}})"> <i class="fa fa-plus"></i> Product</button>
                                     </div>
                                 </div>
                             </div>
                         @endif
                     @endif
+                @elseif(!empty($dispatch_for) && $dispatch_for == "expenses")
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="form-group">
+                                <label for="country">Vendor(s)<span class="required" style="color: red">*</span></label>
+                                <select wire:model.debounce.300ms="vendor_id" class="form-control" required>
+                                   <option value="">Select Vendor</option>
+                                    @foreach ($vendors as $vendor)
+                                        <option value="{{$vendor->id}}">{{$vendor->name}} {{$vendor->vendor_number}}</option> 
+                                    @endforeach
+                               </select>
+                                @error('vendor_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                <small> <a href="{{ route('vendors.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Vendor</a></small> 
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="country">Currencies<span class="required" style="color: red">*</span></label>
+                                <select wire:model.debounce.300ms="currency_id" class="form-control" required>
+                                   <option value="">Select Currency</option>
+                                 @foreach ($currencies as $currency)
+                                 <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option> 
+                                 @endforeach
+                              
+                               </select>
+                                @error('currency_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                <small>  <a href="{{ route('currencies.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Currency</a></small> 
+                            </div>
+                            @if (!is_null($currency_id))
+                            @if ($company)
+                                @if ($currency_id != $company->currency_id)
+                                <div class="form-group">
+                                    <label for="customer">Conversion Rate</label>
+                                    <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="exchange_rate"  placeholder="Exchange Rate {{$selected_currency ? "From ".$selected_currency->name : ""}} {{$company->currency ? "To ".$company->currency->name : ""}}" >
+                                    @error('exchange_rate') <span class="text-danger error">{{ $message }}</span>@enderror
+                                    <small style="color: green">{{$selected_currency ? " 1 ".$selected_currency->name." is how much in" : ""}} {{$company->currency ? $company->currency->name." ?" : ""}}</small>
+                                    <small>{{$exchange_amount ? "The fuel converted amount is: ".$exchange_amount : ""}}</small> 
+                                </div> 
+                                @endif
+                            @endif
+                        @endif
+                            
+                        </div>
+                    </div>
+                   
+                    <div style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="country">Items (Products & Services)<span class="required" style="color: red">*</span></label>
+                                    <select wire:model.debounce.300ms="selectedExpenseProduct.0" class="form-control" required>
+                                    <option value="">Select Item</option>
+                                        @foreach ($products as $product)
+                                            <option value="{{$product->id}}">
+                                                <strong>{{$product->name}}</strong> {{$product->description ? "| ".$product->description : ""}}
+                                            </option> 
+                                        @endforeach
+                                    </select>
+                                    <small><a href="{{route('inventory_products.create')}}" target="_blank" ><i class="fa fa-plus-square-o"></i> New Product / Service</a></small><a href="#" wire:click.prevent="refresh('products')" class="float-end" style="float: right"><i class="fa fa-refresh"></i></a>
+                                @error('selectedExpenseProduct.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                       
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="name">Description</label>
+                               <textarea wire:model.debounce.300ms="item_description.0" class="form-control" cols="30" rows="1" placeholder="Enter Description"></textarea>
+                                @error('item_description.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                         <div class="col-md-2">
+                                <div class="form-group">
+                                <label for="country">Payment Methods</label>
+                                <select wire:model.debounce.300ms="payment_method_id.0"  class="form-control"  >
+                                    <option value="">Select Payment Method</option>
+                                    @foreach ($payment_methods as $payment_method)
+                                    <option value="{{ $payment_method->id }}">{{ $payment_method->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('payment_method_id.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-1">
+                            <div class="form-group">
+                                <label for="name">Qty<span class="required" style="color: red">*</span></label>
+                                <input type="number" class="form-control" wire:model.debounce.300ms="qty.0"  required />
+                                @error('qty.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-1">
+                            <div class="form-group">
+                                <label for="name">Price<span class="required" style="color: red">*</span></label>
+                                <input type="number" step="any" class="form-control" wire:model.debounce.300ms="amount.0" required />
+                                @error('amount.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+
+                        <div class="col-md-1">
+                            <div class="form-group">
+                                <label for="subheading">Taxes</label>
+                                <select wire:model.debounce.300ms="selectedTax.0"  class="form-control">
+                                    <option value="">Select Tax</option>
+                                        @foreach ($tax_accounts as $tax)
+                                           <option value="{{$tax->id}}">{{$tax->abbreviation}} </option> 
+                                        @endforeach
+                                    </select>
+                                    <small><a href="{{ route('accounts.tax') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small> 
+                                @error('selectedTax.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>      
+                    </div>  
+                    </div>
+                    @foreach ($expenses_inputs as $key => $value)
+                    <div style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="country">Items (Products & Services)<span class="required" style="color: red">*</span></label>
+                                    <select wire:model.debounce.300ms="selectedExpenseProduct.{{$value}}" class="form-control" required>
+                                    <option value="">Select Item</option>
+                                        @foreach ($products as $product)
+                                            <option value="{{$product->id}}">
+                                                <strong>{{$product->name}}</strong> {{$product->description ? "| ".$product->description : ""}}
+                                            </option> 
+                                        @endforeach
+                                    </select>
+                                    <small><a href="{{route('inventory_products.create')}}" target="_blank" ><i class="fa fa-plus-square-o"></i> New Product / Service</a></small><a href="#" wire:click.prevent="refresh('products')" class="float-end" style="float: right"><i class="fa fa-refresh"></i></a>
+                                @error('selectedExpenseProduct.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                       
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label for="name">Description</label>
+                               <textarea wire:model.debounce.300ms="item_description.{{$value}}" class="form-control" cols="30" rows="1" placeholder="Enter Description"></textarea>
+                                @error('item_description.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                         <div class="col-md-2">
+                                <div class="form-group">
+                                <label for="country">Payment Methods</label>
+                                <select wire:model.debounce.300ms="payment_method_id.{{$value}}"  class="form-control"  >
+                                    <option value="">Select Payment Method</option>
+                                    @foreach ($payment_methods as $payment_method)
+                                    <option value="{{ $payment_method->id }}">{{ $payment_method->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('payment_method_id.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-1">
+                            <div class="form-group">
+                                <label for="name">Qty<span class="required" style="color: red">*</span></label>
+                                <input type="number" class="form-control" wire:model.debounce.300ms="qty.{{$value}}"  required />
+                                @error('qty.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-1">
+                            <div class="form-group">
+                                <label for="name">Price<span class="required" style="color: red">*</span></label>
+                                <input type="number" step="any" class="form-control" wire:model.debounce.300ms="amount.{{$value}}" required />
+                                @error('amount.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+
+                        <div class="col-md-1">
+                            <div class="form-group">
+                                <label for="subheading">Taxes</label>
+                                <select wire:model.debounce.300ms="selectedTax.{{$value}}"  class="form-control">
+                                    <option value="">Select Tax</option>
+                                        @foreach ($tax_accounts as $tax)
+                                           <option value="{{$tax->id}}">{{$tax->abbreviation}} </option> 
+                                        @endforeach
+                                    </select>
+                                    <small><a href="{{ route('accounts.tax') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small> 
+                                @error('selectedTax.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>     
+                         <div class="col-md-1">
+                            <div class="form-group">
+                                <button class="btn btn-danger btn-rounded btn-sm" style="margin-top:23px"  wire:click.prevent="removeExpense({{$key}})"> <i class="fa fa-times"></i></button>
+                            </div>
+                        </div> 
+                    </div>
+                    </div>
+                    @endforeach
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group mt-20">
+                                <button class="btn btn-success btn-rounded btn-sm" style="float: right" wire:click.prevent="addExpense({{$e}})"> <i class="fa fa-plus"></i> Item</button>
+                            </div>
+                        </div>
+                    </div>
+                @endif
                 
                 <div class="form-group">
                     <label for="comment">Comments/Notes</label>

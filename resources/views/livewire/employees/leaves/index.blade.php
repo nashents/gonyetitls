@@ -30,11 +30,7 @@
                                 </div>
                                 <table  class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                     <thead >
-                                        <th class="th-sm">Emp#
-                                        </th>
-                                        <th class="th-sm">Name
-                                        </th>
-                                        <th class="th-sm">Surname
+                                        <th class="th-sm">Employee
                                         </th>
                                         <th class="th-sm">Leave Day(s)
                                         </th>
@@ -51,9 +47,13 @@
                                         @forelse ($employees as $employee)
                                       
                                         <tr>
-                                            <td>{{ucfirst($employee->employee_number)}}</td>
-                                            <td>{{ucfirst($employee->name)}}</td>
-                                            <td>{{ucfirst($employee->surname)}}</td>
+                                            <td>
+                                                <strong>{{ucfirst($employee->name)}} {{ucfirst($employee->surname)}}</strong> <br>
+                                                <small class="text-muted">
+                                                    <strong>Emp#:</strong> {{ucfirst($employee->employee_number)}} <br>
+                                                    <strong>Post: </strong>{{ucfirst($employee->post)}}
+                                                </small>
+                                            </td>
                                             <td>{{$employee->leave_days}}</td>
                                             <td>{{$employee->accrual_rate}}</td>
                                             <td>{{$employee->maximum_leave_days}}</td>
