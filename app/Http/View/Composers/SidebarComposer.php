@@ -18,9 +18,7 @@ class SidebarComposer
     {
         $user = Auth::user();
         $logged_in_user = User::find($user->id);
-
         $isSystemAdmin =  $logged_in_user->is_admin();
-        $is_admin  =  $logged_in_user->is_admin();
         $employee = $user?->employee;
         $not_driver = !$employee->driver;
         $has_vehicle_assignment = $employee->vehicle_assignment;
@@ -41,13 +39,9 @@ class SidebarComposer
         $now = Carbon::now();
         $startOfWeek = $now->startOfWeek();
         $endOfWeek   = $now->copy()->endOfWeek();
-
-        // Example: a helper for weekly counts (you can DRY this further)
-        $weeklyCount = function ($model, $extra = []) use ($startOfWeek, $endOfWeek) {
-            return $model::where($extra)
-                ->whereBetween('created_at', [$startOfWeek, $endOfWeek])
-                ->count();
-        };
+        $today       = Carbon::today();
+        
+       
 
         $myAllocationCount = $employee
             ? Allocation::where('employee_id', $employee->id)
@@ -66,14 +60,7 @@ class SidebarComposer
             'Stores',
         ])->get()->keyBy('name');
 
-        // Example: leave stats
-        $leavesPendingCount   = $weeklyCount(Leave::class,   ['status' => 'pending']);
-        $leavesApprovedCount  = $weeklyCount(Leave::class,   ['status' => 'approved']);
-        $leavesRejectedCount  = $weeklyCount(Leave::class,   ['status' => 'rejected']);
-        
-        $leavesDeletedCount   = Leave::onlyTrashed()
-            ->whereDate('created_at', now()->toDateString())
-            ->count();
+      
 
         $hrdepartment   = $departments->get('Human Resources');
         $hrdepartment_head     = $employee && $hrdepartment
@@ -138,8 +125,7 @@ class SidebarComposer
         $inTransport       = in_array('Transport & Logistics', $department_names);
         $inStores       = in_array('Stores', $department_names);
         $inWorkshop       = in_array('Workshop', $department_names);
-       
-        
+  
        
         $companyColor =
         $employee?->company->color ??
@@ -156,36 +142,11 @@ class SidebarComposer
         $user?->customer?->company->color ??
         $user?->agent?->company->color;
 
-        
-         $billsPendingCount = Bill::where('authorization','pending')
-        ->where('created_at', '>', Carbon::now()->startOfWeek())
-        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
-        // ->whereDate('created_at', Carbon::today())->get()->count();
-        $billsApprovedCount = Bill::where('authorization','approved')
-        ->where('created_at', '>', Carbon::now()->startOfWeek())
-        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
-        $billsRejectedCount = Bill::where('authorization','rejected')
-        ->where('created_at', '>', Carbon::now()->startOfWeek())
-        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
-        $billsDeletedCount = Bill::onlyTrashed()
-        ->whereDate('created_at', Carbon::today())->get()->count();
-
-        // Dates
-        $startOfWeek = Carbon::now()->startOfWeek();
-        $endOfWeek   = Carbon::now()->endOfWeek();
-        $today       = Carbon::today();
-
-        // Flags
-        $inHrDept      = in_array('Human Resources', $this->department_names ?? []);
-        $isAdmin       = in_array('Admin', $this->role_names ?? []);
-        $isSuperAdmin  = in_array('Super Admin', $this->role_names ?? []);
-        $isManagement  = in_array('Management', $this->rank_names ?? []);
-
-        // Permission: who can see ALL leaves
+         // Permission: who can see ALL leaves
         $canSeeAllLeaves =
             $isSuperAdmin ||
-            ($isAdmin && $inHrDept) ||
-            ($isManagement && $inHrDept);
+            ($isAdmin && $inHR) ||
+            ($isManagement && $inHR);
 
         // Decide which decision column to use
         $decisionColumn = $canSeeAllLeaves ? 'management_decision' : 'hod_decision';
@@ -236,6 +197,23 @@ class SidebarComposer
         $leavesDeletedCount = $deletedQuery
             ->whereDate('deleted_at', $today)   // better than created_at for deletions
             ->count();
+
+
+        
+         $billsPendingCount = Bill::where('authorization','pending')
+        ->where('created_at', '>', Carbon::now()->startOfWeek())
+        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
+        // ->whereDate('created_at', Carbon::today())->get()->count();
+        $billsApprovedCount = Bill::where('authorization','approved')
+        ->where('created_at', '>', Carbon::now()->startOfWeek())
+        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
+        $billsRejectedCount = Bill::where('authorization','rejected')
+        ->where('created_at', '>', Carbon::now()->startOfWeek())
+        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
+        $billsDeletedCount = Bill::onlyTrashed()
+        ->whereDate('created_at', Carbon::today())->get()->count();
+
+    
 
         $attendancesPendingCount = Attendance::where('authorization','pending')
         ->where('created_at', '>', Carbon::now()->startOfWeek())
@@ -650,7 +628,6 @@ class SidebarComposer
             'isDirector'    => (bool) $isDirector,
             'isDriver'      => (bool) ($user?->driver ?? false),
             'isSystemAdmin'      => (bool) $isSystemAdmin,
-            'is_admin '      => (bool) $is_admin ,
             'in_transport_admin' => (bool) $in_transport_admin,
             'in_transport_management' => (bool) $in_transport_management,
             'inHR'          => (bool) $inHR,
@@ -910,8 +887,6 @@ class SidebarComposer
             'wsdepartment_head'          => $wsdepartment_head,
             'sdepartment_head'          => $sdepartment_head,
             'isSystemAdmin'          => $isSystemAdmin,
-            'is_admin'          => $is_admin,
-
             'attendancesPendingCount'  => $attendancesPendingCount,
             'attendancesApprovedCount' => $attendancesApprovedCount,
             'attendancesRejectedCount' => $attendancesRejectedCount,
