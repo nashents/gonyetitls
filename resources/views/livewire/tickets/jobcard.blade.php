@@ -40,14 +40,11 @@
       <aside class="meta">
         <h1>Workshop Job Card</h1>
         <dl class="meta-grid">
-          <dt>Booking #</dt><dd class="mono" data-field="jobcard.number">{{$booking->booking_number}}</dd>
-          <dt>JobCard #</dt><dd class="mono" data-field="jobcard.number">{{$ticket->ticket_number}}</dd>
-          <dt>Inspection #</dt><dd class="mono" data-field="jobcard.number">{{$inspection->inspection_number}}</dd>
+          <dt>Booking/JobCard/Inspection#</dt><dd class="mono" data-field="jobcard.number">{{$booking->booking_number}}{{$ticket->ticket_number ? "/".$ticket->ticket_number : ""}}{{$inspection->inspection_number ? "/".$inspection->inspection_number : ""}}</dd>
           <dt>Date Opened</dt><dd data-field="jobcard.opened_at">{{$booking->in_date}}</dd>
-          <dt>Job Type</dt><dd data-field="jobcard.opened_at">{{$service_type->name}}</dd>
-          <dt>Status</dt><dd><span class="tag upper" data-field="jobcard.status">{{$ticket->status == 1 ? "Open" :  "Closed"}}</span></dd>
+          <dt>Job Type/Status</dt><dd data-field="jobcard.opened_at">{{$service_type->name}} <span class="tag upper" data-field="jobcard.status">{{$ticket->status == 1 ? "Open" :  "Closed"}}</span></dd>
           <dt>AssignedTo</dt><dd>
-              @foreach ($ticket->employees as $employee)
+              @foreach ($ticket?->booking?->employees as $employee)
                 {{$employee?->name}} {{$employee?->name}}@if (!$loop->last), @endif
               @endforeach
           </dd>
@@ -64,15 +61,13 @@
         <div class="kv">
           @if ($ticket->horse)
             <div class="k">Equipment</div><div class="v" data-field="asset.type">Horse</div>
-            <div class="k">Reg #</div><div class="v" data-field="asset.registration">{{$ticket->horse->registration_number}}</div>
-            <div class="k">Fleet #</div><div class="v" data-field="asset.fleet">{{$ticket->horse->fleet_number}}</div>
+            <div class="k">Reg(Fleet)#</div><div class="v" data-field="asset.registration">{{$ticket->horse->registration_number}} {{$ticket->horse->fleet_number ? "(".$ticket->horse->fleet_number.")" : ""}}</div>
             <div class="k">Make / Model</div><div class="v" data-field="asset.make_model">{{$ticket->horse->horse_make ? $ticket->horse->horse_make->name : ""}} {{$ticket->horse->horse_model ? $ticket->horse->horse_model->name : ""}}</div>
             <div class="k">VIN / Chasis</div><div class="v" data-field="asset.make_model">{{$ticket->horse->chasis_number}} </div>
             <div class="k">Engine#</div><div class="v" data-field="asset.make_model">{{$ticket->horse->engine_number}}</div>
           @elseif($ticket->vehicle)
             <div class="k">Equipment</div><div class="v" data-field="asset.type">Vehicle</div>
-            <div class="k">Reg #</div><div class="v" data-field="asset.registration">{{$ticket->vehicle->registration_number}}</div>
-            <div class="k">Fleet #</div><div class="v" data-field="asset.fleet">{{$ticket->vehicle->fleet_number}}</div>
+          <div class="k">Reg(Fleet)#</div><div class="v" data-field="asset.registration">{{$ticket->vehicle->registration_number}} {{$ticket->vehicle->fleet_number ? "(".$ticket->vehicle->fleet_number.")" : ""}}</div>
             <div class="k">Make / Model</div><div class="v" data-field="asset.make_model">{{$ticket->vehicle->vehicle_make ? $ticket->vehicle->vehicle_make->name : ""}} {{$ticket->vehicle->vehicle_model ? $ticket->vehicle->vehicle_model->name : ""}}</div>
             <div class="k">VIN / Chasis</div><div class="v" data-field="asset.make_model">{{$ticket->vehicle->chasis_number}} </div>
             <div class="k">Engine#</div><div class="v" data-field="asset.make_model">{{$ticket->vehicle->engine_number}}</div>
@@ -81,8 +76,7 @@
             <div class="k">Asset</div><div class="v" data-field="asset.registration">{{$ticket->asset->product ? $ticket->asset->product->name : ""}} {{$ticket->asset->product->brand ? $ticket->asset->product->brand->name : ""}}</div>
           @elseif($ticket->trailer)
             <div class="k">Equipment</div><div class="v" data-field="asset.type">Trailer</div>
-            <div class="k">Reg #</div><div class="v" data-field="asset.registration">{{$ticket->trailer ? $ticket->trailer->registration_number : ""}}</div>
-            <div class="k">Fleet #</div><div class="v" data-field="asset.fleet">{{$ticket->trailer ? $ticket->trailer->fleet_number : ""}}</div>
+             <div class="k">Reg(Fleet)#</div><div class="v" data-field="asset.registration">{{$ticket->trailer->registration_number}} {{$ticket->trailer->fleet_number ? "(".$ticket->trailer->fleet_number.")" : ""}}</div>
             <div class="k">Make / Model</div><div class="v" data-field="asset.make_model">{{$ticket->trailer->make}} {{$ticket->trailer->model}}</div>
           @endif
           
