@@ -691,6 +691,7 @@
                             @endif
 
                             @foreach ($inputs as $key => $value)
+                            @if (!in_array($this->requisition_for, ['Trip', 'Purchase', 'Booking']))
                             <div class="mt-15" style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">
                                 <div class="row">
                                     <div class="col-md-4">
@@ -804,11 +805,131 @@
                                     <div class="col-md-1">
                                         <div class="form-group">
                                             <label for=""></label>
-                                            <button class="btn btn-danger btn-rounded xs" style="margin-top:23px"  wire:click.prevent="remove({{$key}})"> <i class="fa fa-times"></i></button>
+                                            <button class="btn btn-danger btn-rounded btn-xs" style="margin-top:23px"  wire:click.prevent="remove({{$key}})"> <i class="fa fa-times"></i></button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                            @else
+                                @php
+                                    $isIncluded = (bool)($included[$value] ?? true);
+                                @endphp
+
+                                <div class="mt-15"
+                                    style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px; {{ $isIncluded ? '' : 'opacity:0.55;' }}">
+                                    <div class="row">
+
+                                        {{-- Include checkbox --}}
+                                        <div class="col-md-1">
+                                            <div class="form-group" style="margin-top: 23px;">
+                                                <label class="d-block" style="font-weight: 600;">Include</label>
+                                                <input type="checkbox"
+                                                    wire:model="included.{{ $value }}">
+                                            </div>
+                                        </div>
+
+                                        {{-- Everything else: disable when unchecked --}}
+                                        <div class="col-md-4">
+                                            @if ($requisition_for == "Trip")
+                                                @if (isset($expense_id[$value]))
+                                                    <div class="form-group">
+                                                        <label>Expenses<span class="required" style="color: red">*</span></label>
+                                                        <select wire:model.debounce.300ms="expense_id.{{ $value }}"
+                                                                class="form-control"
+                                                                {{ (!$isIncluded || in_array($this->requisition_for, ['Trip', 'Purchase'])) ? 'disabled' : '' }}
+                                                                required>
+                                                            <option value="">Select Expense</option>
+                                                            @foreach ($expenses as $expense)
+                                                                <option value="{{ $expense->id }}">{{ $expense->name }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                        @error('expense_id.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                    </div>
+                                                @else
+                                                    <div class="form-group">
+                                                        <label>Allowances<span class="required" style="color: red">*</span></label>
+                                                        <select wire:model.debounce.300ms="allowance_id.{{ $value }}"
+                                                                class="form-control"
+                                                                {{ (!$isIncluded || in_array($this->requisition_for, ['Trip', 'Purchase'])) ? 'disabled' : '' }}
+                                                                required>
+                                                            <option value="">Select Allowance</option>
+                                                            @foreach ($allowances as $allowance)
+                                                                <option value="{{ $allowance->id }}">{{ $allowance->name }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                        @error('allowance_id.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                    </div>
+                                                @endif
+                                            @else
+                                                <div class="form-group">
+                                                    <label>Items<span class="required" style="color: red">*</span></label>
+                                                    <select wire:model.debounce.300ms="selectedProduct.{{$value}}"
+                                                            class="form-control"
+                                                            {{ (!$isIncluded || in_array($this->requisition_for, ['Trip', 'Purchase', 'Booking'])) ? 'disabled' : '' }}
+                                                            required>
+                                                        <option value="">Select Item</option>
+                                                        @foreach ($products as $product)
+                                                            <option value="{{$product->id}}">
+                                                                <strong>{{$product->name}}</strong> {{$product->description ? "| ".$product->description : ""}}
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
+                                                    <small>
+                                                        <a href="{{route('product_services.all',['category' => 'bills'])}}" target="_blank">
+                                                            <i class="fa fa-plus-square-o"></i> New Product / Service
+                                                        </a>
+                                                        <a href="#" wire:click.prevent="refresh('products')" style="float: right; margin-top:5px;">
+                                                            <i class="fa fa-refresh" aria-hidden="true"></i>
+                                                        </a>
+                                                    </small>
+                                                    @error('selectedProduct.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                </div>
+                                            @endif
+                                        </div>
+
+                                        {{-- Repeat the same disable condition for other inputs --}}
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label>Currencies</label>
+                                                <select wire:model.debounce.300ms="selectedCurrency.{{$value}}"
+                                                        class="form-control"
+                                                        {{ (!$isIncluded || in_array($this->requisition_for, ['Trip', 'Purchase', 'Booking'])) ? 'disabled' : '' }}>
+                                                    <option value="">Select Currency</option>
+                                                    @foreach ($currencies as $currency)
+                                                        <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
+                                                    @endforeach
+                                                </select>
+                                                @error('selectedCurrency.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-1">
+                                            <div class="form-group">
+                                                <label>Qty<span class="required" style="color: red">*</span></label>
+                                                <input type="number"
+                                                    class="form-control"
+                                                    wire:model.debounce.300ms="qty.{{ $value }}"
+                                                    {{ (!$isIncluded || in_array($this->requisition_for, ['Trip', 'Purchase', 'Booking'])) ? 'disabled' : '' }}
+                                                    required />
+                                                @error('qty.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label>Amount</label>
+                                                <input type="number" step="any"
+                                                    class="form-control"
+                                                    wire:model.debounce.300ms="amount.{{ $value }}"
+                                                    {{ (!$isIncluded || in_array($this->requisition_for, ['Trip', 'Purchase', 'Booking'])) ? 'disabled' : '' }} />
+                                                @error('amount.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            </div>
+                                        </div>
+
+                                        {{-- No remove button anymore (optional: keep it as a “hard delete” elsewhere) --}}
+                                    </div>
+                                </div>
+                                                            @endif
                             <br>
                             @endforeach
                             @if (!in_array($this->requisition_for, ['Trip', 'Purchase', 'Booking']))

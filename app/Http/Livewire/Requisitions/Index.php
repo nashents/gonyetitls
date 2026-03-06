@@ -125,7 +125,7 @@ class Index extends Component
     public $buy = True;
     public $item_key;
 
-
+    public array $included = [];   
     public $inputs = [];
     public $i = 1;
     public $n = 1;
@@ -153,6 +153,8 @@ class Index extends Component
         unset($this->exchange_rate[$i]);
         unset($this->exchange_amount[$i]);
     }
+
+   
 
     private function resetInputFields(){
 
@@ -237,6 +239,13 @@ class Index extends Component
         ]);
     }
 
+     public function activeRowKeys(): array
+    {
+        return array_values(array_filter($this->inputs, function ($value) {
+            return (bool)($this->included[$value] ?? true);
+        }));
+    }
+
     public function updatedSelectedTrip($id)
     {   
         if (!is_null($id)) {
@@ -251,6 +260,9 @@ class Index extends Component
                 foreach ($trip->trip_expenses as $trip_expense) {
                     
                     $this->inputs[] = $index;
+
+                      // NEW: default row is ON
+                     $this->included[$index] = true;
 
                     $this->expense_id[$index] = $trip_expense->expense_id;
                     $this->allowance_id[$index] = $trip_expense->allowance_id;
@@ -296,7 +308,7 @@ class Index extends Component
                 foreach ($purchase->purchase_products as $purchase_product) {
                     
                     $this->inputs[] = $index;
-
+                    $this->included[$index] = true;
                     $this->selectedProduct[$index] = $purchase_product->product_id;
                     $this->selectedCurrency[$index] = $purchase->currency_id;
                     $this->selected_currency[$index] = $purchase->currency;
@@ -330,7 +342,7 @@ class Index extends Component
                 foreach ($ticket->ticket_expenses as $ticket_expense) {
                     
                     $this->inputs[] = $index;
-
+                    $this->included[$index] = true;
                     $this->selectedProduct[$index] = $ticket_expense->product_id;
                     $this->selectedCurrency[$index] = $ticket_expense->currency_id;
                     $this->payment_method_id[$index] = $ticket_expense->payment_method_id;
@@ -449,20 +461,12 @@ class Index extends Component
     }
 
     protected $rules = [
-        'selectedCurrency' => 'required',
-        'expense_id.0' => 'required',
-        'allowance_id.0' => 'required',
+      
         'selectedProduct.0' => 'required',
-        'selectedAccount.0' => 'required',
-        'employee_id.0' => 'required',
         'qty.0' => 'required',
-        'amount.0' => 'required',
         'selectedProduct.*' => 'required',
-        'expense_id.*' => 'required',
-        'allowance_id.*' => 'required',
-        'selectedAccount.*' => 'required',
         'qty.*' => 'required',
-        'amount.*' => 'required',
+       
     ];
     
 
@@ -605,6 +609,11 @@ class Index extends Component
         $type = null;
         $requisition_total = 0;
        
+        if (isset($this->requisition_for)) {
+            # code...
+        }else{
+            
+        }
 
         if ($this->qty) {
 
@@ -659,13 +668,15 @@ class Index extends Component
 
         $requisition = Requisition::find($requisition->id);
 
-        if ($this->selectedPurchase && $purchase_order = Purchase::find($this->selectedPurchase)) {
-            $requisition->total = $purchase_order->total;
-            $requisition->exchange_rate = $purchase_order->exchange_rate;
-            $requisition->exchange_amount = $purchase_order->exchange_amount;
-        } else {
-            $requisition->total = $requisition_total;
-        }
+        $requisition->total = $requisition_total;
+
+        // if ($this->selectedPurchase && $purchase_order = Purchase::find($this->selectedPurchase)) {
+        //     $requisition->total = $purchase_order->total;
+        //     $requisition->exchange_rate = $purchase_order->exchange_rate;
+        //     $requisition->exchange_amount = $purchase_order->exchange_amount;
+        // } else {
+        //     $requisition->total = $requisition_total;
+        // }
 
         $requisition->save();
 
@@ -905,14 +916,16 @@ class Index extends Component
 
         $requisition = Requisition::find($requisition->id);
 
-        if ($this->selectedPurchase && $purchase_order = Purchase::find($this->selectedPurchase)) {
-            $requisition->total = $purchase_order->total;
-            $requisition->exchange_rate = $purchase_order->exchange_rate;
-            $requisition->exchange_amount = $purchase_order->exchange_amount;
-        } else {
+        $requisition->total = $requisition_total;
+
+        // if ($this->selectedPurchase && $purchase_order = Purchase::find($this->selectedPurchase)) {
+        //     $requisition->total = $purchase_order->total;
+        //     $requisition->exchange_rate = $purchase_order->exchange_rate;
+        //     $requisition->exchange_amount = $purchase_order->exchange_amount;
+        // } else {
           
-            $requisition->total = $requisition_total;
-        }
+        //     $requisition->total = $requisition_total;
+        // }
 
         $requisition->update();
         

@@ -160,9 +160,9 @@ class Pending extends Component
                 $user = $booking->user;
                 $email = $user?->email ?? null;
                 $notification = "Garage Booking Authorization";
-                if($email){
-                    Mail::to($email)->send(new AuthorizationNotificationMail($company, $notification, $user, $booking));
-                }
+                // if($email){
+                //     Mail::to($email)->send(new AuthorizationNotificationMail($company, $notification, $user, $booking));
+                // }
 
                 if ($this->authorize == "approved") {
 
@@ -308,6 +308,8 @@ class Pending extends Component
 
       public function update(){
 
+        DB::transaction(function () {
+
         $this->validate([
             'authorize' => 'required',
         ]);
@@ -324,9 +326,9 @@ class Pending extends Component
         $user = $booking->user;
         $email = $user?->email ?? null;
         $notification = "Garage Booking Authorization";
-        if($email){
-            Mail::to($email)->send(new AuthorizationNotificationMail($company, $notification, $user, $booking));
-        }
+        // if($email){
+        //     Mail::to($email)->send(new AuthorizationNotificationMail($company, $notification, $user, $booking));
+        // }
 
         if ($this->authorize == 'approved') {
 
@@ -456,6 +458,7 @@ class Pending extends Component
         return redirect()->route('bookings.rejected');
 
             }
+        });
        
       }
 

@@ -2,19 +2,20 @@
 
 namespace App\Http\Livewire\Bookings;
 
-use App\Models\Hour;
-use App\Models\Horse;
-use App\Models\Ticket;
+use App\Mail\AuthorizationNotificationMail;
 use App\Models\Booking;
+use App\Models\Horse;
+use App\Models\Hour;
+use App\Models\Inspection;
 use App\Models\Mileage;
+use App\Models\Ticket;
 use App\Models\Trailer;
 use App\Models\Vehicle;
-use Livewire\Component;
-use App\Models\Inspection;
-use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
-use App\Mail\AuthorizationNotificationMail;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class Rejected extends Component
 {
@@ -117,6 +118,8 @@ class Rejected extends Component
       }
 
       public function update(){
+
+         DB::transaction(function () {
 
          $this->validate([
             'authorize' => 'required',
@@ -262,6 +265,7 @@ class Rejected extends Component
                  ]);
                  return redirect()->route('bookings.rejected');
         }
+         });
       }
 
 
