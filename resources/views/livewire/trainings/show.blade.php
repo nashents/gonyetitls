@@ -39,19 +39,15 @@
                             <tr>
                                 <th class="w-10 text-center line-height-35">When</th>
                                 <td class="w-20 line-height-35">
-                                    @if ($training->day_event == False)
-                                        {{$training->date}}
+                                    @if (!$training->day_event)
+                                        {{ \Carbon\Carbon::parse($training->from)->format('d M Y, H:i') }} - 
+                                        {{ \Carbon\Carbon::parse($training->to)->format('d M Y, H:i') }}
                                     @else
-                                        {{$training->from}} - {{$training->to}}
+                                        {{ \Carbon\Carbon::parse($training->date)->format('d M Y') }}
                                     @endif
                                 </td>
                             </tr> 
-                            <tr>
-                                <th class="w-10 text-center line-height-35">Participation</th>
-                                <td class="w-20 line-height-35">
-                                   {{$training->participation}}
-                                </td>
-                            </tr> 
+                          
                             <tr>
                                 <th class="w-10 text-center line-height-35">Comments</th>
                                 <td class="w-20 line-height-35">
@@ -63,7 +59,7 @@
                     </table>
                 </div>
                 <div role="tabpanel" class="tab-pane" id="documents">
-                 @livewire('trainings.documents', ['id' => $training->id, 'category' => "training"])
+                 @livewire('documents.index', ['id' => $training->id, 'category' => "training"])
                 </div>
                 <div class="row">
                     <div class="col-md-12">

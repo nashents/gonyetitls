@@ -19,15 +19,15 @@
 
                             {{-- Date Range --}}
                             <div class="panel-title">
-                                <h5>Date Range</h5>
+                               
                                 <div class="row">
-                                    <div class="col-lg-2" style="margin-right: 7px">
+                                    <div class="col-lg-3">
                                         <div class="input-group">
                                             <span class="input-group-addon">From</span>
                                             <input type="date" wire:model.debounce.300ms="from" wire:change="dateRange()" class="form-control">
                                         </div>
                                     </div>
-                                    <div class="col-lg-2" style="margin-left: 7px">
+                                    <div class="col-lg-3" >
                                         <div class="input-group">
                                             <span class="input-group-addon">To</span>
                                             <input type="date" wire:model.debounce.300ms="to" wire:change="dateRange()" class="form-control">

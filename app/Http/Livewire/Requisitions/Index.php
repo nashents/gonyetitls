@@ -610,12 +610,58 @@ class Index extends Component
         $requisition_total = 0;
        
         if (isset($this->requisition_for)) {
-            # code...
-        }else{
-            
-        }
+        
 
-        if ($this->qty) {
+           foreach ($this->activeRowKeys() as $value) {
+              
+               
+                $requisition_item = new RequisitionItem;
+                $requisition_item->requisition_id = $requisition->id;
+
+                // Assign either expense_id or product_id
+    
+                // Handle quantity and amount
+             
+               
+                $product_id = $this->selectedProduct[$value] ?? Null;
+                $expense_id = $this->expense_id[$value] ?? Null;
+                $allowance_id = $this->allowance_id[$value] ?? Null;
+                $payment_method_id = $this->payment_method_id[$value] ?? Null;
+                $qty = $value ?? 0;
+                $amount = $this->amount[$value] ?? 0;
+                $currency_id = $this->selectedCurrency[$value] ?? 0;
+                $exchange_rate = $this->exchange_rate[$value] ?? 0;
+                $exchange_amount = $this->exchange_amount[$value] ?? 0;
+
+                $requisition_item->allowance_id = $allowance_id;
+                $requisition_item->product_id = $product_id;
+                $requisition_item->expense_id = $expense_id;
+                $requisition_item->payment_method_id = $payment_method_id;
+                $requisition_item->qty = $qty;
+                $requisition_item->amount = $amount;
+                $requisition_item->currency_id = $currency_id;
+                $requisition_item->exchange_rate = $exchange_rate;
+                $requisition_item->exchange_amount = $exchange_amount;
+
+                // Calculate subtotal based on currency
+                if (is_numeric($amount) && is_numeric($qty)) {
+                    $subtotal = ($currency_id != $this->company->currency_id) 
+                    ? $exchange_amount * $qty 
+                    : $amount * $qty;
+                }
+                
+
+                // Assign and save the subtotal
+                $requisition_item->subtotal = $subtotal;
+                $requisition_item->save();
+
+                // Add to the cumulative total
+                $requisition_total += $subtotal;
+
+            }
+      
+        }else{
+            if ($this->qty) {
 
             foreach ($this->qty as $key => $value) {
               
@@ -665,6 +711,9 @@ class Index extends Component
 
             }
         }
+        }
+
+        
 
         $requisition = Requisition::find($requisition->id);
 

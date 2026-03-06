@@ -9,23 +9,41 @@
                             <div>
                                 @include('includes.messages')
                             </div>
-
+                             <div class="panel-title">
+                               
+                                <div class="row">
+                                    <div class="col-lg-3">
+                                        <div class="input-group">
+                                            <span class="input-group-addon">From</span>
+                                            <input type="date" wire:model.debounce.300ms="search_from"  class="form-control">
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-3" >
+                                        <div class="input-group">
+                                            <span class="input-group-addon">To</span>
+                                            <input type="date" wire:model.debounce.300ms="search_to"  class="form-control">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="panel-title">
                                 <a href="#" data-toggle="modal" data-target="#trainingModal" class="btn btn-default"><i class="fa fa-plus-square-o"></i>Training</a>
                             </div>
                         </div>
                         <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
-
+                            <div class="col-md-3" style="float: right; padding-right:0px">
+                                <div class="form-group">
+                                    <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search trainings...">
+                                </div>
+                            </div>
                             <table  class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
                                 <thead>
                                   <tr>
-                                    <th class="th-sm">Employee
+                                    <th class="th-sm">Participant
                                     </th>
                                     <th class="th-sm">Training Item
                                     </th>
-                                    <th class="th-sm">Duration
-                                    </th>
-                                    <th class="th-sm">Participation
+                                    <th class="th-sm">When?
                                     </th>
                                     <th class="th-sm">Comments
                                     </th>
@@ -47,13 +65,13 @@
                                     </td>
                                     <td>{{$training->training_item ? $training->training_item->name : ""}}</td>
                                     <td>
-                                        @if ($training->day_event == False)
-                                            {{$training->from}} - {{$training->to}}
+                                        @if (!$training->day_event)
+                                            {{ \Carbon\Carbon::parse($training->from)->format('d M Y, H:i') }} - 
+                                            {{ \Carbon\Carbon::parse($training->to)->format('d M Y, H:i') }}
                                         @else
-                                            {{$training->date}}
+                                            {{ \Carbon\Carbon::parse($training->date)->format('d M Y') }}
                                         @endif
                                     </td>
-                                    <td>{{$training->participation}}</td>
                                     <td>{{$training->comments}}</td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
@@ -171,28 +189,14 @@
                                 </div>
                             </div>
                         @endif
-                       
-                        
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="name">Participation</label>
-                                <select wire:model.debounce.300ms="participation" class="form-control">
-                                    <option value="">Select Employee</option>
-                                    <option value="Present">Present</option>
-                                    <option value="Absent">Absent</option>
-                                </select>
-                                @error('participation') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                <label for="name">Comments</label>
+                                <textarea wire:model.debounce.300ms="comments" class="form-control" cols="30" rows="3"></textarea>
+                                @error('comments') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="name">Comments</label>
-                        <textarea wire:model.debounce.300ms="comments" class="form-control" cols="30" rows="3"></textarea>
-                        @error('comments') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                    </div>
-                   
-                   
-                   
+                    </div> 
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">
@@ -270,24 +274,12 @@
                         @endif
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="name">Participation</label>
-                                <select wire:model.debounce.300ms="participation" class="form-control">
-                                    <option value="">Select Employee</option>
-                                    <option value="Present">Present</option>
-                                    <option value="Absent">Absent</option>
-                                </select>
-                                @error('participation') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                <label for="name">Comments</label>
+                                <textarea wire:model.debounce.300ms="comments" class="form-control" cols="30" rows="3"></textarea>
+                                @error('comments') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label for="name">Comments</label>
-                        <textarea wire:model.debounce.300ms="comments" class="form-control" cols="30" rows="3"></textarea>
-                        @error('comments') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                    </div>
-                   
-                   
-              
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">

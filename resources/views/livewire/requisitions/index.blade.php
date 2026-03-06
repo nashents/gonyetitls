@@ -827,7 +827,6 @@
                                                     wire:model="included.{{ $value }}">
                                             </div>
                                         </div>
-
                                         {{-- Everything else: disable when unchecked --}}
                                         <div class="col-md-4">
                                             @if ($requisition_for == "Trip")

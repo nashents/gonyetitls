@@ -46,7 +46,7 @@
                         </div>
                         <!-- /.container-fluid -->
 
-                        @livewire('Incidents.approved')
+                        @livewire('incidents.approved')
                         <!-- /.section -->
 
                     </div>

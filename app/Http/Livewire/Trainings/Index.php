@@ -155,9 +155,38 @@ class Index extends Component
     public function render()
     {
        
-        $trainings = Training::latest()->paginate(10);
-        return view('livewire.trainings.index',[
-            'trainings' =>   $trainings,
-        ]);
+       $query = Training::query()
+        ->with(['employee', 'training_item']);
+
+    // Default filter: current year
+    if (!empty($this->search_from) && !empty($this->search_to)) {
+        $query->whereBetween('created_at', [$this->search_from, $this->search_to]);
+    } else {
+        $query->whereYear('created_at', now()->year);
+    }
+
+    // Search filter
+    if (!empty($this->search)) {
+        $search = '%' . trim($this->search) . '%';
+
+        $query->where(function ($q) use ($search) {
+            $q->where('date', 'like', $search)
+              ->orWhere('comments', 'like', $search)
+              ->orWhereHas('employee', function ($q) use ($search) {
+                  $q->where('name', 'like', $search)
+                    ->orWhere('surname', 'like', $search)
+                    ->orWhereRaw("CONCAT(name, ' ', surname) like ?", [$search]);
+              })
+              ->orWhereHas('training_item', function ($q) use ($search) {
+                  $q->where('name', 'like', $search);
+              });
+        });
+    }
+
+    $trainings = $query->orderBy('created_at','desc')->paginate(10);
+
+    return view('livewire.trainings.index', [
+        'trainings' => $trainings,
+    ]);
     }
 }

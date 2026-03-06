@@ -98,187 +98,65 @@ class Index extends Component
 
     public function render()
     {
+        $user = Auth::user();
 
+        $department_names = $user->employee?->departments?->pluck('name')->toArray() ?? [];
+        $role_names       = $user->roles?->pluck('name')->toArray() ?? [];
+        $rank_names       = $user->employee?->ranks?->pluck('name')->toArray() ?? [];
 
-        $departments = Auth::user()->employee->departments;
-            foreach($departments as $department){
-                $department_names[] = $department->name;
-            }
-            $roles = Auth::user()->roles;
-            foreach($roles as $role){
-                $role_names[] = $role->name;
-            }
-            $ranks = Auth::user()->employee->ranks;
-            foreach($ranks as $rank){
-                $rank_names[] = $rank->name;
-            }
-            if (in_array('Admin', $role_names) || in_array('Super Admin', $role_names)) {
-                if (isset($this->from) && isset($this->to)) {
-                    if (isset($this->search)) {
-                        return view('livewire.incidents.index',[
-                            'incidents' => Incident::query()->with('customer','trip','horse','trailer','vehicle')->whereBetween('created_at',[$this->from, $this->to] )
-                            ->where('incident_number','like', '%'.$this->search.'%')
-                            ->orWhereHas('horse', function ($query) {
-                                return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                            })
-                            ->orWhereHas('horse', function ($query) {
-                                return $query->where('fleet_number', 'like', '%'.$this->search.'%');
-                            })
-                            ->orWhereHas('customer', function ($query) {
-                                return $query->where('ticket_number', 'like', '%'.$this->search.'%');
-                            })
-                            ->orWhereHas('trip', function ($query) {
-                                return $query->where('inspection_number', 'like', '%'.$this->search.'%');
-                            })
-                            ->orWhereHas('vehicle', function ($query) {
-                                return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                            })
-                            ->orWhereHas('vehicle', function ($query) {
-                                return $query->where('fleet_number', 'like', '%'.$this->search.'%');
-                            })
-                            ->orWhereHas('trailer', function ($query) {
-                                return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                            })
-                            ->orWhereHas('trailer', function ($query) {
-                                return $query->where('fleet_number', 'like', '%'.$this->search.'%');
-                            })->orderBy('incident_number','desc')->paginate(10),
-                          
-                        ]);
-                    }else {
-                        return view('livewire.incidents.index',[
-                            'incidents' => Incident::query()->with('customer','trip','horse','trailer','vehicle')->whereBetween('created_at',[$this->from, $this->to] )->orderBy('incident_number','desc')->paginate(10),
-                          
-                        ]);
-                    }
-                   
-                }
-                elseif (isset($this->search)) {
-                   
-                    return view('livewire.incidents.index',[
-                        'incidents' => Incident::query()->with('customer','trip','horse','trailer','vehicle')->whereMonth('created_at', date('m'))
-                        ->whereYear('created_at', date('Y'))
-                        ->where('incident_number','like', '%'.$this->search.'%')
-                        ->orWhereHas('horse', function ($query) {
-                            return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('horse', function ($query) {
-                            return $query->where('fleet_number', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('customer', function ($query) {
-                            return $query->where('ticket_number', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('trip', function ($query) {
-                            return $query->where('inspection_number', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('vehicle', function ($query) {
-                            return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('vehicle', function ($query) {
-                            return $query->where('fleet_number', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('trailer', function ($query) {
-                            return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('trailer', function ($query) {
-                            return $query->where('fleet_number', 'like', '%'.$this->search.'%');
-                        })->orderBy('incident_number','desc')->paginate(10),
-                      
-                    ]);
-                }
-                else {
-                   
-                    return view('livewire.incidents.index',[
-                        'incidents' => Incident::query()->with('customer','trip','horse','trailer','vehicle')->whereMonth('created_at', date('m'))
-                        ->whereYear('created_at', date('Y'))->orderBy('incident_number','desc')->paginate(10),
-                      
-                    ]);
-                  
-                }
-            }else {
-                if (isset($this->from) && isset($this->to)) {
-                    if (isset($this->search)) {
-                        return view('livewire.incidents.index',[
-                            'incidents' => Incident::query()->with('customer','trip','horse','trailer','vehicle')->whereBetween('created_at',[$this->from, $this->to] )->where('user_id',Auth::user()->id)
-                            ->where('incident_number','like', '%'.$this->search.'%')
-                            ->orWhereHas('horse', function ($query) {
-                                return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                            })
-                            ->orWhereHas('horse', function ($query) {
-                                return $query->where('fleet_number', 'like', '%'.$this->search.'%');
-                            })
-                            ->orWhereHas('customer', function ($query) {
-                                return $query->where('ticket_number', 'like', '%'.$this->search.'%');
-                            })
-                            ->orWhereHas('trip', function ($query) {
-                                return $query->where('inspection_number', 'like', '%'.$this->search.'%');
-                            })
-                            ->orWhereHas('vehicle', function ($query) {
-                                return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                            })
-                            ->orWhereHas('vehicle', function ($query) {
-                                return $query->where('fleet_number', 'like', '%'.$this->search.'%');
-                            })
-                            ->orWhereHas('trailer', function ($query) {
-                                return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                            })
-                            ->orWhereHas('trailer', function ($query) {
-                                return $query->where('fleet_number', 'like', '%'.$this->search.'%');
-                            })->orderBy('incident_number','desc')->paginate(10),
-                          
-                        ]);
-                    }else{
-                        return view('livewire.incidents.index',[
-                            'incidents' => Incident::query()->with('customer','trip','horse','trailer','vehicle')->whereBetween('created_at',[$this->from, $this->to] )->where('user_id',Auth::user()->id)->orderBy('incident_number','desc')->paginate(10),
-                          
-                        ]);
-                    }
-                  
-                   
-                }
-                elseif (isset($this->search)) {
-                    return view('livewire.incidents.index',[
-                        'incidents' => Incident::query()->with('customer','trip','horse','trailer','vehicle')->whereMonth('created_at', date('m'))
-                        ->whereYear('created_at', date('Y'))->where('user_id',Auth::user()->id)
-                        ->where('incident_number','like', '%'.$this->search.'%')
-                        ->orWhereHas('horse', function ($query) {
-                            return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('horse', function ($query) {
-                            return $query->where('fleet_number', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('customer', function ($query) {
-                            return $query->where('ticket_number', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('trip', function ($query) {
-                            return $query->where('inspection_number', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('vehicle', function ($query) {
-                            return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('vehicle', function ($query) {
-                            return $query->where('fleet_number', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('trailer', function ($query) {
-                            return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                        })
-                        ->orWhereHas('trailer', function ($query) {
-                            return $query->where('fleet_number', 'like', '%'.$this->search.'%');
-                        })->orderBy('incident_number','desc')->paginate(10),
-                      
-                    ]);
-                }
-                else {
-                    
-                    return view('livewire.incidents.index',[
-                        'incidents' => Incident::query()->with('customer','trip','horse','trailer','vehicle')->whereMonth('created_at', date('m'))
-                        ->whereYear('created_at', date('Y'))->where('user_id',Auth::user()->id)->orderBy('incident_number','desc')->paginate(10),
-                      
-                    ]);
+        $isAdmin = in_array('Admin', $role_names) || in_array('Super Admin', $role_names);
 
-                }
-    
-            }
-       
+        $query = Incident::query()
+            ->with(['customer', 'trip', 'horse', 'trailer', 'vehicle']);
+
+        // Access control
+        if (! $isAdmin) {
+            $query->where('user_id', $user->id);
+        }
+
+        // Date filter
+        if (!empty($this->from) && !empty($this->to)) {
+            $query->whereBetween('created_at', [$this->from, $this->to]);
+        } else {
+            $query->whereMonth('created_at', now()->month)
+                ->whereYear('created_at', now()->year);
+        }
+
+        // Search filter
+        if (!empty($this->search)) {
+            $search = '%' . trim($this->search) . '%';
+
+            $query->where(function ($q) use ($search) {
+                $q->where('incident_number', 'like', $search)
+                    ->orWhereHas('horse', function ($q) use ($search) {
+                        $q->where('registration_number', 'like', $search)
+                        ->orWhere('fleet_number', 'like', $search);
+                    })
+                    ->orWhereHas('customer', function ($q) use ($search) {
+                        $q->where('ticket_number', 'like', $search);
+                    })
+                    ->orWhereHas('trip', function ($q) use ($search) {
+                        $q->where('inspection_number', 'like', $search);
+                    })
+                    ->orWhereHas('vehicle', function ($q) use ($search) {
+                        $q->where('registration_number', 'like', $search)
+                        ->orWhere('fleet_number', 'like', $search);
+                    })
+                    ->orWhereHas('trailer', function ($q) use ($search) {
+                        $q->where('registration_number', 'like', $search)
+                        ->orWhere('fleet_number', 'like', $search);
+                    });
+            });
+        }
+
+        $incidents = $query->orderByDesc('incident_number')->paginate(10);
+
+        return view('livewire.incidents.index', [
+            'incidents' => $incidents,
+            'department_names' => $department_names,
+            'role_names' => $role_names,
+            'rank_names' => $rank_names,
+        ]);
 
     }
 }
