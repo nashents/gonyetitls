@@ -46,6 +46,11 @@
           <dt>Date Opened</dt><dd data-field="jobcard.opened_at">{{$booking->in_date}}</dd>
           <dt>Job Type</dt><dd data-field="jobcard.opened_at">{{$service_type->name}}</dd>
           <dt>Status</dt><dd><span class="tag upper" data-field="jobcard.status">{{$ticket->status == 1 ? "Open" :  "Closed"}}</span></dd>
+          <dt>AssignedTo</dt><dd>
+              @foreach ($ticket->employees as $employee)
+                {{$employee?->name}} {{$employee?->name}}@if (!$loop->last), @endif
+              @endforeach
+          </dd>
         </dl>
       </aside>
     </header>
