@@ -611,10 +611,9 @@ class Index extends Component
        
         if (isset($this->requisition_for)) {
         
-
            foreach ($this->activeRowKeys() as $value) {
               
-               
+       
                 $requisition_item = new RequisitionItem;
                 $requisition_item->requisition_id = $requisition->id;
 
@@ -627,7 +626,7 @@ class Index extends Component
                 $expense_id = $this->expense_id[$value] ?? Null;
                 $allowance_id = $this->allowance_id[$value] ?? Null;
                 $payment_method_id = $this->payment_method_id[$value] ?? Null;
-                $qty = $value ?? 0;
+                $qty = $this->qty[$value] ?? Null;
                 $amount = $this->amount[$value] ?? 0;
                 $currency_id = $this->selectedCurrency[$value] ?? 0;
                 $exchange_rate = $this->exchange_rate[$value] ?? 0;

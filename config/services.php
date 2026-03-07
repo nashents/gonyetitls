@@ -30,4 +30,11 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'fiscal_harmony' => [
+    'base_url'   => env('FISCAL_HARMONY_BASE_URL', 'https://apitest.fiscalharmony.co.zw'),
+    'api_key'    => env('FISCAL_HARMONY_API_KEY'),
+    'api_secret' => env('FISCAL_HARMONY_API_SECRET'),
+    'app_name'   => env('FISCAL_HARMONY_APP_NAME', 'GonyetiERP'),
+    ],
+
 ];

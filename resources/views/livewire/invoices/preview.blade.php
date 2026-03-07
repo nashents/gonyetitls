@@ -2,15 +2,134 @@
     <div id="print-area">
         <div id="invoice">
             <x-loading/>
-            <div class="toolbar hidden-print">
-                <div class="text-end">
-                    <button type="button" onclick="goBack()" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-arrow-left" style="color:black"></i> Back</button>
-                    {{-- <a href="#" wire:click="sendEmail({{$invoice->id}})" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-envelope" style="color:red"></i> Send</a> --}}
-                    <a href="javascript:void(0)" onclick="printSection()" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-print" style="color: black"></i> Print</a>
-                    <a href="{{route('invoices.pdf', $invoice->id)}}" class="btn btn-default border-primary btn-wide btn-rounded"><i class="fa fa-file-pdf-o" style="color:red"></i> Export as PDF</a>
+        <div class="toolbar hidden-print">
+    <div class="text-end">
+
+        <button type="button" onclick="goBack()"
+                class="btn btn-default border-primary btn-wide btn-rounded">
+            <i class="fa fa-arrow-left" style="color:black"></i> Back
+        </button>
+
+        {{-- ── FISCALIZE / STATUS BUTTON ──────────────────────────── --}}
+        @if($fiscalStatus === 'approved')
+            <span class="btn btn-success btn-wide btn-rounded" style="cursor:default">
+                <i class="fa fa-check-circle"></i> Fiscalised
+            </span>
+
+        @elseif($fiscalStatus === 'pending')
+            {{-- Submitted but still waiting on Fiscal Harmony --}}
+            <button type="button"
+                    wire:click="pollFiscalStatus"
+                    wire:loading.attr="disabled"
+                    wire:target="pollFiscalStatus"
+                    class="btn btn-warning btn-wide btn-rounded">
+                <span wire:loading.remove wire:target="pollFiscalStatus">
+                    <i class="fa fa-refresh"></i> Check Fiscal Status
+                </span>
+                <span wire:loading wire:target="pollFiscalStatus">
+                    <span class="spinner-border spinner-border-sm"></span> Checking...
+                </span>
+            </button>
+
+        @elseif($fiscalStatus === 'failed' && $fiscalActionable)
+            {{-- Failed but can retry --}}
+            <button type="button"
+                    wire:click="fiscalizeInvoice({{ $invoice->id }})"
+                    wire:loading.attr="disabled"
+                    wire:target="fiscalizeInvoice"
+                    class="btn btn-danger btn-wide btn-rounded">
+                <span wire:loading.remove wire:target="fiscalizeInvoice">
+                    <i class="fa fa-refresh"></i> Retry Fiscalize
+                </span>
+                <span wire:loading wire:target="fiscalizeInvoice">
+                    <span class="spinner-border spinner-border-sm"></span> Retrying...
+                </span>
+            </button>
+
+        @else
+            {{-- Not fiscalised yet (or non-actionable failed = still show button) --}}
+            <button type="button"
+                    wire:click="fiscalizeInvoice({{ $invoice->id }})"
+                    wire:loading.attr="disabled"
+                    wire:target="fiscalizeInvoice"
+                    class="btn btn-default border-primary btn-wide btn-rounded">
+                <span wire:loading.remove wire:target="fiscalizeInvoice">
+                    <i class="fa fa-receipt" style="color:red"></i> Fiscalize Invoice
+                </span>
+                <span wire:loading wire:target="fiscalizeInvoice">
+                    <span class="spinner-border spinner-border-sm" role="status"></span>
+                    Fiscalizing...
+                </span>
+            </button>
+        @endif
+
+        {{-- ── DOWNLOAD FISCAL PDF (only once approved) ───────────── --}}
+        @if($fiscalStatus === 'approved' && $fiscalPdfFile)
+            <button type="button"
+                    wire:click="downloadFiscalPdf"
+                    class="btn btn-success btn-wide btn-rounded">
+                <i class="fa fa-file-pdf-o"></i> Download Fiscal PDF
+            </button>
+        @endif
+
+        <a href="javascript:void(0)" onclick="printSection()"
+           class="btn btn-default border-primary btn-wide btn-rounded">
+            <i class="fa fa-print" style="color: black"></i> Print
+        </a>
+
+        <a href="{{ route('invoices.pdf', $invoice->id) }}"
+           class="btn btn-default border-primary btn-wide btn-rounded">
+            <i class="fa fa-file-pdf-o" style="color:red"></i> Export as PDF
+        </a>
+
+    </div>
+
+    {{-- ── STATUS BANNER ───────────────────────────────────────────── --}}
+    @if($fiscalMessage)
+        <div class="alert mt-2 mb-0 py-2
+                {{ $fiscalMessageType === 'success' ? 'alert-success' : ($fiscalMessageType === 'error' ? 'alert-danger' : 'alert-warning') }}"
+             role="alert">
+            @if($fiscalMessageType === 'success') <i class="fa fa-check-circle"></i>
+            @elseif($fiscalMessageType === 'error') <i class="fa fa-times-circle"></i>
+            @else <i class="fa fa-clock-o"></i>
+            @endif
+            {{ $fiscalMessage }}
+        </div>
+    @endif
+
+    {{-- ── QR CODE PANEL (shown once approved) ────────────────────── --}}
+    @if($fiscalStatus === 'approved' && $fiscalQrUrl)
+        <div class="card mt-3 border-success hidden-print">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center gap-3">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ urlencode($fiscalQrUrl) }}"
+                         alt="Fiscal QR Code" width="100" height="100"
+                         style="border:1px solid #ccc; border-radius:4px">
+                    <div style="font-size:13px; line-height:1.8">
+                        <div>
+                            <strong>Verification Code:</strong>
+                            <span class="badge bg-dark text-white px-2 py-1"
+                                  style="font-family:monospace; font-size:14px">
+                                {{ $fiscalVerifyCode }}
+                            </span>
+                        </div>
+                        @if($fiscalDay)
+                            <div><strong>Fiscal Day:</strong> {{ $fiscalDay }}</div>
+                        @endif
+                        @if($fiscalRaInvoiceNo)
+                            <div><strong>RA Invoice No:</strong> {{ $fiscalRaInvoiceNo }}</div>
+                        @endif
+                        <small class="text-muted">
+                            Scan QR code or enter verification code at the Revenue Authority portal.
+                        </small>
+                    </div>
                 </div>
-                <hr>
             </div>
+        </div>
+    @endif
+
+    <hr>
+</div>
             <div class="invoice overflow-auto">
                 <div style="min-width: 600px">
                     <header>
