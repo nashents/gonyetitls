@@ -155,6 +155,13 @@
                                 </div>
                                   
                                 </div>
+                                   <div class="panel-title">
+                                    <a href="#" wire:click="exportTicketsExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
+                                    <a href="#" wire:click="exportTicketsCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
+                                    <a href="#" wire:click="exportTicketsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a> 
+                                    <br>
+                                    <br>
+                                </div>
                             
                                 <div class="col-md-5" style="float: right; padding-right:2px">
                                     <div class="form-group">

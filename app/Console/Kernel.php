@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use App\Console\Commands\SyncChangeLog;
 use Illuminate\Console\Scheduling\Schedule;
 use App\Console\Commands\FitnessReminderCommand;
+use App\Console\Commands\GenerateZimbabweHolidays;
 use App\Console\Commands\SendDailyReports;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -21,6 +22,7 @@ class Kernel extends ConsoleKernel
         FitnessReminderCommand::class,
         AccrueEmployeeLeave::class,
         SendDailyReports::class,
+        GenerateZimbabweHolidays::class,
         SyncChangeLog::class,
     ];
 
@@ -47,6 +49,9 @@ class Kernel extends ConsoleKernel
         ->timezone('Africa/Harare')        // your timezone
         ->withoutOverlapping()
         ->onOneServer();
+
+         $schedule->command('holidays:generate ' . (now()->year + 1))
+            ->yearlyOn(12, 1, '00:10');
     }
 
     /**

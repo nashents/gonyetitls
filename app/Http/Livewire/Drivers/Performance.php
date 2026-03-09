@@ -37,7 +37,7 @@ class Performance extends Component
     }
 
 
-         public function updatedYear()
+    public function updatedYear()
     {
         $this->loadChart();
 

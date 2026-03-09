@@ -2,19 +2,21 @@
 
 namespace App\Http\Livewire\Leaves;
 
-use DateTime;
-use Carbon\Carbon;
-use App\Models\User;
-use App\Models\Leave;
-use Livewire\Component;
-use App\Models\Employee;
-use App\Models\LeaveType;
-use Livewire\WithPagination;
-use Maatwebsite\Excel\Excel;
 use App\Exports\LeavesExport;
 use App\Models\DepartmentHead;
-use Illuminate\Support\Facades\DB;
+use App\Models\Employee;
+use App\Models\Leave;
+use App\Models\LeaveType;
+use App\Models\PublicHoliday;
+use App\Models\User;
+use Carbon\Carbon;
+use Carbon\CarbonPeriod;
+use DateTime;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Livewire\Component;
+use Livewire\WithPagination;
+use Maatwebsite\Excel\Excel;
 
 class Manage extends Component
 {
@@ -46,6 +48,7 @@ class Manage extends Component
     public $reason;
     public $available_leave_days;
     public $days;
+    public $days_calculation;
     public $leave_filter = 'all';
 
 
@@ -87,6 +90,11 @@ class Manage extends Component
         ->orderBy('surname', 'asc')->get();
         $this->leave_types = LeaveType::orderBy('name','asc')->get();
         $this->employee_departments = collect();
+
+         $user = Auth::user();
+        $employee = $user->employee;
+        $company = $employee->company;
+        $this->days_calculation = $company?->days_calculation;
        
     }
 
@@ -279,91 +287,93 @@ class Manage extends Component
     }
 
 
+    public function updatedFrom()
+    {
+        $this->recalculateDays();
+    }
+
+    public function updatedTo()
+    {
+        $this->recalculateDays();
+    }
+
+    public function updatedDaysCalculation()
+    {
+        $this->recalculateDays();
+    }
+
+    public function recalculateDays()
+    {
+        if (blank($this->from) || blank($this->to)) {
+            $this->days = 0;
+            return;
+        }
+
+        $this->days = $this->calculateLeaveDays(
+            $this->from,
+            $this->to,
+            $this->days_calculation ?? 'include_weekends'
+        );
+    }
+
+    public function calculateLeaveDays($from, $to, $daysCalculation = 'include_weekends')
+    {
+        $startDate = Carbon::parse($from)->startOfDay();
+        $endDate   = Carbon::parse($to)->startOfDay();
+
+        if ($startDate->gt($endDate)) {
+            return 0;
+        }
+
+        $publicHolidays = PublicHoliday::whereBetween('date', [
+            $startDate->toDateString(),
+            $endDate->toDateString()
+        ])->pluck('date')
+        ->mapWithKeys(fn ($date) => [Carbon::parse($date)->toDateString() => true]);
+
+        $days = 0;
+        $weekendIncluded = false;
+
+        foreach (CarbonPeriod::create($startDate, $endDate) as $date) {
+            $currentDate = $date->toDateString();
+
+            if (isset($publicHolidays[$currentDate])) {
+                continue;
+            }
+
+            if ($daysCalculation === 'exclude_weekends') {
+                if (! $date->isWeekend()) {
+                    $days++;
+                }
+            } elseif ($daysCalculation === 'one_weekend_day') {
+                if (! $date->isWeekend()) {
+                    $days++;
+                } elseif (! $weekendIncluded) {
+                    $days++;
+                    $weekendIncluded = true;
+                }
+            } else {
+                $days++;
+            }
+        }
+
+        return $days;
+    }
+
         
     public function render()
     {
-            if (isset($this->from) && isset($this->to)) {
-                $startDate = Carbon::parse($this->from);
-                $endDate = Carbon::parse($this->to);
-                $this->days = $startDate->diffInDays($endDate) + 1;
-            }
-
+            
             $this->leave_types = LeaveType::orderBy('name','asc')->get();
-            $today = Carbon::today();
 
-            // Base query with eager loading
-            $query = Leave::with('employee','user','department','leave_type');
-
-            // Apply filters based on leave_filter
-            switch ($this->leave_filter) {
-                case 'all':
-                    if ($this->range_from && $this->range_to) {
-                        $query->where(function ($q) {
-                            $q->whereBetween('from', [$this->range_from, $this->range_to])
-                            ->orWhereBetween('to', [$this->range_from, $this->range_to])
-                            ->orWhere(function ($q) {
-                                $q->where('from', '<', $this->range_from)
-                                    ->where('to', '>', $this->range_to);
-                            });
-                        });
-                    } else {
-                        // Default to current month
-                        $query->whereMonth('created_at', now()->month)
-                            ->whereYear('created_at', now()->year);
-                    }
-                    break;
-
-                case 'inprogress':
-                    $query->where('status', 'approved')
-                        ->whereDate('from', '<=', $today)
-                        ->whereDate('to', '>=', $today);
-                    break;
-
-                case 'cancelled':
-                    $query->where('is_cancelled', true);
-                    break;
-
-                case 'last_month':
-                    $startOfLastMonth = Carbon::now()->subMonth()->startOfMonth();
-                    $endOfLastMonth = Carbon::now()->subMonth()->endOfMonth();
-
-                    $query->where(function ($q) use ($startOfLastMonth, $endOfLastMonth) {
-                        $q->whereBetween('from', [$startOfLastMonth, $endOfLastMonth])
-                        ->orWhereBetween('to', [$startOfLastMonth, $endOfLastMonth])
-                        ->orWhere(function ($q) use ($startOfLastMonth, $endOfLastMonth) {
-                            $q->where('from', '<', $startOfLastMonth)
-                                ->where('to', '>', $endOfLastMonth);
-                        });
-                    });
-                    break;
-
-                case 'greater_than_10_days':
-                    $query->where('days', '>=', 10);
-                    break;
-            }
-
-            // Apply search if provided
-            if (!empty($this->search)) {
-                $query->where(function ($q) {
-                    $q->where('days', 'like', '%' . $this->search . '%')
-                    ->orWhere('reason','like', '%' . $this->search . '%')
-                    ->orWhereHas('employee', function ($q) {
-                        $q->where(DB::raw("concat(name, ' ', surname)"), 'like', '%' . $this->search . '%');
-                    })
-                    ->orWhereHas('user', function ($q) {
-                        $q->where(DB::raw("concat(name, ' ', surname)"), 'like', '%' . $this->search . '%');
-                    })
-                    ->orWhereHas('department', function ($q) {
-                        $q->where('name', 'like', '%' . $this->search . '%');
-                    })
-                    ->orWhereHas('leave_type', function ($q) {
-                        $q->where('name', 'like', '%' . $this->search . '%');
-                    });
-                });
-            }
+            
+           $leaves = Leave::with('employee','user','department','leave_type')
+            ->filterLeaves($this->leave_filter, $this->range_from, $this->range_to, $this->search)
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
 
             return view('livewire.leaves.manage', [
-                'leaves' => $query->orderBy('created_at', 'desc')->paginate(10)
+                'leaves' =>  $leaves
             ]);
     }
 }

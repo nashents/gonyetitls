@@ -171,16 +171,28 @@
                         <label for="one" class="radio-label">Backdated Leave Application</label>
                         @error('is_backdated') <span class="text-danger error">{{ $message }}</span>@enderror
                     </div>
-                    <div class="row">
-                         @if ($this->is_backdated == True)
-                        <div class="col-md-4">
+                     <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="vat">Days Calculation<span class="required" style="color: red">*</span></label>
+                                <select class="form-control" wire:model.debounce.300ms="days_calculation" required>
+                                    <option value="">Select Option</option>
+                                    <option value="include_weekends">Include Weekends</option>
+                                    <option value="exclude_weekends">Exclude Weekends</option>
+                                    <option value="one_weekend_day">1 Weekend Day</option>
+                                </select>
+                                @error('days_calculation') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        @if ($this->is_backdated == True)
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label for="name">Start Leave Date<span class="required" style="color: red">*</span></label>
                                 <input type="date" class="form-control"  wire:model.debounce.300ms="from" required />
                                 @error('from') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label for="to">End Leave Date<span class="required" style="color: red">*</span></label>
                                 <input type="date" class="form-control" wire:model.debounce.300ms="to" required />
@@ -188,14 +200,14 @@
                             </div>
                         </div>
                         @else
-                         <div class="col-md-4">
+                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="name">Start Leave Date<span class="required" style="color: red">*</span></label>
                                 <input type="date" class="form-control" min="<?= date('Y-m-d'); ?>" wire:model.debounce.300ms="from" required />
                                 @error('from') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label for="to">End Leave Date<span class="required" style="color: red">*</span></label>
                                 <input type="date" class="form-control" min="<?= date('Y-m-d'); ?>" wire:model.debounce.300ms="to" required />
@@ -203,7 +215,7 @@
                             </div>
                         </div>
                         @endif
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label for="to">Days Applied<span class="required" style="color: red">*</span></label>
                                 <input type="number" step="any" class="form-control" wire:model.debounce.300ms="days" required disabled/>
@@ -287,16 +299,28 @@
                         <label for="one" class="radio-label">Backdated Leave Application</label>
                         @error('is_backdated') <span class="text-danger error">{{ $message }}</span>@enderror
                     </div>
-                    <div class="row">
-                         @if ($this->is_backdated == True)
-                        <div class="col-md-4">
+                     <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="vat">Days Calculation<span class="required" style="color: red">*</span></label>
+                                <select class="form-control" wire:model.debounce.300ms="days_calculation" required>
+                                    <option value="">Select Option</option>
+                                    <option value="include_weekends">Include Weekends</option>
+                                    <option value="exclude_weekends">Exclude Weekends</option>
+                                    <option value="one_weekend_day">1 Weekend Day</option>
+                                </select>
+                                @error('days_calculation') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                        @if ($this->is_backdated == True)
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label for="name">Start Leave Date<span class="required" style="color: red">*</span></label>
                                 <input type="date" class="form-control"  wire:model.debounce.300ms="from" required />
                                 @error('from') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label for="to">End Leave Date<span class="required" style="color: red">*</span></label>
                                 <input type="date" class="form-control" wire:model.debounce.300ms="to" required />
@@ -304,14 +328,14 @@
                             </div>
                         </div>
                         @else
-                         <div class="col-md-4">
+                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="name">Start Leave Date<span class="required" style="color: red">*</span></label>
                                 <input type="date" class="form-control" min="<?= date('Y-m-d'); ?>" wire:model.debounce.300ms="from" required />
                                 @error('from') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label for="to">End Leave Date<span class="required" style="color: red">*</span></label>
                                 <input type="date" class="form-control" min="<?= date('Y-m-d'); ?>" wire:model.debounce.300ms="to" required />
@@ -319,7 +343,7 @@
                             </div>
                         </div>
                         @endif
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label for="to">Days Applied<span class="required" style="color: red">*</span></label>
                                 <input type="number" step="any" class="form-control" wire:model.debounce.300ms="days" required disabled/>

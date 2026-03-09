@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Measurement;
+use App\Models\PublicHoliday;
 use App\Models\UnitsOfMeasure;
 use Database\Seeders\AccountSeeder;
 use Database\Seeders\AccountTypeGroupSeeder;
@@ -40,6 +41,7 @@ use Database\Seeders\LossGroupSeeder;
 use Database\Seeders\MeasurementSeeder;
 use Database\Seeders\MenuRegistrySeeder;
 use Database\Seeders\PaymentMethodSeeder;
+use Database\Seeders\PublicHolidaySeeder;
 use Database\Seeders\RankSeeder;
 use Database\Seeders\ReminderItemSeeder;
 use Database\Seeders\RoleSeeder;
@@ -120,6 +122,7 @@ class DatabaseSeeder extends Seeder
         $this->call(StageSeeder::class);
         $this->call(CriterionSeeder::class);
         $this->call(CheckSeeder::class);
+        $this->call(PublicHolidaySeeder::class);
      
     }
 }

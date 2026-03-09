@@ -13,6 +13,7 @@ class Hr extends Component
     public $company_id;
     public $maximum_leave_days;
     public $accrual_rate;
+    public $days_calculation;
 
 
 
@@ -23,6 +24,7 @@ class Hr extends Component
         $this->company_id = $company->id;
         $this->maximum_leave_days = $company->maximum_leave_days;
         $this->accrual_rate = $company->accrual_rate;
+        $this->days_calculation = $company->days_calculation;
     }
 
     public function update(){
@@ -30,6 +32,7 @@ class Hr extends Component
         $company = Company::find($this->company_id);
         $company->maximum_leave_days = $this->maximum_leave_days;
         $company->accrual_rate = $this->accrual_rate;
+        $company->days_calculation = $this->days_calculation;
         $company->update();
         
         if (isset($employees)) {

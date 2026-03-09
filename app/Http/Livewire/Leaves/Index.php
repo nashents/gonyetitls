@@ -2,17 +2,19 @@
 
 namespace App\Http\Livewire\Leaves;
 
-use DateTime;
-use Carbon\Carbon;
-use App\Models\User;
-use App\Models\Leave;
-use Livewire\Component;
-use App\Models\Employee;
-use App\Models\LeaveType;
-use Livewire\WithPagination;
 use App\Models\DepartmentHead;
-use Illuminate\Support\Facades\DB;
+use App\Models\Employee;
+use App\Models\Leave;
+use App\Models\LeaveType;
+use App\Models\PublicHoliday;
+use App\Models\User;
+use Carbon\Carbon;
+use Carbon\CarbonPeriod;
+use DateTime;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class Index extends Component
 {
@@ -43,6 +45,7 @@ class Index extends Component
     public $reason;
     public $available_leave_days;
     public $days;
+    public $days_calculation;
 
 
     public function updated($value){
@@ -74,6 +77,10 @@ class Index extends Component
         $this->departments = $this->selected_employee->departments;
         $this->available_leave_days =  $this->selected_employee->leave_days;
         $this->leave_types = LeaveType::orderBy('name','asc')->get();
+        $user = Auth::user();
+        $employee = $user->employee;
+        $company = $employee->company;
+        $this->days_calculation = $company?->days_calculation;
         
     }
 
@@ -248,6 +255,79 @@ class Index extends Component
         
             }
         }
+
+            public function updatedFrom()
+    {
+        $this->recalculateDays();
+    }
+
+    public function updatedTo()
+    {
+        $this->recalculateDays();
+    }
+
+    public function updatedDaysCalculation()
+    {
+        $this->recalculateDays();
+    }
+
+    public function recalculateDays()
+    {
+        if (blank($this->from) || blank($this->to)) {
+            $this->days = 0;
+            return;
+        }
+
+        $this->days = $this->calculateLeaveDays(
+            $this->from,
+            $this->to,
+            $this->days_calculation ?? 'include_weekends'
+        );
+    }
+
+    public function calculateLeaveDays($from, $to, $daysCalculation = 'include_weekends')
+    {
+        $startDate = Carbon::parse($from)->startOfDay();
+        $endDate   = Carbon::parse($to)->startOfDay();
+
+        if ($startDate->gt($endDate)) {
+            return 0;
+        }
+
+        $publicHolidays = PublicHoliday::whereBetween('date', [
+            $startDate->toDateString(),
+            $endDate->toDateString()
+        ])->pluck('date')
+        ->mapWithKeys(fn ($date) => [Carbon::parse($date)->toDateString() => true]);
+
+        $days = 0;
+        $weekendIncluded = false;
+
+        foreach (CarbonPeriod::create($startDate, $endDate) as $date) {
+            $currentDate = $date->toDateString();
+
+            if (isset($publicHolidays[$currentDate])) {
+                continue;
+            }
+
+            if ($daysCalculation === 'exclude_weekends') {
+                if (! $date->isWeekend()) {
+                    $days++;
+                }
+            } elseif ($daysCalculation === 'one_weekend_day') {
+                if (! $date->isWeekend()) {
+                    $days++;
+                } elseif (! $weekendIncluded) {
+                    $days++;
+                    $weekendIncluded = true;
+                }
+            } else {
+                $days++;
+            }
+        }
+
+        return $days;
+    }
     public function render()
     {
         if (isset($this->from) && isset($this->to)) {

@@ -28,10 +28,29 @@ WithCustomStartCell
     /**
     * @return \Illuminate\Support\Collection
     */
+    public $from;
+    public $to;
+    public $filter;
+    public $search;
+
+    public function __construct($from = Null, $to = Null, $filter = Null, $search = null)
+    {
+       $this->from = $from;
+       $this->to = $to;
+       $this->filter = $filter;
+       $this->search = $search;
+    }
+
     public function query()
     {
-        return Leave::query()->where('user_id',Auth::user()->id);
+        return Leave::query()
+        ->with(['employee', 'user', 'department', 'leave_type'])
+        ->where('user_id', Auth::id())
+        ->filterLeaves($this->filter, $this->from, $this->to, $this->search)
+        ->orderBy('created_at', 'desc');
     }
+
+
     public function map($leave): array{
 
         $employee_name = $leave->employee ? $leave->employee->name : "";

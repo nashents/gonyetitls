@@ -298,7 +298,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.bundle.js"></script>
 <script src="{{asset('js/chartjs/utils.js')}}"></script>
 <script src="{{asset('js/chartjs/globalchartjs.js')}}"></script>
-    <script>
+<script>
     Highcharts.setOptions({
     global: { useUTC: false },
     chart: { style: { fontFamily: 'Poppins' } }
