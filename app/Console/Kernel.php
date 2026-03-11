@@ -50,7 +50,7 @@ class Kernel extends ConsoleKernel
         ->withoutOverlapping()
         ->onOneServer();
 
-         $schedule->command('holidays:generate ' . (now()->year + 1))
+        $schedule->command('holidays:generate ' . (now()->year + 1))
             ->yearlyOn(12, 1, '00:10');
     }
 

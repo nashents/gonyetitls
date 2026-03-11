@@ -2,32 +2,37 @@
 
 namespace App\Http\Livewire\Trips;
 
-use App\Models\Bill;
-use App\Models\Trip;
-use App\Models\User;
-use App\Models\Horse;
-use App\Models\Driver;
-use App\Models\Country;
-use App\Models\Mileage;
-use App\Models\Trailer;
-use App\Models\Vehicle;
-use Livewire\Component;
-use App\Models\TripStatus;
 use App\Exports\PodTracker;
-use App\Exports\TripsExport;
+use App\Exports\TripsReportExport;
 use App\Imports\TripsImport;
+use App\Mail\TripUpdatesMail;
+use App\Models\Bill;
+use App\Models\Cargo;
+use App\Models\Consignee;
+use App\Models\Country;
+use App\Models\Currency;
+use App\Models\Customer;
 use App\Models\DeliveryNote;
-use App\Models\TripDocument;
+use App\Models\Destination;
+use App\Models\Driver;
+use App\Models\Horse;
+use App\Models\Mileage;
+use App\Models\Route;
+use App\Models\Trailer;
+use App\Models\Transporter;
+use App\Models\Trip;
 use App\Models\TripLocation;
+use App\Models\TripStatus;
+use App\Models\TripType;
+use App\Models\User;
+use App\Models\Vehicle;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Livewire\Component;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Excel;
-use App\Mail\TripUpdatesMail;
-use Livewire\WithFileUploads;
-use App\Exports\TripsReportExport;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Session;
 
 class Index extends Component
 {
@@ -40,9 +45,7 @@ class Index extends Component
     public $trip_id;
     public $status;
     public $measurement;
-    public $trip_filter;
-    public $from;
-    public $to;
+ 
     public $sea;
     public $loaded;
     public $loaded_date;
@@ -88,7 +91,40 @@ class Index extends Component
     {
         unset($this->inputs[$i]);
     }
+
+
+    
+    public $trip_filter;
+    public $from;
+    public $to;
+    public $transporters;
+ 
+    public $horses;
+    public $filter_transporter_id;
+    public $filter_horse_id;
+    public $filter_driver_id;
+    public $filter_currency_id;
+    public $filter_cargo_id;
+    public $filter_route_id;
+    public $filter_trip_type_id;
+    public $filter_customer_id;
+    public $filter_consignee_id;
+    public $filter_from;
+    public $filter_to;
+    public $drivers;
+    public $currencies;
+    public $cargos;
+    public $destinations;
+    public $routes;
+  
+    public $trip_types;
    
+    public $filter_trip_status;
+    public $customers;
+    
+    public $consignees;
+    
+
     public $company;
     public $trip;
     public $trip_number;
@@ -161,7 +197,9 @@ class Index extends Component
     public $comments;
     public $customer_total;
     public $transporter_total;
-    public $currencies;
+
+    public $use_filters = False;
+  
 
     public $loaded_quantity;
     public $loaded_litreage;
@@ -207,19 +245,61 @@ class Index extends Component
         
     public function exportPodTrackerExcel(Excel $excel){
 
-        return $excel->download(new PodTracker($this->from, $this->to, $this->trip_filter, $this->search), 'pod_tracking_' .time().'.xlsx');
+        return $excel->download(new PodTracker($this->from, $this->to, $this->trip_filter, $this->search,), 'pod_tracking_' .time().'.xlsx');
     }
     public function exportTripsCSV(Excel $excel){
-
-        return $excel->download(new TripsReportExport($this->from, $this->to, $this->trip_filter, $this->search), 'trips_' .time().'.csv', Excel::CSV);
+   
+        return $excel->download(new TripsReportExport($this->from, $this->to, $this->trip_filter, $this->search,
+         [
+            'horse_id'            => $this->filter_horse_id,
+            'driver_id'           => $this->filter_driver_id,
+            'customer_id'         => $this->filter_customer_id,
+            'cargo_id'            => $this->filter_cargo_id,
+            'from_destination_id' => $this->filter_from,
+            'to_destination_id'   => $this->filter_to,
+            'consignee_id'             => $this->filter_consignee_id,
+            'trip_type_id'        => $this->filter_trip_type_id,
+            'transporter_id'      => $this->filter_transporter_id,
+            'route_id'            => $this->filter_route_id,
+            'trip_status'         => $this->filter_trip_status,
+        ]
+        ), 'trips_' .time().'.csv', Excel::CSV);
     }
 
     public function exportTripsPDF(Excel $excel){
 
-        return $excel->download(new TripsReportExport($this->from, $this->to, $this->trip_filter, $this->search), 'trips_' .time().'.pdf', Excel::DOMPDF);
+        return $excel->download(new TripsReportExport($this->from, $this->to, $this->trip_filter, $this->search,
+         [
+             'horse_id'            => $this->filter_horse_id,
+            'driver_id'           => $this->filter_driver_id,
+            'customer_id'         => $this->filter_customer_id,
+            'cargo_id'            => $this->filter_cargo_id,
+            'from_destination_id' => $this->filter_from,
+            'to_destination_id'   => $this->filter_to,
+            'consignee_id'             => $this->filter_consignee_id,
+            'trip_type_id'        => $this->filter_trip_type_id,
+            'transporter_id'      => $this->filter_transporter_id,
+            'route_id'            => $this->filter_route_id,
+            'trip_status'         => $this->filter_trip_status,
+        ]
+        ), 'trips_' .time().'.pdf', Excel::DOMPDF);
     }
     public function exportTripsExcel(Excel $excel){
-        return $excel->download(new TripsReportExport($this->from, $this->to, $this->trip_filter, $this->search), 'trips_' .time().'.xlsx');
+        return $excel->download(new TripsReportExport($this->from, $this->to, $this->trip_filter, $this->search,
+         [
+            'horse_id'            => $this->filter_horse_id,
+            'driver_id'           => $this->filter_driver_id,
+            'customer_id'         => $this->filter_customer_id,
+            'cargo_id'            => $this->filter_cargo_id,
+            'from_destination_id' => $this->filter_from,
+            'to_destination_id'   => $this->filter_to,
+            'consignee_id'             => $this->filter_consignee_id,
+            'trip_type_id'        => $this->filter_trip_type_id,
+            'transporter_id'      => $this->filter_transporter_id,
+            'route_id'            => $this->filter_route_id,
+            'trip_status'         => $this->filter_trip_status,
+        ]
+        ), 'trips_' .time().'.xlsx');
     }
     
 
@@ -317,6 +397,19 @@ class Index extends Component
         foreach($this->employee->ranks as $rank) {
             $this->rank_names[] = $rank->name;
         }
+
+        
+        
+        $this->customers = Customer::orderBy('name','asc')->get();
+        $this->transporters = Transporter::orderBy('name','asc')->get();
+        $this->destinations = Destination::orderBy('city','asc')->get();
+        $this->cargos = Cargo::orderBy('name','asc')->get();
+        $this->drivers = Driver::latest()->get();
+        $this->currencies = Currency::latest()->get();
+        $this->horses = Horse::orderBy('registration_number','asc')->get();
+        $this->consignees = Consignee::orderBy('name','asc')->get();
+        $this->trip_types = TripType::orderBy('name','asc')->get();
+        $this->routes = Route::orderBy('name','asc')->get();
      
       }
 
@@ -1074,66 +1167,120 @@ class Index extends Component
         );
 
        
-
         $withRelations = [
-        'breakdowns','breakdown_assignments','trip_destinations','trip_expenses','trip_locations','delivery_note',
-        'fuel:id,order_number','transporter:id,name','trip_type:id,name','border:id,name','clearing_agent:id,name',
-        'trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model',
-        'vehicle','vehicle.vehicle_make','vehicle.vehicle_model','trailers:id,make,model,registration_number',
-        'driver.employee:id,name,surname','loading_point:id,name','offloading_point:id,name','route:id,name,rank',
-        'truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name',
-        'commission:id,commission,amount'
+            'breakdowns',
+            'breakdown_assignments',
+            'trip_destinations',
+            'trip_expenses',
+            'trip_locations',
+            'delivery_note',
+            'fuel:id,order_number',
+            'transporter:id,name',
+            'trip_type:id,name',
+            'border:id,name',
+            'clearing_agent:id,name',
+            'trip_group:id,name',
+            'broker:id,name',
+            'customer:id,name',
+            'horse',
+            'horse.horse_make',
+            'horse.horse_model',
+            'vehicle',
+            'vehicle.vehicle_make',
+            'vehicle.vehicle_model',
+            'trailers:id,make,model,registration_number',
+            'driver.employee:id,name,surname',
+            'loading_point:id,name',
+            'offloading_point:id,name',
+            'route:id,name,rank',
+            'truck_stops:id,name',
+            'cargo:id,name,group,risk,type',
+            'currency:id,name,symbol',
+            'agent:id,name',
+            'commission:id,commission,amount',
         ];
 
-        // Base query
         $trips = Trip::query()->with($withRelations);
 
-        // Common search logic
+        /*
+        |--------------------------------------------------------------------------
+        | Search Logic
+        |--------------------------------------------------------------------------
+        */
         $applySearch = function ($query) {
-        $search = $this->search;
+            $search = trim($this->search);
 
-        $query->where(function ($q) use ($search) {
-            $q->where('trip_number', 'like', "%$search%")
-            ->orWhere('trip_status', 'like', "%$search%")
-            ->orWhere('trip_ref', 'like', "%$search%")
-            ->orWhere('authorization', 'like', "%$search%")
-            ->orWhereHas('horse', function ($q2) use ($search) {
-                $q2->where('registration_number', 'like', "%$search%")
-                    ->orWhere('fleet_number', 'like', "%$search%");
-            })
-            ->orWhereHas('trip_type', fn($q2) => $q2->where('name', 'like', "%$search%"))
-            ->orWhereHas('customer', fn($q2) => $q2->where('name', 'like', "%$search%"))
-            ->orWhereHas('cargo', fn($q2) => $q2->where('name', 'like', "%$search%"))
-            ->orWhereRaw("DATE_FORMAT(start_date, '%Y-%m-%d') LIKE ?", ["%$search%"])
-            ->orWhereRaw("DATE_FORMAT(end_date, '%Y-%m-%d') LIKE ?", ["%$search%"])
-            ->orWhereHas('delivery_note', fn($q2) => 
-                $q2->whereRaw("DATE_FORMAT(offloaded_date, '%Y-%m-%d') LIKE ?", ["%$search%"])
-            )
-            ->orWhereHas('user.employee', fn($q2) => 
-                $q2->where(DB::raw("concat(name, ' ', surname)"), 'like', "%$search%")
-            )
-            ->orWhereHas('driver.employee', fn($q2) => 
-                $q2->where(DB::raw("concat(name, ' ', surname)"), 'like', "%$search%")
-            )
-            ->orWhereHas('transporter', fn($q2) => $q2->where('name', 'like', "%$search%"))
-            ->orWhereHas('vehicle', function ($q2) use ($search) {
-                $q2->where('registration_number', 'like', "%$search%")
-                    ->orWhere('fleet_number', 'like', "%$search%");
-            })
-            ->orWhereHas('trailers', function ($q2) use ($search) {
-                $q2->where('registration_number', 'like', "%$search%")
-                    ->orWhere('fleet_number', 'like', "%$search%");
-            })
-            ->orWhereHas('loading_point', fn($q2) => $q2->where('name', 'like', "%$search%"))
-            ->orWhereHas('trip_documents', fn($q2) => $q2->where('document_number', 'like', "%$search%"))
-            ->orWhereHas('offloading_point', fn($q2) => $q2->where('name', 'like', "%$search%"))
-            ->orWhereHas('loading_point', fn($q2) => $q2->where('name', 'like', "%$search%"));
+            $query->where(function ($q) use ($search) {
+                $q->where('trip_number', 'like', "%{$search}%")
+                    ->orWhere('trip_status', 'like', "%{$search}%")
+                    ->orWhere('trip_ref', 'like', "%{$search}%")
+                    ->orWhere('authorization', 'like', "%{$search}%")
+                    ->orWhereHas('horse', function ($q2) use ($search) {
+                        $q2->where('registration_number', 'like', "%{$search}%")
+                            ->orWhere('fleet_number', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('trip_type', fn ($q2) => $q2->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('customer', fn ($q2) => $q2->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('cargo', fn ($q2) => $q2->where('name', 'like', "%{$search}%"))
+                    ->orWhereRaw("DATE_FORMAT(start_date, '%Y-%m-%d') LIKE ?", ["%{$search}%"])
+                    ->orWhereRaw("DATE_FORMAT(end_date, '%Y-%m-%d') LIKE ?", ["%{$search}%"])
+                    ->orWhereHas('delivery_note', function ($q2) use ($search) {
+                        $q2->whereRaw("DATE_FORMAT(offloaded_date, '%Y-%m-%d') LIKE ?", ["%{$search}%"]);
+                    })
+                    ->orWhereHas('user.employee', function ($q2) use ($search) {
+                        $q2->where(DB::raw("concat(name, ' ', surname)"), 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('driver.employee', function ($q2) use ($search) {
+                        $q2->where(DB::raw("concat(name, ' ', surname)"), 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('transporter', fn ($q2) => $q2->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('vehicle', function ($q2) use ($search) {
+                        $q2->where('registration_number', 'like', "%{$search}%")
+                            ->orWhere('fleet_number', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('trailers', function ($q2) use ($search) {
+                        $q2->where('registration_number', 'like', "%{$search}%")
+                            ->orWhere('fleet_number', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('loading_point', fn ($q2) => $q2->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('offloading_point', fn ($q2) => $q2->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('trip_documents', fn ($q2) => $q2->where('document_number', 'like', "%{$search}%"));
             });
         };
 
-        // Handle offloaded_date case
-        if ($this->trip_filter === "offloaded_date") {
-            
+        /*
+        |--------------------------------------------------------------------------
+        | Exact Filters
+        |--------------------------------------------------------------------------
+        | Remove "filter_" and use the matching DB column
+        */
+        $exactFilters = [
+            'filter_transporter_id' => 'transporter_id',
+            'filter_horse_id'       => 'horse_id',
+            'filter_driver_id'      => 'driver_id',
+            'filter_currency_id'    => 'currency_id',
+            'filter_cargo_id'       => 'cargo_id',
+            'filter_route_id'       => 'route_id',
+            'filter_trip_type_id'   => 'trip_type_id',
+            'filter_customer_id'    => 'customer_id',
+            'filter_consignee_id'   => 'consignee_id',
+            'filter_from'   => 'from',
+            'filter_to'   => 'to',
+            'filter_trip_status'   => 'trip_status',
+        ];
+
+        foreach ($exactFilters as $property => $column) {
+            if (filled($this->{$property})) {
+                $trips->where($column, $this->{$property});
+            }
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Date Filter
+        |--------------------------------------------------------------------------
+        */
+        if ($this->trip_filter === 'offloaded_date') {
             $trips->whereHas('delivery_note', function ($q) {
                 if (filled($this->from) && filled($this->to)) {
                     $q->whereBetween('offloaded_date', [$this->from, $this->to]);
@@ -1144,36 +1291,32 @@ class Index extends Component
             });
 
             if (filled($this->search)) {
-                $trips->where(function ($q) use ($applySearch) {
-                    $applySearch($q);
-                });
+                $applySearch($trips);
             }
 
-            // Join only for sorting
+            // join only for sorting
             $trips->join('delivery_notes', 'delivery_notes.trip_id', '=', 'trips.id')
+                ->select('trips.*')
                 ->orderBy('delivery_notes.offloaded_date', 'desc');
-
         } else {
-            // Other trip_filter cases
             if (filled($this->from) && filled($this->to)) {
                 $trips->whereBetween($this->trip_filter, [$this->from, $this->to]);
             } else {
-                if(!filled($this->search)){
-                     $trips->whereMonth($this->trip_filter, date('m'))
-                    ->whereYear($this->trip_filter, date('Y'));
+                if (!filled($this->search)) {
+                    $trips->whereMonth($this->trip_filter, date('m'))
+                        ->whereYear($this->trip_filter, date('Y'));
                 }
             }
 
             if (filled($this->search)) {
-                $trips->where(function ($q) use ($applySearch) {
-                    $applySearch($q);
-                });
+                $applySearch($trips);
             }
 
             $trips->orderBy($this->trip_filter, 'desc');
         }
 
         $all_trips = $trips->get();
+
         $this->totalsByCurrency = $all_trips
         ->whereNotNull('freight')
         ->filter(fn ($trip) => $trip->freight !== '')

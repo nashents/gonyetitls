@@ -69,19 +69,22 @@
                             </div>
                             <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
                                 <div class="panel-title">
+                                    <h5>Date range</h5>
                                     <div class="row">
                                         <div class="col-lg-3">
                                             <div class="input-group">
-                                            <span class="input-group-addon">Filter By</span>
-                                            <select wire:model.debounce.300ms="trip_filter" class="form-control" aria-label="..." >
-                                                <option value="created_at">Trip Created At</option>
-                                                <option value="offloaded_date">Trip Offloading Date</option>
-                                                <option value="start_date">Trip Start Date</option>
-                                            </select>
+                                                <span class="input-group-addon">
+                                                    Filter By
+                                                </span>
+                                                <select wire:model.debounce.300ms="trip_filter" class="form-control" aria-label="..." >
+                                                    <option value="created_at">Trip Created At</option>
+                                                    <option value="offloaded_date">Trip Offloading Date</option>
+                                                    <option value="start_date">Trip Start Date</option>
+                                                </select>
                                             </div>
                                             <!-- /input-group -->
                                         </div>
-                                        <div class="col-lg-2" style="margin-right: 7px">
+                                        <div class="col-lg-3" >
                                             <div class="input-group">
                                                 <span class="input-group-addon">
                                                     From
@@ -90,7 +93,7 @@
                                             </div>
                                             <!-- /input-group -->
                                         </div>
-                                        <div class="col-lg-2" style="margin-left: 7px">
+                                        <div class="col-lg-3" >
                                             <div class="input-group">
                                                 <span class="input-group-addon">
                                                     To
@@ -99,19 +102,206 @@
                                             </div>
                                             <!-- /input-group -->
                                         </div>
+                                        <!-- /input-group -->
                                     </div>
-                                    <div class="row mt-7">
-                                        <div class="col-md-12">
-                                            <a href="{{ route('trips.create') }}"  class="btn btn-default btn-wide" aria-haspopup="true" aria-expanded="true"><i class="fa fa-plus-square-o"></i>Trip</a>
-                                            <a href="" data-toggle="modal" data-target="#tripsImportModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import</a>
-                                            <a href="#" wire:click="exportTripsExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
-                                            <a href="#" wire:click="exportTripsCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
-                                            <a href="#" wire:click="exportTripsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
+                                    <div class="mb-15 mt-15">
+                                        <input type="checkbox" wire:model.debounce.300ms="use_filters"   class="line-style" />
+                                        <label for="one" class="radio-label">Use Additional Filters</label>
+                                        @error('use_filters') <span class="text-danger error">{{ $message }}</span>@enderror
+                                    </div>
+                                    @if ($use_filters == True)
+                                    <h5>Filter reports by</h5>
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="input-group">
+                                                <span class="input-group-addon">
+                                                    Transporters
+                                                </span>
+                                                <select wire:model.debounce.300ms="filter_transporter_id" class="form-control" aria-label="..." >
+                                                        <option value="">Select Transporter</option>
+                                                        @foreach ($transporters as $transporter)
+                                                            <option value="{{ $transporter->id }}"  >{{ ucfirst($transporter->name) }}</option>
+                                                        @endforeach
+                                                </select>
+                                            </div>
+                                            <!-- /input-group -->
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="input-group">
+                                                <span class="input-group-addon">
+                                                    Horses
+                                                </span>
+                                                <select wire:model.debounce.300ms="filter_horse_id" class="form-control" aria-label="..." >
+                                                        <option value="">Select Horse</option>
+                                                        @foreach ($horses as $horse)
+                                                            <option value="{{ $horse->id }}"  > {{ $horse->registration_number }} {{ $horse->fleet_number ? "(".$horse->fleet_number.")" : "" }} </option>
+                                                        @endforeach
+                                                </select>
+                                            </div>
+                                            <!-- /input-group -->
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="input-group">
+                                                <span class="input-group-addon">
+                                                    Drivers
+                                                </span>
+                                                <select wire:model.debounce.300ms="filter_driver_id" class="form-control" aria-label="..." >
+                                                        <option value="">Select Driver</option>
+                                                        @foreach ($drivers as $driver)
+                                                            <option value="{{ $driver->id }}"  >{{ ucfirst($driver->employee ? $driver->employee->name : " employee") }} {{ ucfirst($driver->employee ? $driver->employee->surname : "") }}</option>
+                                                        @endforeach
+                                                </select>
+                                            </div>
+                                            <!-- /input-group -->
+                                        </div>
+                                         <div class="col-md-3">
+                                            <div class="input-group ">
+                                                <span class="input-group-addon">
+                                                    Currency
+                                                </span>
+                                                <select wire:model.debounce.300ms="filter_currency_id" class="form-control  " aria-label="..." >
+                                                        <option value="">Select Currency</option>
+                                                        @foreach ($currencies as $currency)
+                                                            <option value="{{ $currency->id }}">{{ $currency->name}}</option> 
+                                                        @endforeach
+                                                </select>
+                                            </div>
+                                            <!-- /input-group -->
+                                        </div>
+                                        
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="input-group ">
+                                                <span class="input-group-addon">
+                                                    Cargos
+                                                </span>
+                                                <select wire:model.debounce.300ms="filter_cargo_id" class="form-control  " aria-label="..." >
+                                                        <option value="">Select Cargo</option>
+                                                        @foreach ($cargos as $cargo)
+                                                        <option value="{{ $cargo->id }}"  >{{ ucfirst($cargo->name) }}</option>
+                                                        @endforeach
+                                                </select>	
+                                            </div>
+                                            <!-- /input-group -->
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="input-group ">
+                                                <span class="input-group-addon">
+                                                    Origins
+                                                </span>
+                                                <select wire:model.debounce.300ms="filter_from" class="form-control  " aria-label="..." >
+                                                        <option value="">Select Origin</option>
+                                                        @foreach ($destinations as $destination)
+                                                            <option value="{{ $destination->id }}"  >{{ ucfirst($destination->country ? $destination->country->name : "") }} {{ ucfirst($destination->city) }}</option>
+                                                        @endforeach
+                                                </select>
+                                            </div>
+                                            <!-- /input-group -->
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="input-group ">
+                                                <span class="input-group-addon">
+                                                    Destinations
+                                                </span>
+                                                <select wire:model.debounce.300ms="filter_to" class="form-control  " aria-label="..." >
+                                                        <option value="">Select Destination</option>
+                                                        @foreach ($destinations as $destination)
+                                                            <option value="{{ $destination->id }}"  >{{ ucfirst($destination->country ? $destination->country->name : "") }} {{ ucfirst($destination->city) }}</option>
+                                                        @endforeach
+                                                </select>
+                                            </div>
+                                            <!-- /input-group -->
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="input-group ">
+                                                <span class="input-group-addon">
+                                                    Routes
+                                                </span>
+                                                <select wire:model.debounce.300ms="filter_route_id" class="form-control  " aria-label="..." >
+                                                    <option value="">Select Route</option>
+                                                    @foreach ($customers as $customer)
+                                                        <option value="{{ $customer->id }}" >{{ ucfirst($customer->name) }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <!-- /input-group -->
                                         </div>
                                     </div>
-                                    <div class="row mt-10">
-                                        <div class="col-md-12">
-                                            <div class="dropdown">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="input-group ">
+                                                <span class="input-group-addon">
+                                                    Trip Statuses
+                                                </span>
+                                                <select wire:model.debounce.300ms="filter_trip_status" class="form-control  " aria-label="..." >
+                                                        <option value="">Select Status</option>
+                                                        <option value="Scheduled">Scheduled</option>
+                                                        <option value="Loading Point">Loading Point</option>
+                                                        <option value="Loaded">Loaded</option>
+                                                        <option value="Instransit">Instransit</option>
+                                                        <option value="Offloading Point">Offloading Point</option>
+                                                        <option value="Offloaded">Offloaded</option>
+                                                        <option value="Onhold">Onhold</option>
+                                                </select>	
+                                            </div>
+                                            <!-- /input-group -->
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="input-group ">
+                                                <span class="input-group-addon">
+                                                    Trip Type
+                                                </span>
+                                                <select wire:model.debounce.300ms="filter_trip_type_id" class="form-control  " aria-label="..." >
+                                                        <option value="">Select Trip Type</option>
+                                                        @foreach ($trip_types as $trip_type)
+                                                            <option value="{{ $trip_type->id }}">{{ $trip_type->name }}</option> 
+                                                        @endforeach
+                                                </select>
+                                            </div>
+                                            <!-- /input-group -->
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="input-group">
+                                                <span class="input-group-addon">
+                                                    Customers
+                                                </span>
+                                                <select wire:model.debounce.300ms="filter_customer_id" class="form-control" aria-label="..." >
+                                                        <option value="">Select Customer</option>
+                                                        @foreach ($customers as $customer)
+                                                            <option value="{{ $customer->id }}" >{{ ucfirst($customer->name) }}</option>
+                                                        @endforeach
+                                                </select>	
+                                            </div>
+                                            <!-- /input-group -->
+                                        </div>
+                                       <div class="col-md-3">
+                                            <div class="input-group ">
+                                                <span class="input-group-addon">
+                                                    Consignees
+                                                </span>
+                                                <select wire:model.debounce.300ms="filter_consignee_id" class="form-control  " aria-label="..." >
+                                                        <option value="">Select Consignee</option>
+                                                        @foreach ($consignees as $consignee)
+                                                            <option value="{{ $consignee->id }}"  >{{ $consignee->name }} </option>
+                                                        @endforeach
+                                                </select>
+                                            </div>
+                                            <!-- /input-group -->
+                                        </div>
+                                       
+                                    </div>
+                                    @endif
+                                    <div class="row mt-15">
+                                        <div class="col-md-5">
+                                            <a href="{{ route('trips.create') }}"  class="btn btn-default btn-wide" aria-haspopup="true" aria-expanded="true"><i class="fa fa-plus-square-o"></i>Trip</a>
+                                            <a href="" data-toggle="modal" data-target="#tripsImportModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import</a>
+                                            <a href="#" wire:click.prevent="exportTripsExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
+                                            <a href="#" wire:click.prevent="exportTripsCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
+                                            <a href="#" wire:click.prevent="exportTripsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
+                                        </div>
+                                         <div class="col-md-6">
+                                           <div class="dropdown">
                                                 <button class="btn btn-default border-primary btn-rounded btn-wide dropdown-toggle" type="button" id="menu12" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
                                                     <i class="fa fa-bars"></i> More Actions
                                                     <span class="caret"></span>
@@ -132,9 +322,7 @@
                                                 </ul>
                                             </div>
                                         </div>
-                                       
                                     </div>
-                               
                                 </div>
                                 <br>
                                 <div class="col-md-5" style="float: right; padding-right:0px">

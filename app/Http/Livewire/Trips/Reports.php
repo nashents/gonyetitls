@@ -84,6 +84,7 @@ class Reports extends Component
     public function exportCompactTripsExcel(Excel $excel){
         return $excel->download(new TripsCompactExport($this->search_id,$this->category,$this->from,$this->to,$this->trip_filter), 'trips_' .time().'.xlsx');
     }
+    
 
     public function mount(){
         $this->resetPage();
