@@ -243,11 +243,11 @@ class TripsReportExport implements FromQuery, ShouldAutoSize, WithMapping, WithH
             $this->weightPerKm = $this->totalWeight / $this->totalDistance;
         }
 
-        if ($this->totalWeight > 0) {
+        if ($this->totalWeight > 0 && $totalOffloadedWeight > 0 ) {
             $this->weightLossRatio = (($this->totalWeight - $totalOffloadedWeight) / $this->totalWeight) * 100;
         }
 
-        if ($this->totalVolume > 0) {
+        if ($this->totalVolume > 0 && $totalOffloadedVolume > 0) {
             $this->volumeLossRatio = (($this->totalVolume - $totalOffloadedVolume) / $this->totalVolume) * 100;
         }
 
@@ -894,7 +894,7 @@ class TripsReportExport implements FromQuery, ShouldAutoSize, WithMapping, WithH
             AfterSheet::class => function (AfterSheet $event) use ($statusLine, $tripTypeLine, $avgTrip) {
                 $sheet = $event->sheet->getDelegate();
 
-                $sheet->getStyle('A20:BX20')->applyFromArray([
+                $sheet->getStyle('A21:BX21')->applyFromArray([
                     'font' => ['bold' => true],
                     'borders' => [
                         'outline' => [
@@ -990,7 +990,7 @@ class TripsReportExport implements FromQuery, ShouldAutoSize, WithMapping, WithH
 
                 $filtersText = !empty($filters) ? implode(' | ', $filters) : '';
 
-                $generatedText = 'This report was generated on ' . now()->format('d M Y H:i') . ' by ' . Auth::user()->name;
+                $generatedText = 'This report was generated on ' . now()->format('d M Y H:i') . ' by ' . Auth::user()->name ." ".Auth::user()->surname;
 
                 if ($filtersText !== '') {
                     $generatedText .= '. Applied filters: ' . $filtersText . '.';
@@ -1017,24 +1017,21 @@ class TripsReportExport implements FromQuery, ShouldAutoSize, WithMapping, WithH
                 | Report summary heading on Row 2
                 |--------------------------------------------------------------------------
                 */
-                $sheet->mergeCells('C2:D2');
-                $sheet->setCellValue('C2', 'REPORT SUMMARY');
-                $sheet->getStyle('C2:D2')->applyFromArray([
+                $sheet->mergeCells('C3:D3');
+                $sheet->setCellValue('C3', 'REPORT SUMMARY');
+                $sheet->getStyle('C3:D3')->applyFromArray([
                     'font' => [
                         'bold' => true,
-                        'size' => 14,
+                        'size' => 12,
                     ],
                     'alignment' => [
                         'horizontal' => Alignment::HORIZONTAL_CENTER,
                         'vertical' => Alignment::VERTICAL_CENTER,
                     ],
-                    'fill' => [
-                        'fillType' => Fill::FILL_SOLID,
-                        'startColor' => ['rgb' => 'FCE4D6'],
-                    ],
+                   
                 ]);
 
-                $row = 3;
+                $row = 4;
 
                 $baseSymbol = optional($this->company->currency)->symbol ?? '';
 
@@ -1128,7 +1125,7 @@ class TripsReportExport implements FromQuery, ShouldAutoSize, WithMapping, WithH
 
                 $final_row = $row - 1;
 
-                $sheet->getStyle("C3:D{$final_row}")->applyFromArray([
+                $sheet->getStyle("C4:D{$final_row}")->applyFromArray([
                     'font' => ['bold' => true],
                     'fill' => [
                         'fillType' => Fill::FILL_SOLID,
@@ -1136,7 +1133,7 @@ class TripsReportExport implements FromQuery, ShouldAutoSize, WithMapping, WithH
                     ],
                 ]);
 
-                $sheet->getStyle("D3:D{$final_row}")
+                $sheet->getStyle("D4:D{$final_row}")
                     ->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_LEFT);
             },
@@ -1247,13 +1244,13 @@ class TripsReportExport implements FromQuery, ShouldAutoSize, WithMapping, WithH
         }
 
         $drawing->setHeight(90);
-        $drawing->setCoordinates('A2');
+        $drawing->setCoordinates('A3');
 
         return $drawing;
     }
 
     public function startCell(): string
     {
-        return 'A20';
+        return 'A21';
     }
 }

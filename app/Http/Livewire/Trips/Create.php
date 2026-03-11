@@ -1547,8 +1547,7 @@ class Create extends Component
                 $delivery_note->trip_id = $trip->id;
                 $delivery_note->measurement = $trip->measurement;
                 $delivery_note->distance = $trip->distance;
-                $delivery_note->loaded_date = $trip->start_date;
-                $delivery_note->offloaded_date = $trip->end_date;
+               
                 
                 if (isset($trip->cargo)) {
                 if ($trip->cargo->type == "Liquid") {
