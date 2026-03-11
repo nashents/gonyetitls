@@ -514,6 +514,10 @@
                                                             {{ $proofOfDelivery ? "Submitted On: {$proofOfDelivery->date}" : "pending" }}
                                                         </span>
                                                         <div class="text-center"> {{ $proofOfDelivery->document_number ? "POD#: ".$proofOfDelivery->document_number : "" }}</div>
+                                                    @else
+                                                        <span class="label label-warning">
+                                                            pending
+                                                        </span>
                                                     @endif
                                                    
                                                 </td>
