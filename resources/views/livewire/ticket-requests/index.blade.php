@@ -54,7 +54,7 @@
                                         </button>
                                         <ul class="dropdown-menu">
                                             <li><a href="#"  wire:click="edit({{$ticket_request->id}})" ><i class="fa fa-edit color-success"></i> Edit</a></li>
-                                            <li><a href="#" data-toggle="modal" data-target="#ticket_requestDeleteModal{{ $ticket_request->id }}" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                                            <li><a href="#" wire:click="delete({{$ticket_request->id}})" ><i class="fa fa-trash color-danger"></i>Delete</a></li>
                                         </ul>
                                     </div>
                                 </td> 

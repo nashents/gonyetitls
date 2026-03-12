@@ -39,7 +39,8 @@ class SendDailyReports extends Command
 
         // Ensure directory exists on local disk (storage/app)
         Storage::disk('local')->makeDirectory($tmpDir);
-
+        
+        $date = now()->subDay()->toDateString();
         // Define the reports you want to generate
         $reports = [
             [
@@ -55,14 +56,15 @@ class SendDailyReports extends Command
                 'file'   => "employee_leaves-{$date}.xlsx",
             ],
             [
+                
                 'export' => new AttendanceRegisterExport(
-                    now()->subDay()->toDateString(), // from = yesterday
-                    now()->subDay()->toDateString(), // to   = yesterday
-                    null,                           // department_id
-                    null,                           // search
-                    "date"                             // attendance_filter
+                    $date,
+                    $date,
+                    null,
+                    null,
+                    'date'
                 ),
-                'file'   => "attendance_register-{$date}.xlsx",
+                'file' => "attendance_register-{$date}.xlsx",
             ],
            
         ];

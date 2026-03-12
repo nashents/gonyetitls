@@ -348,7 +348,7 @@
 
 
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="attachmentModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog  mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fa fa-plus"></i> Add Attachment(s) <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -390,7 +390,7 @@
     </div>
 
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="workDoneModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fa fa-plus"></i> Add Work Done(s) <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -399,11 +399,11 @@
                     <div class="modal-body">
                         <div class="card-body mt-30 mb-30" style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px; " >
                         <div class="row">
-                            <div class="col-md-2">
+                            <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="">Artisan Type<span class="required" style="color: red">*</span></label>
                                     <select wire:model.debounce.300ms="artisan.0" class="form-control">
-                                        <option value="">Select Artisan Type</option>
+                                        <option value="">Select Artisan</option>
                                         <option value="Mechanic">Mechanic</option>
                                         <option value="Auto Mechanic">Auto Mechanic</option>
                                         <option value="Other">Other</option>
@@ -418,7 +418,7 @@
                                     @error('job_description.0') <span class="text-danger error">{{ $message }}</span>@enderror
                                 </div>
                             </div>
-                            <div class="col-md-5">
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="">Spares Used</label>
                                     <textarea wire:model.debounce.300ms="spares.0" cols="30" rows="2" class="form-control" placeholder="Write Spares used"></textarea>
@@ -446,11 +446,11 @@
                         @foreach ($work_inputs as $key => $value)
                           <div class="card-body mt-30 mb-30" style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;" >
                             <div class="row">
-                                <div class="col-md-2">
+                                <div class="col-md-3">
                                     <div class="form-group">
                                         <label for="">Artisan Type<span class="required" style="color: red">*</span></label>
                                         <select wire:model.debounce.300ms="artisan.{{$value}}" class="form-control">
-                                            <option value="">Select Artisan Type</option>
+                                            <option value="">Select Artisan</option>
                                             <option value="Mechanic">Mechanic</option>
                                             <option value="Auto Mechanic">Auto Mechanic</option>
                                             <option value="Other">Other</option>
@@ -465,7 +465,7 @@
                                         @error('job_description.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>
                                 </div>
-                                <div class="col-md-5">
+                                <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="">Spares Used</label>
                                         <textarea wire:model.debounce.300ms="spares.{{$value}}" cols="30" rows="2" class="form-control" placeholder="Write spares used" ></textarea>
@@ -522,7 +522,7 @@
     </div>
  
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="initialDiagnosisModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog mw-100 w-50" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fa fa-plus"></i> Add Initial Diagnosis <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>

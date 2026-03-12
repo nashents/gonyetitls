@@ -31,6 +31,8 @@
                                     </th>
                                     <th class="th-sm">Impact
                                     </th>
+                                    <th class="th-sm">Control
+                                    </th>
                                     <th class="th-sm">Qty Collected
                                     </th>
                                     <th class="th-sm">Action

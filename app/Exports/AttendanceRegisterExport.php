@@ -103,15 +103,9 @@ class AttendanceRegisterExport implements
 
     public function query()
     {
-        // ✅ These dates now filter Attendance (parent), not AttendanceRegister.date
-        $from = filled($this->from) ? Carbon::parse($this->from)->startOfDay() : null;
-        $to   = filled($this->to)   ? Carbon::parse($this->to)->endOfDay()   : null;
-
-        // Default current month if from/to not provided
-        if (!$from || !$to) {
-            $from = now()->startOfMonth()->startOfDay();
-            $to   = now()->endOfMonth()->endOfDay();
-        }
+        $from = $this->from ? trim($this->from) : null;
+        $to   = $this->to ? trim($this->to) : null;
+        $search = trim($this->search ?? '');
 
         $baseQuery = AttendanceRegister::query()
             ->with([
@@ -120,44 +114,52 @@ class AttendanceRegisterExport implements
                 'attendance.department:id,name',
             ])
 
-            // ✅ Filter by parent Attendance date
-            ->whereHas('attendance', function (Builder $a) use ($from, $to) {
-                // Change 'date' here if your Attendance date column is named differently.
-                $a->whereBetween('date', [$from->toDateString(), $to->toDateString()]);
+            // Filter by parent Attendance date
+            ->when($from || $to, function (Builder $q) use ($from, $to) {
+                $q->whereHas('attendance', function (Builder $a) use ($from, $to) {
+                    if ($from && $to) {
+                        $a->whereBetween('date', [$from, $to]);
+                    } elseif ($from) {
+                        $a->where('date', '>=', $from);
+                    } elseif ($to) {
+                        $a->where('date', '<=', $to);
+                    }
+                });
             })
 
-            // ✅ Department filter is on Attendance
+            // Department filter is on Attendance
             ->when(filled($this->department_id), function (Builder $q) {
-                $q->whereHas('attendance', fn (Builder $a) => $a->where('department_id', $this->department_id));
+                $q->whereHas('attendance', function (Builder $a) {
+                    $a->where('department_id', $this->department_id);
+                });
             })
 
-            // Optional search (unchanged, but we also allow searching department/attendance date if desired)
-            ->when(filled($this->search), function (Builder $q) {
-                $term = trim($this->search);
-                $like = "%{$term}%";
+            // Search
+            ->when($search !== '', function (Builder $q) use ($search) {
+                $like = "%{$search}%";
 
                 $q->where(function (Builder $qq) use ($like) {
                     $qq->where('status', 'like', $like)
                         ->orWhere('shift', 'like', $like)
                         ->orWhere('source', 'like', $like)
                         ->orWhere('notes', 'like', $like)
-                        ->orWhereHas('attendance', fn (Builder $a) =>
+                        ->orWhereHas('attendance', function (Builder $a) use ($like) {
                             $a->where('attendance_number', 'like', $like)
-                              ->orWhere('date', 'like', $like)
-                        )
-                        ->orWhereHas('attendance.department', fn (Builder $d) => $d->where('name', 'like', $like))
+                            ->orWhere('date', 'like', $like);
+                        })
+                        ->orWhereHas('attendance.department', function (Builder $d) use ($like) {
+                            $d->where('name', 'like', $like);
+                        })
                         ->orWhereHas('employee', function (Builder $e) use ($like) {
                             $e->where('employee_number', 'like', $like)
-                              ->orWhere(DB::raw("CONCAT(name,' ',surname)"), 'like', $like)
-                              ->orWhere('name', 'like', $like)
-                              ->orWhere('surname', 'like', $like);
+                            ->orWhere(DB::raw("CONCAT(name,' ',surname)"), 'like', $like)
+                            ->orWhere('name', 'like', $like)
+                            ->orWhere('surname', 'like', $like);
                         });
                 });
             });
 
-        // Sorting: most recent attendance first, then employee
-        return $baseQuery
-            ->orderByDesc($this->attendance_filter);
+        return $baseQuery->orderBy($this->attendance_filter, 'desc');
     }
 
     public function map($row): array

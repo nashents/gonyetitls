@@ -286,21 +286,16 @@ class Index extends Component
 
         $attendances = Attendance::query()
            
-                 // ✅ date filter on date when from/to provided
+            // ✅ date filter on date when from/to provided
             ->when($this->from || $this->to, function ($q) {
-                $from = $this->from
-                    ? Carbon::parse($this->from)->startOfDay()
-                    : null;
+                $from = $this->from ?: null;
+                $to   = $this->to ?: null;
 
-                $to = $this->to
-                    ? Carbon::parse($this->to)->endOfDay()
-                    : null;
-
-                if ($from && $to) {
-                    $q->whereBetween('date', [$from, $to]);
+            if ($from && $to) {
+                $q->whereBetween('date', [$from, $to]);
                 } elseif ($from) {
                     $q->where('date', '>=', $from);
-                } else { // only $to
+                } else {
                     $q->where('date', '<=', $to);
                 }
             })
