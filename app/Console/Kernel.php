@@ -45,7 +45,7 @@ class Kernel extends ConsoleKernel
         ->onOneServer();
 
         $schedule->command('employees:accrue-leave')
-        ->monthlyOn(1, '00:05')            // 1st day of the month at 00:05
+        ->monthlyOn(1, '00:00')          
         ->timezone('Africa/Harare')        // your timezone
         ->withoutOverlapping()
         ->onOneServer();

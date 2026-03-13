@@ -196,6 +196,22 @@
                                 </ul>
                             </nav>    
 
+                            <div class="panel border-primary no-border border-3-top">
+                                <div class="panel-heading">
+                                    <div class="panel-title d-flex align-items-center justify-content-between">
+                                        <h5>Horses: Total Weight ({{ $year }})</h5>
+                                        <select class="form-control" style="width: 140px;" wire:model.debounce.300ms="year">
+                                            @for($y = now()->year; $y >= now()->year - 5; $y--)
+                                                <option value="{{ $y }}">{{ $y }}</option>
+                                            @endfor
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="panel-body">
+                                    <div wire:ignore id="horses-weight-chart"
+                                        style="min-width:310px;height:400px;margin:0 auto"></div>
+                                </div>
+                            </div>
                             <!-- /.col-md-12 -->
                         </div>
                     </div>
@@ -264,7 +280,93 @@
         </div>
     </div>
    
+@section('extra-js')
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/highcharts-3d.js"></script>
+<script src="https://code.highcharts.com/modules/funnel.js"></script>
+<script src="https://code.highcharts.com/highcharts-more.js"></script>
 
+
+<script src="{{asset('js/prism/prism.js')}}"></script>
+<script src="{{asset('js/amcharts/amcharts.js')}}"></script>
+<script src="{{asset('js/amcharts/serial.js')}}"></script>
+<script src="{{asset('js/amcharts/pie.js')}}"></script>
+<script src="{{asset('js/amcharts/plugins/animate/animate.min.js')}}"></script>
+<script src="{{asset('js/amcharts/plugins/export/export.min.js')}}"></script>
+<link rel="stylesheet" href="{{asset('js/amcharts/plugins/export/export.css')}}" type="text/css" media="all" />
+<script src="{{asset('js/amcharts/themes/light.js')}}"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.bundle.js"></script>
+<script src="{{asset('js/chartjs/utils.js')}}"></script>
+<script src="{{asset('js/chartjs/globalchartjs.js')}}"></script>
+
+<script>
+    Highcharts.setOptions({
+    global: { useUTC: false },
+    chart: { style: { fontFamily: 'Poppins' } }
+});
+
+(function () {
+    const elId = 'horses-weight-chart';
+    const initialData = @json($chartData);
+    const initialYear = @json($year);
+
+    let chart = Highcharts.chart(elId, {
+        chart: { type: 'column' },
+        title: { text: `Horses Total Weight Moved (${initialYear})` },
+        subtitle: { text: 'Source: Trips (system)' },
+
+        xAxis: {
+            type: 'category',
+            labels: {
+                rotation: -45,
+                style: { fontSize: '13px', fontFamily: 'Poppins' }
+            }
+        },
+
+        yAxis: {
+            min: 0,
+            title: { text: 'Total Weight' } // e.g. "Tonnes"
+        },
+
+        legend: { enabled: false },
+
+        tooltip: {
+            pointFormat: 'Total: <b>{point.y:,.2f}</b>'
+        },
+
+        series: [{
+            name: 'Total Weight',
+            data: initialData,
+            dataLabels: {
+                enabled: true,
+                rotation: -90,
+                align: 'right',
+                format: '{point.y:,.1f}',
+                y: 10,
+                style: { fontSize: '13px', fontFamily: 'Poppins' }
+            }
+        }]
+    });
+
+    // Livewire v2 event listener
+   (() => {
+    document.addEventListener('livewire:load', function () {
+        window.livewire.on('horses-weight-updated', function (payload) {
+            const data = payload.data || [];
+            const year = payload.year || '';
+
+            chart.setTitle({ text: `Horses Total Weight (${year})` });
+            chart.series[0].setData(data, true);
+        });
+    });
+    })();
+
+})();
+
+</script>
+@endsection
 
 
 </div>

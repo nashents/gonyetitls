@@ -15,6 +15,25 @@
                                     @include('includes.messages')
                                 </div>
                                 <div class="panel-title">
+                                    <div class="row">
+                                    <div class="col-lg-3">
+                                        <div class="input-group">
+                                            <span class="input-group-addon">
+                                                From
+                                            </span>
+                                            <input type="date" wire:model.debounce.300ms="from"  class="form-control" aria-label="...">
+                                        </div>
+                                        <!-- /input-group -->
+                                    </div>
+                                    <div class="col-lg-3">
+                                        <div class="input-group">
+                                            <span class="input-group-addon">
+                                                To
+                                            </span>
+                                            <input type="date" wire:model.debounce.300ms="to"  class="form-control" aria-label="...">
+                                        </div>
+                                    </div>
+                                    </div>
                                     <a href="{{route('horses.create')}}"  class="btn btn-default"><i class="fa fa-plus-square-o"></i>Horse</a>
                                     <a href="" data-toggle="modal" data-target="#horsesImportModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import</a>
                                     <a href="#" wire:click="exportHorsesExcel()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>

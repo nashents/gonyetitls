@@ -199,7 +199,7 @@
                                 <div class="panel-heading">
                                     <div class="panel-title d-flex align-items-center justify-content-between">
                                         <h5>Drivers: Total Weight ({{ $year }})</h5>
-                                        <select class="form-control" style="width: 140px;" wire:model="year">
+                                        <select class="form-control" style="width: 140px;" wire:model.debounce.300ms="year">
                                             @for($y = now()->year; $y >= now()->year - 5; $y--)
                                                 <option value="{{ $y }}">{{ $y }}</option>
                                             @endfor
@@ -298,6 +298,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.bundle.js"></script>
 <script src="{{asset('js/chartjs/utils.js')}}"></script>
 <script src="{{asset('js/chartjs/globalchartjs.js')}}"></script>
+
 <script>
     Highcharts.setOptions({
     global: { useUTC: false },
@@ -347,16 +348,19 @@
         }]
     });
 
-    // Livewire v3 event listener
-    document.addEventListener('livewire:init', () => {
-        Livewire.on('drivers-weight-updated', (payload) => {
+     // Livewire v2 event listener
+   (() => {
+    document.addEventListener('livewire:load', function () {
+        window.livewire.on('drivers-weight-updated', function (payload) {
             const data = payload.data || [];
             const year = payload.year || '';
 
-            chart.setTitle({ text: `Drivers Total Weights (${year})` });
+            chart.setTitle({ text: `Drivers Total Weight (${year})` });
             chart.series[0].setData(data, true);
         });
     });
+    })();
+   
 })();
 
 </script>

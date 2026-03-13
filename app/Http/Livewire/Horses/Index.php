@@ -2,16 +2,17 @@
 
 namespace App\Http\Livewire\Horses;
 
+use App\Exports\HorsesExport;
 use App\Models\Bill;
+use App\Models\Currency;
 use App\Models\Horse;
 use App\Models\Mileage;
-use Livewire\Component;
-use App\Models\Currency;
-use Livewire\WithPagination;
-use Maatwebsite\Excel\Excel;
-use App\Exports\HorsesExport;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
+use Livewire\Component;
+use Livewire\WithPagination;
+use Maatwebsite\Excel\Excel;
 
 class Index extends Component
 {
@@ -27,20 +28,24 @@ class Index extends Component
     public $revenue;
     public $currency_id;
     public $horse_id;
+    public $from;
+    public $to;
 
     public function exportHorsesCSV(Excel $excel){
 
-        return $excel->download(new HorsesExport, 'horses.csv', Excel::CSV);
+        return $excel->download(new HorsesExport($this->from, $this->to, $this->search), 'horses_'.time().'.csv', Excel::CSV);
     }
     public function exportHorsesPDF(Excel $excel){
 
-        return $excel->download(new HorsesExport, 'horses.pdf', Excel::DOMPDF);
+        return $excel->download(new HorsesExport($this->from, $this->to, $this->search), 'horses_'.time().'.pdf', Excel::DOMPDF);
     }
     public function exportHorsesExcel(Excel $excel){
-        return $excel->download(new HorsesExport, 'horses.xlsx');
+        return $excel->download(new HorsesExport($this->from, $this->to, $this->search), 'horses_'.time().'.xlsx');
     }
 
     public function mount(){
+        $this->from = Carbon::now()->startOfYear()->format('Y-m-d');
+        $this->to   = Carbon::now()->format('Y-m-d');
         $this->resetPage();
         $this->currencies = Currency::all();
       }
@@ -70,7 +75,7 @@ class Index extends Component
 
             $cpk = Null;
             $distance = Null;
-            $bills = Bill::where('horse_id',$id)->where('authorization','approved')->whereYear('created_at',date('Y'))->get();
+            $bills = Bill::where('horse_id',$id)->where('authorization','approved')->whereBetween('created_at', [$this->from, $this->to])->get();
 
             $expenses = 0.0;
 
@@ -86,8 +91,8 @@ class Index extends Component
                 $expenses = null;
             }
 
-            $last_mileage = Mileage::where('horse_id',$id)->whereYear('created_at', date('Y'))->orderBy('created_at','desc')->first();
-            $first_mileage = Mileage::where('horse_id',$id)->whereYear('created_at', date('Y'))->orderBy('created_at','asc')->first();
+            $last_mileage = Mileage::where('horse_id',$id)->whereBetween('created_at', [$this->from, $this->to])->orderBy('created_at','desc')->first();
+            $first_mileage = Mileage::where('horse_id',$id)->whereBetween('created_at', [$this->from, $this->to])->orderBy('created_at','asc')->first();
             
             if ((isset($last_mileage) && is_numeric($last_mileage)) && (isset($first_mileage) && is_numeric($first_mileage))) {
 

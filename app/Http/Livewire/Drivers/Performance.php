@@ -42,10 +42,10 @@ class Performance extends Component
         $this->loadChart();
 
         // Push updated data to the browser (no full page refresh needed)
-        $this->dispatch('drivers-weight-updated',
-            data: $this->chartData,
-            year: $this->year
-        );
+        $this->emit('drivers-weight-updated', [
+            'data' => $this->chartData,
+            'year' => $this->year,
+        ]);
     }
 
     private function loadChart(): void

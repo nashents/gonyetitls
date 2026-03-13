@@ -40,32 +40,30 @@ class Performance extends Component
 
     public function updatedYear()
     {
+        
         $this->loadChart();
 
         // Push updated data to the browser (no full page refresh needed)
-        $this->dispatch('horses-weight-updated',
-            data: $this->chartData,
-            year: $this->year
-        );
+        $this->emit('horses-weight-updated', [
+            'data' => $this->chartData,
+            'year' => $this->year,
+        ]);
     }
 
     private function loadChart(): void
     {
         $horses = Horse::query()
-            ->with(['employee:id,name,surname']) // adjust if your columns differ
             ->withSum([
-                'trips as year_total_weight' => function ($q) {
+                'trips as total_weight' => function ($q) {
                     $q->whereYear('start_date', $this->year);   // <-- your trip date column
                 }
             ], 'weight')                                  // <-- your weight column
-            ->orderByRaw('COALESCE(year_total_weight, 0) DESC')
+            ->orderByRaw('COALESCE(total_weight, 0) DESC')
             ->get();
 
         $this->chartData = $horses->map(function ($d) {
-            $name = trim(($d->employee->name ?? '') . ' ' . ($d->employee->surname ?? ''));
-            $name = $name !== '' ? $name : ($d->name ?? ('Driver #' . $d->id));
-
-            return [$name, (float) ($d->year_total_weight ?? 0)];
+            $reg = trim(($d->registration_number ?? '') . ' ('. ($d->fleet_number ?? '')).')';
+            return [$reg, (float) ($d->total_weight ?? 0)];
         })->values()->all();
     }
 
