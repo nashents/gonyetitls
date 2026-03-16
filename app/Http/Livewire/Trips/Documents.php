@@ -138,6 +138,7 @@ class Documents extends Component
 
         $document = TripDocument::find($id);
         $this->trip_id = $document->trip_id;
+        $document->user_id = $document->user_id ?? Auth::user()->id;
         $this->title = $document->title;
         $this->document_number = $document->document_number;
         $this->filename = $document->filename;

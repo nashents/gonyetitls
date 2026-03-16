@@ -590,6 +590,8 @@ class Index extends Component
 
       public function update(){
 
+         DB::transaction(function () {
+
         $trip = Trip::withTrashed()->find($this->trip_id);
         $trip->trip_status = $this->selectedStatus;
         $trip->trip_status_date = $this->trip_status_date;
@@ -816,7 +818,7 @@ class Index extends Component
           'message'=>"Trip Status Updated Successfully!!"
       ]);
     //   return redirect(request()->header('Referer'));
-
+         });
     }
 
       public function editLocations(){
@@ -828,6 +830,8 @@ class Index extends Component
       }
 
       public function updateTripStatus(){
+
+       DB::transaction(function () {
 
         if (isset($this->status)) {
             foreach ($this->status as $key => $value) {
@@ -986,6 +990,7 @@ class Index extends Component
                 ]);
             }
         }
+       });
       }
 
     

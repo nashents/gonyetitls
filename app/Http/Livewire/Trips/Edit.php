@@ -2,54 +2,55 @@
 
 namespace App\Http\Livewire\Trips;
 
-use Carbon\Carbon;
-use App\Models\Bill;
-use App\Models\Fuel;
-use App\Models\Hour;
-use App\Models\Rate;
-use App\Models\Trip;
+use App\Models\Account;
 use App\Models\Agent;
+use App\Models\Allowance;
+use App\Models\Assignment;
+use App\Models\Bill;
+use App\Models\BillExpense;
+use App\Models\Border;
+use App\Models\Broker;
 use App\Models\Cargo;
+use App\Models\ClearingAgent;
+use App\Models\Company;
+use App\Models\Consignee;
+use App\Models\Container;
+use App\Models\Currency;
+use App\Models\Customer;
+use App\Models\Destination;
+use App\Models\Driver;
+use App\Models\EmptyRun;
+use App\Models\ExchangeRate;
+use App\Models\Expense;
+use App\Models\Fuel;
 use App\Models\Horse;
+use App\Models\Hour;
+use App\Models\LoadingPoint;
+use App\Models\Measurement;
+use App\Models\Mileage;
+use App\Models\OffloadingPoint;
+use App\Models\Quotation;
+use App\Models\Rate;
 use App\Models\Route;
 use App\Models\Shift;
 use App\Models\TopUp;
-use App\Models\Border;
-use App\Models\Broker;
-use App\Models\Driver;
-use App\Models\Account;
-use App\Models\Company;
-use App\Models\Expense;
-use App\Models\Mileage;
 use App\Models\Trailer;
-use App\Models\Vehicle;
-use Livewire\Component;
-use App\Models\Currency;
-use App\Models\Customer;
-use App\Models\EmptyRun;
-use App\Models\TripType;
-use App\Models\Allowance;
-use App\Models\Consignee;
-use App\Models\Container;
-use App\Models\Quotation;
-use App\Models\TripGroup;
-use App\Models\TruckStop;
-use App\Models\Assignment;
-use App\Models\BillExpense;
-use App\Models\Destination;
-use App\Models\Measurement;
 use App\Models\Transporter;
+use App\Models\Trip;
+use App\Models\TripDestination;
 use App\Models\TripExpense;
-use App\Models\ExchangeRate;
-use App\Models\LoadingPoint;
-use App\Models\ClearingAgent;
-use Livewire\WithFileUploads;
-use App\Models\OffloadingPoint;
+use App\Models\TripGroup;
+use App\Models\TripType;
+use App\Models\TruckStop;
+use App\Models\Vehicle;
 use App\Models\VehicleAssignment;
-use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Session;
+use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class Edit extends Component
 {
@@ -107,6 +108,7 @@ class Edit extends Component
     public $brokers;
     public $quantity;
     public $selectedBroker;
+    public $multiple_destinations;
     public $customers;
     public $customer_id;
     public $containers;
@@ -207,6 +209,29 @@ class Edit extends Component
     public $transporter_freight;
     public $profit;
     public $notes;
+
+    public $trip_destinations;
+    public $destinations_selectedTo = [];
+    public $destinations_offloading_point_id = [];
+    public $offloaded_weight = [];
+    public $offloaded_rate = [];
+    public $offloaded_freight = [];
+    public $offloaded_quantity = [];
+    public $offloaded_litreage = [];
+    public $offloaded_litreage_at_20 = [];
+    public $destinations_inputs = [];
+    public $d = 1;
+    public $e = 1;
+    public function destaintionsAdd($d)
+    {
+        $d = $d + 1;
+        $this->d = $d;
+        array_push($this->destinations_inputs ,$d);
+    }
+    public function destinationsRemove($d)
+    {
+        unset($this->destinations_inputs[$d]);
+    }
 
     public $manifest_comments;
     public $volume;
@@ -927,7 +952,20 @@ class Edit extends Component
         }else{
             $this->with_transporter_rates = "custom";
         }
-       
+        $this->trip_destinations = TripDestination::where('trip_id', $this->trip->id)->get();
+
+        if($this->trip_destinations){
+            foreach($this->trip_destinations as $trip_destination){
+                $this->offloaded_weight[] = $trip_destination->weight;
+                $this->offloaded_quantity[] = $trip_destination->quantity;
+                $this->offloaded_litreage[] = $trip_destination->litreage;
+                $this->offloaded_litreage_at_20[] = $trip_destination->litreage_at_20;
+                $this->destinations_selectedTo[] = $trip_destination->destination_id;
+                $this->destinations_offloading_point_id[] = $trip_destination->offloading_point_id;
+                $this->offloaded_rate[] = $trip_destination->rate;
+                $this->offloaded_freight[] = $trip_destination->freight;
+            }
+        }
         
         $this->horses = Horse::where('status', 1)
         ->where('service',0)
@@ -1047,6 +1085,7 @@ class Edit extends Component
          $this->timelines = $this->trip->timelines;
          $this->arrive_lp = $this->trip->arrive_loading_point;
          $this->depart_lp = $this->trip->depart_loading_point;
+         $this->multiple_destinations = $this->trip->multiple_destinations ?? False;
          $this->arrive_op = $this->trip->arrive_offloading_point;
          $this->depart_op = $this->trip->depart_offloading_point;
          $this->selectedHorse = $this->trip->horse_id;
@@ -1148,6 +1187,66 @@ class Edit extends Component
         }
        
     }
+
+     public function addDestinations($id){
+
+        if($this->multiple_destinations == True){
+
+            if (isset($this->destinations_selectedTo)) {
+                foreach ($this->destinations_selectedTo as $key => $destinationId) {
+                    $trip_destination = new TripDestination;
+                    $trip_destination->user_id = Auth::user()->id;
+                    $trip_destination->trip_id = $id;
+                   
+                    if (isset($this->destinations_offloading_point_id[$key])) {
+                        $trip_destination->offloading_point_id = $this->destinations_offloading_point_id[$key];
+                    }
+                    $trip_destination->destination_id = $destinationId;
+                    if (isset($this->offloaded_weight[$key])) {
+                        $trip_destination->weight = $this->offloaded_weight[$key];
+                    }
+                    if (isset($this->offloaded_quantity[$key])) {
+                        $trip_destination->quantity = $this->offloaded_quantity[$key];
+                    }
+                    $measurement = Measurement::where('name', $this->measurement)->first();
+                    $trip_destination->measurement_id = $measurement?->id;
+                    if (isset($this->offloaded_itreage[$key])) {
+                        $trip_destination->litreage = $this->offloaded_litreage[$key];
+                    }
+                    if (isset($this->offloaded_litreage_at_20[$key])) {
+                        $trip_destination->litreage_at_20 = $this->offloaded_litreage_at_20[$key];
+                    }
+                    if (isset($this->offloaded_rate[$key])) {
+                        $trip_destination->rate = $this->offloaded_rate[$key];
+                    }
+                    if (isset($this->offloaded_freight[$key])) {
+                        $trip_destination->freight = $this->offloaded_freight[$key];
+                    }
+                
+                    $trip_destination->save();
+
+                }
+            }
+        }else{
+            $trip_destination = new TripDestination;
+            $trip_destination->user_id = Auth::user()->id;
+            $trip_destination->trip_id = $id;
+            $trip_destination->offloading_point_id = $this->offloading_point_id;
+            $trip_destination->destination_id = $this->to;
+            $trip_destination->weight = $this->weight;
+            $trip_destination->quantity = $this->quantity;
+            $measurement = Measurement::where('name', $this->measurement)->first();
+            $trip_destination->measurement_id = $measurement?->id;
+            $trip_destination->litreage = $this->litreage;
+            $trip_destination->litreage_at_20 = $this->litreage_at_20;
+            $trip_destination->rate = $this->rate;
+            $trip_destination->freight = $this->freight;
+            $trip_destination->save();
+        }
+         
+    }
+
+    
     public function updatedAllVehicles($status){
         if(!is_null($status)){
             if($status == True){
@@ -1612,6 +1711,7 @@ class Edit extends Component
           $trip->consignee_id = $this->consignee_id ?: null;
           $trip->shift_id = $this->selectedShift ?: null;
           $trip->shift = $this->shift;
+          $trip->multiple_destinations = $this->multiple_destinations;
           $trip->arrive_loading_point = $this->arrive_lp;
           $trip->depart_loading_point = $this->depart_lp;
           $trip->loading_time = $this->calculateTimeDifference($this->arrive_lp, $this->depart_lp);

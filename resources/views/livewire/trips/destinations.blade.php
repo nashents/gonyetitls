@@ -69,7 +69,7 @@
                     @endif
                 </td>
                 <td>
-                    @if ($trip_destination->litreage)
+                    @if ($trip_destination->litreage_at_20)
                         {{number_format($trip_destination->litreage_at_20,2)}} {{$trip->measurement ? $trip->measurement : ""}}  
                     @endif
                 </td>
@@ -142,8 +142,17 @@
                     <strong>{{ number_format($total_litreage_at_20,2) }} {{$trip->measurement ? $trip->measurement : ""}}</strong>
                     @endif
                 </td>
-                <td></td>
-                <td></td>
+                <td >
+                    @if (isset($total_rate) && $total_rate > 0)
+                        <strong> {{$trip->currency ? $trip->currency->symbol : ""}}{{ number_format($total_rate,2) }}</strong>
+                    @endif
+                </td>
+                <td >
+                    @if (isset($total_freight) && $total_freight > 0)
+                        <strong> {{$trip->currency ? $trip->currency->symbol : ""}}{{ number_format($total_freight,2) }}</strong>
+                    @endif
+                </td>
+                
             </tr>
             @endif
           

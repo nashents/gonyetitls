@@ -401,6 +401,7 @@ class Show extends Component
     }
 
       public function authorize($id){
+
         $trip = Trip::find($id);
         $this->trip_id = $trip->id;
         $this->trip = $trip;
@@ -450,8 +451,8 @@ class Show extends Component
          
           if (isset($trip->vehicle_id)) {
               $vehicle = Vehicle::find($trip->vehicle_id);
-              $current_mileage = $vehicle->mileage;
-              if($this->mileage > $current_mileage){
+              $current_mileage = $vehicle?->mileage;
+              if(isset($current_mileage) && ($this->mileage > $current_mileage)){
                   $vehicle->mileage = $this->mileage;
               }
               $vehicle->update();
@@ -459,8 +460,8 @@ class Show extends Component
           }elseif(isset($trip->horse_id)){
 
               $horse = Horse::find($trip->horse_id);
-              $current_mileage = $horse->mileage;
-              if($this->mileage > $current_mileage){
+              $current_mileage = $horse?->mileage;
+              if(isset($current_mileage) && ($this->mileage > $current_mileage)){
                   $horse->mileage = $this->mileage;
               }
               $horse->update();

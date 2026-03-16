@@ -49,9 +49,9 @@
                             <span class="caret"></span>
                         </button>
                         <ul class="dropdown-menu">
-                             @if ($document->user_id == Auth::user()->id || Auth::user()->is_admin())
-                            <li><a href="#" wire:click="edit({{$document->id}})"><i class="fa fa-edit color-success"></i> Edit</a></li>
-                            <li><a href="#" data-toggle="modal" data-target="#documentDeleteModal{{$document->id}}"><i class="fa fa-trash color-danger"></i>Delete</a></li>
+                             @if ($document->user_id == Null || $document->user_id == Auth::user()->id || Auth::user()->is_admin() )
+                                <li><a href="#" wire:click="edit({{$document->id}})"><i class="fa fa-edit color-success"></i> Edit</a></li>
+                                <li><a href="#" data-toggle="modal" data-target="#documentDeleteModal{{$document->id}}"><i class="fa fa-trash color-danger"></i>Delete</a></li>
                             @endif
                         </ul>
                     </div>

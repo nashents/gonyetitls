@@ -433,11 +433,11 @@
                                                             <tr>
                                                                 <th scope="row">Actual Offloading Date</th>
                                                                 <td>
-                                                                    @if ($trip->delivery_note)
-                                                                        @if ((preg_match($pattern, $trip->delivery_note->offloaded_date)) )
-                                                                        {{ \Carbon\Carbon::parse($trip->delivery_note->offloaded_date)->format('d M Y g:i A')}}
+                                                                    @if ($delivery_note)
+                                                                        @if ((preg_match($pattern, $delivery_note->offloaded_date)) )
+                                                                        {{ \Carbon\Carbon::parse($delivery_note->offloaded_date)->format('d M Y g:i A')}}
                                                                         @else
-                                                                            {{$trip->delivery_note->offloaded_date}}
+                                                                            {{$delivery_note->offloaded_date}}
                                                                         @endif
                                                                     @endif
                                                                     
@@ -458,14 +458,14 @@
                                                                 </td>
                                                             </tr>
                                                             @endif
-                                                            @if (isset($trip->start_date) && isset($trip->delivery_note->offloaded_date))
+                                                            @if (isset($trip->start_date) && isset($delivery_note->offloaded_date))
                                                             <tr>
                                                                 <th scope="row">  Actual Trip Duration</th>
                                                                 <td>
-                                                                    @if ((preg_match($pattern, $trip->start_date)) && (preg_match($pattern, $trip->delivery_note->offloaded_date)) )
+                                                                    @if ((preg_match($pattern, $trip->start_date)) && (preg_match($pattern, $delivery_note->offloaded_date)) )
 
                                                                     {{ \Carbon\Carbon::parse($trip->start_date)
-                                                                        ->diff(\Carbon\Carbon::parse($trip->delivery_note->offloaded_date))
+                                                                        ->diff(\Carbon\Carbon::parse($delivery_note->offloaded_date))
                                                                         ->format('%d Day(s) %h Hour(s) %i Minute(s)') }}
 
                                                                    
@@ -588,13 +588,13 @@
                                                                 <tr>
                                                                     <th scope="row">Loaded Weight</th>
                                                                     <td>
-                                                                        {{$trip->delivery_note->loaded_weight ? $trip->delivery_note->loaded_weight." tons" : ""}} 
+                                                                        {{$delivery_note->loaded_weight ? $delivery_note->loaded_weight." tons" : ""}} 
                                                                     </td>
                                                                 </tr>
                                                                 <tr>
                                                                     <th scope="row">Offloading Weight</th>
                                                                     <td>
-                                                                        {{$trip->delivery_note->offloaded_weight ? $trip->delivery_note->offloaded_weight." tons" : ""}} 
+                                                                        {{$delivery_note->offloaded_weight ? $delivery_note->offloaded_weight." tons" : ""}} 
                                                                     </td>
                                                                 </tr>
                                                             @endif
@@ -609,13 +609,13 @@
                                                                 <tr>
                                                                     <th scope="row"> Loaded Quantity</th>
                                                                     <td>
-                                                                        {{$trip->delivery_note->loaded_quantity ? $trip->delivery_note->loaded_quantity : ""}} {{$trip->measurement}}
+                                                                        {{$delivery_note->loaded_quantity ? $delivery_note->loaded_quantity : ""}} {{$trip->measurement}}
                                                                     </td>
                                                                 </tr>
                                                                 <tr>
                                                                     <th scope="row"> Offloaded Quantity</th>
                                                                     <td>
-                                                                        {{$trip->delivery_note->offloaded_quantity ? $trip->delivery_note->offloaded_quantity : ""}} {{$trip->measurement}}
+                                                                        {{$delivery_note->offloaded_quantity ? $delivery_note->offloaded_quantity : ""}} {{$trip->measurement}}
                                                                     </td>
                                                                 </tr>
                                                             @elseif($trip->cargo->type == "Liquid")
@@ -634,25 +634,25 @@
                                                             <tr>
                                                                 <th scope="row">Loaded Litreage @ Ambient Temperature</th>
                                                                 <td>
-                                                                     {{$trip->delivery_note ? $trip->delivery_note->loaded_litreage : ""}} {{$trip->measurement}}
+                                                                     {{$delivery_note ? $delivery_note->loaded_litreage : ""}} {{$trip->measurement}}
                                                                 </td>
                                                             </tr>
                                                             <tr>
                                                                 <th scope="row">Loaded Litreage @ 20 Degrees</th>
                                                                 <td>
-                                                                    {{$trip->delivery_note ? $trip->delivery_note->loaded_litreage_at_20 : ""}} {{$trip->measurement}}
+                                                                    {{$delivery_note ? $delivery_note->loaded_litreage_at_20 : ""}} {{$trip->measurement}}
                                                                 </td>
                                                             </tr>
                                                             <tr>
                                                                 <th scope="row">Offloaded Litreage @ Ambient Temperature</th>
                                                                 <td>
-                                                                    {{$trip->delivery_note ? $trip->delivery_note->offloaded_litreage : ""}} {{$trip->measurement}}
+                                                                    {{$delivery_note ? $delivery_note->offloaded_litreage : ""}} {{$trip->measurement}}
                                                                 </td>
                                                             </tr>
                                                             <tr>
                                                                 <th scope="row">Offloaded Litreage @ 20 Degrees</th>
                                                                 <td>
-                                                                    {{$trip->delivery_note ? $trip->delivery_note->offloaded_litreage_at_20 : ""}} {{$trip->measurement}}
+                                                                    {{$delivery_note ? $delivery_note->offloaded_litreage_at_20 : ""}} {{$trip->measurement}}
                                                                 </td>
                                                             </tr>
                                                             @endif

@@ -2,20 +2,21 @@
 
 namespace App\Http\Livewire\Trips;
 
-use Carbon\Carbon;
-use App\Models\Trip;
-use App\Models\Horse;
-use App\Models\Driver;
-use App\Models\Trailer;
-use App\Models\Vehicle;
-use Livewire\Component;
-use App\Models\Currency;
-use App\Models\TripStatus;
-use App\Models\Measurement;
-use App\Models\DeliveryNote;
 use App\Mail\TripUpdatesMail;
+use App\Models\Currency;
+use App\Models\DeliveryNote;
+use App\Models\Driver;
+use App\Models\Horse;
+use App\Models\Measurement;
+use App\Models\Trailer;
+use App\Models\Trip;
+use App\Models\TripStatus;
+use App\Models\Vehicle;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Livewire\Component;
 
 class DeliveryNotes extends Component
 {
@@ -181,6 +182,8 @@ class DeliveryNotes extends Component
     public $role_names;
     public $department_names;
     public $rank_names;
+    public $calculation_measurement;
+    public $measurements;
 
     public $active_tab;
 
@@ -442,6 +445,8 @@ class DeliveryNotes extends Component
 
     public function update(){
 
+     DB::transaction(function () {
+
       $trip = Trip::find($this->trip_id);
       $trip->trip_status = $this->selectedStatus;
       $trip->trip_status_date = $this->trip_status_date;
@@ -669,6 +674,8 @@ class DeliveryNotes extends Component
         'message'=>"Trip Status Updated Successfully!!"
     ]);
   //   return redirect(request()->header('Referer'));
+
+     });
 
   }
 

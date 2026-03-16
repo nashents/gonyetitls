@@ -2,16 +2,17 @@
 
 namespace App\Http\Livewire\Trips;
 
-use App\Models\Trip;
-use App\Models\Horse;
-use App\Models\Driver;
-use App\Models\Country;
-use App\Models\Trailer;
-use Livewire\Component;
 use App\Models\Breakdown;
-use App\Models\Transporter;
 use App\Models\BreakdownAssignment;
+use App\Models\Country;
+use App\Models\Driver;
+use App\Models\Horse;
+use App\Models\Trailer;
+use App\Models\Transporter;
+use App\Models\Trip;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Livewire\Component;
 
 class Breakdowns extends Component
 {
@@ -129,6 +130,9 @@ class Breakdowns extends Component
     }
 
     public function store(){
+         
+        DB::transaction(function () {
+
         $breakdown = new Breakdown;
         $breakdown->user_id = Auth::user()->id;
         $breakdown->trip_id = $this->trip_id;
@@ -149,6 +153,8 @@ class Breakdowns extends Component
             'type'=>'success',
             'message'=>"Trip Incident Created Successfully!!"
         ]);
+
+        });
 
     }
 
@@ -263,6 +269,9 @@ class Breakdowns extends Component
 
 
     public function update(){
+
+     DB::transaction(function () {
+
         if ($this->breakdown_id) {
             $breakdown = Breakdown::find($this->breakdown_id);
             $this->trip = Trip::find($this->trip_id);
@@ -285,6 +294,8 @@ class Breakdowns extends Component
                 'message'=>"Trip Incident Updated Successfully!!"
             ]);
         }
+
+     });
     }
 
     public function render()

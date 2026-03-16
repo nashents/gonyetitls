@@ -2,13 +2,14 @@
 
 namespace App\Http\Livewire\Trips;
 
-use App\Models\Trip;
-use Livewire\Component;
 use App\Models\Destination;
 use App\Models\Measurement;
 use App\Models\OffloadingPoint;
+use App\Models\Trip;
 use App\Models\TripDestination;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Livewire\Component;
 
 class Destinations extends Component
 {
@@ -33,6 +34,8 @@ class Destinations extends Component
     public $old_litreage_at_20;
     public $measurements;
     public $measurement_id;
+    public $trip_destination_id;
+    public $trip_destination;
 
 
     public $inputs = [];
@@ -89,7 +92,9 @@ class Destinations extends Component
 
         $this->validate();
 
-        // try{
+       
+        DB::transaction(function () {
+
         if (isset($this->destination_id)) {
             foreach ($this->destination_id as $key => $value) {
                 $trip_destination = new TripDestination;
@@ -128,44 +133,6 @@ class Destinations extends Component
                
                 $trip_destination->save();
 
-
-                // $delivery_note = $this->trip->delivery_note;
-                // if (isset($delivery_note)) {
-                //     if (isset($this->weight[$key]) && !is_null($delivery_note->offloaded_weight)) {
-                //         $delivery_note->offloaded_weight = $delivery_note->offloaded_weight + $this->weight[$key];
-                //     }else {
-                //         if (isset($this->weight[$key])) {
-                //             $delivery_note->offloaded_weight = $this->weight[$key];
-                //         }
-                //     }
-                //     if (isset($this->quantity[$key]) && !is_null($delivery_note->offloaded_quantity)) {
-                //         $delivery_note->offloaded_quantity = $delivery_note->offloaded_quantity +  $this->quantity[$key];
-                //     }else {
-                //         if(isset($this->quantity[$key])){
-                //             $delivery_note->offloaded_quantity = $this->quantity[$key];
-                //         }
-                       
-                //     }
-                //     if (isset($this->litreage[$key]) && !is_null($delivery_note->offloaded_litreage)) {
-                //         $delivery_note->offloaded_litreage = $delivery_note->offloaded_litreage + $this->litreage[$key];
-                //     }else {
-                //         if (isset($this->litreage[$key])) {
-                //             $delivery_note->offloaded_litreage =  $this->litreage[$key];
-                //         }
-                       
-                //     }
-                //     if (isset($this->litreage_at_20[$key]) && !is_null($delivery_note->offloaded_litreage_at_20)) {
-                //         $delivery_note->offloaded_litreage_at_20 = $delivery_note->offloaded_litreage_at_20 + $this->litreage_at_20[$key];
-                //     }else {
-                //         if (isset($this->litreage_at_20[$key])) {
-                //             $delivery_note->offloaded_litreage_at_20 = $this->litreage_at_20[$key];
-                //         }
-                       
-                //     }
-                //     // $delivery_note->updated_from_offloading_points = 1;
-                //     $delivery_note->update();
-                // }
-
             }
         }
        
@@ -176,13 +143,9 @@ class Destinations extends Component
             'message'=>"Destination(s) Added Successfully!!"
         ]);
 
-    // }catch(\Exception $e){
-    //     // Set Flash Message
-    //     $this->dispatchBrowserEvent('alert',[
-    //         'type'=>'error',
-    //         'message'=>"Something went wrong while adding destinations(s)!!"
-    //     ]);
-    // }
+        });
+
+  
     }
 
     public function edit($id){
@@ -209,7 +172,8 @@ class Destinations extends Component
 
     public function update(){
 
-        // try{
+        DB::transaction(function () {
+
         if (isset($this->trip_destination_id)) {
                 $trip_destination =  TripDestination::find($this->trip_destination_id);
                 $trip_destination->destination_id = $this->destination_id;
@@ -257,13 +221,8 @@ class Destinations extends Component
                 ]);
         }
        
-    // }catch(\Exception $e){
-    //     // Set Flash Message
-    //     $this->dispatchBrowserEvent('alert',[
-    //         'type'=>'error',
-    //         'message'=>"Something went wrong while adding destinations(s)!!"
-    //     ]);
-    // }
+        });
+        
     }
 
     public function refresh($category){
