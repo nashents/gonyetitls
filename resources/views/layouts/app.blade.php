@@ -4,6 +4,7 @@
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
     	<meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>@yield('title')</title>
 
         <!-- ========== COMMON STYLES ========== -->
@@ -4843,6 +4844,30 @@ window.addEventListener('hide-imageModal', event => {
   }
 });
 </script>
+
+@auth
+<script>
+(function () {
+    if (! navigator.geolocation) return;
+
+    navigator.geolocation.getCurrentPosition(
+        function (pos) {
+            fetch('/login/location', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    lat:      pos.coords.latitude,
+                    lng:      pos.coords.longitude,
+                    accuracy: Math.round(pos.coords.accuracy)
+                })
+            });
+        },
+        function () {},
+        { enableHighAccuracy: true, timeout: 10000 }
+    );
+})();
+</script>
+@endauth
     
-    </body>
+</body>
 </html>

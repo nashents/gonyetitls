@@ -9,22 +9,23 @@
         @endif
         {{-- <x-loading/> --}}
         <table id="trip_destinationsTable" class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
+            <caption>Offloading Details</caption>
             <thead >
-                <th class="th-sm">AddedBy
+                <th class="th-sm" style="width: 20%">AddedBy
                 </th>
-                <th class="th-sm">Offloading Date
+                <th class="th-sm" style="width: 15%">Date
                 </th>
-                <th class="th-sm">Destination
+                <th class="th-sm">To
                 </th>
                 <th class="th-sm">Offloading Point
                 </th>
-                <th class="th-sm">Weight
+                <th class="th-sm">Weight(t)
                 </th>
-                <th class="th-sm">Qty
+                <th class="th-sm" style="width:20%">Qty({{$trip->measurement ? $trip->measurement : ""}})
                 </th>
-                <th class="th-sm">Litreage @ Ambient
+                <th class="th-sm">@ A(l)
                 </th>
-                <th class="th-sm">Litreage @ 20 Degrees
+                <th class="th-sm">@ 20(l)
                 </th>
                 <th class="th-sm">Rate
                 </th>
@@ -44,7 +45,7 @@
                 <td>
                     {{ $trip_destination->user ? $trip_destination->user->name : '' }} {{ $trip_destination->user ? $trip_destination->user->surname : '' }}
                     <br>
-                    <small><strong>AddedOn: </strong> {{ date('d M, Y', strtotime($trip_destination->created_at)) }}</small>
+                    <small><strong>On: </strong> {{ date('d M, Y', strtotime($trip_destination->created_at)) }}</small>
                 </td>
                 <td>{{$trip_destination->offloading_date}}</td>
                 <td>
@@ -60,17 +61,17 @@
                 </td>
                 <td>
                     @if ($trip_destination->quantity)
-                        {{number_format($trip_destination->quantity,2)}} {{$trip->measurement ? $trip->measurement : ""}}
+                        {{number_format($trip_destination->quantity,2)}} 
                     @endif
                    </td>
                 <td>
                     @if ($trip_destination->litreage)
-                        {{number_format($trip_destination->litreage,2)}} {{$trip->measurement ? $trip->measurement : ""}}  
+                        {{number_format($trip_destination->litreage,2)}}   
                     @endif
                 </td>
                 <td>
                     @if ($trip_destination->litreage_at_20)
-                        {{number_format($trip_destination->litreage_at_20,2)}} {{$trip->measurement ? $trip->measurement : ""}}  
+                        {{number_format($trip_destination->litreage_at_20,2)}} 
                     @endif
                 </td>
                 <td>
@@ -119,6 +120,8 @@
                 $total_quantity = $trip_destinations->where('quantity','!=', null)->where('quantity','!=',"")->sum('quantity');
                 $total_litreage = $trip_destinations->where('litreage','!=', null)->where('litreage','!=',"")->sum('litreage');
                 $total_litreage_at_20 = $trip_destinations->where('litreage_at_20','!=', null)->where('litreage_at_20','!=',"")->sum('litreage_at_20');
+                $total_rate = $trip_destinations->where('rate','!=', null)->where('rate','!=',"")->sum('rate');
+                $total_freight = $trip_destinations->where('freight','!=', null)->where('freight','!=',"")->sum('freight');
             @endphp
             <tr>
                 <th colspan="4"><h5 style="margin-top:-5px;"><strong>Total</strong></h5></th>
@@ -129,17 +132,17 @@
                 </td>
                 <td  >
                     @if (isset($total_quantity) && $total_quantity > 0)
-                       <strong>{{ number_format($total_quantity,2) }} {{$trip->measurement ? $trip->measurement : ""}} </strong> 
+                       <strong>{{ number_format($total_quantity,2) }}  </strong> 
                     @endif
                 </td>
                 <td >
                     @if (isset($total_litreage) && $total_litreage > 0)
-                    <strong>{{ number_format($total_litreage,2) }} {{$trip->measurement ? $trip->measurement : ""}}</strong> 
+                    <strong>{{ number_format($total_litreage,2) }} </strong> 
                     @endif
                 </td>
                 <td >
                     @if (isset($total_litreage_at_20) && $total_litreage_at_20 > 0)
-                    <strong>{{ number_format($total_litreage_at_20,2) }} {{$trip->measurement ? $trip->measurement : ""}}</strong>
+                    <strong>{{ number_format($total_litreage_at_20,2) }} </strong>
                     @endif
                 </td>
                 <td >
@@ -446,7 +449,7 @@
         </div>
     </div>
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="trip_destinationEditModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog" role="trip_destination">
+        <div class="modal-dialog mw-100 w-70" role="trip_destination">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fa fa-edit"></i> Edit Offloading Point<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>

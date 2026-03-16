@@ -664,7 +664,7 @@
                                     </div>
                                     <div class="col-md-3">
                                         <div class="form-group">
-                                            <label for="weight">Additional Cargo Details</label>
+                                            <label for="additional">Additional Cargo Details</label>
                                             <input type="text"  class="form-control" wire:model.debounce.300ms="cargo_details" placeholder="Additional Remarks">
                                             @error('cargo_details') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
@@ -815,8 +815,12 @@
                                         </div>
                                         <div class="col-md-4">
                                             <div class="form-group">
-                                                <label for="customer"><a href="{{ route('currencies.index') }}" target="_blank" style="color: blue">Currencies</a></label>
-                                              <select class="form-control" wire:model.debounce.300ms="selectedCurrency"  {{ !isset($company->currency_id) ? "disabled" : ""  }} >
+                                                <label for="customer"><a href="{{ route('currencies.index') }}" target="_blank" style="color: blue">Currencies
+                                                @if ($rate)
+                                                    <span class="required" style="color: red">*</span>
+                                                @endif    
+                                                </a></label>
+                                              <select class="form-control" wire:model.debounce.300ms="selectedCurrency" {{$rate ? "required" : ""}}  {{ !isset($company->currency_id) ? "disabled" : ""  }} >
                                                   <option value="">Select Currency</option>
                                                   @foreach ($currencies as $currency)
                                                   <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
@@ -889,7 +893,7 @@
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label for="weight">Freight</label>
-                                                <input type="number" step="any" min="0" class="form-control"  wire:model.debounce.300ms="freight" placeholder="Enter Freight"  >
+                                                <input type="number" step="any" min="0" class="form-control"  wire:model.debounce.300ms="freight" disabled placeholder="Enter Freight"  >
                                                 @error('freight') <span class="text-danger error">{{ $message }}</span>@enderror
                                             </div>
                                         </div>

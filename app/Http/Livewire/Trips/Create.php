@@ -971,6 +971,7 @@ class Create extends Component
 
 
     public function mount(){
+
         $this->freight_calculation = 'flat_rate';
         $this->user = Auth::user();
         $this->employee =  $this->user->employee;
@@ -1377,7 +1378,7 @@ class Create extends Component
             $trip_destination->user_id = Auth::user()->id;
             $trip_destination->trip_id =$trip->id;
             $trip_destination->offloading_point_id = $this->offloading_point_id;
-            $trip_destination->destination_id = $this->to;
+            $trip_destination->destination_id = $this->selectedTo;
             $trip_destination->weight = $this->weight;
             $trip_destination->quantity = $this->quantity;
             $measurement = Measurement::where('name', $this->measurement)->first();
@@ -1390,6 +1391,8 @@ class Create extends Component
         }
          
     }
+
+   
 
     public function store(){
 
@@ -1910,9 +1913,11 @@ class Create extends Component
       public function updatedTransporterRate(){
             $this->calculateFreight();
       }
-      public function updatedWeight(){
+      public function updatedWeight($value){
 
+        $this->net_weight = $value;
         $this->calculateFreight();
+         
       }
       public function updatedFreightCalculation(){
           $this->calculateFreight();

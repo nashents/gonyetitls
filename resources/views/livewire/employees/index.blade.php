@@ -62,6 +62,7 @@
                                         @forelse ($employees as $employee)
                                         @php
                                             $lastLogin = $employee->user->last_login_at;
+                                            $user = $employee->user;
                                         @endphp
                                         @if (!$employee->driver)
                                             @if (Auth::user()->is_admin() || !$employee->user->is_admin())
@@ -131,7 +132,19 @@
                                                     <span class="badge bg-danger">Deleted</span>
                                                     @endif
                                                 </td>
-                                                <td>{{ $lastLogin ? \Carbon\Carbon::parse($lastLogin)->diffForHumans() : 'Never' }}</td>
+                                                <td>
+                                                    {{ $lastLogin ? \Carbon\Carbon::parse($lastLogin)->diffForHumans() : 'Never' }}
+                                                    @if($user->last_login_lat)
+                                                        <a href="https://www.google.com/maps?q={{ $user->last_login_lat }},{{ $user->last_login_lng }}"
+                                                            target="_blank"
+                                                            title="{{ $user->last_login_address }}">
+                                                                {{ Str::limit($user->last_login_address, 40) }}
+                                                                <small class="text-muted">(±{{ $user->last_login_accuracy }}m)</small>
+                                                            </a>
+                                                        @else
+                                                            {{ $user->last_login_address ?? '—' }}
+                                                    @endif
+                                                </td>
                                                 <td class="w-10 line-height-35 table-dropdown">
                                                     <div class="dropdown">
                                                         <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

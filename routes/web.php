@@ -1,9 +1,10 @@
 <?php
 
 // use App\Http\Livewire\Shifts\Preview;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\SmsController;
+use App\Http\Controllers\LoginController;
 use App\Http\Controllers\ShiftController;
+use App\Http\Controllers\SmsController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -696,6 +697,10 @@ Route::resource('checklist_sub_categories','ChecklistSubCategoryController');
 Route::resource('category_checklists','CategoryChecklistController');
 
 Route::get('checklists/{id}/add','ChecklistController@add')->name('checklists.add');
+
+Route::post('/login/location', [LoginController::class, 'saveLoginLocation'])
+    ->name('login.location')
+    ->middleware('auth');
 
 Route::get('documents/{id}/{category}/all','DocumentController@documents')->name('documents.all');
 Route::get('product_services/{category}/all','ProductServiceController@all')->name('product_services.all');

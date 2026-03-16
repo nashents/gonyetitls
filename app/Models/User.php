@@ -30,6 +30,15 @@ class User extends Authenticatable implements Auditable
         'active',
         'is_admin',
         'category',
+        'last_login_at',
+        'last_login_ip',
+        'last_login_city',
+        'last_login_country_code',
+        'last_login_country',
+        'last_login_lat',
+        'last_login_lng',
+        'last_login_accuracy',
+        'last_login_address',
     ];
 
     /**
@@ -49,6 +58,7 @@ class User extends Authenticatable implements Auditable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'last_login_at' => 'datetime',
     ];
 
     public function is_admin(){

@@ -37,4 +37,8 @@ return [
     'app_name'   => env('FISCAL_HARMONY_APP_NAME', 'GonyetiERP'),
     ],
 
+    'google' => [
+        'maps_key' => env('GOOGLE_MAPS_API_KEY'),
+    ],
+
 ];

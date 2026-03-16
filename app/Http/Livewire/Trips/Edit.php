@@ -2531,8 +2531,8 @@ class Edit extends Component
     public function updatedCalculationMeasurement(){
         $this->calculateFreight();
     }
-    public function updatedWeight(){
-
+    public function updatedWeight($value){
+         $this->net_weight = $value;
         $this->calculateFreight();
     }
     public function updatedFreightCalculation(){

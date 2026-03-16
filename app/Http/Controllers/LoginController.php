@@ -1,17 +1,19 @@
 <?php
 
 namespace App\Http\Controllers;
-use Carbon\Carbon;
 use App\Models\Role;
 use App\Models\User;
-use App\Models\Category;
-use App\Models\Customer;
-use Illuminate\Support\Str;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Str;
+
+
 
 class LoginController extends Controller
 {
@@ -48,7 +50,7 @@ class LoginController extends Controller
             'password' => 'required|string',
         ]);
 
-        // 3) Attempt login
+        // 2) Attempt login
         $credentials = $request->only('username', 'password');
 
         if (! Auth::attempt($credentials)) {
@@ -60,14 +62,14 @@ class LoginController extends Controller
         $user = Auth::user();
         $displayName = trim($user->name . ' ' . ($user->surname ?? ''));
 
-        // 4) Account active check
+        // 3) Account active check
         if ($user->active !== 1) {
             Auth::logout();
             Session::flash('error', 'Failed to login. User account suspended.');
             return back();
         }
 
-        // 5) Category routing
+        // 4) Category routing
         switch ($user->category) {
             case 'company':
                 Session::flash('success', "Welcome to your company dashboard {$displayName}");
@@ -94,11 +96,10 @@ class LoginController extends Controller
             case 'employee':
             case 'driver':
             case 'admin':
-                // Guard against missing relations
-                $employee   = $user->employee;
-                $company    = $employee->company ?? null;
-                $roles      = $user->roles ?? collect();
-                $ranks      = $employee->ranks ?? collect();
+                $employee    = $user->employee;
+                $company     = $employee->company ?? null;
+                $roles       = $user->roles ?? collect();
+                $ranks       = $employee->ranks ?? collect();
                 $departments = $employee->departments ?? collect();
 
                 if (! $company || $company->status !== 1) {
@@ -113,20 +114,69 @@ class LoginController extends Controller
                     return back();
                 }
 
+                // Record login time and IP immediately (coords come async from browser)
                 $user->last_login_at = now();
+                $user->last_login_ip = $request->ip();
                 $user->save();
 
                 Session::flash('success', "Welcome to your admin dashboard {$displayName}");
                 return redirect()->route('dashboard.index');
 
             default:
-                // Unknown category – don’t let them in
                 Auth::logout();
                 Session::flash('error', 'Failed to login. User category is not recognized.');
                 return back();
         }
     }
 
+
+    public function saveLoginLocation(Request $request)
+    {
+        $data = $request->validate([
+            'lat'      => 'required|numeric|between:-90,90',
+            'lng'      => 'required|numeric|between:-180,180',
+            'accuracy' => 'nullable|numeric',
+        ]);
+
+        $address = $this->reverseGeocode($data['lat'], $data['lng']);
+
+        $request->user()->update([
+            'last_login_lat'      => $data['lat'],
+            'last_login_lng'      => $data['lng'],
+            'last_login_accuracy' => $data['accuracy'] ?? null,
+            'last_login_address'  => $address,
+        ]);
+
+        return response()->json(['ok' => true]);
+    }
+
+    private function reverseGeocode(float $lat, float $lng): ?string
+    {
+        try {
+            $response = \Illuminate\Support\Facades\Http::timeout(5)
+                ->get('https://maps.googleapis.com/maps/api/geocode/json', [
+                    'latlng'   => "{$lat},{$lng}",
+                    'key'      => config('services.google.maps_key'),
+                    'language' => 'en',
+                ])
+                ->json();
+
+            if (($response['status'] ?? '') !== 'OK' || empty($response['results'])) {
+                Log::warning('Geocoding failed', [
+                    'status' => $response['status'] ?? 'no status',
+                    'lat'    => $lat,
+                    'lng'    => $lng,
+                ]);
+                return null;
+            }
+
+            return $response['results'][0]['formatted_address'];
+
+        } catch (\Throwable $e) {
+            Log::error('Geocoding exception: ' . $e->getMessage());
+            return null;
+        }
+    }
 
   
 
@@ -135,7 +185,7 @@ class LoginController extends Controller
     //Retrieve the user from the database
     $user = DB::table('users')->where('email', $email)->select('name', 'email')->first();
     //Generate, the password reset link. The token generated is embedded in the link
-    $link = 'http://fundiso.co.zw/' . $token . '/reset-password';
+    $link = env('APP_URL') . $token . '/reset-password';
 
     $data= array(
         'name'=> $user->name,
@@ -145,7 +195,7 @@ class LoginController extends Controller
     Mail::send('emails.verify',$data, function($message) use($data){
         $message->to($data['email']);
         $message->subject('Reset Password Notification');
-        $message->from("no-reply@fundiso.co.zw");
+        $message->from("noreply@gonyetitls.com");
     });
 }
 
