@@ -120,12 +120,8 @@ Route::get('tyre_purchase/orders/pending','TyrePurchaseController@pending')->nam
 Route::get('tyre_purchase/orders/management','TyrePurchaseController@manage')->name('tyre_purchases.manage');
 Route::get('tyre_purchase/orders/reports','TyrePurchaseController@reports')->name('tyre_purchases.reports');
 
-//Transportation Order Routes
-Route::get('order','TransportOrderController@order')->name('order');
-Route::get('transportation/orders','TransportOrderController@index')->name('transport_orders.index');
-Route::get('transportation/order/{trip}/preview','TransportOrderController@preview')->name('transport_orders.preview');
-Route::get('transportation/order/{trip}/print','TransportOrderController@print')->name('transport_orders.print');
-Route::get('transportation/order/{trip}//export-to-pdf','TransportOrderController@generatePDF')->name('transport_orders.pdf');
+
+
 
 //Fuel Suppliers Routes
 Route::get('fuel/supplier/{id}/top-up','TopUpController@manage')->name('top_ups.manage');
@@ -478,12 +474,20 @@ Route::get('goods-received/assets/','GoodsReceivedController@assets')->name('goo
 
 Route::get('reminders/copy/','ReminderController@copy')->name('reminders.copy');
 
+//Transportation Order Routes
+Route::get('order','TransportOrderController@order')->name('order');
+Route::get('transportation/order/{trip}/preview','TransportOrderController@preview')->name('transport_orders.preview');
+Route::get('transportation/order/{trip}/print','TransportOrderController@print')->name('transport_orders.print');
+Route::get('transportation/order/{trip}//export-to-pdf','TransportOrderController@generatePDF')->name('transport_orders.pdf');
+
+
 
 Route::get('horses/{horse}/edit','HorseController@edit')->name('horses.edit')->withTrashed();
 Route::resource('ticket_requests','TicketRequestController');
 Route::resource('payment_methods','PaymentMethodController');
 Route::resource('grades','GradeController');
 Route::resource('clusters','ClusterController');
+Route::resource('transport_orders','TransportOrderController');
 Route::resource('teams','TeamController');
 Route::resource('bins','BinController');
 Route::resource('claims','ClaimController');
@@ -823,6 +827,10 @@ Route::get('recoveries/authorization/rejected','RecoveryController@rejected')->n
 Route::get('trips/authorization/pending','TripController@pending')->name('trips.pending');
 Route::get('trips/authorization/approved','TripController@approved')->name('trips.approved');
 Route::get('trips/authorization/rejected','TripController@rejected')->name('trips.rejected');
+
+Route::get('transport_orders/authorization/pending','TransportOrderController@pending')->name('transport_orders.pending');
+Route::get('transport_orders/authorization/approved','TransportOrderController@approved')->name('transport_orders.approved');
+Route::get('transport_orders/authorization/rejected','TransportOrderController@rejected')->name('transport_orders.rejected');
 
 Route::get('shifts/authorization/pending','ShiftController@pending')->name('shifts.pending');
 Route::get('shifts/authorization/approved','ShiftController@approved')->name('shifts.approved');

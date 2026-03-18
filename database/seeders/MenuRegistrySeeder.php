@@ -1519,6 +1519,28 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
         $upsertSub($m, ['name'=>'Manage Shifts','slug'=>'manage-shifts','is_active'  => false,'icon'=>'fas fa-list','route_name'=>'shifts.index','sort_order'=>10]);
         $upsertSub($m, ['name'=>'Shifts Reports','slug'=>'shifts-reports',  'is_active'  => false,'icon'=>'fas fa-line-chart','route_name'=>'shifts.reports','sort_order'=>20]);
 
+        // Transport Orders
+        $m = $upsertModule($g, [
+            'name' => 'Transport Orders',
+            'slug' => 'transport-orders',
+            'icon' => 'fas fa-list',
+            'route_name' => 'transport_orders.*',
+            'sort_order' => 45,
+        ]);
+
+       
+        $upsertSub($m, ['name'=>'Manage Orders','slug'=>'manage-transport-orders','icon'=>'fas fa-list','route_name'=>'transport_orders.index','sort_order'=>10]);
+
+        $tripManageVis = $any([
+            $all(['isAdmin']),
+            $all(['hasTLDeptHead']),
+            $all(['isSuperAdmin']),
+        ]);
+
+        $upsertSub($m, ['name'=>'Pending Orders','slug'=>'pending-transport-orders','icon'=>'fas fa-clock','route_name'=>'transport_orders.pending','sort_order'=>20,'badge_key'=>'transport_orders_pending_count','visibility'=>$tripManageVis]);
+        $upsertSub($m, ['name'=>'Approved Orders','slug'=>'approved-transport-orders','icon'=>'fas fa-check','route_name'=>'transport_orders.approved','sort_order'=>30,'badge_key'=>'transport_orders_approved_count','visibility'=>$tripManageVis]);
+        $upsertSub($m, ['name'=>'Rejected Orders','slug'=>'rejected-transport-orders','icon'=>'fas fa-ban','route_name'=>'transport_orders.rejected','sort_order'=>40,'badge_key'=>'transport_orders_rejected_count','visibility'=>$tripManageVis]);
+       
         // Trips
         $m = $upsertModule($g, [
             'name' => 'Trips',
@@ -1527,6 +1549,7 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
             'route_name' => 'trips.*',
             'sort_order' => 50,
         ]);
+        
         $upsertSub($m, 
         ['name'=>'Create Trip',
         'slug'=>'create-trip',
@@ -1539,11 +1562,7 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
         ]);
         $upsertSub($m, ['name'=>'Manage Trips','slug'=>'manage-trips','icon'=>'fas fa-list','route_name'=>'trips.index','sort_order'=>20]);
 
-        $tripManageVis = $any([
-            $all(['isAdmin']),
-            $all(['hasTLDeptHead']),
-            $all(['isSuperAdmin']),
-        ]);
+       
         $upsertSub($m, ['name'=>'Pending Trips','slug'=>'pending-trips','icon'=>'fas fa-clock','route_name'=>'trips.pending','sort_order'=>30,'badge_key'=>'trips_pending_count','visibility'=>$tripManageVis]);
         $upsertSub($m, ['name'=>'Approved Trips','slug'=>'approved-trips','icon'=>'fas fa-check','route_name'=>'trips.approved','sort_order'=>40,'badge_key'=>'trips_approved_count','visibility'=>$tripManageVis]);
         $upsertSub($m, ['name'=>'Rejected Trips','slug'=>'rejected-trips','icon'=>'fas fa-ban','route_name'=>'trips.rejected','sort_order'=>50,'badge_key'=>'trips_rejected_count','visibility'=>$tripManageVis]);
