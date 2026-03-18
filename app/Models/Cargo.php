@@ -15,6 +15,9 @@ class Cargo extends Model implements Auditable
     public function capacities(){
         return $this->hasMany('App\Models\Capacity');
     }
+    public function transport_orders(){
+      return $this->hasMany('App\Models\TransportOrder');
+    }
     public function shifts(){
         return $this->hasMany('App\Models\Shift');
     }

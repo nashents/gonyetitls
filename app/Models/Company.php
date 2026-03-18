@@ -15,6 +15,9 @@ class Company extends Model  implements Auditable
     public function user(){
         return $this->belongsTo('App\Models\User');
     }
+      public function transport_orders(){
+      return $this->hasMany('App\Models\TransportOrder');
+    }
     public function sales(){
         return $this->hasMany('App\Models\Sale');
     }

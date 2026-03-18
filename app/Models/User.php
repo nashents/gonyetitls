@@ -71,6 +71,9 @@ class User extends Authenticatable implements Auditable
 
     }
 
+    public function transport_orders(){
+      return $this->hasMany('App\Models\TransportOrder');
+    }
     public function applications()
     {
         return $this->hasMany(Application::class);

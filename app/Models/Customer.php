@@ -16,11 +16,15 @@ class Customer extends Model implements Auditable
     public function contacts(){
         return $this->hasMany('App\Models\Contact');
     }
+    
      public function rentals(){
         return $this->hasMany('App\Models\Rental');
     }
       public function waste_disposals(){
         return $this->hasMany('App\Models\WasteDisposal');
+    }
+      public function transport_orders(){
+      return $this->hasMany('App\Models\TransportOrder');
     }
     public function shifts(){
         return $this->hasMany('App\Models\Shift');

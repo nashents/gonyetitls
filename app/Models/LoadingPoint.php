@@ -24,6 +24,9 @@ class LoadingPoint extends Model implements Auditable
         'lat',
         'status',
     ];
+    public function transport_orders(){
+      return $this->hasMany('App\Models\TransportOrder');
+    }
     public function rates(){
       return $this->hasMany('App\Models\Rate');
     }

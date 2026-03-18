@@ -66,8 +66,12 @@ class Index extends Component
     use WithPagination;
 
     protected $paginationTheme = 'bootstrap';
-    protected $queryString = ['searchVehicle','searchHorse','searchTrailer','searchDriver', 'searchFrom','searchTo','searchLoadingPoint','searchOffloadingPoint'];
+    protected $queryString = ['search', 'searchFrom','searchTo','searchLoadingPoint','searchOffloadingPoint'];
     private $transport_orders;
+    public $transport_order_filter;
+    public $from;
+    public $to;
+    public $search;
     public $trip_id;
     public $with_quotation = False;
     public $selectedQuotation;
@@ -176,6 +180,15 @@ class Index extends Component
     public $allowance_amount;
     public $allowance_exchange_rate;
     public $allowance_exchange_amount;
+             
+    public $filter_currency_id;
+    public $filter_cargo_id;
+    public $filter_trip_type_id;
+    public $filter_customer_id;
+    public $filter_consignee_id;
+    public $filter_from;
+    public $filter_to;
+    public $filter_trip_status;
 
     public $allowance;
     public $allowance_title;
@@ -958,6 +971,7 @@ class Index extends Component
 
     public function mount(){
 
+        $this->transport_order_filter = 'created_at';
         $this->freight_calculation = 'flat_rate';
         $this->user = Auth::user();
         $this->employee =  $this->user->employee;
@@ -2659,11 +2673,9 @@ class Index extends Component
         }
 
          $withRelations = [
-       
             'trip_type:id,name',
-            'border:id,name',
-            'clearing_agent:id,name',
-            'trip_group:id,name',
+            // 'border:id,name',
+            // 'clearing_agent:id,name',
             'customer:id,name',
             'loading_point:id,name',
             'offloading_point:id,name',
@@ -2682,40 +2694,14 @@ class Index extends Component
             $search = trim($this->search);
 
             $query->where(function ($q) use ($search) {
-                $q->where('trip_number', 'like', "%{$search}%")
-                    ->orWhere('trip_status', 'like', "%{$search}%")
-                    ->orWhere('trip_ref', 'like', "%{$search}%")
+                $q->where('transport_order_number', 'like', "%{$search}%")
                     ->orWhere('authorization', 'like', "%{$search}%")
-                    ->orWhereHas('horse', function ($q2) use ($search) {
-                        $q2->where('registration_number', 'like', "%{$search}%")
-                            ->orWhere('fleet_number', 'like', "%{$search}%");
-                    })
                     ->orWhereHas('trip_type', fn ($q2) => $q2->where('name', 'like', "%{$search}%"))
                     ->orWhereHas('customer', fn ($q2) => $q2->where('name', 'like', "%{$search}%"))
                     ->orWhereHas('cargo', fn ($q2) => $q2->where('name', 'like', "%{$search}%"))
-                    ->orWhereRaw("DATE_FORMAT(start_date, '%Y-%m-%d') LIKE ?", ["%{$search}%"])
-                    ->orWhereRaw("DATE_FORMAT(end_date, '%Y-%m-%d') LIKE ?", ["%{$search}%"])
-                    ->orWhereHas('delivery_note', function ($q2) use ($search) {
-                        $q2->whereRaw("DATE_FORMAT(offloaded_date, '%Y-%m-%d') LIKE ?", ["%{$search}%"]);
-                    })
-                    ->orWhereHas('user.employee', function ($q2) use ($search) {
-                        $q2->where(DB::raw("concat(name, ' ', surname)"), 'like', "%{$search}%");
-                    })
-                    ->orWhereHas('driver.employee', function ($q2) use ($search) {
-                        $q2->where(DB::raw("concat(name, ' ', surname)"), 'like', "%{$search}%");
-                    })
-                    ->orWhereHas('transporter', fn ($q2) => $q2->where('name', 'like', "%{$search}%"))
-                    ->orWhereHas('vehicle', function ($q2) use ($search) {
-                        $q2->where('registration_number', 'like', "%{$search}%")
-                            ->orWhere('fleet_number', 'like', "%{$search}%");
-                    })
-                    ->orWhereHas('trailers', function ($q2) use ($search) {
-                        $q2->where('registration_number', 'like', "%{$search}%")
-                            ->orWhere('fleet_number', 'like', "%{$search}%");
-                    })
+                    ->orWhereRaw("DATE_FORMAT(date, '%Y-%m-%d') LIKE ?", ["%{$search}%"])
                     ->orWhereHas('loading_point', fn ($q2) => $q2->where('name', 'like', "%{$search}%"))
-                    ->orWhereHas('offloading_point', fn ($q2) => $q2->where('name', 'like', "%{$search}%"))
-                    ->orWhereHas('trip_documents', fn ($q2) => $q2->where('document_number', 'like', "%{$search}%"));
+                    ->orWhereHas('offloading_point', fn ($q2) => $q2->where('name', 'like', "%{$search}%"));
             });
         };
 
@@ -2726,12 +2712,9 @@ class Index extends Component
         | Remove "filter_" and use the matching DB column
         */
         $exactFilters = [
-            'filter_transporter_id' => 'transporter_id',
-            'filter_horse_id'       => 'horse_id',
-            'filter_driver_id'      => 'driver_id',
+           
             'filter_currency_id'    => 'currency_id',
             'filter_cargo_id'       => 'cargo_id',
-            'filter_route_id'       => 'route_id',
             'filter_trip_type_id'   => 'trip_type_id',
             'filter_customer_id'    => 'customer_id',
             'filter_consignee_id'   => 'consignee_id',
@@ -2751,31 +2734,12 @@ class Index extends Component
         | Date Filter
         |--------------------------------------------------------------------------
         */
-        if ($this->trip_filter === 'offloaded_date') {
-            $transport_orders->whereHas('delivery_note', function ($q) {
-                if (filled($this->from) && filled($this->to)) {
-                    $q->whereBetween('offloaded_date', [$this->from, $this->to]);
-                } else {
-                    $q->whereMonth('offloaded_date', date('m'))
-                    ->whereYear('offloaded_date', date('Y'));
-                }
-            });
-
-            if (filled($this->search)) {
-                $applySearch($transport_orders);
-            }
-
-            // join only for sorting
-            $transport_orders->join('delivery_notes', 'delivery_notes.trip_id', '=', 'transport_orders.id')
-                ->select('transport_orders.*')
-                ->orderBy('delivery_notes.offloaded_date', 'desc');
-        } else {
             if (filled($this->from) && filled($this->to)) {
-                $transport_orders->whereBetween($this->trip_filter, [$this->from, $this->to]);
+                $transport_orders->whereBetween($this->transport_order_filter, [$this->from, $this->to]);
             } else {
                 if (!filled($this->search)) {
-                    $transport_orders->whereMonth($this->trip_filter, date('m'))
-                        ->whereYear($this->trip_filter, date('Y'));
+                    $transport_orders->whereMonth($this->transport_order_filter, date('m'))
+                        ->whereYear($this->transport_order_filter, date('Y'));
                 }
             }
 
@@ -2783,9 +2747,10 @@ class Index extends Component
                 $applySearch($transport_orders);
             }
 
-            $transport_orders->orderBy($this->trip_filter, 'desc');
-        }
+            $transport_orders->orderBy($this->transport_order_filter, 'desc');
 
-        return view('livewire.transport-orders.index');
+        return view('livewire.transport-orders.index',[
+            'transport_orders' => $transport_orders->paginate(10)
+        ]);
     }
 }

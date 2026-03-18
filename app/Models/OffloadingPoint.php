@@ -26,6 +26,9 @@ class OffloadingPoint extends Model implements Auditable
         'status',
     ];
 
+      public function transport_orders(){
+      return $this->hasMany('App\Models\TransportOrder');
+    }
     public function rates(){
       return $this->hasMany('App\Models\Rate');
   }

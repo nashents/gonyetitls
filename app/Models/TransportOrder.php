@@ -12,16 +12,31 @@ class TransportOrder extends Model implements Auditable
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 
-    public function trip(){
-        return $this->belongsTo('App\Models\Trip');
+    public function trips(){
+        return $this->belongsToMany('App\Models\Trip');
     }
-    public function transporter(){
-        return $this->belongsTo('App\Models\Transporter');
+    public function customer(){
+        return $this->belongsTo('App\Models\Customer');
     }
-    public function driver(){
-        return $this->belongsTo('App\Models\Driver');
+    public function cargo(){
+        return $this->belongsTo('App\Models\Cargo');
     }
-    public function horse(){
-        return $this->belongsTo('App\Models\Horse');
+    public function currency(){
+        return $this->belongsTo('App\Models\Currency');
+    }
+    public function consignee(){
+        return $this->belongsTo('App\Models\Consignee');
+    }
+    public function user(){
+        return $this->belongsTo('App\Models\User');
+    }
+    public function company(){
+        return $this->belongsTo('App\Models\Company');
+    }
+    public function loading_point(){
+        return $this->belongsTo('App\Models\LoadingPoint');
+    }
+    public function offloading_point(){
+        return $this->belongsTo('App\Models\OffloadingPoint');
     }
 }
