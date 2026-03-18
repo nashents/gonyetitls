@@ -16,22 +16,18 @@ use App\Models\Mileage;
 use App\Models\Trailer;
 use App\Models\Vehicle;
 use Livewire\Component;
-use App\Models\CashFlow;
 use App\Models\GatePass;
 use App\Models\Container;
 use App\Mail\FuelOrderMail;
 use App\Models\BillExpense;
-use App\Models\Destination;
 use App\Models\Transporter;
 use App\Models\LoadingPoint;
 use Livewire\WithPagination;
 use App\Mail\TripUpdatesMail;
-use App\Models\TransportOrder;
 use App\Mail\TransportOrderMail;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Session;
 use App\Mail\AuthorizationNotificationMail;
 
 class Pending extends Component
@@ -295,20 +291,26 @@ class Pending extends Component
            
             if (isset($trip->vehicle_id)) {
                 $vehicle = Vehicle::find($trip->vehicle_id);
-                $current_mileage = $vehicle->mileage;
-                if($this->mileage > $current_mileage){
-                    $vehicle->mileage = $this->mileage;
+                
+                if($vehicle){
+                    $current_mileage = $vehicle->mileage;
+                    if($this->mileage > $current_mileage){
+                        $vehicle->mileage = $this->mileage;
+                    }
+                    $vehicle->update();
                 }
-                $vehicle->update();
-
+               
             }elseif(isset($trip->horse_id)){
 
                 $horse = Horse::find($trip->horse_id);
-                $current_mileage = $horse->mileage;
-                if($this->mileage > $current_mileage){
-                    $horse->mileage = $this->mileage;
+                if($horse){
+                    $current_mileage = $horse->mileage;
+                    if($this->mileage > $current_mileage){
+                        $horse->mileage = $this->mileage;
+                    }
+                    $horse->update();
                 }
-                $horse->update();
+               
             }
 
             if(isset($trip->starting_mileage)){
@@ -651,19 +653,20 @@ class Pending extends Component
                 if ($trip->trip_status != "Offloaded" && $trip->trip_status != "Cancelled" && $trip->trip_status != "Scheduled") {
                     
                     $horse = Horse::withTrashed()->find($trip->horse_id);
-                    if(isset($horse)){
+                    if($horse){
                         $horse->status = 0;
                         $horse->update();
                     }
 
                     $vehicle = Vehicle::withTrashed()->find($trip->vehicle_id);
-                    if(isset($vehicle)){
+                    if($vehicle){
                         $vehicle->status = 0;
                         $vehicle->update();
                     }
     
                     $driver = Driver::withTrashed()->find($trip->driver_id);
-                    if(isset($driver)){
+
+                    if($driver){
                         $driver->status = 0;
                         $driver->update();
                     }
@@ -705,30 +708,35 @@ class Pending extends Component
 
                         if ($fuel->horse) {
                             $horse = Horse::find($fuel->horse_id);
-                          
-                            if(is_numeric($fuel->quantity)){
+                            if($horse){
+                                if(is_numeric($fuel->quantity)){
                                 $horse->fuel_balance = $horse->fuel_balance + $fuel->quantity;
+                                }
+                            
+                                $current_mileage = $horse->mileage;
+                                if ($fuel->odometer >  $current_mileage) {
+                                    $horse->mileage = $fuel->odometer;
+                                }
+                            
+                                $horse->update();
                             }
-                           
-                            $current_mileage = $horse->mileage;
-                            if ($fuel->odometer >  $current_mileage) {
-                                $horse->mileage = $fuel->odometer;
-                            }
-                          
-                            $horse->update();
+                            
                         }
                         if ($fuel->vehicle) {
                             $vehicle = Vehicle::find($fuel->vehicle_id);
-                            if(is_numeric($fuel->quantity)){
+                            if($vehicle){
+                                 if(is_numeric($fuel->quantity)){
                                 $vehicle->fuel_balance = $vehicle->fuel_balance + $fuel->quantity;
+                                }
+                            
+                                $current_mileage = $vehicle->mileage;
+                                if ($fuel->odometer >  $current_mileage) {
+                                    $vehicle->mileage = $fuel->odometer;
+                                }
+                            
+                                $vehicle->update();
                             }
                            
-                            $current_mileage = $vehicle->mileage;
-                            if ($fuel->odometer >  $current_mileage) {
-                                $vehicle->mileage = $fuel->odometer;
-                            }
-                          
-                            $vehicle->update();
             
                         }
 
@@ -920,20 +928,25 @@ class Pending extends Component
                     
                         if (isset($trip->vehicle_id)) {
                             $vehicle = Vehicle::find($trip->vehicle_id);
-                            $current_mileage = $vehicle->mileage;
-                            if($this->mileage > $current_mileage){
-                                $vehicle->mileage = $this->mileage;
+                            if($vehicle){
+                                 $current_mileage = $vehicle->mileage;
+                                if($this->mileage > $current_mileage){
+                                    $vehicle->mileage = $this->mileage;
+                                }
+                                $vehicle->update();
                             }
-                            $vehicle->update();
-
+                           
                         }elseif(isset($trip->horse_id)){
 
                             $horse = Horse::find($trip->horse_id);
-                            $current_mileage = $horse->mileage;
-                            if($this->mileage > $current_mileage){
-                                $horse->mileage = $this->mileage;
+                            if($horse){
+                                $current_mileage = $horse->mileage;
+                                if($this->mileage > $current_mileage){
+                                    $horse->mileage = $this->mileage;
+                                }
+                                $horse->update();
                             }
-                            $horse->update();
+                            
                         }
 
 
@@ -1186,19 +1199,19 @@ class Pending extends Component
                         if ($trip->trip_status != "Offloaded" && $trip->trip_status != "Cancelled" && $trip->trip_status != "Scheduled") {
                             
                             $horse = Horse::withTrashed()->find($trip->horse_id);
-                            if(isset($horse)){
+                            if($horse){
                                 $horse->status = 0;
                                 $horse->update();
                             }
 
                             $vehicle = Vehicle::withTrashed()->find($trip->vehicle_id);
-                            if(isset($vehicle)){
+                            if($vehicle){
                                 $vehicle->status = 0;
                                 $vehicle->update();
                             }
             
                             $driver = Driver::withTrashed()->find($trip->driver_id);
-                            if(isset($driver)){
+                            if($driver){
                                 $driver->status = 0;
                                 $driver->update();
                             }
@@ -1254,31 +1267,39 @@ class Pending extends Component
                                 $trip = $fuel->trip;
         
                                 if ($fuel->horse) {
+
                                     $horse = Horse::find($fuel->horse_id);
-                                    if(is_numeric($fuel->quantity)){
-                                        $horse->fuel_balance = $horse->fuel_balance + $fuel->quantity;
+
+                                    if($horse){
+                                        if(is_numeric($fuel->quantity)){
+                                            $horse->fuel_balance = $horse->fuel_balance + $fuel->quantity;
+                                        }
+                                    
+                                        $current_mileage = $horse->mileage;
+                                        if ($fuel->odometer >  $current_mileage) {
+                                            $horse->mileage = $fuel->odometer;
+                                        }
+                                    
+                                        $horse->update();
                                     }
-                                   
-                                    $current_mileage = $horse->mileage;
-                                    if ($fuel->odometer >  $current_mileage) {
-                                        $horse->mileage = $fuel->odometer;
-                                    }
-                                  
-                                    $horse->update();
+                                 
                                 }
 
                                 if ($fuel->vehicle) {
                                     $vehicle = Vehicle::find($fuel->vehicle_id);
-                                    if(is_numeric($fuel->quantity)){
-                                        $vehicle->fuel_balance = $vehicle->fuel_balance + $fuel->quantity;
+                                    if($vehicle){
+                                        if(is_numeric($fuel->quantity)){
+                                            $vehicle->fuel_balance = $vehicle->fuel_balance + $fuel->quantity;
+                                        }
+                                    
+                                        $current_mileage = $vehicle->mileage;
+                                        if ($fuel->odometer >  $current_mileage) {
+                                            $vehicle->mileage = $fuel->odometer;
+                                        }
+                                    
+                                        $vehicle->update();
                                     }
-                                   
-                                    $current_mileage = $vehicle->mileage;
-                                    if ($fuel->odometer >  $current_mileage) {
-                                        $vehicle->mileage = $fuel->odometer;
-                                    }
-                                  
-                                    $vehicle->update();
+                                    
                     
                                 }
         

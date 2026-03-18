@@ -2,39 +2,41 @@
 
 namespace App\Http\Livewire\Trips;
 
-use Carbon\Carbon;
-use App\Models\Bill;
-use App\Models\Fuel;
-use App\Models\Trip;
-use App\Models\User;
-use App\Models\Horse;
-use App\Models\Driver;
+use App\Mail\AuthorizationNotificationMail;
+use App\Mail\FuelOrderMail;
+use App\Mail\TransportOrderMail;
+use App\Mail\TripUpdatesMail;
 use App\Models\Account;
+use App\Models\Bill;
+use App\Models\BillExpense;
+use App\Models\Container;
+use App\Models\Currency;
+use App\Models\DeliveryNote;
+use App\Models\Destination;
+use App\Models\Driver;
+use App\Models\EmptyRun;
 use App\Models\Expense;
+use App\Models\Fuel;
+use App\Models\GatePass;
+use App\Models\Horse;
+use App\Models\Hour;
+use App\Models\LoadingPoint;
+use App\Models\Measurement;
 use App\Models\Mileage;
 use App\Models\Trailer;
-use App\Models\Vehicle;
-use Livewire\Component;
-use App\Models\Currency;
-use App\Models\EmptyRun;
-use App\Models\GatePass;
-use App\Models\Container;
-use App\Models\TripStatus;
-use App\Mail\FuelOrderMail;
-use App\Models\BillExpense;
-use App\Models\Destination;
-use App\Models\Measurement;
 use App\Models\Transporter;
-use App\Models\TripExpense;
-use App\Models\DeliveryNote;
-use App\Models\LoadingPoint;
-use App\Mail\TripUpdatesMail;
 use App\Models\TransportOrder;
-use App\Mail\TransportOrderMail;
-use Illuminate\Support\Facades\DB;
+use App\Models\Trip;
+use App\Models\TripExpense;
+use App\Models\TripStatus;
+use App\Models\User;
+use App\Models\Vehicle;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Redirect;
+use Livewire\Component;
 
 class Show extends Component
 {
@@ -417,98 +419,158 @@ class Show extends Component
       }
 
       public function updateAuthorization(){
-      // try{
+      
+            
+       $this->validate([
+            'authorize' => 'required',
+        ]);
+        // try{
         DB::transaction(function () {
-      $trip = Trip::find($this->trip_id);
-      $trip->authorized_by_id = Auth::user()->id;
-      $trip->authorization = $this->authorize;
-      $trip->reason = $this->comments;
-      $trip->update();
 
-      if ($this->authorize == 'approved') {  
+        $trip = Trip::find($this->trip_id);
+        $trip->authorized_by_id = Auth::user()->id;
+        $trip->authorization = $this->authorize;
+        $trip->authorization_date = now();
+        $trip->reason = $this->comments;
+        $trip->update();
 
-          $gate_pass = new GatePass;
-          $gate_pass->user_id = Auth::user()->id;
-          $gate_pass->gate_pass_number = $this->gate_passNumber();
-          if (Auth::user()->employee->branch) {
-              $gate_pass->branch_id = Auth::user()->employee->branch ? Auth::user()->employee->branch->id : "";
-          }
-          $gate_pass->type = "Trip";
-          $gate_pass->trip_id = $trip->id;
-          $gate_pass->driver_id = $trip->driver_id ? $trip->driver_id : null;
-          $gate_pass->horse_id = $trip->horse_id ? $trip->horse_id : null;
-          $gate_pass->exit = $trip->start_date;
-          $trailers = $trip->trailers;
+        $company =  Auth::user()->employee->company;
+        $user = $trip->user;
+        $email = $user?->email ?? null;
+        $notification = "Trip Authorization";
+        if($email){
+            Mail::to($email)->send(new AuthorizationNotificationMail($company, $notification, $user, $trip));
+        }
 
-          foreach ($trailers as $trailer) {
-              $trailer_ids[] = $trailer->id;
-          }
+        if ($this->authorize == 'approved') {  
 
-          $gate_pass->save();
-          if (isset($trailer_ids)) {
-              $gate_pass->trailers()->sync($trailer_ids);
-          }
-         
-          if (isset($trip->vehicle_id)) {
-              $vehicle = Vehicle::find($trip->vehicle_id);
-              $current_mileage = $vehicle?->mileage;
-              if(isset($current_mileage) && ($this->mileage > $current_mileage)){
-                  $vehicle->mileage = $this->mileage;
-              }
-              $vehicle->update();
-
-          }elseif(isset($trip->horse_id)){
-
-              $horse = Horse::find($trip->horse_id);
-              $current_mileage = $horse?->mileage;
-              if(isset($current_mileage) && ($this->mileage > $current_mileage)){
-                  $horse->mileage = $this->mileage;
-              }
-              $horse->update();
-          }
-
-          if(isset($trip->starting_mileage)){
-
-              $last_mileage = Mileage::whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
-              if(isset($last_mileage)){
-                  if($last_mileage < $trip->starting_mileage){
-                      $mileage = new Mileage;
-                      $mileage->user_id = Auth::user()->id;
-                      $mileage->trip_id = $trip->id;
-                      $mileage->horse_id = $trip->horse_id;
-                      $mileage->trailer_id = $trip->trailer_id;
-                      $mileage->vehicle_id = $trip->vehicle_id;
-                      $mileage->mileage = $trip->starting_mileage;
-                      $mileage->date = $trip->start_date;
-                      $mileage->category = "Trip";
-                      $mileage->position = "starting";
-                      $mileage->save();
-                  }
-              }           
+            $gate_pass = new GatePass;
+            $gate_pass->user_id = Auth::user()->id;
+            $gate_pass->gate_pass_number = $this->gate_passNumber();
+            if (Auth::user()->employee->branch) {
+                $gate_pass->branch_id = Auth::user()->employee->branch ? Auth::user()->employee->branch->id : "";
             }
-  
-            if(isset($trip->ending_mileage)){
-              $last_mileage = Mileage::whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
-              if(isset($last_mileage)){
-                  if($last_mileage < $trip->ending_mileage){
-                      $mileage = new Mileage;
-                      $mileage->user_id = Auth::user()->id;
-                      $mileage->trip_id = $trip->id;
-                      $mileage->horse_id = $trip->horse_id;
-                      $mileage->trailer_id = $trip->trailer_id;
-                      $mileage->vehicle_id = $trip->vehicle_id;
-                      $mileage->mileage = $trip->ending_mileage;
-                      $mileage->date = $trip->end_date;
-                      $mileage->category = "Trip";
-                      $mileage->position = "ending";
-                      $mileage->save();
-                  }
-              }
+            $gate_pass->type = "Trip";
+            $gate_pass->trip_id = $trip->id;
+            $gate_pass->driver_id = $trip->driver_id ? $trip->driver_id : null;
+            $gate_pass->horse_id = $trip->horse_id ? $trip->horse_id : null;
+            $gate_pass->exit = $trip->start_date;
+            $gate_pass->save();
+            
+            $trailers = $trip->trailers;
+            foreach ($trailers as $trailer) {
+                $trailer_ids[] = $trailer->id;
+            }
+            if (isset($trailer_ids)) {
+                $gate_pass->trailers()->sync($trailer_ids);
+            }
+           
+            if ($trip->vehicle_id) {
+                $vehicle = Vehicle::find($trip->vehicle_id);
+                if($vehicle){
+                     $current_mileage = $vehicle->mileage;
+                    if($this->mileage > $current_mileage){
+                        $vehicle->mileage = $this->mileage;
+                    }
+                    $vehicle->update();
+                }
+               
+
+            }elseif($trip->horse_id){
+
+                $horse = Horse::find($trip->horse_id);
+                if($horse){
+                    $current_mileage = $horse->mileage;
+                    if($this->mileage > $current_mileage){
+                        $horse->mileage = $this->mileage;
+                    }
+                    $horse->update();
+                }
+               
             }
 
+            if(isset($trip->starting_mileage)){
 
-          $expenses = Trip::find($this->trip_id)->trip_expenses;
+                $last_mileage = Mileage::whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
+                if(isset($last_mileage)){
+                    if($last_mileage < $trip->starting_mileage){
+                        $mileage = new Mileage;
+                        $mileage->user_id = Auth::user()->id;
+                        $mileage->trip_id = $trip->id;
+                        $mileage->horse_id = $trip->horse_id;
+                        $mileage->trailer_id = $trip->trailer_id;
+                        $mileage->vehicle_id = $trip->vehicle_id;
+                        $mileage->mileage = $trip->starting_mileage;
+                        $mileage->date = $trip->start_date;
+                        $mileage->category = "Trip";
+                        $mileage->position = "starting";
+                        $mileage->save();
+                    }
+                }    
+                       
+              }
+    
+              if(isset($trip->ending_mileage)){
+                $last_mileage = Mileage::whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
+                if(isset($last_mileage)){
+                    if($last_mileage < $trip->ending_mileage){
+                        $mileage = new Mileage;
+                        $mileage->user_id = Auth::user()->id;
+                        $mileage->trip_id = $trip->id;
+                        $mileage->horse_id = $trip->horse_id;
+                        $mileage->trailer_id = $trip->trailer_id;
+                        $mileage->vehicle_id = $trip->vehicle_id;
+                        $mileage->mileage = $trip->ending_mileage;
+                        $mileage->date = $trip->end_date;
+                        $mileage->category = "Trip";
+                        $mileage->position = "ending";
+                        $mileage->save();
+                    }
+                }
+              }
           
+              if(isset($trip->starting_hours)){
+
+                $last_hours = Hour::whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
+                if(isset($last_hours)){
+                    if($last_hours < $trip->starting_hours){
+                        $hours = new Hour;
+                        $hours->user_id = Auth::user()->id;
+                        $hours->trip_id = $trip->id;
+                        $hours->horse_id = $trip->horse_id;
+                        $hours->trailer_id = $trip->trailer_id;
+                        $hours->vehicle_id = $trip->vehicle_id;
+                        $hours->hours = $trip->starting_hours;
+                        $hours->date = $trip->start_date;
+                        $hours->category = "Trip";
+                        $hours->position = "starting";
+                        $hours->save();
+                    }
+                }    
+              }
+    
+              if(isset($trip->ending_hours)){
+                $last_hours = Hour::whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
+                if(isset($last_hours)){
+                    if($last_hours < $trip->ending_hours){
+                        $hours = new Hour;
+                        $hours->user_id = Auth::user()->id;
+                        $hours->trip_id = $trip->id;
+                        $hours->horse_id = $trip->horse_id;
+                        $hours->trailer_id = $trip->trailer_id;
+                        $hours->vehicle_id = $trip->vehicle_id;
+                        $hours->hours = $trip->ending_hours;
+                        $hours->date = $trip->end_date;
+                        $hours->category = "Trip";
+                        $hours->position = "ending";
+                        $hours->save();
+                    }
+                }
+              }
+
+
+            $expenses = Trip::find($this->trip_id)->trip_expenses;
+            
             if($expenses->count()>0){
                 foreach ($expenses as $trip_expense) {
 
@@ -587,7 +649,7 @@ class Show extends Component
                         $bill->user_id = Auth::user()->id;
                         $bill->bill_number = $this->billNumber();
                         $bill->trip_id = $trip->id;
-                        $bill->trip_id = $trip->horse_id;
+                        $bill->horse_id = $trip->horse_id;
                         $bill->category = "Trip Expense - Transporter Payment";
                         $bill->transporter_id = $trip_expense->transporter_id;
                         $bill->trip_expense_id = $trip_expense->id;
@@ -597,11 +659,6 @@ class Show extends Component
                             $bill->account_type_id = $account->account_type->id;
                         }
                         $bill->currency_id = $trip_expense->currency_id;
-
-                        if($trip_expense->currency_id != Auth::user()->employee->company->currency_id){
-                            $bill->exchange_rate = $trip_expense ->exchange_rate;
-                            $bill->exchange_amount = $trip_expense->exchange_amount;
-                        }
                         $bill->subtotal = $trip_expense->amount;
                         $bill->total = $trip_expense->amount;
                         $bill->balance = $trip_expense->amount;
@@ -691,306 +748,280 @@ class Show extends Component
                     
                 }
             }
- 
+            
+   
 
-     
+       
 
-              if ($trip->trailers->count()>0) {
-                  foreach ($trip->trailers as $trailer) {
-                      $trailer_regnumbers[] = $trailer->registration_number;
-                  }
-                  $regnumbers_string = implode(",",$trailer_regnumbers);
-              }
+                if ($trip->trailers->count()>0) {
+                    foreach ($trip->trailers as $trailer) {
+                        $trailer_regnumbers[] = $trailer->registration_number;
+                    }
+                    $regnumbers_string = implode(",",$trailer_regnumbers);
+                }
 
-              $user = User::find($trip->user_id);
+                $user = User::find($trip->user_id);
 
-              $transport_order = new TransportOrder;
-              $transport_order->user_id = Auth::user()->id;
-              $transport_order->trip_id = $trip->id;
-              $transport_order->transporter_id = $trip->transporter_id;
-              $transport_order->driver_id = $trip->driver_id;
-              $transport_order->horse_id = $trip->horse_id;
-              if (isset($regnumbers_string)) {
-                  $transport_order->trailer_regnumber = $regnumbers_string;
-              }
-              $transport_order->collection_point = $trip->loading_point ? $trip->loading_point->name : "";
-              $transport_order->delivery_point = $trip->offloading_point ? $trip->offloading_point->name : "";
-              $transport_order->cargo = $trip->cargo ? $trip->cargo->name : "";
-              $transport_order->weight = $trip->weight;
-              if (isset($trip->quantity)) {
-                  $transport_order->quantity = $trip->quantity;
-              }else{
-                  $transport_order->litreage = $trip->litreage;
-              }
-              $transport_order->measurement = $trip->measurement;
              
-              $transport_order->date = $trip->start_date;
-              $user = $trip->user;
-              $name =  $user->employee ? $user->employee->name : "";
-              $surname = $user->employee ? $user->employee->surname : "";
-              $transport_order->checked_by = $name . ' ' . $surname;
-              $transport_order->authorized_by = Auth::user()->employee->name . ' ' .Auth::user()->employee->surname;
-              $transport_order->save();
-           
-              $this->trip_id = $trip->id;
-              $this->driver_id = $trip->driver_id;
-              $this->horse_id = $trip->horse_id;
-              $this->transporter_id = $trip->transporter_id;
-              $this->start_date = $trip->start_date;
-              $user = $trip->user;
-              $name =  $user->employee ? $user->employee->name : "";
-              $surname = $user->employee ? $user->employee->surname : "";
-              $this->checked_by = $name . ' ' . $surname;
-              $auth_name = Auth::user()->employee->name;
-              $auth_surname =Auth::user()->employee->surname;
-              $this->authorized_by =  $auth_name. ' ' .$auth_surname;
-              if (isset($trip->quantity)) {
-                  $this->quantity = $trip->quantity;
-              }else{
-                  $this->litreage = $trip->litreage;
-              }
-              $this->measurement = $trip->measurement;
-              $this->cargo = $trip->cargo ? $trip->cargo->name : "";
-              $this->weight = $trip->weight;
-              $this->delivery_point = $trip->offloading_point ? $trip->offloading_point->name : "";
-              $this->collection_point = $trip->loading_point ? $trip->loading_point->name : "";
-              if (isset($regnumbers_string)) {
-                  $this->trailer_reg_numbers = $regnumbers_string;
-              }
-           
-              $loading_point = LoadingPoint::find($trip->loading_point_id);
-              if ( $loading_point) {
-                  $this->loading_point_email =   $loading_point->email;
-              }
              
+                $this->trip_id = $trip->id;
+                $this->driver_id = $trip->driver_id;
+                $this->horse_id = $trip->horse_id;
+                $this->transporter_id = $trip->transporter_id;
+                $this->start_date = $trip->start_date;
+                $user = $trip->user;
+                $name =  $user->employee ? $user->employee->name : "";
+                $surname = $user->employee ? $user->employee->surname : "";
+                $this->checked_by = $name . ' ' . $surname;
+                $auth_name = Auth::user()->employee->name;
+                $auth_surname =Auth::user()->employee->surname;
+                $this->authorized_by =  $auth_name. ' ' .$auth_surname;
+                if (isset($trip->quantity)) {
+                    $this->quantity = $trip->quantity;
+                }else{
+                    $this->litreage = $trip->litreage;
+                }
+                $this->measurement = $trip->measurement;
+                $this->cargo = $trip->cargo ? $trip->cargo->name : "";
+                $this->weight = $trip->weight;
+                $this->delivery_point = $trip->offloading_point ? $trip->offloading_point->name : "";
+                $this->collection_point = $trip->loading_point ? $trip->loading_point->name : "";
+                if (isset($regnumbers_string)) {
+                    $this->trailer_reg_numbers = $regnumbers_string;
+                }
+             
+                $loading_point = LoadingPoint::find($trip->loading_point_id);
+                if ( $loading_point) {
+                    $this->loading_point_email =   $loading_point->email;
+                }
+               
 
-              if ( isset($this->loading_point_email) && $this->loading_point_email != "") {
-                  $data = array(
-                      'email'=> $this->loading_point_email,
-                      'date'=> $this->start_date,
-                      'horse'=> Horse::find($this->horse_id),
-                      'driver'=> Driver::find($this->driver_id),
-                      'transporter'=> Transporter::find($this->transporter_id),
-                      'trip'=> Trip::find($this->trip_id),
-                      'regnumbers'=> $this->trailer_reg_numbers ? $this->trailer_reg_numbers : "",
-                      'authorized_by'=> $this->authorized_by,
-                      'checked_by'=> $this->checked_by,
-                      'collection_point'=> $this->collection_point,
-                      'delivery_point'=> $this->delivery_point,
-                      'cargo'=> $this->cargo,
-                      'litreage'=> $this->litreage,
-                      'quantity'=> $this->quantity,
-                      'measurement'=> $this->measurement,
-                      'weight'=> $this->weight,
-                     );
-      
-                     if (isset(Auth::user()->company)) {
-                      $company = Auth::user()->company;
-                      }elseif (isset(Auth::user()->employee->company)) {
-                          $company = Auth::user()->employee->company;
-                      }
-      
-                     Mail::to($this->loading_point_email)->send(new TransportOrderMail($data, $company));
-              }
-              
-
-              if ($trip->trip_status != "Offloaded" && $trip->trip_status != "Cancelled" && $trip->trip_status != "Scheduled") {
-                  
-                  $horse = Horse::withTrashed()->find($trip->horse_id);
-                  if(isset($horse)){
-                      $horse->status = 0;
-                      $horse->update();
-                  }
-
-                  $vehicle = Vehicle::withTrashed()->find($trip->vehicle_id);
-                  if(isset($vehicle)){
-                      $vehicle->status = 0;
-                      $vehicle->update();
-                  }
-  
-                  $driver = Driver::withTrashed()->find($trip->driver_id);
-                  if(isset($driver)){
-                      $driver->status = 0;
-                      $driver->update();
-                  }
-  
-                  if ($trip->trailers->count()>0) {
-                      foreach ($trip->trailers as $trailer) {
-                          $trailer = Trailer::withTrashed()->find($trailer->id);
-                          $trailer->status = 0;
-                          $trailer->update();
-                      }
-                  }
-  
-              }
+                if ( isset($this->loading_point_email) && $this->loading_point_email != "") {
+                    $data = array(
+                        'email'=> $this->loading_point_email,
+                        'date'=> $this->start_date,
+                        'horse'=> Horse::find($this->horse_id),
+                        'driver'=> Driver::find($this->driver_id),
+                        'transporter'=> Transporter::find($this->transporter_id),
+                        'trip'=> Trip::find($this->trip_id),
+                        'regnumbers'=> $this->trailer_reg_numbers ? $this->trailer_reg_numbers : "",
+                        'authorized_by'=> $this->authorized_by,
+                        'checked_by'=> $this->checked_by,
+                        'collection_point'=> $this->collection_point,
+                        'delivery_point'=> $this->delivery_point,
+                        'cargo'=> $this->cargo,
+                        'litreage'=> $this->litreage,
+                        'quantity'=> $this->quantity,
+                        'measurement'=> $this->measurement,
+                        'weight'=> $this->weight,
+                       );
         
+                       if (isset(Auth::user()->company)) {
+                        $company = Auth::user()->company;
+                        }elseif (isset(Auth::user()->employee->company)) {
+                            $company = Auth::user()->employee->company;
+                        }
+        
+                       Mail::to($this->loading_point_email)->send(new TransportOrderMail($data, $company));
+                }
+                
 
-
-              if ($this->customer_updates == TRUE) {
-
-                  $this->customer_email = $this->trip->customer->email;
-                 
-                  if (isset($this->customer_email) && $this->customer_email != "") {
-                  Mail::to($this->customer_email)->send(new TripUpdatesMail($this->trip, $this->company));
-                   }
-               }
-
-
-              if ($this->trip->fuel_order == True) {
-
-                  $fuel = Fuel::find($this->trip->fuel->id);
-                  $fuel->authorization = $this->authorize;
-                  $fuel->authorized_by_id = Auth::user()->id;
-                  $fuel->comments = $this->comments;
-                  $fuel->update();
-          
-                  if ($this->authorize == "approved") {
-
-                      // sending fuel order email to supplier
-                      $trip = $fuel->trip;
-
-                      if ($fuel->horse) {
-                          $horse = Horse::find($fuel->horse_id);
-                        
-                          if(is_numeric($fuel->quantity)){
-                              $horse->fuel_balance = $horse->fuel_balance + $fuel->quantity;
-                          }
-                         
-                          $current_mileage = $horse->mileage;
-                          if ($fuel->odometer >  $current_mileage) {
-                              $horse->mileage = $fuel->odometer;
-                          }
-                        
-                          $horse->update();
-                      }
-                      if ($fuel->vehicle) {
-                          $vehicle = Vehicle::find($fuel->vehicle_id);
-                          if(is_numeric($fuel->quantity)){
-                              $vehicle->fuel_balance = $vehicle->fuel_balance + $fuel->quantity;
-                          }
-                         
-                          $current_mileage = $vehicle->mileage;
-                          if ($fuel->odometer >  $current_mileage) {
-                              $vehicle->mileage = $fuel->odometer;
-                          }
-                        
-                          $vehicle->update();
-          
-                      }
-
-                      $user = User::find($trip->user_id);
-                      $this->fuel_station_email = $fuel->container ? $fuel->container->email : "";
-                      $this->station_name = $fuel->container ? $fuel->container->name : "";
-                      $this->fuel_order_date = $fuel->datze;
-                      $this->order_number = $fuel->order_number;
-                      $this->driver = $fuel->driver;
-                      $this->horse = $fuel->horse;
-                      $this->collection_point = $fuel->trip->loading_point ? $fuel->trip->loading_point->name : "";
-                      $this->delivery_point = $fuel->trip->offloading_point ? $fuel->trip->offloading_point->name : "";
-                      $this->fuel_type = $fuel->container ? $fuel->container->fuel_type : "";
-                      $this->fuel_order_quantity = $fuel->quantity;
-                      $this->authorized_by = Auth::user()->employee->name . ' ' . Auth::user()->employee->surname;
-                      $this->checked_by = $fuel->user->employee->name . ' ' . $fuel->user->employee->surname;
-                      $this->regnumber = $fuel->horse ? $fuel->horse->registration_number : "";
-          
-                      if (isset($this->fuel_station_email) && $this->fuel_station_email != "") {
-                      $data = array(
-                          'station_email'=> $this->fuel_station_email,
-                          'station_name'=> $this->station_name,
-                          'date'=> $this->fuel_order_date,
-                          'order_number'=> $this->order_number,
-                          'driver'=> $this->driver,
-                          'horse'=> $this->horse,
-                          'regnumber'=> $this->regnumber,
-                          'authorized_by'=> $this->authorized_by,
-                          'checked_by'=> $this->checked_by,
-                          'collection_point'=> $this->collection_point,
-                          'delivery_point'=> $this->delivery_point,
-                          'fuel_type'=> $this->fuel_type,
-                          'quantity'=> $this->fuel_order_quantity,
-                         );
-          
-                         if (isset(Auth::user()->company)) {
-                          $company = Auth::user()->company;
-                          }elseif (isset(Auth::user()->employee->company)) {
-                              $company = Auth::user()->employee->company;
-                          }
-          
-                         Mail::to($this->fuel_station_email)->send(new FuelOrderMail($data, $company));
-                      }
-
-                      $container = Container::find($fuel->container_id);
-
-                      if (isset($container)) {
-                          if(is_numeric($container->balance) && is_numeric($fuel->quantity) &&  $container->balance >= $fuel->quantity){
-                              $container->balance = $container->balance - $fuel->quantity;
-                              if(is_numeric($container->account_balance) && is_numeric($fuel->amount) && $container->account_balance >= $fuel->amount){
-                                  $container->account_balance = $container->account_balance - $fuel->amount;
-                              }
-                              $container->update();
-                          }
-                      }
-                     
+                if ($trip->trip_status != "Offloaded" && $trip->trip_status != "Cancelled" && $trip->trip_status != "Scheduled") {
                     
-                  }
-              }
+                    $horse = Horse::withTrashed()->find($trip->horse_id);
+                    if($horse){
+                        $horse->status = 0;
+                        $horse->update();
+                    }
 
-              if ($trip->fuel) {
-
-              $this->dispatchBrowserEvent('hide-authorizationModal');
-              $this->resetInputFields();
-              $this->dispatchBrowserEvent('alert',[
-                  'type'=>'success',
-                  'message'=>"Trip & Fuel Order Approved Successfully!!"
-              ]);
-             return redirect()->route('trips.approved');
-          }else {
-              $this->dispatchBrowserEvent('hide-authorizationModal');
-              $this->resetInputFields();
-              $this->dispatchBrowserEvent('alert',[
-                  'type'=>'success',
-                  'message'=>"Trip Approved Successfully!!"
-              ]);
-             return redirect()->route('trips.approved');
-          }
+                    $vehicle = Vehicle::withTrashed()->find($trip->vehicle_id);
+                    if($vehicle){
+                        $vehicle->status = 0;
+                        $vehicle->update();
+                    }
+    
+                    $driver = Driver::withTrashed()->find($trip->driver_id);
+                    if(isset($driver)){
+                        $driver->status = 0;
+                        $driver->update();
+                    }
+    
+                    if ($trip->trailers->count()>0) {
+                        foreach ($trip->trailers as $trailer) {
+                            $trailer = Trailer::withTrashed()->find($trailer->id);
+                            $trailer->status = 0;
+                            $trailer->update();
+                        }
+                    }
+    
+                }
           
-      }else {
-          if ($trip->fuel) {
-              $this->dispatchBrowserEvent('hide-authorizationModal');
-              $this->resetInputFields();
-              $this->dispatchBrowserEvent('alert',[
-                  'type'=>'success',
-                  'message'=>"Trip & Fuel Order Rejected Successfully!!"
-              ]);
-              return redirect()->route('trips.rejected');
-          }else{
-
-              $this->dispatchBrowserEvent('hide-authorizationModal');
-              $this->resetInputFields();
-              $this->dispatchBrowserEvent('alert',[
-                  'type'=>'success',
-                  'message'=>"Trip Rejected Successfully!!"
-              ]);
-              return redirect()->route('trips.rejected');
-          }
-        
 
 
+                if ($this->customer_updates == TRUE) {
 
-      }
+                    $this->customer_email = $this->trip->customer->email;
+                   
+                    if (isset($this->customer_email) && $this->customer_email != "") {
+                    Mail::to($this->customer_email)->send(new TripUpdatesMail($this->trip, $this->company));
+                     }
+                 }
 
-    //     }
-    //     catch(\Exception $e){
-    //     // Set Flash Message
-    //     $this->dispatchBrowserEvent('alert',[
-    //         'type'=>'error',
-    //         'message'=>"Something goes wrong while updating trip!!"
-    //     ]);
-    // }
 
-    });
+                if ($this->trip->fuel_order == True) {
 
-      }
+                    $fuel = Fuel::find($this->trip->fuel->id);
+                    $fuel->authorization = $this->authorize;
+                    $fuel->authorized_by_id = Auth::user()->id;
+                    $fuel->comments = $this->comments;
+                    $fuel->update();
+            
+                    if ($this->authorize == "approved") {
+
+                        // sending fuel order email to supplier
+                        $trip = $fuel->trip;
+
+                        if ($fuel->horse) {
+
+                            $horse = Horse::find($fuel->horse_id);
+
+                            if($horse){
+                                if(is_numeric($fuel->quantity)){
+                                    $horse->fuel_balance = $horse->fuel_balance + $fuel->quantity;
+                                }
+                                    $current_mileage = $horse->mileage;
+                                if ($fuel->odometer >  $current_mileage) {
+                                    $horse->mileage = $fuel->odometer;
+                                }
+                            
+                                $horse->update();
+                            }
+                            
+                        }
+                        if ($fuel->vehicle) {
+                            $vehicle = Vehicle::find($fuel->vehicle_id);
+                            if($vehicle){
+                                if(is_numeric($fuel->quantity)){
+                                    $vehicle->fuel_balance = $vehicle->fuel_balance + $fuel->quantity;
+                                }
+                            
+                                $current_mileage = $vehicle->mileage;
+                                if ($fuel->odometer >  $current_mileage) {
+                                    $vehicle->mileage = $fuel->odometer;
+                                }
+                            
+                                $vehicle->update();
+                            }
+                           
+            
+                        }
+
+                        $user = User::find($trip->user_id);
+                        $this->fuel_station_email = $fuel->container ? $fuel->container->email : "";
+                        $this->station_name = $fuel->container ? $fuel->container->name : "";
+                        $this->fuel_order_date = $fuel->datze;
+                        $this->order_number = $fuel->order_number;
+                        $this->driver = $fuel->driver;
+                        $this->horse = $fuel->horse;
+                        $this->collection_point = $fuel->trip->loading_point ? $fuel->trip->loading_point->name : "";
+                        $this->delivery_point = $fuel->trip->offloading_point ? $fuel->trip->offloading_point->name : "";
+                        $this->fuel_type = $fuel->container ? $fuel->container->fuel_type : "";
+                        $this->fuel_order_quantity = $fuel->quantity;
+                        $this->authorized_by = Auth::user()->employee->name . ' ' . Auth::user()->employee->surname;
+                        $this->checked_by = $fuel->user->employee->name . ' ' . $fuel->user->employee->surname;
+                        $this->regnumber = $fuel->horse ? $fuel->horse->registration_number : "";
+            
+                        if (isset($this->fuel_station_email) && $this->fuel_station_email != "") {
+                        $data = array(
+                            'station_email'=> $this->fuel_station_email,
+                            'station_name'=> $this->station_name,
+                            'date'=> $this->fuel_order_date,
+                            'order_number'=> $this->order_number,
+                            'driver'=> $this->driver,
+                            'horse'=> $this->horse,
+                            'regnumber'=> $this->regnumber,
+                            'authorized_by'=> $this->authorized_by,
+                            'checked_by'=> $this->checked_by,
+                            'collection_point'=> $this->collection_point,
+                            'delivery_point'=> $this->delivery_point,
+                            'fuel_type'=> $this->fuel_type,
+                            'quantity'=> $this->fuel_order_quantity,
+                           );
+            
+                           if (isset(Auth::user()->company)) {
+                            $company = Auth::user()->company;
+                            }elseif (isset(Auth::user()->employee->company)) {
+                                $company = Auth::user()->employee->company;
+                            }
+            
+                           Mail::to($this->fuel_station_email)->send(new FuelOrderMail($data, $company));
+                        }
+
+                        $container = Container::find($fuel->container_id);
+
+                        if (isset($container)) {
+                            if(is_numeric($container->balance) && is_numeric($fuel->quantity) && $container->balance >= $fuel->quantity){
+                                $container->balance = $container->balance - $fuel->quantity;
+                                if(is_numeric($container->account_balance) && is_numeric($fuel->amount)){
+                                    $container->account_balance = $container->account_balance - $fuel->amount;
+                                }
+                                $container->update();
+                            }
+                        }
+                       
+                      
+                    }
+                }
+
+                if ($trip->fuel) {
+
+                $this->dispatchBrowserEvent('hide-authorizationModal');
+                $this->resetInputFields();
+                $this->dispatchBrowserEvent('alert',[
+                    'type'=>'success',
+                    'message'=>"Trip & Fuel Order Approved Successfully!!"
+                ]);
+               return redirect()->route('trips.approved');
+            }else {
+                $this->dispatchBrowserEvent('hide-authorizationModal');
+                $this->resetInputFields();
+                $this->dispatchBrowserEvent('alert',[
+                    'type'=>'success',
+                    'message'=>"Trip Approved Successfully!!"
+                ]);
+               return redirect()->route('trips.approved');
+            }
+            
+        }else {
+            if ($trip->fuel) {
+                $this->dispatchBrowserEvent('hide-authorizationModal');
+                $this->resetInputFields();
+                $this->dispatchBrowserEvent('alert',[
+                    'type'=>'success',
+                    'message'=>"Trip & Fuel Order Rejected Successfully!!"
+                ]);
+                return redirect()->route('trips.rejected');
+            }else{
+
+                $this->dispatchBrowserEvent('hide-authorizationModal');
+                $this->resetInputFields();
+                $this->dispatchBrowserEvent('alert',[
+                    'type'=>'success',
+                    'message'=>"Trip Rejected Successfully!!"
+                ]);
+                return redirect()->route('trips.rejected');
+            }
+          
+
+
+
+        }
+
+
+
+        });
+
+    }
 
       public function updatedTripStatusDate($date){
         if(isset($this->selectedStatus) && ($this->selectedStatus == "Offloaded" || $this->selectedStatus == "Loaded")){
