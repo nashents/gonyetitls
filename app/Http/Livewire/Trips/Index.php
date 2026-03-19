@@ -41,6 +41,11 @@ class Index extends Component
 
     protected $paginationTheme = 'bootstrap';
 
+    public function paginationView()
+    { 
+        return 'vendor.pagination.bootstrap-custom';
+    }
+
     private $trips;
     public $trip_id;
     public $status;
@@ -65,13 +70,33 @@ class Index extends Component
     public $description;
     public $suburb;
     public $street_address;
+    public $clear_filters;
 
     public $user;
     public $employee;
+    public $perPage = 10;
 
 
     public $search;
-    protected $queryString = ['search'];
+    protected $queryString = [
+        'search'                 => ['except' => ''],
+        'trip_filter'            => ['except' => ''],
+        'from'                   => ['except' => ''],
+        'to'                     => ['except' => ''],
+        'perPage'                => ['except' => 10],
+        'page'                   => ['except' => 1],
+        'filter_transporter_id'  => ['except' => ''],
+        'filter_horse_id'        => ['except' => ''],
+        'filter_driver_id'       => ['except' => ''],
+        'filter_currency_id'     => ['except' => ''],
+        'filter_cargo_id'        => ['except' => ''],
+        'filter_route_id'        => ['except' => ''],
+        'filter_trip_type_id'    => ['except' => ''],
+        'filter_customer_id'     => ['except' => ''],
+        'filter_consignee_id'    => ['except' => ''],
+        'filter_from'            => ['except' => ''],
+        'filter_to'              => ['except' => ''],
+    ];
 
     public $title;
     public $file;
@@ -241,6 +266,28 @@ class Index extends Component
     public $turnover = 0;
     public $cargo_type;
     public $importFile;
+
+    public function clearFilters(): void
+    {
+        $this->search              = '';
+        $this->trip_filter         = 'created_at'; // ← reset to default, not ''
+        $this->from                = '';
+        $this->to                  = '';
+        $this->filter_transporter_id = null;
+        $this->filter_horse_id       = null;
+        $this->filter_driver_id      = null;
+        $this->filter_currency_id    = null;
+        $this->filter_cargo_id       = null;
+        $this->filter_route_id       = null;
+        $this->filter_trip_type_id   = null;
+        $this->filter_customer_id    = null;
+        $this->filter_consignee_id   = null;
+        $this->filter_from           = null;
+        $this->filter_to             = null;
+        $this->filter_trip_status    = null;
+
+        $this->resetPage();
+    }
    
         
     public function exportPodTrackerExcel(Excel $excel){
@@ -317,6 +364,40 @@ class Index extends Component
         ]);
 
         return redirect(request()->header('Referer'));
+    }
+
+     public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingStatusFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingRangeFrom()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingRangeTo()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingPerPage()
+    {
+        $this->resetPage();
+    }
+
+    public function gotoPageNumber($page)
+    {
+        $page = (int) $page;
+
+        if ($page > 0) {
+            $this->gotoPage($page);
+        }
     }
     
 
@@ -995,10 +1076,7 @@ class Index extends Component
 
     
    
-    public function updatingSearch()
-    {
-        $this->resetPage();
-    }
+ 
 
 
     public function calculateCPK($id){
@@ -1173,6 +1251,7 @@ class Index extends Component
 
        
         $withRelations = [
+            'podDocument',
             'breakdowns',
             'breakdown_assignments',
             'trip_destinations',
@@ -1349,7 +1428,7 @@ class Index extends Component
         $this->expense_currencies = \App\Models\Currency::whereIn('id', $this->expenseTotalsByCurrency->keys())->get();
 
             return view('livewire.trips.index', [
-                'trips' => $trips->paginate(10),
+                'trips' => $trips->paginate($this->perPage),
                 'trip_filter' => $this->trip_filter,
                 'totalsByCurrency' => $this->totalsByCurrency,
                 'trips_currencies' => $this->trips_currencies,

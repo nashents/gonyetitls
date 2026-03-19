@@ -6,7 +6,7 @@
 
     <ul class="dropdown-menu">
         <li>
-            <a href="{{ route('trips.show', $trip->id) }}">
+            <a href="{{ route('trips.show', ['trip' => $trip->id, 'return' => urlencode(request()->fullUrl())]) }}">
                 <i class="fas fa-eye color-default"></i> View
             </a>
         </li>

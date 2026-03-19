@@ -102,6 +102,12 @@
                                             </div>
                                             <!-- /input-group -->
                                         </div>
+                                        <div class="col-lg-3" >
+                                            <div class="input-group">
+                                               <a href="#" wire:click.prevent="clearFilters()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-refresh"></i>CLEAR FILTERS</a>
+                                            </div>
+                                            <!-- /input-group -->
+                                        </div>
                                         <!-- /input-group -->
                                     </div>
                                     <div class="mb-15 mt-15">
@@ -554,14 +560,8 @@
                                         </tbody>
                                     </table>
                                 {{-- </div> --}}
-                                  
-                                    <nav class="text-center" style="float: right">
-                                        <ul class="pagination rounded-corners">
-                                            @if (isset($trips))
-                                                {{ $trips->links() }} 
-                                            @endif 
-                                        </ul>
-                                    </nav>    
+                 
+                                    {{ $trips->links() }}
 
                                 <!-- /.col-md-12 -->
                             </div>

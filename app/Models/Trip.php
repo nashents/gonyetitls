@@ -207,4 +207,14 @@ class Trip extends Model implements Auditable
             ->where('title', 'POD')
             ->latestOfMany(); // requires created_at; otherwise remove this line
     }
+
+    public function tripDocuments()
+    {
+        return $this->hasMany(TripDocument::class, 'trip_id');
+    }
+
+    public function podDocument()
+    {
+        return $this->hasOne(TripDocument::class, 'trip_id')->where('title', 'POD');
+    }
 }
