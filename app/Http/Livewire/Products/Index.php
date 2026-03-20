@@ -35,10 +35,21 @@ class Index extends Component
     public $search;
     public $department;
     public $importFile;
-    protected $queryString = ['search'];
+    protected $queryString = [
+        'search',
+        'perPage'                => ['except' => 10],
+        'page'                   => ['except' => 1],
+        ];
     private $products;
     public $base_currency;
     public $company;
+    public $perPage = 10;
+    
+    public function paginationView()
+    { 
+        return 'vendor.pagination.bootstrap-custom';
+    }
+    
 
 
     public function mount($category){
@@ -190,7 +201,7 @@ class Index extends Component
                 });
             })
             ->orderBy('name', 'asc')
-            ->paginate(10);
+            ->paginate($this->perPage);
 
         return view('livewire.products.index', [
             'products' => $products,

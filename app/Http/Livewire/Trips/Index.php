@@ -45,6 +45,7 @@ class Index extends Component
     { 
         return 'vendor.pagination.bootstrap-custom';
     }
+    
 
     private $trips;
     public $trip_id;
