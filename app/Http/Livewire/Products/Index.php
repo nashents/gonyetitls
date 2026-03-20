@@ -73,7 +73,7 @@ class Index extends Component
       public function importProducts(){
       
         $file = $this->importFile;
-        $import = new PastelInventoryImport($this->department);
+        $import = new PastelInventoryImport;
         $import->import($file);
 
         $this->dispatchBrowserEvent('hide-importModal');
@@ -167,26 +167,33 @@ class Index extends Component
 
     public function render()
     {
-        if (isset($this->search)) {
-            return view('livewire.products.index',[
-                'products' => Product::query()->with('brand','category','category_value')->where('department', $this->department)->where('status',1)
-                ->where('product_number','like', '%'.$this->search.'%')
-                ->orWhere('name','like', '%'.$this->search.'%')
-                ->orWhereHas('category', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('category_value', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('brand', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orderBy('name','asc')->paginate(10)
-            ]);
-        }else{
-            return view('livewire.products.index',[
-                'products' => Product::query()->with('brand','category','category_value')->where('department', $this->department)->where('status',1)->orderBy('name','asc')->paginate(10)
-            ]);
-        }
+        $products = Product::query()
+            ->with(['brand', 'category', 'category_value'])
+            ->where('department', $this->department)
+            ->where('status', 1)
+            ->when(filled($this->search), function ($query) {
+                $search = '%' . trim($this->search) . '%';
+
+                $query->where(function ($q) use ($search) {
+                    $q->where('product_number', 'like', $search)
+                        ->orWhere('name', 'like', $search)
+                        ->orWhere('identification_number', 'like', $search)
+                        ->orWhereHas('category', function ($categoryQuery) use ($search) {
+                            $categoryQuery->where('name', 'like', $search);
+                        })
+                        ->orWhereHas('category_value', function ($categoryValueQuery) use ($search) {
+                            $categoryValueQuery->where('name', 'like', $search);
+                        })
+                        ->orWhereHas('brand', function ($brandQuery) use ($search) {
+                            $brandQuery->where('name', 'like', $search);
+                        });
+                });
+            })
+            ->orderBy('name', 'asc')
+            ->paginate(10);
+
+        return view('livewire.products.index', [
+            'products' => $products,
+        ]);
     }
 }

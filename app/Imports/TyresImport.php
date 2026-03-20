@@ -329,7 +329,15 @@ WithBatchInserts
 
                     for ($i = 0; $i < $quantity; $i++) {
 
-                    $tyre = Tyre::firstOrNew(['serial_number' => $serial_number]);
+                    $tyre = Tyre::firstOrNew([
+                        'serial_number' => $serial_number
+                        ]);
+
+                    
+                    if (!$tyre->exists) {
+                        $tyre->tyre_number = $this->tyreNumber();
+                    }
+
                     $tyre->fill([
                         'currency_id'              => $currency?->id,
                         'store_id'                 => $store?->id,
@@ -344,6 +352,8 @@ WithBatchInserts
                         'aspect_ratio'             => $row->get('aspect_ratio'),
                         'diameter'                 => $row->get('diameter'),
                         'qty'                      => 1,
+                        'weight'                      => 1,
+                        'balance'                      => 1,
                         'purchase_date'            => $this->parseExcelDate($row->get('purchase_date')),
                         'status'                   => 1,
                         'disposed'                 => 0,

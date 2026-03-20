@@ -170,28 +170,11 @@
                 <form wire:submit.prevent="importProducts()" method="POST" enctype="multipart/form-data">
                   
                 <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                                <div class="form-group">
-                                <label for="name">Categories<span class="required" style="color: red">*</span></label>
-                                <select class="form-control" wire:model.debounce.300ms="department" disabled>
-                                    <option value="">Select Option</option>
-                                    <option value="asset">Assets</option>
-                                    <option value="inventory">Stores Inventory</option>
-                                    <option value="tyre">Tyres</option>
-                                </select>
-                                @error('department') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="name">Upload Products Excel File<span class="required" style="color: red">*</span></label>
-                                <input type="file" class="form-control" wire:model.debounce.300ms="importFile"placeholder="Upload Products File" required>
-                                @error('importFile') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                            </div>
-                        </div>
+                   <div class="form-group">
+                        <label for="name">Upload Products Excel File<span class="required" style="color: red">*</span></label>
+                        <input type="file" class="form-control" wire:model.debounce.300ms="importFile"placeholder="Upload Products File" required>
+                        @error('importFile') <span class="error" style="color:red">{{ $message }}</span> @enderror
                     </div>
-                 
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group" role="group">

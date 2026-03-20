@@ -123,6 +123,7 @@ class DatabaseSeeder extends Seeder
         $this->call(CriterionSeeder::class);
         $this->call(CheckSeeder::class);
         $this->call(PublicHolidaySeeder::class);
+        $this->call(MenuRegistrySeeder::class);
      
     }
 }

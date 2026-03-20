@@ -128,7 +128,7 @@ class Index extends Component
                     ->orWhere('total', 'like', "%{$search}%")
                     ->orWhere('subtotal', 'like', "%{$search}%")
                     ->orWhereHas('product', function ($q2) use ($search) {
-                        $q2->where('name', 'like', "%{$search}%");
+                        $q2->where('name', 'like', "%{$search}%")->orWhere('identification_number', 'like', "%{$search}%");
                     })
                     ->orWhereHas('product.brand', function ($q2) use ($search) {
                         $q2->where('name', 'like', "%{$search}%");
