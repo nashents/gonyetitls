@@ -487,15 +487,14 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="customer"><a href="{{ route('measurements.index') }}" target="_blank" style="color: blue">Measurements</a></label>
-                                      <select class="form-control" wire:model.debounce.300ms="measurement" >
-                                          <option value="">Select Measurement</option>
-                                              @foreach ($solid_measurements as $measurement)
-                                                  <option value="{{ $measurement->name }}">{{ $measurement->name }}</option>
-                                              @endforeach
-                                      </select>
-                                        @error('measurement') <span class="text-danger error">{{ $message }}</span>@enderror
-                                        <small>  <a href="{{ route('measurements.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Measurement</a></small> <a href="#" wire:click.prevent="refresh('measurements')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                        <label for="customer">Units Of Measure</label>
+                                        <select class="form-control" wire:model.debounce.300ms="units_of_measure_id" >
+                                            <option value="">Select Unit Of Measure</option>
+                                                @foreach ($units_of_measures as $units_of_measure)
+                                                    <option value="{{ $units_of_measure->id }}">{{ $units_of_measure->name }} {{ $units_of_measure->abbreviation ? "(".$units_of_measure->abbreviation.")" : "" }}</option>
+                                                @endforeach
+                                        </select>
+                                        @error('units_of_measure_id') <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>
                                 </div>
                                 @elseif ($cargo_type == "Liquid")
@@ -516,15 +515,14 @@
                               
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label for="customer"><a href="{{ route('measurements.index') }}" target="_blank" style="color: blue">Measurements</a></label>
-                                      <select class="form-control" wire:model.debounce.300ms="measurement">
-                                          <option value="">Select Measurement</option>
-                                          @foreach ($liquid_measurements as $measurement)
-                                          <option value="{{ $measurement->name }}">{{ $measurement->name }}</option>
-                                      @endforeach
-                                      </select>
-                                        @error('measurement') <span class="text-danger error">{{ $message }}</span>@enderror
-                                        <small>  <a href="{{ route('measurements.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Measurement</a></small> <a href="#" wire:click.prevent="refresh('measurements')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                        <label for="customer">Units Of Measure</label>
+                                        <select class="form-control" wire:model.debounce.300ms="units_of_measure_id" >
+                                            <option value="">Select Unit Of Measure</option>
+                                                @foreach ($units_of_measures as $units_of_measure)
+                                                    <option value="{{ $units_of_measure->id }}">{{ $units_of_measure->name }} {{ $units_of_measure->abbreviation ? "(".$units_of_measure->abbreviation.")" : "" }}</option>
+                                                @endforeach
+                                        </select>
+                                        @error('units_of_measure_id') <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>
                                 </div>
                                 @endif
@@ -996,14 +994,14 @@
                                                     </div>
                                                     <div class="col-md-3">
                                                         <div class="form-group">
-                                                            <label for="customer"><a href="{{ route('measurements.index') }}" target="_blank" style="color: blue">Measurements</a></label>
-                                                            <select class="form-control" wire:model.debounce.300ms="measurement" >
-                                                                <option value="">Select Measurement</option>
-                                                                    @foreach ($solid_measurements as $measurement)
-                                                                        <option value="{{ $measurement->name }}">{{ $measurement->name }}</option>
+                                                            <label for="customer">Units Of Measure</label>
+                                                            <select class="form-control" wire:model.debounce.300ms="units_of_measure_id" >
+                                                                <option value="">Select Unit Of Measure</option>
+                                                                    @foreach ($units_of_measures as $units_of_measure)
+                                                                        <option value="{{ $units_of_measure->id }}">{{ $units_of_measure->name }} {{ $units_of_measure->abbreviation ? "(".$units_of_measure->abbreviation.")" : "" }}</option>
                                                                     @endforeach
                                                             </select>
-                                                            @error('measurement') <span class="text-danger error">{{ $message }}</span>@enderror
+                                                            @error('units_of_measure_id') <span class="text-danger error">{{ $message }}</span>@enderror
                                                         </div>
                                                     </div>
                                                 @elseif($cargo_type == "Liquid")

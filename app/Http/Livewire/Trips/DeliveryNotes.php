@@ -7,10 +7,10 @@ use App\Models\Currency;
 use App\Models\DeliveryNote;
 use App\Models\Driver;
 use App\Models\Horse;
-use App\Models\Measurement;
 use App\Models\Trailer;
 use App\Models\Trip;
 use App\Models\TripStatus;
+use App\Models\UnitsOfMeasure;
 use App\Models\Vehicle;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -52,7 +52,7 @@ class DeliveryNotes extends Component
     public $deliver_point;
     public $weight;
     public $cargo;
-    public $measurement;
+    public $units_of_measure;
     public $litreage;
     public $quantity;
     public $authorized_by;
@@ -183,7 +183,7 @@ class DeliveryNotes extends Component
     public $department_names;
     public $rank_names;
     public $calculation_measurement;
-    public $measurements;
+    public $units_of_measures;
 
     public $active_tab;
 
@@ -200,8 +200,8 @@ class DeliveryNotes extends Component
         $this->currency = Currency::with('trips')->find($this->trip->currency_id); 
         $this->currency_id = $this->trip->currency_id; 
         $this->currencies = Currency::with('trips')->orderBy('name','asc')->get(); 
-        $this->measurements = Measurement::orderBy('name','asc')->get(); 
-        $this->measurement = $this->trip->measurement; 
+        $this->units_of_measures = UnitsOfMeasure::orderBy('name','asc')->get(); 
+        $this->units_of_measure = $this->trip->units_of_measure; 
 
         $departments = $this->employee->departments;
         foreach($departments as $department){
@@ -235,7 +235,7 @@ class DeliveryNotes extends Component
         $this->starting_mileage = Null;
         $this->ending_hours = Null;
         $this->starting_hours = Null;
-        $this->measurement = Null;
+        $this->units_of_measure = Null;
         $this->distance = Null;
         $this->loaded_quantity = Null;
         $this->loaded_litreage = Null;
@@ -311,7 +311,7 @@ class DeliveryNotes extends Component
       $delivery_note = $this->delivery_note;
 
       if ($delivery_note) {
-          $this->measurement = $delivery_note->measurement;
+          $this->units_of_measure = $delivery_note->units_of_measure;
           $this->distance = $delivery_note->distance;
           $this->loaded_quantity = $delivery_note->loaded_quantity;
           $this->loaded_litreage = $delivery_note->loaded_litreage;
@@ -356,7 +356,7 @@ class DeliveryNotes extends Component
           $delivery_note = new DeliveryNote;
           $delivery_note->user_id = Auth::user()->id;
           $delivery_note->trip_id = $trip->id;
-          $delivery_note->measurement = $trip->measurement;
+          $delivery_note->units_of_measure = $trip->units_of_measure;
           $delivery_note->distance = $trip->distance;
           $delivery_note->loaded_quantity = $trip->quantity;
           $delivery_note->loaded_litreage = $trip->litreage;
@@ -380,7 +380,7 @@ class DeliveryNotes extends Component
           $delivery_note->comments = $this->comments;
           $delivery_note->save();
 
-          $this->measurement = $delivery_note->measurement;
+          $this->units_of_measure = $delivery_note->units_of_measure;
           $this->distance = $delivery_note->distance;
           $this->loaded_quantity = $delivery_note->loaded_quantity;
           $this->loaded_litreage = $delivery_note->loaded_litreage;
@@ -493,7 +493,7 @@ class DeliveryNotes extends Component
 
           $delivery_note = $this->delivery_note;
           if (isset($delivery_note)) {
-              $delivery_note->measurement = $this->measurement;
+              $delivery_note->units_of_measure = $this->units_of_measure;
               $delivery_note->loaded_quantity = $this->loaded_quantity;
               $delivery_note->distance = $this->distance;
               $delivery_note->loaded_litreage = $this->loaded_litreage;
@@ -521,7 +521,7 @@ class DeliveryNotes extends Component
               $delivery_note = new DeliveryNote;
               $delivery_note->user_id = Auth::user()->id;
               $delivery_note->trip_id = $trip->id;
-              $delivery_note->measurement = $this->measurement;
+              $delivery_note->units_of_measure = $this->units_of_measure;
               $delivery_note->loaded_quantity = $this->loaded_quantity;
               $delivery_note->distance = $this->distance;
               $delivery_note->loaded_litreage = $this->loaded_litreage;

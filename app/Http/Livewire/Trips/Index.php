@@ -50,7 +50,7 @@ class Index extends Component
     private $trips;
     public $trip_id;
     public $status;
-    public $measurement;
+    public $units_of_measure_id;
  
     public $sea;
     public $loaded;
@@ -143,6 +143,7 @@ class Index extends Component
     public $destinations;
     public $routes;
   
+    
     public $trip_types;
    
     public $filter_trip_status;
@@ -428,7 +429,7 @@ class Index extends Component
         $this->starting_mileage = Null;
         $this->ending_hours = Null;
         $this->starting_hours = Null;
-        $this->measurement = Null;
+        $this->units_of_measure_id = Null;
         $this->distance = Null;
         $this->loaded_quantity = Null;
         $this->loaded_litreage = Null;
@@ -484,7 +485,7 @@ class Index extends Component
         
         $this->customers = Customer::orderBy('name','asc')->get();
         $this->transporters = Transporter::orderBy('name','asc')->get();
-        $this->destinations = Destination::orderBy('city','asc')->get();
+        $this->destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
         $this->cargos = Cargo::orderBy('name','asc')->get();
         $this->drivers = Driver::latest()->get();
         $this->currencies = Currency::latest()->get();
@@ -538,7 +539,7 @@ class Index extends Component
         $this->starting_hours = $trip->starting_hours;
 
         if (isset($delivery_note)) {
-            $this->measurement = $delivery_note->measurement;
+            $this->units_of_measure_id = $delivery_note->units_of_measure_id;
             $this->distance = $delivery_note->distance;
             $this->loaded_quantity = $delivery_note->loaded_quantity;
             $this->loaded_litreage = $delivery_note->loaded_litreage;
@@ -583,7 +584,7 @@ class Index extends Component
             $delivery_note = new DeliveryNote;
             $delivery_note->user_id = Auth::user()->id;
             $delivery_note->trip_id = $trip->id;
-            $delivery_note->measurement = $trip->measurement;
+            $delivery_note->units_of_measure_id = $trip->units_of_measure_id;
             $delivery_note->distance = $trip->distance;
             $delivery_note->loaded_quantity = $trip->quantity;
             $delivery_note->loaded_litreage = $trip->litreage;
@@ -607,7 +608,7 @@ class Index extends Component
             $delivery_note->comments = $this->comments;
             $delivery_note->save();
 
-            $this->measurement = $delivery_note->measurement;
+            $this->units_of_measure_id = $delivery_note->units_of_measure_id;
             $this->distance = $delivery_note->distance;
             $this->loaded_quantity = $delivery_note->loaded_quantity;
             $this->loaded_litreage = $delivery_note->loaded_litreage;
@@ -721,7 +722,7 @@ class Index extends Component
 
             $delivery_note = $trip->delivery_note;
             if (isset($delivery_note)) {
-                $delivery_note->measurement = $this->measurement;
+                $delivery_note->units_of_measure_id = $this->units_of_measure_id;
                 $delivery_note->loaded_quantity = $this->loaded_quantity;
                 $delivery_note->distance = $this->distance;
                 $delivery_note->loaded_litreage = $this->loaded_litreage;
@@ -749,7 +750,7 @@ class Index extends Component
                 $delivery_note = new DeliveryNote;
                 $delivery_note->user_id = Auth::user()->id;
                 $delivery_note->trip_id = $trip->id;
-                $delivery_note->measurement = $this->measurement;
+                $delivery_note->units_of_measure_id = $this->units_of_measure_id;
                 $delivery_note->loaded_quantity = $this->loaded_quantity;
                 $delivery_note->distance = $this->distance;
                 $delivery_note->loaded_litreage = $this->loaded_litreage;

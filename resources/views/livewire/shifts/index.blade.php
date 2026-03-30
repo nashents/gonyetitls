@@ -19,6 +19,7 @@
                                                 <option value="shift_start_time">Shift Start Time</option>
                                             </select>
                                         </div>
+
                                         <!-- /input-group -->
                                     </div>
                                     <div class="col-lg-3">
@@ -27,7 +28,9 @@
                                                 From
                                             </span>
                                             <input type="datetime-local" wire:model.debounce.300ms="from"  class="form-control" aria-label="...">
+                                            
                                         </div>
+                                     
                                         <!-- /input-group -->
                                     </div>
                                     <div class="col-lg-3">

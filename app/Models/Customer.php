@@ -13,6 +13,9 @@ class Customer extends Model implements Auditable
 
     use \OwenIt\Auditing\Auditable;
 
+    public function rates(){
+        return $this->hasMany('App\Models\Rate');
+    }
     public function contacts(){
         return $this->hasMany('App\Models\Contact');
     }

@@ -179,7 +179,7 @@
                                     <th style="width: 30%; padding-left:20px;" style="width: 30%; padding:10px;">Loaded Quantity</th>
                                     <td>
                                         @if (isset($delivery_note->loaded_quantity))
-                                        {{$delivery_note->loaded_quantity}}  {{$delivery_note->measurement}}
+                                        {{$delivery_note->loaded_quantity}}  {{$delivery_note->units_of_measure?->name}}
                                         @else
                                         No Loaded Quantity Recorded
                                         @endif
@@ -190,7 +190,7 @@
                                     <th style="width: 30%; padding-left:20px;" style="width: 30%; padding:10px;"> Loaded Litreage @ 20 Degrees</th>
                                     <td>
                                         @if (is_numeric($delivery_note->loaded_litreage_at_20))
-                                            {{number_format($delivery_note->loaded_litreage_at_20,2)}}  {{$delivery_note->measurement}}
+                                            {{number_format($delivery_note->loaded_litreage_at_20,2)}}  {{$delivery_note->units_of_measure?->name}}
                                         @else
                                             No Loaded Litreage @ 20 Recorded
                                         @endif
@@ -200,7 +200,7 @@
                                     <th style="width: 30%; padding-left:20px;" style="width: 30%; padding:10px;">Loaded Litreage @ Ambient</th>
                                     <td>
                                         @if (is_numeric($delivery_note->loaded_litreage))
-                                        {{number_format($delivery_note->loaded_litreage,2)}} {{$delivery_note->measurement}}
+                                        {{number_format($delivery_note->loaded_litreage,2)}} {{$delivery_note->units_of_measure?->name}}
                                         @else
                                         No Loaded Litreage @ Ambient Recorded
                                         @endif
@@ -321,7 +321,7 @@
                                     <th style="width: 30%; padding-left:20px;">Offloaded Quantity </th>
                                     <td>
                                         @if (isset($delivery_note->offloaded_quantity))
-                                        {{$delivery_note->offloaded_quantity}}  {{$delivery_note->measurement}}
+                                        {{$delivery_note->offloaded_quantity}}  {{$delivery_note->units_of_measure?->name}}
                                         @else
                                         No Offloaded Quantity Recorded
                                     @endif
@@ -332,7 +332,7 @@
                                     <th style="width: 30%; padding-left:20px;"> Offloaded Litreage @ Ambient</th>
                                     <td>
                                         @if (isset($delivery_note->offloaded_litreage))
-                                        {{$delivery_note->offloaded_litreage}}  {{$delivery_note->measurement}}
+                                        {{$delivery_note->offloaded_litreage}}  {{$delivery_note->units_of_measure?->name}}
                                         @else
                                         No Offloaded Litreage @ Ambient Recorded
                                         @endif
@@ -342,7 +342,7 @@
                                     <th style="width: 30%; padding-left:20px;"> Offloaded Litreage @ 20 Degrees</th>
                                     <td>
                                         @if (isset($delivery_note->offloaded_litreage_at_20))
-                                        {{$delivery_note->offloaded_litreage_at_20}}  {{$delivery_note->measurement}}
+                                        {{$delivery_note->offloaded_litreage_at_20}}  {{$delivery_note->units_of_measure?->name}}
                                         @else
                                         No Offloaded Litreage @ 20 Recorded
                                         @endif
@@ -528,15 +528,15 @@
                                     @if ($quantity_loss)
                                         @if ($quantity_loss > 0)
                                             <div class="label label-danger" >
-                                            {{ abs($quantity_loss) }} {{$delivery_note ? $delivery_note->measurement : ""}}
+                                            {{ abs($quantity_loss) }} {{$delivery_note ? $delivery_note->units_of_measure?->name : ""}}
                                             </div>
                                         @elseif ($quantity_loss == 0)
                                             <div class="label label-default">
-                                                {{ abs($quantity_loss) }} {{$delivery_note ? $delivery_note->measurement : ""}}
+                                                {{ abs($quantity_loss) }} {{$delivery_note ? $delivery_note->units_of_measure?->name : ""}}
                                             </div>
                                         @elseif ($quantity_loss < 0)
                                             <div class="label label-success">
-                                                {{ abs($quantity_loss) }} {{$delivery_note ? $delivery_note->measurement : ""}}
+                                                {{ abs($quantity_loss) }} {{$delivery_note ? $delivery_note->units_of_measure?->name : ""}}
                                             </div>
                                         @endif
                                     @else
@@ -550,7 +550,7 @@
                                 <td>
                                     @if ($trip->allowable_loss_quantity)
                                         <span class="label label-success">
-                                        {{ $trip->allowable_loss_quantity ? $trip->allowable_loss_quantity : "" }} {{$delivery_note ? $delivery_note->measurement : ""}}
+                                        {{ $trip->allowable_loss_quantity ? $trip->allowable_loss_quantity : "" }} {{$delivery_note ? $delivery_note->units_of_measure?->name : ""}}
                                         </span>
                                     @endif
                                 </td>
@@ -560,7 +560,7 @@
                                 <td>
                                     @if ($chargeable_quantity_loss)
                                     <span class="label label-success">
-                                        {{  $chargeable_quantity_loss ?  $chargeable_quantity_loss : "" }} {{$delivery_note ? $delivery_note->measurement : ""}}
+                                        {{  $chargeable_quantity_loss ?  $chargeable_quantity_loss : "" }} {{$delivery_note ? $delivery_note->units_of_measure?->name : ""}}
                                     </span>
                                     @endif
                                 </td>
@@ -572,15 +572,15 @@
                                     @if ($litreage_loss)
                                         @if ($litreage_loss > 0)
                                             <div class="label label-danger" >
-                                            {{ abs($litreage_loss) }} {{$delivery_note ? $delivery_note->measurement : ""}}
+                                            {{ abs($litreage_loss) }} {{$delivery_note ? $delivery_note->units_of_measure?->name : ""}}
                                             </div>
                                         @elseif ($litreage_loss == 0)
                                             <div class="label label-default">
-                                                {{ abs($litreage_loss) }} {{$delivery_note ? $delivery_note->measurement : ""}}
+                                                {{ abs($litreage_loss) }} {{$delivery_note ? $delivery_note->units_of_measure?->name : ""}}
                                             </div>
                                         @elseif ($litreage_loss < 0)
                                             <div class="label label-success">
-                                                {{ abs($litreage_loss) }} {{$delivery_note ? $delivery_note->measurement : ""}}
+                                                {{ abs($litreage_loss) }} {{$delivery_note ? $delivery_note->units_of_measure?->name : ""}}
                                             </div>
                                         @endif
                                     @else
@@ -594,15 +594,15 @@
                                     @if ($litreage_at_20_loss)
                                         @if ($litreage_at_20_loss > 0)
                                             <div class="label label-danger" >
-                                            {{ abs($litreage_at_20_loss) }} {{$delivery_note ? $delivery_note->measurement : ""}}
+                                            {{ abs($litreage_at_20_loss) }} {{$delivery_note ? $delivery_note->units_of_measure?->name : ""}}
                                             </div>
                                         @elseif ($litreage_at_20_loss == 0)
                                             <div class="label label-default">
-                                                {{ abs($litreage_at_20_loss) }} {{$delivery_note ? $delivery_note->measurement : ""}}
+                                                {{ abs($litreage_at_20_loss) }} {{$delivery_note ? $delivery_note->units_of_measure?->name : ""}}
                                             </div>
                                         @elseif ($litreage_at_20_loss < 0)
                                             <div class="label label-success">
-                                                {{ abs($litreage_at_20_loss) }} {{$delivery_note ? $delivery_note->measurement : ""}}
+                                                {{ abs($litreage_at_20_loss) }} {{$delivery_note ? $delivery_note->units_of_measure?->name : ""}}
                                             </div>
                                         @endif
                                     @else
@@ -615,7 +615,7 @@
                                 <td>
                                     @if ($trip->allowable_loss_litreage)
                                     <span class="label label-success">
-                                        {{ $trip->allowable_loss_litreage ? $trip->allowable_loss_litreage : "" }} {{$delivery_note ? $delivery_note->measurement : ""}}
+                                        {{ $trip->allowable_loss_litreage ? $trip->allowable_loss_litreage : "" }} {{$delivery_note ? $delivery_note->units_of_measure?->name : ""}}
                                     </span>
                                     @endif
                                 </td>
@@ -625,7 +625,7 @@
                                 <td>
                                     @if ($chargeable_litreage_loss)
                                     <span class="label label-success">
-                                        {{  $chargeable_litreage_loss ?  $chargeable_litreage_loss : "" }} {{$delivery_note ? $delivery_note->measurement : ""}}
+                                        {{  $chargeable_litreage_loss ?  $chargeable_litreage_loss : "" }} {{$delivery_note ? $delivery_note->units_of_measure?->name : ""}}
                                     </span>
                                     @endif
                                 </td>

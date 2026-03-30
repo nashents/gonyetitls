@@ -15,6 +15,9 @@ class TripType extends Model implements Auditable
     public function trips(){
         return $this->hasMany('App\Models\Trip');
     }
+    public function transport_orders(){
+        return $this->hasMany('App\Models\TransportOrder');
+    }
 
     protected $filable =[
         'name',

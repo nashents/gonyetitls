@@ -18,44 +18,44 @@
 
         @if ($driver)
                <div class="row">
-                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-primary" href="{{route('driver.trips',$driver->id)}}">
-                        <span class="number counter">{{$driver_trips}}</span>
-                        <span class="name">Trips</span>
-                        <span class="bg-icon"><i class="fa fa-road"></i></span>
-                    </a>
-                </div>
+                    <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
+                        <a class="dashboard-stat bg-primary" href="{{route('driver.trips',$driver->id)}}">
+                            <span class="number counter">{{$driver_trips}}</span>
+                            <span class="name">Trips</span>
+                            <span class="bg-icon"><i class="fa fa-road"></i></span>
+                        </a>
+                    </div>
                 <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
 
-                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-danger" href="{{route('driver.inspections',$driver->id)}}">
-                        <span class="number counter">{{$driver_inspections}}</span>
-                        <span class="name">Inspections</span>
-                        <span class="bg-icon"><i class="fa fa-search"></i></span>
-                    </a>
-                </div>
+                    <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
+                        <a class="dashboard-stat bg-danger" href="{{route('driver.inspections',$driver->id)}}">
+                            <span class="number counter">{{$driver_inspections}}</span>
+                            <span class="name">Inspections</span>
+                            <span class="bg-icon"><i class="fa fa-search"></i></span>
+                        </a>
+                    </div>
                 <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
 
-                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-warning" href="{{route('driver.breakdowns',$driver->id)}}">
-                        <span class="number counter">{{$driver_breakdowns}}</span>
-                        <span class="name">Breakdown Reports</span>
-                        <span class="bg-icon"><i class="fa fa-wrench"></i></span>
-                    </a>
-                    <!-- /.dashboard-stat -->
-                    <!-- /.src-code -->
-                </div>
+                    <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
+                        <a class="dashboard-stat bg-success" href="{{route('driver.breakdowns',$driver->id)}}">
+                            <span class="number counter">{{$driver_breakdowns}}</span>
+                            <span class="name">Breakdown Reports</span>
+                            <span class="bg-icon"><i class="fa fa-wrench"></i></span>
+                        </a>
+                        <!-- /.dashboard-stat -->
+                        <!-- /.src-code -->
+                    </div>
                 <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
 
-                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-success" href="{{route('driver.recoveries',$driver->id)}}">
-                        <span class="number counter">{{$driver_recoveries}}</span>
-                        <span class="name">Recoveries</span>
-                        <span class="bg-icon"><i class="fas fa-list"></i></span>
-                    </a>
-                    <!-- /.dashboard-stat -->
-                    <!-- /.src-code -->
-                </div>
+                    <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
+                        <a class="dashboard-stat bg-warning" href="{{route('driver.recoveries',$driver->id)}}">
+                            <span class="number counter">{{$driver_recoveries}}</span>
+                            <span class="name">Recoveries</span>
+                            <span class="bg-icon"><i class="fas fa-list"></i></span>
+                        </a>
+                        <!-- /.dashboard-stat -->
+                        <!-- /.src-code -->
+                    </div>
                 <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
 
             </div>
@@ -65,25 +65,7 @@
         @if ((in_array('Human Resources', $department_names) || in_array('Super Admin', $role_names)))
             <div class="row">
                 <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-primary" href="{{route('branches.index')}}">
-                        <span class="number counter">{{$branch_count}}</span>
-                        <span class="name">Branches</span>
-                        <span class="bg-icon"><i class="fa fa-network-wired"></i></span>
-                    </a>
-                </div>
-                <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
-
-                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-danger" href="#">
-                        <span class="number counter">{{$department_count}}</span>
-                        <span class="name">Departments</span>
-                        <span class="bg-icon"><i class="fa fa-building"></i></span>
-                    </a>
-                </div>
-                <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
-
-                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-warning" href="{{route('employees.index')}}">
+                    <a class="dashboard-stat bg-primary" href="{{route('employees.index')}}">
                         <span class="number counter">{{$employee_count}}</span>
                         <span class="name">Employees</span>
                         <span class="bg-icon"><i class="fa fa-users"></i></span>
@@ -96,10 +78,30 @@
                 <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
 
                 <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-success" href="{{route('drivers.index')}}">
+                    <a class="dashboard-stat bg-danger" href="{{route('drivers.index')}}">
                         <span class="number counter">{{$driver_count}}</span>
                         <span class="name">Drivers</span>
                         <span class="bg-icon"><i class="fas fa-users"></i></span>
+                    </a>
+                    <!-- /.dashboard-stat -->
+                    <!-- /.src-code -->
+                </div>
+                <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
+                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
+                    <a class="dashboard-stat bg-success" href="{{route('leaves.manage')}}">
+                        <span class="number counter">{{$leave_count}}</span>
+                        <span class="name">Leave Applications</span>
+                        <span class="bg-icon"><i class="fas fa-file"></i></span>
+                    </a>
+                    <!-- /.dashboard-stat -->
+                    <!-- /.src-code -->
+                </div>
+                <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
+                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
+                    <a class="dashboard-stat bg-warning" href="{{route('attendances.index')}}">
+                        <span class="number counter">{{$attendance_count}}</span>
+                        <span class="name">Attendance</span>
+                        <span class="bg-icon"><i class="fas fa-tasks"></i></span>
                     </a>
                     <!-- /.dashboard-stat -->
                     <!-- /.src-code -->
@@ -135,7 +137,7 @@
                     <!-- /.src-code -->
                 </div>   
                 <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-warning" href="{{route('vendors.index')}}">
+                    <a class="dashboard-stat bg-success" href="{{route('vendors.index')}}">
                         <span class="number counter">{{$vendor_count}}</span>
                         <span class="name">Vendors</span>
                         <span class="bg-icon"><i class="fas fa-building"></i></span>
@@ -144,7 +146,7 @@
                 </div>
 
                 <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-success" href="{{route('bills.index')}}">
+                    <a class="dashboard-stat bg-warning" href="{{route('bills.index')}}">
                         <span class="number counter">{{$bill_count}}</span>
                         <span class="name">Bills</span>
                         <span class="bg-icon"><i class="fa fa-list"></i></span>
@@ -182,7 +184,7 @@
                 </div>
                 <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
                   <div class="col-lg-2 col-md-2 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-default" href="{{route('assignments.index')}}">
+                    <a class="dashboard-stat bg-success" href="{{route('assignments.index')}}">
                         <span class="number counter">{{$assignment_count}}</span>
                         <span class="name">Assignments</span>
                         <span class="bg-icon"><i class="fa fa-tasks"></i></span>
@@ -207,7 +209,7 @@
                 <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
 
                 <div class="col-lg-2 col-md-2 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-success" href="{{route('vehicles.index')}}">
+                    <a class="dashboard-stat bg-info" href="{{route('vehicles.index')}}">
                         <span class="number counter">{{$vehicle_count}}</span>
                         <span class="name">Vehicles</span>
                         <span class="bg-icon"><i class="fa fa-car"></i></span>
@@ -237,14 +239,12 @@
             </div>
             <br>
             <div class="row">
-                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-primary" href="{{route('shifts.index')}}">
-                        <span class="number counter">{{$shift_count}}</span>
-                        <span class="name">Shifts</span>
-                        <span class="bg-icon"><i class="fa fa-clock"></i></span>
+                 <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
+                    <a class="dashboard-stat bg-primary" href="{{route('transport_orders.index')}}">
+                        <span class="number counter">{{$transport_order_count}}</span>
+                        <span class="name">Transport Orders</span>
+                        <span class="bg-icon"><i class="fas fa-tasks"></i></span>
                     </a>
-                    <!-- /.dashboard-stat -->
-                    <!-- /.src-code -->
                 </div>
                 <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
                     <a class="dashboard-stat bg-danger" href="{{route('trips.index')}}">
@@ -254,15 +254,19 @@
                     </a>
                 </div>
                 <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-warning" href="{{route('containers.index')}}">
-                        <span class="number counter">{{$fuel_supplier_count}}</span>
-                        <span class="name">Fueling Stations</span>
-                        <span class="bg-icon"><i class="fas fa-gas-pump"></i></span>
+                    <a class="dashboard-stat bg-success" href="{{route('shifts.index')}}">
+                        <span class="number counter">{{$shift_count}}</span>
+                        <span class="name">Shifts</span>
+                        <span class="bg-icon"><i class="fa fa-clock"></i></span>
                     </a>
+                    <!-- /.dashboard-stat -->
+                    <!-- /.src-code -->
                 </div>
+                
+               
                 <!-- /.col-lg-3 col-md-3 col-sm-6 col-xs-12 -->
                 <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-success" href="{{route('fuels.index')}}">
+                    <a class="dashboard-stat bg-warning" href="{{route('fuels.index')}}">
                         <span class="number counter">{{$fuel_order_count}}</span>
                         <span class="name">Fuel Orders</span>
                         <span class="bg-icon"><i class="fas fa-list"></i></span>
@@ -293,7 +297,7 @@
                     </a>
                 </div>
                 <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-warning" href="{{route('inventory_purchases.index')}}">
+                    <a class="dashboard-stat bg-success" href="{{route('inventory_purchases.index')}}">
                         <span class="number counter">{{$inventory_purchases_count}}</span>
                         <span class="name">Inventory POs</span>
                         <span class="bg-icon"><i class="fas fa-list"></i></span>
@@ -302,7 +306,7 @@
                     <!-- /.src-code -->
                 </div>
                 <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                    <a class="dashboard-stat bg-success" href="{{route('inventory_dispatches.index')}}">
+                    <a class="dashboard-stat bg-warning" href="{{route('inventory_dispatches.index')}}">
                         <span class="number counter">{{$inventory_dispatches_count}}</span>
                         <span class="name">Inventory Dispatches</span>
                         <span class="bg-icon"><i class="fas fa-list"></i></span>
@@ -338,7 +342,7 @@
                         <!-- /.src-code -->
                     </div>
                     <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
-                        <a class="dashboard-stat bg-warning" href="{{route('inspections.index')}}">
+                        <a class="dashboard-stat bg-success" href="{{route('inspections.index')}}">
                             <span class="number counter">{{$inspection_count}}</span>
                             <span class="name">Inspections</span>
                             <span class="bg-icon"><i class="fas fa-tasks"></i></span>

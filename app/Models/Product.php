@@ -16,6 +16,9 @@ class Product extends Model implements Auditable
     public function sale_items(){
         return $this->hasMany('App\Models\SaleItem');
     }
+    public function units_of_measure(){
+        return $this->belongsTo('App\Models\UnitsOfMeasure');
+    }
     public function transfer_items(){
         return $this->hasMany('App\Models\TransferItem');
     }

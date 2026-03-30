@@ -61,6 +61,7 @@ class ShiftsDailyExport implements FromArray, WithEvents, WithColumnWidths, With
         $this->bootLoadingPoints();
         $this->bootColumns();
     }
+    
 
     public function title(): string
     {

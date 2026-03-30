@@ -9,7 +9,7 @@
     @endif
 @endsection
 @section('title')
-    Transport Order|@if (Auth::user()->employee->company)
+    Transport Orders | @if (Auth::user()->employee->company)
     {{Auth::user()->employee->company->name}}
     @elseif (Auth::user()->company)
     {{Auth::user()->company->name}}

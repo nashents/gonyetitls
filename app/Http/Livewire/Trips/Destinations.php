@@ -3,10 +3,10 @@
 namespace App\Http\Livewire\Trips;
 
 use App\Models\Destination;
-use App\Models\Measurement;
 use App\Models\OffloadingPoint;
 use App\Models\Trip;
 use App\Models\TripDestination;
+use App\Models\UnitsOfMeasure;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -32,8 +32,8 @@ class Destinations extends Component
     public $offloading_date;
     public $litreage_at_20;
     public $old_litreage_at_20;
-    public $measurements;
-    public $measurement_id;
+    public $units_of_measures;
+    public $units_of_measure_id;
     public $trip_destination_id;
     public $trip_destination;
 
@@ -57,7 +57,7 @@ class Destinations extends Component
     private function resetInputFields(){
         $this->destination_id = [] ;
         $this->offloading_point_id = [];
-        $this->measurement_id = [];
+        $this->units_of_measure_id = [];
         $this->weight = [];
         $this->quantity = [];
         $this->litreage = [];
@@ -74,7 +74,6 @@ class Destinations extends Component
     protected $rules = [
         'destination_id' => 'required',
         'offloading_point_id' => 'required',
-        // 'measurement_id' => 'required',
         'offloading_date' => 'required',
     ];
 
@@ -84,7 +83,7 @@ class Destinations extends Component
         $this->cargo = $this->trip->cargo;
         $this->trip_destinations = $this->trip->trip_destinations;
         $this->destinations = Destination::orderBy('city','asc')->get();
-        $this->measurements = Measurement::orderBy('name','asc')->get();
+        $this->units_of_measures = UnitsOfMeasure::orderBy('name','asc')->get();
         $this->offloading_points = OffloadingPoint::orderBy('name','asc')->get();
     }
 
@@ -115,8 +114,8 @@ class Destinations extends Component
                 if (isset($this->quantity[$key])) {
                     $trip_destination->quantity = $this->quantity[$key];
                 }
-                if (isset($this->measurement_id[$key])) {
-                    $trip_destination->measurement_id = $this->measurement_id[$key];
+                if (isset($this->units_of_measure_id[$key])) {
+                    $trip_destination->units_of_measure_id = $this->units_of_measure_id[$key];
                 }
                 if (isset($this->litreage[$key])) {
                     $trip_destination->litreage = $this->litreage[$key];
@@ -155,7 +154,7 @@ class Destinations extends Component
         $this->trip = $this->trip_destination->trip;
         $this->offloading_point_id = $this->trip_destination->offloading_point_id;
         $this->destination_id = $this->trip_destination->destination_id;
-        $this->measurement_id = $this->trip_destination->measurement_id;
+        $this->units_of_measure_id = $this->trip_destination->units_of_measure_id;
         $this->offloading_date = $this->trip_destination->offloading_date;
         $this->weight = $this->trip_destination->weight;
         $this->rate = $this->trip_destination->rate;
@@ -183,7 +182,7 @@ class Destinations extends Component
                 $trip_destination->offloading_date = $this->offloading_date;
                 $trip_destination->litreage_at_20 = $this->litreage_at_20;
                 $trip_destination->quantity = $this->quantity;
-                $trip_destination->measurement_id = $this->measurement_id;
+                $trip_destination->units_of_measure_id = $this->units_of_measure_id;
                 $trip_destination->freight = $this->freight;
                 $trip_destination->rate = $this->rate;
                 $trip_destination->update();

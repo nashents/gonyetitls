@@ -12,8 +12,17 @@ class Rate extends Model implements Auditable
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 
+    public function user(){
+        return $this->belongsTo('App\Models\User');
+    }
     public function cargo(){
         return $this->belongsTo('App\Models\Cargo');
+    }
+    public function customer(){
+        return $this->belongsTo('App\Models\Customer');
+    }
+    public function transporter(){
+        return $this->belongsTo('App\Models\Transporter');
     }
     public function trips(){
         return $this->hasMany('App\Models\Trip');

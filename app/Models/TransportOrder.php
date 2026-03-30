@@ -12,14 +12,29 @@ class TransportOrder extends Model implements Auditable
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 
-    public function trips(){
-        return $this->belongsToMany('App\Models\Trip');
+   public function trips()
+    {
+        return $this->belongsToMany(
+            Trip::class,
+            'trip_transport_orders',
+            'transport_order_id',
+            'trip_id'
+        );
     }
     public function customer(){
         return $this->belongsTo('App\Models\Customer');
     }
+     public function trip_destinations(){
+        return $this->hasMany('App\Models\TripDestination');
+    }
     public function cargo(){
         return $this->belongsTo('App\Models\Cargo');
+    }
+    public function trip_type(){
+        return $this->belongsTo('App\Models\TripType');
+    }
+    public function units_of_measure(){
+        return $this->belongsTo('App\Models\UnitsOfMeasure');
     }
     public function currency(){
         return $this->belongsTo('App\Models\Currency');
@@ -39,4 +54,14 @@ class TransportOrder extends Model implements Auditable
     public function offloading_point(){
         return $this->belongsTo('App\Models\OffloadingPoint');
     }
+    public function fromDestination()
+    {
+        return $this->belongsTo(\App\Models\Destination::class, 'from');
+    }
+    public function toDestination()
+    {
+        return $this->belongsTo(\App\Models\Destination::class, 'to');
+    }
+
+
 }

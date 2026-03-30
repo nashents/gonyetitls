@@ -26,7 +26,6 @@ use App\Models\Fuel;
 use App\Models\Horse;
 use App\Models\Hour;
 use App\Models\LoadingPoint;
-use App\Models\Measurement;
 use App\Models\Mileage;
 use App\Models\OffloadingPoint;
 use App\Models\Quotation;
@@ -42,6 +41,7 @@ use App\Models\TripExpense;
 use App\Models\TripGroup;
 use App\Models\TripType;
 use App\Models\TruckStop;
+use App\Models\UnitsOfMeasure;
 use App\Models\Vehicle;
 use App\Models\VehicleAssignment;
 use Carbon\Carbon;
@@ -112,8 +112,8 @@ class Edit extends Component
     public $customers;
     public $customer_id;
     public $containers;
-    public $measurements;
-    public $measurement;
+    public $units_of_measures;
+    public $units_of_measure_id;
     public $container;
     public $container_id;
     public $trip_ref;
@@ -137,9 +137,6 @@ class Edit extends Component
     public $all_trailers = False;
     public $all_vehicles = False;
     public $all_horses = False;
-
-    public $liquid_measurements;
-    public $solid_measurements;
 
     public $emptyrun_origin;
     public $emptyrun_origin_starting_mileage;
@@ -893,13 +890,11 @@ class Edit extends Component
         $this->routes = Route::with('truck_stops:id,name')->orderBy('name','asc')->get();
         $this->agents = Agent::orderBy('name','asc')->get();
         $this->truck_stops = TruckStop::orderBy('name','asc')->get();
-        $this->liquid_measurements = Measurement::where('cargo_type','Liquid')->orderBy('name','asc')->get();
-        $this->solid_measurements = Measurement::where('cargo_type','Solid')->orderBy('name','asc')->get(); 
         $trip_truck_stops = $this->trip->truck_stops;
         foreach ($trip_truck_stops as $trip_truck_stop) {
             $this->trip_truck_stop_ids[] = $trip_truck_stop->id;
         }
-        $this->measurements = Measurement::orderBy('name','asc')->get();
+        $this->units_of_measures = UnitsOfMeasure::orderBy('name','asc')->get();
         $this->emptyrun_destination = $this->trip->emptyrun_destination;
         $this->emptyrun_origin = $this->trip->emptyrun_origin;
 
@@ -1129,7 +1124,7 @@ class Edit extends Component
          $this->bill_of_entry = $this->trip->bill_of_entry;
          $this->container_number = $this->trip->container_number;
          $this->manifest_number = $this->trip->manifest_number;
-         $this->measurement = $this->trip->measurement;
+         $this->units_of_measure_id = $this->trip->units_of_measure_id;
          $this->notes = $this->trip->notes;
          $this->quantity = $this->trip->quantity;
          $this->customer_updates = $this->trip->customer_updates;
@@ -1208,8 +1203,7 @@ class Edit extends Component
                     if (isset($this->offloaded_quantity[$key])) {
                         $trip_destination->quantity = $this->offloaded_quantity[$key];
                     }
-                    $measurement = Measurement::where('name', $this->measurement)->first();
-                    $trip_destination->measurement_id = $measurement?->id;
+                    $trip_destination->units_of_measure_id = $this->units_of_measure_id;
                     if (isset($this->offloaded_itreage[$key])) {
                         $trip_destination->litreage = $this->offloaded_litreage[$key];
                     }
@@ -1235,8 +1229,7 @@ class Edit extends Component
             $trip_destination->destination_id = $this->to;
             $trip_destination->weight = $this->weight;
             $trip_destination->quantity = $this->quantity;
-            $measurement = Measurement::where('name', $this->measurement)->first();
-            $trip_destination->measurement_id = $measurement?->id;
+            $trip_destination->units_of_measure_id = $this->units_of_measure_id;
             $trip_destination->litreage = $this->litreage;
             $trip_destination->litreage_at_20 = $this->litreage_at_20;
             $trip_destination->rate = $this->rate;
@@ -1755,7 +1748,7 @@ class Edit extends Component
           $trip->quantity = $this->quantity;
           $trip->litreage = $this->litreage;
           $trip->litreage_at_20 = $this->litreage_at_20;
-          $trip->measurement = $this->measurement;
+          $trip->units_of_measure_id = $this->units_of_measure_id;
           $trip->weight = $this->weight;
           $trip->freight = $this->freight;
           $trip->transporter_freight = $this->transporter_freight;
@@ -1985,7 +1978,7 @@ class Edit extends Component
             $delivery_note = $trip->delivery_note()->firstOrNew(['trip_id' => $trip->id]); // Use firstOrNew to get existing or create new
 
             $delivery_note->user_id = $trip->user->id;
-            $delivery_note->measurement = $trip->measurement;
+            $delivery_note->units_of_measure_id = $trip->units_of_measure_id;
             $delivery_note->distance = $trip->distance;
             $delivery_note->loaded_date = $trip->start_date;
             $delivery_note->offloaded_date = $trip->end_date;
@@ -3063,13 +3056,12 @@ class Edit extends Component
                     'message'=>"Cargos Refreshed Successfully!!."
                 ]);
             }
-            elseif($category == 'measurements'){
-                $this->measurements = Measurement::orderBy('name','asc')->get();
-                $this->liquid_measurements = Measurement::where('cargo_type','Liquid')->orderBy('name','asc')->get();
-                $this->solid_measurements = Measurement::where('cargo_type','Solid')->orderBy('name','asc')->get(); 
+            elseif($category == 'units_of_measures'){
+                $this->units_of_measures = UnitsOfMeasure::orderBy('name','asc')->get();
+                 
                 $this->dispatchBrowserEvent('alert',[
                     'type'=>'success',
-                    'message'=>"Measurements Refreshed Successfully!!."
+                    'message'=>"Units of Measures Refreshed Successfully!!."
                 ]);
             }
             elseif($category == 'rates'){

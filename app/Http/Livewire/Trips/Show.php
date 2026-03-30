@@ -21,7 +21,6 @@ use App\Models\GatePass;
 use App\Models\Horse;
 use App\Models\Hour;
 use App\Models\LoadingPoint;
-use App\Models\Measurement;
 use App\Models\Mileage;
 use App\Models\Trailer;
 use App\Models\Transporter;
@@ -29,6 +28,7 @@ use App\Models\TransportOrder;
 use App\Models\Trip;
 use App\Models\TripExpense;
 use App\Models\TripStatus;
+use App\Models\UnitsOfMeasure;
 use App\Models\User;
 use App\Models\Vehicle;
 use Carbon\Carbon;
@@ -56,7 +56,8 @@ class Show extends Component
     public $deliver_point;
     public $weight;
     public $cargo;
-    public $measurement;
+    public $units_of_measure_id;
+    public $units_of_measure;
     public $litreage;
     public $quantity;
     public $authorized_by;
@@ -781,7 +782,7 @@ class Show extends Component
                 }else{
                     $this->litreage = $trip->litreage;
                 }
-                $this->measurement = $trip->measurement;
+                $this->units_of_measure = UnitsOfMeasure::find($trip->units_of_measure_id);
                 $this->cargo = $trip->cargo ? $trip->cargo->name : "";
                 $this->weight = $trip->weight;
                 $this->delivery_point = $trip->offloading_point ? $trip->offloading_point->name : "";
@@ -812,7 +813,7 @@ class Show extends Component
                         'cargo'=> $this->cargo,
                         'litreage'=> $this->litreage,
                         'quantity'=> $this->quantity,
-                        'measurement'=> $this->measurement,
+                        'units_of_measure'=> $this->units_of_measure,
                         'weight'=> $this->weight,
                        );
         

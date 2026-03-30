@@ -2166,8 +2166,8 @@ class Index extends Component
         $baseQuery->when(
             filled($this->from) && filled($this->to),
             fn (Builder $q) => $q->whereBetween($this->shift_filter, [
-                Carbon::parse($this->from)->startOfDay(),
-                Carbon::parse($this->to)->endOfDay(),
+                Carbon::parse($this->from),  
+                Carbon::parse($this->to), 
             ]),
             fn (Builder $q) => $q->whereMonth($this->shift_filter, now()->month)
                 ->whereYear($this->shift_filter, now()->year)
@@ -2184,7 +2184,6 @@ class Index extends Component
         ->when(filled($this->filter_driver_id), fn (Builder $q) => $q->where('driver_id', $this->filter_driver_id))
         ->when(filled($this->filter_horse_id), fn (Builder $q) => $q->where('horse_id', $this->filter_horse_id))
         ->when(filled($this->filter_vehicle_id), fn (Builder $q) => $q->where('vehicle_id', $this->filter_vehicle_id))
-        ->when(filled($this->filter_cargo_id), fn (Builder $q) => $q->where('cargo_id', $this->filter_cargo_id))
         ->when(filled($this->filter_shift_type), fn (Builder $q) => $q->where('type', $this->filter_shift_type))
         ->when(filled($this->filter_user_id), fn (Builder $q) => $q->where('user_id', $this->filter_user_id))
 
@@ -2197,6 +2196,9 @@ class Index extends Component
         )
         ->when(filled($this->filter_haulage_type), fn (Builder $q) =>
             $q->whereHas('trips', fn (Builder $t) => $t->where('haulage_type', $this->filter_haulage_type))
+        )
+        ->when(filled($this->filter_cargo_id), fn (Builder $q) =>
+            $q->whereHas('trips', fn (Builder $t) => $t->where('cargo_id', $this->filter_cargo_id))
         )
         ->when(filled($this->filter_loading_point_id), fn (Builder $q) =>
             $q->whereHas('trips', fn (Builder $t) => $t->where('loading_point_id', $this->filter_loading_point_id))

@@ -21,7 +21,7 @@
                 </th>
                 <th class="th-sm">Weight(t)
                 </th>
-                <th class="th-sm" style="width:20%">Qty({{$trip->measurement ? $trip->measurement : ""}})
+                <th class="th-sm" style="width:20%">Qty({{$trip->units_of_measure?->name }})
                 </th>
                 <th class="th-sm">@ A(l)
                 </th>
@@ -233,14 +233,14 @@
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label for="file">Measurements</label>
-                              <select class="form-control" wire:model.debounce.300ms="measurement_id.0" disabled>
-                                <option value="">Select Measurement</option>
-                                @foreach ($measurements as $measurement)
-                                    <option value="{{$measurement->id}}">{{$measurement->name}}</option>
-                                @endforeach
-                              </select>
-                                @error('measurement_id.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                <label for="customer">Units Of Measure</label>
+                                <select class="form-control" wire:model.debounce.300ms="units_of_measure_id" >
+                                    <option value="">Select Unit Of Measure</option>
+                                        @foreach ($units_of_measures as $units_of_measure)
+                                            <option value="{{ $units_of_measure->id }}">{{ $units_of_measure->name }} {{ $units_of_measure->abbreviation ? "(".$units_of_measure->abbreviation.")" : "" }}</option>
+                                        @endforeach
+                                </select>
+                                @error('units_of_measure_id') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
                         </div>
                         <div class="col-md-2">
@@ -358,14 +358,14 @@
                                 </div>
                                 <div class="col-md-2">
                                     <div class="form-group">
-                                        <label for="file">Measurements</label>
-                                      <select class="form-control" wire:model.debounce.300ms="measurement_id.{{ $value }}" disabled>
-                                        <option value="">Select Measurement</option>
-                                        @foreach ($measurements as $measurement)
-                                            <option value="{{$measurement->id}}">{{$measurement->name}}</option>
-                                        @endforeach
-                                      </select>
-                                        @error('measurement_id.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        <label for="customer">Units Of Measure</label>
+                                        <select class="form-control" wire:model.debounce.300ms="units_of_measure_id" >
+                                            <option value="">Select Unit Of Measure</option>
+                                                @foreach ($units_of_measures as $units_of_measure)
+                                                    <option value="{{ $units_of_measure->id }}">{{ $units_of_measure->name }} {{ $units_of_measure->abbreviation ? "(".$units_of_measure->abbreviation.")" : "" }}</option>
+                                                @endforeach
+                                        </select>
+                                        @error('units_of_measure_id') <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>
                                 </div>
                                 <div class="col-md-2">
@@ -511,14 +511,14 @@
                             </div>
                             <div class="col-md-2">
                                 <div class="form-group">
-                                    <label for="file">Measurements</label>
-                                  <select class="form-control" wire:model.debounce.300ms="measurement_id" disabled>
-                                    <option value="">Select Measurement</option>
-                                    @foreach ($measurements as $measurement)
-                                        <option value="{{$measurement->id}}">{{$measurement->name}}</option>
-                                    @endforeach
-                                  </select>
-                                    @error('measurement_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    <label for="customer">Units Of Measure</label>
+                                    <select class="form-control" wire:model.debounce.300ms="units_of_measure_id" >
+                                        <option value="">Select Unit Of Measure</option>
+                                            @foreach ($units_of_measures as $units_of_measure)
+                                                <option value="{{ $units_of_measure->id }}">{{ $units_of_measure->name }} {{ $units_of_measure->abbreviation ? "(".$units_of_measure->abbreviation.")" : "" }}</option>
+                                            @endforeach
+                                    </select>
+                                    @error('units_of_measure_id') <span class="text-danger error">{{ $message }}</span>@enderror
                                 </div>
                             </div>
                             <div class="col-md-2">

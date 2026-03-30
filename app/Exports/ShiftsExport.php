@@ -169,8 +169,8 @@ WithCustomStartCell
         $baseQuery->when(
             filled($this->from) && filled($this->to),
             fn (Builder $q) => $q->whereBetween($this->shift_filter, [
-                Carbon::parse($this->from)->startOfDay(),
-                Carbon::parse($this->to)->endOfDay(),
+                    Carbon::parse($this->from), 
+                    Carbon::parse($this->to),   
             ]),
             fn (Builder $q) => $q->whereMonth($this->shift_filter, now()->month)
                 ->whereYear($this->shift_filter, now()->year)

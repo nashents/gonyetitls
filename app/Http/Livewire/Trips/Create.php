@@ -28,7 +28,6 @@ use App\Models\Fuel;
 use App\Models\Horse;
 use App\Models\Hour;
 use App\Models\LoadingPoint;
-use App\Models\Measurement;
 use App\Models\Mileage;
 use App\Models\Notification;
 use App\Models\OffloadingPoint;
@@ -40,12 +39,15 @@ use App\Models\RouteExpense;
 use App\Models\TopUp;
 use App\Models\Trailer;
 use App\Models\Transporter;
+use App\Models\TransportOrder;
 use App\Models\Trip;
 use App\Models\TripDestination;
 use App\Models\TripExpense;
 use App\Models\TripGroup;
+use App\Models\TripTransportOrder;
 use App\Models\TripType;
 use App\Models\TruckStop;
+use App\Models\UnitsOfMeasure;
 use App\Models\Vehicle;
 use App\Models\VehicleAssignment;
 use Carbon\Carbon;
@@ -84,6 +86,36 @@ class Create extends Component
     public $searchTrip;
     public $trips;
     public $selectedTrip;
+
+    public $attach_transport_order = False;
+    public $allocated_weight = [];
+    public $allocated_quantity = [];
+    public $allocated_litreage = [];
+    public $allocated_units_of_measure_id = [];
+    public $selectedTransportOrder = [];
+    public $transport_orders;
+    
+    public $to_inputs = [];
+    public $to = 1;
+    public $o = 1;
+
+    public function toAdd($to)
+    {
+        $to = $to + 1;
+        $this->to = $to;
+        array_push($this->to_inputs ,$to);
+    }
+
+    public function toRemove($to)
+    {
+        unset($this->to_inputs[$to]);
+        unset($this->selectedTranportOrder[$to]);
+        unset($this->allocated_units_of_measure_id[$to]);
+        unset($this->allocated_weight[$to]);
+        unset($this->allocated_litreage[$to]);
+        unset($this->allocated_quantity[$to]);
+    }
+
     public $borders;
     public $selectedBorder;
     public $border_inputs = [];
@@ -228,6 +260,7 @@ class Create extends Component
     public $inputs = [];
     public $i = 1;
     public $n = 1;
+    
     public function add($i)
     {
         $i = $i + 1;
@@ -273,6 +306,8 @@ class Create extends Component
     public $distance;
     public $trip_fuel;
 
+    
+
     //cargo vars
     public $with_cargos = True;
     public $selectedCargo;
@@ -282,10 +317,8 @@ class Create extends Component
     public $cargo_details;
     public $weight;
     public $quantity;
-    public $measurements;
-    public $measurement;
-    public $liquid_measurements;
-    public $solid_measurements;
+    public $units_of_measures;
+    public $units_of_measure_id;
     public $litreage;
     public $litreage_at_20;
 
@@ -402,6 +435,8 @@ class Create extends Component
             $this->selectedFuelCurrency = $container->currency_id;
         }
     }
+
+   
 
     public function updatedSelectedCurrency($id){
         if(!is_null($id)){
@@ -671,6 +706,8 @@ class Create extends Component
            
         }
     }
+
+    
     public function updatedSelectedVehicle($id)
     {
         if (!is_null($id) ) {
@@ -709,6 +746,31 @@ class Create extends Component
               }
               
             }
+    }
+
+    public function updatedAttachTransportOrder($value){
+       
+        if(!is_null($value)){
+            if($value == True){
+                $this->transport_orders = TransportOrder::latest()->get();
+                $this->cargo_type = [];
+            }
+        }
+    }
+
+    public function updatedSelectedTransportOrder($id, $key){
+       
+        if(is_null($id) && is_null($key) ){
+           return ;
+        }
+
+        $transport_order = TransportOrder::find($id);
+        $cargo = Cargo::find($transport_order->cargo_id);
+        $this->cargo_type[$key] = $cargo->type;
+        $this->allocated_weight[$key] = $transport_order->weight;
+        $this->allocated_litreage[$key] = $transport_order->litreage;
+        $this->allocated_quantity[$key] = $transport_order->quantity;
+        $this->allocated_units_of_measure_id[$key] = $transport_order->units_of_measure_id;
     }
     
 
@@ -984,10 +1046,7 @@ class Create extends Component
                                     ->latest()
                                     ->get();
         $this->company = Company::with('currency')->find($this->employee->company_id);
-        $this->exchange_rates = ExchangeRate::all();
-       
-        $this->liquid_measurements = Measurement::where('cargo_type','Liquid')->orderBy('name','asc')->get();
-        $this->solid_measurements = Measurement::where('cargo_type','Solid')->orderBy('name','asc')->get();  
+        $this->exchange_rates = ExchangeRate::all(); 
         $this->emptyrun_destination = False;
         $this->emptyrun_origin = False;
         $this->transporters = Transporter::with('vehicles:id,registration_number','vehicles.vehicle_make:id,name','vehicles.vehicle_model:id,name','horses:id,registration_number','horses.horse_make:id,name','horses.horse_model:id,name','cargos:id,name','trailers:id,registration_number,make,model','drivers:id','drivers.employee:id,name,surname')->where('authorization','approved')->orderBy('name','asc')->get();
@@ -995,12 +1054,13 @@ class Create extends Component
         $this->offloading_points = OffloadingPoint::orderBy('name','asc')->get();
         $this->loading_points = LoadingPoint::orderBy('name','asc')->get();
         $this->trip_groups = TripGroup::where('status',1)->latest()->get();
-        $this->defined_customer_rates = Rate::where('category','Customer')->with('loading_point:id,name','offloading_point:id,name')->latest()->get();
-        $this->defined_transporter_rates = Rate::where('category','Transporter')->with('loading_point:id,name','offloading_point:id,name')->latest()->get();
+        $this->defined_customer_rates = Rate::where('category','Customer')->latest()->get();
+        $this->defined_transporter_rates = Rate::where('category','Transporter')->latest()->get();
         $this->allowances = Allowance::orderBy('name','asc')->get();
         $this->routes = Route::with('truck_stops:id,name')->where('status',1)->orderBy('name','asc')->get();
-        $this->measurements = Measurement::orderBy('name','asc')->get();
+        $this->units_of_measures = UnitsOfMeasure::orderBy('name','asc')->get();
         $this->truck_stops = collect();
+        $this->transport_orders = collect();
         $this->with_customer_rates = "custom";
         $this->with_transporter_rates = "custom";
         $this->horses =  collect();
@@ -1106,11 +1166,12 @@ class Create extends Component
 
      
 
-      public function updatedSelectedDefinedCustomerRate($id){
+    public function updatedSelectedDefinedCustomerRate($id){
             if(!is_null($id)){
                 $defined_customer_rate = Rate::find($id);
                 $this->rate = $defined_customer_rate->rate;
-                $this->freight = $defined_customer_rate->freight;
+                $this->freight = $defined_customer_rate->customer_id;
+                $this->customer_id = $defined_customer_rate->freight;
                 $this->weight = $defined_customer_rate->weight;
                 $this->litreage = $defined_customer_rate->litreage;
                 $this->distance = $defined_customer_rate->distance;
@@ -1124,13 +1185,14 @@ class Create extends Component
       public function updatedSelectedDefinedTransporterRate($id){
         if(!is_null($id)){
             $defined_transporter_rate = Rate::find($id);
+            $this->selectedTransporter = $defined_transporter_rate->transporter_id;
             $this->transporter_rate = $defined_transporter_rate->rate;
             $this->transporter_freight = $defined_transporter_rate->freight;
         }
       }
 
 
-      private function addToCategoryTotal($category, $amount)
+    private function addToCategoryTotal($category, $amount)
     {
         if (is_numeric($amount)) {
             switch ($category) {
@@ -1330,67 +1392,188 @@ class Create extends Component
         return null;
     }
 
-    public function addDestinations($trip){
-                
-        if($this->multiple_destinations == True){
+    public function addDestinations($trip_transport_order){
 
-            if (isset($this->destinations_selectedTo)) {
-                    
-                foreach ($this->destinations_selectedTo as $key => $destinationId) {
+        $trip_destinations = TripDestination::where('transport_order_id', $trip_transport_order->transport_order_id)->get();
+      
+        if(isset($trip_destinations) && $trip_destinations->count() > 0){
             
-                    $trip_destination = new TripDestination;
-                    $trip_destination->user_id = Auth::user()->id;
-                    $trip_destination->trip_id = $trip->id;
-                   
-                    if (isset($this->destinations_offloading_point_id[$key])) {
-                        $trip_destination->offloading_point_id = $this->destinations_offloading_point_id[$key];
-                    }
-                    $trip_destination->destination_id = $destinationId;
-                    if (isset($this->offloaded_weight[$key])) {
-                        $trip_destination->weight = $this->offloaded_weight[$key];
-                    }
-                    if (isset($this->offloaded_quantity[$key])) {
-                        $trip_destination->quantity = $this->offloaded_quantity[$key];
-                    }
-                    $measurement = Measurement::where('name', $this->measurement)->first();
-                    $trip_destination->measurement_id = $measurement?->id;
-                    if (isset($this->offloaded_litreage[$key])) {
-                        $trip_destination->litreage = $this->offloaded_litreage[$key];
-                    }
-                  
-                    if (isset($this->offloaded_litreage_at_20[$key])) {
-                        $trip_destination->litreage_at_20 = $this->offloaded_litreage_at_20[$key];
-                    }
-                    if (isset($this->offloaded_rate[$key])) {
-                        $trip_destination->rate = $this->offloaded_rate[$key];
-                    }
-                    if (isset($this->offloaded_freight[$key])) {
-                        $trip_destination->freight = $this->offloaded_freight[$key];
-                    }
-                
-                    $trip_destination->save();
-
-                }
-            }
           
+            foreach($trip_destinations as $trip_destination){
+                $trip_destination->user_id = Auth::user()->id;
+                $trip_destination->trip_id = $trip_transport_order->trip_id;
+                $trip_destination->trip_transport_order_id = $trip_transport_order->id;
+                $trip_destination->update();
+            }
+
         }else{
-            $trip_destination = new TripDestination;
-            $trip_destination->user_id = Auth::user()->id;
-            $trip_destination->trip_id =$trip->id;
-            $trip_destination->offloading_point_id = $this->offloading_point_id;
-            $trip_destination->destination_id = $this->selectedTo;
-            $trip_destination->weight = $this->weight;
-            $trip_destination->quantity = $this->quantity;
-            $measurement = Measurement::where('name', $this->measurement)->first();
-            $trip_destination->measurement_id = $measurement?->id;
-            $trip_destination->litreage = $this->litreage;
-            $trip_destination->litreage_at_20 = $this->litreage_at_20;
-            $trip_destination->rate = $this->rate;
-            $trip_destination->freight = $this->freight;
-            $trip_destination->save();
+            
+          
+            if($this->multiple_destinations == True){
+                             
+
+                if (isset($this->destinations_selectedTo)) {
+                        
+                    foreach ($this->destinations_selectedTo as $key => $destinationId) {
+                
+                        $trip_destination = new TripDestination;
+                        $trip_destination->user_id = Auth::user()->id;
+                        $trip_destination->trip_id = $trip_transport_order->trip_id;
+                        $trip_destination->transport_order_id = $trip_transport_order->transport_order_id;
+                        $trip_destination->trip_transport_order_id = $trip_transport_order->id;
+                    
+                        if (isset($this->destinations_offloading_point_id[$key])) {
+                            $trip_destination->offloading_point_id = $this->destinations_offloading_point_id[$key];
+                        }
+                        $trip_destination->destination_id = $destinationId;
+                        if (isset($this->offloaded_weight[$key])) {
+                            $trip_destination->weight = $this->offloaded_weight[$key];
+                        }
+                        if (isset($this->offloaded_quantity[$key])) {
+                            $trip_destination->quantity = $this->offloaded_quantity[$key];
+                        }
+                    
+                        $trip_destination->units_of_measure_id = $this->units_of_measure_id;
+                        if (isset($this->offloaded_litreage[$key])) {
+                            $trip_destination->litreage = $this->offloaded_litreage[$key];
+                        }
+                    
+                        if (isset($this->offloaded_litreage_at_20[$key])) {
+                            $trip_destination->litreage_at_20 = $this->offloaded_litreage_at_20[$key];
+                        }
+                        if (isset($this->offloaded_rate[$key])) {
+                            $trip_destination->rate = $this->offloaded_rate[$key];
+                        }
+                        if (isset($this->offloaded_freight[$key])) {
+                            $trip_destination->freight = $this->offloaded_freight[$key];
+                        }
+                    
+                        $trip_destination->save();
+
+                    }
+                }
+            
+            }else{
+                
+                $trip_destination = new TripDestination;
+                $trip_destination->user_id = Auth::user()->id;
+                $trip_destination->trip_id = $trip_transport_order->trip_id;
+                $trip_destination->transport_order_id = $trip_transport_order->transport_order_id;
+                $trip_destination->trip_transport_order_id = $trip_transport_order->id;
+                $trip_destination->offloading_point_id = $this->offloading_point_id;
+                $trip_destination->destination_id = $this->selectedTo;
+                $trip_destination->weight = $this->weight;
+                $trip_destination->quantity = $this->quantity;
+                
+                $trip_destination->units_of_measure_id = $this->units_of_measure_id;
+                $trip_destination->litreage = $this->litreage;
+                $trip_destination->litreage_at_20 = $this->litreage_at_20;
+                $trip_destination->rate = $this->rate;
+                $trip_destination->freight = $this->freight;
+                $trip_destination->save();
+            }
         }
+                
+        
          
     }
+
+
+    public function transportOrderNumber(){
+
+     if (isset($this->company)) {
+            $str = $this->company->name;
+            $words = explode(' ', $str);
+            if (isset($words[1][0])) {
+                $initials = $words[0][0].$words[1][0];
+            }else {
+                $initials = $words[0][0];
+            }
+        }
+ 
+        $transport_order = TransportOrder::orderBy('id','desc')->first();
+
+        if (!$transport_order) {
+            $transport_order_number =  $initials .'TO'. str_pad(1, 5, "0", STR_PAD_LEFT);
+        }else {
+            $number = $transport_order->id + 1;
+            $transport_order_number =  $initials .'TO'. str_pad($number, 5, "0", STR_PAD_LEFT);
+        }
+
+        return  $transport_order_number;
+
+    }
+
+    public function createTransportOrder(){
+
+                $transport_order = new TransportOrder;
+                $transport_order->transport_order_number = $this->transportOrderNumber();
+                $transport_order->custom_ref = $this->trip_ref;
+                $transport_order->user_id =  $this->user->id ?: null;
+                $transport_order->company_id = $this->company->id ?: null;
+                $transport_order->quotation_id = $this->selectedQuotation ?: null;
+                $transport_order->with_customer_rates = $this->with_customer_rates;
+                $transport_order->with_transporter_rates = $this->with_transporter_rates;
+                $transport_order->customer_id = $this->customer_id ?: null;
+                $transport_order->consignee_id = $this->consignee_id ?: null;
+                $transport_order->freight_calculation = $this->freight_calculation;
+                $transport_order->calculation_measurement = $this->calculation_measurement;
+                $transport_order->currency_id = $this->selectedCurrency ?: null;
+                $transport_order->cargo_id = $this->selectedCargo;
+                $transport_order->trip_type_id = $this->selectedTripType;
+                $transport_order->defined_customer_rate_id = $this->selectedDefinedCustomerRate;
+                $transport_order->defined_transporter_rate_id = $this->selectedDefinedTransporterRate;
+                $transport_order->from = $this->selectedFrom;
+                $transport_order->to = $this->selectedTo;
+                $transport_order->offloading_point_id = $this->offloading_point_id;
+                $transport_order->loading_point_id = $this->loading_point_id;
+                $transport_order->start_date = $this->start_date;
+                $transport_order->cargo_details = $this->cargo_details;
+                $transport_order->end_date = $this->end_date;
+                $transport_order->multiple_destinations = $this->multiple_destinations;
+                $transport_order->quantity = $this->quantity;
+                $transport_order->litreage = $this->litreage;
+                $transport_order->units_of_measure_id = $this->units_of_measure_id;
+                $transport_order->weight = $this->weight;
+                $transport_order->status = "Pending";
+                $transport_order->rate = $this->rate;
+                $transport_order->freight = $this->freight;
+                $transport_order->transporter_rate = $this->transporter_rate;
+                $transport_order->transporter_freight = $this->transporter_freight;
+                $transport_order->exchange_rate = $this->exchange_rate;
+                $transport_order->exchange_customer_freight = $this->exchange_customer_freight;
+                $transport_order->distance = $this->distance;
+                $transport_order->save();;
+
+                $this->selectedTransportOrder[] = $transport_order?->id;
+    }
+
+    public function createDeliveryNotes($trip_transport_order){
+        
+                $delivery_note = new DeliveryNote;
+                $delivery_note->user_id =  $trip_transport_order->created_by;
+                $delivery_note->trip_id = $trip_transport_order->trip_id;
+                $delivery_note->transport_order_id = $trip_transport_order->transport_order_id;
+                $delivery_note->units_of_measure_id = $trip_transport_order->units_of_measure_id;
+                $delivery_note->distance = $trip_transport_order->distance;
+               
+                if (isset($trip->cargo)) {
+                    if ($trip->cargo->type == "Liquid") {
+                        $delivery_note->loaded_litreage = $trip->litreage;
+                        $delivery_note->loaded_litreage_at_20 = $trip->litreage_at_20;
+                    }elseif($trip->cargo->type == "Solid") {
+                        $delivery_note->loaded_quantity = $trip->quantity;
+                    }
+                }
+   
+                $delivery_note->loaded_weight = $trip_transport_order->allocated_weight;
+                $delivery_note->loaded_rate = $trip_transport_order->rate;
+                $delivery_note->loaded_freight = $trip_transport_order->freight;
+                $delivery_note->transporter_loaded_rate = $trip_transport_order->transporter_rate;
+                $delivery_note->transporter_loaded_freight = $trip_transport_order->transporter_freight;
+                $delivery_note->save();
+    }
+
 
    
 
@@ -1401,6 +1584,10 @@ class Create extends Component
         // try{
         
         DB::transaction(function () {
+
+                if(empty($this->selectedTransportOrder)){
+                    $this->createTransportOrder();
+                }
 
                 $trip = new Trip;
                 $trip->trip_number = $this->tripNumber();
@@ -1466,7 +1653,16 @@ class Create extends Component
                 $trip->quantity = $this->quantity;
                 $trip->litreage = $this->litreage;
                 $trip->litreage_at_20 = $this->litreage_at_20;
-                $trip->measurement = $this->measurement;
+                $trip->units_of_measure_id = $this->units_of_measure_id;
+                if($this->selectedTransportOrder){
+                    foreach($this->selectedTransportOrder as $key => $id){
+                         $transport_order = TransportOrder::find($id);  
+                         if($transport_order){
+                            $this->freight += $this->company->currency_id ==  $transport_order->currency_id ? $transport_order->freight : $transport_order->exchange_customer_freight;
+                            $this->weight += $transport_order->weight;
+                         }
+                    }
+                }
                 $trip->weight = $this->weight;
                 $trip->freight = $this->freight;
                 $trip->transporter_freight = $this->transporter_freight;
@@ -1475,8 +1671,6 @@ class Create extends Component
                 $trip->exchange_transporter_freight = $this->exchange_transporter_freight;
                 $this->turnover = $this->company->currency_id ==  $this->selectedCurrency ? $this->freight : $this->exchange_customer_freight;
                 $trip->turnover = $this->turnover;
-              
-               
                 $trip->trip_status = $this->selectedStatus;
                 $trip->trip_status_date = $this->start_date;
                 $trip->route_id = $this->selectedRoute;
@@ -1486,7 +1680,26 @@ class Create extends Component
                 $trip->emptyrun_destination = $this->emptyrun_destination;
                 $trip->save();
 
-                $this->addDestinations($trip);
+                if(!empty($this->selectedTransportOrder)){
+                  
+                    foreach($this->selectedTransportOrder as $key => $Id){
+                            $transport_order = TransportOrder::find($Id);
+                            $trip_transport_order = new TripTransportOrder;
+                            $trip_transport_order->trip_id = $trip->id;
+                            $trip_transport_order->transport_order_id = $Id;
+                            if($transport_order){
+                                $trip_transport_order->allocated_quantity = $transport_order->quantity;
+                                $trip_transport_order->allocated_weight = $transport_order->weight;
+                                $trip_transport_order->allocated_litreage = $transport_order->litreage;
+                                $trip_transport_order->units_of_measure_id = $transport_order->units_of_measure_id;
+                            }
+                            $trip_transport_order->save();
+                           
+                            $this->addDestinations($trip_transport_order);
+                    }
+                }
+
+                
 
                 $this->calculateFuelConsumption($trip->id);
                 $this->syncRelations($trip);
@@ -1636,32 +1849,7 @@ class Create extends Component
                     }
                 }
 
-                
-                $delivery_note = new DeliveryNote;
-                $delivery_note->user_id =  $trip->user->id;
-                $delivery_note->trip_id = $trip->id;
-                $delivery_note->measurement = $trip->measurement;
-                $delivery_note->distance = $trip->distance;
-               
-                
-                if (isset($trip->cargo)) {
-                if ($trip->cargo->type == "Liquid") {
-                    $delivery_note->loaded_litreage = $trip->litreage;
-                    $delivery_note->loaded_litreage_at_20 = $trip->litreage_at_20;
-                    }elseif($trip->cargo->type == "Solid") {
-                        $delivery_note->loaded_quantity = $trip->quantity;
-                    }
-                }
-   
-                $delivery_note->loaded_weight = $trip->weight;
-                $delivery_note->loaded_rate = $trip->rate;
-                $delivery_note->loaded_freight = $trip->freight;
-                $delivery_note->transporter_loaded_rate = $trip->transporter_rate;
-                $delivery_note->transporter_loaded_freight = $trip->transporter_freight;
-                $delivery_note->save();
-                
-
-
+            
                 if (isset($this->agent_id) && !empty($this->agent_id)) {
                     $commission = new Commission;
                     $commission->user_id =   $this->user->id ;
@@ -2600,13 +2788,11 @@ class Create extends Component
                 'message'=>"Cargos Refreshed Successfully!!."
             ]);
         }
-        elseif($category == 'measurements'){
-            $this->measurements = Measurement::orderBy('name','asc')->get();
-            $this->liquid_measurements = Measurement::where('cargo_type','Liquid')->get();
-            $this->solid_measurements = Measurement::where('cargo_type','Solid')->get(); 
+        elseif($category == 'units_of_measures'){
+            $this->units_of_measures = UnitsOfMeasure::orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',
-                'message'=>"Measurements Refreshed Successfully!!."
+                'message'=>"Units Of Measures Refreshed Successfully!!."
             ]);
         }
         elseif($category == 'rates'){

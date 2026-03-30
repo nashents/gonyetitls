@@ -16,7 +16,7 @@ class TransportOrderMail extends Mailable implements ShouldQueue
     public $delivery_point;
     public $weight;
     public $cargo;
-    public $measurement;
+    public $units_of_measure;
     public $litreage;
     public $quantity;
     public $authorized_by;
@@ -53,7 +53,7 @@ class TransportOrderMail extends Mailable implements ShouldQueue
         $this->quantity = $data['quantity'];
         $this->litreage = $data['litreage'];
         $this->weight = $data['weight'];
-        $this->measurement = $data['measurement'];
+        $this->units_of_measure = $data['units_of_measure'];
         $this->company = $company;
     }
 

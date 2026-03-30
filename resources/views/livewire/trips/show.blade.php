@@ -603,56 +603,56 @@
                                                                 <tr>
                                                                     <th scope="row"> Secheduled Quantity</th>
                                                                     <td>
-                                                                        {{$trip->quantity}} {{$trip->measurement}}
+                                                                        {{$trip->quantity}} {{$trip->units_of_measure?->name}}
                                                                     </td>
                                                                 </tr>
                                                                 <tr>
                                                                     <th scope="row"> Loaded Quantity</th>
                                                                     <td>
-                                                                        {{$delivery_note?->loaded_quantity ? $delivery_note?->loaded_quantity : ""}} {{$trip->measurement}}
+                                                                        {{$delivery_note?->loaded_quantity ? $delivery_note?->loaded_quantity : ""}} {{$trip->units_of_measure?->name}}
                                                                     </td>
                                                                 </tr>
                                                                 <tr>
                                                                     <th scope="row"> Offloaded Quantity</th>
                                                                     <td>
-                                                                        {{$delivery_note?->offloaded_quantity ? $delivery_note?->offloaded_quantity : ""}} {{$trip->measurement}}
+                                                                        {{$delivery_note?->offloaded_quantity ? $delivery_note?->offloaded_quantity : ""}} {{$trip->units_of_measure?->name}}
                                                                     </td>
                                                                 </tr>
                                                             @elseif($trip->cargo->type == "Liquid")
                                                             <tr>
                                                                 <th scope="row">Scheduled Litreage @ Ambient Temperature</th>
                                                                 <td>
-                                                                    {{$trip->litreage}} {{$trip->measurement}}
+                                                                    {{$trip->litreage}} {{$trip->units_of_measure?->name}}
                                                                 </td>
                                                             </tr>
                                                             <tr>
                                                                 <th scope="row">Scheduled Litreage @ 20 Degrees</th>
                                                                 <td>
-                                                                    {{$trip->litreage_at_20}} {{$trip->measurement}}
+                                                                    {{$trip->litreage_at_20}} {{$trip->units_of_measure?->name}}
                                                                 </td>
                                                             </tr>
                                                             <tr>
                                                                 <th scope="row">Loaded Litreage @ Ambient Temperature</th>
                                                                 <td>
-                                                                     {{$delivery_note ? $delivery_note->loaded_litreage : ""}} {{$trip->measurement}}
+                                                                     {{$delivery_note ? $delivery_note->loaded_litreage : ""}} {{$trip->units_of_measure?->name}}
                                                                 </td>
                                                             </tr>
                                                             <tr>
                                                                 <th scope="row">Loaded Litreage @ 20 Degrees</th>
                                                                 <td>
-                                                                    {{$delivery_note ? $delivery_note->loaded_litreage_at_20 : ""}} {{$trip->measurement}}
+                                                                    {{$delivery_note ? $delivery_note->loaded_litreage_at_20 : ""}} {{$trip->units_of_measure?->name}}
                                                                 </td>
                                                             </tr>
                                                             <tr>
                                                                 <th scope="row">Offloaded Litreage @ Ambient Temperature</th>
                                                                 <td>
-                                                                    {{$delivery_note ? $delivery_note->offloaded_litreage : ""}} {{$trip->measurement}}
+                                                                    {{$delivery_note ? $delivery_note->offloaded_litreage : ""}} {{$trip->units_of_measure?->name}}
                                                                 </td>
                                                             </tr>
                                                             <tr>
                                                                 <th scope="row">Offloaded Litreage @ 20 Degrees</th>
                                                                 <td>
-                                                                    {{$delivery_note ? $delivery_note->offloaded_litreage_at_20 : ""}} {{$trip->measurement}}
+                                                                    {{$delivery_note ? $delivery_note->offloaded_litreage_at_20 : ""}} {{$trip->units_of_measure?->name}}
                                                                 </td>
                                                             </tr>
                                                             @endif

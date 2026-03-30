@@ -200,7 +200,18 @@ class SidebarComposer
 
 
         
-         $billsPendingCount = Bill::where('authorization','pending')
+        $transportOrdersPendingCount = TransportOrder::where('authorization','pending')
+        ->where('created_at', '>', Carbon::now()->startOfWeek())
+        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
+        // ->whereDate('created_at', Carbon::today())->get()->count();
+        $transportOrdersApprovedCount = TransportOrder::where('authorization','approved')
+        ->where('created_at', '>', Carbon::now()->startOfWeek())
+        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
+        $transportOrdersRejectedCount = TransportOrder::where('authorization','rejected')
+        ->where('created_at', '>', Carbon::now()->startOfWeek())
+        ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
+        
+        $billsPendingCount = Bill::where('authorization','pending')
         ->where('created_at', '>', Carbon::now()->startOfWeek())
         ->where('created_at', '<', Carbon::now()->endOfWeek())->get()->count();
         // ->whereDate('created_at', Carbon::today())->get()->count();
@@ -709,6 +720,11 @@ class SidebarComposer
         'bills_pending_count'  => (int) ($billsPendingCount ?? 0),
         'bills_approved_count' => (int) ($billsApprovedCount ?? 0),
         'bills_rejected_count' => (int) ($billsRejectedCount ?? 0),
+       
+        // TransportOrders
+        'transport_orders_pending_count'  => (int) ($transportOrdersPendingCount ?? 0),
+        'transport_orders_approved_count' => (int) ($transportOrdersApprovedCount ?? 0),
+        'transport_orders_rejected_count' => (int) ($transportOrdersRejectedCount ?? 0),
 
         // Requisitions
         'requisitions_pending_count'  => (int) ($requisitionsPendingCount ?? 0),
@@ -911,6 +927,9 @@ class SidebarComposer
             'billsRejectedCount'          => $billsRejectedCount,
             'billsApprovedCount'          => $billsApprovedCount,
             'billsPendingCount'          => $billsPendingCount,
+            'transportOrdersRejectedCount'          => $transportOrdersRejectedCount,
+            'transportOrdersApprovedCount'          => $transportOrdersApprovedCount,
+            'transportOrdersPendingCount'          => $transportOrdersPendingCount,
             
             'loansDeletedCount'          => $loansDeletedCount,
             'loansRejectedCount'          => $loansRejectedCount,

@@ -21,6 +21,20 @@ class TransportOrderController extends Controller
     {
         return view('transport_orders.index');
     }
+
+        public function pending()
+    {
+        return view('transport_orders.pending');
+    }
+    public function approved()
+    {
+        return view('transport_orders.approved');
+    }
+    public function rejected()
+    {
+        return view('transport_orders.rejected');
+    }
+
     public function order()
     {
         return view('transport_orders.order');
@@ -120,7 +134,9 @@ class TransportOrderController extends Controller
      */
     public function show(TransportOrder $transportOrder)
     {
-        //
+        return view('transport_orders.show',[
+            'transport_order' => $transportOrder
+        ]);
     }
 
     /**

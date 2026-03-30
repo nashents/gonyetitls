@@ -23,6 +23,37 @@ class Trip extends Model implements Auditable
             ->distinct();
     }
 
+    public function trip_transport_orders()
+    {
+        return $this->hasMany(TripTransportOrder::class);
+    }
+
+    public function transport_orders()
+    {
+        return $this->belongsToMany(
+            TransportOrder::class,
+            'trip_transport_orders',
+            'trip_id',
+            'transport_order_id'
+        )
+        ->withPivot([
+            'id',
+            'allocated_quantity',
+            'allocated_weight',
+            'allocated_litreage',
+            'sequence_no',
+            'status',
+            'notes',
+            'created_at',
+            'updated_at',
+        ])
+        ->withTimestamps();
+    }
+
+    public function units_of_measure(){
+        return $this->belongsTo('App\Models\UnitsOfMeasure');
+    }
+
     public function trip_statuses(){
         return $this->hasMany('App\Models\TripStatus');
     }
@@ -189,6 +220,8 @@ class Trip extends Model implements Auditable
     public function user(){
         return $this->belongsTo('App\Models\User');
     }
+
+    
 
 
     public function fromDestination()
