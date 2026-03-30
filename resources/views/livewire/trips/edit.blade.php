@@ -13,38 +13,118 @@
                         </div>
                         <div class="panel-body">
                             <form wire:submit.prevent="update()" class="p-20" enctype="multipart/form-data">
-                                <div class="row" >
-                                <h5 class="underline mt-n">Trip Details</h5>
-                                           <div class="mb-10">
+                                 <h6 class="underline mt-20 mb-20"><strong>Order Details</strong></h6>
+                                <div class="mb-10">
+                                    <input type="checkbox" wire:model.debounce.300ms="attach_transport_order"   class="line-style" />
+                                    <label for="one" class="radio-label">Attach Transport Order(s)</label>
+                                    @error('attach_transport_order') <span class="text-danger error">{{ $message }}</span>@enderror
+                                </div>
+                                @if ($attach_transport_order == True)
+                              
+                                @foreach ($existing_transport_orders as $key => $value)
+                                    <div class="mt-30 mb-30" style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">
+                                        <div class="form-group">
+                                            <label for="trip_type">
+                                                <a href="{{ route('transport_orders.index') }}" target="_blank" style="color: blue">Transport Orders</a>
+                                                <span class="required text-danger">*</span>
+                                            </label>
+                                            <select class="form-control" wire:model.debounce.300ms="selectedTransportOrder.{{$key}}" required size="4">
+                                                <option value="">Select Transport Order</option>
+                                                @foreach ($transport_orders as $transport_order)
+                                                    <option value="{{ $transport_order->id }}"
+                                                        @if(in_array($transport_order->id, $selectedTransportOrder ?? []) && ($selectedTransportOrder[$key] ?? null) != $transport_order->id) 
+                                                            disabled 
+                                                        @endif
+                                                        >
+                                                        Customer: {{ $transport_order->customer?->name }}  Total Weight: {{ $transport_order->weight }} Total Qty: {{ $transport_order->quantity }}{{ $transport_order->units_of_measure?->name }} {{ $transport_order->status }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                            @error('selectedTransportOrder.'.$key) <span class="text-danger error">{{ $message }}</span> @enderror
+                                        </div>
+                                        <div class="row">
+                                            
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <label for="trip_ref">Allocated Weight(t)</label>
+                                                    <input type="number" step="any" class="form-control" wire:model.debounce.300ms="allocated_weight.{{$key}}" placeholder="Allocated Weight (Tons)"  />
+                                                    @error('allocated_weight.'.$key) <span class="text-danger error">{{ $message }}</span> @enderror
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                @if (isset($cargo_type[$key]) && $cargo_type[$key] == "Solid")
+                                                    <div class="form-group">
+                                                    <label for="trip_ref">Allocated Qty</label>
+                                                    <input type="number" step="any" class="form-control" wire:model.debounce.300ms="allocated_quantity.{{$key}}" placeholder="Allocated Quantity"  />
+                                                    @error('allocated_quantity.'.$key) <span class="text-danger error">{{ $message }}</span> @enderror
+                                                </div>
+                                                @elseif(isset($cargo_type[$key]) && $cargo_type[$key] == "Solid")
+                                                    <div class="form-group">
+                                                        <label for="trip_ref">Allocated Litreage</label>
+                                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="allocated_litreage.{{$key}}" placeholder="Allocated Litreage (Tons)"  />
+                                                        @error('allocated_litreage.'.$key) <span class="text-danger error">{{ $message }}</span> @enderror
+                                                    </div>
+                                                @endif
+                                                
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label for="trip_ref">Unit Of Measure</label>
+                                                    <select class="form-control" wire:model.debounce.300ms="allocated_units_of_measure_id.{{$key}}">
+                                                        <option value="">Select Unit Of Measure</option>
+                                                        @foreach ($units_of_measures as $units_of_measure)
+                                                            <option value="{{$units_of_measure->id}}">{{$units_of_measure->name}} {{$units_of_measure->abbreviation ? "(".$units_of_measure->abbreviation.")" : ""}}</option>
+                                                        @endforeach
+                                                    </select>
+                                                    @error('allocated_units_of_measure_id.'.$key) <span class="text-danger error">{{ $message }}</span> @enderror
+                                                </div>
+                                            </div>
+                                            <div class="col-md-1">
+                                                <div class="form-group " style="margin-top:32%">
+                                                    <button class="btn btn-danger btn-rounded btn-xs"    wire:click.prevent="toRemove({{$key}})"> <i class="fa fa-times"></i></button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <button class="btn btn-success btn-rounded btn-xs" style="float: right" wire:click.prevent="toAdd({{$i}})"> <i class="fa fa-plus"></i>Transport Order</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                @elseif($attach_transport_order == False)
+                                    <div class="mb-10">
                                         <input type="checkbox" wire:model.debounce.300ms="with_quotation"   class="line-style" />
                                         <label for="one" class="radio-label">Attach a quotation</label>
                                         @error('with_quotation') <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>
-                                @if ($with_quotation == True)
-                                        <div class="form-group">
-                                            <label for="trip_type">
-                                                <a href="{{ route('quotations.index') }}" target="_blank" style="color: blue">Quotations</a>
-                                                <span class="required text-danger">*</span>
-                                            </label>
-                                            <select class="form-control" wire:model.debounce.300ms="selectedQuotation" required>
-                                                <option value="">Select Quotation</option>
-                                                @foreach ($quotations as $quotation)
-                                                    <option value="{{ $quotation->id }}">{{ $quotation->quotation_number }} {{ $quotation->customer ? $quotation->customer->name : "" }}</option>
-                                                @endforeach
-                                            </select>
-                                            @error('selectedQuotation') <span class="text-danger error">{{ $message }}</span> @enderror
-                                        </div>
-                                @endif
-                                   <div class="row">
+                                    @if ($with_quotation == True)
+                                            <div class="form-group">
+                                                <label for="trip_type">
+                                                    <a href="{{ route('quotations.index') }}" target="_blank" style="color: blue">Quotations</a>
+                                                    <span class="required text-danger">*</span>
+                                                </label>
+                                                <select class="form-control" wire:model.debounce.300ms="selectedQuotation" required>
+                                                    <option value="">Select Quotation</option>
+                                                    @foreach ($quotations as $quotation)
+                                                        <option value="{{ $quotation->id }}">{{ $quotation->quotation_number }} {{ $quotation->customer ? $quotation->customer->name : "" }}</option>
+                                                    @endforeach
+                                                </select>
+                                                @error('selectedQuotation') <span class="text-danger error">{{ $message }}</span> @enderror
+                                            </div>
+                                    @endif
+                                       <div class="row">
                                     <div class="col-md-2">
                                         <div class="form-group">
                                             <label for="trip_ref">Custom Reference</label>
-                                            <input type="text" class="form-control" wire:model.debounce.300ms="trip_ref" placeholder="Custom Trip Reference#" />
+                                            <input type="text" class="form-control" wire:model.debounce.300ms="trip_ref" placeholder="Custom Trip Reference#"  />
                                             @error('trip_ref') <span class="text-danger error">{{ $message }}</span> @enderror
                                         </div>
                                     </div>
                                     <!-- Trip Type -->
-                                    <div class="col-md-3">
+                                    <div class="col-md-5">
                                         <div class="form-group">
                                             <label for="trip_type">
                                                 <a href="{{ route('trip_types.index') }}" target="_blank" style="color: blue">Trip Types</a>
@@ -62,7 +142,7 @@
                                 
                                     <!-- Trip Reference -->
                                    
-                                    <div class="col-md-3">
+                                    <div class="col-md-5">
                                         <div class="form-group">
                                             <label for="trip_type">Trip Haulage</a>
                                             </label>
@@ -75,30 +155,6 @@
                                         </div>
                                     </div>
                                     <!-- Trip Group -->
-                                    <div class="col-md-4">
-                                        <div class="form-group">
-                                            <label for="trip_group">
-                                                <a href="{{ route('trip_groups.index') }}" target="_blank" style="color: blue">Trips Tracking Groups</a>
-                                            </label>
-                                            <select class="form-control" wire:model.debounce.300ms="trip_group_id">
-                                                <option value="">Select Trips Tracking Group</option>
-                                                @foreach ($trip_groups as $trip_group)
-                                                    <option value="{{ $trip_group->id }}">{{ $trip_group->name }}</option>
-                                                @endforeach
-                                            </select>
-                                            @error('trip_group_id') <span class="text-danger error">{{ $message }}</span> @enderror
-                                            <small>
-                                                <a href="{{ route('trip_groups.index') }}" target="_blank">
-                                                    <i class="fa fa-plus-square-o"></i> New Trips Tracking Group
-                                                </a>
-                                            </small>
-                                            <a href="#" wire:click.prevent="refresh('tracking_groups')" class="float-end">
-                                                <i class="fa fa-refresh" aria-hidden="true"></i>
-                                            </a>
-                                        </div>
-                                    </div>
-                                   
-                                   
                                 </div>
                                 
                                 @if ($trip_type_name == "Return")
@@ -217,163 +273,10 @@
                                     </div>
                                 </div>
                                 @endif
-                                <div class="row">
-                                    <div class="col-md-3">
-                                        <div class="form-group">
-                                            <label for="customer">Trip Status<span class="required" style="color: red">*</span></label>
-                                          <select class="form-control" wire:model.debounce.300ms="selectedStatus" required>
-                                              <option value="">Select Status</option>
-                                                  <option value="Scheduled">Scheduled</option>
-                                                  <option value="Started">Started</option>
-                                                  <option value="Loading Point">Loading Point</option>
-                                                  <option value="Loaded">Loaded</option>
-                                                  <option value="InTransit">InTransit</option>
-                                                  <option value="Offloading Point">Offloading Point</option>
-                                                  <option value="Offloaded">Offloaded</option>
-                                                  <option value="OnHold">OnHold</option>
-                                                  <option value="Cancelled">Cancelled</option>
-                                          </select>
-                                            @error('selectedStatus') <span class="text-danger error">{{ $message }}</span>@enderror
-                                        </div>
-                                    </div>
-                                    <div class="col-md-5">
-                                        <div class="form-group">
-                                            <label for="exampleInputEmail13"><a href="{{ route('transporters.index') }}" target="_blank" style="color: blue">Transporter(s)</a></label>
-                                       <select wire:model.debounce.300ms="selectedTransporter" class="form-control" >
-                                           <option value="">Select Transporter</option>
-                                           @if (!is_null($selectedStatus))
-                                           @foreach ($transporters as $transporter)
-                                                <option value="{{$transporter->id}}">{{$transporter->name}}</option>
-                                            @endforeach
-                                           @endif
-                                          
-                                       </select>
-                                            @error('selectedTransporter') <span class="text-danger error">{{ $message }}</span>@enderror
-                                            <small>  <a href="{{ route('transporters.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Transporter</a></small> <a href="#" wire:click.prevent="refresh('transporters')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="form-group">
-                                            <label for="customer"><a href="{{ route('brokers.index') }}" target="_blank" style="color: blue">Broker(s)</a></label>
-                                          <select class="form-control" wire:model.debounce.300ms="selectedBroker">
-                                              <option value="">Select Broker</option>
-                                              @foreach ($brokers as $broker)
-                                                  <option value="{{$broker->id}}">{{$broker->name}}</option>
-                                              @endforeach
-                                          </select>
-                                            @error('selectedBroker') <span class="text-danger error">{{ $message }}</span>@enderror
-                                            <small>  <a href="{{ route('brokers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Broker</a></small> <a href="#" wire:click.prevent="refresh('brokers')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
-                                        </div>
-                                    </div>
-                        
-                                </div>
-                                <div class="row">
-                                <div class="col-md-4">
 
-                                    @if (!isset($mode_of_transport))
-                                        <div class="form-group" style="margin-left: 22px">
-                                            <label for="name">Mode of Transport?</label>
-                                            <label class="radio-inline">
-                                                <input type="radio" wire:model.debounce.300ms="mode_of_transport" value="Horse" name="optradio" >Horse
-                                            </label>
-                                            <label class="radio-inline">
-                                                <input type="radio" wire:model.debounce.300ms="mode_of_transport" value="Vehicle" name="optradio">Vehicle
-                                            </label>
-                                        </div>
-                                    @endif
-                                    @if (isset($mode_of_transport) && $mode_of_transport == "Horse")
-                                    <div class="form-group">
-                                        <label for="horse"><a href="{{ route('horses.index') }}" target="_blank" style="color: blue">Horse(s)</a><span class="required" style="color: red">*</span></label>
-                                        <input type="checkbox" wire:model.debounce.300ms="all_horses"   class="line-style" />
-                                        <label for="one" class="radio-label">Select from all horses</label>
-                                        <input type="text" wire:model.debounce.300ms="searchHorse" placeholder="Search with reg..." class="form-control">
-                                        <select class="form-control" wire:model.debounce.300ms="selectedHorse"  required size="4">
-                                            <option value="">Select Horse </option>
-                                            @if (!is_null($selectedTransporter) || !is_null($selectedBroker))
-                                          @foreach ($horses as $horse)
-                                          <option value="{{$horse->id}}"> {{$horse->registration_number}} {{$horse->horse_make ? $horse->horse_make->name : ""}} {{$horse->horse_model ? $horse->horse_model->name : ""}}</option>
-                                            @endforeach
-                                          @endif
-                                        </select>
-                                        @error('selectedHorse') <span class="text-danger error">{{ $message }}</span>@enderror
-                                        <small>  <a href="{{ route('horses.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Horse</a></small> <a href="#" wire:click.prevent="refresh('horses')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
-                                    </div>
-                                    @elseif (isset($mode_of_transport) && $mode_of_transport == "Vehicle")
-                                        <div class="form-group">
-                                            <label for="horse"><a href="{{ route('vehicles.index') }}" target="_blank" style="color: blue">Vehicle(s)</a><span class="required" style="color: red">*</span></label>
-                                            <input type="checkbox" wire:model.debounce.300ms="all_vehicles"   class="line-style" />
-                                            <label for="one" class="radio-label">Select from all vehicles</label>
-                                            <input type="text" wire:model.debounce.300ms="searchVehicle" placeholder="Search with reg..." class="form-control">
-                                            <select class="form-control" wire:model.debounce.300ms="selectedVehicle"  required size="4">
-                                                <option value="">Select Vehicle </option>
-                                                @if (!is_null($selectedTransporter) || !is_null($selectedBroker))
-                                            @foreach ($vehicles as $vehicle)
-                                            <option value="{{$vehicle->id}}"> {{$vehicle->registration_number}} {{$vehicle->vehicle_make ? $vehicle->vehicle_make->name : ""}} {{$vehicle->vehicle_model ? $vehicle->vehicle_model->name : ""}}</option>
-                                                @endforeach
-                                            @endif
-                                            </select>
-                                            @error('selectedVehicle') <span class="text-danger error">{{ $message }}</span>@enderror
-                                            <small>  <a href="{{ route('vehicles.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Vehicle</a></small> <a href="#" wire:click.prevent="refresh('vehicles')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
-                                        </div>
-                                    @endif
-                                </div>
-                                    <div class="col-md-3">
-                                        @if (!isset($with_trailer))
-                                            <div class="row">
-                                                <div class="mb-10">
-                                                    <input type="checkbox" wire:model.debounce.300ms="with_trailer"   class="line-style" />
-                                                    <label for="one" class="radio-label">With Trailer</label>
-                                                    @error('with_trailer') <span class="text-danger error">{{ $message }}</span>@enderror
-                                                </div>
-                                            </div>
-                                        @endif
-                                        @if ($with_trailer == True)
-                                                <div class="form-group">
-                                                    <label for="vehcile"><a href="{{ route('trailers.index') }}" target="_blank" style="color: blue">Trailer(s)</a></label>
-                                                    <input type="checkbox" wire:model.debounce.300ms="all_trailers"   class="line-style" />
-                                                    <label for="one" class="radio-label">Select from all trailers</label>
-                                                    <input type="text" wire:model.debounce.300ms="searchTrailer" placeholder="Search with reg..." class="form-control">
-                                                    <select class="form-control" wire:model.debounce.300ms="trailer_id" multiple="multiple" >
-                                                        <option value="">Select Trailer(s)</option>
-                                                            @if (!is_null($selectedTransporter) || !is_null($selectedBroker))
-                                                                @foreach ($trailers as $trailer)
-                                                                    <option value="{{$trailer->id}}">({{$trailer->registration_number}}) {{$trailer->make}} {{$trailer->model}} </option>
-                                                                @endforeach
-                                                            @endif
-                                                    </select>
-                                                    @error('trailer_id') <span class="text-danger error">{{ $message }}</span>@enderror
-                                                    <small>  <a href="{{ route('trailers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Trailer</a></small> <a href="#" wire:click.prevent="refresh('trailers')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
-                                                </div>
-                                            @endif
-                                    </div>
-                                    <div class="col-md-5">
-                                        <div class="form-group">
-                                            <label for="driver"><a href="{{ route('drivers.index') }}" target="_blank" style="color: blue">Driver(s)</a><span class="required" style="color: red">*</span></label>
-                                            <input type="checkbox" wire:model.debounce.300ms="all_drivers"   class="line-style" />
-                                            <label for="one" class="radio-label">Select from all drivers</label>
-                                            <input type="text" wire:model.debounce.300ms="searchDriver" placeholder="Search with name..." class="form-control" >
-                                          <select class="form-control" wire:model.debounce.300ms="driver_id" required size="4">
-                                              <option value="">Select Driver</option>
-                                              @if (!is_null($selectedTransporter) || !is_null($selectedBroker))
-                                                @foreach ($drivers as $driver)
-                                                    @if (isset($driver->employee))
-                                                    <option value="{{$driver->id}}">{{$driver->employee->name}} {{$driver->employee->surname}}</option>
-                                                    @endif
-                                                @endforeach
-                                              @endif
-                                          </select>
-                                            @error('driver_id') <span class="text-danger error">{{ $message }}</span>@enderror
-                                            <small>  <a href="{{ route('drivers.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Driver</a></small> <a href="#" wire:click.prevent="refresh('drivers')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
-                                        </div>
-                                        <div class="form-group">
-                                                <label for="notes">Driver Notes</label>
-                                                <textarea wire:model.debounce.300ms="notes"  class="form-control" placeholder="Driver Notes OR Instructions eg What to do @ offloading point" cols="30" rows="2"></textarea>
-                                                @error('notes') <span class="text-danger error">{{ $message }}</span>@enderror
-                                        </div>
-                                    </div>
-                                </div>
+                                
                                 <div class="row">
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <div class="form-group">
                                             <label for="customer"><a href="{{ route('customers.index') }}" target="_blank" style="color: blue">Customer(s)</a><span class="required" style="color: red">*</span></label>
                                           <select class="form-control" wire:model.debounce.300ms="customer_id" required>
@@ -386,7 +289,7 @@
                                             <small>  <a href="{{ route('customers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Customer</a></small> <a href="#" wire:click.prevent="refresh('customers')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <div class="form-group">
                                             <label for="name"><a href="{{route('consignees.index')}}" style="color: blue" target="_blank">Consignees</a></label>
                                             <select class="form-control" wire:model.debounce.300ms="consignee_id">
@@ -399,7 +302,20 @@
                                             @error('consignee_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="customer"><a href="{{ route('brokers.index') }}" target="_blank" style="color: blue">Broker(s)</a></label>
+                                          <select class="form-control" wire:model.debounce.300ms="selectedBroker">
+                                              <option value="">Select Broker</option>
+                                              @foreach ($brokers as $broker)
+                                                  <option value="{{$broker->id}}">{{$broker->name}}</option>
+                                              @endforeach
+                                          </select>
+                                            @error('selectedBroker') <span class="text-danger error">{{ $message }}</span>@enderror
+                                            <small>  <a href="{{ route('brokers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Broker</a></small> <a href="#" wire:click.prevent="refresh('brokers')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
                                         <div class="row">
                                             <div class="form-group">
                                                 <label for="exampleInputEmail13"><a href="{{ route('agents.index') }}" target="_blank" style="color: blue">Agent(s)</a></label>
@@ -430,7 +346,7 @@
                                     </div>
                                 </div>
 
-                                    <h5 class="underline mt-30">Cargo Details</h5>
+                                
                                 <div class="mb-10">
                                    <input type="checkbox" wire:model.debounce.300ms="with_cargos"   class="line-style" />
                                    <label for="one" class="radio-label">With Cargo</label>
@@ -564,12 +480,8 @@
                                @endif
 
                                
-                                @if (
-                                    $company->rates_managed_by_finance == 0 || 
-                                    ($company->rates_managed_by_finance == 1 && 
-                                    (in_array('Finance', $department_names) || in_array('Super Admin', $role_names)))
-                                )
-                                    <h5 class="underline mt-30">Freight Calculation Method<span class="required" style="color: red">*</span></h5>
+                                @if ($company->rates_managed_by_finance == 0 || ($company->rates_managed_by_finance == 1 && (in_array('Finance', $department_names) || in_array('Super Admin', $role_names))))
+                                    <h6 class="underline mt-30"><strong>Freight Calculation Method</strong><span class="required" style="color: red">*</span></h6>
                                     <div class="row">
                                         <div class="col-md-8">
                                             <div class="mb-10">
@@ -600,85 +512,80 @@
                                                         @error('calculation_measurement') <span class="text-danger error">{{ $message }}</span>@enderror
                                                     </div>
                                                 @endif
-                                            @endif
-                                           
+                                            @endif 
                                         </div>
                                         <div class="col-md-4">
                                             <div class="form-group">
                                                 <label for="customer"><a href="{{ route('currencies.index') }}" target="_blank" style="color: blue">Currencies
-                                                  @if ($rate)
-                                                    <span class="required" style="color: red">*</span>
-                                                @endif        
-                                                </a></label>
-                                              <select class="form-control" wire:model.debounce.300ms="selectedCurrency" {{$rate ? "required" : ""}}  {{ !isset($company->currency_id) ? "disabled" : ""  }} >
-                                                  <option value="">Select Currency</option>
-                                                  @foreach ($currencies as $currency)
-                                                  <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
-                                                  @endforeach
-                                              </select>
+                                                    @if ($rate)
+                                                        <span class="required" style="color: red">*</span>
+                                                    @endif </a>
+                                                </label>
+                                                <select class="form-control" wire:model.debounce.300ms="selectedCurrency" {{$rate ? "required" : ""}}  {{ !isset($company->currency_id) ? "disabled" : ""  }} >
+                                                    <option value="">Select Currency</option>
+                                                    @foreach ($currencies as $currency)
+                                                    <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
+                                                    @endforeach
+                                                </select>
                                                 @error('selectedCurrency') <span class="text-danger error">{{ $message }}</span>@enderror
                                                 @if (!isset($company->currency_id))
-                                                <small style="color:red">Default company trading currency not set</small>
-                                                <br>
+                                                    <small style="color:red">Default company trading currency not set</small>
+                                                    <br>
                                                 @endif
-                                                <small>  <a href="{{ route('currencies.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Currency</a></small> <a href="#" wire:click.prevent="refresh('currencies')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                                <small><a href="{{ route('currencies.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Currency</a></small> <a href="#" wire:click.prevent="refresh('currencies')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                             </div>
                                             @if (!is_null($selectedCurrency))
-                                            @if ($company)
-                                                @if ($selectedCurrency != $company->currency_id)
-                                                <div class="form-group">
-                                                    <label for="customer">Conversion Rate<span class="required" style="color: red">*</span></label>
-                                                    <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="exchange_rate"  placeholder="Exchange Rate {{$selected_currency ? "From ".$selected_currency->name : ""}} {{$company->currency ? "To ".$company->currency->name : ""}}" required>
-                                                    @error('exchange_rate') <span class="text-danger error">{{ $message }}</span>@enderror
-                                                    <small style="color: green">{{$selected_currency ? " 1 ".$selected_currency->name." is how much in" : ""}} {{$company->currency ? $company->currency->name." ?" : ""}}</small>
-                                                    <small>{{$exchange_customer_freight ? "The customer converted amount is: ".$exchange_customer_freight : ""}}</small> <br>
-                                                    <small>{{$exchange_transporter_freight ? "The transporter converted amount is: ".$exchange_transporter_freight : ""}}</small>
-                                                </div> 
+                                                @if ($company)
+                                                    @if ($selectedCurrency != $company->currency_id)
+                                                    <div class="form-group">
+                                                        <label for="customer">Conversion Rate<span class="required" style="color: red">*</span></label>
+                                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="exchange_rate"  placeholder="Exchange Rate {{$selected_currency ? "From ".$selected_currency->name : ""}} {{$company->currency ? "To ".$company->currency->name : ""}}" required>
+                                                        @error('exchange_rate') <span class="text-danger error">{{ $message }}</span>@enderror
+                                                        <small style="color: green">{{$selected_currency ? " 1 ".$selected_currency->name." is how much in" : ""}} {{$company->currency ? $company->currency->name." ?" : ""}}</small>
+                                                        <small>{{$exchange_customer_freight ? "The customer converted amount is: ".$exchange_customer_freight : ""}}</small> <br>
+                                                        <small>{{$exchange_transporter_freight ? "The transporter converted amount is: ".$exchange_transporter_freight : ""}}</small>
+                                                    </div> 
+                                                    @endif
                                                 @endif
-                                            @endif
                                             @endif
                                         </div>
                                     </div>
-                                   
-                                    <h5 class="underline mt-10">Customer Freight Agreement</h5>
+                                    <h6 class="underline mt-10"><strong>Freight Agreements</strong></h6>
                                     <div class="form-group" >
-                                        <label for="name">Customer Rates</label>
+                                        <label for="name">Trip Rates (Customers)</label>
                                         <label class="radio-inline">
                                             <input type="radio" wire:model.debounce.300ms="with_customer_rates" value="rates" name="optradio_customer" >Predefined Rates
-                                          </label>
-                                          <label class="radio-inline">
-                                            <input type="radio" wire:model.debounce.300ms="with_customer_rates" value="custom" name="optradio_customer">Custom Rate
-                                          </label>
+                                        </label>
+                                        <label class="radio-inline">
+                                        <input type="radio" wire:model.debounce.300ms="with_customer_rates" value="custom" name="optradio_customer">Custom Rate
+                                        </label>
                                     </div>
-
                                     <div class="row">
                                         <div class="col-md-6">
                                             @if (!is_null($with_customer_rates))
                                                 @if ($with_customer_rates == "rates")
-                                                <div class="form-group">
-                                                    <label for="customer"><a href="{{ route('rates.index') }}" target="_blank" style="color: blue">Rates</a><span class="required" style="color: red">*</span></label>
-                                                  <select class="form-control" wire:model.debounce.300ms="selectedDefinedCustomerRate" required>
-                                                      <option value="">Select Rate</option>
-                                                      @foreach ($defined_customer_rates as $rate)
-                                                          {{ $this->getDestination($rate->from) ? $this->getDestination($rate->from)->country->name : ""}}
-                                                          <option value="{{$rate->id}}">{{ $rate->freight_calculation }} {{ $rate->cargo ? $rate->cargo->name : "" }} {{ $rate->weight ? $rate->weight."tons" : ""}} {{ $rate->litreage ? $rate->litreage."litres" : ""}} | {{ $this->getDestination($rate->from)->country ? $this->getDestination($rate->from)->country->name : "" }} {{ $this->getDestination($rate->from)->city}} {{ $rate->loading_point ? $rate->loading_point->name : "" }}  - {{ $this->getDestination($rate->to)->country ? $this->getDestination($rate->to)->country->name : "" }} {{ $this->getDestination($rate->to)->city}} {{$rate->offloading_point ? $rate->offloading_point->name : ""}} {{$rate->distance ? $rate->distance."Kms" : ""}} | {{$rate->currency ? $rate->currency->name : ""}} {{$rate->currency ? $rate->currency->symbol : ""}}{{$rate->rate}}</option>
-                                                      @endforeach
-                                                  </select>
-                                                    @error('selectedDefinedCustomerRate') <span class="text-danger error">{{ $message }}</span>@enderror
-                                                  
-                                                    @if (in_array('Finance', $department_names) || in_array('Management', $rank_names) || in_array('Super Admin', $role_names))
-                                                    <small>  <a href="{{ route('rates.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Rate</a></small> <a href="#" wire:click.prevent="refresh('rates')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
-                                                    @endif
-                                                </div>
+                                                    <div class="form-group">
+                                                        <label for="customer"><a href="{{ route('rates.index') }}" target="_blank" style="color: blue">Rates</a><span class="required" style="color: red">*</span></label>
+                                                        <select class="form-control" wire:model.debounce.300ms="selectedDefinedCustomerRate" required>
+                                                            <option value="">Select Rate</option>
+                                                            @foreach ($defined_customer_rates as $rate)
+                                                                {{ $this->getDestination($rate->from) ? $this->getDestination($rate->from)->country->name : ""}}
+                                                                <option value="{{$rate->id}}">{{ $rate->freight_calculation }} {{ $rate->cargo ? $rate->cargo->name : "" }} {{ $rate->weight ? $rate->weight."tons" : ""}} {{ $rate->litreage ? $rate->litreage."litres" : ""}} | {{ $this->getDestination($rate->from)->country ? $this->getDestination($rate->from)->country->name : "" }} {{ $this->getDestination($rate->from)->city}} {{ $rate->loading_point ? $rate->loading_point->name : "" }}  - {{ $this->getDestination($rate->to)->country ? $this->getDestination($rate->to)->country->name : "" }} {{ $this->getDestination($rate->to)->city}} {{$rate->offloading_point ? $rate->offloading_point->name : ""}} {{$rate->distance ? $rate->distance."Kms" : ""}} | {{$rate->currency ? $rate->currency->name : ""}} {{$rate->currency ? $rate->currency->symbol : ""}}{{$rate->rate}}</option>
+                                                            @endforeach
+                                                        </select>
+                                                        @error('selectedDefinedCustomerRate') <span class="text-danger error">{{ $message }}</span>@enderror
+                                                        @if (in_array('Finance', $department_names) || in_array('Management', $rank_names) || in_array('Super Admin', $role_names))
+                                                            <small>  <a href="{{ route('rates.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Rate</a></small> <a href="#" wire:click.prevent="refresh('rates')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                                        @endif
+                                                    </div>
                                                 @elseif($with_customer_rates == "custom")
-                                                <div class="form-group">
-                                                    <label for="weight">Rate</label>
-                                                    <input type="number" step="any" min="0" class="form-control"  wire:model.debounce.300ms="rate"  placeholder="Enter Rate" >
-                                                    @error('rate') <span class="text-danger error">{{ $message }}</span>@enderror
-                                                </div>
+                                                    <div class="form-group">
+                                                        <label for="weight">Rate</label>
+                                                        <input type="number" step="any" min="0" class="form-control"  wire:model.debounce.300ms="rate"  placeholder="Enter Rate" >
+                                                        @error('rate') <span class="text-danger error">{{ $message }}</span>@enderror
+                                                    </div>
                                                 @endif
-                                            @endif
-                                           
+                                            @endif 
                                         </div>
                                         <div class="col-md-6">
                                             <div class="form-group">
@@ -687,19 +594,15 @@
                                                 @error('freight') <span class="text-danger error">{{ $message }}</span>@enderror
                                             </div>
                                         </div>
-    
-                                        <!-- /.col-md-6 -->
                                     </div>
-                                   
-                                    <h5 class="underline mt-10">Transporter Freight Agreement</h5>
                                     <div class="mb-10">
                                         <input type="checkbox" wire:model.debounce.300ms="transporter_agreement"   class="line-style" />
-                                        <label for="one" class="radio-label">Transporter</label>
+                                        <label for="one" class="radio-label">Add Transporter Freight</label>
                                         @error('transporter_agreement') <span class="text-danger error">{{ $message }}</span>@enderror
                                     </div>
                                     @if ($transporter_agreement == True)
                                     <div class="form-group" >
-                                        <label for="name">Transporter Rates</label>
+                                          <label for="name">Trip Rates (Transporter)</label>
                                         <label class="radio-inline">
                                             <input type="radio" wire:model.debounce.300ms="with_transporter_rates" value="rates" name="optradio_transporter" >Predefined Rates
                                           </label>
@@ -751,133 +654,9 @@
                                 @endif
 
                                 @endif
-                                <h5 class="underline mt-30">Empty Runs /  Dead Head </h5>
-                                <div class="mb-10">
-                                    <input type="checkbox" wire:model.debounce.300ms="emptyrun_origin"   class="line-style" />
-                                    <label for="one" class="radio-label">Empty Run - Origin</label>
-                                    @error('emptyrun_origin') <span class="text-danger error">{{ $message }}</span>@enderror
-                                </div>
-                                @if (isset($emptyrun_origin) &&  $emptyrun_origin == True)
-                                <small style="color: red">Empty Run - Origin  is the distance from your starting point to your loading point to load.</small>
-                                <br>
-                                <br>
-                                 <div class="row">
-                                     <div class="col-md-4">
-                                         <div class="form-group">
-                                             <label for="">Starting Mileage</label>
-                                             <input type="number" step="any" class="form-control" wire:model.debounce.300ms="emptyrun_origin_starting_mileage"  />
-                                             @error('emptyrun_origin_starting_mileage') <span class="text-danger error">{{ $message }}</span>@enderror
-                                         </div>
-                                     </div>
-                                     <div class="col-md-4">
-                                         <div class="form-group">
-                                             <label for="">Ending Mileage</label>
-                                             <input type="number" step="any" class="form-control" wire:model.debounce.300ms="emptyrun_origin_ending_mileage"  />
-                                             @error('emptyrun_origin_ending_mileage') <span class="text-danger error">{{ $message }}</span>@enderror
-                                         </div>
-                                     </div>
-                                     <div class="col-md-4">
-                                         <div class="form-group">
-                                             <label for="">Distance</label>
-                                             <input type="number" step="any" class="form-control" wire:model.debounce.300ms="emptyrun_origin_distance"  />
-                                             @error('emptyrun_origin_distance') <span class="text-danger error">{{ $message }}</span>@enderror
-                                         </div>
-                                     </div>
-                                 </div>
-                                 <div class="row">
-                                     <div class="col-md-4">
-                                         <div class="form-group">
-                                             <label for="">Fuel Quantity</label>
-                                             <input type="number" step="any" class="form-control" wire:model.debounce.300ms="emptyrun_origin_fuel_quantity"  />
-                                             @error('emptyrun_origin_fuel_quantity') <span class="text-danger error">{{ $message }}</span>@enderror
-                                         </div>
-                                     </div>
-                                     <div class="col-md-4">
-                                         <div class="form-group">
-                                             <label for="customer"><a href="{{ route('currencies.index') }}" target="_blank" style="color: blue">Currencies</a></label>
-                                           <select class="form-control" wire:model.debounce.300ms="emptyrun_origin_currency_id"  >
-                                               <option value="">Select Currency</option>
-                                               @foreach ($currencies as $currency)
-                                                     <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
-                                               @endforeach
-                                           </select>
-                                             @error('emptyrun_origin_currency_id') <span class="text-danger error">{{ $message }}</span>@enderror
-                                             <small>  <a href="{{ route('currencies.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Currency</a></small> <a href="#" wire:click.prevent="refresh('currencies')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
-                                         </div>
-                                     </div>
-                                     <div class="col-md-4">
-                                         <div class="form-group">
-                                             <label for="">Fuel Amount</label>
-                                             <input type="number" step="any" class="form-control" wire:model.debounce.300ms="emptyrun_origin_fuel_amount"  />
-                                             @error('emptyrun_origin_fuel_amount') <span class="text-danger error">{{ $message }}</span>@enderror
-                                         </div>
-                                     </div>
-                                 </div>
-                                @endif
+                                <hr>
                                
-                                 <div class="mb-10">
-                                    <input type="checkbox" wire:model.debounce.300ms="emptyrun_destination"   class="line-style" />
-                                    <label for="one" class="radio-label">Empty Run - Destination</label>
-                                    @error('emptyrun_destination') <span class="text-danger error">{{ $message }}</span>@enderror
-                                </div>
-                                @if (isset($emptyrun_destination) && $emptyrun_destination == True)
-                                <small style="color: red">Empty Run - Destination is the distance from your offloading point to your  next load or back to the starting point.</small>
-                                <br>
-                                <br>
-                                <div class="row">
-                                 <div class="col-md-4">
-                                     <div class="form-group">
-                                         <label for="">Starting Mileage</label>
-                                         <input type="number" step="any" class="form-control" wire:model.debounce.300ms="emptyrun_destination_starting_mileage"  />
-                                         @error('emptyrun_destination_starting_mileage') <span class="text-danger error">{{ $message }}</span>@enderror
-                                     </div>
-                                 </div>
-                                 <div class="col-md-4">
-                                     <div class="form-group">
-                                         <label for="">Ending Mileage</label>
-                                         <input type="number" step="any" class="form-control" wire:model.debounce.300ms="emptyrun_destination_ending_mileage"  />
-                                         @error('emptyrun_destination_ending_mileage') <span class="text-danger error">{{ $message }}</span>@enderror
-                                     </div>
-                                 </div>
-                                 <div class="col-md-4">
-                                     <div class="form-group">
-                                         <label for="">Distance</label>
-                                         <input type="number" step="any" class="form-control" wire:model.debounce.300ms="emptyrun_destination_distance"  />
-                                         @error('emptyrun_destination_distance') <span class="text-danger error">{{ $message }}</span>@enderror
-                                     </div>
-                                 </div>
-                             </div>
-                             <div class="row">
-                                 <div class="col-md-4">
-                                     <div class="form-group">
-                                         <label for="">Fuel Quantity</label>
-                                         <input type="number" step="any" class="form-control" wire:model.debounce.300ms="emptyrun_destination_fuel_quantity"  />
-                                         @error('emptyrun_destination_fuel_quantity') <span class="text-danger error">{{ $message }}</span>@enderror
-                                     </div>
-                                 </div>
-                                 <div class="col-md-4">
-                                     <div class="form-group">
-                                         <label for="customer"><a href="{{ route('currencies.index') }}" target="_blank" style="color: blue">Currencies</a></label>
-                                       <select class="form-control" wire:model.debounce.300ms="emptyrun_destination_currency_id"  >
-                                           <option value="">Select Currency</option>
-                                           @foreach ($currencies as $currency)
-                                                 <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
-                                           @endforeach
-                                       </select>
-                                         @error('emptyrun_destination_currency_id') <span class="text-danger error">{{ $message }}</span>@enderror
-                                         <small>  <a href="{{ route('currencies.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Currency</a></small> <a href="#" wire:click.prevent="refresh('currencies')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
-                                     </div>
-                                 </div>
-                                 <div class="col-md-4">
-                                     <div class="form-group">
-                                         <label for="">Fuel Amount</label>
-                                         <input type="number" step="any" class="form-control" wire:model.debounce.300ms="emptyrun_destination_fuel_amount"  />
-                                         @error('emptyrun_destination_fuel_amount') <span class="text-danger error">{{ $message }}</span>@enderror
-                                     </div>
-                                 </div>
-                             </div>
-                                @endif
-                                <h5 class="underline mt-30">Location Details</h5>
+                                <h6 class="underline mt-20 mb-20"><strong>Location Details</strong></h6>
                                 <div class="mb-15 mt-15">
                                    <input type="checkbox" wire:model.debounce.300ms="multiple_destinations"   class="line-style" />
                                    <label for="one" class="radio-label">Add multiple offloading points</label>
@@ -889,12 +668,12 @@
                                             <div class="form-group">
                                                 <label for="customer"><a href="{{ route('destinations.index') }}" target="_blank" style="color: blue">From</a><span class="required" style="color: red">*</span></label>
                                                 <input type="text" wire:model.debounce.300ms="searchFrom" placeholder="Search origin locations..." class="form-control">
-                                            <select class="form-control" wire:model.debounce.300ms="selectedFrom" size="4" required>
-                                                <option value="">Select From Location</option>
-                                                @foreach ($from_destinations as $destination)
-                                                    <option value="{{$destination->id}}">{{$destination->country ? $destination->country->name : ""}} {{$destination->city}}</option>
-                                                @endforeach
-                                            </select>
+                                                <select class="form-control" wire:model.debounce.300ms="selectedFrom" size="4" required>
+                                                    <option value="">Select From Location</option>
+                                                    @foreach ($from_destinations as $destination)
+                                                        <option value="{{$destination->id}}">{{$destination->country ? $destination->country->name : ""}} {{$destination->city}}</option>
+                                                    @endforeach
+                                                </select>
                                                 @error('selectedFrom') <span class="text-danger error">{{ $message }}</span>@enderror
                                                 <small>  <a href="{{ route('destinations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Destination</a></small> <a href="#" wire:click.prevent="refresh('destinations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                             </div>
@@ -904,11 +683,11 @@
                                                 <label for="customer"><a href="{{ route('loading_points.index') }}" target="_blank" style="color: blue">Loading Point(s)</a></label>
                                                 <input type="text" wire:model.debounce.300ms="searchLoadingPoint" placeholder="Search loading points..." class="form-control">
                                                 <select class="form-control" wire:model.debounce.300ms="loading_point_id"  size="4">
-                                                <option value="">Select Loading Point</option>
-                                                @foreach ($loading_points as $loading_point)
-                                                <option value="{{$loading_point->id}}">{{ucfirst($loading_point->name)}}</option>
-                                                @endforeach
-                                            </select>
+                                                    <option value="">Select Loading Point</option>
+                                                    @foreach ($loading_points as $loading_point)
+                                                    <option value="{{$loading_point->id}}">{{ucfirst($loading_point->name)}}</option>
+                                                    @endforeach
+                                                </select>
                                                 @error('loading_point_id') <span class="text-danger error">{{ $message }}</span>@enderror
                                                 <small>  <a href="{{ route('loading_points.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Loading Point</a></small> <a href="#" wire:click.prevent="refresh('loading_points')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                             </div>
@@ -917,12 +696,12 @@
                                             <div class="form-group">
                                                 <label for="destination"><a href="{{ route('destinations.index') }}" target="_blank" style="color: blue">To</a><span class="required" style="color: red">*</span></label>
                                                 <input type="text" wire:model.debounce.300ms="searchTo" placeholder="Search destination locations..." class="form-control">
-                                            <select class="form-control" wire:model.debounce.300ms="selectedTo" size="4" required>
-                                                <option value="">Select To Location</option>
-                                                @foreach ($to_destinations as $destination)
-                                                    <option value="{{$destination->id}}">{{$destination->country ? $destination->country->name : ""}} {{ucfirst($destination->city)}}</option>
-                                                @endforeach
-                                            </select>
+                                                <select class="form-control" wire:model.debounce.300ms="selectedTo" size="4" required>
+                                                    <option value="">Select To Location</option>
+                                                    @foreach ($to_destinations as $destination)
+                                                        <option value="{{$destination->id}}">{{$destination->country ? $destination->country->name : ""}} {{ucfirst($destination->city)}}</option>
+                                                    @endforeach
+                                                </select>
                                                 @error('selectedTo') <span class="text-danger error">{{ $message }}</span>@enderror
                                                 <small>  <a href="{{ route('destinations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Destination</a></small> <a href="#" wire:click.prevent="refresh('destinations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                             </div>
@@ -931,19 +710,18 @@
                                             <div class="form-group">
                                                 <label for="destination"><a href="{{ route('offloading_points.index') }}" target="_blank" style="color: blue">Offloading Point(s)</a></label>
                                                 <input type="text" wire:model.debounce.300ms="searchOffloadingPoint" placeholder="Search offloading points..." class="form-control">
-                                            <select class="form-control" wire:model.debounce.300ms="offloading_point_id" size="4" >
-                                                <option value="">Select Offloading Point</option>
-                                                @foreach ($offloading_points as $offloading_point)
-                                                    <option value="{{$offloading_point->id}}">{{ucfirst($offloading_point->name)}}</option>
-                                                @endforeach
-                                            </select>
+                                                <select class="form-control" wire:model.debounce.300ms="offloading_point_id" size="4" >
+                                                    <option value="">Select Offloading Point</option>
+                                                    @foreach ($offloading_points as $offloading_point)
+                                                        <option value="{{$offloading_point->id}}">{{ucfirst($offloading_point->name)}}</option>
+                                                    @endforeach
+                                                </select>
                                                 @error('offloading_point_id') <span class="text-danger error">{{ $message }}</span>@enderror
                                                 <small>  <a href="{{ route('offloading_points.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Offloading Points</a></small> <a href="#" wire:click.prevent="refresh('offloading_points')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                             </div>
                                         </div>
                                     </div>
                                 @else
-                                    
                                     @foreach ($trip_destinations as $key => $value)
                                         <div style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">
                                             <div class="row">
@@ -1034,22 +812,27 @@
                                                         @error('offloaded_freight.'.$key) <span class="text-danger error">{{ $message }}</span>@enderror
                                                     </div>
                                                 </div>
-                                               
                                             </div>
                                         </div>
                                     @endforeach
-                                   
                                 @endif
                                 <div class="row">
                                     <div class="col-md-3">
                                         <div class="form-group">
+                                            <label for="distance">Trip Distance</label>
+                                            <input type="number" min="1" step="any" class="form-control" wire:model.debounce.300ms="distance" placeholder="Trip Distance (Kms)"  >
+                                            @error('distance') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
                                             <label for="route"><a href="{{ route('routes.index') }}" target="_blank" style="color: blue">Route(s)</a></label>
-                                          <select class="form-control" wire:model.debounce.300ms="selectedRoute" >
-                                              <option value="">Select Route</option>
-                                              @foreach ($routes as $route)
-                                                  <option value="{{$route->id}}">{{ucfirst($route->name)}}</option>
-                                              @endforeach
-                                          </select>
+                                            <select class="form-control" wire:model.debounce.300ms="selectedRoute" >
+                                                <option value="">Select Route</option>
+                                                @foreach ($routes as $route)
+                                                    <option value="{{$route->id}}">{{ucfirst($route->name)}}</option>
+                                                @endforeach
+                                            </select>
                                             @error('selectedRoute') <span class="text-danger error">{{ $message }}</span>@enderror
                                             <small>  <a href="{{ route('routes.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Route</a></small> <a href="#" wire:click.prevent="refresh('routes')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         </div>
@@ -1077,24 +860,184 @@
                                             <small>  <a href="{{ route('truck_stops.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Truck Stop</a></small> <a href="#" wire:click.prevent="refresh('truck_stops')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         </div>
                                     </div>
-
-                                    <div class="col-md-3">
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-2">
                                         <div class="form-group">
-                                            <label for="start_date">Trip Start Date<span class="required" style="color: red">*</span></label>
+                                            <label for="start_date">Start Date<span class="required" style="color: red">*</span></label>
                                             <input type="datetime-local" class="form-control" wire:model.debounce.300ms="start_date" placeholder="Enter Start Date" required>
                                             @error('start_date') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
-                                    <div class="col-md-3">
+                                    <div class="col-md-2">
                                         <div class="form-group">
-                                            <label for="end_date">Estimated Trip End Date<span class="required" style="color: red">*</span></label>
+                                            <label for="end_date">Est End Date<span class="required" style="color: red">*</span></label>
                                             <input type="datetime-local" class="form-control" wire:model.debounce.300ms="end_date" placeholder="Enter End Date" required>
                                             @error('end_date') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label for="customer">Trip Status<span class="required" style="color: red">*</span></label>
+                                          <select class="form-control" wire:model.debounce.300ms="selectedStatus" required>
+                                              <option value="">Select Status</option>
+                                                  <option value="Scheduled">Scheduled</option>
+                                                  <option value="Started">Started</option>
+                                                  <option value="Loading Point">Loading Point</option>
+                                                  <option value="Loaded">Loaded</option>
+                                                  <option value="InTransit">InTransit</option>
+                                                  <option value="Offloading Point">Offloading Point</option>
+                                                  <option value="Offloaded">Offloaded</option>
+                                                  <option value="OnHold">OnHold</option>
+                                                  <option value="Cancelled">Cancelled</option>
+                                          </select>
+                                            @error('selectedStatus') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="trip_group">
+                                                <a href="{{ route('trip_groups.index') }}" target="_blank" style="color: blue">Trips Tracking Groups</a>
+                                            </label>
+                                            <select class="form-control" wire:model.debounce.300ms="trip_group_id">
+                                                <option value="">Select Trips Tracking Group</option>
+                                                @foreach ($trip_groups as $trip_group)
+                                                    <option value="{{ $trip_group->id }}">{{ $trip_group->name }}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('trip_group_id') <span class="text-danger error">{{ $message }}</span> @enderror
+                                            <small>
+                                                <a href="{{ route('trip_groups.index') }}" target="_blank">
+                                                    <i class="fa fa-plus-square-o"></i> New Trips Tracking Group
+                                                </a>
+                                            </small>
+                                            <a href="#" wire:click.prevent="refresh('tracking_groups')" class="float-end">
+                                                <i class="fa fa-refresh" aria-hidden="true"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="exampleInputEmail13"><a href="{{ route('transporters.index') }}" target="_blank" style="color: blue">Transporter(s)</a></label>
+                                            <select wire:model.debounce.300ms="selectedTransporter" class="form-control" >
+                                                <option value="">Select Transporter</option>
+                                                @if (!is_null($selectedStatus))
+                                                    @foreach ($transporters as $transporter)
+                                                        <option value="{{$transporter->id}}">{{$transporter->name}}</option>
+                                                    @endforeach
+                                                @endif
+                                            </select>
+                                            @error('selectedTransporter') <span class="text-danger error">{{ $message }}</span>@enderror
+                                            <small>  <a href="{{ route('transporters.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Transporter</a></small> <a href="#" wire:click.prevent="refresh('transporters')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                        </div>
+                                    </div>
                                 </div>
-                    
-                                <br>
+
+                                @endif
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        @if (!isset($mode_of_transport))
+                                            <div class="form-group" style="margin-left: 22px">
+                                                <label for="name">Equipment Category?</label>
+                                                <label class="radio-inline">
+                                                    <input type="radio" wire:model.debounce.300ms="mode_of_transport" value="Horse" name="optradio" >Horse
+                                                </label>
+                                                <label class="radio-inline">
+                                                    <input type="radio" wire:model.debounce.300ms="mode_of_transport" value="Vehicle" name="optradio">Vehicle
+                                                </label>
+                                            </div>
+                                        @endif
+                                        @if (isset($mode_of_transport) && $mode_of_transport == "Horse")
+                                            <div class="form-group">
+                                                <label for="horse"><a href="{{ route('horses.index') }}" target="_blank" style="color: blue">Horse(s)</a><span class="required" style="color: red">*</span></label>
+                                                <input type="checkbox" wire:model.debounce.300ms="all_horses"   class="line-style" />
+                                                <label for="one" class="radio-label">Select from all horses</label>
+                                                <input type="text" wire:model.debounce.300ms="searchHorse" placeholder="Search with reg..." class="form-control">
+                                                <select class="form-control" wire:model.debounce.300ms="selectedHorse"  required size="4">
+                                                    <option value="">Select Horse </option>
+                                                    @if (!is_null($selectedTransporter) || !is_null($selectedBroker))
+                                                @foreach ($horses as $horse)
+                                                <option value="{{$horse->id}}"> {{$horse->registration_number}} {{$horse->horse_make ? $horse->horse_make->name : ""}} {{$horse->horse_model ? $horse->horse_model->name : ""}}</option>
+                                                    @endforeach
+                                                @endif
+                                                </select>
+                                                @error('selectedHorse') <span class="text-danger error">{{ $message }}</span>@enderror
+                                                <small>  <a href="{{ route('horses.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Horse</a></small> <a href="#" wire:click.prevent="refresh('horses')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                            </div>
+                                        @elseif (isset($mode_of_transport) && $mode_of_transport == "Vehicle")
+                                            <div class="form-group">
+                                                <label for="horse"><a href="{{ route('vehicles.index') }}" target="_blank" style="color: blue">Vehicle(s)</a><span class="required" style="color: red">*</span></label>
+                                                <input type="checkbox" wire:model.debounce.300ms="all_vehicles"   class="line-style" />
+                                                <label for="one" class="radio-label">Select from all vehicles</label>
+                                                <input type="text" wire:model.debounce.300ms="searchVehicle" placeholder="Search with reg..." class="form-control">
+                                                <select class="form-control" wire:model.debounce.300ms="selectedVehicle"  required size="4">
+                                                    <option value="">Select Vehicle </option>
+                                                    @if (!is_null($selectedTransporter) || !is_null($selectedBroker))
+                                                @foreach ($vehicles as $vehicle)
+                                                <option value="{{$vehicle->id}}"> {{$vehicle->registration_number}} {{$vehicle->vehicle_make ? $vehicle->vehicle_make->name : ""}} {{$vehicle->vehicle_model ? $vehicle->vehicle_model->name : ""}}</option>
+                                                    @endforeach
+                                                @endif
+                                                </select>
+                                                @error('selectedVehicle') <span class="text-danger error">{{ $message }}</span>@enderror
+                                                <small>  <a href="{{ route('vehicles.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Vehicle</a></small> <a href="#" wire:click.prevent="refresh('vehicles')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                            </div>
+                                        @endif
+                                    </div>
+                                    <div class="col-md-3">
+                                        @if (!isset($with_trailer))
+                                            <div class="row">
+                                                <div class="mb-10">
+                                                    <input type="checkbox" wire:model.debounce.300ms="with_trailer"   class="line-style" />
+                                                    <label for="one" class="radio-label">With Trailer</label>
+                                                    @error('with_trailer') <span class="text-danger error">{{ $message }}</span>@enderror
+                                                </div>
+                                            </div>
+                                        @endif
+                                        @if ($with_trailer == True)
+                                            <div class="form-group">
+                                                <label for="vehcile"><a href="{{ route('trailers.index') }}" target="_blank" style="color: blue">Trailer(s)</a></label>
+                                                <input type="checkbox" wire:model.debounce.300ms="all_trailers"   class="line-style" />
+                                                <label for="one" class="radio-label">Select from all trailers</label>
+                                                <input type="text" wire:model.debounce.300ms="searchTrailer" placeholder="Search with reg..." class="form-control">
+                                                <select class="form-control" wire:model.debounce.300ms="trailer_id" multiple="multiple" >
+                                                    <option value="">Select Trailer(s)</option>
+                                                        @if (!is_null($selectedTransporter) || !is_null($selectedBroker))
+                                                            @foreach ($trailers as $trailer)
+                                                                <option value="{{$trailer->id}}">({{$trailer->registration_number}}) {{$trailer->make}} {{$trailer->model}} </option>
+                                                            @endforeach
+                                                        @endif
+                                                </select>
+                                                @error('trailer_id') <span class="text-danger error">{{ $message }}</span>@enderror
+                                                <small>  <a href="{{ route('trailers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Trailer</a></small> <a href="#" wire:click.prevent="refresh('trailers')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                            </div>
+                                        @endif
+                                    </div>
+                                    <div class="col-md-5">
+                                        <div class="form-group">
+                                            <label for="driver"><a href="{{ route('drivers.index') }}" target="_blank" style="color: blue">Driver(s)</a><span class="required" style="color: red">*</span></label>
+                                            <input type="checkbox" wire:model.debounce.300ms="all_drivers"   class="line-style" />
+                                            <label for="one" class="radio-label">Select from all drivers</label>
+                                            <input type="text" wire:model.debounce.300ms="searchDriver" placeholder="Search with name..." class="form-control" >
+                                          <select class="form-control" wire:model.debounce.300ms="driver_id" required size="4">
+                                              <option value="">Select Driver</option>
+                                              @if (!is_null($selectedTransporter) || !is_null($selectedBroker))
+                                                @foreach ($drivers as $driver)
+                                                    @if (isset($driver->employee))
+                                                    <option value="{{$driver->id}}">{{$driver->employee->name}} {{$driver->employee->surname}}</option>
+                                                    @endif
+                                                @endforeach
+                                              @endif
+                                          </select>
+                                            @error('driver_id') <span class="text-danger error">{{ $message }}</span>@enderror
+                                            <small>  <a href="{{ route('drivers.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Driver</a></small> <a href="#" wire:click.prevent="refresh('drivers')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                        </div>
+                                        <div class="form-group">
+                                                <label for="notes">Driver Notes</label>
+                                                <textarea wire:model.debounce.300ms="notes"  class="form-control" placeholder="Driver Notes OR Instructions eg What to do @ offloading point" cols="30" rows="2"></textarea>
+                                                @error('notes') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                    </div>
+                                </div>
                                 <div class="mb-15 mt-15">
                                    <input type="checkbox" wire:model.debounce.300ms="timelines"   class="line-style" />
                                    <label for="one" class="radio-label">Add Trip Timelines</label>
@@ -1133,7 +1076,7 @@
                                     </div>  
                                 @endif
                                 <div class="row">
-                                    <div class="col-md-2">
+                                    <div class="col-md-3">
                                         <div class="form-group">
                                             <label for="end_date">Starting Mileage</label>
                                             <input type="number" step="any" min="1" class="form-control" wire:model.debounce.300ms="starting_mileage" placeholder="Mileage @ Rest" >
@@ -1175,21 +1118,13 @@
                                             <input type="number" step="any" class="form-control" wire:model.debounce.300ms="ending_hours" placeholder="Engine Hours @ Offloading" disabled >
                                             @error('ending_hours') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
-                                        @endif
-                                       
+                                        @endif                                       
                                     </div>
 
-                                    <div class="col-md-2">
+                                    <div class="col-md-3">
                                         <div class="form-group">
-                                            <label for="distance">Trip Distance</label>
-                                            <input type="number" min="1" step="any" class="form-control" wire:model.debounce.300ms="distance" placeholder="Trip Distance (Kms)"  >
-                                            @error('distance') <span class="text-danger error">{{ $message }}</span>@enderror
-                                        </div>
-                                    </div>
-                                    <div class="col-md-2">
-                                        <div class="form-group">
-                                            <label for="end_date">Trip Fuel</label>
-                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="trip_fuel" placeholder="Trip Fuel Qty">
+                                            <label for="end_date">Est Trip Fuel</label>
+                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="trip_fuel" placeholder="Estimate Trip Fuel Qty">
                                             @error('trip_fuel') <span class="text-danger error">{{ $message }}</span>@enderror
                                             @if ($horse_selected)
                                                 <small> <a href="{{ route('horses.show',$horse_selected->id) }}" target="_blank" style="color: blue">Horse {{ $horse_selected->registration_number }}</a> Fuel Tank Balance: {{ $fuel_balance }} Litres</small>
@@ -1200,33 +1135,155 @@
                                                 <small style="color: red">Order fuel for horse. Estimated trip fuel is greater than available fuel in horse fuel tank.</small>
                                                 @endif
                                             @endif
-                                           
-                                          
                                         </div>
                                     </div>
                                     <!-- /.col-md-6 -->
                                 </div>
-
                             <br>
-                           <div class="row">
-                                    <div class="col-md-12">
+                            <h6 class="underline mt-20 mb-20"><strong>Empty Runs</strong></h6>
+                            <div class="mb-10">
+                                <input type="checkbox" wire:model.debounce.300ms="emptyrun_origin"   class="line-style" />
+                                <label for="one" class="radio-label">Empty Run - Origin</label>
+                                @error('emptyrun_origin') <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
+                            @if (isset($emptyrun_origin) &&  $emptyrun_origin == True)
+                            <small style="color: red">Empty Run - Origin  is the distance from your starting point to your loading point to load.</small>
+                            <br>
+                            <br>
+                                <div class="row">
+                                    <div class="col-md-4">
                                         <div class="form-group">
-                                            <label for="street_address">Trip Notes/Comments</label>
-                                            <textarea wire:model.debounce.300ms="comments" class="form-control" placeholder="Enter Trip Notes / Comments" cols="30" rows="3"></textarea>
-                                            @error('comments') <span class="text-danger error">{{ $message }}</span>@enderror
+                                            <label for="">Starting Mileage</label>
+                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="emptyrun_origin_starting_mileage"  />
+                                            @error('emptyrun_origin_starting_mileage') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
-                                    
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="">Ending Mileage</label>
+                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="emptyrun_origin_ending_mileage"  />
+                                            @error('emptyrun_origin_ending_mileage') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="">Distance</label>
+                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="emptyrun_origin_distance"  />
+                                            @error('emptyrun_origin_distance') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                    </div>
                                 </div>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="">Fuel Quantity</label>
+                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="emptyrun_origin_fuel_quantity"  />
+                                            @error('emptyrun_origin_fuel_quantity') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="customer"><a href="{{ route('currencies.index') }}" target="_blank" style="color: blue">Currencies</a></label>
+                                        <select class="form-control" wire:model.debounce.300ms="emptyrun_origin_currency_id"  >
+                                            <option value="">Select Currency</option>
+                                            @foreach ($currencies as $currency)
+                                                    <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
+                                            @endforeach
+                                        </select>
+                                            @error('emptyrun_origin_currency_id') <span class="text-danger error">{{ $message }}</span>@enderror
+                                            <small>  <a href="{{ route('currencies.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Currency</a></small> <a href="#" wire:click.prevent="refresh('currencies')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="">Fuel Amount</label>
+                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="emptyrun_origin_fuel_amount"  />
+                                            @error('emptyrun_origin_fuel_amount') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+                            
+                            <div class="mb-10">
+                                <input type="checkbox" wire:model.debounce.300ms="emptyrun_destination"   class="line-style" />
+                                <label for="one" class="radio-label">Empty Run - Destination</label>
+                                @error('emptyrun_destination') <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
+                            @if (isset($emptyrun_destination) && $emptyrun_destination == True)
+                                <small style="color: red">Empty Run - Destination is the distance from your offloading point to your  next load or back to the starting point.</small>
+                                <br>
+                                <br>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="">Starting Mileage</label>
+                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="emptyrun_destination_starting_mileage"  />
+                                            @error('emptyrun_destination_starting_mileage') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="">Ending Mileage</label>
+                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="emptyrun_destination_ending_mileage"  />
+                                            @error('emptyrun_destination_ending_mileage') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="">Distance</label>
+                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="emptyrun_destination_distance"  />
+                                            @error('emptyrun_destination_distance') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="">Fuel Quantity</label>
+                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="emptyrun_destination_fuel_quantity"  />
+                                            @error('emptyrun_destination_fuel_quantity') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="customer"><a href="{{ route('currencies.index') }}" target="_blank" style="color: blue">Currencies</a></label>
+                                        <select class="form-control" wire:model.debounce.300ms="emptyrun_destination_currency_id"  >
+                                            <option value="">Select Currency</option>
+                                            @foreach ($currencies as $currency)
+                                                    <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
+                                            @endforeach
+                                        </select>
+                                            @error('emptyrun_destination_currency_id') <span class="text-danger error">{{ $message }}</span>@enderror
+                                            <small>  <a href="{{ route('currencies.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Currency</a></small> <a href="#" wire:click.prevent="refresh('currencies')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="">Fuel Amount</label>
+                                            <input type="number" step="any" class="form-control" wire:model.debounce.300ms="emptyrun_destination_fuel_amount"  />
+                                            @error('emptyrun_destination_fuel_amount') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label for="street_address">Trip Notes/Comments</label>
+                                        <textarea wire:model.debounce.300ms="comments" class="form-control" placeholder="Enter Trip Notes / Comments" cols="30" rows="3"></textarea>
+                                        @error('comments') <span class="text-danger error">{{ $message }}</span>@enderror
+                                    </div>
+                                </div>
+                            </div>
                             <hr>
                                 @if ($shift == False)
                                     <hr>
-                                    <h5 class="underline mt-30">Fuel Order Details</h5>
+                                    <h6 class="underline mt-20 mb-20"><strong>Fuel Order Details</strong></h6>
                                     <div class="mb-10">
                                        <input type="checkbox" wire:model.debounce.300ms="fuel_order"   class="line-style" />
                                        <label for="one" class="radio-label">Fuel Order</label>
                                        @error('fuel_order') <span class="text-danger error">{{ $message }}</span>@enderror
-                                   </div>
+                                    </div>
                                    @if ($fuel_order == True)
                                    <div class="row">
                                        <div class="col-md-4">
@@ -1425,10 +1482,10 @@
 
                                    <hr>
                            
-                            <h5 class="underline mt-30">Send trip updates to customer(s)</h5>
+                            <h6 class="underline mt-20 mb-20"><strong>Automated customer - trip updates</strong></h6>
                             <div class="mb-10">
                                 <input type="checkbox" wire:model.debounce.300ms="customer_updates"   class="line-style" />
-                                <label for="one" class="radio-label">Customer notifications</label>
+                                <label for="one" class="radio-label">Send automated notifications</label>
                                 @error('customer_updates') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
                             <br>

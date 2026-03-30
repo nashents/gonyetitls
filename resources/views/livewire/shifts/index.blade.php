@@ -243,9 +243,6 @@
                                         </div>
                                         <!-- /input-group -->
                                     </div>
-                               
-                                   
-                                    
                                 </div>
                             </div>
                             <div class="panel-title">
@@ -275,6 +272,8 @@
                                             Duty
                                         </th>
                                         <th class="th-sm" style="width: 20%;">Narration
+                                        </th>
+                                        <th class="th-sm" style="width: 20%;">Work Done
                                         </th>
                                         <th class="th-sm" style="width:10%">
                                             Distance(Km)
@@ -324,20 +323,33 @@
                                                     @if ($shift->horse)
                                                         <strong>Horse:</strong>  {{$shift->horse->registration_number}} {{$shift->horse->fleet_number ? "(".$shift->horse->fleet_number.")" : ""}} <br>
                                                     @elseif($shift->vehicle)
-                                                        <strong>Vehicle:</strong> {{$shift->vehicle->registration_number}} {{$shift->vehicle->fleet_number ? "(".$shift->vehicle->fleet_number.")" : ""}} <br>
+                                                        <strong>Vehicle:</strong> {{$shift->vehicle->registration_number}} {{$shift->vehicle->fleet_number ? "(".$shift->vehicle->fleet_number.")" : ""}}
                                                     @endif
                                                     @if ($shift->loading_points->isNotEmpty() && $shift->loading_points->count()>0)
+                                                        <br>
                                                         <strong>Loading Points: </strong>
                                                         @foreach ($shift->loading_points as $loading_point)
                                                             {{ $loading_point->name }} @if (!$loop->last), @endif
                                                         @endforeach
                                                     @endif
-                                                    <br>
                                                     @if ($shift->offloading_points->isNotEmpty())
+                                                        <br>
                                                         <strong>Offloading Points: </strong>
                                                         @foreach ($shift->offloading_points as $offloading_point)
                                                             {{ $offloading_point->name }}@if (!$loop->last), @endif
                                                         @endforeach
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @if ($shift->for == "Trips")
+                                                        <strong>Total Loads:</strong> {{$shift->trips?->count()}} <br>
+                                                        <strong>Total Weight:</strong> {{$shift->trips?->sum('weight')}} <br>
+                                                        @if ($shift->trips)
+                                                            @foreach ($shift->trips as $trip)
+                                                                {{$trip->trip_number}} @if (!$loop->last)@endif
+                                                            @endforeach
+                                                        @endif
+
                                                     @endif
                                                 </td>
                                                 <td>

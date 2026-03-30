@@ -555,7 +555,7 @@ class Create extends Component
             if(isset($initial_trip)){
                 $this->selectedTransporter = $initial_trip->transporter_id;
                 $transporter = Transporter::find($initial_trip->transporter_id);
-                $this->cargos = $transporter->cargos->sortBy('name');
+                $this->cargos = Cargo::orderBy('name','asc')->get();
                 $this->trip_ref = $initial_trip->trip_ref;
                 $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$initial_trip->transporter_id)
                 ->where('archive',0)
@@ -778,8 +778,7 @@ class Create extends Component
     {
         if (!is_null($id) ) {
             $this->selectedTransporter = $id;
-            $transporter = Transporter::find($id);
-            $this->cargos = $transporter->cargos->sortBy('name');
+         
 
             if (isset($this->selectedStatus) && ($this->selectedStatus == "Scheduled" || $this->selectedStatus == "Offloaded" || $this->selectedStatus == "Cancelled") ) {
                 $this->horses = Horse::query()->with('horse_make:id,name','horse_model:id,name')->where('transporter_id',$id)
@@ -830,7 +829,6 @@ class Create extends Component
             if (!is_null($id) ) {
                 $broker = Broker::find($id);
                 if(isset($broker)){
-                    $this->cargos = $broker->cargos->sortBy('name');
                     if (isset($this->selectedStatus) && ($this->selectedStatus == "Scheduled" || $this->selectedStatus == "Offloaded" || $this->selectedStatus == "Cancelled") ) {
                         $this->horses = $broker->horses->where('archive',0);
                         $this->trailers = $broker->trailers->where('archive',0);
@@ -1114,7 +1112,7 @@ class Create extends Component
         $this->consignees = Consignee::orderBy('name','asc')->get();
         $this->customers = Customer::orderBy('name','asc')->get();
         $this->brokers = Broker::orderBy('name','asc')->latest()->get();
-        $this->cargos = collect();
+        $this->cargos = Cargo::orderBy('name','asc')->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->from_destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
         $this->to_destinations = Destination::with('country')->get()->sortBy('city')->sortBy('country.name');
@@ -1610,6 +1608,7 @@ class Create extends Component
                 $trip->driver_id = $this->driver_id ?: null;
                 $trip->with_customer_rates = $this->with_customer_rates;
                 $trip->with_transporter_rates = $this->with_transporter_rates;
+                $trip->attach_transport_order = $this->attach_transport_order;
                 $trip->broker_id = $this->selectedBroker ?: null;
                 $trip->initial_trip_id = $this->trip_type_name === "Return" ? $this->selectedTrip : null;
                 $trip->customer_id = $this->customer_id ?: null;
@@ -1680,24 +1679,7 @@ class Create extends Component
                 $trip->emptyrun_destination = $this->emptyrun_destination;
                 $trip->save();
 
-                if(!empty($this->selectedTransportOrder)){
-                  
-                    foreach($this->selectedTransportOrder as $key => $Id){
-                            $transport_order = TransportOrder::find($Id);
-                            $trip_transport_order = new TripTransportOrder;
-                            $trip_transport_order->trip_id = $trip->id;
-                            $trip_transport_order->transport_order_id = $Id;
-                            if($transport_order){
-                                $trip_transport_order->allocated_quantity = $transport_order->quantity;
-                                $trip_transport_order->allocated_weight = $transport_order->weight;
-                                $trip_transport_order->allocated_litreage = $transport_order->litreage;
-                                $trip_transport_order->units_of_measure_id = $transport_order->units_of_measure_id;
-                            }
-                            $trip_transport_order->save();
-                           
-                            $this->addDestinations($trip_transport_order);
-                    }
-                }
+             
 
                 
 
@@ -2779,9 +2761,8 @@ class Create extends Component
         }
         elseif($category == 'cargos'){
             if ($this->selectedTransporter) {
-                $this->cargos = Transporter::find($this->selectedTransporter)->cargos->sortBy('name');
-            }else{
-                $this->cargos = Cargo::orderBy('name','asc')->get();
+               $this->cargos = Cargo::orderBy('name','asc')->get();
+               
             }
             $this->dispatchBrowserEvent('alert',[
                 'type'=>'success',

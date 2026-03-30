@@ -84,6 +84,7 @@ WithCustomStartCell
                     : 0,
             ];
 
+
             // Night hours: 21:00 -> 04:00
             // Day hours:   05:00 -> 20:00
             foreach ($summaryRows as $s) {
@@ -299,8 +300,8 @@ WithCustomStartCell
                     $shift->cargo ? $shift->cargo->name : "",
                     $equipment,
                     $driver,
-                    $shift->total_loads,
-                    $shift->total_weight,
+                    $shift?->trips->count(),
+                    $shift->trips->sum('weight'),
                     $shift->calculated_mileage,
                     $shift->actual_mileage,
                     $shift->total_fuel,

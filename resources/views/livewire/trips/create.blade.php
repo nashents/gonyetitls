@@ -15,7 +15,7 @@
                         <div class="panel-body">
 
                             <form wire:submit.prevent="store()" class="p-20" enctype="multipart/form-data">
-                                <h5 class="underline mt-20 mb-20">Order Details</h5>
+                                <h6 class="underline mt-20 mb-20"><strong>Order Details</strong></h6>
                                 <div class="mb-10">
                                     <input type="checkbox" wire:model.debounce.300ms="attach_transport_order"   class="line-style" />
                                     <label for="one" class="radio-label">Attach Transport Order(s)</label>
@@ -182,6 +182,7 @@
                                         @error('selectedQuotation') <span class="text-danger error">{{ $message }}</span> @enderror
                                     </div>
                                 @endif
+
                                 <div class="row">
                                     <div class="col-md-2">
                                         <div class="form-group">
@@ -222,9 +223,6 @@
                                         </div>
                                     </div>
                                     <!-- Trip Group -->
-                                  
-                                   
-                                   
                                 </div>
                                 
                                 <!-- Return Trip Search -->
