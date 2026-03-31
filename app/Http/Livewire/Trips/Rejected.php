@@ -2,7 +2,6 @@
 
 namespace App\Http\Livewire\Trips;
 
-use Carbon\Carbon;
 use App\Models\Bill;
 use App\Models\Fuel;
 use App\Models\Hour;
@@ -16,7 +15,6 @@ use App\Models\Mileage;
 use App\Models\Trailer;
 use App\Models\Vehicle;
 use Livewire\Component;
-use App\Models\CashFlow;
 use App\Models\GatePass;
 use App\Models\Container;
 use App\Mail\FuelOrderMail;
@@ -25,12 +23,10 @@ use App\Models\Transporter;
 use App\Models\LoadingPoint;
 use Livewire\WithPagination;
 use App\Mail\TripUpdatesMail;
-use App\Models\TransportOrder;
 use App\Mail\TransportOrderMail;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Session;
 use App\Mail\AuthorizationNotificationMail;
 
 class Rejected extends Component
@@ -39,6 +35,10 @@ class Rejected extends Component
     use WithPagination;
 
     protected $paginationTheme = 'bootstrap';
+      public function paginationView()
+    { 
+        return 'vendor.pagination.bootstrap-custom';
+    }
 
     public $selectedRows = [];
     public $selectPageRows = false;
@@ -47,6 +47,12 @@ class Rejected extends Component
     public $comments;
     public $trip_id;
 
+     public $user;
+    public $employee;
+    public $employee_department;
+    public $department_names;
+    public $rank_names;
+    public $role_names;
     public $company;
     public $trip;
     public $trip_number;
@@ -77,7 +83,15 @@ class Rejected extends Component
     public $route;
     public $truck_stops;
     public $search;
-    protected $queryString = ['search'];
+    public $perPage = 10;
+    protected $queryString = [
+        'search'                 => ['except' => ''],
+        'trip_filter'            => ['except' => ''],
+        'from'                   => ['except' => ''],
+        'to'                     => ['except' => ''],
+        'perPage'                => ['except' => 10],
+        'page'                   => ['except' => 1],
+    ];
 
     //fuel order variables
     public $fuels;
@@ -133,6 +147,19 @@ class Rejected extends Component
      $this->comments = "";
  }
 
+    public function clearFilters(): void
+    {
+        $this->search              = Null;
+        $this->trip_filter         = 'created_at'; // ← reset to default, not ''
+        $this->from                =  Null;
+        $this->to                  = Null;
+        $this->resetPage();
+         $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Filters Cleared Successfully!!"
+        ]);
+    }
+
  public function dateRange(){
  
     // $this->resetPage();
@@ -178,9 +205,63 @@ public function updatingSearch()
 }
 
     
+  public function updatingStatusFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingRangeFrom()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingRangeTo()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingPerPage()
+    {
+        $this->resetPage();
+    }
+
+    public function gotoPageNumber($page)
+    {
+        $page = (int) $page;
+
+        if ($page > 0) {
+            $this->gotoPage($page);
+        }
+    }
+    
+
+    public function getAuthorizer($id){
+        if(is_null($id)){
+            return ;
+        }
+        $user = User::find($id);
+        return $user?->name." ".$user?->surname;
+    }
    
 
     public function mount(){
+        
+        $this->user = Auth::user();
+        $this->employee = $this->user->employee;
+        $this->employee_department = $this->employee->departments->first();
+        $this->company = $this->employee->company;
+         foreach($this->employee->departments as $department) {
+            $this->department_names[] = $department->name;
+        }
+    
+        foreach($this->user->roles as $role) {
+            $this->role_names[] = $role->name;
+        }
+    
+        foreach($this->employee->ranks as $rank) {
+            $this->rank_names[] = $rank->name;
+        }
+
         $this->resetPage();
         $this->trip_filter = 'created_at';
       }

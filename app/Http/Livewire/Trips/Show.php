@@ -10,8 +10,6 @@ use App\Models\Account;
 use App\Models\Bill;
 use App\Models\BillExpense;
 use App\Models\Container;
-use App\Models\Currency;
-use App\Models\DeliveryNote;
 use App\Models\Destination;
 use App\Models\Driver;
 use App\Models\EmptyRun;
@@ -24,18 +22,14 @@ use App\Models\LoadingPoint;
 use App\Models\Mileage;
 use App\Models\Trailer;
 use App\Models\Transporter;
-use App\Models\TransportOrder;
 use App\Models\Trip;
 use App\Models\TripExpense;
-use App\Models\TripStatus;
 use App\Models\UnitsOfMeasure;
 use App\Models\User;
 use App\Models\Vehicle;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Redirect;
 use Livewire\Component;
 
 class Show extends Component
@@ -239,7 +233,16 @@ class Show extends Component
         $this->trip = Trip::with(['breakdowns','breakdown_assignments','trip_destinations','trip_expenses','trip_locations','delivery_note','fuel:id,order_number','fuels','transporter:id,name','trip_type:id,name','border:id,name',
         'clearing_agent:id,name','trip_group:id,name','broker:id,name','customer:id,name','horse','horse.horse_make','horse.horse_model',
         'trailers:id,make,model,registration_number','driver.employee:id,name,surname','loading_point:id,name','offloading_point:id,name',
-        'route:id,name,rank','truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name','commission:id,commission,amount'])->find($id);
+        'route:id,name,rank','truck_stops:id,name','cargo:id,name,group,risk,type','currency:id,name,symbol','agent:id,name','commission:id,commission,amount',
+        'fromDestination.country',
+        'toDestination.country',
+        'transport_orders.fromDestination.country',
+        'transport_orders.loading_point',
+        'transport_orders.trip_destinations.destination.country',
+        'transport_orders.trip_destinations.offloading_point',
+        'trip_transport_orders.transport_order.customer',
+        'trip_transport_orders.transport_order.cargo',
+        ])->findOrFail($id);
     }
 
     private function calculateActualDistance()

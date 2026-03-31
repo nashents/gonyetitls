@@ -51,7 +51,6 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Session;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -1720,6 +1719,31 @@ class Edit extends Component
         return null;
     }
 
+    public function transportOrderNumber(){
+
+        if (isset($this->company)) {
+            $str = $this->company->name;
+            $words = explode(' ', $str);
+            if (isset($words[1][0])) {
+                $initials = $words[0][0].$words[1][0];
+            }else {
+                $initials = $words[0][0];
+            }
+        }
+
+        $transport_order = TransportOrder::orderBy('id','desc')->first();
+
+        if (!$transport_order) {
+            $transport_order_number =  $initials .'TO'. str_pad(1, 5, "0", STR_PAD_LEFT);
+        }else {
+            $number = $transport_order->id + 1;
+            $transport_order_number =  $initials .'TO'. str_pad($number, 5, "0", STR_PAD_LEFT);
+        }
+
+        return  $transport_order_number;
+
+    }
+
     public function createTransportOrder(){
 
                 $transport_order = new TransportOrder;
@@ -1889,27 +1913,73 @@ class Edit extends Component
 
         if (!empty($this->selectedTransportOrder)) {
 
-            foreach ($this->selectedTransportOrder as $key => $id) {
+                    $totalFreight = 0;
+                    $totalWeight = 0;
+                $totalLitreage = 0;
 
-                $transport_order = TransportOrder::find($id);
+                    foreach ($this->selectedTransportOrder as $key => $id) {
 
-                $trip_transport_order = TripTransportOrder::firstOrNew([
-                    'trip_id' => $trip->id,
-                    'transport_order_id' => $id,
-                ]);
+                        $transport_order = TransportOrder::find($id);
+            
+                        $trip_transport_order = TripTransportOrder::firstOrNew([
+                            'trip_id' => $trip->id,
+                            'transport_order_id' => $id,
+                        ]);
 
-                if ($transport_order) {
-                    $trip_transport_order->allocated_quantity  = $transport_order->quantity;
-                    $trip_transport_order->allocated_weight    = $transport_order->weight;
-                    $trip_transport_order->allocated_litreage  = $transport_order->litreage;
-                    $trip_transport_order->units_of_measure_id = $transport_order->units_of_measure_id;
+                        if(!empty($this->allocated_weight)){
+
+                            $quantity = $this->allocated_quantity[$key] ?? Null;
+                            $weight = $this->allocated_weight[$key] ?? Null;
+                            $litreage = $this->allocated_litreage[$key] ?? Null;
+                            $units_of_measure_id = $this->allocated_units_of_measure_id[$key] ?? Null;
+                            $freight = 0;
+
+                            if($this->company->currency_id == $transport_order->currency_id){
+                                $freight = $transport_order->freight *   $weight / $transport_order->weight;
+                            }else{
+                                $freight = $transport_order->customer_exchange_freight *   $weight / $transport_order->weight;
+                            } 
+
+                            $trip_transport_order->allocated_quantity  = $quantity;
+                            $trip_transport_order->allocated_weight    = $weight;
+                            $trip_transport_order->allocated_litreage  = $litreage;
+                            $trip_transport_order->allocated_freight  = $freight;
+                            $trip_transport_order->units_of_measure_id = $units_of_measure_id;
+
+                        }else{
+                        
+                            if ($transport_order) {
+
+                                $trip_transport_order->allocated_quantity  = $transport_order->quantity;
+                                $trip_transport_order->allocated_weight    = $transport_order->weight;
+                                $trip_transport_order->allocated_litreage  = $transport_order->litreage;
+                                $trip_transport_order->allocated_freight  = $transport_order->freight;
+                                $trip_transport_order->units_of_measure_id = $transport_order->units_of_measure_id;
+
+                            }
+
+                        }
+
+                        
+
+                        $trip_transport_order->save();
+
+
+                        $totalFreight += $trip_transport_order->allocated_freight;
+                        $totalWeight += $trip_transport_order->allocated_weight;
+                        $totalLitreage += $trip_transport_order->allocated_litreage;
+
+                        $this->createDeliveryNotes($trip_transport_order);
+                        $this->addDestinations($trip_transport_order);
+                    }
+
+                    $trip->litreage = $totalLitreage;
+                    $trip->weight = $totalWeight;
+                    $trip->freight = $totalFreight;
+                    $this->turnover = $totalFreight;
+                    $trip->turnover = $this->turnover;
+                    $trip->update();
                 }
-
-                $trip_transport_order->save();
-
-                $this->addDestinations($trip_transport_order);
-            }
-        }
 
           $this->calculateFuelConsumption($trip->id);
 

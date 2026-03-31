@@ -19,60 +19,46 @@
                             <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
                        
                                 <div class="panel-title">
-                                    <h5>Trips Management</h5>
-                                    <div class="row">
-                                    <div class="col-lg-3">
-                                    <div class="input-group">
-                                      <span class="input-group-addon">Filter By</span>
-                                      <select wire:model.debounce.300ms="trip_filter" class="form-control" aria-label="..." >
-                                        <option value="created_at">Trip Created At</option>
-                                        <option value="start_date">Trip Start Date</option>
-                                      </select>
-                                    </div>
-                                        <!-- /input-group -->
-                                    </div>
-                                    @if ($trip_filter == "created_at")
-                                    <div class="col-lg-2" style="margin-right: 7px">
-                                        <div class="input-group">
-                                            <span class="input-group-addon">
-                                      From
-                                      </span>
-                                      <input type="date" wire:model.debounce.300ms="from" wire:change="dateRange()" class="form-control" aria-label="...">
+                                   <div class="row">
+                                        <div class="col-lg-3">
+                                            <div class="input-group">
+                                                <span class="input-group-addon">
+                                                    Filter By
+                                                </span>
+                                                <select wire:model.debounce.300ms="trip_filter" class="form-control" aria-label="..." >
+                                                    <option value="created_at">Trip Created At</option>
+                                                    <option value="offloaded_date">Trip Offloading Date</option>
+                                                    <option value="start_date">Trip Start Date</option>
+                                                </select>
+                                            </div>
+                                            <!-- /input-group -->
+                                        </div>
+                                        <div class="col-lg-3" >
+                                            <div class="input-group">
+                                                <span class="input-group-addon">
+                                                    From
+                                                </span>
+                                                <input type="date" wire:model.debounce.300ms="from"  class="form-control" aria-label="...">
+                                            </div>
+                                            <!-- /input-group -->
+                                        </div>
+                                        <div class="col-lg-3" >
+                                            <div class="input-group">
+                                                <span class="input-group-addon">
+                                                    To
+                                                </span>
+                                                <input type="date" wire:model.debounce.300ms="to"  class="form-control" aria-label="...">
+                                            </div>
+                                            <!-- /input-group -->
+                                        </div>
+                                        <div class="col-lg-3" >
+                                            <div class="input-group">
+                                               <a href="#" wire:click.prevent="clearFilters()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-refresh"></i>CLEAR FILTERS</a>
+                                            </div>
+                                            <!-- /input-group -->
                                         </div>
                                         <!-- /input-group -->
                                     </div>
-                                    <div class="col-lg-2" style="margin-left: 7px">
-                                        <div class="input-group">
-                                            <span class="input-group-addon">
-                                      To
-                                      </span>
-                                      <input type="date" wire:model.debounce.300ms="to" wire:change="dateRange()" class="form-control" aria-label="...">
-                                        </div>
-                                        <!-- /input-group -->
-                                    </div>
-                                    @elseif ($trip_filter == "start_date")
-                                    <div class="col-lg-2" style="margin-right: 42px">
-                                        <div class="input-group">
-                                            <span class="input-group-addon">
-                                      From
-                                      </span>
-                                      <input type="datetime-local" wire:model.debounce.300ms="from" wire:change="dateRange()" class="form-control" aria-label="...">
-                                        </div>
-                                        <!-- /input-group -->
-                                    </div>
-                                    <div class="col-lg-2" style="margin-left: 42px">
-                                        <div class="input-group">
-                                            <span class="input-group-addon">
-                                      To
-                                      </span>
-                                      <input type="datetime-local" wire:model.debounce.300ms="to" wire:change="dateRange()" class="form-control" aria-label="...">
-                                        </div>
-                                        <!-- /input-group -->
-                                    </div>
-                                    @endif
-                                   
-                                    <!-- /input-group -->
-                                </div>
                                 @if ($selectedRows)
                                 <div class="row">
                                     <div class="col-lg-2" >
@@ -100,916 +86,372 @@
                                     </div>
                                 </div>
                                    
-                                <table  class="table  table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%" style=" width:100%; height:100%;">
-                                    <thead >
-                                        <th class="th-sm">
-                                            <input type="checkbox" wire:model.debounce.300ms="selectPageRows" >
-                                        </th>
-                                        <th class="th-sm">Trip#
-                                        </th>
-                                        <th class="th-sm">CreatedBy
-                                        </th>
-                                        <th class="th-sm">Customer
-                                        </th>
-                                        <th class="th-sm">Transporter
-                                        </th>
-                                        <th class="th-sm">Horse
-                                        </th>
-                                        <th class="th-sm">From
-                                        </th>
-                                        <th class="th-sm">To
-                                        </th>
-                                        <th class="th-sm">Status
-                                        </th>
-                                        <th class="th-sm">Auth
-                                        </th>
-                                        <th class="th-sm">AuthBy
-                                        </th>
-                                        <th class="th-sm">Notifications
-                                        </th>
-                                        <th class="th-sm">Actions
-                                        </th>
+                                   @php
+                                    $showFreight = !$company->rates_managed_by_finance
+                                        || in_array('Finance', $department_names)
+                                        || in_array('Super Admin', $role_names);
 
-                                      </tr>
-                                    </thead>
-                                    @if (isset($trips))
-                                    <tbody>
-                                        @forelse ($trips as $trip)
-                                        @php
-                                            $from = App\Models\Destination::find($trip->from);
-                                            $to = App\Models\Destination::find($trip->to);
-                                            $user = App\Models\User::find($trip->authorized_by_id);
-                                        @endphp
-                                        @if ($trip->trip_status == "Offloaded")
-                                      <tr style="background-color: #5cb85c">
-                                        <td><input type="checkbox" wire:model.debounce.300ms="selectedRows" id="{{ $trip->id }}" value="{{ $trip->id }}"></td>
-                                          <td>
-                                            {{ucfirst($trip->trip_number)}}
-                                            @if ($trip->trip_ref)
-                                            /{{$trip->trip_ref}}
-                                            @endif
-                                        </td>
-                                        <td>  {{ $trip->user->employee ? $trip->user->employee->name : "" }} {{ $trip->user->employee ? $trip->user->employee->surname : "" }}</td>
-                                       
-                                        <td>{{ucfirst($trip->customer ? $trip->customer->name : "")}}</td>
-                                        <td>{{ucfirst($trip->transporter ? $trip->transporter->name : "")}}</td>
-                                        <td>
-                                            @if ($trip->horse)
-                                                Horse | {{ucfirst($trip->horse->horse_make ? $trip->horse->horse_make->name : "")}} {{ucfirst($trip->horse->horse_model ? $trip->horse->horse_model->name : "")}} {{ucfirst($trip->horse ? $trip->horse->registration_number : "")}} {{$trip->horse ? "| ".$trip->horse->fleet_number : ""}}
-                                            @elseif ($trip->vehicle)
-                                               Vehicle | {{ucfirst($trip->vehicle->vehicle_make ? $trip->vehicle->vehicle_make->name : "")}} {{ucfirst($trip->vehicle->vehicle_model ? $trip->vehicle->vehicle_model->name : "")}} {{ucfirst($trip->vehicle ? $trip->vehicle->registration_number : "")}}
-                                            @endif
-                                         
-                                            @if (isset($trip->trailers) && $trip->trailers->count()>0)
-                                            <hr>
-                                                @foreach ($trip->trailers as $trailer)
-                                                    {{ $trailer->registration_number }} 
-                                                @endforeach
-                                            @endif
-                                        </td>
-                                        
-                                        <td>
-                                            @if (isset($from))
-                                            {{$from->country ? $from->country->name : ""}} {{ $from->city }}
-                                            @endif
-                                            @if ($trip->loading_point)
-                                                @if (isset($from))
-                                                <hr> 
+                                    $dtPattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
+                                    $formatDate = function ($value) use ($dtPattern) {
+                                        if (!$value) return null;
+
+                                        // datetime-local like 2026-01-09T06:30
+                                        if (is_string($value) && preg_match($dtPattern, $value)) {
+                                            return \Carbon\Carbon::createFromFormat('Y-m-d\TH:i', $value)->format('d M Y g:i A');
+                                        }
+
+                                        // already a Carbon/date string
+                                        try {
+                                            return \Carbon\Carbon::parse($value)->format('d M Y g:i A');
+                                        } catch (\Throwable $e) {
+                                            return $value; // fallback
+                                        }
+                                    };
+
+                                    $statusMap = [
+                                        'Offloaded'        => ['row' => '#5cb85c', 'cell' => 'table-success', 'badge' => 'success'],
+                                        'Scheduled'        => ['row' => '#f0ad4e', 'cell' => 'table-warning', 'badge' => 'warning'],
+                                        'Loading Point'    => ['row' => '#adb5bd', 'cell' => 'table-secondary', 'badge' => 'secondary'],
+                                        'Loaded'           => ['row' => '#5bc0de', 'cell' => 'table-info', 'badge' => 'info'],
+                                        'Started'          => ['row' => '#1976D2', 'cell' => 'table-primary', 'badge' => 'primary'],
+                                        'InTransit'        => ['row' => '#1976D2', 'cell' => 'table-primary', 'badge' => 'primary'],
+                                        'Offloading Point' => ['row' => '#82B1FF', 'cell' => 'table-info', 'badge' => 'info'],
+                                        'OnHold'           => ['row' => '#d9534f', 'cell' => 'table-danger', 'badge' => 'danger'],
+                                        'Cancelled'        => ['row' => '#C4A484', 'cell' => 'table-light', 'badge' => 'light'],
+                                    ];
+                                @endphp
+                              
+                                {{-- <div class="table-responsive"> --}}
+                                    <table class="table  table-striped table-bordered table-sm table-responsive sortable" cellspacing="0" width="100%" style=" width:100%; height:100%;  font-size: 13px;">
+                                        <thead>
+                                            <tr>
+                                                <th class="th-sm">
+                                                    <input type="checkbox" wire:model.debounce.300ms="selectPageRows" >
+                                                </th>
+                                                <th>Trip#<hr style="margin-top:2px; margin-bottom:2px">Type</th>
+                                                <th>Departure <hr style="margin-top:2px; margin-bottom:2px">Offloaded</th>
+                                                <th>Customer (Cargo)</th>
+                                                <th>Transporter<hr style="margin-top:2px; margin-bottom:2px">Driver</th>
+                                                <th>Horse/Vehicle<hr style="margin-top:2px; margin-bottom:2px">Trailer</th>
+                                                <th>From</th>
+                                                <th>To</th>
+                                                <th>Status</th>
+                                                @if($showFreight)
+                                                    <th>Freight</th>
                                                 @endif
-                                                {{ $trip->loading_point ? $trip->loading_point->name : "" }}
-                                            @endif
-                                           
-                                        </td>
-                                        <td>
-                                            @if (isset($to))
-                                            {{$to->country ? $to->country->name : ""}} {{ $to->city }}
-                                            @endif
-                                            @if ($trip->offloading_point)
-                                                @if (isset($to))
-                                                <hr>  
+                                                <th>Invoice<hr style="margin-top:2px; margin-bottom:2px">POD</th>
+                                                <th>Auth</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        @forelse($trips as $trip)
+                                            @php
+                                                $s = $statusMap[$trip->trip_status] ?? ['row' => null, 'cell' => '', 'badge' => 'secondary'];
+                                                $offloadedDate = $trip->delivery_note?->offloaded_date;
+                                                $pod = $trip->pod;
+                                                $proofOfDelivery = App\Models\TripDocument::where('trip_id', $trip->id)->where('title', 'POD')->first();
+                                            @endphp
+
+                                            <tr @if($s['row']) style="background-color: {{ $s['row'] }}" @endif>
+                                                  <td><input type="checkbox" wire:model.debounce.300ms="selectedRows" id="{{ $trip->id }}" value="{{ $trip->id }}"></td>
+                                                <td>
+                                                    <strong>{{ $trip->trip_number }}@if($trip->trip_ref)/{{ $trip->trip_ref }}@endif</strong>
+                                                    <br>
+                                                    <small>
+                                                        <strong>CreatedBy:</strong>  {{ $trip->user?->name }} {{ $trip->user?->surname }} <br>
+                                                        <strong>CreatedOn:</strong> {{ $trip->created_at }}
+                                                    </small>
+                                                    <hr class="my-1">
+                                                    {{ $trip->trip_type?->name }}
+                                                    @if($trip->haulage_type)
+                                                        <small><strong>{{ $trip->haulage_type == "short_haul" ? "(Short Haul)" : "(Long Haul)"}}</strong></small>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    {{ $formatDate($trip->start_date) }}
+                                                    <hr class="my-1">
+                                                    {{ $formatDate($offloadedDate) }}
+                                                </td>
+                                                <td>
+                                                    @php
+                                                        $items = collect();
+
+                                                        if ($trip->trip_transport_orders && $trip->trip_transport_orders->count()) {
+
+                                                            $items = $trip->trip_transport_orders
+                                                                ->map(function ($trip_transport_order) {
+                                                                    $to = $trip_transport_order->transport_order;
+
+                                                                    $customer = ucfirst($to->customer?->name ?? '');
+                                                                    $cargo    = ucfirst($to->cargo?->name ?? '');
+
+                                                                    return [
+                                                                        'label' => trim($customer . ' ' . $cargo),
+                                                                        'key'   => md5(($to->customer_id ?? '') . '|' . ($to->cargo_id ?? '')),
+                                                                    ];
+                                                                })
+                                                                ->filter(fn ($item) => !empty($item['label']))
+                                                                ->unique('key')
+                                                                ->values();
+
+                                                        } else {
+
+                                                            // fallback (old structure)
+                                                            $customer = ucfirst($trip->customer?->name ?? '');
+                                                            $cargo    = ucfirst($trip->cargo?->name ?? '');
+
+                                                            $label = trim($customer . ' ' . $cargo);
+
+                                                            if (!empty($label)) {
+                                                                $items = collect([
+                                                                    [
+                                                                        'label' => $label,
+                                                                        'key'   => md5(($trip->customer_id ?? '') . '|' . ($trip->cargo_id ?? '')),
+                                                                    ]
+                                                                ]);
+                                                            }
+                                                        }
+                                                    @endphp
+
+                                                    @forelse($items as $item)
+                                                        {{ $item['label'] }}
+
+                                                        @if(!$loop->last && $items->count() > 1)
+                                                            <hr class="my-1">
+                                                        @endif
+                                                    @empty
+                                                        -
+                                                    @endforelse
+                                                </td>
+
+                                                <td>
+                                                    {{ ucfirst($trip->transporter?->name ?? '') }}
+                                                    @if($trip->driver)
+                                                        <hr class="my-1">
+                                                        {{ $trip->driver?->employee?->name }} {{ $trip->driver?->employee?->surname }}
+                                                    @endif
+                                                </td>
+
+                                                <td>
+                                                    @if($trip->horse)
+                                                        Horse | {{ $trip->horse->registration_number }} {{ $trip->horse->fleet_number ? "({$trip->horse->fleet_number})" : "" }}
+                                                    @elseif($trip->vehicle)
+                                                        Vehicle | {{ $trip->vehicle->registration_number }} {{ $trip->vehicle->fleet_number ? "({$trip->vehicle->fleet_number})" : "" }}
+                                                    @endif
+
+                                                    @if($trip->trailers?->count())
+                                                        <hr class="my-1">
+                                                        @foreach($trip->trailers as $trailer)
+                                                            {{ $trailer->registration_number }} {{ $trailer->fleet_number ? "({$trailer->fleet_number})" : "" }}@if(!$loop->last), @endif
+                                                        @endforeach
+                                                    @endif
+                                                </td>
+
+                                               <td>
+                                                    @php
+                                                        $fromRoutes = collect();
+
+                                                        if ($trip->transport_orders && $trip->transport_orders->count()) {
+                                                            $fromRoutes = $trip->transport_orders
+                                                                ->map(function ($transportOrder) {
+                                                                    $from = $transportOrder->fromDestination
+                                                                        ? trim(($transportOrder->fromDestination->country?->name ?? '') . ' ' . ($transportOrder->fromDestination->city ?? ''))
+                                                                        : null;
+
+                                                                    $loadingPoint = $transportOrder->loading_point?->name;
+
+                                                                    return [
+                                                                        'label' => trim(($from ?? '') . ' - ' . ($loadingPoint ?? ''), ' -'),
+                                                                        'key'   => md5(($from ?? '') . '|' . ($loadingPoint ?? '')),
+                                                                    ];
+                                                                })
+                                                                ->filter(fn ($item) => !empty($item['label']))
+                                                                ->unique('key')
+                                                                ->values();
+                                                        } else {
+                                                            $from = $trip->fromDestination
+                                                                ? trim(($trip->fromDestination->country?->name ?? '') . ' ' . ($trip->fromDestination->city ?? ''))
+                                                                : null;
+
+                                                            $loadingPoint = $trip->loading_point?->name;
+
+                                                            $label = trim(($from ?? '') . ' - ' . ($loadingPoint ?? ''), ' -');
+
+                                                            if (!empty($label)) {
+                                                                $fromRoutes = collect([
+                                                                    [
+                                                                        'label' => $label,
+                                                                        'key'   => md5(($from ?? '') . '|' . ($loadingPoint ?? '')),
+                                                                    ]
+                                                                ]);
+                                                            }
+                                                        }
+                                                    @endphp
+
+                                                    @forelse($fromRoutes as $route)
+                                                        {{ $route['label'] }}
+
+                                                        @if(!$loop->last && $fromRoutes->count() > 1)
+                                                            <hr class="my-1">
+                                                        @endif
+                                                    @empty
+                                                        -
+                                                    @endforelse
+                                                </td>
+
+                                                <td>
+                                                    @php
+                                                        $toRoutes = collect();
+
+                                                        if ($trip->transport_orders && $trip->transport_orders->count()) {
+                                                            $toRoutes = $trip->transport_orders
+                                                                ->flatMap(function ($transport_order) {
+                                                                    return $transport_order->trip_destinations->map(function ($trip_destination) {
+                                                                        $to = $trip_destination->destination
+                                                                            ? trim(($trip_destination->destination->country?->name ?? '') . ' ' . ($trip_destination->destination->city ?? ''))
+                                                                            : null;
+
+                                                                        $offloadingPoint = $trip_destination->offloading_point?->name;
+
+                                                                        return [
+                                                                            'label' => trim(($to ?? '') . ' - ' . ($offloadingPoint ?? ''), ' -'),
+                                                                            'key'   => md5(($to ?? '') . '|' . ($offloadingPoint ?? '')),
+                                                                        ];
+                                                                    });
+                                                                })
+                                                                ->filter(fn ($item) => !empty($item['label']))
+                                                                ->unique('key')
+                                                                ->values();
+                                                        } else {
+                                                            $to = $trip->toDestination
+                                                                ? trim(($trip->toDestination->country?->name ?? '') . ' ' . ($trip->toDestination->city ?? ''))
+                                                                : null;
+
+                                                            $offloadingPoint = $trip->offloading_point?->name;
+
+                                                            $label = trim(($to ?? '') . ' - ' . ($offloadingPoint ?? ''), ' -');
+
+                                                            if (!empty($label)) {
+                                                                $toRoutes = collect([
+                                                                    [
+                                                                        'label' => $label,
+                                                                        'key'   => md5(($to ?? '') . '|' . ($offloadingPoint ?? '')),
+                                                                    ]
+                                                                ]);
+                                                            }
+                                                        }
+                                                    @endphp
+
+                                                    @forelse($toRoutes as $route)
+                                                        {{ $route['label'] }}
+
+                                                        @if(!$loop->last && $toRoutes->count() > 1)
+                                                            <hr class="my-1">
+                                                        @endif
+                                                    @empty
+                                                        -
+                                                    @endforelse
+                                                </td>
+                                                <td class="{{ $s['cell'] }}" style="padding: 5px;">
+                                                    <span class="label label-{{ $s['badge'] }} label-wide">
+                                                        {{ $trip->trip_status }}
+                                                        @if($trip->authorization === "approved")
+                                                            <a href="#" wire:click="status({{ $trip->id }})" class="ms-1">
+                                                                <i class="fa fa-edit" style="color:black"></i>
+                                                            </a>
+                                                        @endif
+                                                    </span>
+                                                </td>
+
+                                                @if($showFreight)
+                                                    <td>
+                                                        {{ $trip->currency?->name }} {{ $trip->currency?->symbol }}
+                                                        {{ number_format(
+                                                                (float) (is_numeric($trip->freight)
+                                                                    ? $trip->freight
+                                                                    : preg_replace('/[^\d\.\-]/', '', (string) ($trip->freight ?? 0))
+                                                                ),
+                                                                2
+                                                            ) }}
+                                                    </td>
                                                 @endif
-                                                {{ $trip->offloading_point ? $trip->offloading_point->name : "" }}
-                                            @endif
-                                        </td>
-                                       
-                                        @if ($trip->trip_status == "Offloaded")
-                                        <td class="table-success"><span class="label label-success label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Scheduled")
-                                        <td class="table-warning" ><span class="label label-warning label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Loading Point")
-                                        <td class="table-gray" ><span class="label label-gray label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Loaded")
-                                        <td class="table-info"><span class="label label-info label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Started")
-                                        <td class="table-primary"><span class="label label-primary label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "InTransit")
-                                        <td class="table-primary"><span class="label label-primary label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "OnHold")
-                                        <td class="table-danger"><span class="label label-danger label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Offloading Point")
-                                        <td class="table-accent"><span class="label label-accent label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Cancelled")
-                                        <td class="table-accent"><span class="label label-light label-wide">{{$trip->trip_status}}</span></td>
-                                        @endif
-                                        
-                                         <td><span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
-                                         <td> 
-                                            @if (isset($user))
-                                            {{ $user->employee ? $user->employee->name : "" }} {{ $user->employee ? $user->employee->surname : "" }}        
-                                            @endif
-                                        </td>
-                                         <td><input type="checkbox"  wire:click.prevent="customerUpdates({{ $trip->id }}, '{{ $trip->customer_updates }}')"  {{ $trip->customer_updates ? "checked" : "" }} ></td>
-                                         <td class="w-10 line-height-35 table-dropdown">
-                                            <div class="dropdown">
-                                                <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                    <i class="fa fa-bars"></i>
-                                                    <span class="caret"></span>
-                                                </button>
-                                                <ul class="dropdown-menu">
-                                                    <li><a href="{{route('trips.show', $trip->id)}}"><i class="fas fa-eye color-default"></i>View</a></li>
-                                                    <li><a href="#" wire:click="authorize({{$trip->id}})"><i class="fas fa-gavel color-success"></i> Authorization</a></li>
+
+                                                <td>
+                                                    @if($trip->invoices?->count())
+                                                        <span class="label label-success">issued</span>
+                                                        <small>
+                                                            <strong>Invoice#(s):</strong>
+                                                            @foreach($trip->invoices as $invoice)
+                                                                {{ $invoice->invoice_number }}@if(!$loop->last),@endif
+                                                            @endforeach
+                                                        </small>
+                                                    @else
+                                                        <span class="label label-warning">pending</span>
+                                                    @endif
+
+                                                    <hr class="my-1">
+                                                    @if (isset($pod))
+                                                        <span class="label label-{{ $pod ? 'success' : 'warning' }}">
+                                                            {{ $pod ? "Submitted On: {$pod->date}" : "pending" }}
+                                                        </span>
+                                                       <div class="text-center"> {{ $pod->document_number ? "POD#: ".$pod->document_number : "" }}</div>
+                                                    @elseif (isset($proofOfDelivery))
+                                                        <span class="label label-{{ $proofOfDelivery ? 'success' : 'warning' }}">
+                                                            {{ $proofOfDelivery ? "Submitted On: {$proofOfDelivery->date}" : "pending" }}
+                                                        </span>
+                                                        <div class="text-center"> {{ $proofOfDelivery->document_number ? "POD#: ".$proofOfDelivery->document_number : "" }}</div>
+                                                    @else
+                                                        <span class="label label-warning">
+                                                            pending
+                                                        </span>
+                                                    @endif
                                                    
+                                                </td>
 
-                                                </ul>
-                                            </div>
-                                            @include('trips.delete')
+                                                <td>
+                                                    @php
+                                                        $authClass = $trip->authorization === 'approved' ? 'success' : ($trip->authorization === 'rejected' ? 'danger' : 'warning');
+                                                        $authText  = $trip->authorization === 'approved' ? 'approved' : ($trip->authorization === 'rejected' ? 'rejected' : 'pending');
+                                                    @endphp
+                                                    <span class="label label-{{ $authClass }}">{{ $authText }}</span>
 
-                                    </td>
-                                      </tr>
-                                      @elseif($trip->trip_status == "Scheduled")
-                                      <tr style="background-color: #f0ad4e" >
-                                        <td><input type="checkbox" wire:model.debounce.300ms="selectedRows" id="{{ $trip->id }}" value="{{ $trip->id }}"></td>
-                                          <td>
-                                            {{ucfirst($trip->trip_number)}}
-                                            @if ($trip->trip_ref)
-                                            /{{$trip->trip_ref}}
-                                            @endif
-                                        </td>
-                                        <td>  {{ $trip->user->employee ? $trip->user->employee->name : "" }} {{ $trip->user->employee ? $trip->user->employee->surname : "" }}</td>
-                                        
-                                        <td>{{ucfirst($trip->customer ? $trip->customer->name : "")}}</td>
-                                        <td>{{ucfirst($trip->transporter ? $trip->transporter->name : "")}}</td>
-                                        <td>
-                                            @if ($trip->horse)
-                                                Horse | {{ucfirst($trip->horse->horse_make ? $trip->horse->horse_make->name : "")}} {{ucfirst($trip->horse->horse_model ? $trip->horse->horse_model->name : "")}} {{ucfirst($trip->horse ? $trip->horse->registration_number : "")}} {{$trip->horse ? "| ".$trip->horse->fleet_number : ""}}
-                                            @elseif ($trip->vehicle)
-                                               Vehicle | {{ucfirst($trip->vehicle->vehicle_make ? $trip->vehicle->vehicle_make->name : "")}} {{ucfirst($trip->vehicle->vehicle_model ? $trip->vehicle->vehicle_model->name : "")}} {{ucfirst($trip->vehicle ? $trip->vehicle->registration_number : "")}}
-                                            @endif
-                                         
-                                            @if (isset($trip->trailers) && $trip->trailers->count()>0)
-                                            <hr>
-                                                @foreach ($trip->trailers as $trailer)
-                                                    {{ $trailer->registration_number }} 
-                                                @endforeach
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if (isset($from))
-                                            {{$from->country ? $from->country->name : ""}} {{ $from->city }}
-                                            @endif
-                                            @if ($trip->loading_point)
-                                                @if (isset($from))
-                                                <hr> 
-                                                @endif
-                                                {{ $trip->loading_point ? $trip->loading_point->name : "" }}
-                                            @endif
-                                           
-                                        </td>
-                                        <td>
-                                            @if (isset($to))
-                                            {{$to->country ? $to->country->name : ""}} {{ $to->city }}
-                                            @endif
-                                            @if ($trip->offloading_point)
-                                                @if (isset($to))
-                                                <hr>  
-                                                @endif
-                                                {{ $trip->offloading_point ? $trip->offloading_point->name : "" }}
-                                            @endif
-                                        </td>
-                                        @if ($trip->trip_status == "Offloaded")
-                                        <td class="table-success"><span class="label label-success label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Scheduled")
-                                        <td class="table-warning" ><span class="label label-warning label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Loading Point")
-                                        <td class="table-gray" ><span class="label label-gray label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Loaded")
-                                        <td class="table-info"><span class="label label-info label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Started")
-                                        <td class="table-primary"><span class="label label-primary label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "InTransit")
-                                        <td class="table-primary"><span class="label label-primary label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "OnHold")
-                                        <td class="table-danger"><span class="label label-danger label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Offloading Point")
-                                        <td class="table-accent"><span class="label label-accent label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Cancelled")
-                                        <td class="table-accent"><span class="label label-light label-wide">{{$trip->trip_status}}</span></td>
-                                        @endif
-                                       
-                                         <td><span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
-                                          <td> 
-                                            @if (isset($user))
-                                            {{ $user->employee ? $user->employee->name : "" }} {{ $user->employee ? $user->employee->surname : "" }}        
-                                            @endif
-                                        </td>
-                                         <td><input type="checkbox"  wire:click.prevent="customerUpdates({{ $trip->id }}, '{{ $trip->customer_updates }}')"  {{ $trip->customer_updates ? "checked" : "" }} ></td>
-                                         <td class="w-10 line-height-35 table-dropdown">
-                                            <div class="dropdown">
-                                                <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                    <i class="fa fa-bars"></i>
-                                                    <span class="caret"></span>
-                                                </button>
-                                                <ul class="dropdown-menu">
-                                                    <li><a href="{{route('trips.show', $trip->id)}}"><i class="fas fa-eye color-default"></i>View</a></li>
-                                                    <li><a href="#" wire:click="authorize({{$trip->id}})"><i class="fas fa-gavel color-success"></i> Authorization</a></li>
-                                               
-                                                </ul>
-                                            </div>
-                                            @include('trips.delete')
+                                                    @if($trip->authorization_date)
+                                                        <br><small><strong style="background-color: orange">AuthorizedOn: {{ $trip->authorization_date }}</strong></small>
+                                                    @endif
+                                                    @if($trip->authorized_by_id)
+                                                        <br><small><strong style="background-color: orange">AuthorizedBy: {{ $this->getAuthorizer($trip->authorized_by_id) }}</strong></small>
+                                                    @endif
+                                                    @if($trip->reason)
+                                                        <br><small><strong style="background-color: orange">Comments: {{ $trip->reason }}</strong></small>
+                                                    @endif
+                                                </td>
 
-                                    </td>
-                                      </tr>
-                                      @elseif($trip->trip_status == "Loading Point")
-                                      <tr  style="background-color: #adb5bd" >
-                                        <td><input type="checkbox" wire:model.debounce.300ms="selectedRows" id="{{ $trip->id }}" value="{{ $trip->id }}"></td>
-                                      <td>
-                                            {{ucfirst($trip->trip_number)}}
-                                            @if ($trip->trip_ref)
-                                            /{{$trip->trip_ref}}
-                                            @endif
-                                        </td>
-                                    <td>  {{ $trip->user->employee ? $trip->user->employee->name : "" }} {{ $trip->user->employee ? $trip->user->employee->surname : "" }}</td>
-                                  
-                                    <td>{{ucfirst($trip->customer ? $trip->customer->name : "")}}</td>
-                                    <td>{{ucfirst($trip->transporter ? $trip->transporter->name : "")}}</td>
-                                    <td>
-                                        @if ($trip->horse)
-                                            Horse | {{ucfirst($trip->horse->horse_make ? $trip->horse->horse_make->name : "")}} {{ucfirst($trip->horse->horse_model ? $trip->horse->horse_model->name : "")}} {{ucfirst($trip->horse ? $trip->horse->registration_number : "")}} {{$trip->horse ? "| ".$trip->horse->fleet_number : ""}}
-                                        @elseif ($trip->vehicle)
-                                           Vehicle | {{ucfirst($trip->vehicle->vehicle_make ? $trip->vehicle->vehicle_make->name : "")}} {{ucfirst($trip->vehicle->vehicle_model ? $trip->vehicle->vehicle_model->name : "")}} {{ucfirst($trip->vehicle ? $trip->vehicle->registration_number : "")}}
-                                        @endif
-                                     
-                                        @if (isset($trip->trailers) && $trip->trailers->count()>0)
-                                        <hr>
-                                            @foreach ($trip->trailers as $trailer)
-                                                {{ $trailer->registration_number }} 
-                                            @endforeach
-                                        @endif
-                                    </td>
-                                    <td>
-                                        @if (isset($from))
-                                        {{$from->country ? $from->country->name : ""}} {{ $from->city }}
-                                        @endif
-                                        @if ($trip->loading_point)
-                                            @if (isset($from))
-                                            <hr> 
-                                            @endif
-                                            {{ $trip->loading_point ? $trip->loading_point->name : "" }}
-                                        @endif
-                                       
-                                    </td>
-                                    <td>
-                                        @if (isset($to))
-                                        {{$to->country ? $to->country->name : ""}} {{ $to->city }}
-                                        @endif
-                                        @if ($trip->offloading_point)
-                                            @if (isset($to))
-                                            <hr>  
-                                            @endif
-                                            {{ $trip->offloading_point ? $trip->offloading_point->name : "" }}
-                                        @endif
-                                    </td>
-                                    @if ($trip->trip_status == "Offloaded")
-                                    <td class="table-success"><span class="label label-success label-wide">{{$trip->trip_status}}</span></td>
-                                    @elseif($trip->trip_status == "Scheduled")
-                                    <td class="table-warning" ><span class="label label-warning label-wide">{{$trip->trip_status}}</span></td>
-                                    @elseif($trip->trip_status == "Loading Point")
-                                    <td class="table-gray" ><span class="label label-gray label-wide">{{$trip->trip_status}}</span></td>
-                                    @elseif($trip->trip_status == "Loaded")
-                                    <td class="table-info"><span class="label label-info label-wide">{{$trip->trip_status}}</span></td>
-                                    @elseif($trip->trip_status == "InTransit")
-                                    <td class="table-primary"><span class="label label-primary label-wide">{{$trip->trip_status}}</span></td>
-                                    @elseif($trip->trip_status == "Started")
-                                    <td class="table-primary"><span class="label label-primary label-wide">{{$trip->trip_status}}</span></td>
-                                    @elseif($trip->trip_status == "OnHold")
-                                    <td class="table-danger"><span class="label label-danger label-wide">{{$trip->trip_status}}</span></td>
-                                    @elseif($trip->trip_status == "Offloading Point")
-                                    <td class="table-accent"><span class="label label-accent label-wide">{{$trip->trip_status}}</span></td>
-                                    @elseif($trip->trip_status == "Cancelled")
-                                    <td class="table-accent"><span class="label label-light label-wide">{{$trip->trip_status}}</span></td>
-                                    @endif
-                                   
-                                     <td><span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
-                                      <td> 
-                                            @if (isset($user))
-                                            {{ $user->employee ? $user->employee->name : "" }} {{ $user->employee ? $user->employee->surname : "" }}        
-                                            @endif
-                                        </td>
-                                     <td><input type="checkbox"  wire:click.prevent="customerUpdates({{ $trip->id }}, '{{ $trip->customer_updates }}')"  {{ $trip->customer_updates ? "checked" : "" }} ></td>
-                                     <td class="w-10 line-height-35 table-dropdown">
-                                        <div class="dropdown">
-                                            <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                <i class="fa fa-bars"></i>
-                                                <span class="caret"></span>
-                                            </button>
-                                            <ul class="dropdown-menu">
-                                                <li><a href="{{route('trips.show', $trip->id)}}"><i class="fas fa-eye color-default"></i>View</a></li>
-                                                 <li><a href="#" wire:click="authorize({{$trip->id}})"><i class="fas fa-gavel color-success"></i> Authorization</a></li>
-                                              
-
-                                            </ul>
-                                        </div>
-                                        @include('trips.delete')
-
-                                </td>
-                                      </tr>
-                                      @elseif($trip->trip_status == "Loaded")
-                                      <tr  style="background-color: #5bc0de" >
-                                        <td><input type="checkbox" wire:model.debounce.300ms="selectedRows" id="{{ $trip->id }}" value="{{ $trip->id }}"></td>
-                                          <td>
-                                            {{ucfirst($trip->trip_number)}}
-                                            @if ($trip->trip_ref)
-                                            /{{$trip->trip_ref}}
-                                            @endif
-                                        </td>
-                                        <td>  {{ $trip->user->employee ? $trip->user->employee->name : "" }} {{ $trip->user->employee ? $trip->user->employee->surname : "" }}</td>
-                                        
-                                        <td>{{ucfirst($trip->customer ? $trip->customer->name : "")}}</td>
-                                        <td>{{ucfirst($trip->transporter ? $trip->transporter->name : "")}}</td>
-                                        <td>
-                                            @if ($trip->horse)
-                                                Horse | {{ucfirst($trip->horse->horse_make ? $trip->horse->horse_make->name : "")}} {{ucfirst($trip->horse->horse_model ? $trip->horse->horse_model->name : "")}} {{ucfirst($trip->horse ? $trip->horse->registration_number : "")}} {{$trip->horse ? "| ".$trip->horse->fleet_number : ""}}
-                                            @elseif ($trip->vehicle)
-                                               Vehicle | {{ucfirst($trip->vehicle->vehicle_make ? $trip->vehicle->vehicle_make->name : "")}} {{ucfirst($trip->vehicle->vehicle_model ? $trip->vehicle->vehicle_model->name : "")}} {{ucfirst($trip->vehicle ? $trip->vehicle->registration_number : "")}}
-                                            @endif
-                                         
-                                            @if (isset($trip->trailers) && $trip->trailers->count()>0)
-                                            <hr>
-                                                @foreach ($trip->trailers as $trailer)
-                                                    {{ $trailer->registration_number }} 
-                                                @endforeach
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if (isset($from))
-                                            {{$from->country ? $from->country->name : ""}} {{ $from->city }}
-                                            @endif
-                                            @if ($trip->loading_point)
-                                                @if (isset($from))
-                                                <hr> 
-                                                @endif
-                                                {{ $trip->loading_point ? $trip->loading_point->name : "" }}
-                                            @endif
-                                           
-                                        </td>
-                                        <td>
-                                            @if (isset($to))
-                                            {{$to->country ? $to->country->name : ""}} {{ $to->city }}
-                                            @endif
-                                            @if ($trip->offloading_point)
-                                                @if (isset($to))
-                                                <hr>  
-                                                @endif
-                                                {{ $trip->offloading_point ? $trip->offloading_point->name : "" }}
-                                            @endif
-                                        </td>
-                                        @if ($trip->trip_status == "Offloaded")
-                                        <td class="table-success"><span class="label label-success label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Scheduled")
-                                        <td class="table-warning" ><span class="label label-warning label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Loading Point")
-                                        <td class="table-gray" ><span class="label label-gray label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Loaded")
-                                        <td class="table-info"><span class="label label-info label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "InTransit")
-                                        <td class="table-primary"><span class="label label-primary label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Started")
-                                        <td class="table-primary"><span class="label label-primary label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "OnHold")
-                                        <td class="table-danger"><span class="label label-danger label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Offloading Point")
-                                        <td class="table-accent"><span class="label label-accent label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Cancelled")
-                                        <td class="table-accent"><span class="label label-light label-wide">{{$trip->trip_status}}</span></td>
-                                        @endif
-                                       
-                                         <td><span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
-                                          <td> 
-                                            @if (isset($user))
-                                            {{ $user->employee ? $user->employee->name : "" }} {{ $user->employee ? $user->employee->surname : "" }}        
-                                            @endif
-                                        </td>
-                                         <td><input type="checkbox"  wire:click.prevent="customerUpdates({{ $trip->id }}, '{{ $trip->customer_updates }}')"  {{ $trip->customer_updates ? "checked" : "" }} ></td>
-                                         <td class="w-10 line-height-35 table-dropdown">
-                                            <div class="dropdown">
-                                                <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                    <i class="fa fa-bars"></i>
-                                                    <span class="caret"></span>
-                                                </button>
-                                                <ul class="dropdown-menu">
-                                                    <li><a href="{{route('trips.show', $trip->id)}}"><i class="fas fa-eye color-default"></i>View</a></li>
-                                                     <li><a href="#" wire:click="authorize({{$trip->id}})"><i class="fas fa-gavel color-success"></i> Authorization</a></li>
-                                                  
-
-                                                </ul>
-                                            </div>
-                                            @include('trips.delete')
-
-                                    </td>
-                                      </tr>
-                                      @elseif($trip->trip_status == "Started")
-                                      <tr  style="background-color: #1976D2">
-                                        <td><input type="checkbox" wire:model.debounce.300ms="selectedRows" id="{{ $trip->id }}" value="{{ $trip->id }}"></td>
-                                          <td>
-                                            {{ucfirst($trip->trip_number)}}
-                                            @if ($trip->trip_ref)
-                                            /{{$trip->trip_ref}}
-                                            @endif
-                                        </td>
-                                        <td>  {{ $trip->user->employee ? $trip->user->employee->name : "" }} {{ $trip->user->employee ? $trip->user->employee->surname : "" }}</td>
-                                       
-                                        <td>{{ucfirst($trip->customer ? $trip->customer->name : "")}}</td>
-                                        <td>{{ucfirst($trip->transporter ? $trip->transporter->name : "")}}</td>
-                                        <td>
-                                            @if ($trip->horse)
-                                                Horse | {{ucfirst($trip->horse->horse_make ? $trip->horse->horse_make->name : "")}} {{ucfirst($trip->horse->horse_model ? $trip->horse->horse_model->name : "")}} {{ucfirst($trip->horse ? $trip->horse->registration_number : "")}} {{$trip->horse ? "| ".$trip->horse->fleet_number : ""}}
-                                            @elseif ($trip->vehicle)
-                                               Vehicle | {{ucfirst($trip->vehicle->vehicle_make ? $trip->vehicle->vehicle_make->name : "")}} {{ucfirst($trip->vehicle->vehicle_model ? $trip->vehicle->vehicle_model->name : "")}} {{ucfirst($trip->vehicle ? $trip->vehicle->registration_number : "")}}
-                                            @endif
-                                         
-                                            @if (isset($trip->trailers) && $trip->trailers->count()>0)
-                                            <hr>
-                                                @foreach ($trip->trailers as $trailer)
-                                                    {{ $trailer->registration_number }} 
-                                                @endforeach
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if (isset($from))
-                                            {{$from->country ? $from->country->name : ""}} {{ $from->city }}
-                                            @endif
-                                            @if ($trip->loading_point)
-                                                @if (isset($from))
-                                                <hr> 
-                                                @endif
-                                                {{ $trip->loading_point ? $trip->loading_point->name : "" }}
-                                            @endif
-                                           
-                                        </td>
-                                        <td>
-                                            @if (isset($to))
-                                            {{$to->country ? $to->country->name : ""}} {{ $to->city }}
-                                            @endif
-                                            @if ($trip->offloading_point)
-                                                @if (isset($to))
-                                                <hr>  
-                                                @endif
-                                                {{ $trip->offloading_point ? $trip->offloading_point->name : "" }}
-                                            @endif
-                                        </td>
-                                       
-                                        @if ($trip->trip_status == "Offloaded")
-                                        <td class="table-success"><span class="label label-success label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Scheduled")
-                                        <td class="table-warning" ><span class="label label-warning label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Loading Point")
-                                        <td class="table-gray" ><span class="label label-gray label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Loaded")
-                                        <td class="table-info"><span class="label label-info label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Started")
-                                        <td class="table-primary"><span class="label label-primary label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "InTransit")
-                                        <td class="table-primary"><span class="label label-primary label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "OnHold")
-                                        <td class="table-danger"><span class="label label-danger label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Offloading Point")
-                                        <td class="table-accent"><span class="label label-accent label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Cancelled")
-                                        <td class="table-accent"><span class="label label-light label-wide">{{$trip->trip_status}}</span></td>
-                                        @endif
-                                       
-                                         <td><span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
-                                          <td> 
-                                            @if (isset($user))
-                                            {{ $user->employee ? $user->employee->name : "" }} {{ $user->employee ? $user->employee->surname : "" }}        
-                                            @endif
-                                        </td>
-                                         <td><input type="checkbox"  wire:click.prevent="customerUpdates({{ $trip->id }}, '{{ $trip->customer_updates }}')"  {{ $trip->customer_updates ? "checked" : "" }} ></td>
-                                         <td class="w-10 line-height-35 table-dropdown">
-                                            <div class="dropdown">
-                                                <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                    <i class="fa fa-bars"></i>
-                                                    <span class="caret"></span>
-                                                </button>
-                                                <ul class="dropdown-menu">
-                                                    <li><a href="{{route('trips.show', $trip->id)}}"><i class="fas fa-eye color-default"></i>View</a></li>
-                                                    <li><a href="#" wire:click="authorize({{$trip->id}})"><i class="fas fa-gavel color-success"></i> Authorization</a></li>
-                                                </ul>
-                                            </div>
-                                            @include('trips.delete')
-
-                                    </td>
-                                      </tr>
-                                      @elseif($trip->trip_status == "InTransit")
-                                      <tr  style="background-color: #1976D2">
-                                        <td><input type="checkbox" wire:model.debounce.300ms="selectedRows" id="{{ $trip->id }}" value="{{ $trip->id }}"></td>
-                                          <td>
-                                            {{ucfirst($trip->trip_number)}}
-                                            @if ($trip->trip_ref)
-                                            /{{$trip->trip_ref}}
-                                            @endif
-                                        </td>
-                                        <td>  {{ $trip->user->employee ? $trip->user->employee->name : "" }} {{ $trip->user->employee ? $trip->user->employee->surname : "" }}</td>
-                                       
-                                        <td>{{ucfirst($trip->customer ? $trip->customer->name : "")}}</td>
-                                        <td>{{ucfirst($trip->transporter ? $trip->transporter->name : "")}}</td>
-                                        <td>
-                                            @if ($trip->horse)
-                                                Horse | {{ucfirst($trip->horse->horse_make ? $trip->horse->horse_make->name : "")}} {{ucfirst($trip->horse->horse_model ? $trip->horse->horse_model->name : "")}} {{ucfirst($trip->horse ? $trip->horse->registration_number : "")}} {{$trip->horse ? "| ".$trip->horse->fleet_number : ""}}
-                                            @elseif ($trip->vehicle)
-                                               Vehicle | {{ucfirst($trip->vehicle->vehicle_make ? $trip->vehicle->vehicle_make->name : "")}} {{ucfirst($trip->vehicle->vehicle_model ? $trip->vehicle->vehicle_model->name : "")}} {{ucfirst($trip->vehicle ? $trip->vehicle->registration_number : "")}}
-                                            @endif
-                                         
-                                            @if (isset($trip->trailers) && $trip->trailers->count()>0)
-                                            <hr>
-                                                @foreach ($trip->trailers as $trailer)
-                                                    {{ $trailer->registration_number }} 
-                                                @endforeach
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if (isset($from))
-                                            {{$from->country ? $from->country->name : ""}} {{ $from->city }}
-                                            @endif
-                                            @if ($trip->loading_point)
-                                                @if (isset($from))
-                                                <hr> 
-                                                @endif
-                                                {{ $trip->loading_point ? $trip->loading_point->name : "" }}
-                                            @endif
-                                           
-                                        </td>
-                                        <td>
-                                            @if (isset($to))
-                                            {{$to->country ? $to->country->name : ""}} {{ $to->city }}
-                                            @endif
-                                            @if ($trip->offloading_point)
-                                                @if (isset($to))
-                                                <hr>  
-                                                @endif
-                                                {{ $trip->offloading_point ? $trip->offloading_point->name : "" }}
-                                            @endif
-                                        </td>
-                                       
-                                        @if ($trip->trip_status == "Offloaded")
-                                        <td class="table-success"><span class="label label-success label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Scheduled")
-                                        <td class="table-warning" ><span class="label label-warning label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Loading Point")
-                                        <td class="table-gray" ><span class="label label-gray label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Loaded")
-                                        <td class="table-info"><span class="label label-info label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Started")
-                                        <td class="table-primary"><span class="label label-primary label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "InTransit")
-                                        <td class="table-primary"><span class="label label-primary label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "OnHold")
-                                        <td class="table-danger"><span class="label label-danger label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Offloading Point")
-                                        <td class="table-accent"><span class="label label-accent label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Cancelled")
-                                        <td class="table-accent"><span class="label label-light label-wide">{{$trip->trip_status}}</span></td>
-                                        @endif
-                                       
-                                         <td><span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
-                                          <td> 
-                                            @if (isset($user))
-                                            {{ $user->employee ? $user->employee->name : "" }} {{ $user->employee ? $user->employee->surname : "" }}        
-                                            @endif
-                                        </td>
-                                         <td><input type="checkbox"  wire:click.prevent="customerUpdates({{ $trip->id }}, '{{ $trip->customer_updates }}')"  {{ $trip->customer_updates ? "checked" : "" }} ></td>
-                                         <td class="w-10 line-height-35 table-dropdown">
-                                            <div class="dropdown">
-                                                <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                    <i class="fa fa-bars"></i>
-                                                    <span class="caret"></span>
-                                                </button>
-                                                <ul class="dropdown-menu">
-                                                    <li><a href="{{route('trips.show', $trip->id)}}"><i class="fas fa-eye color-default"></i>View</a></li>
-                                                    <li><a href="#" wire:click="authorize({{$trip->id}})"><i class="fas fa-gavel color-success"></i> Authorization</a></li>
-                                                </ul>
-                                            </div>
-                                            @include('trips.delete')
-
-                                    </td>
-                                      </tr>
-                                      @elseif($trip->trip_status == "OnHold")
-                                      <tr  style="background-color: #d9534f">
-                                        <td><input type="checkbox" wire:model.debounce.300ms="selectedRows" id="{{ $trip->id }}" value="{{ $trip->id }}"></td>
-                                          <td>
-                                            {{ucfirst($trip->trip_number)}}
-                                            @if ($trip->trip_ref)
-                                            /{{$trip->trip_ref}}
-                                            @endif
-                                        </td>
-                                        <td>  {{ $trip->user->employee ? $trip->user->employee->name : "" }} {{ $trip->user->employee ? $trip->user->employee->surname : "" }}</td>
-                                       
-                                        <td>{{ucfirst($trip->customer ? $trip->customer->name : "")}}</td>
-                                        <td>{{ucfirst($trip->transporter ? $trip->transporter->name : "")}}</td>
-                                        <td>
-                                            @if ($trip->horse)
-                                                Horse | {{ucfirst($trip->horse->horse_make ? $trip->horse->horse_make->name : "")}} {{ucfirst($trip->horse->horse_model ? $trip->horse->horse_model->name : "")}} {{ucfirst($trip->horse ? $trip->horse->registration_number : "")}} {{$trip->horse ? "| ".$trip->horse->fleet_number : ""}}
-                                            @elseif ($trip->vehicle)
-                                               Vehicle | {{ucfirst($trip->vehicle->vehicle_make ? $trip->vehicle->vehicle_make->name : "")}} {{ucfirst($trip->vehicle->vehicle_model ? $trip->vehicle->vehicle_model->name : "")}} {{ucfirst($trip->vehicle ? $trip->vehicle->registration_number : "")}}
-                                            @endif
-                                         
-                                            @if (isset($trip->trailers) && $trip->trailers->count()>0)
-                                            <hr>
-                                                @foreach ($trip->trailers as $trailer)
-                                                    {{ $trailer->registration_number }} 
-                                                @endforeach
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if (isset($from))
-                                            {{$from->country ? $from->country->name : ""}} {{ $from->city }}
-                                            @endif
-                                            @if ($trip->loading_point)
-                                                @if (isset($from))
-                                                <hr> 
-                                                @endif
-                                                {{ $trip->loading_point ? $trip->loading_point->name : "" }}
-                                            @endif
-                                           
-                                        </td>
-                                        <td>
-                                            @if (isset($to))
-                                            {{$to->country ? $to->country->name : ""}} {{ $to->city }}
-                                            @endif
-                                            @if ($trip->offloading_point)
-                                                @if (isset($to))
-                                                <hr>  
-                                                @endif
-                                                {{ $trip->offloading_point ? $trip->offloading_point->name : "" }}
-                                            @endif
-                                        </td>
-                                      
-                                        @if ($trip->trip_status == "Offloaded")
-                                        <td class="table-success"><span class="label label-success label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Scheduled")
-                                        <td class="table-warning" ><span class="label label-warning label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Loading Point")
-                                        <td class="table-gray" ><span class="label label-gray label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Loaded")
-                                        <td class="table-info"><span class="label label-info label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "InTransit")
-                                        <td class="table-primary"><span class="label label-primary label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Started")
-                                        <td class="table-primary"><span class="label label-primary label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "OnHold")
-                                        <td class="table-danger"><span class="label label-danger label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Offloading Point")
-                                        <td class="table-accent"><span class="label label-accent label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Cancelled")
-                                        <td class="table-accent"><span class="label label-light label-wide">{{$trip->trip_status}}</span></td>
-                                        @endif
-                                       
-                                         <td><span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
-                                          <td> 
-                                            @if (isset($user))
-                                            {{ $user->employee ? $user->employee->name : "" }} {{ $user->employee ? $user->employee->surname : "" }}        
-                                            @endif
-                                        </td>
-                                         <td><input type="checkbox"  wire:click.prevent="customerUpdates({{ $trip->id }}, '{{ $trip->customer_updates }}')"  {{ $trip->customer_updates ? "checked" : "" }} ></td>
-                                         <td class="w-10 line-height-35 table-dropdown">
-                                            <div class="dropdown">
-                                                <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                    <i class="fa fa-bars"></i>
-                                                    <span class="caret"></span>
-                                                </button>
-                                                <ul class="dropdown-menu">
-                                                    <li><a href="{{route('trips.show', $trip->id)}}"><i class="fas fa-eye color-default"></i>View</a></li>
-                                                    <li><a href="#" wire:click="authorize({{$trip->id}})"><i class="fas fa-gavel color-success"></i> Authorization</a></li>
-                                                   
-
-                                                </ul>
-                                            </div>
-                                            @include('trips.delete')
-
-                                    </td>
-                                      </tr>
-                                      @elseif($trip->trip_status == "Cancelled")
-                                      <tr  style="background-color: #C4A484">
-                                        <td><input type="checkbox" wire:model.debounce.300ms="selectedRows" id="{{ $trip->id }}" value="{{ $trip->id }}"></td>
-                                          <td>
-                                            {{ucfirst($trip->trip_number)}}
-                                            @if ($trip->trip_ref)
-                                            /{{$trip->trip_ref}}
-                                            @endif
-                                        </td>
-                                        <td>  {{ $trip->user->employee ? $trip->user->employee->name : "" }} {{ $trip->user->employee ? $trip->user->employee->surname : "" }}</td>
-                                       
-                                        <td>{{ucfirst($trip->customer ? $trip->customer->name : "")}}</td>
-                                        <td>{{ucfirst($trip->transporter ? $trip->transporter->name : "")}}</td>
-                                        <td>
-                                            @if ($trip->horse)
-                                                Horse | {{ucfirst($trip->horse->horse_make ? $trip->horse->horse_make->name : "")}} {{ucfirst($trip->horse->horse_model ? $trip->horse->horse_model->name : "")}} {{ucfirst($trip->horse ? $trip->horse->registration_number : "")}} {{$trip->horse ? "| ".$trip->horse->fleet_number : ""}}
-                                            @elseif ($trip->vehicle)
-                                               Vehicle | {{ucfirst($trip->vehicle->vehicle_make ? $trip->vehicle->vehicle_make->name : "")}} {{ucfirst($trip->vehicle->vehicle_model ? $trip->vehicle->vehicle_model->name : "")}} {{ucfirst($trip->vehicle ? $trip->vehicle->registration_number : "")}}
-                                            @endif
-                                         
-                                            @if (isset($trip->trailers) && $trip->trailers->count()>0)
-                                            <hr>
-                                                @foreach ($trip->trailers as $trailer)
-                                                    {{ $trailer->registration_number }} 
-                                                @endforeach
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if (isset($from))
-                                            {{$from->country ? $from->country->name : ""}} {{ $from->city }}
-                                            @endif
-                                            @if ($trip->loading_point)
-                                                @if (isset($from))
-                                                <hr> 
-                                                @endif
-                                                {{ $trip->loading_point ? $trip->loading_point->name : "" }}
-                                            @endif
-                                           
-                                        </td>
-                                        <td>
-                                            @if (isset($to))
-                                            {{$to->country ? $to->country->name : ""}} {{ $to->city }}
-                                            @endif
-                                            @if ($trip->offloading_point)
-                                                @if (isset($to))
-                                                <hr>  
-                                                @endif
-                                                {{ $trip->offloading_point ? $trip->offloading_point->name : "" }}
-                                            @endif
-                                        </td>
-                                      
-                                        @if ($trip->trip_status == "Offloaded")
-                                        <td class="table-success"><span class="label label-success label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Scheduled")
-                                        <td class="table-warning" ><span class="label label-warning label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Loading Point")
-                                        <td class="table-gray" ><span class="label label-gray label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Loaded")
-                                        <td class="table-info"><span class="label label-info label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "InTransit")
-                                        <td class="table-primary"><span class="label label-primary label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Started")
-                                        <td class="table-primary"><span class="label label-primary label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "OnHold")
-                                        <td class="table-danger"><span class="label label-danger label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Offloading Point")
-                                        <td class="table-accent"><span class="label label-accent label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Cancelled")
-                                        <td class="table-accent"><span class="label label-light label-wide">{{$trip->trip_status}}</span></td>
-                                        @endif
-                                       
-                                         <td><span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
-                                          <td> 
-                                            @if (isset($user))
-                                            {{ $user->employee ? $user->employee->name : "" }} {{ $user->employee ? $user->employee->surname : "" }}        
-                                            @endif
-                                        </td>
-                                         <td><input type="checkbox"  wire:click.prevent="customerUpdates({{ $trip->id }}, '{{ $trip->customer_updates }}')"  {{ $trip->customer_updates ? "checked" : "" }} ></td>
-                                         <td class="w-10 line-height-35 table-dropdown">
-                                            <div class="dropdown">
-                                                <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                    <i class="fa fa-bars"></i>
-                                                    <span class="caret"></span>
-                                                </button>
-                                                <ul class="dropdown-menu">
-                                                    <li><a href="{{route('trips.show', $trip->id)}}"><i class="fas fa-eye color-default"></i>View</a></li>
-                                                    <li><a href="#" wire:click="authorize({{$trip->id}})"><i class="fas fa-gavel color-success"></i> Authorization</a></li>
-                                                   
-
-                                                </ul>
-                                            </div>
-                                            @include('trips.delete')
-
-                                    </td>
-                                      </tr>
-                                      @elseif($trip->trip_status == "Offloading Point")
-                                      <tr  style="background-color: #82B1FF">
-                                        <td><input type="checkbox" wire:model.debounce.300ms="selectedRows" id="{{ $trip->id }}" value="{{ $trip->id }}"></td>
-                                          <td>
-                                            {{ucfirst($trip->trip_number)}}
-                                            @if ($trip->trip_ref)
-                                            /{{$trip->trip_ref}}
-                                            @endif
-                                        </td>
-                                        <td>  {{ $trip->user->employee ? $trip->user->employee->name : "" }} {{ $trip->user->employee ? $trip->user->employee->surname : "" }}</td>
-                                       
-                                        <td>{{ucfirst($trip->customer ? $trip->customer->name : "")}}</td>
-                                        <td>{{ucfirst($trip->transporter ? $trip->transporter->name : "")}}</td>
-                                        <td>
-                                            @if ($trip->horse)
-                                                Horse | {{ucfirst($trip->horse->horse_make ? $trip->horse->horse_make->name : "")}} {{ucfirst($trip->horse->horse_model ? $trip->horse->horse_model->name : "")}} {{ucfirst($trip->horse ? $trip->horse->registration_number : "")}} {{$trip->horse ? "| ".$trip->horse->fleet_number : ""}}
-                                            @elseif ($trip->vehicle)
-                                               Vehicle | {{ucfirst($trip->vehicle->vehicle_make ? $trip->vehicle->vehicle_make->name : "")}} {{ucfirst($trip->vehicle->vehicle_model ? $trip->vehicle->vehicle_model->name : "")}} {{ucfirst($trip->vehicle ? $trip->vehicle->registration_number : "")}}
-                                            @endif
-                                         
-                                            @if (isset($trip->trailers) && $trip->trailers->count()>0)
-                                            <hr>
-                                                @foreach ($trip->trailers as $trailer)
-                                                    {{ $trailer->registration_number }} 
-                                                @endforeach
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if (isset($from))
-                                            {{$from->country ? $from->country->name : ""}} {{ $from->city }}
-                                            @endif
-                                            @if ($trip->loading_point)
-                                                @if (isset($from))
-                                                <hr> 
-                                                @endif
-                                                {{ $trip->loading_point ? $trip->loading_point->name : "" }}
-                                            @endif
-                                           
-                                        </td>
-                                        <td>
-                                            @if (isset($to))
-                                            {{$to->country ? $to->country->name : ""}} {{ $to->city }}
-                                            @endif
-                                            @if ($trip->offloading_point)
-                                                @if (isset($to))
-                                                <hr>  
-                                                @endif
-                                                {{ $trip->offloading_point ? $trip->offloading_point->name : "" }}
-                                            @endif
-                                        </td>
-                                       
-                                        @if ($trip->trip_status == "Offloaded")
-                                        <td class="table-success"><span class="label label-success label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Scheduled")
-                                        <td class="table-warning" ><span class="label label-warning label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Loading Point")
-                                        <td class="table-gray" ><span class="label label-gray label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Loaded")
-                                        <td class="table-info"><span class="label label-info label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "InTransit")
-                                        <td class="table-primary"><span class="label label-primary label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Started")
-                                        <td class="table-primary"><span class="label label-primary label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "OnHold")
-                                        <td class="table-danger"><span class="label label-danger label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Offloading Point")
-                                        <td class="table-accent"><span class="label label-accent label-wide">{{$trip->trip_status}}</span></td>
-                                        @elseif($trip->trip_status == "Cancelled")
-                                        <td class="table-accent"><span class="label label-light label-wide">{{$trip->trip_status}}</span></td>
-                                        @endif      
-                                       
-                                         <td><span class="label label-{{($trip->authorization == 'approved') ? 'success' : (($trip->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($trip->authorization == 'approved') ? 'approved' : (($trip->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
-                                          <td> 
-                                            @if (isset($user))
-                                            {{ $user->employee ? $user->employee->name : "" }} {{ $user->employee ? $user->employee->surname : "" }}        
-                                            @endif
-                                        </td>
-                                         <td><input type="checkbox"  wire:click.prevent="customerUpdates({{ $trip->id }}, '{{ $trip->customer_updates }}')"  {{ $trip->customer_updates ? "checked" : "" }} ></td>
-                                         <td class="w-10 line-height-35 table-dropdown">
-                                            <div class="dropdown">
-                                                <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                    <i class="fa fa-bars"></i>
-                                                    <span class="caret"></span>
-                                                </button>
-                                                <ul class="dropdown-menu">
-                                                    <li><a href="{{route('trips.show', $trip->id)}}"><i class="fas fa-eye color-default"></i>View</a></li>
-                                                    <li><a href="#" wire:click="authorize({{$trip->id}})"><i class="fas fa-gavel color-success"></i> Authorization</a></li>
-                                                </ul>
-                                            </div>
-                                            @include('trips.delete')
-
-                                    </td>
-                                      </tr>
-                                      @endif
-                                      @empty
-                                      <tr>
-                                        <td colspan="14">
-                                            <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
-                                                No Rejected Trips Found ....
-                                            </div>
-                                           
-                                        </td>
-                                      </tr>
-                                      @endforelse
-                                    </tbody>
-                                    @else
-                                    <img style="padding-left: 35%; padding-top:7%; width:100% height:100%" src="{{asset('images/nodata.png')}}" alt="">
-                                    @endif
-
-                                  </table>
-                                  <nav class="text-center" style="float: right">
-                                    <ul class="pagination rounded-corners">
-                                        @if (isset($trips))
-                                            {{ $trips->links() }} 
-                                        @endif 
-                                    </ul>
-                                </nav>    
+                                               <td class="w-10 line-height-35 table-dropdown">
+                                                    <div class="dropdown">
+                                                        <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                            <i class="fa fa-bars"></i>
+                                                            <span class="caret"></span>
+                                                        </button>
+                                                        <ul class="dropdown-menu">
+                                                            <li><a href="{{route('trips.show', $trip->id)}}"><i class="fas fa-eye color-default"></i>View</a></li>
+                                                            <li><a href="#" wire:click="authorize({{$trip->id}})"><i class="fas fa-gavel color-success"></i> Authorization</a></li>
+                                                        </ul>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="15" class="text-center text-muted" style="padding: 12px; font-size: 17px;">
+                                                    No Rejected Trips Found ....
+                                                </td>
+                                            </tr>
+                                        @endforelse
+                                        </tbody>
+                                    </table>
+                                {{-- </div> --}}
+                 
+                                    {{ $trips->links() }}   
                             
 
                                 <!-- /.col-md-12 -->

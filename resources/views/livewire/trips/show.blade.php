@@ -274,13 +274,58 @@
                                                                 </td>
                                                             </tr>
                                                             @endif
-                                                            <tr>
+                                                           <tr>
                                                                 <th scope="row">Customer</th>
                                                                 <td>
-                                                                    @if ($trip->customer)
-                                                                        <a href="{{ route('customers.show',$trip->customer->id) }}" style="color:blue"> {{$trip->customer ? $trip->customer->name : ""}}</a>
-                                                                    @endif
-                                                                   
+                                                                    @php
+                                                                        $customers = collect();
+
+                                                                        if ($trip->trip_transport_orders && $trip->trip_transport_orders->count()) {
+
+                                                                            $customers = $trip->trip_transport_orders
+                                                                                ->map(function ($trip_transport_order) {
+                                                                                    $to = $trip_transport_order->transport_order;
+
+                                                                                    if (!$to?->customer) {
+                                                                                        return null;
+                                                                                    }
+
+                                                                                    return [
+                                                                                        'id'   => $to->customer->id,
+                                                                                        'name' => $to->customer->name,
+                                                                                        'key'  => md5($to->customer->id),
+                                                                                    ];
+                                                                                })
+                                                                                ->filter()
+                                                                                ->unique('key')
+                                                                                ->values();
+
+                                                                        } else {
+
+                                                                            // fallback (old structure)
+                                                                            if ($trip->customer) {
+                                                                                $customers = collect([
+                                                                                    [
+                                                                                        'id'   => $trip->customer->id,
+                                                                                        'name' => $trip->customer->name,
+                                                                                        'key'  => md5($trip->customer->id),
+                                                                                    ]
+                                                                                ]);
+                                                                            }
+                                                                        }
+                                                                    @endphp
+
+                                                                    @forelse($customers as $customer)
+                                                                        <a href="{{ route('customers.show', $customer['id']) }}" style="color:blue">
+                                                                            {{ $customer['name'] }}
+                                                                        </a>
+
+                                                                        @if(!$loop->last && $customers->count() > 1)
+                                                                            <hr class="my-1">
+                                                                        @endif
+                                                                    @empty
+                                                                        -
+                                                                    @endforelse
                                                                 </td>
                                                             </tr>
                                                             @if ($trip->consignee)
@@ -334,35 +379,114 @@
                                                             <tr>
                                                                 <th scope="row"> From</th>
                                                                 <td>
-                                                                    @if (isset($from))
-                                                                    {{$from->country ? $from->country->name : ""}} {{$from->city}}
-                                                                    @endif
+                                                                     @php
+                                                                        $fromRoutes = collect();
+
+                                                                        if ($trip->transport_orders && $trip->transport_orders->count()) {
+                                                                            $fromRoutes = $trip->transport_orders
+                                                                                ->map(function ($transportOrder) {
+                                                                                    $from = $transportOrder->fromDestination
+                                                                                        ? trim(($transportOrder->fromDestination->country?->name ?? '') . ' ' . ($transportOrder->fromDestination->city ?? ''))
+                                                                                        : null;
+
+                                                                                    $loadingPoint = $transportOrder->loading_point?->name;
+
+                                                                                    return [
+                                                                                        'label' => trim(($from ?? '') . ' - ' . ($loadingPoint ?? ''), ' -'),
+                                                                                        'key'   => md5(($from ?? '') . '|' . ($loadingPoint ?? '')),
+                                                                                    ];
+                                                                                })
+                                                                                ->filter(fn ($item) => !empty($item['label']))
+                                                                                ->unique('key')
+                                                                                ->values();
+                                                                        } else {
+                                                                            $from = $trip->fromDestination
+                                                                                ? trim(($trip->fromDestination->country?->name ?? '') . ' ' . ($trip->fromDestination->city ?? ''))
+                                                                                : null;
+
+                                                                            $loadingPoint = $trip->loading_point?->name;
+
+                                                                            $label = trim(($from ?? '') . ' - ' . ($loadingPoint ?? ''), ' -');
+
+                                                                            if (!empty($label)) {
+                                                                                $fromRoutes = collect([
+                                                                                    [
+                                                                                        'label' => $label,
+                                                                                        'key'   => md5(($from ?? '') . '|' . ($loadingPoint ?? '')),
+                                                                                    ]
+                                                                                ]);
+                                                                            }
+                                                                        }
+                                                                    @endphp
+
+                                                                    @forelse($fromRoutes as $route)
+                                                                        {{ $route['label'] }}
+
+                                                                        @if(!$loop->last && $fromRoutes->count() > 1)
+                                                                            <hr class="my-1">
+                                                                        @endif
+                                                                    @empty
+                                                                        -
+                                                                    @endforelse
                                                                 </td>
                                                             </tr>
                                                             <tr>
                                                                 <th scope="row"> To</th>
                                                                 <td>
-                                                                    @if (isset($to))
-                                                                     {{$to->country ? $to->country->name : ""}} {{$to->city}}
-                                                                    @endif  
+                                                                    @php
+                                                                        $toRoutes = collect();
+
+                                                                        if ($trip->transport_orders && $trip->transport_orders->count()) {
+                                                                            $toRoutes = $trip->transport_orders
+                                                                                ->flatMap(function ($transport_order) {
+                                                                                    return $transport_order->trip_destinations->map(function ($trip_destination) {
+                                                                                        $to = $trip_destination->destination
+                                                                                            ? trim(($trip_destination->destination->country?->name ?? '') . ' ' . ($trip_destination->destination->city ?? ''))
+                                                                                            : null;
+
+                                                                                        $offloadingPoint = $trip_destination->offloading_point?->name;
+
+                                                                                        return [
+                                                                                            'label' => trim(($to ?? '') . ' - ' . ($offloadingPoint ?? ''), ' -'),
+                                                                                            'key'   => md5(($to ?? '') . '|' . ($offloadingPoint ?? '')),
+                                                                                        ];
+                                                                                    });
+                                                                                })
+                                                                                ->filter(fn ($item) => !empty($item['label']))
+                                                                                ->unique('key')
+                                                                                ->values();
+                                                                        } else {
+                                                                            $to = $trip->toDestination
+                                                                                ? trim(($trip->toDestination->country?->name ?? '') . ' ' . ($trip->toDestination->city ?? ''))
+                                                                                : null;
+
+                                                                            $offloadingPoint = $trip->offloading_point?->name;
+
+                                                                            $label = trim(($to ?? '') . ' - ' . ($offloadingPoint ?? ''), ' -');
+
+                                                                            if (!empty($label)) {
+                                                                                $toRoutes = collect([
+                                                                                    [
+                                                                                        'label' => $label,
+                                                                                        'key'   => md5(($to ?? '') . '|' . ($offloadingPoint ?? '')),
+                                                                                    ]
+                                                                                ]);
+                                                                            }
+                                                                        }
+                                                                    @endphp
+
+                                                                    @forelse($toRoutes as $route)
+                                                                        {{ $route['label'] }}
+
+                                                                        @if(!$loop->last && $toRoutes->count() > 1)
+                                                                            <hr class="my-1">
+                                                                        @endif
+                                                                    @empty
+                                                                        -
+                                                                    @endforelse
                                                                 </td>
                                                             </tr>
-                                                            @if ($trip->loading_point)
-                                                            <tr>
-                                                                <th scope="row">Loading Point</th>
-                                                                <td>
-                                                                    <a href="{{ route('loading_points.show',$trip->loading_point->id) }}" style="color:blue">{{$trip->loading_point ? $trip->loading_point->name : ""}}</a>
-                                                                </td>
-                                                            </tr>
-                                                            @endif
-                                                            @if ($trip->offloading_point)
-                                                            <tr>
-                                                                <th scope="row">Offloading Point</th>
-                                                                <td>
-                                                                    <a href="{{ route('offloading_points.show',$trip->offloading_point->id) }}" style="color:blue">{{$trip->offloading_point ? $trip->offloading_point->name : ""}}</a>
-                                                                </td>
-                                                            </tr>
-                                                            @endif
+                                                         
                                                             <tr>
                                                                 <th scope="row">Route</th>
                                                                 <td>
@@ -545,7 +669,53 @@
                                                             <tr>
                                                                 <th scope="row">Cargo</th>
                                                                 <td>
-                                                                    {{$trip->cargo ? $trip->cargo->name : ""}}
+                                                                    @php
+                                                                                $cargos = collect();
+
+                                                                                if ($trip->trip_transport_orders && $trip->trip_transport_orders->count()) {
+
+                                                                                    $cargos = $trip->trip_transport_orders
+                                                                                        ->map(function ($trip_transport_order) {
+                                                                                            $to = $trip_transport_order->transport_order;
+
+                                                                                            if (!$to?->cargo) {
+                                                                                                return null;
+                                                                                            }
+
+                                                                                            return [
+                                                                                                'id'   => $to->cargo->id,
+                                                                                                'name' => $to->cargo->name,
+                                                                                                'key'  => md5($to->cargo->id),
+                                                                                            ];
+                                                                                        })
+                                                                                        ->filter()
+                                                                                        ->unique('key')
+                                                                                        ->values();
+
+                                                                                } else {
+
+                                                                                    // fallback (old structure)
+                                                                                    if ($trip->cargo) {
+                                                                                        $cargos = collect([
+                                                                                            [
+                                                                                                'id'   => $trip->cargo->id,
+                                                                                                'name' => $trip->cargo->name,
+                                                                                                'key'  => md5($trip->cargo->id),
+                                                                                            ]
+                                                                                        ]);
+                                                                                    }
+                                                                                }
+                                                                            @endphp
+
+                                                                            @forelse($cargos as $cargo)
+                                                                                {{ $cargo['name'] }}
+
+                                                                                @if(!$loop->last && $cargos->count() > 1)
+                                                                                    <hr class="my-1">
+                                                                                @endif
+                                                                            @empty
+                                                                                -
+                                                                            @endforelse
                                                                     <br>
                                                                     @if ($trip->cargo_details)
                                                                     <strong>Additional Cargo Details | </strong>  {{ $trip->cargo_details }}

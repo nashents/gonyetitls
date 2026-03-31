@@ -2,7 +2,6 @@
 
 namespace App\Http\Livewire\Trips;
 
-use Carbon\Carbon;
 use App\Models\Bill;
 use App\Models\Fuel;
 use App\Models\Hour;
@@ -35,6 +34,10 @@ class Pending extends Component
     use WithPagination;
 
     protected $paginationTheme = 'bootstrap';
+      public function paginationView()
+    { 
+        return 'vendor.pagination.bootstrap-custom';
+    }
 
     // private $trips;
     public $authorize;
@@ -43,6 +46,14 @@ class Pending extends Component
     public $selectedRows = [];
     public $selectPageRows = false;
 
+
+
+    public $user;
+    public $employee;
+    public $employee_department;
+    public $department_names;
+    public $rank_names;
+    public $role_names;
     public $company;
     public $trip;
     public $trip_number;
@@ -91,7 +102,15 @@ class Pending extends Component
     public $mileage;
 
     public $search;
-    protected $queryString = ['search'];
+    public $perPage = 10;
+    protected $queryString = [
+        'search'                 => ['except' => ''],
+        'trip_filter'            => ['except' => ''],
+        'from'                   => ['except' => ''],
+        'to'                     => ['except' => ''],
+        'perPage'                => ['except' => 10],
+        'page'                   => ['except' => 1],
+    ];
 
   
     public $customer_updates;
@@ -126,6 +145,7 @@ class Pending extends Component
     public $freight;
     public $distance;
     public $trip_status;
+  
 
  private function resetInputFields(){
      $this->authorize = "";
@@ -133,11 +153,83 @@ class Pending extends Component
  }
 
 
+     public function clearFilters(): void
+    {
+        $this->search              = Null;
+        $this->trip_filter         = 'created_at'; // ← reset to default, not ''
+        $this->from                =  Null;
+        $this->to                  = Null;
+        $this->resetPage();
+
+        $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Filters Cleared Successfully!!"
+        ]);
+    }
+   
+
 
     public function mount(){
+          $this->user = Auth::user();
+        $this->employee = $this->user->employee;
+        $this->employee_department = $this->employee->departments->first();
+        $this->company = $this->employee->company;
+         foreach($this->employee->departments as $department) {
+            $this->department_names[] = $department->name;
+        }
+    
+        foreach($this->user->roles as $role) {
+            $this->role_names[] = $role->name;
+        }
+    
+        foreach($this->employee->ranks as $rank) {
+            $this->rank_names[] = $rank->name;
+        }
+
         $this->resetPage();
         $this->trip_filter = "created_at";
       }
+
+     
+
+    public function updatingStatusFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingRangeFrom()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingRangeTo()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingPerPage()
+    {
+        $this->resetPage();
+    }
+
+    public function gotoPageNumber($page)
+    {
+        $page = (int) $page;
+
+        if ($page > 0) {
+            $this->gotoPage($page);
+        }
+    }
+    
+
+    public function getAuthorizer($id){
+        if(is_null($id)){
+            return ;
+        }
+        $user = User::find($id);
+        return $user?->name." ".$user?->surname;
+    }
+ 
 
       public function billNumber(){
 
@@ -1406,207 +1498,96 @@ class Pending extends Component
 
       }
 
-      public function getTripsProperty(){
-        $departments = Auth::user()->employee->departments;
-        foreach($departments as $department){
-            $department_names[] = $department->name;
-        }
-        $roles = Auth::user()->roles;
-        foreach($roles as $role){
-            $role_names[] = $role->name;
-        }
-        $ranks = Auth::user()->employee->ranks;
-        foreach($ranks as $rank){
-            $rank_names[] = $rank->name;
-        }
-        if (in_array('Admin', $role_names) || in_array('Super Admin', $role_names)) {
-            if (isset($this->from) && isset($this->to)) {
-                if (isset($this->search)) {
-                    return Trip::query()->with(['customer:id,name' ,'transporter:id,name','horse','horse.horse_model','horse.horse_make',
-                    'loading_point:id,name','offloading_point:id,name','invoice_items','trip_documents'])->where('authorization','pending')->whereBetween($this->trip_filter,[$this->from, $this->to] )
-                    ->where('trip_number','like', '%'.$this->search.'%')
-                    ->orWhere('trip_status','like', '%'.$this->search.'%')
-                    ->orWhere('authorization','like', '%'.$this->search.'%')
-                    ->orWhereHas('horse', function ($query) {
-                        return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('customer', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('delivery_note', function ($query) {
-                        return $query->where('offloaded_date', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('horse', function ($query) {
-                        return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('horse', function ($query) {
-                        return $query->where('fleet_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('user.employee', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('transporter', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('loading_point', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('offloading_point', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('trip_documents', function ($query) {
-                        return $query->where('document_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orderBy('created_at','desc')->paginate(10);
-                }else {
-                    return Trip::query()->with(['customer:id,name' ,'transporter:id,name','horse','horse.horse_model','horse.horse_make',
-                    'loading_point:id,name','offloading_point:id,name','invoice_items','trip_documents'])->where('authorization','pending')->whereBetween($this->trip_filter,[$this->from, $this->to] )->orderBy('created_at','desc')->paginate(10);
-                }
-               
-            }
-            elseif (isset($this->search)) {
-               
-                return Trip::query()->with(['customer:id,name' ,'transporter:id,name','horse','horse.horse_model','horse.horse_make',
-                'loading_point:id,name','offloading_point:id,name','invoice_items','trip_documents'])->where('authorization','pending')->whereMonth('created_at', date('m'))
-                ->whereYear('created_at', date('Y'))
-                ->where('trip_number','like', '%'.$this->search.'%')
-                ->orWhere('trip_status','like', '%'.$this->search.'%')
-                ->orWhere('authorization','like', '%'.$this->search.'%')
-                ->orWhereHas('horse', function ($query) {
-                    return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('customer', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('delivery_note', function ($query) {
-                    return $query->where('offloaded_date', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('user.employee', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('transporter', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('horse', function ($query) {
-                    return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('horse', function ($query) {
-                    return $query->where('fleet_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('loading_point', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('trip_documents', function ($query) {
-                    return $query->where('document_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('offloading_point', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orderBy('created_at','desc')->paginate(10);
-            }
-            else {
-               
-                return Trip::query()->with(['customer:id,name' ,'transporter:id,name','horse','horse.horse_model','horse.horse_make',
-                'loading_point:id,name','offloading_point:id,name','invoice_items','trip_documents'])->where('authorization','pending')->whereMonth('created_at', date('m'))
-                ->whereYear($this->trip_filter, date('Y'))->orderBy('created_at','desc')->paginate(10);
-              
-            }
-        }else {
-            if (isset($this->from) && isset($this->to)) {
-                if (isset($this->search)) {
-                    return Trip::query()->with(['customer:id,name' ,'transporter:id,name','horse','horse.horse_model','horse.horse_make',
-                    'loading_point:id,name','offloading_point:id,name','invoice_items','trip_documents'])->where('authorization','pending')->whereBetween($this->trip_filter,[$this->from, $this->to] )->where('user_id',Auth::user()->id)
-                    ->where('trip_number','like', '%'.$this->search.'%')
-                    ->orWhere('trip_status','like', '%'.$this->search.'%')
-                    ->orWhere('authorization','like', '%'.$this->search.'%')
-                    ->orWhereHas('horse', function ($query) {
-                        return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('customer', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('delivery_note', function ($query) {
-                        return $query->where('offloaded_date', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('user.employee', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('trip_documents', function ($query) {
-                        return $query->where('document_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('transporter', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('loading_point', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('horse', function ($query) {
-                        return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('horse', function ($query) {
-                        return $query->where('fleet_number', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('offloading_point', function ($query) {
-                        return $query->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orderBy('created_at','desc')->paginate(10);
-                }else{
-                    return Trip::query()->with(['customer:id,name' ,'transporter:id,name','horse','horse.horse_model','horse.horse_make',
-                    'loading_point:id,name','offloading_point:id,name','invoice_items','trip_documents'])->where('authorization','pending')->whereBetween($this->trip_filter,[$this->from, $this->to] )->where('user_id',Auth::user()->id)->orderBy('created_at','desc')->paginate(10);
-                }
-              
-               
-            }
-            elseif (isset($this->search)) {
+    public function getTripsProperty()
+    {
+        $user = Auth::user();
 
-                return Trip::query()->with(['customer:id,name' ,'transporter:id,name','horse','horse.horse_model','horse.horse_make',
-                'loading_point:id,name','offloading_point:id,name','invoice_items','trip_documents'])->where('authorization','pending')->whereMonth($this->trip_filter, date('m'))
-                ->whereYear($this->trip_filter, date('Y'))->where('trip_number','like', '%'.$this->search.'%')->where('user_id',Auth::user()->id)
-                ->where('trip_number','like', '%'.$this->search.'%')
-                ->orWhere('trip_status','like', '%'.$this->search.'%')
-                ->orWhere('authorization','like', '%'.$this->search.'%')
-                ->orWhereHas('horse', function ($query) {
-                    return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('customer', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('delivery_note', function ($query) {
-                    return $query->where('offloaded_date', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('user.employee', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('transporter', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('trip_documents', function ($query) {
-                    return $query->where('document_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('horse', function ($query) {
-                    return $query->where('registration_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('horse', function ($query) {
-                    return $query->where('fleet_number', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('loading_point', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('offloading_point', function ($query) {
-                    return $query->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orderBy('created_at','desc')->paginate(10);
-            }
-            else {
-                
-                return Trip::query()->with(['customer:id,name' ,'transporter:id,name','horse','horse.horse_model','horse.horse_make',
-                'loading_point:id,name','offloading_point:id,name','invoice_items','trip_documents'])->where('authorization','pending')->whereMonth($this->trip_filter, date('m'))
-                ->whereYear($this->trip_filter, date('Y'))->where('user_id',Auth::user()->id)->orderBy('created_at','desc')->paginate(10);
+        $roleNames = $user->roles->pluck('name')->toArray();
+        $isAdmin   = in_array('Admin', $roleNames) || in_array('Super Admin', $roleNames);
 
-            }
+        $query = Trip::query()
+            ->with([
+                'customer:id,name',
+                'transporter:id,name',
+                'horse',
+                'horse.horse_model',
+                'horse.horse_make',
+                'loading_point:id,name',
+                'offloading_point:id,name',
+                'invoice_items',
+                'trip_documents',
+                'delivery_note',
+                'user.employee',
+                'cargo',
+                'customer',
+                'loading_point',
+                'offloading_point',
+                'fromDestination.country',
+                'toDestination.country',
+                'transport_orders.fromDestination.country',
+                'transport_orders.loading_point',
+                'transport_orders.trip_destinations.destination.country',
+                'transport_orders.trip_destinations.offloading_point',
+                'trip_transport_orders.transport_order.customer',
+                'trip_transport_orders.transport_order.cargo',
+            ])
+            ->where('authorization', 'pending');
 
-        }
-      }
+        // Restrict non-admin users
+        $query->when(!$isAdmin, function ($q) use ($user) {
+            $q->where('user_id', $user->id);
+        });
+
+        // Date filter
+        $query->when(
+            !empty($this->from) && !empty($this->to),
+            function ($q) {
+                $q->whereBetween($this->trip_filter, [$this->from, $this->to]);
+            },
+            function ($q) {
+                $q->whereMonth($this->trip_filter, date('m'))
+                ->whereYear($this->trip_filter, date('Y'));
+            }
+        );
+
+        // Search filter
+        $query->when(!empty($this->search), function ($q) {
+            $search = '%' . trim($this->search) . '%';
+
+            $q->where(function ($subQuery) use ($search) {
+                $subQuery->where('trip_number', 'like', $search)
+                    ->orWhere('trip_status', 'like', $search)
+                    ->orWhere('authorization', 'like', $search)
+                    ->orWhereHas('horse', function ($horseQuery) use ($search) {
+                        $horseQuery->where('registration_number', 'like', $search)
+                            ->orWhere('fleet_number', 'like', $search);
+                    })
+                    ->orWhereHas('customer', function ($customerQuery) use ($search) {
+                        $customerQuery->where('name', 'like', $search);
+                    })
+                    ->orWhereHas('delivery_note', function ($deliveryNoteQuery) use ($search) {
+                        $deliveryNoteQuery->where('offloaded_date', 'like', $search);
+                    })
+                    ->orWhereHas('user.employee', function ($employeeQuery) use ($search) {
+                        $employeeQuery->where('name', 'like', $search);
+                    })
+                    ->orWhereHas('transporter', function ($transporterQuery) use ($search) {
+                        $transporterQuery->where('name', 'like', $search);
+                    })
+                    ->orWhereHas('loading_point', function ($loadingPointQuery) use ($search) {
+                        $loadingPointQuery->where('name', 'like', $search);
+                    })
+                    ->orWhereHas('offloading_point', function ($offloadingPointQuery) use ($search) {
+                        $offloadingPointQuery->where('name', 'like', $search);
+                    })
+                    ->orWhereHas('trip_documents', function ($documentQuery) use ($search) {
+                        $documentQuery->where('document_number', 'like', $search);
+                    });
+            });
+        });
+
+        return $query->latest()->paginate(10);
+    }
 
 
 

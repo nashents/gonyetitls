@@ -271,10 +271,10 @@ class Index extends Component
 
     public function clearFilters(): void
     {
-        $this->search              = '';
+        $this->search              = Null;
         $this->trip_filter         = 'created_at'; // ← reset to default, not ''
-        $this->from                = '';
-        $this->to                  = '';
+        $this->from                = Null;
+        $this->to                  = Null;
         $this->filter_transporter_id = null;
         $this->filter_horse_id       = null;
         $this->filter_driver_id      = null;
@@ -289,6 +289,11 @@ class Index extends Component
         $this->filter_trip_status    = null;
 
         $this->resetPage();
+
+         $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Filters Cleared Successfully!!"
+        ]);
     }
    
         
@@ -1284,6 +1289,14 @@ class Index extends Component
             'currency:id,name,symbol',
             'agent:id,name',
             'commission:id,commission,amount',
+            'fromDestination.country',
+            'toDestination.country',
+            'transport_orders.fromDestination.country',
+            'transport_orders.loading_point',
+            'transport_orders.trip_destinations.destination.country',
+            'transport_orders.trip_destinations.offloading_point',
+            'trip_transport_orders.transport_order.customer',
+            'trip_transport_orders.transport_order.cargo',
         ];
 
         $trips = Trip::query()->with($withRelations);

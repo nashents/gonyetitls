@@ -3,11 +3,11 @@
 namespace App\Http\Livewire\Trips;
 
 use App\Models\Trip;
-use Livewire\Component;
-use Livewire\WithPagination;
-use App\Models\TransportOrder;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class Approved extends Component
 {
@@ -15,7 +15,10 @@ class Approved extends Component
     use WithPagination;
 
     protected $paginationTheme = 'bootstrap';
-
+      public function paginationView()
+    { 
+        return 'vendor.pagination.bootstrap-custom';
+    }
   
     public $authorize;
     public $trailer_reg_numbers;
@@ -25,10 +28,93 @@ class Approved extends Component
     public $trip_filter;
     public $trip_id;
     public $search;
-    protected $queryString = ['search'];
+    public $perPage = 10;
+    protected $queryString = [
+        'search'                 => ['except' => ''],
+        'trip_filter'            => ['except' => ''],
+        'from'                   => ['except' => ''],
+        'to'                     => ['except' => ''],
+        'perPage'                => ['except' => 10],
+        'page'                   => ['except' => 1],
+    ];
+        public $user;
+    public $employee;
+    public $employee_department;
+    public $department_names;
+    public $rank_names;
+    public $role_names;
+    public $company;
 
 
+      public function clearFilters(): void
+    {
+        $this->search              = Null;
+        $this->trip_filter         = 'created_at'; // ← reset to default, not ''
+        $this->from                =  Null;
+        $this->to                  = Null;
+        $this->resetPage();
+
+         $this->dispatchBrowserEvent('alert',[
+            'type'=>'success',
+            'message'=>"Filters Cleared Successfully!!"
+        ]);
+    }
+
+      public function updatingStatusFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingRangeFrom()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingRangeTo()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingPerPage()
+    {
+        $this->resetPage();
+    }
+
+    public function gotoPageNumber($page)
+    {
+        $page = (int) $page;
+
+        if ($page > 0) {
+            $this->gotoPage($page);
+        }
+    }
+    
+
+    public function getAuthorizer($id){
+        if(is_null($id)){
+            return ;
+        }
+        $user = User::find($id);
+        return $user?->name." ".$user?->surname;
+    }
+    
     public function mount(){
+          $this->user = Auth::user();
+        $this->employee = $this->user->employee;
+        $this->employee_department = $this->employee->departments->first();
+        $this->company = $this->employee->company;
+         foreach($this->employee->departments as $department) {
+            $this->department_names[] = $department->name;
+        }
+    
+        foreach($this->user->roles as $role) {
+            $this->role_names[] = $role->name;
+        }
+    
+        foreach($this->employee->ranks as $rank) {
+            $this->rank_names[] = $rank->name;
+        }
+
         $this->resetPage();
         $this->trip_filter = 'updated_at';
       

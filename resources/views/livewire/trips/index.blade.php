@@ -69,7 +69,7 @@
                             </div>
                             <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
                                 <div class="panel-title">
-                                    <h5>Date range</h5>
+                                    
                                     <div class="row">
                                         <div class="col-lg-3">
                                             <div class="input-group">
