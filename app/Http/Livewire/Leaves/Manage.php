@@ -8,12 +8,9 @@ use App\Models\Employee;
 use App\Models\Leave;
 use App\Models\LeaveType;
 use App\Models\PublicHoliday;
-use App\Models\User;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
-use DateTime;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Excel;
@@ -30,6 +27,7 @@ class Manage extends Component
     public $employees;
     public $selectedEmployee;
     public $is_backdated = False;
+    public $ignore_public_holidays = False;
     public $employee_departments;
     public $department_id;
     public $selected_employee;
@@ -73,6 +71,7 @@ class Manage extends Component
         $this->reason = '';
         $this->leave_type_id = '';
         $this->is_backdated = False;
+        $this->ignore_public_holidays = False;
     }
 
      public function exportLeavesCSV(Excel $excel){
@@ -124,6 +123,108 @@ class Manage extends Component
             $leave->to = $this->to;
             $leave->from = $this->from;
             $leave->is_backdated = $this->is_backdated;
+            $leave->ignore_public_holidays = $this->ignore_public_holidays;
+            $leave->is_emergency = $isEmergency;
+            $leave->leave_type_id = $this->leave_type_id;
+            $leave->department_id = $this->department_id;
+            $leave->days = $this->days;
+            $leave->reason = $this->reason;
+
+            //checking if employee is a department head or a manager
+            $hod = DepartmentHead::where('employee_id', $this->selected_employee->id)->first();
+            $ranks = $this->selected_employee->ranks;
+
+            foreach($ranks as $rank){
+                $rank_names[] = $rank->name;
+            }
+
+            if (in_array('Management', $rank_names) || isset($hod)) {
+                $leave->hod_decision = 'approved';
+                $leave->management_decision = 'pending';
+            }else {
+                $department_heads = DepartmentHead::all();
+                $employee_department = $this->employee_departments->first();
+                $department_with_department_head = DepartmentHead::where('department_id', $employee_department?->id)->first();
+             
+                if ($department_heads->count()>0) {
+                    
+                    if (isset($department_with_department_head)) {
+                        $leave->hod_decision = 'pending';
+                        $leave->management_decision = 'pending';
+                    }else {
+                        $leave->hod_decision = 'approved';
+                        $leave->management_decision = 'pending';
+                    }
+                }else {
+                  
+                    $leave->hod_decision = 'approved';
+                    $leave->management_decision = 'pending';
+                }
+            }
+
+            $leave->save();
+
+            $this->dispatchBrowserEvent('hide-leaveModal');
+            $this->resetInputFields();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Application Submitted Successfully!!"
+            ]);
+        }else {
+            $this->dispatchBrowserEvent('hide-leaveModal');
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'error',
+                'message'=>"Assign employee to a department before leave application!!"
+            ]);
+        }
+
+
+    }
+
+
+
+
+
+    public function edit($id){
+        $leave = Leave::find($id);
+       
+        $this->leave_id = $leave->id;
+        $this->user_id = $leave->user_id;
+      
+        $this->hod_decision = $leave->hod_decision;
+        $this->management_decision = $leave->management_decision;
+        $this->selectedEmployee = $leave->employee_id;
+        $this->selected_employee = Employee::find($leave->employee_id);
+        $this->available_leave_days =  $this->selected_employee->leave_days;
+        $this->leave_type_id = $leave->leave_type_id;
+        $this->ignore_public_holidays = $leave->ignore_public_holidays;
+        $this->to = $leave->to;
+        $this->from = $leave->from;
+        $this->days = $leave->days;
+        $this->reason = $leave->reason;
+        $this->dispatchBrowserEvent('show-leaveEditModal');
+
+        }
+
+        public function update()
+        {
+            
+        if (isset($this->department_id)) {
+
+            $now = Carbon::now();
+            $start = Carbon::parse($this->from);
+            $end = Carbon::parse($this->to);
+
+            $isBackdated = $start->lt($now->startOfDay()); // Before today
+            $isEmergency = !$isBackdated && $start->lt($now->addHours(24)); // Less than 24hrs ahead
+
+            $leave =  Leave::find($this->leave_id);
+            $leave->user_id = Auth::user()->id;
+            $leave->employee_id = $this->selected_employee->id;
+            $leave->to = $this->to;
+            $leave->from = $this->from;
+            $leave->is_backdated = $this->is_backdated;
+            $leave->ignore_public_holidays = $this->ignore_public_holidays;
             $leave->is_emergency = $isEmergency;
             $leave->leave_type_id = $this->leave_type_id;
             $leave->department_id = $this->department_id;
@@ -164,7 +265,7 @@ class Manage extends Component
 
             }
 
-            $leave->save();
+            $leave->update();
 
             $this->dispatchBrowserEvent('hide-leaveModal');
             $this->resetInputFields();
@@ -179,107 +280,7 @@ class Manage extends Component
                 'message'=>"Assign employee to a department before leave application!!"
             ]);
         }
-
-
-    }
-
-
-
-
-
-    public function edit($id){
-        $leave = Leave::find($id);
-       
-        $this->leave_id = $leave->id;
-        $this->user_id = $leave->user_id;
-      
-        $this->hod_decision = $leave->hod_decision;
-        $this->management_decision = $leave->management_decision;
-        $this->selectedEmployee = $leave->employee_id;
-        $this->selected_employee = Employee::find($leave->employee_id);
-        $this->available_leave_days =  $this->selected_employee->leave_days;
-        $this->leave_type_id = $leave->leave_type_id;
-        $this->to = $leave->to;
-        $this->from = $leave->from;
-        $this->days = $leave->days;
-        $this->reason = $leave->reason;
-        $this->dispatchBrowserEvent('show-leaveEditModal');
-
-        }
-
-        public function update()
-        {
-            if ($this->leave_id) {
-                $departments = $this->selected_employee->departments;
-                foreach($departments as $department){
-                    $department_names[] = $department->name;
-                }
-                $roles = $this->selected_employee->user->roles;
-                foreach($roles as $role){
-                    $role_names[] = $role->name;
-                }
-                $ranks = $this->selected_employee->ranks;
-                foreach($ranks as $rank){
-                    $rank_names[] = $rank->name;
-                }
-                $employee_department = $this->selected_employee->departments->first();
-        
-                if (isset($employee_department)) {
-        
-                    $leave =  Leave::find($this->leave_id);
-                    $leave->user_id = Auth::user()->id;
-                    $leave->employee_id = $this->selected_employee->id;
-                    $leave->to = $this->to;
-                    $leave->from = $this->from;
-                    $leave->leave_type_id = $this->leave_type_id;
-                    $leave->department_id = $employee_department->id;
-                    $leave->days = $this->days;
-                    $leave->reason = $this->reason;
-        
-                    $hod = DepartmentHead::where('employee_id', $this->selected_employee->id)->first();
-                     
-                    if (in_array('Management', $rank_names) || isset($hod)) {
-                        $leave->hod_decision = 'approved';
-                        $leave->management_decision = 'pending';
-                    }else {
-                        $department_heads = DepartmentHead::all();
-                        $department_with_department_head = DepartmentHead::where('department_id',$employee_department->id)->first();
-                     
-                        if ($department_heads->count()>0) {
-                            
-                            if (isset($department_with_department_head)) {
-                                $leave->hod_decision = 'pending';
-                                $leave->management_decision = 'pending';
-                            }else {
-                                $leave->hod_decision = 'approved';
-                                $leave->management_decision = 'pending';
-                            }
-                        }else {
-                          
-                            $leave->hod_decision = 'approved';
-                            $leave->management_decision = 'pending';
-                        }
-        
-        
-                    }
-        
-                    $leave->update();
-        
-                    $this->dispatchBrowserEvent('hide-leaveEditModal');
-                    $this->resetInputFields();
-                    $this->dispatchBrowserEvent('alert',[
-                        'type'=>'success',
-                        'message'=>"Leave Application Updated Successfully!!"
-                    ]);
-                }else {
-                    $this->dispatchBrowserEvent('hide-leaveModal');
-                    $this->dispatchBrowserEvent('alert',[
-                        'type'=>'error',
-                        'message'=>"Assign employee to a department before leave application!!"
-                    ]);
-                }
-        
-            }
+          
         }
 
     public function updatedLeaveFilter($filter){
@@ -301,6 +302,7 @@ class Manage extends Component
     {
         $this->recalculateDays();
     }
+    
 
     public function recalculateDays()
     {

@@ -7,10 +7,8 @@ use App\Models\Employee;
 use App\Models\Leave;
 use App\Models\LeaveType;
 use App\Models\PublicHoliday;
-use App\Models\User;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
-use DateTime;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -27,6 +25,7 @@ class Index extends Component
 
     public $departments;
     public $department_id;
+    public $ignore_public_holidays;
     public $selectedEmployee;
     public $selected_employee;
     public $is_backdated = False;
@@ -69,6 +68,7 @@ class Index extends Component
         $this->from = '';
         $this->reason = '';
         $this->leave_type_id = '';
+        $this->ignore_public_holidays = False;
         $this->is_backdated = False;
     }
 
@@ -82,6 +82,18 @@ class Index extends Component
         $company = $employee->company;
         $this->days_calculation = $company?->days_calculation;
         
+    }
+
+    
+    public function refresh($category){
+
+        if($category == "leave_types"){
+            $this->leave_types = LeaveType::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Leave Types Refreshed Successfully!!."
+            ]);
+        }
     }
 
    
@@ -102,6 +114,7 @@ class Index extends Component
             $leave->employee_id = $this->selected_employee->id;
             $leave->to = $this->to;
             $leave->from = $this->from;
+            $leave->ignore_public_holidays = $this->ignore_public_holidays;
             $leave->is_backdated = $this->is_backdated;
             $leave->is_emergency = $isEmergency;
             $leave->leave_type_id = $this->leave_type_id;
@@ -173,6 +186,7 @@ class Index extends Component
         $this->selected_employee = Employee::find($leave->employee_id);
         $this->available_leave_days =  $this->selected_employee->leave_days;
         $this->leave_type_id = $leave->leave_type_id;
+        $this->ignore_public_holidays = $leave->ignore_public_holidays;
         $this->to = $leave->to;
         $this->from = $leave->from;
         $this->days = $leave->days;
@@ -183,42 +197,43 @@ class Index extends Component
 
         public function update()
         {
-            if ($this->leave_id) {
-                $departments = $this->selected_employee->departments;
-                foreach($departments as $department){
-                    $department_names[] = $department->name;
-                }
-                $roles = $this->selected_employee->user->roles;
-                foreach($roles as $role){
-                    $role_names[] = $role->name;
-                }
-                $ranks = $this->selected_employee->ranks;
-                foreach($ranks as $rank){
-                    $rank_names[] = $rank->name;
-                }
-               
-        
-                if ($this->department_id) {
-        
+              if ($this->department_id) {
+
+                    $now = Carbon::now();
+                    $start = Carbon::parse($this->from);
+                    $end = Carbon::parse($this->to);
+
+                    $isBackdated = $start->lt($now->startOfDay()); // Before today
+                    $isEmergency = !$isBackdated && $start->lt($now->addHours(24)); // Less than 24hrs ahead
+
                     $leave =  Leave::find($this->leave_id);
                     $leave->user_id = Auth::user()->id;
                     $leave->employee_id = $this->selected_employee->id;
                     $leave->to = $this->to;
                     $leave->from = $this->from;
+                    $leave->ignore_public_holidays = $this->ignore_public_holidays;
+                    $leave->is_backdated = $this->is_backdated;
+                    $leave->is_emergency = $isEmergency;
                     $leave->leave_type_id = $this->leave_type_id;
                     $leave->department_id = $this->department_id;
                     $leave->days = $this->days;
                     $leave->reason = $this->reason;
-        
+
+
+                    //checking if employee is a department head or a manager
                     $hod = DepartmentHead::where('employee_id', $this->selected_employee->id)->first();
-                     
+                    $ranks = $this->selected_employee->ranks;
+                    foreach($ranks as $rank){
+                        $rank_names[] = $rank->name;
+                    }
+                    
                     if (in_array('Management', $rank_names) || isset($hod)) {
                         $leave->hod_decision = 'approved';
                         $leave->management_decision = 'pending';
                     }else {
                         $department_heads = DepartmentHead::all();
                         $department_with_department_head = DepartmentHead::where('department_id',$this->department_id)->first();
-                     
+                    
                         if ($department_heads->count()>0) {
                             
                             if (isset($department_with_department_head)) {
@@ -229,21 +244,21 @@ class Index extends Component
                                 $leave->management_decision = 'pending';
                             }
                         }else {
-                          
+                        
                             $leave->hod_decision = 'approved';
                             $leave->management_decision = 'pending';
                         }
-        
-        
+
+
                     }
-        
+
                     $leave->update();
-        
-                    $this->dispatchBrowserEvent('hide-leaveEditModal');
+
+                    $this->dispatchBrowserEvent('hide-leaveModal');
                     $this->resetInputFields();
                     $this->dispatchBrowserEvent('alert',[
                         'type'=>'success',
-                        'message'=>"Leave Application Updated Successfully!!"
+                        'message'=>"Leave Application Submitted Successfully!!"
                     ]);
                 }else {
                     $this->dispatchBrowserEvent('hide-leaveModal');
@@ -252,8 +267,6 @@ class Index extends Component
                         'message'=>"Assign employee to a department before leave application!!"
                     ]);
                 }
-        
-            }
         }
 
             public function updatedFrom()
@@ -328,6 +341,7 @@ class Index extends Component
 
         return $days;
     }
+
     public function render()
     {
         if (isset($this->from) && isset($this->to)) {
@@ -337,7 +351,7 @@ class Index extends Component
     
         }
      
-        $this->leave_types = LeaveType::orderBy('name','asc')->get();
+     
         
         if (filled($this->search)) {
              return view('livewire.leaves.index',[

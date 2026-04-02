@@ -247,16 +247,27 @@
                                         <option value="{{$leave_type->id}}">{{$leave_type->name}}</option>
                                     @endforeach
                                 </select>
-                                <small><a href="{{ route('leave_types.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Leave Type</a></small>
+                                <small><a href="{{ route('leave_types.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Leave Type</a></small><a href="#" wire:click.prevent="refresh('leave_types')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 @error('leave_type_id') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
                         </div>
                     </div>
                    
+                    <div class="row">
+                        <div class="col-md-6">
+                             <div class="mb-10">
+                                <input type="checkbox" wire:model.debounce.300ms="is_backdated"   class="line-style" />
+                                <label for="one" class="radio-label">Backdated Leave Application</label>
+                                @error('is_backdated') <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
                             <div class="mb-10">
-                        <input type="checkbox" wire:model.debounce.300ms="is_backdated"   class="line-style" />
-                        <label for="one" class="radio-label">Backdated Leave Application</label>
-                        @error('is_backdated') <span class="text-danger error">{{ $message }}</span>@enderror
+                                <input type="checkbox" wire:model.debounce.300ms="ignore_public_holidays"   class="line-style" />
+                                <label for="one" class="radio-label">Ignore Public Holidays</label>
+                                @error('ignore_public_holidays') <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
+                        </div>
                     </div>
                     <div class="row">
                         <div class="col-md-3">
@@ -389,16 +400,28 @@
                                         <option value="{{$leave_type->id}}">{{$leave_type->name}}</option>
                                     @endforeach
                                 </select>
-                                <small><a href="{{ route('leave_types.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Leave Type</a></small>
+                                <small><a href="{{ route('leave_types.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Leave Type</a></small><a href="#" wire:click.prevent="refresh('leave_types')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 @error('leave_type_id') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
                         </div>
                     </div>
-                    <div class="mb-10">
-                        <input type="checkbox" wire:model.debounce.300ms="is_backdated"   class="line-style" />
-                        <label for="one" class="radio-label">Backdated Leave Application</label>
-                        @error('is_backdated') <span class="text-danger error">{{ $message }}</span>@enderror
+                    <div class="row">
+                        <div class="col-md-6">
+                             <div class="mb-10">
+                                <input type="checkbox" wire:model.debounce.300ms="is_backdated"   class="line-style" />
+                                <label for="one" class="radio-label">Backdated Leave Application</label>
+                                @error('is_backdated') <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-10">
+                                <input type="checkbox" wire:model.debounce.300ms="ignore_public_holidays"   class="line-style" />
+                                <label for="one" class="radio-label">Ignore Public Holidays</label>
+                                @error('ignore_public_holidays') <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
+                        </div>
                     </div>
+                   
                       <div class="row">
                         <div class="col-md-3">
                             <div class="form-group">

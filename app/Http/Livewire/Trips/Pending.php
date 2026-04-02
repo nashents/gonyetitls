@@ -504,10 +504,10 @@ class Pending extends Component
                                     $bill->user_id = Auth::user()->id;
                                     $bill->bill_number = $this->billNumber();
                                     $bill->trip_id = $trip->id;
-                                    $bill->fuel_id = $trip_expense->fuel_id;
+                                    $bill->fuel_id = $trip_expense->fuel_id  ?: Null;
                                     $bill->trip_expense_id = $trip_expense->id;
-                                    $bill->horse_id = $trip->horse_id;
-                                    $bill->vehicle_id = $trip->vehicle_id;
+                                    $bill->horse_id = $trip->horse_id  ?: Null;
+                                    $bill->vehicle_id = $trip->vehicle_id  ?: Null;
                                     if (isset($account)) {
                                         $bill->account_id = $account->id;
                                         $bill->account_type_id = $account->account_type->id;
@@ -517,10 +517,10 @@ class Pending extends Component
                                     }else{
                                         $bill->to_be_paid = False;
                                     }
-                                    $bill->driver_id = $trip->driver_id;
+                                    $bill->driver_id = $trip->driver_id  ?: Null;
                                     $bill->category = "Trip Expense - Fuel Order";
                                     $bill->bill_date = date("Y-m-d");
-                                    $bill->currency_id = $trip_expense->currency_id;
+                                    $bill->currency_id = $trip_expense->currency_id  ?: Null;
                                     $bill->subtotal = $trip_expense->amount;
                                     $bill->total = $trip_expense->amount;
                                     if($trip_expense->currency_id != Auth::user()->employee->company->currency_id){
@@ -535,13 +535,13 @@ class Pending extends Component
                 
                                     $bill_expense = new BillExpense;
                                     $bill_expense->user_id = Auth::user()->id;
-                                    $bill_expense->bill_id = $bill->id;
+                                    $bill_expense->bill_id = $bill->id  ?: Null;
                                     if (isset($account)) {
-                                        $bill_expense->account_id = $account->id;
-                                        $bill_expense->account_type_id = $account->account_type->id;
+                                        $bill_expense->account_id = $account->id  ?: Null;
+                                        $bill_expense->account_type_id = $account->account_type->id  ?: Null;
                                     }
-                                    $bill_expense->currency_id = $bill->currency_id;
-                                    $bill_expense->expense_id = $trip_expense->expense_id;
+                                    $bill_expense->currency_id = $bill->currency_id  ?: Null;
+                                    $bill_expense->expense_id = $trip_expense->expense_id  ?: Null;
                                     $bill_expense->qty = 1;
                                     if($trip_expense->currency_id != Auth::user()->employee->company->currency_id){
                                         $bill_expense->exchange_rate = $trip_expense ->exchange_rate;
@@ -564,17 +564,17 @@ class Pending extends Component
                         $bill = new Bill;
                         $bill->user_id = Auth::user()->id;
                         $bill->bill_number = $this->billNumber();
-                        $bill->trip_id = $trip->id;
-                        $bill->horse_id = $trip->horse_id;
+                        $bill->trip_id = $trip->id  ?: Null;
+                        $bill->horse_id = $trip->horse_id  ?: Null; 
                         $bill->category = "Trip Expense - Transporter Payment";
-                        $bill->transporter_id = $trip_expense->transporter_id;
-                        $bill->trip_expense_id = $trip_expense->id;
+                        $bill->transporter_id = $trip_expense->transporter_id  ?: Null;
+                        $bill->trip_expense_id = $trip_expense->id  ?: Null;
                         $bill->bill_date = $trip->start_date;
                         if (isset($account)) {
-                            $bill->account_id = $account->id;
-                            $bill->account_type_id = $account->account_type->id;
+                            $bill->account_id = $account->id  ?: Null;
+                            $bill->account_type_id = $account->account_type->id  ?: Null;
                         }
-                        $bill->currency_id = $trip_expense->currency_id;
+                        $bill->currency_id = $trip_expense->currency_id  ?: Null;
                         $bill->subtotal = $trip_expense->amount;
                         $bill->total = $trip_expense->amount;
                         $bill->balance = $trip_expense->amount;
@@ -587,15 +587,15 @@ class Pending extends Component
                        
 
                         $bill_expense = new BillExpense;
-                        $bill_expense->user_id = Auth::user()->id;
-                        $bill_expense->bill_id = $bill->id;
-                        $bill_expense->currency_id = $bill->currency_id;
+                        $bill_expense->user_id = Auth::user()->id  ?: Null;
+                        $bill_expense->bill_id = $bill->id  ?: Null;
+                        $bill_expense->currency_id = $bill->currency_id  ?: Null;
                         if (isset($expense)) {
-                            $bill_expense->expense_id = $expense->id;
+                            $bill_expense->expense_id = $expense->id  ?: Null;
                         }
                         if (isset($account)) {
-                            $bill_expense->account_id = $account->id;
-                            $bill_expense->account_type_id = $account->account_type->id;
+                            $bill_expense->account_id = $account->id  ?: Null;
+                            $bill_expense->account_type_id = $account->account_type->id  ?: Null;
                         }
                         $bill_expense->qty = 1;
                         if($trip_expense->currency_id != Auth::user()->employee->company->currency_id){
@@ -615,19 +615,19 @@ class Pending extends Component
                         $bill = new Bill;
                         $bill->user_id = Auth::user()->id;
                         $bill->bill_number = $this->billNumber();
-                        $bill->trip_id = $trip->id;
-                        $bill->fuel_id = $trip_expense->fuel_id;
-                        $bill->trip_expense_id = $trip_expense->id;
-                        $bill->horse_id = $trip->horse_id;
-                        $bill->vehicle_id = $trip->vehicle_id;
+                        $bill->trip_id = $trip->id  ?: Null;
+                        $bill->fuel_id = $trip_expense->fuel_id  ?: Null;
+                        $bill->trip_expense_id = $trip_expense->id  ?: Null;
+                        $bill->horse_id = $trip->horse_id  ?: Null;
+                        $bill->vehicle_id = $trip->vehicle_id  ?: Null;
                         if (isset($account)) {
-                            $bill->account_id = $account->id;
-                            $bill->account_type_id = $account->account_type->id;
+                            $bill->account_id = $account->id  ?: Null;
+                            $bill->account_type_id = $account->account_type->id  ?: Null;
                         }
-                        $bill->driver_id = $trip->driver_id;
+                        $bill->driver_id = $trip->driver_id  ?: Null;
                         $bill->category = "Trip Expense";
                         $bill->bill_date = date("Y-m-d");
-                        $bill->currency_id = $trip_expense->currency_id;
+                        $bill->currency_id = $trip_expense->currency_id  ?: Null;
                         $bill->subtotal = $trip_expense->amount;
                         $bill->total = $trip_expense->amount;
                         if($trip_expense->currency_id != Auth::user()->employee->company->currency_id){
@@ -642,13 +642,13 @@ class Pending extends Component
 
                         $bill_expense = new BillExpense;
                         $bill_expense->user_id = Auth::user()->id;
-                        $bill_expense->bill_id = $bill->id;
-                        $bill_expense->currency_id = $bill->currency_id;
-                        $bill_expense->expense_id = $trip_expense->expense_id;
-                        $bill_expense->allowance_id = $trip_expense->allowance_id;
+                        $bill_expense->bill_id = $bill->id  ?: Null;
+                        $bill_expense->currency_id = $bill->currency_id  ?: Null;
+                        $bill_expense->expense_id = $trip_expense->expense_id  ?: Null;
+                        $bill_expense->allowance_id = $trip_expense->allowance_id  ?: Null;
                         if (isset($account)) {
-                            $bill_expense->account_id = $account->id;
-                            $bill_expense->account_type_id = $account->account_type->id;
+                            $bill_expense->account_id = $account->id  ?: Null;
+                            $bill_expense->account_type_id = $account->account_type->id  ?: Null;
                         }
                         $bill_expense->qty = 1;
                         if($trip_expense->currency_id != Auth::user()->employee->company->currency_id){
@@ -1168,18 +1168,18 @@ class Pending extends Component
                                     $bill->user_id = Auth::user()->id;
                                     $bill->bill_number = $this->billNumber();
                                     $bill->trip_id = $trip->id;
-                                    $bill->fuel_id = $trip_expense->fuel_id;
+                                    $bill->fuel_id = $trip_expense->fuel_id  ?: Null;
                                     $bill->trip_expense_id = $trip_expense->id;
-                                    $bill->horse_id = $trip->horse_id;
-                                    $bill->vehicle_id = $trip->vehicle_id;
+                                    $bill->horse_id = $trip->horse_id ?: Null;
+                                    $bill->vehicle_id = $trip->vehicle_id  ?: Null;
                                     if (isset($account)) {
                                         $bill->account_id = $account->id;
                                         $bill->account_type_id = $account->account_type->id;
                                     }
-                                    $bill->driver_id = $trip->driver_id;
+                                    $bill->driver_id = $trip->driver_id  ?: Null;
                                     $bill->category = "Trip Expense";
                                     $bill->bill_date = date("Y-m-d");
-                                    $bill->currency_id = $trip_expense->currency_id;
+                                    $bill->currency_id = $trip_expense->currency_id  ?: Null;
                                     $bill->subtotal = $trip_expense->amount;
                                     $bill->total = $trip_expense->amount;
                                     if($trip_expense->currency_id != Auth::user()->employee->company->currency_id){
