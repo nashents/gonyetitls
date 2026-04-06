@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Currency;
 use App\Models\DeliveryNote;
 use App\Models\TransportOrder;
 use App\Models\Trip;
@@ -42,6 +43,7 @@ class TripTransportOrder extends Model
         'sequence_no'        => 'integer',
     ];
 
+    
    
     public function units_of_measure(){
         return $this->belongsTo('App\Models\UnitsOfMeasure');
@@ -50,6 +52,9 @@ class TripTransportOrder extends Model
         return $this->hasMany('App\Models\TripDestination');
     }
 
+     public function invoice_items(){
+        return $this->hasMany('App\Models\InvoiceItem');
+    }
     public function delivery_note()
     {
         return $this->hasOne(DeliveryNote::class, 'trip_transport_order_id');
@@ -58,6 +63,10 @@ class TripTransportOrder extends Model
     public function transport_order()
     {
         return $this->belongsTo(TransportOrder::class, 'transport_order_id');
+    }
+    public function currency()
+    {
+        return $this->belongsTo(Currency::class, 'currency_id');
     }
 
     public function trip()

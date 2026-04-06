@@ -1492,6 +1492,31 @@ class Create extends Component
     }
 
 
+    public function ttoNumber(){
+
+        if (isset($this->company)) {
+            $str = $this->company->name;
+            $words = explode(' ', $str);
+            if (isset($words[1][0])) {
+                $initials = $words[0][0].$words[1][0];
+            }else {
+                $initials = $words[0][0];
+            }
+        }
+
+        $transport_order = TripTransportOrder::orderBy('id','desc')->first();
+
+        if (!$transport_order) {
+            $transport_order_number =  $initials .'TO'. str_pad(1, 5, "0", STR_PAD_LEFT);
+        }else {
+            $number = $transport_order->id + 1;
+            $transport_order_number =  $initials .'TO'. str_pad($number, 5, "0", STR_PAD_LEFT);
+        }
+
+        return  $transport_order_number;
+
+    }
+
     public function transportOrderNumber(){
 
         if (isset($this->company)) {

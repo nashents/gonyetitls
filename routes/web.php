@@ -490,6 +490,7 @@ Route::resource('clusters','ClusterController');
 Route::resource('transport_orders','TransportOrderController');
 Route::resource('teams','TeamController');
 Route::resource('bins','BinController');
+Route::resource('trip_transport_orders','TripTransportOrderController');
 Route::resource('claims','ClaimController');
 Route::resource('inventory_transfers','InventoryTransferController');
 Route::resource('tyre_transfers','TyreTransferController');

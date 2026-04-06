@@ -1530,7 +1530,6 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
 
        
         $upsertSub($m, ['name'=>'Manage Orders','slug'=>'manage-transport-orders','icon'=>'fas fa-list','route_name'=>'transport_orders.index','sort_order'=>10]);
-
         $tripManageVis = $any([
             $all(['isAdmin']),
             $all(['hasTLDeptHead']),
@@ -1540,6 +1539,7 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
         $upsertSub($m, ['name'=>'Pending Orders','slug'=>'pending-transport-orders','icon'=>'fas fa-clock','route_name'=>'transport_orders.pending','sort_order'=>20,'badge_key'=>'transport_orders_pending_count','visibility'=>$tripManageVis]);
         $upsertSub($m, ['name'=>'Approved Orders','slug'=>'approved-transport-orders','icon'=>'fas fa-check','route_name'=>'transport_orders.approved','sort_order'=>30,'badge_key'=>'transport_orders_approved_count','visibility'=>$tripManageVis]);
         $upsertSub($m, ['name'=>'Rejected Orders','slug'=>'rejected-transport-orders','icon'=>'fas fa-ban','route_name'=>'transport_orders.rejected','sort_order'=>40,'badge_key'=>'transport_orders_rejected_count','visibility'=>$tripManageVis]);
+       
        
         // Trips
         $m = $upsertModule($g, [
@@ -1567,7 +1567,7 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
         $upsertSub($m, ['name'=>'Approved Trips','slug'=>'approved-trips','icon'=>'fas fa-check','route_name'=>'trips.approved','sort_order'=>40,'badge_key'=>'trips_approved_count','visibility'=>$tripManageVis]);
         $upsertSub($m, ['name'=>'Rejected Trips','slug'=>'rejected-trips','icon'=>'fas fa-ban','route_name'=>'trips.rejected','sort_order'=>50,'badge_key'=>'trips_rejected_count','visibility'=>$tripManageVis]);
         $upsertSub($m, ['name'=>'Deleted Trips','slug'=>'deleted-trips','icon'=>'fas fa-trash','route_name'=>'trips.deleted','sort_order'=>60,'badge_key'=>'trips_deleted_count','visibility'=>$tripManageVis]);
-
+        $upsertSub($m, ['name'=>'Manage TTOs','slug'=>'manage-trip-transport-orders','icon'=>'fas fa-list','route_name'=>'trip_transport_orders.index','sort_order'=>65]);
         $upsertSub($m, ['name'=>'Tracking Groups','slug'=>'tracking-groups','icon'=>'fas fa-list','route_name'=>'trip_groups.index','sort_order'=>70]);
 
         // Gatepass (Logistics) - not driver

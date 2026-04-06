@@ -2,26 +2,24 @@
 @section('content')
 
 @section('extra-css')
-    @if (Auth::user()->employee->company)
+    @if (isset(Auth::user()->employee->company))
     <link rel="shortcut icon" type = "image/png" href="{!! asset('images/uploads/'.Auth::user()->employee->company->logo)!!}">
     @elseif (Auth::user()->company)
     <link rel="shortcut icon" type = "image/png" href="{!! asset('images/uploads/'.Auth::user()->company->logo)!!}">
     @endif
 @endsection
 @section('title')
-    Transport Orders | @if (Auth::user()->employee->company)
+    TTOs | @if (isset(Auth::user()->employee->company))
     {{Auth::user()->employee->company->name}}
     @elseif (Auth::user()->company)
     {{Auth::user()->company->name}}
     @endif
 @endsection
-
 @section('body-id')
 <body class="top-navbar-fixed">
 @endsection
 
-
-
+    
                     <div class="main-page">
                         <div class="container-fluid">
                             <div class="row page-title-div">
@@ -32,22 +30,19 @@
                                 <div class="col-md-6">
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
-            							<li><a href="{{route('transport_orders.index')}}"><i class="fa fa-list"></i> Transport Orders</a></li>
-            							<li class="active"> <i class="fa fa-eye"></i>Transport Order</li>
+            							<li><a href="{{route('trip_transport_orders.index')}}"><i class="fa fa-list"></i> Trip Transport Orders</a></li>
+            							<li class="active"> <i class="fas fa-eye"></i> Trip Transport Order</li>
             						</ul>
                                 </div>
                             </div>
                             <!-- /.row -->
                         </div>
-                        @livewire('transport-orders.show',['transport_order'=> $transport_order])
+
+                        @livewire('trip-transport-orders.show',['trip_transport_order' => $trip_transport_order])
+
+
                     </div>
+
 @endsection
 
-@section('extra-js')
-    <script>
-    $(document).ready( function () {
-        $('#transport_ordersTable').DataTable();
-    } );
-    </script>
-@endsection
 

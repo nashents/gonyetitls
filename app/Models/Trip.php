@@ -22,6 +22,7 @@ class Trip extends Model implements Auditable
         return $this->belongsToMany(Invoice::class, 'invoice_items', 'trip_id', 'invoice_id')
             ->distinct();
     }
+   
 
     public function trip_transport_orders()
     {

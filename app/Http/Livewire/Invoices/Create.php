@@ -2,52 +2,54 @@
 
 namespace App\Http\Livewire\Invoices;
 
-use Carbon\Carbon;
-use App\Models\Tax;
-use App\Models\Trip;
-use App\Models\User;
-use App\Models\Cargo;
-use App\Models\Count;
-use App\Models\Rental;
+use App\Mail\PendingNotificationEmails;
 use App\Models\Account;
+use App\Models\BankAccount;
 use App\Models\Booking;
-use App\Models\Invoice;
-use App\Models\Payment;
-use App\Models\Product;
-use Livewire\Component;
+use App\Models\Cargo;
 use App\Models\CashFlow;
+use App\Models\Count;
 use App\Models\Currency;
 use App\Models\Customer;
-use App\Models\Discount;
-use App\Models\Inventory;
-use App\Models\BankAccount;
+use App\Models\DeliveryNote;
+use App\Models\Denomination;
 use App\Models\Destination;
+use App\Models\Discount;
+use App\Models\ExchangeRate;
+use App\Models\Inventory;
+use App\Models\InventoryDispatch;
+use App\Models\InventoryRequisition;
+use App\Models\Invoice;
+use App\Models\InvoiceCount;
 use App\Models\InvoiceItem;
+use App\Models\InvoicePayment;
 use App\Models\InvoiceTrip;
 use App\Models\Measurement;
-use App\Models\Transporter;
-use App\Models\Denomination;
-use App\Models\ExchangeRate;
-use App\Models\InvoiceCount;
 use App\Models\Notification;
-use App\Models\TripDocument;
-use App\Models\InvoicePayment;
+use App\Models\Payment;
+use App\Models\Product;
 use App\Models\ProductService;
-use App\Models\InventoryDispatch;
-use Illuminate\Support\Facades\DB;
-use App\Models\InventoryRequisition;
+use App\Models\Rental;
+use App\Models\Tax;
+use App\Models\Transporter;
+use App\Models\Trip;
+use App\Models\TripDocument;
+use App\Models\TripTransportOrder;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
-use App\Mail\PendingNotificationEmails;
-use Illuminate\Support\Facades\Session;
+use Livewire\Component;
 
 class Create extends Component
 {
     public $searchBooking;
     public $searchRental;
     public $searchTrip;
-    protected $queryString = ['searchTrip','searchBooking','searchRental'];
+    public $searchTTO;
+    protected $queryString = ['searchTrip','searchTTO','searchBooking','searchRental'];
     public $from;
     public $to;
     public $multi_select = False;
@@ -82,6 +84,7 @@ class Create extends Component
     public $selectedTransporter;
     public $source = "Generic";
     public $from_trips = false;
+    public $from_ttos = false;
     public $exchange_rate;
     public $from_inventory = false;
     public $from_bookings = false;
@@ -101,6 +104,7 @@ class Create extends Component
     public $selected_currency;
     public $selectedMultiTrip;
     public $selectedTrip = [];
+    public $selectedTTO = [];
     public $selectedRental = [];
     public $trip_sum = [];
     public $tax_rate = [];
@@ -223,6 +227,7 @@ class Create extends Component
         unset($this->selectedTax[$value]);
         unset($this->selectedProduct[$value]);
         unset($this->selectedTrip[$value]);
+        unset($this->selectedTTO[$value]);
         unset($this->selectedRental[$value]);
         unset($this->selectedInventory[$value]);
         
@@ -648,6 +653,64 @@ class Create extends Component
         }
    
     }
+   
+    public function updatedSelectedTTO($id, $key){
+      
+        if (!is_null($id)) {
+            
+            $tto = TripTransportOrder::find($id);
+            $trip = $tto?->trip;
+            $transport_order = $tto?->transport_order;
+            $delivery_note = DeliveryNote::where('trip_id',$trip?->id)->where('transport_order_id',$transport_order?->id)->first();
+
+            if (isset($tto)) {
+
+                foreach($trip->trip_expenses as $expense){
+
+                    if (isset($expense->category)  && isset($expense->currency_id)) {
+    
+                        if ($expense->currency_id == $tto->currency_id) {
+                            if ($expense->category == "Customer") {
+                               if(is_numeric($expense->amount)){
+                                $this->total_customer_expenses = $this->total_customer_expenses + $expense->amount;
+                               }
+                            }
+                           
+                        }
+                    }
+                }
+                
+
+              if($this->invoice_to == "Customer"){
+                    if (isset($this->total_customer_expenses) && $this->total_customer_expenses > 0) {
+                        if($this->values == "scheduled"){
+                            $this->amount[$key] = $tto->allocated_freight + $this->total_customer_expenses; 
+                        }elseif($this->values == "loading"){
+                            $this->amount[$key] = $delivery_note?->loaded_freight + $this->total_customer_expenses; 
+                        }elseif($this->values == "offloading"){
+                            $this->amount[$key] =  $delivery_note?->offloaded_freight + $this->total_customer_expenses; 
+                        }
+                    }else{
+                        if($this->values == "scheduled"){
+                            $this->amount[$key] = $tto->allocated_freight ; 
+                        }elseif($this->values == "loading"){
+                            $this->amount[$key] = $delivery_note?->loaded_freight ; 
+                        }elseif($this->values == "offloading"){
+                            $this->amount[$key] = $delivery_note?->offloaded_freight ; 
+                        }
+                    
+                    }
+                    $this->description[$key] = $this->setTTODescription($id); 
+                }
+                
+                $this->qty[$key] = 1; 
+                $this->selectedAccount[$key] =  $this->income_account_id;
+            }
+           
+            
+        }
+   
+    }
     public function updatedSelectedRental($id, $key){
       
         if (!is_null($id)) {
@@ -946,6 +1009,124 @@ class Create extends Component
 
         return implode(' ', $segments);
     }
+    public function setTTODescription($id)
+    {
+        $tto = TripTransportOrder::find($id);
+        $transport_order = $tto?->transport_order;
+        $trip = $tto?->trip;
+        if (! $tto) {
+            return '';
+        }
+
+        $cargo      = $transport_order->cargo;
+        $cargoName  = $cargo?->name ?? '';
+        $cargoType  = $cargo?->type ?? null;
+        $measurement = $tto->units_of_measure?->name ?? '';
+
+        // Weight with unit
+        $weightText = $trip->weight
+            ? $trip->weight . ' tons'
+            : '';
+
+        // Quantity / litreage text
+        $quantityText = ($tto->quantity && $measurement)
+            ? $tto->quantity . ' ' . $measurement
+            : '';
+
+        $litreageText = ($tto->litreage && $measurement)
+            ? $tto->litreage . ' ' . $measurement
+            : '';
+
+        // Cargo description based on type
+        if ($cargoType === 'Solid') {
+            $cargoDescription = trim("{$cargoName} {$weightText} {$quantityText}");
+        } elseif ($cargoType === 'Liquid') {
+            $cargoDescription = trim("{$cargoName} {$weightText} {$litreageText}");
+        } else {
+            $cargoDescription = '';
+        }
+
+        // Registration number (horse first, then vehicle)
+        $regNumber = $trip->horse?->registration_number
+            ?? $trip->vehicle?->registration_number
+            ?? '';
+
+        // Origin / destination
+        $originCity      = Destination::find($transport_order->from)?->city ?? '';
+        $destinationCity = Destination::find($transport_order->to)?->city ?? '';
+
+        $lp = $transport_order->loading_point?->name ?? '';
+        $op = $transport_order->offloading_point?->name ?? '';
+
+        $from = trim("{$originCity} {$lp}");
+        $to   = trim("{$destinationCity} {$op}");
+
+        $route = $from && $to
+            ? "{$from} to {$to}"
+            : trim($from . ' ' . $to);
+
+        // Freight calculation: formula + variables
+        $symbol    = $tto->currency?->symbol ?? '';
+        $formula   = '';
+        $variables = '';
+
+        if ($transport_order->freight_calculation) {
+            switch ($transport_order->freight_calculation) {
+                case 'flat_rate':
+                    $formula   = 'R';
+                    $variables = $symbol . $tto->allocated_rate;
+                    break;
+
+                case 'rate_weight':
+                    if ($cargoType === 'Solid') {
+                        $formula   = 'R*W';
+                        $variables = $symbol . $tto->allocated_rate . '*' . $tto->allocated_weight;
+                    } elseif ($cargoType === 'Liquid') {
+                        $formula   = 'R*L';
+                        $variables = $symbol . $tto->allocated_rate . '*' . $trip->litreage;
+                    }
+                    break;
+
+                case 'rate_distance':
+                    $formula   = 'R*D';
+                    $variables = $symbol . $tto->rate . '*' . $transport_order->distance;
+                    break;
+
+                case 'rate_weight_distance':
+                    if ($cargoType === 'Solid') {
+                        $formula   = 'R*W*D';
+                        $variables = $symbol . $tto->allocated_rate . '*' . $tto->allocated_weight . '*' . $transport_order->distance;
+                    } elseif ($cargoType === 'Liquid') {
+                        $formula   = 'R*L*D';
+                        $variables = $symbol . $tto->allocated_rate . '*' . $tto->allocated_litreage . '*' . $transport_order->distance;
+                    }
+                    break;
+            }
+        }
+
+        $formulaBlock = trim(
+            ($formula ? $formula : '') .
+            ($formula && $variables ? ' ' : '') .
+            ($variables ?: '')
+        );
+
+        // POD document
+        $document   = TripDocument::where('trip_id', $trip->id)
+                        ->where('title', 'POD')
+                        ->first();
+        $podNumber  = $document?->document_number ?? '';
+
+        // Build the final description from meaningful chunks
+        $segments = array_filter([
+            $cargoDescription,
+            $formulaBlock,
+            $route,
+            $regNumber,
+            $podNumber,
+        ]);
+
+        return implode(' ', $segments);
+    }
 
    
 
@@ -1129,6 +1310,7 @@ class Create extends Component
                 $invoice->footer = $this->footer;
                 $invoice->from_inventory = $this->from_inventory;
                 $invoice->from_trips = $this->from_trips;
+                $invoice->from_ttos = $this->from_ttos;
                 $invoice->save();
                 
                 $validAccounts = BankAccount::whereIn('id', (array) $this->bank_account_id)->pluck('id')->toArray();
@@ -1227,6 +1409,140 @@ class Create extends Component
                             }
                             if (isset($this->selectedTrip[$key])) {
                                 $invoice_item->trip_id = $this->selectedTrip[$key];
+                            }
+                            if (isset($this->selectedProduct[$key])) {
+                                $invoice_item->product_id = $this->selectedProduct[$key];
+                            }
+                            if (isset($this->is_custom_item[$key])) {
+                                $invoice_item->is_custom_item = $this->is_custom_item[$key];
+                            }
+                            if (isset($this->qty[$key])) {
+                                $invoice_item->qty = $this->qty[$key];
+                            }
+                            if (isset($this->amount[$key])) {
+                                $invoice_item->amount = $this->amount[$key];
+                            }
+                            if (isset($this->description[$key])) {
+                               
+                                $invoice_item->description = $this->description[$key];
+                            }
+                            if (isset($this->tax_rate[$key])) {
+                                $invoice_item->tax_rate = $this->tax_rate[$key];
+                            }
+                            if (isset($this->hs_code[$key])) {
+                                $invoice_item->hs_code = $this->hs_code[$key];
+                            }
+                            if (isset($this->selectedTax[$key])) {
+                                $invoice_item->tax_id = $this->selectedTax[$key];
+                            }
+                            if ((isset($this->amount[$key]) && is_numeric($this->amount[$key])) && ( isset($this->qty[$key]) && is_numeric($this->qty[$key]) ) ) {
+
+                                $item_subtotal = $this->amount[$key]*$this->qty[$key];
+                                $invoice_item->subtotal = $item_subtotal;
+                                $this->subtotal = $this->subtotal + $item_subtotal;
+
+                            }
+                            if ((isset($this->tax_rate[$key]) && is_numeric($this->tax_rate[$key])) && isset($this->selectedTax[$key])) {
+
+                                $item_tax_amount = ($item_subtotal * ($this->tax_rate[$key] / 100 ));
+                                $invoice_item->tax_amount =  $item_tax_amount;
+                                $this->tax_amount = $this->tax_amount + $item_tax_amount;
+                                $item_subtotal_incl = $item_tax_amount + $item_subtotal;
+                                $invoice_item->subtotal_incl =  $item_subtotal_incl;
+                                $this->total =  $this->total + $item_subtotal_incl;
+
+                            }else{
+                                $item_subtotal_incl = $item_subtotal;
+                                $invoice_item->subtotal_incl = $item_subtotal_incl;
+                                $this->total =  $this->total + $item_subtotal_incl;
+                            }
+                            
+                            if ((isset($this->exchange_rate) && is_numeric($this->exchange_rate))) {
+                                $invoice_item->exchange_rate = $this->exchange_rate;
+                                $invoice_item->exchange_amount = $this->exchange_rate * $item_subtotal_incl ;
+                            }
+                            $invoice_item->save();
+                    
+                    }
+                }
+                    
+            }
+            elseif ($this->source == "TTO") {
+              
+                if($this->multi_select == True){
+                    
+                    foreach($this->selectedMultiTTO as $ttoId){
+                            $tto = TripTransportOrder::find($ttoId);
+                            $delivery_note = $tto?->delivery_note;
+                            $invoice_item = new InvoiceItem;
+                            $invoice_item->invoice_id = $invoice->id;
+                            $invoice_item->account_id = $this->income_account_id;
+                            $invoice_item->trip_transport_order_id = $ttoId;
+                            $invoice_item->qty = 1;
+                            if($this->values == "scheduled"){
+                                $invoice_item->amount = $tto?->allocated_freight;
+                            }elseif($this->values == "loading"){
+                                $invoice_item->amount = $delivery_note?->loaded_freight;
+                            }elseif($this->values == "offloading"){
+                                $invoice_item->amount = $delivery_note?->offloaded_freight;
+                            }
+                           
+                            $invoice_item->description = $this->setTTODescription($ttoId);
+                            $tax_rate = Null;
+                           
+                            if(!is_null($this->selectedMultiTax)){
+                                
+                                $tax = Account::find($this->selectedMultiTax);
+                                $invoice_item->tax_rate = $tax?->rate;
+                                $tax_rate = $tax?->rate;
+                                $invoice_item->hs_code = $tax?->hs_code;
+                                $invoice_item->tax_id = $this->selectedMultiTax;
+                
+                            }
+                            
+                            $amount = $tto?->allocated_freight;
+                            $qty = 1;
+                            if ((isset($amount) && is_numeric($amount)) && ( isset($qty) && is_numeric($qty) ) ) {
+
+                                $item_subtotal = $amount*$qty;
+                                $invoice_item->subtotal = $item_subtotal;
+                                $this->subtotal = $this->subtotal + $item_subtotal;
+
+                            }
+                            if (isset($tax_rate) && is_numeric($tax_rate)) {
+
+                                $item_tax_amount = ($item_subtotal * ($tax_rate / 100 ));
+                                $invoice_item->tax_amount =  $item_tax_amount;
+                                $this->tax_amount = $this->tax_amount + $item_tax_amount;
+                                $item_subtotal_incl = $item_tax_amount + $item_subtotal;
+                                $invoice_item->subtotal_incl =  $item_subtotal_incl;
+                                $this->total =  $this->total + $item_subtotal_incl;
+
+                            }else{
+                                $item_subtotal_incl = $item_subtotal;
+                                $invoice_item->subtotal_incl = $item_subtotal_incl;
+                                $this->total =  $this->total + $item_subtotal_incl;
+                            }
+                            
+                            if ((isset($this->exchange_rate) && is_numeric($this->exchange_rate))) {
+                                $invoice_item->exchange_rate = $this->exchange_rate;
+                                $invoice_item->exchange_amount = $this->exchange_rate * $item_subtotal_incl ;
+                            }
+                            $invoice_item->save();
+                        
+                    }
+
+                    }else{
+
+                    foreach($this->qty as $key => $value){
+
+                            $invoice_item = new InvoiceItem;
+                            $invoice_item->invoice_id = $invoice->id;
+                            if (isset($this->selectedAccount[$key])) {
+                                $invoice_item->account_id = $this->selectedAccount[$key];
+                            }
+                            if (isset($this->selectedTTO[$key])) {
+                                $invoice_item->trip_transport_order_id = $this->selectedTTO[$key];
                             }
                             if (isset($this->selectedProduct[$key])) {
                                 $invoice_item->product_id = $this->selectedProduct[$key];
@@ -1731,6 +2047,94 @@ class Create extends Component
          return $query->orderByDesc($this->trip_filter)->get();
 
     }
+    
+    public function getTripTransportOrdersProperty()
+    {
+        $query = TripTransportOrder::query()
+            ->with([
+                'trip.horse',
+                'trip.vehicle',
+                'trip.trip_documents',
+                'transport_order.customer',
+                'transport_order.currency',
+            ])
+            ->whereHas('trip', function ($q) {
+                $q->where('trip_status', '!=', 'Cancelled');
+            })
+            ->when($this->invoice_to === 'Customer', function ($q) {
+                $q->where('currency_id', $this->selectedCurrency);
+            })
+            ->when($this->invoice_to === 'Transporter', function ($q) {
+                $q->whereHas('trip', function ($qq) {
+                    $qq->where('transporter_agreement', true);
+                });
+            });
+
+        // Date window via trip
+        if ($this->from && $this->to) {
+            $from = Carbon::parse($this->from)->startOfDay();
+            $to   = Carbon::parse($this->to)->endOfDay();
+
+            $query->whereHas('trip', function ($q) use ($from, $to) {
+                $q->whereBetween($this->trip_filter, [$from, $to]);
+            });
+        } else {
+            $query->whereHas('trip', function ($q) {
+                $q->whereBetween($this->trip_filter, [
+                    now()->startOfMonth(),
+                    now()->endOfMonth(),
+                ]);
+            });
+        }
+
+        // Customer / transporter via transport order
+        if ($this->selectedCustomer) {
+            $query->whereHas('transport_order', function ($q) {
+                $q->where('customer_id', $this->selectedCustomer);
+            });
+        }
+
+        if ($this->selectedTransporter) {
+            $query->whereHas('trip', function ($q) {
+                $q->where('transporter_id', $this->selectedTransporter);
+            });
+        }
+
+        if (filled($this->searchTTO)) {
+            $term = '%' . $this->searchTTO . '%';
+
+            $query->where(function ($q) use ($term) {
+                $q->whereHas('trip', function ($qq) use ($term) {
+                    $qq->where('trip_number', 'like', $term)
+                        ->orWhere('start_date', 'like', $term)
+                        ->orWhere('turnover', 'like', $term)
+                        ->orWhere('freight', 'like', $term)
+                        ->orWhereHas('horse', function ($qqq) use ($term) {
+                            $qqq->where('registration_number', 'like', $term)
+                                ->orWhere('fleet_number', 'like', $term);
+                        })
+                        ->orWhereHas('vehicle', function ($qqq) use ($term) {
+                            $qqq->where('registration_number', 'like', $term)
+                                ->orWhere('fleet_number', 'like', $term);
+                        })
+                        ->orWhereHas('trip_documents', function ($qqq) use ($term) {
+                            $qqq->where('document_number', 'like', $term);
+                        });
+                });
+            });
+        }
+
+        return $query
+            ->whereHas('trip')
+            ->with([
+                'trip' => function ($q) {
+                    $q->orderByDesc($this->trip_filter);
+                }
+            ])
+            ->get()
+            ->sortByDesc(fn ($item) => optional($item->trip)->{$this->trip_filter})
+            ->values();
+    }
 
     public function updatedSource($value){
             if(!$value){
@@ -1738,8 +2142,12 @@ class Create extends Component
             }
             if($value == "Trip"){
                 $this->from_trips = True;
-            }elseif($value == "Inventory"){
+            }
+            elseif($value == "Inventory"){
                  $this->from_inventory = True;
+            }
+            elseif($value == "TTO"){
+                 $this->from_ttos = True;
             }
     }
  
@@ -1852,7 +2260,8 @@ class Create extends Component
         }
 
         return view('livewire.invoices.create',[
-            'trips' => $this->trips,
+            'trips' => $this->trips, 
+            'trip_transport_orders' => $this->trip_transport_orders, 
             'bookings' => $this->bookings,
             'rentals' => $this->rentals,
         ]);

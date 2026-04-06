@@ -15,7 +15,7 @@ class TripTransportOrderController extends Controller
      */
     public function index()
     {
-        //
+        return view('trip_transport_orders.index');
     }
 
     /**
@@ -47,7 +47,9 @@ class TripTransportOrderController extends Controller
      */
     public function show(TripTransportOrder $tripTransportOrder)
     {
-        //
+        return view('trip_transport_orders.show',[
+            'trip_transport_order' => $tripTransportOrder
+        ]);
     }
 
     /**

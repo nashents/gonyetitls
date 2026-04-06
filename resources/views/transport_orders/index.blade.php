@@ -30,7 +30,7 @@
                                 <div class="col-md-6">
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
-            							<li class="active"> <i class="fa fa-list"></i> Trasportation Orders</li>
+            							<li class="active"> <i class="fa fa-list"></i> Transport Orders</li>
             						</ul>
                                 </div>
                             </div>

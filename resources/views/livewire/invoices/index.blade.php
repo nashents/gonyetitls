@@ -191,7 +191,9 @@
                                                         @if ($item->product)
                                                             <strong>{{$item->product ? $item->product->name : ""}} {{$item->product ? $item->product->identification_number : ""}} {{$item->inventory ? $item->inventory->serial_number : ""}}</strong>  
                                                         @elseif($item->trip)  
-                                                            <strong>{{$item->trip ? $item->trip->trip_number : ""}}</strong>  
+                                                            <a href="{{route('trips.show',$item->trip?->id)}}" target="_blank" style="color: blue"><strong>{{$item->trip ? $item->trip->trip_number : ""}}</strong></a>
+                                                        @elseif($item->trip_transport_order)  
+                                                            <a href="{{route('trip_transport_orders.show', $item->trip_transport_order->id)}}" target="_blank" style="color: blue"><strong>{{$item->trip_transport_order->transport_order ? $item->trip_transport_order->tto_number : ""}}</strong></a>  
                                                         @elseif($item->rental)  
                                                             <strong>{{$item->rental ? $item->rental->car_rental_number : ""}}</strong>  
                                                         @endif 

@@ -34,11 +34,13 @@
                 <td>
                     @if ($invoice_item->product)
                         <strong>{{$invoice_item->product ? $invoice_item->product->name : ""}} {{$invoice_item->product ? $invoice_item->product->identification_number : ""}} {{$invoice_item->inventory ? $invoice_item->inventory->serial_number : ""}}</strong>  
-                        <br>
                     @elseif($invoice_item->trip)  
-                        <strong>{{$invoice_item->trip ? $invoice_item->trip->trip_number : ""}}</strong>  
-                        <br>
-                    @endif
+                        <a href="{{route('trips.show',$invoice_item->trip?->id)}}" target="_blank" style="color: blue"><strong>{{$invoice_item->trip ? $invoice_item->trip->trip_number : ""}}</strong></a>
+                    @elseif($invoice_item->trip_transport_order)  
+                        <a href="{{route('trip_transport_orders.show', $invoice_item->trip_transport_order->id)}}" target="_blank" style="color: blue"><strong>{{$invoice_item->trip_transport_order->transport_order ? $invoice_item->trip_transport_order->tto_number : ""}}</strong></a>  
+                    @elseif($invoice_item->rental)  
+                        <strong>{{$invoice_item->rental ? $invoice_item->rental->car_rental_number : ""}}</strong>  
+                    @endif 
                   {{$invoice_item->description}}
                 </td>
                 <td>{{$invoice_item->qty}}</td>

@@ -9,17 +9,15 @@
     @endif
 @endsection
 @section('title')
-    Transport Orders | @if (Auth::user()->employee->company)
+    TTOs | @if (Auth::user()->employee->company)
     {{Auth::user()->employee->company->name}}
     @elseif (Auth::user()->company)
     {{Auth::user()->company->name}}
     @endif
 @endsection
-
 @section('body-id')
 <body class="top-navbar-fixed">
 @endsection
-
 
 
                     <div class="main-page">
@@ -32,15 +30,19 @@
                                 <div class="col-md-6">
                                     <ul class="breadcrumb">
             							<li><a href="{{route('dashboard.index')}}"><i class="fa fa-home"></i> Home</a></li>
-            							<li><a href="{{route('transport_orders.index')}}"><i class="fa fa-list"></i> Transport Orders</a></li>
-            							<li class="active"> <i class="fa fa-eye"></i>Transport Order</li>
+            							<li class="active"> <i class="fa fa-list"></i> Trip Transport Orders</li>
             						</ul>
                                 </div>
                             </div>
                             <!-- /.row -->
                         </div>
-                        @livewire('transport-orders.show',['transport_order'=> $transport_order])
+
+                        @livewire('trip-transport-orders.index')
+
+
                     </div>
+
+
 @endsection
 
 @section('extra-js')
