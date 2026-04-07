@@ -2,18 +2,19 @@
 
 namespace App\Http\Livewire\Products;
 
-use App\Models\Brand;
 use App\Models\Account;
-use App\Models\Product;
-use Livewire\Component;
-use App\Models\Category;
 use App\Models\Attribute;
-use App\Models\CategoryValue;
-use Livewire\WithFileUploads;
 use App\Models\AttributeValue;
+use App\Models\Brand;
+use App\Models\Category;
+use App\Models\CategoryValue;
+use App\Models\Product;
 use App\Models\ProductAttribute;
-use Illuminate\Support\Facades\DB;
+use App\Models\UnitsOfMeasure;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class Edit extends Component
 {
@@ -43,6 +44,7 @@ class Edit extends Component
     public $product_id;
     public $previous_image;
     public $unit_of_measure;
+    public $units_of_measure;
 
     public $tax;
     public $tax_accounts;
@@ -59,6 +61,12 @@ class Edit extends Component
     public $account_id;
     public $buy_price;
     public $sell_price;
+
+    public $is_trackable;
+    public $is_serialized;
+    public $requires_position;
+    public $requires_fitment;
+    public $fitment_mode;
 
 
     public $inputs = [];
@@ -80,9 +88,10 @@ class Edit extends Component
 
     public function mount($product){
         $product_attribute = $product->product_attributes->first();
-        $this->brands = Brand::all();
-        $this->categories = Category::all();
-        $this->category_values = CategoryValue::all();
+        $this->brands = Brand::orderBy('name','asc')->get();
+        $this->categories = Category::orderBy('name','asc')->get();
+        $this->units_of_measure = UnitsOfMeasure::orderBy('name','asc')->get();
+        $this->category_values = CategoryValue::orderBy('name','asc')->get();
         $this->selectedCategory = $product->category_id;
         $this->selectedCategoryValue = $product->category_value_id;
         $this->name = $product->name;
@@ -98,6 +107,11 @@ class Edit extends Component
         $this->buy = $product->buy;
         $this->sell = $product->sell;
         $this->sell_price = $product->sell_price;
+        $this->requires_position = $product->requires_position;
+        $this->requires_fitment = $product->requires_fitment;
+        $this->fitment_mode = $product->fitment_mode;
+        $this->is_serialized = $product->is_serialized;
+        $this->is_trackable = $product->is_trackable;
         $this->buy_price = $product->price;
         $this->selectedTax = $product->tax_id;
         $this->expense_account_id = $product->expense_account_id;
@@ -168,6 +182,11 @@ class Edit extends Component
         $product->max = $this->max;
         $product->price = $this->buy_price;
         $product->sell_price = $this->sell_price;
+         $product->fitment_mode = $this->fitment_mode;
+        $product->is_serialized = $this->is_serialized;
+        $product->is_trackable = $this->is_trackable;
+        $product->requires_position = $this->requires_position;
+        $product->requires_fitment = $this->requires_fitment;
         $product->sell = $this->sell;
         $product->unit_of_measure = $this->unit_of_measure;
         $product->buy = $this->buy;

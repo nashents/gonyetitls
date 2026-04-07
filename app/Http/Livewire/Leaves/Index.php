@@ -269,7 +269,7 @@ class Index extends Component
                 }
         }
 
-            public function updatedFrom()
+     public function updatedFrom()
     {
         $this->recalculateDays();
     }
@@ -284,6 +284,12 @@ class Index extends Component
         $this->recalculateDays();
     }
 
+    public function updatedIgnorePublicHolidays()
+    {
+        $this->recalculateDays();
+    }
+    
+
     public function recalculateDays()
     {
         if (blank($this->from) || blank($this->to)) {
@@ -294,11 +300,13 @@ class Index extends Component
         $this->days = $this->calculateLeaveDays(
             $this->from,
             $this->to,
-            $this->days_calculation ?? 'include_weekends'
+            $this->days_calculation ?? 'include_weekends',
+            $this->ignore_public_holidays
         );
+
     }
 
-    public function calculateLeaveDays($from, $to, $daysCalculation = 'include_weekends')
+    public function calculateLeaveDays($from, $to, $daysCalculation = 'include_weekends', $ignore_public_holidays = false)
     {
         $startDate = Carbon::parse($from)->startOfDay();
         $endDate   = Carbon::parse($to)->startOfDay();
@@ -307,11 +315,17 @@ class Index extends Component
             return 0;
         }
 
-        $publicHolidays = PublicHoliday::whereBetween('date', [
-            $startDate->toDateString(),
-            $endDate->toDateString()
-        ])->pluck('date')
-        ->mapWithKeys(fn ($date) => [Carbon::parse($date)->toDateString() => true]);
+        $ignore_public_holidays = filter_var($ignore_public_holidays, FILTER_VALIDATE_BOOLEAN);
+
+        $publicHolidays = collect();
+
+        if (! $ignore_public_holidays) {
+            $publicHolidays = PublicHoliday::whereBetween('date', [
+                $startDate->toDateString(),
+                $endDate->toDateString()
+            ])->pluck('date')
+            ->mapWithKeys(fn ($date) => [Carbon::parse($date)->toDateString() => true]);
+        }
 
         $days = 0;
         $weekendIncluded = false;
@@ -319,7 +333,8 @@ class Index extends Component
         foreach (CarbonPeriod::create($startDate, $endDate) as $date) {
             $currentDate = $date->toDateString();
 
-            if (isset($publicHolidays[$currentDate])) {
+            // Only skip public holidays when they must be excluded
+            if (! $ignore_public_holidays && isset($publicHolidays[$currentDate])) {
                 continue;
             }
 
@@ -344,14 +359,6 @@ class Index extends Component
 
     public function render()
     {
-        if (isset($this->from) && isset($this->to)) {
-            $startDate = Carbon::parse($this->from);
-            $endDate = Carbon::parse($this->to);
-            $this->days = $startDate->diffInDays($endDate) + 1;
-    
-        }
-     
-     
         
         if (filled($this->search)) {
              return view('livewire.leaves.index',[

@@ -34,9 +34,11 @@ class Index extends Component
     }
 
     public function mount(){
+
         $this->user = Auth::user();
         $this->employee =  $this->user->employee;
         $this->company = Company::with('currency')->find($this->employee->company_id);
+
         $departments = $this->employee->departments;
         foreach($departments as $department){
             $this->department_names[] = $department->name;
@@ -48,13 +50,14 @@ class Index extends Component
         $ranks = $this->employee->ranks;
         foreach($ranks as $rank){
             $this->rank_names[] = $rank->name;
-         }
+        }
+
     }
-    
+
     public function render()
     {
         
-         $withRelations = [
+        $withRelations = [
             'trip',
             'transport_order',
             'currency',

@@ -3,41 +3,42 @@
 namespace App\Http\Livewire\Inventories;
 
 
-use Carbon\Carbon;
-use App\Models\Bin;
-use App\Models\Bill;
-use App\Models\Rack;
-use App\Models\Brand;
-use App\Models\Store;
-use App\Models\Branch;
-use App\Models\Vendor;
 use App\Models\Account;
-use App\Models\Contact;
-use App\Models\Product;
-use Livewire\Component;
+use App\Models\Attribute;
+use App\Models\AttributeValue;
+use App\Models\Bill;
+use App\Models\BillExpense;
+use App\Models\Bin;
+use App\Models\Branch;
+use App\Models\Brand;
 use App\Models\Category;
+use App\Models\CategoryValue;
+use App\Models\Contact;
 use App\Models\Currency;
+use App\Models\Department;
 use App\Models\Document;
 use App\Models\Employee;
-use App\Models\Purchase;
-use App\Models\Transfer;
-use App\Models\Attribute;
-use App\Models\Inventory;
-use App\Models\Department;
-use App\Models\VendorType;
-use App\Models\BillExpense;
 use App\Models\ExchangeRate;
-use App\Models\TransferItem;
-use App\Models\CategoryValue;
 use App\Models\GoodsReceived;
-use Livewire\WithFileUploads;
-use App\Models\AttributeValue;
-use App\Models\PurchaseProduct;
 use App\Models\inventorieserial;
+use App\Models\Inventory;
+use App\Models\Product;
 use App\Models\ProductAttribute;
-use Illuminate\Support\Facades\DB;
+use App\Models\Purchase;
+use App\Models\PurchaseProduct;
+use App\Models\Rack;
+use App\Models\Store;
+use App\Models\Transfer;
+use App\Models\TransferItem;
+use App\Models\UnitsOfMeasure;
+use App\Models\Vendor;
+use App\Models\VendorType;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
+use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class Create extends Component
 {
@@ -77,6 +78,7 @@ class Create extends Component
     public $warranty_exp_date;
     public $condition;
     public $inventory_number;
+    public $units_of_measures;
    
     public $purchase_type;
     public $description;
@@ -176,6 +178,7 @@ class Create extends Component
         $this->bins = Bin::orderBy('name','asc')->get();
         $this->vendors = Vendor::orderBy('name','asc')->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
+        $this->units_of_measures = UnitsOfMeasure::orderBy('name','asc')->get();
 
 
         $this->expense_accounts = Account::whereHas('account_type.account_type_group', function ($query) {
@@ -668,11 +671,7 @@ class Create extends Component
             foreach ($this->selectedProduct as $key => $value) {
 
             if (isset($this->qty[$key])) {
-                
-    
-                // for ($i=0; $i < $this->qty[$key] ; $i++) { 
-                       
-                   
+                     
                     $inventory = new Inventory;
                     $inventory->user_id = Auth::user()->id;
                     $inventory->vendor_id = $this->vendor_id ? $this->vendor_id : NULL;
@@ -826,7 +825,6 @@ class Create extends Component
 
                     }
     
-                // }
     
               }
             }

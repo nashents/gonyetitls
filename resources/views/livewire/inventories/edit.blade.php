@@ -25,15 +25,16 @@
                                     <small>  <a href="{{ route('goods_receiveds.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Goods Received Voucher</a></small>  <a href="#" wire:click.prevent="refresh('goods_receiveds')" class="float-end"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                     @error('selectedGoodsReceived') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
+                                 <label for="exampleInputEmail13">Select source of items</label>
+                                <div class="mb-10">
+                                    <input type="radio" wire:model.debounce.300ms="source" value="Purchase"  class="line-style"  />
+                                    <label for="one" class="radio-label">Purchase Order</label>
+                                    <input type="radio" wire:model.debounce.300ms="source" value="Transfer"  class="line-style"  />
+                                    <label for="one" class="radio-label">Store Transfer Order</label>
+                                </div>  
                             <div class="row">
                                 <div class="col-md-3">
-                                        <label for="exampleInputEmail13">Select source of items<span class="required" style="color: red">*</span></label>
-                                            <div class="mb-10">
-                                                <input type="radio" wire:model.debounce.300ms="source" value="Purchase"  class="line-style"  />
-                                                <label for="one" class="radio-label">Purchase Order</label>
-                                                <input type="radio" wire:model.debounce.300ms="source" value="Transfer"  class="line-style"  />
-                                                <label for="one" class="radio-label">Store Transfer Order</label>
-                                            </div>   
+                                        
                                             <div class="form-group">
                                             @if ($source == "Purchase")
                                                 <label for="country">Purchase Orders</label>
@@ -139,18 +140,18 @@
                                         @if ($source == "Purchase" && $selectedPurchase)
                                             <div class="form-group">
                                                 <label for="country">Product(s)<span class="required" style="color: red">*</span></label>
-                                                <select wire:model.debounce.300ms="selectedPurchaseProduct.0" class="form-control" required>
+                                                <select wire:model.debounce.300ms="selectedPurchaseProduct" class="form-control" required>
                                                     <option value="">Select Product</option>
                                                     @foreach ($purchase_products as $purchase_product)
                                                         <option value="{{$purchase_product->id}}">  {{$purchase_product->product ? $purchase_product->product->name : ""}} {{$purchase_product->product->brand ? $purchase_product->product->brand->name : ""}} {{$purchase_product->product ? $purchase_product->product->identification_number : ""}}</option>
                                                     @endforeach
                                                 </select>
-                                                @error('selectedPurchaseProduct.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                @error('selectedPurchaseProduct') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         @elseif($source == "Transfer" && $selectedTransfer)
                                             <div class="form-group">
                                                 <label for="country">Product(s)<span class="required" style="color: red">*</span></label>
-                                                <select wire:model.debounce.300ms="selectedTransferItem.0" class="form-control" required>
+                                                <select wire:model.debounce.300ms="selectedTransferItem" class="form-control" required>
                                                     <option value="">Select Product</option>
                                                     @foreach ($transfer_items as $transfer_item)
                                                         <option value="{{$transfer_item->id}}"> 
@@ -160,19 +161,20 @@
                                                         </option>
                                                     @endforeach
                                                 </select>
-                                                @error('selectedTransferItem.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                @error('selectedTransferItem') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         @else   
+
                                             <div class="form-group">
                                                 <label for="country">Product(s)<span class="required" style="color: red">*</span></label>
-                                                <select wire:model.debounce.300ms="selectedProduct.0" class="form-control" required>
+                                                <select wire:model.debounce.300ms="selectedProduct" class="form-control" required>
                                                     <option value="">Select Product</option>
                                                     @foreach ($products as $product)
                                                         <option value="{{$product->id}}"> {{$product->name}} {{$product->brand ? $product->brand->name : ""}} {{$product->identification_number}}</option>
                                                     @endforeach
                                                 </select>
                                                  <small><a href="{{ route('inventory_products.create') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Product</a></small><a href="#" wire:click.prevent="refresh('products')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>  
-                                                @error('selectedProduct.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                @error('selectedProduct') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                            
                                         @endif
@@ -198,15 +200,9 @@
                                     <label for="country">UnitOfMeasure<span class="required" style="color: red">*</span></label>
                                     <select wire:model.debounce.300ms="measurement" class="form-control" required>
                                         <option value="">Select UOM</option>
-                                        <option value="Cubic">Cubic</option>
-                                        <option value="Each">Each</option>
-                                        <option value="Item(s)">Item(s)</option>
-                                        <option value="Kg(s)">Kg(s)</option>
-                                        <option value="Litre(s)">Litre(s)</option>
-                                        <option value="Metre(s)">Metre(s)</option>
-                                        <option value="Piece(s)">Piece(s)</option>
-                                        <option value="Ton(s)">Ton(s)</option>
-                                        <option value="Unit(s)">Unit(s)</option>
+                                        @foreach ($units_of_measures as $units_of_measure)
+                                            <option value="{{ $units_of_measure->name}}">{{$units_of_measure->name}} ({{$units_of_measure->abbreviation}})</option>
+                                        @endforeach
                                     </select>
                                     @error('measurement') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>

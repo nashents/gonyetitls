@@ -1333,7 +1333,7 @@ class Index extends Component
                     }
                     }else{
                         if((isset($this->current_rate[$key]) && is_numeric($this->current_rate[$key])) && (isset($this->current_litreage_at_20[$key]) && is_numeric($this->current_litreage_at_20[$key])) ){
-                        $this->current_freight[$key] = $this->current_current_rate[$key] * $this->current_litreage_at_20[$key]; 
+                        $this->current_freight[$key] = $this->current_rate[$key] * $this->current_litreage_at_20[$key]; 
                     }
                 }
                 
@@ -1699,6 +1699,10 @@ class Index extends Component
 
         // if($this->for == "Trips") {
             $this->validate([
+                'loading_point_id'        => 'nullable|array',
+                'loading_point_id.*'      => 'integer|exists:loading_points,id',
+                'offloading_point_id'     => 'nullable|array',
+                'offloading_point_id.*'   => 'integer|exists:offloading_points,id',
                 'selectedCurrency'     => 'nullable',
                 'rate.*'               => 'nullable|numeric|min:0',
                 'weight.*'             => 'nullable|numeric|min:0',
@@ -1724,8 +1728,7 @@ class Index extends Component
         // } 
 
     DB::transaction(function () {
-    
-      
+
         $shift = new Shift;
         $shift->user_id = Auth::user()->id;
         $shift->shift_number = $this->shiftNumber();
@@ -1772,8 +1775,13 @@ class Index extends Component
 
         $shift->save();
 
-        $shift->loading_points()->sync($this->loading_point_id);
-        $shift->offloading_points()->sync($this->offloading_point_id);
+       $shift->loading_points()->sync(
+            array_filter($this->loading_point_id ?? [])
+        );
+
+        $shift->offloading_points()->sync(
+            array_filter($this->offloading_point_id ?? [])
+        );
 
         $this->for == "Trips" ? $this->createTrips($shift->id) : $this->createRehandlingWork($shift->id);
          
@@ -1979,6 +1987,14 @@ class Index extends Component
 
          if($this->for == "Trips") {
             $this->validate([
+                'current_loading_point_id'        => 'nullable|array',
+                'current_loading_point_id.*'      => 'integer|exists:loading_points,id',
+                'current_offloading_point_id'     => 'nullable|array',
+                'current_offloading_point_id.*'   => 'integer|exists:offloading_points,id',
+                'loading_point_id'                => 'nullable|array',
+                'loading_point_id.*'              => 'integer|exists:loading_points,id',
+                'offloading_point_id'             => 'nullable|array',
+                'offloading_point_id.*'           => 'integer|exists:offloading_points,id',
                 'selectedCurrency'     => 'nullable',
                 'rate.*'               => 'nullable|numeric|min:0',
                 'weight.*'             => 'nullable|numeric|min:0',
@@ -1987,8 +2003,6 @@ class Index extends Component
                 'ending_mileage.*'     => 'nullable|numeric|min:0',
                 'starting_hours.*'     => 'nullable|numeric|min:0',
                 'ending_hours.*'       => 'nullable|numeric|min:0',
-                'loading_point_id.*'   => 'nullable|integer|exists:loading_points,id',
-                'offloading_point_id.*'=> 'nullable|integer|exists:offloading_points,id',
                 'shift_start_time' => 'nullable|date_format:Y-m-d\TH:i',
                 'shift_end_time'   => 'nullable|date_format:Y-m-d\TH:i',
                 // …add the rest as needed
@@ -2043,10 +2057,19 @@ class Index extends Component
             $shift->status = '1';
             $shift->update();
 
-            $shift->loading_points()->sync($this->current_loading_point_id);
-            $shift->offloading_points()->sync($this->current_offloading_point_id);
-            $shift->loading_points()->sync($this->loading_point_id);
-            $shift->offloading_points()->sync($this->offloading_point_id);
+            $shift->loading_points()->sync(
+                array_filter(array_unique(array_merge(
+                    (array) ($this->current_loading_point_id ?? []),
+                    (array) ($this->loading_point_id ?? [])
+                )))
+            );
+
+            $shift->offloading_points()->sync(
+                array_filter(array_unique(array_merge(
+                    (array) ($this->current_offloading_point_id ?? []),
+                    (array) ($this->offloading_point_id ?? [])
+                )))
+            );
            
             $this->for == "Trips" ? $this->createTrips($shift->id) : $this->createRehandlingWork($shift->id);
 

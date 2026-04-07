@@ -166,10 +166,21 @@
                             </div>
                         </div>
                     </div>
-                    <div class="mb-10">
-                        <input type="checkbox" wire:model.debounce.300ms="is_backdated"   class="line-style" />
-                        <label for="one" class="radio-label">Backdated Leave Application</label>
-                        @error('is_backdated') <span class="text-danger error">{{ $message }}</span>@enderror
+                    <div class="row">
+                        <div class="col-md-6">
+                             <div class="mb-10">
+                                <input type="checkbox" wire:model.debounce.300ms="is_backdated"   class="line-style" />
+                                <label for="one" class="radio-label">Backdated Leave Application</label>
+                                @error('is_backdated') <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-10">
+                                <input type="checkbox" wire:model.debounce.300ms="ignore_public_holidays"   class="line-style" />
+                                <label for="one" class="radio-label">Ignore Public Holidays</label>
+                                @error('ignore_public_holidays') <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
+                        </div>
                     </div>
                      <div class="row">
                         <div class="col-md-3">
@@ -294,10 +305,21 @@
                             </div>
                         </div>
                     </div>
-                           <div class="mb-10">
-                        <input type="checkbox" wire:model.debounce.300ms="is_backdated"   class="line-style" />
-                        <label for="one" class="radio-label">Backdated Leave Application</label>
-                        @error('is_backdated') <span class="text-danger error">{{ $message }}</span>@enderror
+                    <div class="row">
+                        <div class="col-md-6">
+                             <div class="mb-10">
+                                <input type="checkbox" wire:model.debounce.300ms="is_backdated"   class="line-style" />
+                                <label for="one" class="radio-label">Backdated Leave Application</label>
+                                @error('is_backdated') <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-10">
+                                <input type="checkbox" wire:model.debounce.300ms="ignore_public_holidays"   class="line-style" />
+                                <label for="one" class="radio-label">Ignore Public Holidays</label>
+                                @error('ignore_public_holidays') <span class="text-danger error">{{ $message }}</span>@enderror
+                            </div>
+                        </div>
                     </div>
                      <div class="row">
                         <div class="col-md-3">

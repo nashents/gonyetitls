@@ -126,7 +126,9 @@ Purchase Order Print | @if (Auth::user()->employee->company)
                                          <tr >
                                             <td class="text-center">
                                                 @if ($purchase_product)
-                                                    {{$purchase_product->product->brand ? $purchase_product->product->brand->name : ""}} {{$purchase_product->product ? $purchase_product->product->name : ""}} {{$purchase_product->product ? $purchase_product->product->description : ""}}
+                                                    {{ $purchase_product->product?->brand?->name ?? '' }}
+                                                    {{ $purchase_product->product?->name ?? '' }}
+                                                    {{ $purchase_product->product?->description ?? '' }}
                                                 @endif
                                             </td>
                                             <td class="unit text-center"> 

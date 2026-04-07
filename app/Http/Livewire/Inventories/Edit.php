@@ -2,29 +2,30 @@
 
 namespace App\Http\Livewire\Inventories;
 
-use Carbon\Carbon;
-use App\Models\Bin;
-use App\Models\Tax;
+use App\Models\Account;
 use App\Models\Bill;
+use App\Models\BillExpense;
+use App\Models\Bin;
+use App\Models\Currency;
+use App\Models\ExchangeRate;
+use App\Models\GoodsReceived;
+use App\Models\Inventory;
+use App\Models\Product;
+use App\Models\Purchase;
+use App\Models\PurchaseProduct;
 use App\Models\Rack;
 use App\Models\Store;
-use App\Models\Vendor;
-use App\Models\Account;
-use App\Models\Product;
-use Livewire\Component;
-use App\Models\Currency;
-use App\Models\Purchase;
+use App\Models\Tax;
 use App\Models\Transfer;
-use App\Models\Inventory;
-use App\Models\BillExpense;
-use App\Models\ExchangeRate;
 use App\Models\TransferItem;
-use App\Models\GoodsReceived;
-use Livewire\WithFileUploads;
-use App\Models\PurchaseProduct;
-use Illuminate\Support\Facades\DB;
+use App\Models\UnitsOfMeasure;
+use App\Models\Vendor;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
+use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class Edit extends Component
 {
@@ -118,6 +119,7 @@ class Edit extends Component
     public $worknumber;
     public $email;
     public $website;
+    public $units_of_measures;
 
     public $category_id;
     public $rate;
@@ -191,7 +193,8 @@ class Edit extends Component
         $this->company = Auth::user()->employee->company;
         $this->inventory = $inventory;
         $this->vendors = Vendor::orderBy('name','asc')->get();
-        $this->currencies = Currency::latest()->get();
+        $this->currencies = Currency::orderBy('name','asc')->get();
+        $this->units_of_measures = UnitsOfMeasure::orderBy('name','asc')->get();
         $this->stores = Store::orderBy('name','asc')->get();
         $this->racks = Rack::orderBy('name','asc')->get();
         $this->bins = Bin::orderBy('name','asc')->get();
@@ -224,9 +227,9 @@ class Edit extends Component
         
         $this->to_bills = $inventory->bill ? True : False;
 
-        $this->weight = $inventory->weight;
+        $this->weight = $inventory->weight ?: 1;
        
-        $this->source = $inventory->purchase_id ? "Purchase" : ($inventory->transfer_id ? "Transfer" : "");
+        $this->source = $inventory->purchase_id ? "Purchase" : ($inventory->transfer_id ? "Transfer" : "Purchase");
         $this->store_id = $inventory->store_id;
         $this->bin_id = $inventory->bin_id;
         $this->rack_id = $inventory->rack_id;
@@ -523,15 +526,15 @@ class Edit extends Component
 
         $inventory = Inventory::find($this->inventory_id);
         $inventory->user_id = Auth::user()->id;
-        $inventory->vendor_id = $this->vendor_id ?? null;
-        $inventory->goods_received_id = $this->selectedGoodsReceived ? $this->selectedGoodsReceived : null;
-        $inventory->store_id = $this->store_id ?? null;
-        $inventory->bin_id = $this->bin_id ?? null;
-        $inventory->rack_id = $this->rack_id ?? null;
-        $inventory->product_id = $this->selectedProduct ?? null;
-        $inventory->purchase_product_id = $this->selectedPurchaseProduct ?? null;
-        $inventory->currency_id = $this->selectedCurrency ?? null;
-        $inventory->measurement = $this->measurement ?? null;
+        $inventory->vendor_id = $this->vendor_id ?: null;
+        $inventory->goods_received_id = $this->selectedGoodsReceived ?: null;
+        $inventory->store_id = $this->store_id ?: null;
+        $inventory->bin_id = $this->bin_id ?: null;
+        $inventory->rack_id = $this->rack_id ?: null;
+        $inventory->product_id = $this->selectedProduct ?: null;
+        $inventory->purchase_product_id = $this->selectedPurchaseProduct ?: null;
+        $inventory->currency_id = $this->selectedCurrency ?: null;
+        $inventory->measurement = $this->measurement ?: null;
         $inventory->amount = $this->amount;
         $inventory->cost = $this->cost;
         $inventory->qty = $this->qty;

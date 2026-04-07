@@ -90,7 +90,7 @@ class Manage extends Component
         $this->leave_types = LeaveType::orderBy('name','asc')->get();
         $this->employee_departments = collect();
 
-         $user = Auth::user();
+        $user = Auth::user();
         $employee = $user->employee;
         $company = $employee->company;
         $this->days_calculation = $company?->days_calculation;
@@ -287,6 +287,17 @@ class Manage extends Component
        
     }
 
+    public function refresh($category){
+
+        if($category == "leave_types"){
+            $this->leave_types = LeaveType::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Leave Types Refreshed Successfully!!."
+            ]);
+        }
+    }
+
 
     public function updatedFrom()
     {
@@ -302,6 +313,11 @@ class Manage extends Component
     {
         $this->recalculateDays();
     }
+
+    public function updatedIgnorePublicHolidays()
+    {
+        $this->recalculateDays();
+    }
     
 
     public function recalculateDays()
@@ -314,11 +330,13 @@ class Manage extends Component
         $this->days = $this->calculateLeaveDays(
             $this->from,
             $this->to,
-            $this->days_calculation ?? 'include_weekends'
+            $this->days_calculation ?? 'include_weekends',
+            $this->ignore_public_holidays
         );
+
     }
 
-    public function calculateLeaveDays($from, $to, $daysCalculation = 'include_weekends')
+    public function calculateLeaveDays($from, $to, $daysCalculation = 'include_weekends', $ignore_public_holidays = false)
     {
         $startDate = Carbon::parse($from)->startOfDay();
         $endDate   = Carbon::parse($to)->startOfDay();
@@ -327,11 +345,17 @@ class Manage extends Component
             return 0;
         }
 
-        $publicHolidays = PublicHoliday::whereBetween('date', [
-            $startDate->toDateString(),
-            $endDate->toDateString()
-        ])->pluck('date')
-        ->mapWithKeys(fn ($date) => [Carbon::parse($date)->toDateString() => true]);
+        $ignore_public_holidays = filter_var($ignore_public_holidays, FILTER_VALIDATE_BOOLEAN);
+
+        $publicHolidays = collect();
+
+        if (! $ignore_public_holidays) {
+            $publicHolidays = PublicHoliday::whereBetween('date', [
+                $startDate->toDateString(),
+                $endDate->toDateString()
+            ])->pluck('date')
+            ->mapWithKeys(fn ($date) => [Carbon::parse($date)->toDateString() => true]);
+        }
 
         $days = 0;
         $weekendIncluded = false;
@@ -339,7 +363,8 @@ class Manage extends Component
         foreach (CarbonPeriod::create($startDate, $endDate) as $date) {
             $currentDate = $date->toDateString();
 
-            if (isset($publicHolidays[$currentDate])) {
+            // Only skip public holidays when they must be excluded
+            if (! $ignore_public_holidays && isset($publicHolidays[$currentDate])) {
                 continue;
             }
 
@@ -366,9 +391,7 @@ class Manage extends Component
     public function render()
     {
             
-            $this->leave_types = LeaveType::orderBy('name','asc')->get();
 
-            
            $leaves = Leave::with('employee','user','department','leave_type')
             ->filterLeaves($this->leave_filter, $this->range_from, $this->range_to, $this->search)
             ->orderBy('created_at', 'desc')

@@ -13,6 +13,7 @@ use App\Models\CategoryValue;
 use Livewire\WithFileUploads;
 use App\Models\AttributeValue;
 use App\Models\ProductAttribute;
+use App\Models\UnitsOfMeasure;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
@@ -46,6 +47,7 @@ class Create extends Component
     public $sub_category_id;
     public $brand_name;
     public $unit_of_measure;
+    public $units_of_measure;
 
     public $tax;
     public $tax_accounts;
@@ -61,6 +63,13 @@ class Create extends Component
     public $account_id;
     public $buy_price;
     public $sell_price;
+
+    public $is_trackable;
+    public $is_serialized;
+    public $requires_position;
+    public $requires_fitment;
+    public $fitment_mode;
+
 
 
 
@@ -116,6 +125,7 @@ class Create extends Component
 
     public function mount($category){
         $this->brands = Brand::orderBy('name','asc')->get();
+        $this->units_of_measure = UnitsOfMeasure::orderBy('name','asc')->get();
        
         $this->categories = Category::orderBy('name','asc')->get();
         $this->category_values = CategoryValue::orderBy('name','asc')->get();
@@ -308,6 +318,11 @@ class Create extends Component
         $product->price = $this->buy_price;
         $product->unit_of_measure = $this->unit_of_measure;
         $product->sell_price = $this->sell_price;
+        $product->fitment_mode = $this->fitment_mode;
+        $product->is_serialized = $this->is_serialized;
+        $product->is_trackable = $this->is_trackable;
+        $product->requires_position = $this->requires_position;
+        $product->requires_fitment = $this->requires_fitment;
         $product->min = $this->min;
         $product->max = $this->max;
         $product->sell = $this->sell;

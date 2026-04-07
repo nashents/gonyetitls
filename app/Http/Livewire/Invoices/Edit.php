@@ -2,29 +2,30 @@
 
 namespace App\Http\Livewire\Invoices;
 
-use Carbon\Carbon;
-use App\Models\Trip;
-use App\Models\Rental;
 use App\Models\Account;
+use App\Models\BankAccount;
 use App\Models\Booking;
-use App\Models\Invoice;
-use App\Models\Product;
-use Livewire\Component;
 use App\Models\Currency;
 use App\Models\Customer;
-use App\Models\Discount;
-use App\Models\Inventory;
-use App\Models\BankAccount;
 use App\Models\Destination;
+use App\Models\Discount;
+use App\Models\ExchangeRate;
+use App\Models\Inventory;
+use App\Models\InventoryDispatch;
+use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Measurement;
+use App\Models\Product;
+use App\Models\Rental;
 use App\Models\Transporter;
-use App\Models\ExchangeRate;
+use App\Models\Trip;
 use App\Models\TripDocument;
-use App\Models\InventoryDispatch;
-use Illuminate\Support\Facades\DB;
+use App\Models\TripTransportOrder;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
+use Livewire\Component;
 
 class Edit extends Component
 {
@@ -1865,6 +1866,94 @@ class Edit extends Component
          return $query->orderByDesc($this->rental_filter)->get();
 
     }
+
+     public function getTripTransportOrdersProperty()
+    {
+        $query = TripTransportOrder::query()
+            ->with([
+                'trip.horse',
+                'trip.vehicle',
+                'trip.trip_documents',
+                'transport_order.customer',
+                'transport_order.currency',
+            ])
+            ->whereHas('trip', function ($q) {
+                $q->where('trip_status', '!=', 'Cancelled');
+            })
+            ->when($this->invoice_to === 'Customer', function ($q) {
+                $q->where('currency_id', $this->selectedCurrency);
+            })
+            ->when($this->invoice_to === 'Transporter', function ($q) {
+                $q->whereHas('trip', function ($qq) {
+                    $qq->where('transporter_agreement', true);
+                });
+            });
+
+        // Date window via trip
+        if ($this->from && $this->to) {
+            $from = Carbon::parse($this->from)->startOfDay();
+            $to   = Carbon::parse($this->to)->endOfDay();
+
+            $query->whereHas('trip', function ($q) use ($from, $to) {
+                $q->whereBetween($this->trip_filter, [$from, $to]);
+            });
+        } else {
+            $query->whereHas('trip', function ($q) {
+                $q->whereBetween($this->trip_filter, [
+                    now()->startOfMonth(),
+                    now()->endOfMonth(),
+                ]);
+            });
+        }
+
+        // Customer / transporter via transport order
+        if ($this->selectedCustomer) {
+            $query->whereHas('transport_order', function ($q) {
+                $q->where('customer_id', $this->selectedCustomer);
+            });
+        }
+
+        if ($this->selectedTransporter) {
+            $query->whereHas('trip', function ($q) {
+                $q->where('transporter_id', $this->selectedTransporter);
+            });
+        }
+
+        if (filled($this->searchTTO)) {
+            $term = '%' . $this->searchTTO . '%';
+
+            $query->where(function ($q) use ($term) {
+                $q->whereHas('trip', function ($qq) use ($term) {
+                    $qq->where('trip_number', 'like', $term)
+                        ->orWhere('start_date', 'like', $term)
+                        ->orWhere('turnover', 'like', $term)
+                        ->orWhere('freight', 'like', $term)
+                        ->orWhereHas('horse', function ($qqq) use ($term) {
+                            $qqq->where('registration_number', 'like', $term)
+                                ->orWhere('fleet_number', 'like', $term);
+                        })
+                        ->orWhereHas('vehicle', function ($qqq) use ($term) {
+                            $qqq->where('registration_number', 'like', $term)
+                                ->orWhere('fleet_number', 'like', $term);
+                        })
+                        ->orWhereHas('trip_documents', function ($qqq) use ($term) {
+                            $qqq->where('document_number', 'like', $term);
+                        });
+                });
+            });
+        }
+
+        return $query
+            ->whereHas('trip')
+            ->with([
+                'trip' => function ($q) {
+                    $q->orderByDesc($this->trip_filter);
+                }
+            ])
+            ->get()
+            ->sortByDesc(fn ($item) => optional($item->trip)->{$this->trip_filter})
+            ->values();
+    }
     
  public function getTripsProperty(){
 
@@ -1872,6 +1961,7 @@ class Edit extends Component
             ->with('transporter:id,name','customer:id,name','loading_point:id,name','offloading_point:id,name','currency')
             ->where('authorization','approved')
             ->where('trip_status','!=', 'Cancelled')
+            ->has('trip_transport_orders', '<=', 1)
             ->when($this->invoice_to === 'Customer', function ($q) {
                 $q->where('currency_id', $this->selectedCurrency);
             })

@@ -1996,6 +1996,7 @@ class Create extends Component
             ->with('transporter:id,name','customer:id,name','loading_point:id,name','offloading_point:id,name','currency')
             ->where('authorization','approved')
             ->where('trip_status','!=', 'Cancelled')
+            ->has('trip_transport_orders', '<=', 1)
             ->when($this->invoice_to === 'Customer', function ($q) {
                 $q->where('currency_id', $this->selectedCurrency);
             })

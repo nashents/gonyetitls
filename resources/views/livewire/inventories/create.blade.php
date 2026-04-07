@@ -30,15 +30,16 @@
                                     @endif
                                     @error('selectedGoodsReceived') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
+                                <label for="exampleInputEmail13">Select source of items<span class="required" style="color: red">*</span></label>
+                                <div class="mb-10">
+                                    <input type="radio" wire:model.debounce.300ms="source" value="Purchase"  class="line-style"  />
+                                    <label for="one" class="radio-label">Purchase Order</label>
+                                    <input type="radio" wire:model.debounce.300ms="source" value="Transfer"  class="line-style"  />
+                                    <label for="one" class="radio-label">Store Transfer Order</label>
+                                </div>   
                                 <div class="row">
                                         <div class="col-md-4">
-                                        <label for="exampleInputEmail13">Select source of items<span class="required" style="color: red">*</span></label>
-                                            <div class="mb-10">
-                                                <input type="radio" wire:model.debounce.300ms="source" value="Purchase"  class="line-style"  />
-                                                <label for="one" class="radio-label">Purchase Order</label>
-                                                <input type="radio" wire:model.debounce.300ms="source" value="Transfer"  class="line-style"  />
-                                                <label for="one" class="radio-label">Store Transfer Order</label>
-                                            </div>   
+                                       
                                             <div class="form-group">
                                             @if ($source == "Purchase")
                                                 <label for="country">Purchase Orders</label>
@@ -203,16 +204,9 @@
                                                 <label for="country">UnitOfMeasure<span class="required" style="color: red">*</span></label>
                                                 <select wire:model.debounce.300ms="measurement.0" class="form-control" required>
                                                     <option value="">Select UOM</option>
-                                                    <option value="Cubic">Cubic</option>
-                                                    <option value="Each">Each</option>
-                                                    <option value="Item(s)">Item(s)</option>
-                                                    <option value="Kg(s)">Kg(s)</option>
-                                                    <option value="Litre(s)">Litre(s)</option>
-                                                    <option value="Metre(s)">Metre(s)</option>
-                                                    <option value="Piece(s)">Piece(s)</option>
-                                                    <option value="Ton(s)">Ton(s)</option>
-                                                    <option value="Unit(s)">Unit(s)</option>
-                                                </select>
+                                                    @foreach ($units_of_measures as $units_of_measure)
+                                                        <option value="{{ $units_of_measure->name}}">{{$units_of_measure->name}} ({{$units_of_measure->abbreviation}})</option>
+                                                    @endforeach
                                                 @error('measurement.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                             </div>
                                         </div>
@@ -339,15 +333,9 @@
                                                     <label for="country">UnitOfMeasure<span class="required" style="color: red">*</span></label>
                                                     <select wire:model.debounce.300ms="measurement.{{$value}}" class="form-control" required>
                                                         <option value="">Select UOM</option>
-                                                        <option value="Cubic">Cubic</option>
-                                                        <option value="Each">Each</option>
-                                                        <option value="Item(s)">Item(s)</option>
-                                                        <option value="Kg(s)">Kg(s)</option>
-                                                        <option value="Litre(s)">Litre(s)</option>
-                                                        <option value="Metre(s)">Metre(s)</option>
-                                                        <option value="Piece(s)">Piece(s)</option>
-                                                        <option value="Ton(s)">Ton(s)</option>
-                                                        <option value="Unit(s)">Unit(s)</option>
+                                                        @foreach ($units_of_measures as $units_of_measure)
+                                                            <option value="{{ $units_of_measure->name}}">{{$units_of_measure->name}} ({{$units_of_measure->abbreviation}})</option>
+                                                        @endforeach
                                                     </select>
                                                     @error('measurement.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
                                                 </div>

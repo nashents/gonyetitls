@@ -1177,7 +1177,7 @@
                         </div>
                          
                     @endif
-                    @endif
+                   @else
                            <h5 class="underline mt-10">Destination Details</h5>
                         <div class="row">
                             <div class="col-md-4">
@@ -1217,6 +1217,7 @@
                                 </div>
                             </div>
                         </div>
+                     @endif
 
                 <div class="row">
                     <div class="col-md-4">

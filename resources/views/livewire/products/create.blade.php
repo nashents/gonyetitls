@@ -3,7 +3,7 @@
         <x-loading/>
         <div class="container-fluid">
             <div class="row">
-                <div class="col-md-10 col-md-offset-1">
+                <div class="col-md-12">
                     <div class="panel">
                         <div class="panel-heading">
                             <div class="panel-title">
@@ -73,20 +73,14 @@
                                         @error('identification_number') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
-                                <div class="col-md-2">
+                                 <div class="col-md-2">
                                     <div class="form-group">
                                         <label for="name">Unit Of Measure<span class="required" style="color: red">*</span></label>
                                         <select class="form-control" wire:model.debounce.300ms="unit_of_measure" required>
                                             <option value="">Select Unit Of Measure</option>
-                                            <option value="Cubic">Cubic</option>
-                                            <option value="Each">Each</option>
-                                            <option value="Item(s)">Item(s)</option>
-                                            <option value="Kg(s)">Kg(s)</option>
-                                            <option value="Litre(s)">Litre(s)</option>
-                                            <option value="Metre(s)">Metre(s)</option>
-                                            <option value="Piece(s)">Piece(s)</option>
-                                            <option value="Ton(s)">Ton(s)</option>
-                                            <option value="Unit(s)">Unit(s)</option>
+                                            @foreach ($units_of_measure as $uom)
+                                                <option value="{{$uom->name}}">{{$uom->name}} ({{$uom->abbreviation}})</option>
+                                            @endforeach
                                         </select>
                                         @error('unit_of_measure') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
@@ -106,7 +100,57 @@
                                     </div>
                                 </div>
                             </div>
-
+                             <h6 class="underline mt-20 mb-20"><strong>Usage & Tracking Rules</strong></h6>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-10">
+                                        <input type="checkbox" wire:model.debounce.300ms="is_trackable"   class="line-style"  />
+                                        <label for="one" class="radio-label">Track this item after dispatch</label>
+                                        @error('is_trackable') <span class="text-danger error">{{ $message }}</span>@enderror <br>
+                                        <small style="color: green">Keep lifecycle history of this item across store and vehicle usage</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-10">
+                                        <input type="checkbox" wire:model.debounce.300ms="is_serialized"   class="line-style"  />
+                                        <label for="one" class="radio-label">Track individual units (serialization)</label>
+                                        @error('is_serialized') <span class="text-danger error">{{ $message }}</span>@enderror <br>
+                                         <small style="color: green">Each unit is tracked separately using serial numbers</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-10">
+                                        <input type="checkbox" wire:model.debounce.300ms="requires_fitment"   class="line-style"  />
+                                        <label for="one" class="radio-label">Require fitment on a vehicle </label>
+                                        @error('requires_position') <span class="text-danger error">{{ $message }}</span>@enderror <br>
+                                        <small style="color: green">This item must be linked to a workshop ticket and a vehicle</small>
+                                    </div>
+                                </div>
+                             
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-10">
+                                        <input type="checkbox" wire:model.debounce.300ms="requires_position"   class="line-style"  />
+                                        <label for="one" class="radio-label">Require position/slot when installing </label>
+                                        @error('requires_position') <span class="text-danger error">{{ $message }}</span>@enderror <br>
+                                        <small style="color: green">User must select where the item is fitted on the vehicle</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="name">Fitment Type<span class="required" style="color: red">*</span></label>
+                                        <select class="form-control" wire:model.debounce.300ms="unit_of_measure" required>
+                                            <option value="">Select Fitment Type</option>
+                                            <option value="single_unit">Single Unit</option>
+                                            <option value="quantity_split">Quantity Split</option>
+                                            <option value="bulk_issue">Bulk Issue</option>
+                                        </select>
+                                        @error('unit_of_measure') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                            </div>
+                              <h6 class="underline mt-20 mb-20"><strong>Billing Information</strong></h6>
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="mb-10">
