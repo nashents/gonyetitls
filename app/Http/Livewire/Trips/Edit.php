@@ -452,6 +452,16 @@ class Edit extends Component
             }
     }
 
+      public function updatedAttachTransportOrder($value){
+       
+        if(!is_null($value)){
+            if($value == True){
+                $this->transport_orders = TransportOrder::latest()->get();
+                $this->cargo_type = [];
+            }
+        }
+    }
+
         public function updatedSelectedTransportOrder($id, $key){
        
         if(is_null($id) && is_null($key) ){
@@ -947,6 +957,7 @@ class Edit extends Component
         $this->offloading_points = OffloadingPoint::orderBy('name','asc')->get();
         $this->loading_points = LoadingPoint::orderBy('name','asc')->get();
         $this->trip_groups = TripGroup::where('status',1)->latest()->get();
+        $this->transport_orders = TransportOrder::latest()->get();
         $this->routes = Route::with('truck_stops:id,name')->orderBy('name','asc')->get();
         $this->agents = Agent::orderBy('name','asc')->get();
         $this->truck_stops = TruckStop::orderBy('name','asc')->get();
