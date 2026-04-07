@@ -301,7 +301,7 @@ WithCustomStartCell
                     $equipment,
                     $driver,
                     $shift?->trips->count(),
-                    $shift->trips->sum('weight'),
+                    $shift?->trips?->sum('weight'),
                     $shift->calculated_mileage,
                     $shift->actual_mileage,
                     $shift->total_fuel,
