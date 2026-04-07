@@ -46,6 +46,16 @@
                                 <td class="w-20 line-height-35">{{$product->model}}</td>
                             </tr>
                             @endif
+                             <tr>
+                                <th class="w-10 text-center line-height-35">Usage & Tracking Rules</th>
+                                <td class="w-20 line-height-35"> 
+                                    Track this item after dispatch ?  {{$product->is_trackable ? "Yes" : "No"}} <br>
+                                    Track individual units (serialization) ?  {{$product->is_serialized  ? "Yes" : "No"}} <br>
+                                    Require fitment on a vehicle ?  {{$product->requires_fitment  ? "Yes" : "No"}} <br>
+                                    Require position/slot when installing ?  {{$product->requires_position  ? "Yes" : "No"}} <br>
+                                    Fitment Mode:   {{$product->fitment_mode}}
+                                </td>
+                            </tr>
                             @if ($product->buy == True)
                             @php
                                 $expense_account = App\Models\Account::find($product->expense_account_id);

@@ -21,7 +21,7 @@
                                 </div>
                                 @if ($attach_transport_order == True)
                               
-                                @foreach ($existing_transport_orders as $key => $value)
+                                @foreach ($trip_transport_orders as $key => $value)
                                     <div class="mt-30 mb-30" style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">
                                         <div class="form-group">
                                             <label for="trip_type">

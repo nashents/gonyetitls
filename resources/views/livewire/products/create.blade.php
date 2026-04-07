@@ -139,14 +139,14 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="name">Fitment Type<span class="required" style="color: red">*</span></label>
-                                        <select class="form-control" wire:model.debounce.300ms="unit_of_measure" required>
-                                            <option value="">Select Fitment Type</option>
+                                        <label for="name">Fitment Mode<span class="required" style="color: red">*</span></label>
+                                        <select class="form-control" wire:model.debounce.300ms="fitment_mode" required>
+                                            <option value="">Select Fitment Mode</option>
                                             <option value="single_unit">Single Unit</option>
                                             <option value="quantity_split">Quantity Split</option>
                                             <option value="bulk_issue">Bulk Issue</option>
                                         </select>
-                                        @error('unit_of_measure') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        @error('fitment_mode') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
                             </div>

@@ -139,8 +139,10 @@
                                         </div>
                                 </div>
     
-                                 <div class="mt-30" style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">
+                                <div class="mt-30" style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">
+                                
                                 <div class="row">
+
                                     <div class="col-md-4">
                                         @if ($source == "Purchase" && $selectedPurchase)
                                             <div class="form-group">
@@ -199,18 +201,18 @@
                                             <small>Full capacity per container (e.g. 100L per drum OR 12 Items per carton). Useful for deductions when invoicing / dispatching</small>
                                         </div>
                                     </div>
-                                        <div class="col-md-2">
-                                            <div class="form-group">
-                                                <label for="country">UnitOfMeasure<span class="required" style="color: red">*</span></label>
-                                                <select wire:model.debounce.300ms="measurement.0" class="form-control" required>
-                                                    <option value="">Select UOM</option>
-                                                    @foreach ($units_of_measures as $units_of_measure)
-                                                        <option value="{{ $units_of_measure->name}}">{{$units_of_measure->name}} ({{$units_of_measure->abbreviation}})</option>
-                                                    @endforeach
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label for="country">UnitOfMeasure<span class="required" style="color: red">*</span></label>
+                                            <select wire:model.debounce.300ms="measurement.0" class="form-control" required>
+                                                <option value="">Select UOM</option>
+                                                @foreach ($units_of_measures as $units_of_measure)
+                                                    <option value="{{ $units_of_measure->name}}">{{$units_of_measure->name}} ({{$units_of_measure->abbreviation}})</option>
+                                                @endforeach
                                                 @error('measurement.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                                            </div>
+                                            </select>
                                         </div>
-                                   
+                                    </div>
                                 </div>
                 
                                 <div class="row">
@@ -220,7 +222,7 @@
                                             <input type="text" class="form-control" wire:model.debounce.300ms="serial_number.0" {{ count($qty) > 1 ? 'disabled' : '' }} placeholder="Serial# / UniqueID"/>
                                             @error('serial_number.0') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
-                                        </div>
+                                    </div>
                                         <div class="col-md-2">
                                             @if (filled($serial_number))
                                             <div class="form-group">
@@ -342,13 +344,13 @@
                                             </div>
                                         </div>
                                         <div class="row">
-                                        <div class="col-md-3">
-                                            <div class="form-group">
-                                                <label for="name">Serial#</label>
-                                                <input type="text" class="form-control" wire:model.debounce.300ms="serial_number.{{$value}}" {{ count($qty) > 1 ? 'disabled' : '' }} placeholder="Serial#/UniqueID"/>
-                                                @error('serial_number.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label for="name">Serial#</label>
+                                                    <input type="text" class="form-control" wire:model.debounce.300ms="serial_number.{{$value}}" {{ count($qty) > 1 ? 'disabled' : '' }} placeholder="Serial#/UniqueID"/>
+                                                    @error('serial_number.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                </div>
                                             </div>
-                                        </div>
                                         <div class="col-md-1">
                                             @if (filled($serial_number))
                                             <div class="form-group">

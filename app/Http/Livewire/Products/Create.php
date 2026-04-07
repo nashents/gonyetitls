@@ -64,10 +64,10 @@ class Create extends Component
     public $buy_price;
     public $sell_price;
 
-    public $is_trackable;
-    public $is_serialized;
-    public $requires_position;
-    public $requires_fitment;
+    public $is_trackable = False;
+    public $is_serialized = False;
+    public $requires_position = False;
+    public $requires_fitment = False;
     public $fitment_mode;
 
 
