@@ -191,10 +191,9 @@ class Create extends Component
 
     protected $messages =[
         'selectedEmployee.required' => 'Please select an employee.',
-        'selectedEmployee.unique:employees,id' => 'This employee already has a salary.',
     ];
     protected $rules = [
-        'selectedEmployee' => 'required|unique:salaries,id,NULL,id,deleted_at,NULL',
+        'selectedEmployee' => 'required',
         'selectedCurrency' => 'required',
         'frequency' => 'required',
         

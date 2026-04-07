@@ -160,7 +160,7 @@ class Edit extends Component
         try {
             // Create Salary Record
 
-                $salary = Salary($this->salary_id);
+                $salary = Salary::find($this->salary_id);
                 $salary->employee_id = $this->selectedEmployee;
                 $salary->currency_id = $this->currency_id;
                 $salary->basic = $this->basic;
