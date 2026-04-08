@@ -73,6 +73,36 @@
                                             $lastLogin = $user?->last_login_at;
                                             $employee = App\Models\Employee::find($driver->employee_id);
                                             $assignments  = $driver->assignments->where('status', 1);
+                                            $message = "🎉 *Congratulations!* Your " . ucfirst($user->category) . " account details are ready.\n\n";
+                                            $message .= "*Name:* " . ucfirst($user->name);
+                                            if (isset($user->surname)) {
+                                                $message .= " " . ucfirst($user->surname);
+                                            }
+                                            $message .= "\n*Email:* " . $user->email;
+                                            $message .= "\n*Username:* " . $user->username;
+                                            $message .= "\n*PIN:* " . $employee->pin;
+                                            $message .= "\n\n🔗 Get started: " . $company->website;
+                                            $message .= "\n\n🔴 *Note:* Your PIN is confidential. You may change it anytime from your dashboard under Profile Settings.";
+
+                                            $whatsappLink = null;
+                                            if (!empty($user->phonenumber)) {
+                                                $whatsappNumber = preg_replace('/\D/', '', $user->phonenumber);
+
+                                                if (str_starts_with($whatsappNumber, '2630')) {
+                                                    $whatsappNumber = '263' . substr($whatsappNumber, 4);
+                                                } elseif (str_starts_with($whatsappNumber, '263')) {
+                                                    // already correct
+                                                } elseif (str_starts_with($whatsappNumber, '0')) {
+                                                    $whatsappNumber = '263' . substr($whatsappNumber, 1);
+                                                } else {
+                                                    $whatsappNumber = '263' . $whatsappNumber;
+                                                }
+
+                                                // Final sanity check - must be at least 12 digits (263 + 9 digits)
+                                                if (strlen($whatsappNumber) >= 12) {
+                                                    $whatsappLink = "https://wa.me/" . $whatsappNumber . "?text=" . urlencode($message);
+                                                }
+                                            }
                                         @endphp
                                         <td class="line-height-35">  
                                           <img src="{{asset('images/uploads/'.$user->profile)}}" alt="" class="border-radius-50 img-circle profile-img " style="width: 50px; height:50px">
@@ -139,6 +169,12 @@
                                                     @if (!empty($employee->email) && filter_var($employee->email, FILTER_VALIDATE_EMAIL))
                                                             <br>
                                                             <button type="button"  wire:click.prevent="sendCredentials({{$employee->id}})" class="btn btn-default btn-rounded btn-xs mt-5"><i class="fa fa-send-o"></i>{{$employee->user->sent_credentials == False ? "Send Credentials" : "Resend Credentials"}}</button>
+                                                    @endif
+                                                    <br>
+                                                    @if ($whatsappLink)
+                                                        <a  href="{{ $whatsappLink }}" target="_blank"  class="btn btn-default btn-rounded btn-xs mt-5">
+                                                            📲 Send via WhatsApp
+                                                        </a>
                                                     @endif
                                                 @else
                                                 <span class="badge bg-danger">Deleted</span>

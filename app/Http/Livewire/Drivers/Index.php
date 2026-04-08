@@ -46,6 +46,7 @@ class Index extends Component
     public $remarks;
     public $employee_id;
     public $selected_employee;
+    public $company;
 
     public function exportDriversCSV(Excel $excel){
 
@@ -80,6 +81,7 @@ class Index extends Component
         $this->grades = Grade::orderBy('grade_code','asc')->get();
         $this->branches = Branch::orderBy('name','asc')->get();
         $this->ranks = Rank::orderBy('name','asc')->get();
+        $this->company = Auth::user()->employee ? Auth::user()->employee->company : Auth::user()->company;
     }
 
     public function updatingSearch()
