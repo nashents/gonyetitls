@@ -12,7 +12,7 @@ class DriverTrips extends Component
     public $trips;
 
     public function mount(){
-        $this->trips = Trip::where('driver_id', Auth::user()->driver->id)->whereYear('created_at',date('Y'))->get();
+        $this->trips = Trip::where('driver_id', Auth::user()->driver->id)->whereYear('start_date',date('Y'))->orderBy('start_date','desc')->get();
     }
 
 
