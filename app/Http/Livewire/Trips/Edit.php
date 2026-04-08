@@ -1022,7 +1022,11 @@ class Edit extends Component
 
         if($this->trip_transport_orders){
             foreach($this->trip_transport_orders as $key => $trip_transport_order){
+
                 $this->selectedTransportOrder[$key] = $trip_transport_order->transport_order_id;
+                $transport_order = TransportOrder::find($trip_transport_order->transport_order_id);
+                $cargo = Cargo::find($transport_order->cargo_id);
+                $this->cargo_type[$key] = $cargo->type;
                 $this->allocated_quantity[$key] = $trip_transport_order->allocated_quantity;
                 $this->allocated_weight[$key] = $trip_transport_order->allocated_weight;
                 $this->allocated_litreage[$key] = $trip_transport_order->allocated_litreage;
