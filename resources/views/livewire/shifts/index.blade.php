@@ -347,7 +347,7 @@
                                                         <small>
                                                             @if ($shift->trips)
                                                                 @foreach ($shift->trips as $trip)
-                                                                    {{$trip->trip_number}} {{$trip->cargo?->name}} {{$trip->weight ? $trip->weight."t" : ""}} @if (!$loop->last)@endif
+                                                                    {{$trip->trip_number}} {{$trip->cargo?->name}} {{$trip->weight ? $trip->weight."t" : ""}} @if (!$loop->last) <br> @endif
                                                                 @endforeach
                                                             @endif
                                                         </small>
