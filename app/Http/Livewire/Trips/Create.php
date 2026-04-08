@@ -762,7 +762,7 @@ class Create extends Component
        
         if(!is_null($value)){
             if($value == True){
-                $this->transport_orders = TransportOrder::latest()->get();
+                $this->transport_orders = TransportOrder::where('authorization','approved')->latest()->get();
                 $this->cargo_type = [];
             }
         }
@@ -1669,6 +1669,9 @@ class Create extends Component
                 $trip->emptyrun_origin = $this->emptyrun_origin;
                 $trip->emptyrun_destination = $this->emptyrun_destination;
                 $trip->attach_transport_order = $this->attach_transport_order;
+                $trip->start_date = $this->start_date;
+                $trip->end_date = $this->end_date;
+                $trip->currency_id = $this->selectedCurrency ?: $this->company->currency_id;
 
                 if($this->attach_transport_order == False){
                     
@@ -1677,13 +1680,11 @@ class Create extends Component
                     $trip->quotation_id = $this->selectedQuotation ?: null;
                     $trip->with_customer_rates = $this->with_customer_rates;
                     $trip->with_transporter_rates = $this->with_transporter_rates;
-                  
                     $trip->broker_id = $this->selectedBroker ?: null;
                     $trip->customer_id = $this->customer_id ?: null;
                     $trip->consignee_id = $this->consignee_id ?: null;
                     $trip->freight_calculation = $this->freight_calculation;
                     $trip->calculation_measurement = $this->calculation_measurement;
-                    $trip->currency_id = $this->selectedCurrency ?: null;
                     $trip->cargo_id = $this->selectedCargo;
                     $trip->trip_type_id = $this->selectedTripType;
                     $trip->haulage_type = $this->haulage_type;
@@ -1693,10 +1694,10 @@ class Create extends Component
                     $trip->to = $this->selectedTo;
                     $trip->offloading_point_id = $this->offloading_point_id;
                     $trip->loading_point_id = $this->loading_point_id;
-                    $trip->start_date = $this->start_date;
+                 
                     $trip->cargo_details = $this->cargo_details;
                     $trip->with_cargos = $this->with_cargos;
-                    $trip->end_date = $this->end_date;
+                   
                     $trip->rate = $this->rate;
                     $trip->multiple_destinations = $this->multiple_destinations;
                     $trip->transporter_rate = $this->transporter_rate;
@@ -2703,6 +2704,13 @@ class Create extends Component
             ]);
         }
        
+        elseif($category == "transport_orders"){
+            $this->transport_orders = TransportOrder::where('authorization','approved')->latest()->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Transport Orders Refreshed Successfully!!."
+            ]);
+        }
         elseif($category == "borders"){
             $this->borders = Border::with('clearing_agents:id,name')->orderBy('name','asc')->get();
             $this->dispatchBrowserEvent('alert',[

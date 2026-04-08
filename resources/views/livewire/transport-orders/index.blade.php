@@ -277,7 +277,7 @@
 
                                             <tr @if($s['row']) style="background-color: {{ $s['row'] }}" @endif>
                                                 <td>
-                                                    <strong>{{ $transport_order->transport_order_number }}@if($transport_order->transport_order_ref)/{{ $transport_order->transport_order_ref }}@endif</strong>
+                                                    <strong>{{ $transport_order->transport_order_number }}@if($transport_order->custom_ref)/{{ $transport_order->custom_ref }}@endif</strong>
                                                     <br>
                                                     <small>
                                                         <strong>CreatedBy:</strong>  {{ $transport_order->user?->name }} {{ $transport_order->user?->surname }} <br>
