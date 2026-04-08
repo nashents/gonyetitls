@@ -2200,6 +2200,7 @@ class Index extends Component
          * 2) Dropdown / selected filters
          *    (Assuming these values are IDs)
          */
+        
         $baseQuery
         ->when(filled($this->filter_transporter_id), fn (Builder $q) => $q->where('transporter_id', $this->filter_transporter_id))
         ->when(filled($this->filter_team_id), fn (Builder $q) => $q->where('team_id', $this->filter_team_id))

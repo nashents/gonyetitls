@@ -188,7 +188,6 @@ WithCustomStartCell
         ->when(filled($this->filters['filter_driver_id']), fn (Builder $q) => $q->where('driver_id', $this->filters['filter_driver_id']))
         ->when(filled($this->filters['filter_horse_id']), fn (Builder $q) => $q->where('horse_id', $this->filters['filter_horse_id']))
         ->when(filled($this->filters['filter_vehicle_id']), fn (Builder $q) => $q->where('vehicle_id', $this->filters['filter_vehicle_id']))
-        ->when(filled($this->filters['filter_cargo_id']), fn (Builder $q) => $q->where('cargo_id', $this->filters['filter_cargo_id']))
         ->when(filled($this->filters['filter_shift_type']), fn (Builder $q) => $q->where('type', $this->filters['filter_shift_type']))
         ->when(filled($this->filters['filter_user_id']), fn (Builder $q) => $q->where('user_id', $this->filters['filter_user_id']))
 
@@ -202,6 +201,10 @@ WithCustomStartCell
         ->when(filled($this->filters['filter_haulage_type']), fn (Builder $q) =>
             $q->whereHas('trips', fn (Builder $t) => $t->where('haulage_type', $this->filters['filter_haulage_type']))
         )
+        ->when(filled($this->filters['filter_cargo_id']), fn (Builder $q) =>
+            $q->whereHas('trips', fn (Builder $t) => $t->where('haulage_type', $this->filters['filter_cargo_id']))
+        )
+        
         ->when(filled($this->filters['filter_loading_point_id']), fn (Builder $q) =>
             $q->whereHas('trips', fn (Builder $t) => $t->where('loading_point_id', $this->filters['filter_loading_point_id']))
         )
