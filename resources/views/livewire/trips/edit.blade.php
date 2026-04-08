@@ -17,6 +17,8 @@
                                 <div class="mb-10">
                                     <input type="checkbox" wire:model.debounce.300ms="attach_transport_order"   class="line-style" />
                                     <label for="one" class="radio-label">Attach Transport Order(s)</label>
+                                    <br>
+                                    <small style="color: green">Attach a pre-created transport order or attach multiple pre-created transport orders</small>
                                     @error('attach_transport_order') <span class="text-danger error">{{ $message }}</span>@enderror
                                 </div>
                                 @if ($attach_transport_order == True)
@@ -28,7 +30,7 @@
                                                 <a href="{{ route('transport_orders.index') }}" target="_blank" style="color: blue">Transport Orders</a>
                                                 <span class="required text-danger">*</span>
                                             </label>
-                                            <select class="form-control" wire:model.debounce.300ms="selectedTransportOrder.{{$key}}" required size="4">
+                                            <select class="form-control" wire:model.debounce.300ms="current_selectedTransportOrder.{{$key}}" required size="4">
                                                 <option value="">Select Transport Order</option>
                                                 @foreach ($transport_orders as $transport_order)
                                                     <option value="{{ $transport_order->id }}"
@@ -36,33 +38,42 @@
                                                             disabled 
                                                         @endif
                                                         >
-                                                        Customer: {{ $transport_order->customer?->name }}  Total Weight: {{ $transport_order->weight }} Total Qty: {{ $transport_order->quantity }}{{ $transport_order->units_of_measure?->name }} {{ $transport_order->status }}
+                                                        Customer: {{ $transport_order->customer?->name }} Cargo: {{ $transport_order->cargo?->name }} Weight: {{ $transport_order->weight ? $transport_order->weight."t" : "" }} 
+                                                        @if ($transport_order->quantity)
+                                                            Qty: {{ $transport_order->quantity }}{{ $transport_order->units_of_measure?->name }}
+                                                        @elseif($transport_order->litreage)
+                                                            Litreage: {{ $transport_order->litreage }}{{ $transport_order->units_of_measure?->name }}
+                                                        @endif
+                                                        @if ($company->rates_managed_by_finance == 0 || ($company->rates_managed_by_finance == 1 && (in_array('Finance', $department_names) || in_array('Super Admin', $role_names))))
+                                                            Freight:  {{$transport_order->currency->name}}{{$transport_order->currency->symbol}}{{number_format($transport_order->freight ?: 0,2)}}
+                                                        @endif
+                                                        Order Status: {{ $transport_order->status }}
                                                     </option>
                                                 @endforeach
                                             </select>
-                                            @error('selectedTransportOrder.'.$key) <span class="text-danger error">{{ $message }}</span> @enderror
+                                            @error('current_selectedTransportOrder.'.$key) <span class="text-danger error">{{ $message }}</span> @enderror
                                         </div>
                                         <div class="row">
                                             
                                             <div class="col-md-4">
                                                 <div class="form-group">
                                                     <label for="trip_ref">Allocated Weight(t)</label>
-                                                    <input type="number" step="any" class="form-control" wire:model.debounce.300ms="allocated_weight.{{$key}}" placeholder="Allocated Weight (Tons)"  />
-                                                    @error('allocated_weight.'.$key) <span class="text-danger error">{{ $message }}</span> @enderror
+                                                    <input type="number" step="any" class="form-control" wire:model.debounce.300ms="current_allocated_weight.{{$key}}" placeholder="Allocated Weight (Tons)"  />
+                                                    @error('current_allocated_weight.'.$key) <span class="text-danger error">{{ $message }}</span> @enderror
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
-                                                @if (isset($cargo_type[$key]) && $cargo_type[$key] == "Solid")
+                                                @if (isset($current_cargo_type[$key]) && $current_cargo_type[$key] == "Solid")
                                                     <div class="form-group">
                                                     <label for="trip_ref">Allocated Qty</label>
-                                                    <input type="number" step="any" class="form-control" wire:model.debounce.300ms="allocated_quantity.{{$key}}" placeholder="Allocated Quantity"  />
-                                                    @error('allocated_quantity.'.$key) <span class="text-danger error">{{ $message }}</span> @enderror
+                                                    <input type="number" step="any" class="form-control" wire:model.debounce.300ms="current_allocated_quantity.{{$key}}" placeholder="Allocated Quantity"  />
+                                                    @error('current_allocated_quantity.'.$key) <span class="text-danger error">{{ $message }}</span> @enderror
                                                 </div>
-                                                @elseif(isset($cargo_type[$key]) && $cargo_type[$key] == "Solid")
+                                                @elseif(isset($current_cargo_type[$key]) && $current_cargo_type[$key] == "Solid")
                                                     <div class="form-group">
                                                         <label for="trip_ref">Allocated Litreage</label>
-                                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="allocated_litreage.{{$key}}" placeholder="Allocated Litreage (Tons)"  />
-                                                        @error('allocated_litreage.'.$key) <span class="text-danger error">{{ $message }}</span> @enderror
+                                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="current_allocated_litreage.{{$key}}" placeholder="Allocated Litreage (Tons)"  />
+                                                        @error('current_allocated_litreage.'.$key) <span class="text-danger error">{{ $message }}</span> @enderror
                                                     </div>
                                                 @endif
                                                 
@@ -70,13 +81,13 @@
                                             <div class="col-md-3">
                                                 <div class="form-group">
                                                     <label for="trip_ref">Unit Of Measure</label>
-                                                    <select class="form-control" wire:model.debounce.300ms="allocated_units_of_measure_id.{{$key}}">
+                                                    <select class="form-control" wire:model.debounce.300ms="current_allocated_units_of_measure_id.{{$key}}">
                                                         <option value="">Select Unit Of Measure</option>
                                                         @foreach ($units_of_measures as $units_of_measure)
                                                             <option value="{{$units_of_measure->id}}">{{$units_of_measure->name}} {{$units_of_measure->abbreviation ? "(".$units_of_measure->abbreviation.")" : ""}}</option>
                                                         @endforeach
                                                     </select>
-                                                    @error('allocated_units_of_measure_id.'.$key) <span class="text-danger error">{{ $message }}</span> @enderror
+                                                    @error('current_allocated_units_of_measure_id.'.$key) <span class="text-danger error">{{ $message }}</span> @enderror
                                                 </div>
                                             </div>
                                             <div class="col-md-1">
@@ -86,6 +97,79 @@
                                             </div>
                                         </div>
                                     </div>
+                                @endforeach
+                                @foreach ($to_inputs as $key => $value)
+                                <div class="mt-30 mb-30" style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">
+                                    <div class="form-group">
+                                        <label for="trip_type">
+                                            <a href="{{ route('transport_orders.index') }}" target="_blank" style="color: blue">Transport Orders</a>
+                                            <span class="required text-danger">*</span>
+                                        </label>
+                                        <select class="form-control" wire:model.debounce.300ms="selectedTransportOrder.{{$value}}" required size="4">
+                                            <option value="">Select Transport Order</option>
+                                            @foreach ($transport_orders as $transport_order)
+                                                <option value="{{ $transport_order->id }}"
+                                                     @if(in_array($transport_order->id, $selectedTransportOrder ?? []) && ($selectedTransportOrder[$value] ?? null) != $transport_order->id) 
+                                                        disabled 
+                                                    @endif
+                                                    >
+                                                    Customer: {{ $transport_order->customer?->name }} Cargo: {{ $transport_order->cargo?->name }} Weight: {{ $transport_order->weight ? $transport_order->weight."t" : "" }} 
+                                                    @if ($transport_order->quantity)
+                                                        Qty: {{ $transport_order->quantity }}{{ $transport_order->units_of_measure?->name }}
+                                                    @elseif($transport_order->litreage)
+                                                        Litreage: {{ $transport_order->litreage }}{{ $transport_order->units_of_measure?->name }}
+                                                    @endif
+                                                    @if ($company->rates_managed_by_finance == 0 || ($company->rates_managed_by_finance == 1 && (in_array('Finance', $department_names) || in_array('Super Admin', $role_names))))
+                                                        Freight:  {{$transport_order->currency->name}}{{$transport_order->currency->symbol}}{{number_format($transport_order->freight ?: 0,2)}}
+                                                    @endif
+                                                    Order Status: {{ $transport_order->status }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        @error('selectedTransportOrder.'.$value) <span class="text-danger error">{{ $message }}</span> @enderror
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label for="trip_ref">Allocated Weight(t)</label>
+                                                <input type="number" step="any" class="form-control" wire:model.debounce.300ms="allocated_weight.{{$value}}" placeholder="Allocated Weight (Tons)"  />
+                                                @error('allocated_weight.'.$value) <span class="text-danger error">{{ $message }}</span> @enderror
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                              @if (isset($cargo_type[$value]) && $cargo_type[$value] == "Solid")
+                                                <div class="form-group">
+                                                <label for="trip_ref">Allocated Qty</label>
+                                                <input type="number" step="any" class="form-control" wire:model.debounce.300ms="allocated_quantity.{{$value}}" placeholder="Allocated Quantity"  />
+                                                @error('allocated_quantity.'.$value) <span class="text-danger error">{{ $message }}</span> @enderror
+                                            </div>
+                                            @elseif(isset($cargo_type[$value]) && $cargo_type[$value] == "Solid")
+                                                <div class="form-group">
+                                                    <label for="trip_ref">Allocated Litreage</label>
+                                                    <input type="number" step="any" class="form-control" wire:model.debounce.300ms="allocated_litreage.{{$value}}" placeholder="Allocated Litreage (Tons)"  />
+                                                    @error('allocated_litreage.'.$value) <span class="text-danger error">{{ $message }}</span> @enderror
+                                                </div>
+                                            @endif
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label for="trip_ref">Unit Of Measure</label>
+                                                <select class="form-control" wire:model.debounce.300ms="allocated_units_of_measure_id.{{$value}}">
+                                                    <option value="">Select Unit Of Measure</option>
+                                                    @foreach ($units_of_measures as $units_of_measure)
+                                                        <option value="{{$units_of_measure->id}}">{{$units_of_measure->name}} {{$units_of_measure->abbreviation ? "(".$units_of_measure->abbreviation.")" : ""}}</option>
+                                                    @endforeach
+                                                </select>
+                                                @error('allocated_units_of_measure_id.'.$value) <span class="text-danger error">{{ $message }}</span> @enderror
+                                            </div>
+                                        </div>
+                                        <div class="col-md-1">
+                                            <div class="form-group " style="margin-top:32%">
+                                                <button class="btn btn-danger btn-rounded btn-xs"    wire:click.prevent="toRemove({{$key}})"> <i class="fa fa-times"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                                 @endforeach
                                 <div class="row">
                                     <div class="col-md-12">

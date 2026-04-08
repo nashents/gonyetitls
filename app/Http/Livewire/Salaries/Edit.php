@@ -140,7 +140,13 @@ class Edit extends Component
         }
        
 
-        $this->employees = Employee::orderBy('name','asc')->orderBy('surname','asc')->get();
+        $this->employees = Employee::with('user')
+        ->whereHas('user', function ($query) {
+            $query->where('category', '!=', 'admin');
+        })
+        ->orderBy('name', 'asc')
+        ->orderBy('surname', 'asc')
+        ->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->allowances = Allowance::orderBy('name','asc')->get();
         $this->loans =   Loan::where('employee_id',$salary->employee_id)->where('balance','>','0')->where('authorization','approved')->get();

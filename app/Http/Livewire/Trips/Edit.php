@@ -234,6 +234,18 @@ class Edit extends Component
     }
 
      
+    public $current_allocated_currency_id = [];
+    public $current_allocated_exchange_rate = [];
+    public $current_allocated_exchange_amount = [];
+    public $current_allocated_rate = [];
+    public $current_allocated_freight = [];
+    public $current_allocated_weight = [];
+    public $current_allocated_quantity = [];
+    public $current_allocated_litreage = [];
+    public $current_allocated_units_of_measure_id = [];
+    public $current_selectedTransportOrder = [];
+    public $current_cargo_type = [];
+
     public $allocated_currency_id = [];
     public $allocated_exchange_rate = [];
     public $allocated_exchange_amount = [];
@@ -480,6 +492,26 @@ class Edit extends Component
         $this->allocated_litreage[$key] = $transport_order->litreage;
         $this->allocated_quantity[$key] = $transport_order->quantity;
         $this->allocated_units_of_measure_id[$key] = $transport_order->units_of_measure_id;
+    }
+    
+    public function updatedSelectedCurrentTransportOrder($id, $key){
+       
+        if(is_null($id) && is_null($key) ){
+           return ;
+        }
+
+        $transport_order = TransportOrder::find($id);
+        $cargo = Cargo::find($transport_order->cargo_id);
+        $this->current_cargo_type[$key] = $cargo->type;
+        $this->current_allocated_freight[$key] = $transport_order->freight;
+        $this->current_allocated_rate[$key] = $transport_order->rate;
+        $this->current_allocated_exchange_rate[$key] = $transport_order->exchange_rate;
+        $this->current_allocated_exchange_amount[$key] = $transport_order->exchange_customer_freight;
+        $this->current_allocated_currency_id[$key] = $transport_order->currency_id;
+        $this->current_allocated_weight[$key] = $transport_order->weight;
+        $this->current_allocated_litreage[$key] = $transport_order->litreage;
+        $this->current_allocated_quantity[$key] = $transport_order->quantity;
+        $this->current_allocated_units_of_measure_id[$key] = $transport_order->units_of_measure_id;
     }
 
 
@@ -1023,19 +1055,19 @@ class Edit extends Component
         if($this->trip_transport_orders){
             foreach($this->trip_transport_orders as $key => $trip_transport_order){
 
-                $this->selectedTransportOrder[$key] = $trip_transport_order->transport_order_id;
+                $this->current_selectedTransportOrder[$key] = $trip_transport_order->transport_order_id;
                 $transport_order = TransportOrder::find($trip_transport_order->transport_order_id);
                 $cargo = Cargo::find($transport_order->cargo_id);
-                $this->cargo_type[$key] = $cargo->type;
-                $this->allocated_quantity[$key] = $trip_transport_order->allocated_quantity;
-                $this->allocated_weight[$key] = $trip_transport_order->allocated_weight;
-                $this->allocated_litreage[$key] = $trip_transport_order->allocated_litreage;
-                $this->allocated_units_of_measure_id[$key] = $trip_transport_order->units_of_measure_id;
-                $this->allocated_currency_id[$key] = $trip_transport_order->currency_id;
-                $this->allocated_freight[$key] = $trip_transport_order->freight;
-                $this->allocated_rate[$key] = $trip_transport_order->rate;
-                $this->allocated_exchange_rate[$key] = $trip_transport_order->exchange_rate;
-                $this->allocated_exchange_amount[$key] = $trip_transport_order->exchange_amount;
+                $this->current_cargo_type[$key] = $cargo->type;
+                $this->current_allocated_quantity[$key] = $trip_transport_order->allocated_quantity;
+                $this->current_allocated_weight[$key] = $trip_transport_order->allocated_weight;
+                $this->current_allocated_litreage[$key] = $trip_transport_order->allocated_litreage;
+                $this->current_allocated_units_of_measure_id[$key] = $trip_transport_order->units_of_measure_id;
+                $this->current_allocated_currency_id[$key] = $trip_transport_order->currency_id;
+                $this->current_allocated_freight[$key] = $trip_transport_order->freight;
+                $this->current_allocated_rate[$key] = $trip_transport_order->rate;
+                $this->current_allocated_exchange_rate[$key] = $trip_transport_order->exchange_rate;
+                $this->current_allocated_exchange_amount[$key] = $trip_transport_order->exchange_amount;
             }
         }
 
@@ -1793,6 +1825,30 @@ class Edit extends Component
         return  $transport_order_number;
 
     }
+    public function ttoNumber(){
+
+        if (isset($this->company)) {
+            $str = $this->company->name;
+            $words = explode(' ', $str);
+            if (isset($words[1][0])) {
+                $initials = $words[0][0].$words[1][0];
+            }else {
+                $initials = $words[0][0];
+            }
+        }
+
+        $transport_order = TripTransportOrder::orderBy('id','desc')->first();
+
+        if (!$transport_order) {
+            $transport_order_number =  $initials .'TO'. str_pad(1, 5, "0", STR_PAD_LEFT);
+        }else {
+            $number = $transport_order->id + 1;
+            $transport_order_number =  $initials .'TO'. str_pad($number, 5, "0", STR_PAD_LEFT);
+        }
+
+        return  $transport_order_number;
+
+    }
 
     public function createTransportOrder(){
 
@@ -1872,7 +1928,7 @@ class Edit extends Component
  
         DB::transaction(function () {
 
-        if(empty($this->selectedTransportOrder)){
+        if(empty($this->current_selectedTransportOrder)){
             $this->createTransportOrder();
         }
 
@@ -1968,98 +2024,184 @@ class Edit extends Component
 
         $this->trip = $trip;
 
-            if (!empty($this->selectedTransportOrder)) {
-
-               
-                    $totalFreight = 0;
-                    $totalWeight = 0;
-                    $totalLitreage = 0;
-
-                    foreach ($this->selectedTransportOrder as $key => $id) {
-
-                        $transport_order = TransportOrder::find($id);
+        if (!empty($this->current_selectedTransportOrder)) {
                 
-            
-                        $trip_transport_order = TripTransportOrder::firstOrNew([
-                            'trip_id' => $trip->id,
-                            'transport_order_id' => $id,
-                        ]);
+                $totalFreight = 0;
+                $totalWeight = 0;
+                $totalLitreage = 0;
+
+                foreach ($this->current_selectedTransportOrder as $key => $id) {
+
+                    $transport_order = TransportOrder::find($id);
+        
+                    $trip_transport_order = TripTransportOrder::firstOrNew([
+                        'trip_id' => $trip->id,
+                        'transport_order_id' => $id,
+                    ]);
+
+                    if($this->attach_transport_order == True){
+
+                        $quantity = $this->current_allocated_quantity[$key] ?: Null;
+                        $weight = $this->current_allocated_weight[$key] ?: Null;
+                        $litreage = $this->current_allocated_litreage[$key] ?: Null;
+                        $rate = $this->current_allocated_rate[$key] ?: Null;
+                        $freight = $this->current_allocated_freight[$key] ?: Null;
+                        $units_of_measure_id = $this->current_allocated_units_of_measure_id[$key] ?: Null;
+                        $currency_id = $this->current_allocated_currency_id[$key] ?: Null;
+                        $exchange_rate = $this->current_allocated_exchange_rate[$key] ?: Null;
+                        $exchange_amount = $this->current_allocated_exchange_amount[$key] ?: Null;
                         
-                       
-                        if($this->attach_transport_order == True){
-
-                            $quantity = $this->allocated_quantity[$key] ?: Null;
-                            $weight = $this->allocated_weight[$key] ?: Null;
-                            $litreage = $this->allocated_litreage[$key] ?: Null;
-                            $rate = $this->allocated_rate[$key] ?: Null;
-                            $freight = $this->allocated_freight[$key] ?: Null;
-                            $units_of_measure_id = $this->allocated_units_of_measure_id[$key] ?: Null;
-                            $currency_id = $this->allocated_currency_id[$key] ?: Null;
-                            $exchange_rate = $this->allocated_exchange_rate[$key] ?: Null;
-                            $exchange_amount = $this->allocated_exchange_amount[$key] ?: Null;
-                         
-                            if(is_numeric($freight) && is_numeric($weight) && is_numeric($transport_order->weight)){
-                                $freight = $freight * $weight / $transport_order->weight;
-                            }
-                            
-
-                            if(is_numeric($exchange_amount) && is_numeric($weight) && is_numeric($transport_order->weight)){
-                                $exchange_amount = $exchange_amount *   $weight / $transport_order->weight;
-                            } 
-
-                            $trip_transport_order->allocated_quantity  = $quantity;
-                            $trip_transport_order->allocated_weight    = $weight;
-                            $trip_transport_order->allocated_litreage  = $litreage;
-                            $trip_transport_order->allocated_freight  = $freight;
-                            $trip_transport_order->allocated_rate  = $rate;
-                            $trip_transport_order->units_of_measure_id = $units_of_measure_id;
-                            $trip_transport_order->exchange_rate = $exchange_rate;
-                            $trip_transport_order->exchange_amount = $exchange_amount;
-                            $trip_transport_order->currency_id = $currency_id;
-
-                        }else{
-
-                         
+                        if(is_numeric($freight) && is_numeric($weight) && is_numeric($transport_order->weight)){
+                            $freight = $freight * $weight / $transport_order->weight;
+                        }
                         
-                            if ($transport_order) {
-                              
 
-                                $trip_transport_order->allocated_quantity  = $transport_order->quantity;
-                                $trip_transport_order->allocated_weight    = $transport_order->weight;
-                                $trip_transport_order->allocated_litreage  = $transport_order->litreage;
-                                $trip_transport_order->allocated_freight  = $transport_order->freight;
-                                $trip_transport_order->allocated_rate  = $transport_order->rate;
-                                $trip_transport_order->units_of_measure_id = $transport_order->units_of_measure_id;
-                                $trip_transport_order->currency_id = $transport_order->currency_id;
-                                $trip_transport_order->exchange_rate = $transport_order->exchange_rate;
-                                $trip_transport_order->exchange_amount = $transport_order->exchange_customer_freight;
+                        if(is_numeric($exchange_amount) && is_numeric($weight) && is_numeric($transport_order->weight)){
+                            $exchange_amount = $exchange_amount *   $weight / $transport_order->weight;
+                        } 
+                        
+                        $trip_transport_order->tto_number  = $trip_transport_order->tto_number ?: $this->ttoNumber();
+                        $trip_transport_order->allocated_quantity  = $quantity;
+                        $trip_transport_order->allocated_weight    = $weight;
+                        $trip_transport_order->allocated_litreage  = $litreage;
+                        $trip_transport_order->allocated_freight  = $freight;
+                        $trip_transport_order->allocated_rate  = $rate;
+                        $trip_transport_order->units_of_measure_id = $units_of_measure_id;
+                        $trip_transport_order->exchange_rate = $exchange_rate;
+                        $trip_transport_order->exchange_amount = $exchange_amount;
+                        $trip_transport_order->currency_id = $currency_id;
 
-                            }
+                    }else{
+                    
+                        if ($transport_order) {
+                        
+                            $trip_transport_order->tto_number  = $trip_transport_order->tto_number ?: $this->ttoNumber();
+                            $trip_transport_order->allocated_quantity  = $transport_order->quantity;
+                            $trip_transport_order->allocated_weight    = $transport_order->weight;
+                            $trip_transport_order->allocated_litreage  = $transport_order->litreage;
+                            $trip_transport_order->allocated_freight  = $transport_order->freight;
+                            $trip_transport_order->allocated_rate  = $transport_order->rate;
+                            $trip_transport_order->units_of_measure_id = $transport_order->units_of_measure_id;
+                            $trip_transport_order->currency_id = $transport_order->currency_id;
+                            $trip_transport_order->exchange_rate = $transport_order->exchange_rate;
+                            $trip_transport_order->exchange_amount = $transport_order->exchange_customer_freight;
 
                         }
 
-                        
-
-                        $trip_transport_order->save();
-
-                        $default_currency_id = $this->company->currrency_id ?? 1;
-                        $totalFreight += $default_currency_id == $trip_transport_order->currency_id ? $trip_transport_order->allocated_freight : $trip_transport_order->exchange_amount;
-                        $totalWeight += $trip_transport_order->allocated_weight;
-                        $totalLitreage += $trip_transport_order->allocated_litreage;
-
-                        $this->createDeliveryNotes($trip_transport_order);
-                        $this->addDestinations($trip_transport_order);
                     }
 
+                    
+
+                    $trip_transport_order->save();
+
+                    $default_currency_id = $this->company->currrency_id ?? 1;
+                    $totalFreight += $default_currency_id == $trip_transport_order->currency_id ? $trip_transport_order->allocated_freight : $trip_transport_order->exchange_amount;
+                    $totalWeight += $trip_transport_order->allocated_weight;
+                    $totalLitreage += $trip_transport_order->allocated_litreage;
+
+                    $this->createDeliveryNotes($trip_transport_order);
+                    $this->addDestinations($trip_transport_order);
+                }
+
+                    
+
+                $trip->litreage = $totalLitreage;
+                $trip->weight = $totalWeight;
+                $trip->freight = $totalFreight;
+                $this->turnover = $totalFreight;
+                $trip->turnover = $this->turnover;
+                $trip->update();
+        }
+
+        if (!empty($this->selectedTransportOrder)) {
+                
+                $totalFreight = 0;
+                $totalWeight = 0;
+                $totalLitreage = 0;
+
+                foreach ($this->selectedTransportOrder as $key => $id) {
+
+                    $transport_order = TransportOrder::find($id);
+        
+                    $trip_transport_order = TripTransportOrder::firstOrNew([
+                        'trip_id' => $trip->id,
+                        'transport_order_id' => $id,
+                    ]);
+
+                    if($this->attach_transport_order == True){
+
+                        $quantity = $this->allocated_quantity[$key] ?: Null;
+                        $weight = $this->allocated_weight[$key] ?: Null;
+                        $litreage = $this->allocated_litreage[$key] ?: Null;
+                        $rate = $this->allocated_rate[$key] ?: Null;
+                        $freight = $this->allocated_freight[$key] ?: Null;
+                        $units_of_measure_id = $this->allocated_units_of_measure_id[$key] ?: Null;
+                        $currency_id = $this->allocated_currency_id[$key] ?: Null;
+                        $exchange_rate = $this->allocated_exchange_rate[$key] ?: Null;
+                        $exchange_amount = $this->allocated_exchange_amount[$key] ?: Null;
+                        
+                        if(is_numeric($freight) && is_numeric($weight) && is_numeric($transport_order->weight)){
+                            $freight = $freight * $weight / $transport_order->weight;
+                        }
                         
 
-                    $trip->litreage = $totalLitreage;
-                    $trip->weight = $totalWeight;
-                    $trip->freight = $totalFreight;
-                    $this->turnover = $totalFreight;
-                    $trip->turnover = $this->turnover;
-                    $trip->update();
+                        if(is_numeric($exchange_amount) && is_numeric($weight) && is_numeric($transport_order->weight)){
+                            $exchange_amount = $exchange_amount *   $weight / $transport_order->weight;
+                        } 
+                        
+                        $trip_transport_order->tto_number  = $this->ttoNumber();
+                        $trip_transport_order->allocated_quantity  = $quantity;
+                        $trip_transport_order->allocated_weight    = $weight;
+                        $trip_transport_order->allocated_litreage  = $litreage;
+                        $trip_transport_order->allocated_freight  = $freight;
+                        $trip_transport_order->allocated_rate  = $rate;
+                        $trip_transport_order->units_of_measure_id = $units_of_measure_id;
+                        $trip_transport_order->exchange_rate = $exchange_rate;
+                        $trip_transport_order->exchange_amount = $exchange_amount;
+                        $trip_transport_order->currency_id = $currency_id;
+
+                    }else{
+                    
+                        if ($transport_order) {
+                        
+                            $trip_transport_order->tto_number  = $this->ttoNumber();
+                            $trip_transport_order->allocated_quantity  = $transport_order->quantity;
+                            $trip_transport_order->allocated_weight    = $transport_order->weight;
+                            $trip_transport_order->allocated_litreage  = $transport_order->litreage;
+                            $trip_transport_order->allocated_freight  = $transport_order->freight;
+                            $trip_transport_order->allocated_rate  = $transport_order->rate;
+                            $trip_transport_order->units_of_measure_id = $transport_order->units_of_measure_id;
+                            $trip_transport_order->currency_id = $transport_order->currency_id;
+                            $trip_transport_order->exchange_rate = $transport_order->exchange_rate;
+                            $trip_transport_order->exchange_amount = $transport_order->exchange_customer_freight;
+
+                        }
+
+                    }
+
+                    
+
+                    $trip_transport_order->save();
+
+                    $default_currency_id = $this->company->currrency_id ?? 1;
+                    $totalFreight += $default_currency_id == $trip_transport_order->currency_id ? $trip_transport_order->allocated_freight : $trip_transport_order->exchange_amount;
+                    $totalWeight += $trip_transport_order->allocated_weight;
+                    $totalLitreage += $trip_transport_order->allocated_litreage;
+
+                    $this->createDeliveryNotes($trip_transport_order);
+                    $this->addDestinations($trip_transport_order);
                 }
+
+                    
+
+                $trip->litreage = $totalLitreage;
+                $trip->weight = $totalWeight;
+                $trip->freight = $totalFreight;
+                $this->turnover = $totalFreight;
+                $trip->turnover = $this->turnover;
+                $trip->update();
+        }
+
 
           $this->calculateFuelConsumption($trip->id);
 

@@ -1754,7 +1754,8 @@ class Create extends Component
                             if(is_numeric($exchange_amount) && is_numeric($weight) && is_numeric($transport_order->weight)){
                                 $exchange_amount = $exchange_amount *   $weight / $transport_order->weight;
                             } 
-
+                            
+                            $trip_transport_order->tto_number  = $this->ttoNumber();
                             $trip_transport_order->allocated_quantity  = $quantity;
                             $trip_transport_order->allocated_weight    = $weight;
                             $trip_transport_order->allocated_litreage  = $litreage;
@@ -1768,8 +1769,8 @@ class Create extends Component
                         }else{
                         
                             if ($transport_order) {
-                              
-
+                            
+                                $trip_transport_order->tto_number  = $this->ttoNumber();
                                 $trip_transport_order->allocated_quantity  = $transport_order->quantity;
                                 $trip_transport_order->allocated_weight    = $transport_order->weight;
                                 $trip_transport_order->allocated_litreage  = $transport_order->litreage;

@@ -85,8 +85,13 @@ class Manage extends Component
     }
 
     public function mount(){
-        $this->employees = Employee::orderBy('name', 'asc')
-        ->orderBy('surname', 'asc')->get();
+        $this->employees = Employee::with('user')
+        ->whereHas('user', function ($query) {
+            $query->where('category', '!=', 'admin');
+        })
+        ->orderBy('name', 'asc')
+        ->orderBy('surname', 'asc')
+        ->get();
         $this->leave_types = LeaveType::orderBy('name','asc')->get();
         $this->employee_departments = collect();
 

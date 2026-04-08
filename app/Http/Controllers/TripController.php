@@ -275,11 +275,10 @@ class TripController extends Controller
         $trailers = $trip->trailers;
         $driver = $trip->driver;
         $vehicle = $trip->vehicle;
-        $gate_pass = $trip->gate_pass;
+        $trip->gate_pass()->delete();
+        $trip->trip_transport_orders()->delete();
 
-        if (isset($gate_pass)) {
-            $gate_pass->delete();
-        }
+       
         
         if (isset($vehicle)) {
             $vehicle->status = 1;
@@ -302,32 +301,13 @@ class TripController extends Controller
                 $trailer->update();
             }
         }
-
        
-        $fuels = $trip->fuels;
-        $delivery_note = $trip->delivery_note;
-        $cash_flows = $trip->cash_flows;
-        $expenses = $trip->trip_expenses;
+        $trip->fuels()->delete();
+        $trip->delivery_note()->delete();
+        $trip->cash_flows()->delete();
+        $trip->trip_expenses()->delete();
         $bills = $trip->bills;
-        if (isset($transportation_order)) {
-            $transportation_order->delete();
-        }
-        if (isset($fuels)) {
-            foreach ($fuels as $fuel) {
-                $fuel->delete();
-            }
-           
-        }
-        if (isset($delivery_note)) {
-            $delivery_note->delete();
-        }
-        if (isset($cash_flows)) {
-            if ($cash_flows->count()>0) {
-               foreach ($cash_flows as $cash_flow) {
-               $cash_flow->delete();
-               }
-            }
-        }
+    
         if (isset($bills)) {
             if ($bills->count()>0) {
                foreach ($bills as $bill) {
@@ -338,14 +318,6 @@ class TripController extends Controller
                   }
                 }
                $bill->delete();
-               }
-            }
-        }
-
-        if (isset($expenses)) {
-            if ($expenses->count()>0) {
-               foreach ($expenses as $expense) {
-               $expense->delete();
                }
             }
         }

@@ -405,7 +405,14 @@
                                                 <td>
                                                     <strong>{{ $trip->trip_number }}@if($trip->trip_ref)/{{ $trip->trip_ref }}@endif</strong>
                                                     <br>
-                                                    <small>
+                                                    <small class="text-muted">
+                                                        @if ($trip->trip_transport_orders)
+                                                            @foreach ($trip->trip_transport_orders as $tto)
+                                                                @if ($tto->tto_number)
+                                                                    TTO#: {{$tto->tto_number}} @if (!$loop->last) , @endif
+                                                                @endif
+                                                            @endforeach
+                                                        @endif
                                                         <strong>CreatedBy:</strong>  {{ $trip->user?->name }} {{ $trip->user?->surname }} <br>
                                                         <strong>CreatedOn:</strong> {{ $trip->created_at }}
                                                     </small>

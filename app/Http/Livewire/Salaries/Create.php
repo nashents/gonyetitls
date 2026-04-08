@@ -237,7 +237,13 @@ class Create extends Component
         $this->company = Auth::user()->employee->company;
         $this->selectedCurrency = $this->company->currency_id;
         $this->frequency = "monthly";
-        $this->employees = Employee::orderBy('name','asc')->get();
+        $this->employees = Employee::with('user')
+        ->whereHas('user', function ($query) {
+            $query->where('category', '!=', 'admin');
+        })
+        ->orderBy('name', 'asc')
+        ->orderBy('surname', 'asc')
+        ->get();
         $this->currencies = Currency::orderBy('name','asc')->get();
         $this->allowances = Allowance::where('status','1')->orderBy('name','asc')->get();
         $this->earnings = Earning::where('status','1')->orderBy('name','asc')->get();

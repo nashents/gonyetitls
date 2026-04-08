@@ -19,6 +19,8 @@
                                 <div class="mb-10">
                                     <input type="checkbox" wire:model.debounce.300ms="attach_transport_order"   class="line-style" />
                                     <label for="one" class="radio-label">Attach Transport Order(s)</label>
+                                    <br>
+                                    <small style="color: green">Attach a pre-created transport order or attach multiple pre-created transport orders</small>
                                     @error('attach_transport_order') <span class="text-danger error">{{ $message }}</span>@enderror
                                 </div>
                                 @if ($attach_transport_order == True)
@@ -42,10 +44,14 @@
                                                     @elseif($transport_order->litreage)
                                                         Litreage: {{ $transport_order->litreage }}{{ $transport_order->units_of_measure?->name }}
                                                     @endif
-                                                     Order Status: {{ $transport_order->status }}
+                                                    @if ($company->rates_managed_by_finance == 0 || ($company->rates_managed_by_finance == 1 && (in_array('Finance', $department_names) || in_array('Super Admin', $role_names))))
+                                                        Freight:  {{$transport_order->currency->name}}{{$transport_order->currency->symbol}}{{number_format($transport_order->freight ?: 0,2)}}
+                                                    @endif
+                                                    Order Status: {{ $transport_order->status }}
                                                 </option>
                                             @endforeach
                                         </select>
+                                        <small><a href="{{ route('transport_orders.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Transport Order</a></small> <a href="#" wire:click.prevent="refresh('transport_orders')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         @error('selectedTransportOrder.0') <span class="text-danger error">{{ $message }}</span> @enderror
                                     </div>
                                     <div class="row">
@@ -102,10 +108,20 @@
                                                         disabled 
                                                     @endif
                                                     >
-                                                    Customer: {{ $transport_order->customer?->name }}  Total Weight: {{ $transport_order->weight }} Total Qty: {{ $transport_order->quantity }}{{ $transport_order->units_of_measure?->name }} {{ $transport_order->status }}
+                                                   Customer: {{ $transport_order->customer?->name }} Cargo: {{ $transport_order->cargo?->name }} Weight: {{ $transport_order->weight ? $transport_order->weight."t" : "" }} 
+                                                    @if ($transport_order->quantity)
+                                                        Qty: {{ $transport_order->quantity }}{{ $transport_order->units_of_measure?->name }}
+                                                    @elseif($transport_order->litreage)
+                                                        Litreage: {{ $transport_order->litreage }}{{ $transport_order->units_of_measure?->name }}
+                                                    @endif
+                                                    @if ($company->rates_managed_by_finance == 0 || ($company->rates_managed_by_finance == 1 && (in_array('Finance', $department_names) || in_array('Super Admin', $role_names))))
+                                                        Freight:  {{$transport_order->currency->name}}{{$transport_order->currency->symbol}}{{number_format($transport_order->freight ?: 0,2)}}
+                                                    @endif
+                                                    Order Status: {{ $transport_order->status }}
                                                 </option>
                                             @endforeach
                                         </select>
+                                        <small><a href="{{ route('transport_orders.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Transport Order</a></small> <a href="#" wire:click.prevent="refresh('transport_orders')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         @error('selectedTransportOrder.'.$value) <span class="text-danger error">{{ $message }}</span> @enderror
                                     </div>
                                     <div class="row">
@@ -1749,22 +1765,25 @@
                             <h6 class="underline mt-20 mb-20"><a href="{{ route('expenses.index') }}" target="_blank" style="color: blue"><strong>Add Trip Expense(s)</strong></a></h6>
                             <div class="mb-10">
                                 <input type="checkbox" wire:model.debounce.300ms="trip_expenses"   class="line-style" />
-                                <label for="one" class="radio-label">Trip Expenses</label>
+                                <label for="one" class="radio-label">Trip Expenses</label> <br>
+                                <caption>
+                                    <small>
+                                        <a href="{{ route('expenses.index') }}" target="_blank">
+                                            <i class="fa fa-plus-square-o"></i> New Expense
+                                        </a>
+                                    </small>
+                                   
+                                </caption>
+                                <a href="#" wire:click.prevent="refresh('expenses')" >
+                                    <i class="fa fa-refresh" aria-hidden="true"></i>
+                                </a>
                                 @error('trip_expenses') <span class="text-danger error">{{ $message }}</span>@enderror
                             </div>
                                     @if ($trip_expenses == True)
+                                        <small style="color: green">For new expenses to appear in this list make sure you select Trip Expense on account selection at expense creation.</small> <br>
                                         <div style="height: 400px; overflow: auto">
                                             <table class="table table-striped table-bordered table-sm table-responsive" cellspacing="0" width="100%">
-                                                    <caption>
-                                                        <small>
-                                                            <a href="{{ route('expenses.index') }}" target="_blank">
-                                                                <i class="fa fa-plus-square-o"></i> New Expense
-                                                            </a>
-                                                        </small>
-                                                    </caption>
-                                                    <a href="#" wire:click.prevent="refresh('expenses')" style="float: right">
-                                                        <i class="fa fa-refresh" aria-hidden="true"></i>
-                                                    </a>
+                                                    
                                                     <thead>
                                                         <tr>
                                                             <th>Expense</th>
