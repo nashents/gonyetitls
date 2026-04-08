@@ -36,7 +36,6 @@ class Kernel extends ConsoleKernel
     {
         $schedule->command('reminder:send')
         ->timezone('Africa/Harare');
-     
       
         $schedule->command('reports:send-daily')
         ->dailyAt('09:00')

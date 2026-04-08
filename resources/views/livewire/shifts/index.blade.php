@@ -344,12 +344,13 @@
                                                     @if ($shift->for == "Trips")
                                                         <strong>Total Loads:</strong> {{$shift->trips?->count()}} <br>
                                                         <strong>Total Weight:</strong> {{$shift->trips?->sum('weight')}} <br>
-                                                        @if ($shift->trips)
-                                                            @foreach ($shift->trips as $trip)
-                                                                {{$trip->trip_number}} @if (!$loop->last)@endif
-                                                            @endforeach
-                                                        @endif
-
+                                                        <small>
+                                                            @if ($shift->trips)
+                                                                @foreach ($shift->trips as $trip)
+                                                                    {{$trip->trip_number}} {{$trip->cargo?->name}} {{$trip->weight ? $trip->weight."t" : ""}} @if (!$loop->last)@endif
+                                                                @endforeach
+                                                            @endif
+                                                        </small>
                                                     @endif
                                                 </td>
                                                 <td>
