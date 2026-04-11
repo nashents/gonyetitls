@@ -5,13 +5,13 @@ namespace App\Http\View\Composers;
 use App\Models\Attendance;
 use App\Models\Bill;
 use App\Models\Booking;
-
 use App\Models\CreditNote;
 use App\Models\Dispatch;
 use App\Models\Fitness;
 use App\Models\Fuel;
 use App\Models\FuelRequest;
 use App\Models\GatePass;
+use App\Models\Horse;
 use App\Models\Invoice;
 use App\Models\Leave;
 use App\Models\Loan;
@@ -23,9 +23,11 @@ use App\Models\Requisition;
 use App\Models\Retread;
 use App\Models\Ticket;
 use App\Models\TopUp;
+use App\Models\Trailer;
 use App\Models\Transfer;
 use App\Models\Trip;
 use App\Models\User;
+use App\Models\Vehicle;
 use App\Models\WasteCollection;
 use App\Models\WasteDisposal;
 use Carbon\Carbon;
@@ -153,30 +155,30 @@ class NavbarComposer
         $now   = now();
 
         $validRemindersQuery = Fitness::query()
-            ->where('user_id', $user->id)
-            ->where('closed', 0)
-            ->where(function ($q) use ($today, $now) {
-                $q->where(function ($q) use ($today, $now) {
-                    $q->whereNotNull('first_reminder_at')
-                      ->whereDate('first_reminder_at', '<=', $today)
-                      ->where('first_reminder_at_status', false)
-                      ->where('expires_at', '>=', $now);
-                })
-                ->orWhere(function ($q) use ($today, $now) {
-                    $q->whereNotNull('second_reminder_at')
-                      ->whereDate('second_reminder_at', '<=', $today)
-                      ->where('second_reminder_at_status', false)
-                      ->where('expires_at', '>=', $now);
-                })
-                ->orWhere(function ($q) use ($today, $now) {
-                    $q->whereNotNull('third_reminder_at')
-                      ->whereDate('third_reminder_at', '<=', $today)
-                      ->where('third_reminder_at_status', false)
-                      ->where('expires_at', '>=', $now);
-                });
+        ->where('user_id', $user->id)
+        ->where('closed', 0)
+        ->where(function ($q) use ($today, $now) {
+            $q->where(function ($q) use ($today, $now) {
+                $q->whereNotNull('first_reminder_at')
+                ->whereDate('first_reminder_at', '<=', $today)
+                ->where('first_reminder_at_status', false)
+                ->where('expires_at', '>=', $now);
             })
-            ->with(['reminder_item', 'horse', 'vehicle', 'trailer', 'employee'])
-            ->orderBy('expires_at', 'asc');
+            ->orWhere(function ($q) use ($today, $now) {
+                $q->whereNotNull('second_reminder_at')
+                ->whereDate('second_reminder_at', '<=', $today)
+                ->where('second_reminder_at_status', false)
+                ->where('expires_at', '>=', $now);
+            })
+            ->orWhere(function ($q) use ($today, $now) {
+                $q->whereNotNull('third_reminder_at')
+                ->whereDate('third_reminder_at', '<=', $today)
+                ->where('third_reminder_at_status', false)
+                ->where('expires_at', '>=', $now);
+            });
+        })
+        ->with(['reminder_item', 'horse', 'vehicle', 'trailer', 'employee'])
+        ->orderBy('expires_at', 'asc');
 
         $reminders = $validRemindersQuery->get();
 
@@ -188,7 +190,66 @@ class NavbarComposer
             ->orderBy('expires_at', 'desc')
             ->get();
 
-        $reminders_count = $reminders->count() + $expired_reminders->count();
+        $mileage_reminders = collect();
+
+        $isWorkshopUser = (in_array('Workshop', $department_names) && in_array('Admin', $role_names)) 
+                    || in_array('Super Admin', $role_names);
+
+        if ($isWorkshopUser) {
+            $threshhold = 2500;
+
+            $horses = Horse::whereNotNull('next_service')
+                ->whereNotNull('mileage')
+                ->where('next_service', '>', 0)
+                ->where('mileage', '>', 0)
+                ->get()
+                ->map(function ($horse) {
+                    $horse->mileage_gap    = $horse->next_service - $horse->mileage;
+                    $horse->asset_type     = 'horse';
+                    $horse->asset_label    = $horse->registration_number;
+                    $horse->asset_route    = route('horses.show', $horse->id);
+                    return $horse;
+                })
+                ->filter(fn($h) => $h->mileage_gap <= $threshhold);
+
+            $vehicles = Vehicle::whereNotNull('next_service')
+                ->whereNotNull('mileage')
+                ->where('next_service', '>', 0)
+                ->where('mileage', '>', 0)
+                ->get()
+                ->map(function ($vehicle) {
+                    $vehicle->mileage_gap  = $vehicle->next_service - $vehicle->mileage;
+                    $vehicle->asset_type   = 'vehicle';
+                    $vehicle->asset_label  = $vehicle->registration_number;
+                    $vehicle->asset_route  = route('vehicles.show', $vehicle->id);
+                    return $vehicle;
+                })
+                ->filter(fn($v) => $v->mileage_gap <= $threshhold);
+
+            $trailers = Trailer::whereNotNull('next_service')
+                ->whereNotNull('mileage')
+                ->where('next_service', '>', 0)
+                ->where('mileage', '>', 0)
+                ->get()
+                ->map(function ($trailer) {
+                    $trailer->mileage_gap  = $trailer->next_service - $trailer->mileage;
+                    $trailer->asset_type   = 'trailer';
+                    $trailer->asset_label  = $trailer->registration_number;
+                    $trailer->asset_route  = route('trailers.show', $trailer->id);
+                    return $trailer;
+                })
+                ->filter(fn($t) => $t->mileage_gap <= $threshhold);
+
+            $mileage_reminders = $horses
+                ->concat($vehicles)
+                ->concat($trailers)
+                ->sortBy('mileage_gap')
+                ->values();
+        }
+
+        $reminders_count = $reminders->count()
+            + $expired_reminders->count()
+            + $mileage_reminders->count();
 
         // Share everything to the navbar view
         $view->with([
@@ -200,6 +261,7 @@ class NavbarComposer
             'license' => $license,
             'reminders' => $reminders,
             'expired_reminders' => $expired_reminders,
+            'mileage_reminders' => $mileage_reminders,
             'reminders_count' => $reminders_count,
            
             // Pending authorizations (Operations Control Tower)

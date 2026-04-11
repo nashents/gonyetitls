@@ -208,7 +208,7 @@ class Show extends Component
 
         if (isset($this->next_service)) {
             if ($this->ticket->booking->horse) {
-                $horse =$this->ticket->booking->horse;
+                $horse = $this->ticket->booking->horse;
                 $horse->prev_service = $this->ticket->booking ? $this->ticket->booking->odometer : null;
                 $horse->prev_service_date = $this->ticket->booking ? $this->ticket->booking->in_date : null;
                 $horse->next_service = $this->next_service;

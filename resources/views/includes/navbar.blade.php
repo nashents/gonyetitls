@@ -266,7 +266,7 @@
                                 @endif
                             </a>
 
-                            @php $useTall = ($reminders && $reminders->count() > 10); @endphp
+                           @php $useTall = (($reminders?->count() + $expired_reminders?->count() + $mileage_reminders?->count()) > 10); @endphp
 
                             <ul class="dropdown-menu" style="{{ $useTall ? "overflow-x:auto; height:400px;" : "" }}">
                                 <li style="margin: 10px">
@@ -328,6 +328,54 @@
                                             </a>
                                         </li>
                                     @endforeach
+                                @endif
+
+                                @if ($mileage_reminders && $mileage_reminders->count() > 0)
+                                    <li role="separator" class="divider"></li>
+
+                                    <li><a href="#"><strong style="color: gray">Workshop / Service Due</strong></a></li>
+
+                                    @foreach ($mileage_reminders as $asset)
+                                        @php
+                                            $gap = $asset->mileage_gap;
+
+                                            if ($gap <= 0) {
+                                                $icon_color = 'darkred';
+                                                $urgency    = 'OVERDUE by ' . number_format(abs($gap)) . ' km';
+                                            } elseif ($gap <= 100) {
+                                                $icon_color = 'red';
+                                                $urgency    = number_format($gap) . ' km remaining';
+                                            } elseif ($gap <= 500) {
+                                                $icon_color = 'orangered';
+                                                $urgency    = number_format($gap) . ' km remaining';
+                                            } elseif ($gap <= 1000) {
+                                                $icon_color = 'orange';
+                                                $urgency    = number_format($gap) . ' km remaining';
+                                            } else {
+                                                $icon_color = 'goldenrod';
+                                                $urgency    = number_format($gap) . ' km remaining';
+                                            }
+
+                                            $asset_icon = match($asset->asset_type) {
+                                                'horse'   => 'fa-horse',
+                                                'vehicle' => 'fa-truck',
+                                                'trailer' => 'fa-trailer',
+                                                default   => 'fa-wrench',
+                                            };
+                                        @endphp
+
+                                       <li>
+                                            <a href="{{ $asset->asset_route }}">
+                                                <i class="fa fa-wrench" style="color: {{ $icon_color }}"></i>
+                                                <i class="fa {{ $asset_icon }}" style="color: gray; font-size: 11px"></i>
+                                                {{ $asset->asset_label }}
+                                                &mdash; {{ $urgency }}
+                                                <small style="color: gray">
+                                                    (current: {{ number_format($asset->mileage) }} km &bull; service at {{ number_format($asset->next_service) }} km)
+                                                </small>
+                                            </a>
+                                        </li>
+                                        @endforeach
                                 @endif
                             </ul>
                         </li>
