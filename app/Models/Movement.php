@@ -42,6 +42,18 @@ class Movement extends Model implements Auditable
     public function tyre(){
         return $this->belongsTo('App\Models\Tyre');
     }
+    public function ticket(){
+        return $this->belongsTo('App\Models\Ticket');
+    }
+    public function dispatch(){
+        return $this->belongsTo('App\Models\Dispatch');
+    }
+    public function dispatch_item(){
+        return $this->belongsTo('App\Models\DispatchItem');
+    }
+    public function product(){
+        return $this->belongsTo('App\Models\Product');
+    }
 
     protected $fillable = [
         'user_id',

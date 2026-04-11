@@ -8,6 +8,7 @@
             <ul class="nav nav-tabs nav-justified" role="tablist">
                 <li role="presentation" class="active"><a href="#basic" aria-controls="basic" role="tab" data-toggle="tab">Dispatch Details</a></li>
                 <li role="presentation"><a href="#items" aria-controls="items" role="tab" data-toggle="tab">Dispatch Items</a></li>
+                <li role="presentation"><a href="#fitment" aria-controls="fitment" role="tab" data-toggle="tab">Fitment Details</a></li>
 
             </ul>
             <div class="tab-content bg-white p-15">
@@ -122,6 +123,9 @@
                 </div>
                 <div role="tabpanel" class="tab-pane" id="items">
                   @livewire('dispatches.items', ['id' => $dispatch->id])
+                </div> 
+                <div role="tabpanel" class="tab-pane" id="fitment">
+                  @livewire('dispatches.movements', ['id' => $dispatch->id])
                 </div> 
                 <div class="row">
                     <div class="col-md-12">

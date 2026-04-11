@@ -284,52 +284,50 @@
                             </div>
                         </div>
                     </div>
-             
+                    <h5 class="underline mt-10">Destination Details</h5>
                    <div class="mb-20 mt-20">
                         <input type="checkbox" wire:model.debounce.300ms="attach"   class="line-style"  />
                         <label for="one" class="radio-label">Attach a ticket to dispatch. </label>
                         @error('attach') <span class="text-danger error">{{ $message }}</span>@enderror
                     </div>
                     @if (isset($attach) && $attach == true)
-                
-                    @if (in_array($department,['inventory','tyre']))
-                        
-                        <div class="form-group">
-                            <label for="country">Tickets<span class="required" style="color: red">*</span></label>
-                            <input type="text" wire:model.debounce.300ms="searchTicket" placeholder="Search tickets by ticket#, booking#, registration#, fleet#, driver..." class="form-control">
-                            <select wire:model.debounce.300ms="selectedTicket" class="form-control" required size="4">
-                                <option value="">Select Ticket</option>
-                                @foreach ($tickets as $ticket)
-                                    <option value="{{$ticket->id}}">
-                                            @if ($ticket->booking)
-                                                 {{$ticket->booking->booking_number ? "Booking#: ".$ticket->booking->booking_number : ""}}
-                                            @endif
-                                            {{$ticket->ticket_number ? "Ticket#: ".$ticket->ticket_number : ""}}
-                                            {{$ticket->in_date ? "Date: ".$ticket->in_date : ""}}
-                                            @if ($ticket->booking->service_type)
-                                                , Service Type:  {{$ticket->booking->service_type ? $ticket->booking->service_type->name : ""}}
-                                            @endif
-                                            @if ($ticket->horse)
-                                                , Horse: {{$ticket->horse->registration_number}} {{$ticket->horse->fleet_number ? "(".$ticket->horse->fleet_number.")" : ""}} {{$ticket->horse->horse_make ? $ticket->horse->horse_make->name : ""}} {{$ticket->horse->horse_model ? $ticket->horse->horse_model->name : ""}}
-                                            @endif
-                                            @if ($ticket->trailer)
-                                                , Trailer: {{$ticket->trailer->registration_number}} {{$ticket->trailer->fleet_number ? "(".$ticket->trailer->fleet_number.")" : ""}} {{$ticket->trailer->make}} {{$ticket->trailer->model}}
-                                            @endif
-                                            @if ($ticket->vehicle)
-                                                , Vehicle: {{$ticket->vehicle->registration_number}} {{$ticket->vehicle->fleet_number ? "(".$ticket->vehicle->fleet_number.")" : ""}} {{$ticket->vehicle->vehicle_make ? $ticket->vehicle->vehicle_make->name : ""}} {{$ticket->vehicle->vehicle_model ? $ticket->vehicle->vehicle_model->name : ""}}
-                                            @endif
-                                        </option>
-                                @endforeach
-                            </select>
-                            @if (!is_null($selectedTicket))
-                              <small style="color: green"><a href="{{route('tickets.show',$selectedTicket)}}" target="_blank"> Click to view ticket <strong>{{$ticket->ticket_number}}</strong></a></small>  
-                            @endif
-                            @error('selectedTicket') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                        </div>
-                         
-                    @endif
-                    @endif
-                           <h5 class="underline mt-10">Destination Details</h5>
+
+                        @if (in_array($department,['inventory','tyre']))
+                            
+                            <div class="form-group">
+                                <label for="country">Tickets<span class="required" style="color: red">*</span></label>
+                                <input type="text" wire:model.debounce.300ms="searchTicket" placeholder="Search tickets by ticket#, booking#, registration#, fleet#, driver..." class="form-control">
+                                <select wire:model.debounce.300ms="selectedTicket" class="form-control" required size="4">
+                                    <option value="">Select Ticket</option>
+                                    @foreach ($tickets as $ticket)
+                                        <option value="{{$ticket->id}}">
+                                                @if ($ticket->booking)
+                                                    {{$ticket->booking->booking_number ? "Booking#: ".$ticket->booking->booking_number : ""}}
+                                                @endif
+                                                {{$ticket->ticket_number ? "Ticket#: ".$ticket->ticket_number : ""}}
+                                                {{$ticket->in_date ? "Date: ".$ticket->in_date : ""}}
+                                                @if ($ticket->booking->service_type)
+                                                    , Service Type:  {{$ticket->booking->service_type ? $ticket->booking->service_type->name : ""}}
+                                                @endif
+                                                @if ($ticket->horse)
+                                                    , Horse: {{$ticket->horse->registration_number}} {{$ticket->horse->fleet_number ? "(".$ticket->horse->fleet_number.")" : ""}} {{$ticket->horse->horse_make ? $ticket->horse->horse_make->name : ""}} {{$ticket->horse->horse_model ? $ticket->horse->horse_model->name : ""}}
+                                                @endif
+                                                @if ($ticket->trailer)
+                                                    , Trailer: {{$ticket->trailer->registration_number}} {{$ticket->trailer->fleet_number ? "(".$ticket->trailer->fleet_number.")" : ""}} {{$ticket->trailer->make}} {{$ticket->trailer->model}}
+                                                @endif
+                                                @if ($ticket->vehicle)
+                                                    , Vehicle: {{$ticket->vehicle->registration_number}} {{$ticket->vehicle->fleet_number ? "(".$ticket->vehicle->fleet_number.")" : ""}} {{$ticket->vehicle->vehicle_make ? $ticket->vehicle->vehicle_make->name : ""}} {{$ticket->vehicle->vehicle_model ? $ticket->vehicle->vehicle_model->name : ""}}
+                                                @endif
+                                            </option>
+                                    @endforeach
+                                </select>
+                                @if (!is_null($selectedTicket))
+                                <small style="color: green"><a href="{{route('tickets.show',$selectedTicket)}}" target="_blank"> Click to view ticket <strong>{{$ticket->ticket_number}}</strong></a></small>  
+                                @endif
+                                @error('selectedTicket') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div> 
+                        @endif
+                    @elseif((isset($attach) && $attach == false))
                         <div class="row">
                             <div class="col-md-4">
                                 <div class="form-group">
@@ -368,7 +366,7 @@
                                 </div>
                             </div>
                         </div>
-
+                    @endif
                 <div class="row">
                     <div class="col-md-4">
                         <div class="form-group" >
@@ -404,6 +402,7 @@
                     </div>
                    
                     @if (!is_null($expand) && $expand == False)
+
                         <div style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">
                             <div class="row">
                                 <div class="col-md-4">
@@ -483,34 +482,106 @@
                                     </div>
                                 </div>
                             </div>
+                           {{-- Fitment toggle --}}
+                            @if (!is_null($selectedTicket))
+                                <div class="mb-10">
+                                    <input type="checkbox"
+                                        wire:model="fitment.0"
+                                        class="line-style" />
+                                    <label class="radio-label">Add fitment / installation details</label>
+                                </div>
+
+                                {{-- Fitment rows for this product --}}
+                                @if (!empty($fitment[0]) && $fitment[0])
+                                    @foreach ($fitment_rows[0] ?? [] as $rowIndex => $row)
+                                        <div class="row align-items-end mb-2">
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Mileage <span class="required" style="color:red">*</span></label>
+                                                    <input type="number" step="any"
+                                                        wire:model.debounce.300ms="fitment_rows.{{ 0 }}.{{ $rowIndex }}.mileage"
+                                                        class="form-control"
+                                                        placeholder="Mileage at fitment">
+                                                    @error("fitment_rows.{0}.{$rowIndex}.mileage")
+                                                        <span class="text-danger">{{ $message }}</span>
+                                                    @enderror
+                                                </div>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label>Qty <span class="required" style="color:red">*</span></label>
+                                                    <input type="number" step="any"
+                                                        wire:model.debounce.300ms="fitment_rows.{{ 0 }}.{{ $rowIndex }}.qty"
+                                                        class="form-control"
+                                                        placeholder="Qty fitted">
+                                                    @error("fitment_rows.{0}.{$rowIndex}.qty")
+                                                        <span class="text-danger">{{ $message }}</span>
+                                                    @enderror
+                                                </div>
+                                            </div>
+                                            <div class="col-md-5">
+                                                <div class="form-group">
+                                                    <label>Fitment Position <span class="required" style="color:red">*</span></label>
+                                                    <input type="text"
+                                                        wire:model.debounce.300ms="fitment_rows.{{ 0 }}.{{ $rowIndex }}.position"
+                                                        class="form-control"
+                                                        placeholder="e.g. Rear Left, Front Right">
+                                                    @error("fitment_rows.{0}.{$rowIndex}.position")
+                                                        <span class="text-danger">{{ $message }}</span>
+                                                    @enderror
+                                                </div>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <div class="form-group mt-25">
+                                                    <button class="btn btn-danger btn-rounded btn-sm"
+                                                            wire:click.prevent="removeFitmentRow({{ 0 }}, {{ $rowIndex }})">
+                                                        <i class="fa fa-times"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+
+                                    {{-- Add another fitment row --}}
+                                    <div class="row">
+                                        <div class="col-md-12 text-right">
+                                            <button class="btn btn-success btn-rounded btn-sm"
+                                                    wire:click.prevent="addFitmentRow({{ 0 }})">
+                                                <i class="fa fa-plus"></i> Add Fitment Row
+                                            </button>
+                                        </div>
+                                    </div>
+                                @endif
+                            @endif
+                            
                         </div>
                         <br>
                         @foreach ($inputs as $key => $value)
                             <div style="background-color: lightgrey; padding:5px; border: 1px solid #333; border-radius: 5px;">
                                 <div class="row">
                                     <div class="col-md-4">
-                                    <div class="form-group">
-                                            <label for="horse">Requested Items</label>
-                                            <select wire:model.debounce.300ms="requestedItem.{{$value}}" class="form-control"  size="6">
-                                                    <option value="" disabled>Select Item</option>
-                                                    @if (!empty($ticket_requests))
-                                                        @foreach ($ticket_requests as $ticket_request)
-                                                            <option value="{{$ticket_request->id}}"
-                                                                @if(in_array($ticket_request->id, $requestedItem ?? []) && ($requestedItem[0] ?? null) != $ticket_request->id) 
-                                                                    disabled 
-                                                                @endif
-                                                                >
-                                                                @if ($ticket_request->product)
-                                                                    {{ $ticket_request->product->name }} {{ $ticket_request->product->brand ? $ticket_request->product->brand->name : "" }} {{ $ticket_request->product->identification_number ? "Part/ID#, ".$ticket_request->product->identification_number : "" }}
-                                                                @endif
-                                                                {{$ticket_request->product_name}} {{$ticket_request->qty ? "Qty: ".$ticket_request->qty." ".$ticket_request->measurement : ""}}
-                                                            </option>
-                                                        @endforeach
-                                                    @endif
-                                            </select>
-                                            @error('requestedItem.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        <div class="form-group">
+                                                <label for="horse">Requested Items</label>
+                                                <select wire:model.debounce.300ms="requestedItem.{{$value}}" class="form-control"  size="6">
+                                                        <option value="" disabled>Select Item</option>
+                                                        @if (!empty($ticket_requests))
+                                                            @foreach ($ticket_requests as $ticket_request)
+                                                                <option value="{{$ticket_request->id}}"
+                                                                    @if(in_array($ticket_request->id, $requestedItem ?? []) && ($requestedItem[0] ?? null) != $ticket_request->id) 
+                                                                        disabled 
+                                                                    @endif
+                                                                    >
+                                                                    @if ($ticket_request->product)
+                                                                        {{ $ticket_request->product->name }} {{ $ticket_request->product->brand ? $ticket_request->product->brand->name : "" }} {{ $ticket_request->product->identification_number ? "Part/ID#, ".$ticket_request->product->identification_number : "" }}
+                                                                    @endif
+                                                                    {{$ticket_request->product_name}} {{$ticket_request->qty ? "Qty: ".$ticket_request->qty." ".$ticket_request->measurement : ""}}
+                                                                </option>
+                                                            @endforeach
+                                                        @endif
+                                                </select>
+                                                @error('requestedItem.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                        </div>
                                     </div>
-                                </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="horse">Products<span class="required" style="color: red">*</span></label>
@@ -569,6 +640,77 @@
                                         </div>
                                     </div>
                                 </div>
+                                 {{-- Fitment toggle --}}
+                            @if (!is_null($selectedTicket))
+                                <div class="mb-10">
+                                    <input type="checkbox"
+                                        wire:model="fitment.{{$value}}"
+                                        class="line-style" />
+                                    <label class="radio-label">Add fitment / installation details</label>
+                                </div>
+
+                                {{-- Fitment rows for this product --}}
+                                @if (!empty($fitment[$value]) && $fitment[$value])
+                                    @foreach ($fitment_rows[$value] ?? [] as $rowIndex => $row)
+                                        <div class="row align-items-end mb-2">
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Mileage <span class="required" style="color:red">*</span></label>
+                                                    <input type="number" step="any"
+                                                        wire:model.debounce.300ms="fitment_rows.{{ $value }}.{{ $rowIndex }}.mileage"
+                                                        class="form-control"
+                                                        placeholder="Mileage at fitment">
+                                                    @error("fitment_rows.{$value}.{$rowIndex}.mileage")
+                                                        <span class="text-danger">{{ $message }}</span>
+                                                    @enderror
+                                                </div>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label>Qty <span class="required" style="color:red">*</span></label>
+                                                    <input type="number" step="any"
+                                                        wire:model.debounce.300ms="fitment_rows.{{ $value }}.{{ $rowIndex }}.qty"
+                                                        class="form-control"
+                                                        placeholder="Qty fitted">
+                                                    @error("fitment_rows.{$value}.{$rowIndex}.qty")
+                                                        <span class="text-danger">{{ $message }}</span>
+                                                    @enderror
+                                                </div>
+                                            </div>
+                                            <div class="col-md-5">
+                                                <div class="form-group">
+                                                    <label>Fitment Position <span class="required" style="color:red">*</span></label>
+                                                    <input type="text"
+                                                        wire:model.debounce.300ms="fitment_rows.{{ $value }}.{{ $rowIndex }}.position"
+                                                        class="form-control"
+                                                        placeholder="e.g. Rear Left, Front Right">
+                                                    @error("fitment_rows.{$value}.{$rowIndex}.position")
+                                                        <span class="text-danger">{{ $message }}</span>
+                                                    @enderror
+                                                </div>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <div class="form-group mt-25">
+                                                    <button class="btn btn-danger btn-rounded btn-sm"
+                                                            wire:click.prevent="removeFitmentRow({{ $value }}, {{ $rowIndex }})">
+                                                        <i class="fa fa-times"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+
+                                    {{-- Add another fitment row --}}
+                                    <div class="row">
+                                        <div class="col-md-12 text-right">
+                                            <button class="btn btn-success btn-rounded btn-sm"
+                                                    wire:click.prevent="addFitmentRow({{ $value }})">
+                                                <i class="fa fa-plus"></i> Add Fitment Row
+                                            </button>
+                                        </div>
+                                    </div>
+                                @endif
+                            @endif
                             </div>
                             <br>
                         @endforeach
@@ -1133,52 +1275,49 @@
                             </div>
                         </div>
                     </div>
-             
+                    <h6 class="underline mt-10 mb-10"><strong>Destination Details</strong></h6>
                    <div class="mb-20 mt-20">
                         <input type="checkbox" wire:model.debounce.300ms="attach"   class="line-style"  />
                         <label for="one" class="radio-label">Attach a ticket to dispatch. </label>
                         @error('attach') <span class="text-danger error">{{ $message }}</span>@enderror
                     </div>
                     @if (isset($attach) && $attach == true)
-                
-                    @if (in_array($department,['inventory','tyre']))
-                        
-                        <div class="form-group">
-                            <label for="country">Tickets<span class="required" style="color: red">*</span></label>
-                            <input type="text" wire:model.debounce.300ms="searchTicket" placeholder="Search tickets by ticket#, booking#, registration#, fleet#, driver..." class="form-control">
-                            <select wire:model.debounce.300ms="selectedTicket" class="form-control" required size="4">
-                                <option value="">Select Ticket</option>
-                                @foreach ($tickets as $ticket)
-                                    <option value="{{$ticket->id}}">
-                                            @if ($ticket->booking)
-                                                 {{$ticket->booking->booking_number ? "Booking#: ".$ticket->booking->booking_number : ""}}
-                                            @endif
-                                            {{$ticket->ticket_number ? "Ticket#: ".$ticket->ticket_number : ""}}
-                                            {{$ticket->in_date ? "Date: ".$ticket->in_date : ""}}
-                                            @if ($ticket->booking->service_type)
-                                                , Service Type:  {{$ticket->booking->service_type ? $ticket->booking->service_type->name : ""}}
-                                            @endif
-                                            @if ($ticket->horse)
-                                                , Horse: {{$ticket->horse->registration_number}} {{$ticket->horse->fleet_number ? "(".$ticket->horse->fleet_number.")" : ""}} {{$ticket->horse->horse_make ? $ticket->horse->horse_make->name : ""}} {{$ticket->horse->horse_model ? $ticket->horse->horse_model->name : ""}}
-                                            @endif
-                                            @if ($ticket->trailer)
-                                                , Trailer: {{$ticket->trailer->registration_number}} {{$ticket->trailer->fleet_number ? "(".$ticket->trailer->fleet_number.")" : ""}} {{$ticket->trailer->make}} {{$ticket->trailer->model}}
-                                            @endif
-                                            @if ($ticket->vehicle)
-                                                , Vehicle: {{$ticket->vehicle->registration_number}} {{$ticket->vehicle->fleet_number ? "(".$ticket->vehicle->fleet_number.")" : ""}} {{$ticket->vehicle->vehicle_make ? $ticket->vehicle->vehicle_make->name : ""}} {{$ticket->vehicle->vehicle_model ? $ticket->vehicle->vehicle_model->name : ""}}
-                                            @endif
-                                        </option>
-                                @endforeach
-                            </select>
-                            @if (!is_null($selectedTicket))
-                              <small style="color: green"><a href="{{route('tickets.show',$selectedTicket)}}" target="_blank"> Click to view ticket <strong>{{$ticket->ticket_number}}</strong></a></small>  
-                            @endif
-                            @error('selectedTicket') <span class="error" style="color:red">{{ $message }}</span> @enderror
-                        </div>
-                         
-                    @endif
-                   @else
-                           <h5 class="underline mt-10">Destination Details</h5>
+                        @if (in_array($department,['inventory','tyre']))
+                            <div class="form-group">
+                                <label for="country">Tickets<span class="required" style="color: red">*</span></label>
+                                <input type="text" wire:model.debounce.300ms="searchTicket" placeholder="Search tickets by ticket#, booking#, registration#, fleet#, driver..." class="form-control">
+                                <select wire:model.debounce.300ms="selectedTicket" class="form-control" required size="4">
+                                    <option value="">Select Ticket</option>
+                                    @foreach ($tickets as $ticket)
+                                        <option value="{{$ticket->id}}">
+                                                @if ($ticket->booking)
+                                                    {{$ticket->booking->booking_number ? "Booking#: ".$ticket->booking->booking_number : ""}}
+                                                @endif
+                                                {{$ticket->ticket_number ? "Ticket#: ".$ticket->ticket_number : ""}}
+                                                {{$ticket->in_date ? "Date: ".$ticket->in_date : ""}}
+                                                @if ($ticket->booking->service_type)
+                                                    , Service Type:  {{$ticket->booking->service_type ? $ticket->booking->service_type->name : ""}}
+                                                @endif
+                                                @if ($ticket->horse)
+                                                    , Horse: {{$ticket->horse->registration_number}} {{$ticket->horse->fleet_number ? "(".$ticket->horse->fleet_number.")" : ""}} {{$ticket->horse->horse_make ? $ticket->horse->horse_make->name : ""}} {{$ticket->horse->horse_model ? $ticket->horse->horse_model->name : ""}}
+                                                @endif
+                                                @if ($ticket->trailer)
+                                                    , Trailer: {{$ticket->trailer->registration_number}} {{$ticket->trailer->fleet_number ? "(".$ticket->trailer->fleet_number.")" : ""}} {{$ticket->trailer->make}} {{$ticket->trailer->model}}
+                                                @endif
+                                                @if ($ticket->vehicle)
+                                                    , Vehicle: {{$ticket->vehicle->registration_number}} {{$ticket->vehicle->fleet_number ? "(".$ticket->vehicle->fleet_number.")" : ""}} {{$ticket->vehicle->vehicle_make ? $ticket->vehicle->vehicle_make->name : ""}} {{$ticket->vehicle->vehicle_model ? $ticket->vehicle->vehicle_model->name : ""}}
+                                                @endif
+                                            </option>
+                                    @endforeach
+                                </select>
+                                @if (!is_null($selectedTicket))
+                                <small style="color: green"><a href="{{route('tickets.show',$selectedTicket)}}" target="_blank"> Click to view ticket <strong>{{$ticket->ticket_number}}</strong></a></small>  
+                                @endif
+                                @error('selectedTicket') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                            </div>
+                        @endif
+                    @elseif(isset($attach) && $attach == false)
+                       
                         <div class="row">
                             <div class="col-md-4">
                                 <div class="form-group">

@@ -412,10 +412,10 @@ class Pending extends Component
                     if($last_mileage < $trip->starting_mileage){
                         $mileage = new Mileage;
                         $mileage->user_id = Auth::user()->id;
-                        $mileage->trip_id = $trip->id;
-                        $mileage->horse_id = $trip->horse_id;
-                        $mileage->trailer_id = $trip->trailer_id;
-                        $mileage->vehicle_id = $trip->vehicle_id;
+                        $mileage->trip_id = $trip->id  ?: Null;
+                        $mileage->horse_id = $trip->horse_id ?: Null;
+                        $mileage->trailer_id = $trip->trailer_id  ?: Null;
+                        $mileage->vehicle_id = $trip->vehicle_id  ?: Null;
                         $mileage->mileage = $trip->starting_mileage;
                         $mileage->date = $trip->start_date;
                         $mileage->category = "Trip";
@@ -432,10 +432,10 @@ class Pending extends Component
                     if($last_mileage < $trip->ending_mileage){
                         $mileage = new Mileage;
                         $mileage->user_id = Auth::user()->id;
-                        $mileage->trip_id = $trip->id;
-                        $mileage->horse_id = $trip->horse_id;
-                        $mileage->trailer_id = $trip->trailer_id;
-                        $mileage->vehicle_id = $trip->vehicle_id;
+                        $mileage->trip_id = $trip->id  ?: Null;
+                        $mileage->horse_id = $trip->horse_id  ?: Null;
+                        $mileage->trailer_id = $trip->trailer_id  ?: Null;
+                        $mileage->vehicle_id = $trip->vehicle_id  ?: Null;
                         $mileage->mileage = $trip->ending_mileage;
                         $mileage->date = $trip->end_date;
                         $mileage->category = "Trip";
@@ -452,10 +452,10 @@ class Pending extends Component
                     if($last_hours < $trip->starting_hours){
                         $hours = new Hour;
                         $hours->user_id = Auth::user()->id;
-                        $hours->trip_id = $trip->id;
-                        $hours->horse_id = $trip->horse_id;
-                        $hours->trailer_id = $trip->trailer_id;
-                        $hours->vehicle_id = $trip->vehicle_id;
+                        $hours->trip_id = $trip->id  ?: Null;
+                        $hours->horse_id = $trip->horse_id  ?: Null;
+                        $hours->trailer_id = $trip->trailer_id  ?: Null;
+                        $hours->vehicle_id = $trip->vehicle_id  ?: Null;
                         $hours->hours = $trip->starting_hours;
                         $hours->date = $trip->start_date;
                         $hours->category = "Trip";
@@ -472,9 +472,9 @@ class Pending extends Component
                         $hours = new Hour;
                         $hours->user_id = Auth::user()->id;
                         $hours->trip_id = $trip->id;
-                        $hours->horse_id = $trip->horse_id;
-                        $hours->trailer_id = $trip->trailer_id;
-                        $hours->vehicle_id = $trip->vehicle_id;
+                        $hours->horse_id = $trip->horse_id  ?: Null;
+                        $hours->trailer_id = $trip->trailer_id  ?: Null; 
+                        $hours->vehicle_id = $trip->vehicle_id  ?: Null;
                         $hours->hours = $trip->ending_hours;
                         $hours->date = $trip->end_date;
                         $hours->category = "Trip";
@@ -1063,7 +1063,7 @@ class Pending extends Component
                                                 $bill->fuel_id = $trip_expense->fuel_id;
                                                 $bill->trip_expense_id = $trip_expense->id;
                                                 if (isset($account)) {
-                                                    $bill->account_id = $account->id;
+                                                    $bill->account_id = $account->id  ?: Null;
                                                     $bill->account_type_id = $account->account_type->id;
                                                 }
                                                 if($fuel->container->purchase_type == "Once Off Buy"){
@@ -1071,12 +1071,12 @@ class Pending extends Component
                                                 }else{
                                                     $bill->to_be_paid = False;
                                                 }
-                                                $bill->horse_id = $trip->horse_id;
-                                                $bill->vehicle_id = $trip->vehicle_id;
-                                                $bill->driver_id = $trip->driver_id;
+                                                $bill->horse_id = $trip->horse_id  ?: Null;
+                                                $bill->vehicle_id = $trip->vehicle_id  ?: Null;
+                                                $bill->driver_id = $trip->driver_id  ?: Null;
                                                 $bill->category = "Trip Expense - Fuel Order";
                                                 $bill->bill_date = date("Y-m-d");
-                                                $bill->currency_id = $trip_expense->currency_id;
+                                                $bill->currency_id = $trip_expense->currency_id  ?: Null;
                                                 $bill->subtotal = $trip_expense->amount;
                                                 $bill->total = $trip_expense->amount;
                                                 if($trip_expense->currency_id != Auth::user()->employee->company->currency_id){

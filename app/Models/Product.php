@@ -28,6 +28,9 @@ class Product extends Model implements Auditable
     public function ticket_requests(){
         return $this->hasMany('App\Models\TicketRequest');
     }
+      public function movements(){
+        return $this->hasMany('App\Models\Movement');
+    }
     public function category(){
         return $this->belongsTo('App\Models\Category');
     }

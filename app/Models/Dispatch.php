@@ -18,6 +18,9 @@ class Dispatch extends Model implements Auditable
     public function vendor(){
         return $this->belongsTo('App\Models\Vendor');
     }
+      public function movements(){
+        return $this->hasMany('App\Models\Movement');
+    }
     public function employee(){
         return $this->belongsTo('App\Models\Employee');
     }

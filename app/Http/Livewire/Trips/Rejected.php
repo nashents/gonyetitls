@@ -368,7 +368,7 @@ public function updatingSearch()
                     $gate_pass->branch_id = Auth::user()->employee->branch ? Auth::user()->employee->branch->id : "";
                 }
                 $gate_pass->type = "Trip";
-                $gate_pass->trip_id = $trip->id;
+                $gate_pass->trip_id = $trip->id ?: null;
                 $gate_pass->driver_id = $trip->driver_id ? $trip->driver_id : null;
                 $gate_pass->horse_id = $trip->horse_id ? $trip->horse_id : null;
                 $gate_pass->exit = $trip->start_date;
@@ -421,11 +421,11 @@ public function updatingSearch()
                                         $bill->bill_number = $this->billNumber();
                                         $bill->trip_id = $trip->id;
                                         $bill->fuel_id = $trip_expense->fuel_id;
-                                        $bill->trip_expense_id = $trip_expense->id;
-                                        $bill->horse_id = $trip->horse_id;
-                                        $bill->vehicle_id = $trip->vehicle_id;
+                                        $bill->trip_expense_id = $trip_expense->id ?: null;
+                                        $bill->horse_id = $trip->horse_id ?: null;
+                                        $bill->vehicle_id = $trip->vehicle_id ?: null;
                                         if (isset($account)) {
-                                            $bill->account_id = $account->id;
+                                            $bill->account_id = $account->id ?: null;
                                             $bill->account_type_id = $account->account_type->id;
                                         }
                                         if($fuel->container->purchase_type == "Once Off Buy"){
@@ -433,7 +433,7 @@ public function updatingSearch()
                                         }else{
                                             $bill->to_be_paid = False;
                                         }
-                                        $bill->driver_id = $trip->driver_id;
+                                        $bill->driver_id = $trip->driver_id ?: null;
                                         $bill->category = "Trip Expense - Fuel Order";
                                         $bill->bill_date = date("Y-m-d");
                                         $bill->currency_id = $trip_expense->currency_id;
@@ -521,20 +521,20 @@ public function updatingSearch()
                                 $bill = new Bill;
                                 $bill->user_id = Auth::user()->id;
                                 $bill->bill_number = $this->billNumber();
-                                $bill->trip_id = $trip->id;
-                                $bill->fuel_id = $trip_expense->fuel_id;
-                                $bill->trip_expense_id = $trip_expense->id;
+                                $bill->trip_id = $trip->id ?: null;
+                                $bill->fuel_id = $trip_expense->fuel_id ?: null;
+                                $bill->trip_expense_id = $trip_expense->id ?: null;
                                 
                                 if (isset($account)) {
-                                    $bill->account_id = $account->id;
+                                    $bill->account_id = $account->id ?: null;
                                     $bill->account_type_id = $account->account_type->id;
                                 }
-                                $bill->horse_id = $trip->horse_id;
-                                $bill->vehicle_id = $trip->vehicle_id;
-                                $bill->driver_id = $trip->driver_id;
+                                $bill->horse_id = $trip->horse_id ?: null;
+                                $bill->vehicle_id = $trip->vehicle_id ?: null;
+                                $bill->driver_id = $trip->driver_id ?: null;
                                 $bill->category = "Trip Expense";
                                 $bill->bill_date = date("Y-m-d");
-                                $bill->currency_id = $trip_expense->currency_id;
+                                $bill->currency_id = $trip_expense->currency_id ?: null;
                                 $bill->subtotal = $trip_expense->amount;
                                 $bill->total = $trip_expense->amount;
                                 $bill->exchange_amount = $trip_expense->exchange_amount;
@@ -578,10 +578,10 @@ public function updatingSearch()
         
                      
                      
-                        $this->trip_id = $trip->id;
-                        $this->driver_id = $trip->driver_id;
-                        $this->horse_id = $trip->horse_id;
-                        $this->transporter_id = $trip->transporter_id;
+                        $this->trip_id = $trip->id ?: null;
+                        $this->driver_id = $trip->driver_id ?: null;
+                        $this->horse_id = $trip->horse_id ?: null;
+                        $this->transporter_id = $trip->transporter_id ?: null;
                         $this->start_date = $trip->start_date;
                         $user = $trip->user;
                         $name =  $user->employee ? $user->employee->name : "";
@@ -938,10 +938,10 @@ public function updatingSearch()
                                 if($last_mileage < $trip->starting_mileage){
                                     $mileage = new Mileage;
                                     $mileage->user_id = Auth::user()->id;
-                                    $mileage->trip_id = $trip->id;
-                                    $mileage->horse_id = $trip->horse_id;
-                                    $mileage->trailer_id = $trip->trailer_id;
-                                    $mileage->vehicle_id = $trip->vehicle_id;
+                                    $mileage->trip_id = $trip->id ?: null;
+                                    $mileage->horse_id = $trip->horse_id ?: null;
+                                    $mileage->trailer_id = $trip->trailer_id ?: null;
+                                    $mileage->vehicle_id = $trip->vehicle_id ?: null;
                                     $mileage->mileage = $trip->starting_mileage;
                                     $mileage->date = $trip->start_date;
                                     $mileage->category = "Trip";
@@ -957,10 +957,10 @@ public function updatingSearch()
                                 if($last_mileage < $trip->ending_mileage){
                                     $mileage = new Mileage;
                                     $mileage->user_id = Auth::user()->id;
-                                    $mileage->trip_id = $trip->id;
-                                    $mileage->horse_id = $trip->horse_id;
-                                    $mileage->trailer_id = $trip->trailer_id;
-                                    $mileage->vehicle_id = $trip->vehicle_id;
+                                    $mileage->trip_id = $trip->id ?: null;
+                                    $mileage->horse_id = $trip->horse_id ?: null;
+                                    $mileage->trailer_id = $trip->trailer_id ?: null;
+                                    $mileage->vehicle_id = $trip->vehicle_id ?: null;
                                     $mileage->mileage = $trip->ending_mileage;
                                     $mileage->date = $trip->end_date;
                                     $mileage->category = "Trip";
@@ -977,10 +977,10 @@ public function updatingSearch()
                             if($last_hours < $trip->starting_hours){
                                 $hours = new Hour;
                                 $hours->user_id = Auth::user()->id;
-                                $hours->trip_id = $trip->id;
-                                $hours->horse_id = $trip->horse_id;
-                                $hours->trailer_id = $trip->trailer_id;
-                                $hours->vehicle_id = $trip->vehicle_id;
+                                $hours->trip_id = $trip->id ?: null;
+                                $hours->horse_id = $trip->horse_id ?: null;
+                                $hours->trailer_id = $trip->trailer_id ?: null;
+                                $hours->vehicle_id = $trip->vehicle_id ?: null;
                                 $hours->hours = $trip->starting_hours;
                                 $hours->date = $trip->start_date;
                                 $hours->category = "Trip";
@@ -997,10 +997,10 @@ public function updatingSearch()
                             if($last_hours < $trip->ending_hours){
                                 $hours = new Hour;
                                 $hours->user_id = Auth::user()->id;
-                                $hours->trip_id = $trip->id;
-                                $hours->horse_id = $trip->horse_id;
-                                $hours->trailer_id = $trip->trailer_id;
-                                $hours->vehicle_id = $trip->vehicle_id;
+                                $hours->trip_id = $trip->id ?: null;
+                                $hours->horse_id = $trip->horse_id ?: null;
+                                $hours->trailer_id = $trip->trailer_id ?: null;
+                                $hours->vehicle_id = $trip->vehicle_id ?: null;
                                 $hours->hours = $trip->ending_hours;
                                 $hours->date = $trip->end_date;
                                 $hours->category = "Trip";
@@ -1027,11 +1027,11 @@ public function updatingSearch()
                                             $bill = new Bill;
                                             $bill->user_id = Auth::user()->id;
                                             $bill->bill_number = $this->billNumber();
-                                            $bill->trip_id = $trip->id;
-                                            $bill->fuel_id = $trip_expense->fuel_id;
-                                            $bill->trip_expense_id = $trip_expense->id;
-                                            $bill->horse_id = $trip->horse_id;
-                                            $bill->vehicle_id = $trip->vehicle_id;
+                                            $bill->trip_id = $trip->id ?: null;
+                                            $bill->fuel_id = $trip_expense->fuel_id ?: null;
+                                            $bill->trip_expense_id = $trip_expense->id ?: null;
+                                            $bill->horse_id = $trip->horse_id ?: null;
+                                            $bill->vehicle_id = $trip->vehicle_id ?: null;
                                             if (isset($account)) {
                                                 $bill->account_id = $account->id;
                                                 $bill->account_type_id = $account->account_type->id;
@@ -1041,7 +1041,7 @@ public function updatingSearch()
                                             }else{
                                                 $bill->to_be_paid = False;
                                             }
-                                            $bill->driver_id = $trip->driver_id;
+                                            $bill->driver_id = $trip->driver_id ?: null;
                                             $bill->category = "Trip Expense - Fuel Order";
                                             $bill->bill_date = date("Y-m-d");
                                             $bill->currency_id = $trip_expense->currency_id;
@@ -1134,12 +1134,12 @@ public function updatingSearch()
                                         $bill->account_id = $account->id;
                                         $bill->account_type_id = $account->account_type->id;
                                     }
-                                    $bill->horse_id = $trip->horse_id;
-                                    $bill->vehicle_id = $trip->vehicle_id;
-                                    $bill->driver_id = $trip->driver_id;
+                                    $bill->horse_id = $trip->horse_id ?: null;
+                                    $bill->vehicle_id = $trip->vehicle_id ?: null;
+                                    $bill->driver_id = $trip->driver_id ?: null;
                                     $bill->category = "Trip Expense";
                                     $bill->bill_date = date("Y-m-d");
-                                    $bill->currency_id = $trip_expense->currency_id;
+                                    $bill->currency_id = $trip_expense->currency_id ?: null;
                                     $bill->subtotal = $trip_expense->amount;
                                     $bill->total = $trip_expense->amount;
                                     $bill->exchange_amount = $trip_expense->exchange_amount;
@@ -1152,13 +1152,13 @@ public function updatingSearch()
             
                                     $bill_expense = new BillExpense;
                                     $bill_expense->user_id = Auth::user()->id;
-                                    $bill_expense->bill_id = $bill->id;
+                                    $bill_expense->bill_id = $bill->id ?: null;
                                     if (isset($account)) {
-                                        $bill_expense->account_id = $account->id;
+                                        $bill_expense->account_id = $account->id ?: null;
                                         $bill_expense->account_type_id = $account->account_type->id;
                                     }
-                                    $bill_expense->currency_id = $bill->currency_id;
-                                    $bill_expense->expense_id = $trip_expense->expense_id;
+                                    $bill_expense->currency_id = $bill->currency_id ?: null;
+                                    $bill_expense->expense_id = $trip_expense->expense_id ?: null;
                                     $bill_expense->qty = 1;
                                     $bill_expense->amount = $trip_expense->amount;
                                     $bill_expense->subtotal = $trip_expense->amount;
@@ -1180,10 +1180,10 @@ public function updatingSearch()
                         $user = User::find($trip->user_id);
 
                     
-                        $this->trip_id = $trip->id;
-                        $this->driver_id = $trip->driver_id;
-                        $this->horse_id = $trip->horse_id;
-                        $this->transporter_id = $trip->transporter_id;
+                        $this->trip_id = $trip->id ?: null;
+                        $this->driver_id = $trip->driver_id ?: null;
+                        $this->horse_id = $trip->horse_id ?: null;
+                        $this->transporter_id = $trip->transporter_id ?: null;
                         $this->start_date = $trip->start_date;
                         $user = $trip->user;
                         $name =  $user->employee ? $user->employee->name : "";

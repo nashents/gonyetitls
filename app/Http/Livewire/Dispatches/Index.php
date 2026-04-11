@@ -2,30 +2,31 @@
 
 namespace App\Http\Livewire\Dispatches;
 
-use Carbon\Carbon;
-use App\Models\Tyre;
-use App\Models\Asset;
-use App\Models\Store;
-use App\Models\Branch;
-use App\Models\Ticket;
-use App\Models\Vendor;
+use App\Mail\PendingNotificationEmails;
 use App\Models\Account;
-use App\Models\Product;
-use Livewire\Component;
+use App\Models\Asset;
+use App\Models\Branch;
 use App\Models\Currency;
+use App\Models\Department;
 use App\Models\Dispatch;
+use App\Models\DispatchItem;
 use App\Models\Employee;
 use App\Models\Inventory;
-use App\Models\Department;
-use App\Models\DispatchItem;
+use App\Models\Movement;
 use App\Models\Notification;
-use Livewire\WithPagination;
 use App\Models\PaymentMethod;
-use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\DB;
+use App\Models\Product;
+use App\Models\Store;
+use App\Models\Ticket;
+use App\Models\Tyre;
+use App\Models\Vendor;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
-use App\Mail\PendingNotificationEmails;
+use Illuminate\Validation\Rule;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class Index extends Component
 {
@@ -60,7 +61,8 @@ class Index extends Component
     public $ticket;
     public $selectedTicket;
     public $inventories;
-    public $attach;
+    public $attach = false;
+   
     public $tyres;
     public $assets;
     public $dispatch;
@@ -110,7 +112,7 @@ class Index extends Component
     public $buy = True;
 
     public $inputs = [];
-    public $i = 1;
+    public int $i = 1;
     public $n = 1;
 
     public function add($i)
@@ -122,8 +124,18 @@ class Index extends Component
 
     public function remove($i)
     {
+        $index = $this->inputs[$i]; // grab the $value (e.g. 2) before unsetting
+
         unset($this->inputs[$i]);
+
+        // clean up all related state for that product slot
+        unset($this->selectedProduct[$index]);
+        unset($this->qty[$index]);
+        unset($this->requestedItem[$index]);
+        unset($this->fitment[$index]);
+        unset($this->fitment_rows[$index]);
     }
+  
 
     public $expenses_inputs = [];
     public $e = 1;
@@ -134,6 +146,43 @@ class Index extends Component
         $e = $e + 1;
         $this->e = $e;
         $this->expenses_inputs[] = $e;
+    }
+
+        // Properties
+    public array $fitment = [];       // [productIndex => bool]
+    public array $fitment_rows = [];  // [productIndex => [rowIndex => [mileage, qty, position]]]
+
+    // Add a fitment row for a specific product
+    public function addFitmentRow(int $productIndex): void
+    {
+        $this->fitment_rows[$productIndex][] = [
+            'mileage'  => '',
+            'qty'      => '',
+            'position' => '',
+        ];
+    }
+
+    // Remove a specific fitment row
+    public function removeFitmentRow(int $productIndex, int $rowIndex): void
+    {
+        unset($this->fitment_rows[$productIndex][$rowIndex]);
+        $this->fitment_rows[$productIndex] = array_values($this->fitment_rows[$productIndex]);
+    }
+
+    // When fitment checkbox is toggled on, seed one empty row
+    public function updatedFitment($value, string $productIndex): void
+    {
+        if ($value && empty($this->fitment_rows[(int)$productIndex])) {
+            $this->fitment_rows[(int)$productIndex][] = [
+                'mileage'  => '',
+                'qty'      => '',
+                'position' => '',
+            ];
+        }
+
+        if (!$value) {
+            unset($this->fitment_rows[(int)$productIndex]);
+        }
     }
 
        private function resetExpenseInputFields(){
@@ -198,6 +247,8 @@ class Index extends Component
 
         $this->products = $query->orderBy('name', 'asc')->get();
     }
+
+   
 
     public function updatedSearchTicket($value)
     {
@@ -578,6 +629,36 @@ class Index extends Component
             $dispatch_item->save();
 
             $dispatch_total += $amountFromRow;
+
+            if (!empty($this->fitment[$key])) {
+                $ticket = Ticket::find($dispatch->ticket_id);
+
+                foreach ($this->fitment_rows[$key] ?? [] as $row) {
+                    $movement = new Movement;
+                    $movement->user_id     = Auth::user()->id;
+                    $movement->dispatch_id = $dispatch->id;
+                    $movement->dispatch_item_id = $dispatch->id;
+                    $movement->ticket_id   = $ticket?->id;
+                    $movement->horse_id    = $ticket?->horse_id;
+                    $movement->vehicle_id  = $ticket?->vehicle_id;
+                    $movement->trailer_id  = $ticket?->trailer_id;
+                    $movement->product_id  = $model->product?->id;
+
+                    if ($this->department === 'tyre') {
+                        $movement->tyre_id  = $collectionId;
+                    } elseif ($this->department === 'asset') {
+                        $movement->asset_id  = $collectionId;
+                    } elseif ($this->department === 'inventory') {
+                        $movement->inventory_id  = $collectionId;
+                    } 
+                    
+                    $movement->date        = now();
+                    $movement->mileage_moved = $row['mileage'];
+                    $movement->qty         = $row['qty'];
+                    $movement->position    = $row['position'];
+                    $movement->save();
+                }
+            }
         }
 
         return $dispatch_total;
@@ -714,6 +795,7 @@ class Index extends Component
         foreach ($this->selectedProduct as $key => $productId) {
 
             $requestedQty = (float)($this->qty[$key] ?? 0);
+
             if ($requestedQty <= 0) {
                 continue;
             }
@@ -818,6 +900,29 @@ class Index extends Component
             }
 
             $dispatch_total += $totalLineAmount;
+
+            if (!empty($this->fitment[$key])) {
+                $ticket = Ticket::find($dispatch->ticket_id);
+
+                foreach ($this->fitment_rows[$key] ?? [] as $row) {
+                    $movement = new Movement;
+                    $movement->user_id     = Auth::user()->id;
+                    $movement->dispatch_id = $dispatch->id;
+                    $movement->dispatch_item_id = $dispatch->id;
+                    $movement->ticket_id   = $ticket?->id;
+                    $movement->horse_id    = $ticket?->horse_id;
+                    $movement->vehicle_id  = $ticket?->vehicle_id;
+                    $movement->trailer_id  = $ticket?->trailer_id;
+                    $movement->product_id  = $productId;
+                    $movement->date        = now();
+                    $movement->mileage_moved = $row['mileage'];
+                    $movement->qty         = $row['qty'];
+                    $movement->position    = $row['position'];
+                    $movement->save();
+                }
+            }
+
+           
         }
 
         return $dispatch_total;
@@ -957,6 +1062,26 @@ class Index extends Component
             }
 
             $dispatch_total += $totalLineAmount;
+
+            if (!empty($this->fitment[$key])) {
+                $ticket = Ticket::find($dispatch->ticket_id);
+
+                foreach ($this->fitment_rows[$key] ?? [] as $row) {
+                    $movement = new Movement;
+                    $movement->user_id     = Auth::user()->id;
+                    $movement->dispatch_id = $dispatch->id;
+                    $movement->ticket_id   = $ticket?->id;
+                    $movement->horse_id    = $ticket?->horse_id;
+                    $movement->vehicle_id  = $ticket?->vehicle_id;
+                    $movement->trailer_id  = $ticket?->trailer_id;
+                    $movement->product_id  = $productId;
+                    $movement->date        = now();
+                    $movement->mileage_moved = $row['mileage'];
+                    $movement->qty         = $row['qty'];
+                    $movement->position    = $row['position'];
+                    $movement->save();
+                }
+            }
         }
 
         return $dispatch_total;
@@ -1004,7 +1129,7 @@ class Index extends Component
                 }
             }elseif ($this->expand == False) {
                 if($this->company->valuation_method == "AVCO"){
-                    $dispatch_total = $this->paginationViewroductAVCO($dispatch);
+                    $dispatch_total = $this->productAVCO($dispatch);
                 }elseif($this->company->valuation_method == "FIFO"){
                     $dispatch_total = $this->productFIFO($dispatch);
                 }

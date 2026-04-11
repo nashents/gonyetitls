@@ -33,5 +33,8 @@ class DispatchItem extends Model implements Auditable
     public function ticket_inventory(){
         return $this->hasOne('App\Models\TicketInventory');
     }
+    public function movements(){
+        return $this->hasMany('App\Models\Movement');
+    }
 
 }
