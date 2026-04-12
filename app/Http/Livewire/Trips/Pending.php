@@ -2,32 +2,33 @@
 
 namespace App\Http\Livewire\Trips;
 
-use App\Models\Bill;
-use App\Models\Fuel;
-use App\Models\Hour;
-use App\Models\Trip;
-use App\Models\User;
-use App\Models\Horse;
-use App\Models\Driver;
+use App\Mail\AuthorizationNotificationMail;
+use App\Mail\FuelOrderMail;
+use App\Mail\TransportOrderMail;
+use App\Mail\TripUpdatesMail;
 use App\Models\Account;
+use App\Models\Bill;
+use App\Models\BillExpense;
+use App\Models\Container;
+use App\Models\Driver;
 use App\Models\Expense;
+use App\Models\Fuel;
+use App\Models\GatePass;
+use App\Models\Horse;
+use App\Models\Hour;
+use App\Models\LoadingPoint;
 use App\Models\Mileage;
 use App\Models\Trailer;
-use App\Models\Vehicle;
-use Livewire\Component;
-use App\Models\GatePass;
-use App\Models\Container;
-use App\Mail\FuelOrderMail;
-use App\Models\BillExpense;
 use App\Models\Transporter;
-use App\Models\LoadingPoint;
-use Livewire\WithPagination;
-use App\Mail\TripUpdatesMail;
-use App\Mail\TransportOrderMail;
-use Illuminate\Support\Facades\DB;
+use App\Models\Trip;
+use App\Models\UnitsOfMeasure;
+use App\Models\User;
+use App\Models\Vehicle;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
-use App\Mail\AuthorizationNotificationMail;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class Pending extends Component
 {
@@ -67,7 +68,7 @@ class Pending extends Component
     public $deliver_point;
     public $weight;
     public $cargo;
-    public $measurement;
+    public $units_of_measure_id;
     public $litreage;
     public $quantity;
     public $authorized_by;
@@ -697,7 +698,7 @@ class Pending extends Component
                 }else{
                     $this->litreage = $trip->litreage;
                 }
-                $this->measurement = $trip->measurement;
+                $this->units_of_measure_id = $trip->units_of_measure_id;
                 $this->cargo = $trip->cargo ? $trip->cargo->name : "";
                 $this->weight = $trip->weight;
                 $this->delivery_point = $trip->offloading_point ? $trip->offloading_point->name : "";
@@ -713,6 +714,7 @@ class Pending extends Component
                
 
                 if ( isset($this->loading_point_email) && $this->loading_point_email != "") {
+                    $uom = UnitsOfMeasure::find($this->trip?->units_of_measure_id);
                     $data = array(
                         'email'=> $this->loading_point_email,
                         'date'=> $this->start_date,
@@ -728,7 +730,7 @@ class Pending extends Component
                         'cargo'=> $this->cargo,
                         'litreage'=> $this->litreage,
                         'quantity'=> $this->quantity,
-                        'measurement'=> $this->measurement,
+                        'uom'=> $uom?->name,
                         'weight'=> $this->weight,
                        );
         
@@ -1244,7 +1246,7 @@ class Pending extends Component
                         }else{
                             $this->litreage = $trip->litreage;
                         }
-                        $this->measurement = $trip->measurement;
+                        $this->units_of_measure_id = $trip->units_of_measure_id;
                         $this->cargo = $trip->cargo ? $trip->cargo->name : "";
                         $this->weight = $trip->weight;
                         $this->delivery_point = $trip->offloading_point ? $trip->offloading_point->name : "";
