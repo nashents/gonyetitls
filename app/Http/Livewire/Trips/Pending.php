@@ -1533,7 +1533,11 @@ class Pending extends Component
                 'trip_transport_orders.transport_order.customer',
                 'trip_transport_orders.transport_order.cargo',
             ])
-            ->where('authorization', 'pending');
+           ->where(function ($q) {
+                $q->where('authorization', 'pending')
+                ->orWhereNull('authorization')
+                ->orWhere('authorization', '');
+            });
 
         // Restrict non-admin users
         $query->when(!$isAdmin, function ($q) use ($user) {
