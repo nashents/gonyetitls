@@ -1896,6 +1896,7 @@ class Edit extends Component
         $transport_order->exchange_customer_freight = $this->exchange_customer_freight;
         $transport_order->distance = $this->distance;
         $transport_order->save();
+ 
         
     }
 
@@ -2020,6 +2021,7 @@ class Edit extends Component
             $trip->weight = $this->weight;
           
             $trip->freight = $this->freight;
+           
             $trip->transporter_freight = $this->transporter_freight;
             $trip->exchange_rate = $this->exchange_rate;
             $trip->exchange_customer_freight = $this->exchange_customer_freight;
@@ -2031,7 +2033,7 @@ class Edit extends Component
         }
 
         $trip->update();
-        
+       
 
         $this->trip = $trip;
 
@@ -2090,8 +2092,9 @@ class Edit extends Component
                         $trip_transport_order->currency_id = $currency_id;
 
                     }else{
-                          
+                              
                         if ($transport_order) {
+
                            
                             $trip_transport_order->tto_number  = $trip_transport_order->tto_number ?: $this->ttoNumber();
                             $trip_transport_order->allocated_quantity  = $transport_order->quantity;
@@ -2112,12 +2115,26 @@ class Edit extends Component
 
                     $trip_transport_order->save();
 
-                   
 
-                    $default_currency_id = $this->company->currrency_id ?? 1;
-                    $totalFreight += $default_currency_id == $trip_transport_order->currency_id ? $trip_transport_order->allocated_freight : $trip_transport_order->exchange_amount;
-                    $totalWeight += $trip_transport_order->allocated_weight;
-                    $totalLitreage += $trip_transport_order->allocated_litreage;
+                    $allSameCurrency = $trip->trip_transport_orders
+                        ->pluck('currency_id')
+                        ->unique()
+                        ->count() === 1;
+
+                    if ($trip->trip_transport_orders && $trip->trip_transport_orders->count() > 1) {
+                        $totalFreight += $allSameCurrency
+                            ? $trip_transport_order->allocated_freight
+                            : $trip_transport_order->exchange_amount;
+                        $totalWeight += $trip_transport_order->allocated_weight;
+                        $totalLitreage += $trip_transport_order->allocated_litreage;
+                    } else {
+                        $totalFreight += $trip_transport_order->allocated_freight;
+                        $totalWeight += $trip_transport_order->allocated_weight;
+                        $totalLitreage += $trip_transport_order->allocated_litreage;
+                    }
+                    
+
+                  
                 
                     $this->createDeliveryNotes($trip_transport_order);
                     $this->addDestinations($trip_transport_order);
@@ -2200,10 +2217,22 @@ class Edit extends Component
 
                     $trip_transport_order->save();
 
-                    $default_currency_id = $this->company->currrency_id ?? 1;
-                    $totalFreight += $default_currency_id == $trip_transport_order->currency_id ? $trip_transport_order->allocated_freight : $trip_transport_order->exchange_amount;
-                    $totalWeight += $trip_transport_order->allocated_weight;
-                    $totalLitreage += $trip_transport_order->allocated_litreage;
+                     $allSameCurrency = $trip->trip_transport_orders
+                        ->pluck('currency_id')
+                        ->unique()
+                        ->count() === 1;
+
+                    if ($trip->trip_transport_orders && $trip->trip_transport_orders->count() > 1) {
+                        $totalFreight += $allSameCurrency
+                            ? $trip_transport_order->allocated_freight
+                            : $trip_transport_order->exchange_amount;
+                        $totalWeight += $trip_transport_order->allocated_weight;
+                        $totalLitreage += $trip_transport_order->allocated_litreage;
+                    } else {
+                        $totalFreight += $trip_transport_order->allocated_freight;
+                        $totalWeight += $trip_transport_order->allocated_weight;
+                        $totalLitreage += $trip_transport_order->allocated_litreage;
+                    }
 
                     $this->createDeliveryNotes($trip_transport_order);
                     $this->addDestinations($trip_transport_order);

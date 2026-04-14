@@ -1793,10 +1793,24 @@ class Create extends Component
 
                         $trip_transport_order->save();
 
-                        $default_currency_id = $this->company->currrency_id ?? 1;
-                        $totalFreight += $default_currency_id == $trip_transport_order->currency_id ? $trip_transport_order->allocated_freight : $trip_transport_order->exchange_amount;
-                        $totalWeight += $trip_transport_order->allocated_weight;
-                        $totalLitreage += $trip_transport_order->allocated_litreage;
+                       
+                        $allSameCurrency = $trip->trip_transport_orders
+                            ->pluck('currency_id')
+                            ->unique()
+                            ->count() === 1;
+
+                        if ($trip->trip_transport_orders && $trip->trip_transport_orders->count() > 1) {
+                            $totalFreight += $allSameCurrency
+                                ? $trip_transport_order->allocated_freight
+                                : $trip_transport_order->exchange_amount;
+                            $totalWeight += $trip_transport_order->allocated_weight;
+                            $totalLitreage += $trip_transport_order->allocated_litreage;
+                        } else {
+                            $totalFreight += $trip_transport_order->allocated_freight;
+                            $totalWeight += $trip_transport_order->allocated_weight;
+                            $totalLitreage += $trip_transport_order->allocated_litreage;
+                        }
+                    
 
                         $this->createDeliveryNotes($trip_transport_order);
                         $this->addDestinations($trip_transport_order);
