@@ -41,7 +41,12 @@ class Preview extends Component
      */
     private function makeLedger(int $currencyId): \Illuminate\Database\Query\Builder
     {
-        $inv = Invoice::query()
+        // Excluded invoice IDs that have approved credit notes
+        $excludedInvoiceIds = Invoice::whereHas('credit_notes', function ($q) {
+            $q->where('authorization', 'approved');
+        })->pluck('id')->toArray();
+
+        $inv = DB::table('invoices')
             ->select([
                 'date',
                 'created_at',
@@ -51,11 +56,12 @@ class Preview extends Component
             ->where('authorization', 'approved')
             ->where('customer_id', $this->selectedCustomer)
             ->where('currency_id', $currencyId)
-            ->whereDoesntHave('credit_notes', function ($q) {
-                $q->where('authorization', 'approved');
+            ->whereNull('deleted_at')
+            ->when(!empty($excludedInvoiceIds), function ($q) use ($excludedInvoiceIds) {
+                $q->whereNotIn('id', $excludedInvoiceIds);
             });
 
-        $pay = Payment::query()
+        $pay = DB::table('payments')
             ->select([
                 'date',
                 'created_at',
@@ -64,7 +70,8 @@ class Preview extends Component
             ])
             ->where('customer_id', $this->selectedCustomer)
             ->whereNotNull('accrual_balance')
-            ->where('currency_id', $currencyId);
+            ->where('currency_id', $currencyId)
+            ->whereNull('deleted_at');
 
         return $inv->unionAll($pay);
     }
