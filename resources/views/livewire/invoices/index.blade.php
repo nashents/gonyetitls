@@ -160,7 +160,8 @@
                                     <td>
                                         {{$invoice->invoice_number}}
                                         <small>
-                                            <strong>CreatedBy: </strong>{{$invoice->user ? $invoice->user->name : ""}} {{$invoice->user ? $invoice->user->surname : ""}} <br>
+                                            <strong>By: </strong>{{$invoice->user ? $invoice->user->name : ""}} {{$invoice->user ? $invoice->user->surname : ""}} <br>
+                                            <strong>On: </strong>{{ \Carbon\Carbon::parse($invoice->created_at)->format('d M Y H:i:s') }}
                                             @if ($invoice->sales_order_number)
                                                 <br>
                                                 <strong>S.O.#:</strong> {{$invoice->sales_order_number}}
