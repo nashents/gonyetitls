@@ -118,7 +118,7 @@
                                         <td>
                                             {{$payment->payment_number}}
                                             <small>
-                                                <strong>Recorded By:</strong> {{$payment->user?->name}} {{$payment->user?-surname}} <br>
+                                                <strong>Recorded By:</strong> {{$payment->user?->name}} {{$payment->user?->surname}} <br>
                                                 <strong>On:</strong> {{ \Carbon\Carbon::parse($payment->created_at)->format('d M Y H:i:s') }}
                                             </small>
                                         </td>
