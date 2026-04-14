@@ -115,7 +115,13 @@
                                     <tbody>
                                         @forelse ($payments as $payment)
                                       <tr>
-                                        <td>{{$payment->payment_number}}</td>
+                                        <td>
+                                            {{$payment->payment_number}}
+                                            <small>
+                                                <strong>Recorded By:</strong> {{$payment->user?->name}} {{$payment->user?->name}} <br>
+                                                <strong>On:</strong> {{ \Carbon\Carbon::parse($payment->created_at)->format('d M Y H:i:s') }}
+                                            </small>
+                                        </td>
                                         <td>{{Carbon\Carbon::parse($payment->date)->format('d M Y')}}</td>
                                         <td>
                                             @if ($payment->invoice)
