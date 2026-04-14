@@ -10,7 +10,6 @@
                 <a href="javascript:void(0)" onclick="printSection()" class="btn btn-default border-primary btn-wide btn-rounded">
                     <i class="fa fa-print" style="color: black"></i> Print
                 </a>
-
                 @if (isset($selectedCustomer) && (isset($selectedType) && $selectedType == "Outstanding Invoices"))
                     <a href="{{ route('customer_statements.pdf.outstanding', ['selectedCustomer' => $selectedCustomer, 'selectedType' => $selectedType]) }}"
                        class="btn btn-default border-primary btn-wide btn-rounded">

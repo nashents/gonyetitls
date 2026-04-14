@@ -785,7 +785,7 @@ class Create extends Component
         $this->allocated_weight[$key] = $transport_order->weight;
         $this->allocated_litreage[$key] = $transport_order->litreage;
         $this->allocated_quantity[$key] = $transport_order->quantity;
-        $this->allocated_units_of_measure_id[$key] = $transport_order->units_of_measure_id;
+        $this->allocated_units_of_measure_id[$key] = $transport_order->units_of_measure_id ?: Null;
     }
     
 
@@ -1446,7 +1446,8 @@ class Create extends Component
                             $trip_destination->quantity = $this->offloaded_quantity[$key];
                         }
                     
-                        $trip_destination->units_of_measure_id = $this->units_of_measure_id;
+                        $trip_destination->units_of_measure_id = $this->units_of_measure_id ?: Null;
+
                         if (isset($this->offloaded_litreage[$key])) {
                             $trip_destination->litreage = $this->offloaded_litreage[$key];
                         }
@@ -1477,8 +1478,7 @@ class Create extends Component
                 $trip_destination->destination_id = $this->selectedTo;
                 $trip_destination->weight = $this->weight;
                 $trip_destination->quantity = $this->quantity;
-                
-                $trip_destination->units_of_measure_id = $this->units_of_measure_id;
+                $trip_destination->units_of_measure_id = $this->units_of_measure_id ?: Null;
                 $trip_destination->litreage = $this->litreage;
                 $trip_destination->litreage_at_20 = $this->litreage_at_20;
                 $trip_destination->rate = $this->rate;
@@ -1571,7 +1571,7 @@ class Create extends Component
                 $transport_order->multiple_destinations = $this->multiple_destinations;
                 $transport_order->quantity = $this->quantity;
                 $transport_order->litreage = $this->litreage;
-                $transport_order->units_of_measure_id = $this->units_of_measure_id;
+                $transport_order->units_of_measure_id = $this->units_of_measure_id ?: Null;
                 $transport_order->weight = $this->weight;
                 $transport_order->status = "Pending";
                 $transport_order->rate = $this->rate;
@@ -1592,7 +1592,7 @@ class Create extends Component
                 $delivery_note->user_id =  $trip_transport_order->created_by;
                 $delivery_note->trip_id = $trip_transport_order->trip_id;
                 $delivery_note->transport_order_id = $trip_transport_order->transport_order_id;
-                $delivery_note->units_of_measure_id = $trip_transport_order->units_of_measure_id;
+                $delivery_note->units_of_measure_id = $trip_transport_order->units_of_measure_id ?: Null;
                 $delivery_note->distance = $trip_transport_order->distance;
                
                 if (isset($trip->cargo)) {
@@ -1697,12 +1697,14 @@ class Create extends Component
                  
                     $trip->cargo_details = $this->cargo_details;
                     $trip->with_cargos = $this->with_cargos;
-                   
+                        
                     $trip->rate = $this->rate;
                     $trip->multiple_destinations = $this->multiple_destinations;
                     $trip->transporter_rate = $this->transporter_rate;
                     $trip->quantity = $this->quantity;
-                    $trip->units_of_measure_id = $this->units_of_measure_id;
+                    
+                    $trip->units_of_measure_id = $this->units_of_measure_id ?: Null;
+                  
                     $trip->litreage = $this->litreage;
                     $trip->litreage_at_20 = $this->litreage_at_20;
                     $trip->weight = $this->weight;
@@ -1718,6 +1720,7 @@ class Create extends Component
                 }
 
                 $trip->save();
+                
              
                 if (!empty($this->selectedTransportOrder)) {
                  
@@ -1777,7 +1780,7 @@ class Create extends Component
                                 $trip_transport_order->allocated_litreage  = $transport_order->litreage;
                                 $trip_transport_order->allocated_freight  = $transport_order->freight;
                                 $trip_transport_order->allocated_rate  = $transport_order->rate;
-                                $trip_transport_order->units_of_measure_id = $transport_order->units_of_measure_id;
+                                $trip_transport_order->units_of_measure_id = $transport_order->units_of_measure_id ?: Null;
                                 $trip_transport_order->currency_id = $transport_order->currency_id;
                                 $trip_transport_order->exchange_rate = $transport_order->exchange_rate;
                                 $trip_transport_order->exchange_amount = $transport_order->exchange_customer_freight;
