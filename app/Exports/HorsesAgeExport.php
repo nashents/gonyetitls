@@ -38,10 +38,19 @@ WithCustomStartCell
         $make = $horse->horse_make? $horse->horse_make->name : "";
         $model = $horse->horse_model? $horse->horse_model->name : "";
         $fleet_number = $horse->fleet_number ? "(".$horse->fleet_number.")" : "";
-        if (isset($horse->year)) {
-            $current_year = date('Y');
-            $age = $current_year-$horse->year;
-        }else {
+
+        
+        if (isset($horse->year) && is_numeric($horse->year)) {
+
+            $current_year = (int) date('Y');
+
+            if (is_numeric($current_year)) {
+                $age = $current_year - (int) $horse->year;
+            } else {
+                $age = "";
+            }
+
+        } else {
             $age = "";
         }
     

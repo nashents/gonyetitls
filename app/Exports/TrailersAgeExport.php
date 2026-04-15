@@ -37,10 +37,17 @@ WithCustomStartCell
         
         $fleet_number = $trailer->fleet_number ? "(".$trailer->fleet_number.")" : "";
            
-        if (isset($trailer->year)) {
-            $current_year = date('Y');
-            $age = $current_year-$trailer->year;
-        }else {
+        if (isset($trailer->year) && is_numeric($trailer->year)) {
+
+            $current_year = (int) date('Y');
+
+            if (is_numeric($current_year)) {
+                $age = $current_year - (int) $trailer->year;
+            } else {
+                $age = "";
+            }
+
+        } else {
             $age = "";
         }
     

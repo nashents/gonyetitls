@@ -38,10 +38,17 @@ WithCustomStartCell
         $make = $vehicle->vehicle_make? $vehicle->vehicle_make->name : "";
         $model = $vehicle->vehicle_model? $vehicle->vehicle_model->name : "";
         $fleet_number = $vehicle->fleet_number ? "(".$vehicle->fleet_number.")" : "";
-        if (isset($vehicle->year)) {
-            $current_year = date('Y');
-            $age = $current_year-$vehicle->year;
-        }else {
+        if (isset($vehicle->year) && is_numeric($vehicle->year)) {
+
+            $current_year = (int) date('Y');
+
+            if (is_numeric($current_year)) {
+                $age = $current_year - (int) $vehicle->year;
+            } else {
+                $age = "";
+            }
+
+        } else {
             $age = "";
         }
     
