@@ -155,80 +155,78 @@
                                 @if (isset($invoices))
                                 <tbody>
                                     @forelse ($invoices as $invoice)
-                                  
-                                  <tr>
-                                    <td>
-                                        {{$invoice->invoice_number}}
-                                        <small>
-                                            <strong>By: </strong>{{$invoice->user ? $invoice->user->name : ""}} {{$invoice->user ? $invoice->user->surname : ""}} <br>
-                                            <strong>On: </strong>{{ \Carbon\Carbon::parse($invoice->created_at)->format('d M Y H:i:s') }}
-                                            @if ($invoice->sales_order_number)
-                                                <br>
-                                                <strong>S.O.#:</strong> {{$invoice->sales_order_number}}
-                                                <br>
-                                            @endif
-                                            @if ($invoice->pat_number)
-                                                <strong>PAT#:</strong>{{$invoice->pat_number}}
-                                                <br>
-                                            @endif
-                                            @if($invoice->purchase_order_number)
-                                                <strong>P.O.#</strong>{{$invoice->purchase_order_number}}
-                                                <br>
-                                            @endif
-                                        </small>
-                                    </td>
-                                     
-                                    <td>
-                                        @if ($invoice->customer)
-                                            {{$invoice->customer->name}}
-                                        @elseif($invoice->transporter)
-                                            {{$invoice->transporter->name}}
-                                        @endif
-                                    </td>
-                                    <td>
-                                        <small>
-                                                @if ($invoice->invoice_items)
-                                                    @foreach ($invoice->invoice_items as $item)
-                                                        @if ($item->product)
-                                                            <strong>{{$item->product ? $item->product->name : ""}} {{$item->product ? $item->product->identification_number : ""}} {{$item->inventory ? $item->inventory->serial_number : ""}}</strong>  
-                                                        @elseif($item->trip)  
-                                                            <a href="{{route('trips.show',$item->trip?->id)}}" target="_blank" style="color: blue"><strong>{{$item->trip ? $item->trip->trip_number : ""}}</strong></a>
-                                                        @elseif($item->trip_transport_order)  
-                                                            <a href="{{route('trip_transport_orders.show', $item->trip_transport_order->id)}}" target="_blank" style="color: blue"><strong>{{$item->trip_transport_order->transport_order ? $item->trip_transport_order->tto_number : ""}}</strong></a>  
-                                                        @elseif($item->rental)  
-                                                            <strong>{{$item->rental ? $item->rental->car_rental_number : ""}}</strong>  
-                                                        @endif 
-                                                        {{-- {{$item->description}} --}}
-                                                         @ {{number_format($item->subtotal_incl,2)}} @if (!$loop->last),@endif
-                                                    @endforeach
+                                    <tr>
+                                        <td>
+                                            {{$invoice->invoice_number}} <br>
+                                            <small>
+                                                <strong>By: </strong>{{$invoice->user ? $invoice->user->name : ""}} {{$invoice->user ? $invoice->user->surname : ""}} <br>
+                                                <strong>On: </strong>{{ \Carbon\Carbon::parse($invoice->created_at)->format('d M Y H:i:s') }}
+                                                @if ($invoice->sales_order_number)
+                                                    <br>
+                                                    <strong>S.O.#:</strong> {{$invoice->sales_order_number}}
+                                                    <br>
                                                 @endif
-                                        </small>
-                                       
-                                    </td>
-                                    <td>
-                                        {{$invoice->date}}
-                                            <hr style="margin-top:5px; margin-bottom:5px">  
-                                        <span class="label label-{{$this->checkExpiry($invoice->expiry) ? 'success' : 'danger' }}">{{$invoice->expiry}}</span>
-                                    </td>
-                                    <td><span class="label label-{{($invoice->status == 'Paid') ? 'success' : (($invoice->status == 'Partial') ? 'warning' : 'danger') }}">{{ $invoice->status }}</span></td>
-                                    <td>
-                                        {{$invoice->currency ? $invoice->currency->name : ""}}
-                                    </td>
-                                    <td>
-                                        @if ($invoice->subtotal)
-                                        {{$invoice->currency ? $invoice->currency->symbol : ""}}{{number_format($invoice->subtotal,2)}}
-                                        @endif
-                                    </td>
-                                    <td>
-                                      
-                                        {{$invoice->currency ? $invoice->currency->symbol : ""}}{{number_format($invoice->tax_amount ? $invoice->tax_amount : 0,2)}}
-                                       
-                                    </td>
-                                    <td>
-                                        @if ($invoice->total)
-                                        {{$invoice->currency ? $invoice->currency->symbol : ""}}{{number_format($invoice->total,2)}}
-                                        @endif
-                                    </td>
+                                                @if ($invoice->pat_number)
+                                                    <strong>PAT#:</strong>{{$invoice->pat_number}}
+                                                    <br>
+                                                @endif
+                                                @if($invoice->purchase_order_number)
+                                                    <strong>P.O.#</strong>{{$invoice->purchase_order_number}}
+                                                    <br>
+                                                @endif
+                                            </small>
+                                        </td>
+                                        <td>
+                                            @if ($invoice->customer)
+                                                {{$invoice->customer->name}}
+                                            @elseif($invoice->transporter)
+                                                {{$invoice->transporter->name}}
+                                            @endif
+                                        </td>
+                                        <td>
+                                            <small>
+                                                    @if ($invoice->invoice_items)
+                                                        @foreach ($invoice->invoice_items as $item)
+                                                            @if ($item->product)
+                                                                <strong>{{$item->product ? $item->product->name : ""}} {{$item->product ? $item->product->identification_number : ""}} {{$item->inventory ? $item->inventory->serial_number : ""}}</strong>  
+                                                            @elseif($item->trip)  
+                                                                <a href="{{route('trips.show',$item->trip?->id)}}" target="_blank" style="color: blue"><strong>{{$item->trip ? $item->trip->trip_number : ""}}</strong></a>
+                                                            @elseif($item->trip_transport_order)  
+                                                                <a href="{{route('trip_transport_orders.show', $item->trip_transport_order->id)}}" target="_blank" style="color: blue"><strong>{{$item->trip_transport_order->transport_order ? $item->trip_transport_order->tto_number : ""}}</strong></a>  
+                                                            @elseif($item->rental)  
+                                                                <strong>{{$item->rental ? $item->rental->car_rental_number : ""}}</strong>  
+                                                            @endif 
+                                                            {{-- {{$item->description}} --}}
+                                                            @ {{number_format($item->subtotal_incl,2)}} @if (!$loop->last),@endif
+                                                        @endforeach
+                                                    @endif
+                                            </small>
+                                        
+                                        </td>
+                                        <td>
+                                            {{$invoice->date}}
+                                                <hr style="margin-top:5px; margin-bottom:5px">  
+                                            <span class="label label-{{$this->checkExpiry($invoice->expiry) ? 'success' : 'danger' }}">{{$invoice->expiry}}</span>
+                                        </td>
+                                        <td><span class="label label-{{($invoice->status == 'Paid') ? 'success' : (($invoice->status == 'Partial') ? 'warning' : 'danger') }}">{{ $invoice->status }}</span></td>
+                                        <td>
+                                            {{$invoice->currency ? $invoice->currency->name : ""}}
+                                        </td>
+                                        <td>
+                                            @if ($invoice->subtotal)
+                                            {{$invoice->currency ? $invoice->currency->symbol : ""}}{{number_format($invoice->subtotal,2)}}
+                                            @endif
+                                        </td>
+                                        <td>
+                                        
+                                            {{$invoice->currency ? $invoice->currency->symbol : ""}}{{number_format($invoice->tax_amount ? $invoice->tax_amount : 0,2)}}
+                                        
+                                        </td>
+                                        <td>
+                                            @if ($invoice->total)
+                                            {{$invoice->currency ? $invoice->currency->symbol : ""}}{{number_format($invoice->total,2)}}
+                                            @endif
+                                        </td>
                                     <td>
                                         @php
                                             $amount_paid = $invoice->payments->sum('amount');

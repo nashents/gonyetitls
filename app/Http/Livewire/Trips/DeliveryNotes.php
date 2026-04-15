@@ -52,7 +52,6 @@ class DeliveryNotes extends Component
     public $deliver_point;
     public $weight;
     public $cargo;
-    public $units_of_measure;
     public $litreage;
     public $quantity;
     public $authorized_by;
@@ -184,6 +183,8 @@ class DeliveryNotes extends Component
     public $rank_names;
     public $calculation_measurement;
     public $units_of_measures;
+    public $units_of_measure;
+    public $units_of_measure_id;
 
     public $active_tab;
 
@@ -356,7 +357,7 @@ class DeliveryNotes extends Component
           $delivery_note = new DeliveryNote;
           $delivery_note->user_id = Auth::user()->id;
           $delivery_note->trip_id = $trip->id;
-          $delivery_note->units_of_measure = $trip->units_of_measure;
+          $delivery_note->units_of_measure_id = $trip->units_of_measure_id;
           $delivery_note->distance = $trip->distance;
           $delivery_note->loaded_quantity = $trip->quantity;
           $delivery_note->loaded_litreage = $trip->litreage;
@@ -493,7 +494,7 @@ class DeliveryNotes extends Component
 
           $delivery_note = $this->delivery_note;
           if (isset($delivery_note)) {
-              $delivery_note->units_of_measure = $this->units_of_measure;
+              $delivery_note->units_of_measure_id = $this->units_of_measure->id;
               $delivery_note->loaded_quantity = $this->loaded_quantity;
               $delivery_note->distance = $this->distance;
               $delivery_note->loaded_litreage = $this->loaded_litreage;
@@ -521,7 +522,7 @@ class DeliveryNotes extends Component
               $delivery_note = new DeliveryNote;
               $delivery_note->user_id = Auth::user()->id;
               $delivery_note->trip_id = $trip->id;
-              $delivery_note->units_of_measure = $this->units_of_measure;
+              $delivery_note->units_of_measure_id = $this->units_of_measure->id;
               $delivery_note->loaded_quantity = $this->loaded_quantity;
               $delivery_note->distance = $this->distance;
               $delivery_note->loaded_litreage = $this->loaded_litreage;
