@@ -3,20 +3,17 @@
 namespace App\Http\Livewire\Invoices;
 
 
-use App\Models\User;
-use App\Models\Expense;
+
 use App\Models\Invoice;
-use App\Models\Payment;
+
 use Livewire\Component;
-use App\Models\CashFlow;
-use App\Models\Container;
+
 use Livewire\WithPagination;
-use App\Mail\invoiceOrderMail;
-use App\Models\TransportOrder;
+
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Session;
+
 use App\Mail\AuthorizationNotificationMail;
 
 class Pending extends Component
@@ -220,6 +217,8 @@ class Pending extends Component
         if ($this->authorize == "approved") {
 
             if (isset($invoice->customer_id, $invoice->currency_id)) {
+
+
                 if ($invoice->accrual_balance === null) {
 
                     $customerId = $invoice->customer_id;
@@ -237,7 +236,7 @@ class Pending extends Component
                             DB::raw('0 AS source_priority'),
                             'id',
                         ])
-                         ->whereNull('deleted_at') // exclude soft-deleted payments
+                        ->whereNull('deleted_at') // exclude soft-deleted payments
                         ->where('customer_id', $customerId)
                         ->where('currency_id', $currencyId)
                         ->whereNotNull('accrual_balance');

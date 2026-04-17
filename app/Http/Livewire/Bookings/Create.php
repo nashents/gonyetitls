@@ -379,10 +379,10 @@ class Create extends Component
         }
 
         if (filled($this->searchEmployee)) {
-            $this->employees = Employee::where('archive',0)->where('status',1)->where(DB::raw("concat(name, ' ', surname)"), 'LIKE', "%".$this->searchEmployee."%")
+            $this->employees = Employee::where('archive',0)->where(DB::raw("concat(name, ' ', surname)"), 'LIKE', "%".$this->searchEmployee."%")
             ->get();
         }else{
-            $this->employees = Employee::where('archive',0)->where('status',1)->orderBy('name')->orderBy('surname')->get();
+            $this->employees = Employee::where('archive',0)->orderBy('name')->orderBy('surname')->get();
         }
       
        if (filled($this->searchMechanic)) {

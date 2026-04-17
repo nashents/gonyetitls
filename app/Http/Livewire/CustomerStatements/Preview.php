@@ -3,7 +3,7 @@
 namespace App\Http\Livewire\CustomerStatements;
 
 use App\Models\Invoice;
-use App\Models\Payment;
+
 use App\Models\Currency;
 use Livewire\Component;
 use App\Models\Customer;
@@ -133,7 +133,7 @@ class Preview extends Component
                         'created_at',
                         'date as transaction_date',
                         'total as amount',
-                        'balance',           // ← real balance column, not total
+                        'total as balance',           // ← real balance column, not total
                         'accrual_balance'
                     )
                     ->where('authorization', 'approved')

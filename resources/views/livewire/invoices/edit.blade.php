@@ -13,6 +13,7 @@
                         <div class="panel-body">
                             <form wire:submit.prevent="update()" >
                                 <div class="modal-body">
+                                    <p>Please note Financial values are locked after approval. Raise a credit note to make financial adjustments.</p>
                                     <div class="row">
                                         <div class="col-md-3">
                                             <div class="form-group">

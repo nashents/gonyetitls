@@ -246,7 +246,10 @@
                                         @if ($invoice->accrual_balance)
                                             <br>
                                             <small>
-                                                <strong>Accrual Bal: </strong>  {{number_format($invoice->accrual_balance,2)}} <a href="#" wire:click.prevent="showAccrual({{$invoice->id}})"><i class="fas fa-edit"></i></a>
+                                                <strong>Accrual Bal: </strong>  {{number_format($invoice->accrual_balance,2)}} 
+                                                @if (Auth::user()->is_admin())
+                                                    <a href="#" wire:click.prevent="showAccrual({{$invoice->id}})"><i class="fas fa-edit"></i></a>
+                                                @endif
                                             </small>
                                         @endif
                                        

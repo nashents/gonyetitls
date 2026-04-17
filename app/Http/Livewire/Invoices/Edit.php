@@ -24,7 +24,7 @@ use App\Models\TripTransportOrder;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Session;
+
 use Livewire\Component;
 
 class Edit extends Component
@@ -1061,8 +1061,10 @@ class Edit extends Component
         DB::transaction(function () {
             
             if ($this->invoice_id) {
-                
+
                 $invoice = Invoice::find($this->invoice_id);
+              
+
                 $invoice->company_id = $this->company_id;
                 $invoice->bank_account_id = $this->bank_account_id;
                 $invoice->currency_id = $this->selectedCurrency;
@@ -1082,6 +1084,16 @@ class Edit extends Component
                 $invoice->footer = $this->footer;
                 $invoice->subheading = $this->subheading;
                 $invoice->update();
+
+                if ($invoice->authorization === 'approved') {
+                    $this->dispatchBrowserEvent('alert', [
+                        'type'    => 'success',
+                        'message' => 'Invoice updated. Financial values are locked after approval.'
+                    ]);
+
+                    return redirect()->route('invoices.index');
+                
+                }
                 $validAccounts = BankAccount::whereIn('id', (array) $this->bank_account_id)->pluck('id')->toArray();
 
                 if (!empty($validAccounts)) {

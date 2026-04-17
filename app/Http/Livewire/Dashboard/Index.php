@@ -4,14 +4,14 @@ namespace App\Http\Livewire\Dashboard;
 
 use App\Models\Agent;
 use App\Models\Allocation;
-use App\Models\Asset;
+
 use App\Models\Assignment;
 use App\Models\Attendance;
 use App\Models\Bill;
 use App\Models\Booking;
 use App\Models\Branch;
 use App\Models\Breakdown;
-use App\Models\CashFlow;
+
 use App\Models\Checklist;
 use App\Models\Container;
 use App\Models\Currency;
@@ -24,7 +24,7 @@ use App\Models\Dispatch;
 use App\Models\Driver;
 use App\Models\Employee;
 use App\Models\Fuel;
-use App\Models\FuelRequest;
+
 use App\Models\Horse;
 use App\Models\Inspection;
 use App\Models\Inventory;
@@ -302,11 +302,13 @@ class Index extends Component
     public $income_2023;
     public $income_2024;
     public $income_2025;
+    public $income_2026;
     public $expenses_2021;
     public $expenses_2022;
     public $expenses_2023;
     public $expenses_2024;
     public $expenses_2025;
+    public $expenses_2026;
 
     public $company_currency;
     public $chartData;
@@ -1116,6 +1118,8 @@ class Index extends Component
         $this->expenses_2024 = Bill::whereYear('bill_date', '2024')->where('to_be_paid', True)->where('currency_id', $this->selectedCurrency)->where('authorization','approved')->where('total','!=',Null)->where('total','!=',"")->sum('total');
         $this->income_2025 = Invoice::whereYear('date', '2025')->where('currency_id', $this->selectedCurrency)->where('authorization','approved')->where('total','!=',Null)->where('total','!=',"")->sum('total');
         $this->expenses_2025 = Bill::whereYear('bill_date', '2025')->where('to_be_paid', True)->where('currency_id', $this->selectedCurrency)->where('authorization','approved')->where('total','!=',Null)->where('total','!=',"")->sum('total');
+        $this->income_2026 = Invoice::whereYear('date', '2026')->where('currency_id', $this->selectedCurrency)->where('authorization','approved')->where('total','!=',Null)->where('total','!=',"")->sum('total');
+        $this->expenses_2026 = Bill::whereYear('bill_date', '2026')->where('to_be_paid', True)->where('currency_id', $this->selectedCurrency)->where('authorization','approved')->where('total','!=',Null)->where('total','!=',"")->sum('total');
 
         return view('livewire.dashboard.index');
     }

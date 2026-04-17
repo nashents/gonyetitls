@@ -21,7 +21,7 @@ use App\Models\Transporter;
 use App\Models\ExchangeRate;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Session;
+
 
 class Edit extends Component
 {
@@ -31,6 +31,9 @@ class Edit extends Component
     public $exchange_rate;
     public $exchange_amount;
     public $products;
+    public $trip_id;
+    public $account_id;
+    public $account_type_id;
     
     public $selectedProduct = [];
     public $selectedAccount = [];
@@ -48,6 +51,9 @@ class Edit extends Component
     public $selectedCurrentTax = [];
     public $current_tax_rate = [];
 
+    public $expenses;
+    public $trips;
+    public $currency_id;
     public $bill_for;
     public $vendors;
     public $selectedVendor;
@@ -69,6 +75,7 @@ class Edit extends Component
     public $notes;
     public $accounts;
     public $company;
+    public $bill_expense;
   
   
 
@@ -484,6 +491,18 @@ class Edit extends Component
         $bill->due_date = $this->due_date;
         $bill->notes = $this->notes;
         $bill->update();
+
+        if ($bill->authorization === 'approved') {
+            $this->dispatchBrowserEvent('alert', [
+                'type'    => 'success',
+                'message' => 'Bill updated. Financial values are locked after bill approval.'
+            ]);
+
+            return redirect()->route('bills.index');
+        
+        }
+
+
 
         if (isset($this->bill_expenses)) {
             foreach($this->bill_expenses as $key => $expense){

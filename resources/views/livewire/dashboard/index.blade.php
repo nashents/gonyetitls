@@ -1553,6 +1553,12 @@ var MONTHSbar = ["January", "February", "March", "April", "May", "June", "July",
                     "income": {{$income_2025}},
                     "expenses": {{$expenses_2025}},
                     "dashLengthLine": 5
+                  }, 
+                  {
+                    "year": 2026,
+                    "income": {{$income_2026}},
+                    "expenses": {{$expenses_2026}},
+                    "dashLengthLine": 5
                   } 
                   ],
                   "valueAxes": [ {
