@@ -412,18 +412,14 @@ WithCustomStartCell
     }
 
     
-    public function drawings()
+        public function drawings()
     {
         $drawing = new Drawing();
         if (isset(Auth::user()->employee->company)) {
         $drawing->setName(Auth::user()->employee->company->name);
         $drawing->setDescription(Auth::user()->employee->company->name . 'Logo');
-        if (file_exists(public_path('/images/uploads/'.Auth::user()->employee->company->logo))){
-          if (file_exists(public_path('/images/uploads/'.Auth::user()->employee->company->logo))){
+      if (file_exists(public_path('/images/uploads/'.Auth::user()->employee->company->logo))){
             $drawing->setPath(public_path('/images/uploads/'.Auth::user()->employee->company->logo));
-        }else{
-            $drawing->setPath(public_path('/images/uploads/logo.png'));
-        }
         }else{
             $drawing->setPath(public_path('/images/uploads/logo.png'));
         }
