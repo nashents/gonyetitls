@@ -377,7 +377,7 @@
                                         <thead>
                                             <tr>
                                                 <th>Trip#<hr style="margin-top:2px; margin-bottom:2px">Type</th>
-                                                <th>Departure <hr style="margin-top:2px; margin-bottom:2px">Offloaded</th>
+                                                <th>Departure <hr style="margin-top:2px; margin-bottom:2px">Est/Offloaded</th>
                                                 <th>Customer (Cargo)</th>
                                                 <th>Transporter<hr style="margin-top:2px; margin-bottom:2px">Driver</th>
                                                 <th>Horse/Vehicle<hr style="margin-top:2px; margin-bottom:2px">Trailer</th>
