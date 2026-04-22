@@ -387,6 +387,8 @@ class Edit extends Component
     public $employee;
     public $user;
 
+    public $to_exists = False;
+
 
 
     public $inputs = [];
@@ -1852,9 +1854,9 @@ class Edit extends Component
 
     public function createTransportOrder()
     {
-       
+       // its safe because only trips with one TO gets to this stage
         $trip_transport_order = TripTransportOrder::where('trip_id', $this->trip_id)->first();
-
+        $this->to_exists = $trip_transport_order ? True : False;
         $transport_order = $trip_transport_order
             ? TransportOrder::findOrNew($trip_transport_order->transport_order_id)
             : new TransportOrder();
@@ -1896,6 +1898,10 @@ class Edit extends Component
         $transport_order->exchange_customer_freight = $this->exchange_customer_freight;
         $transport_order->distance = $this->distance;
         $transport_order->save();
+
+        if($this->to_exists == False){
+            $this->selectedTransportOrder[] = $transport_order?->id;
+        }
  
         
     }
@@ -1933,12 +1939,14 @@ class Edit extends Component
  
         DB::transaction(function () {
 
-        if($this->attach_transport_order == False){
-          
-             $this->createTransportOrder();
-        }
-
         $trip = Trip::find($this->trip_id);
+
+        $hasTransportOrders = $trip && $trip->trip_transport_orders()->exists();
+
+        if (!$this->attach_transport_order || !$hasTransportOrders) {
+            $this->createTransportOrder();
+        }
+       
 
         $trip->trip_ref = $this->trip_ref;
         $trip->user_id =  $this->user->id ?: null;
@@ -2045,7 +2053,6 @@ class Edit extends Component
 
         if (!empty($this->current_selectedTransportOrder)) {
           
-                
                 foreach ($this->current_selectedTransportOrder as $key => $id) {
                    
 
