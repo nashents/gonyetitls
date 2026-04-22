@@ -189,6 +189,8 @@ class DeliveryNotes extends Component
 
     public $active_tab;
 
+    protected $listeners = ['tripStatusUpdated' => '$refresh'];
+
 
     public function mount($trip){
         $this->trip = $trip;

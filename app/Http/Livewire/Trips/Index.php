@@ -273,6 +273,8 @@ class Index extends Component
     public $cargo_type;
     public $importFile;
 
+    protected $listeners = ['tripStatusUpdated' => '$refresh'];
+
     public function clearFilters(): void
     {
         $this->search              = Null;
