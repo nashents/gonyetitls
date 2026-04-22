@@ -478,6 +478,7 @@ class Index extends Component
         $this->countries = Country::orderBy('name','asc')->get();
         $this->user = Auth::user();
         $this->employee = $this->user->employee;
+        $this->driver = $this->employee->driver;
         $this->employee_department = $this->employee->departments->first();
         $this->company = $this->employee->company;
          foreach($this->employee->departments as $department) {
@@ -1352,7 +1353,9 @@ class Index extends Component
             'trip_transport_orders.transport_order.cargo',
         ];
 
-        $trips = Trip::query()->with($withRelations);
+        $trips = Trip::query()->with($withRelations)->when($this->driver?->id, function ($q) {
+        $q->where('driver_id', $this->driver->id);
+        });
 
         /*
         |--------------------------------------------------------------------------

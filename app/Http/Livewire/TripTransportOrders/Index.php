@@ -24,6 +24,7 @@ class Index extends Component
     public $company;
     public $employee;
     public $user;
+    public $driver;
     protected $queryString = [
         'search'
     ];
@@ -37,6 +38,7 @@ class Index extends Component
 
         $this->user = Auth::user();
         $this->employee =  $this->user->employee;
+        $this->driver =  $this->employee->driver;
         $this->company = Company::with('currency')->find($this->employee->company_id);
 
         $departments = $this->employee->departments;
@@ -63,7 +65,13 @@ class Index extends Component
             'currency',
         ];
 
-        $trip_transport_orders = TripTransportOrder::query()->with($withRelations);
+       $trip_transport_orders = TripTransportOrder::query()
+        ->with($withRelations)
+        ->when($this->driver?->id, function ($q) {
+            $q->whereHas('trip', function ($t) {
+                $t->where('driver_id', $this->driver->id);
+            });
+        });
 
         /*
         |--------------------------------------------------------------------------

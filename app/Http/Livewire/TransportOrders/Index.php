@@ -164,6 +164,7 @@ class Index extends Component
     public $freight;
     public $transporter_rate;
     public $transporter_freight;
+    public $driver;
 
     //Google Maps Api
     public $duration;
@@ -247,6 +248,7 @@ class Index extends Component
         $this->freight_calculation = 'flat_rate';
         $this->user = Auth::user();
         $this->employee =  $this->user->employee;
+        $this->driver =  $this->employee->driver;
         $this->company = Company::with('currency')->find($this->employee->company_id);
         $this->quotations = Quotation::with('customer')
                                     ->whereYear('date', date('Y'))
@@ -1064,7 +1066,13 @@ public function getAuthorizer($id){
             'currency:id,name,symbol',
         ];
 
-        $transport_orders = TransportOrder::query()->with($withRelations);
+        $transport_orders = TransportOrder::query()
+        ->with($withRelations)
+        ->when($this->driver?->id,
+            fn ($q) => $q->whereHas('trips',
+                fn ($t) => $t->where('driver_id', $this->driver->id)
+            )
+        );
 
         /*
         |--------------------------------------------------------------------------
