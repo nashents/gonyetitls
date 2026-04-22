@@ -41,7 +41,11 @@ class TripTransportOrder extends Model
         'delivered_weight'   => 'decimal:3',
         'delivered_volume'   => 'decimal:3',
         'sequence_no'        => 'integer',
+        'exchange_amount'        => 'float',
+         'allocated_litreage' => 'float',
     ];
+
+    
 
     
    
