@@ -2243,6 +2243,8 @@ class Index extends Component
                     ->orWhere('type', 'like', $like)
                     ->orWhere('date', 'like', $like)
                     ->orWhere('for', 'like', $like)
+                    ->orWhere('open_mileage', 'like', $like)
+                    ->orWhere('close_mileage', 'like', $like)
                     ->orWhereHas('customer', fn (Builder $qq) => $qq->where('name', 'like', $like))
                     ->orWhereHas('team', fn (Builder $qq) => $qq->where('name', 'like', $like))
                     ->orWhereHas('horse', function (Builder $qq) use ($like) {

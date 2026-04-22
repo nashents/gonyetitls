@@ -313,7 +313,10 @@
                                                     <strong>Date:</strong> {{$shift->date}} <br>
                                                     <strong>Start:</strong> {{$shift->shift_start_time}} <br>
                                                     <strong>Close:</strong> {{$shift->shift_end_time}} <br>
-                                                    <strong>Duration:</strong> {{$this->calculatedShiftDuration($shift)}}
+                                                    <strong>Duration:</strong> {{$this->calculatedShiftDuration($shift)}} <br>
+                                                    <strong>Start Mileage:</strong> {{$shift->open_mileage}} <br>
+                                                    <strong>Close Mileage:</strong> {{$shift->close_mileage}}
+
                                                 </td>
                                                 <td>
                                                     <strong>Customer:</strong> {{$shift->customer ? $shift->customer->name : ""}} <br>
@@ -353,8 +356,14 @@
                                                         </small>
                                                     @endif
                                                 </td>
+
                                                 <td>
-                                                    {{$shift->actual_mileage ? $shift->actual_mileage : ""}}
+                                                    <strong>Act:</strong> {{$shift->actual_mileage ? $shift->actual_mileage : ""}} 
+                                                    @if ($shift->calculated_mileage)
+                                                        <br>
+                                                    <strong>Cal:</strong> {{$shift->calculated_mileage ? $shift->calculated_mileage : ""}}
+                                                    @endif
+                                                    
                                                         <hr style="margin-top:5px; margin-bottom:5px"> 
                                                     {{$shift->hours ? $shift->hours : ""}}
                                                 </td>
@@ -683,15 +692,15 @@
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label for="name">Opening Mileage</label>
-                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="shift_open_mileage" placeholder="Enter Shift Opening Mileage"/>
+                                        <label for="name">Opening Mileage<span class="required" style="color: red">*</span></label>
+                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="shift_open_mileage" placeholder="Enter Shift Opening Mileage" required/>
                                         @error('shift_open_mileage') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label for="name">Closing Mileage</label>
-                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="shift_close_mileage" placeholder="Enter Shift Closing Mileage"/>
+                                        <label for="name">Closing Mileage<span class="required" style="color: red">*</span></label>
+                                        <input type="number" step="any" min="{{$shift_open_mileage}}" class="form-control" wire:model.debounce.300ms="shift_close_mileage" {{ (is_numeric($shift_open_mileage) && $shift_open_mileage > 0) ? '' : 'disabled' }} placeholder="Enter Shift Closing Mileage" required/>
                                         @error('shift_close_mileage') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
@@ -1413,15 +1422,15 @@
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label for="name">Opening Mileage</label>
-                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="shift_open_mileage" placeholder="Enter Opening Mileage"/>
+                                        <label for="name">Opening Mileage<span class="required" style="color: red">*</span></label>
+                                        <input type="number" step="any" min="0" class="form-control" wire:model.debounce.300ms="shift_open_mileage" placeholder="Enter Opening Mileage" required/>
                                         @error('shift_open_mileage') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label for="name">Closing Mileage</label>
-                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="shift_close_mileage" placeholder="Enter Closing Mileage"/>
+                                        <label for="name">Closing Mileage<span class="required" style="color: red">*</span></label>
+                                         <input type="number" step="any" min="{{$shift_open_mileage}}" class="form-control" wire:model.debounce.300ms="shift_close_mileage" {{ (is_numeric($shift_open_mileage) && $shift_open_mileage > 0) ? '' : 'disabled' }} placeholder="Enter Shift Closing Mileage" required/>
                                         @error('shift_close_mileage') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                     </div>
                                 </div>

@@ -396,7 +396,9 @@
                                         @forelse($trips as $trip)
                                             @php
                                                 $s = $statusMap[$trip->trip_status] ?? ['row' => null, 'cell' => '', 'badge' => 'secondary'];
-                                                $offloadedDate = $trip->delivery_note?->offloaded_date;
+                                                $offloadedDate = ($trip->trip_status === 'Offloaded' && !empty($trip->trip_status_date))
+                                                                    ? $trip->trip_status_date
+                                                                    : $trip->end_date;
                                                 $pod = $trip->pod;
                                                 $proofOfDelivery = App\Models\TripDocument::where('trip_id', $trip->id)->where('title', 'POD')->first();
                                             @endphp

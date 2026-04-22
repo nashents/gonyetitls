@@ -16,4 +16,12 @@ class TripStatus extends Model implements Auditable
      public function trip(){
         return $this->belongsTo('App\Models\Trip');
     }
+
+    protected $fillable = [
+        'user_id',
+        'trip_id',
+        'status',
+        'date',
+        'description',
+    ];
 }

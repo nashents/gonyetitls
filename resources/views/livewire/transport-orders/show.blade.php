@@ -27,6 +27,13 @@
                                 <th class="w-10 text-center line-height-35">Customer</th>
                                 <td class="w-20 line-height-35"> {{$transport_order->customer ? $transport_order->customer->name : ""}}</td>
                             </tr>
+                            @if ($transport_order->quotation)
+                                <tr>
+                                    <th class="w-10 text-center line-height-35">Quotation</th>
+                                    <td class="w-20 line-height-35"> <a href="{{route('quotations.show',$transport_order->quotation?->id)}}" style="color:blue" target="_blank">{{$transport_order->quotation ? $transport_order->quotation->quotation_number : ""}}</a></td>
+                                </tr>
+                            @endif
+                            
                             <tr>
                                 <th class="w-10 text-center line-height-35">Consignee</th>
                                 <td class="w-20 line-height-35"> {{$transport_order->consignee ? $transport_order->consignee->name : ""}}</td>

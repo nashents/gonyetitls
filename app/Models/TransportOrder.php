@@ -27,6 +27,9 @@ class TransportOrder extends Model implements Auditable
      public function trip_destinations(){
         return $this->hasMany('App\Models\TripDestination');
     }
+    public function quotation(){
+        return $this->belongsTo('App\Models\Quotation');
+    }
     public function cargo(){
         return $this->belongsTo('App\Models\Cargo');
     }

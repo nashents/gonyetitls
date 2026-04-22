@@ -24,6 +24,11 @@ class DeliveryNote extends Model implements Auditable
     {
         return $this->belongsTo(TripTransportOrder::class, 'trip_transport_order_id');
     }
+    
+    public function transport_order()
+    {
+        return $this->belongsTo(TransportOrder::class, 'transport_order_id');
+    }
 
     public function trip()
     {

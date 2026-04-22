@@ -641,6 +641,7 @@
                                     <div class="row">
                                         <div class="col-md-8">
                                             <div class="mb-10">
+                                                
                                                 <input type="radio" wire:model.debounce.300ms="freight_calculation" value="flat_rate"  class="line-style" required />
                                                 <label for="one" class="radio-label">Flat Rate</label>
                                                 <input type="radio" wire:model.debounce.300ms="freight_calculation" value="rate_weight"  class="line-style" required />
