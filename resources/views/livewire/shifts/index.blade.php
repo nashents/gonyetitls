@@ -314,8 +314,38 @@
                                                     <strong>Start:</strong> {{$shift->shift_start_time}} <br>
                                                     <strong>Close:</strong> {{$shift->shift_end_time}} <br>
                                                     <strong>Duration:</strong> {{$this->calculatedShiftDuration($shift)}} <br>
-                                                    <strong>Start Mileage:</strong> {{$shift->open_mileage}} <br>
-                                                    <strong>Close Mileage:</strong> {{$shift->close_mileage}}
+                                                    @php
+                                                        $open = $shift->open_mileage;
+                                                        $close = $shift->close_mileage;
+
+                                                        $openNegative  = is_numeric($open) && $open < 0;
+                                                        $closeNegative = is_numeric($close) && $close < 0;
+                                                        $invalidRange  = is_numeric($open) && is_numeric($close) && $close < $open;
+                                                    @endphp
+
+                                                    <strong>Start Mileage:</strong>
+                                                    <span class="badge {{ $openNegative ? 'bg-danger' : 'bg-success' }}">
+                                                        {{ $open ?? 'N/A' }}
+                                                    </span>
+
+                                                    @if($openNegative)
+                                                        <span class="badge bg-danger">Negative</span>
+                                                    @endif
+
+                                                    <br>
+
+                                                    <strong>Close Mileage:</strong>
+                                                    <span class="badge {{ ($closeNegative || $invalidRange) ? 'bg-danger' : 'bg-success' }}">
+                                                        {{ $close ?? 'N/A' }}
+                                                    </span>
+
+                                                    @if($closeNegative)
+                                                        <span class="badge bg-danger">Negative</span>
+                                                    @endif
+
+                                                    @if($invalidRange)
+                                                        <span class="badge bg-warning text-dark">Close &lt; Open</span>
+                                                    @endif
 
                                                 </td>
                                                 <td>
