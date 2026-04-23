@@ -186,10 +186,9 @@
                                             @if ($payment->accrual_balance)
                                             {{$payment->currency ? $payment->currency->symbol : ""}} {{number_format($payment->accrual_balance,2)}} 
                                             @endif
-                                            @if (Auth::user()->is_admin())
+                                            {{-- @if (Auth::user()->is_admin()) --}}
                                                 <a href="#" wire:click.prevent="showAccrual({{$payment->id}})"><i class="fas fa-edit"></i></a>
-                                            @endif
-                                            
+                                            {{-- @endif --}}
                                         </td>
                                          <td class="w-10 line-height-35 table-dropdown">
                                             <div class="dropdown">

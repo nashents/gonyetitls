@@ -73,6 +73,10 @@
             <dd class="mono" data-field="trip.number">
               {{ $trip->trip_number }}{{ $trip->trip_ref ? ' / '.$trip->trip_ref : '' }}
             </dd>
+            <dt>Bill Of Entry #</dt>
+            <dd class="mono" data-field="trip.number">
+              {{ $trip->bill_of_entry }}
+            </dd>
             <dt>Date</dt>
             <dd data-field="manifest.date">{{ $trip->start_date }}</dd>
             <dt>Created By</dt>
@@ -258,32 +262,33 @@
               <tr>
                 <th style="width:40px" class="center">#</th>
                 <th>Description</th>
-                <th style="width:110px">SKU / Ref</th>
+                <th style="width:110px">Invoice #(s)</th>
                 <th style="width:80px" class="right">Qty</th>
                 <th style="width:70px">Unit</th>
                 <th style="width:100px" class="right">Weight (Tons)</th>
-                <th style="width:100px" class="right">Volume (m³)</th>
-                <th style="width:100px" class="right">Invoice #(s)</th>
+                <th style="width:100px" class="right">SKU / Ref</th>
               </tr>
             </thead>
             <tbody>
               <tr>
                 <td class="center">{{ $loop->iteration }}</td>
                 <td>{{ $cargo?->name }} {{ $ttoDetails }}</td>
-                <td class="mono">{{ $cargo?->sku }}</td>
+                <td class="mono">
+                   @php
+                      $invoiceNumbers = ($tto?->invoice_items ?? $trip->invoice_items ?? collect())
+                          ->map(fn($item) => $item->invoice?->invoice_number)
+                          ->filter()
+                          ->unique()
+                          ->values();
+                    @endphp
+                    @foreach ($invoiceNumbers as $num)
+                      {{ $num }}@if (!$loop->last), @endif
+                    @endforeach
+                </td>
                 <td class="right">{{ $displayQty }}</td>
                 <td>{{ $ttoMeasure }}</td>
                 <td class="right">{{ $ttoWeight }}</td>
-                <td class="right">{{ $ttoVolume }}</td>
-                <td class="right">
-                  @php
-                    // Invoices can sit on the transport_order or on the trip
-                    $invoices = $to?->invoices ?? $trip->invoices ?? collect();
-                  @endphp
-                  @foreach ($invoices as $invoice)
-                    {{ $invoice->invoice_number }}@if (!$loop->last), @endif
-                  @endforeach
-                </td>
+                <td class="right">{{ $cargo?->sku }}</td>
               </tr>
             </tbody>
             @if (! $multiOrder)
@@ -311,19 +316,29 @@
               <tr>
                 <th style="width:40px" class="center">#</th>
                 <th>Description</th>
-                <th style="width:110px">SKU / Ref</th>
+                <th style="width:110px">Invoice #(s)</th>
                 <th style="width:80px" class="right">Qty</th>
                 <th style="width:70px">Unit</th>
                 <th style="width:100px" class="right">Weight (Tons)</th>
-                <th style="width:100px" class="right">Volume (m³)</th>
-                <th style="width:100px" class="right">Invoice #(s)</th>
+                <th style="width:100px" class="right">SKU / Ref</th>
               </tr>
             </thead>
             <tbody>
               <tr>
                 <td class="center">1</td>
                 <td>{{ $cargo->name }} {{ $trip->cargo_details }}</td>
-                <td class="mono">{{ $cargo->sku }}</td>
+                <td class="mono">
+                    @php
+                      $invoiceNumbers = ($trip->invoice_items ?? collect())
+                          ->map(fn($item) => $item->invoice?->invoice_number)
+                          ->filter()
+                          ->unique()
+                          ->values();
+                    @endphp
+                    @foreach ($invoiceNumbers as $num)
+                      {{ $num }}@if (!$loop->last), @endif
+                    @endforeach
+                 </td>
                 <td class="right">
                   @if ($cargo->type === 'Solid') {{ $trip->quantity }}
                   @elseif ($cargo->type === 'Liquid') {{ $trip->litreage_at_20 }}
@@ -331,11 +346,8 @@
                 </td>
                 <td>{{ $trip->measurement }}</td>
                 <td class="right">{{ $trip->weight }}</td>
-                <td class="right">{{ $trip->volume }}</td>
                 <td class="right">
-                  @foreach ($trip->invoices as $invoice)
-                    {{ $invoice->invoice_number }}@if (!$loop->last), @endif
-                  @endforeach
+                  {{ $cargo->sku }}
                 </td>
               </tr>
             </tbody>
