@@ -30,15 +30,11 @@
     </div>
     <div class="col-md-4">
         <div class="form-group">
-            <label>
-                Weight
-                @if ($cargo_type === 'Solid') <span class="text-danger">*</span> @endif
-            </label>
+            <label>Weight</label>
             <input type="number" step="any" class="form-control"
                    wire:model.debounce.300ms="deliveryNotes.{{ $ttoId }}.loaded_weight"
                    placeholder="Loading weight"
-                   {{ $selectedStatus === 'Offloaded' ? 'disabled' : '' }}
-                   {{ $cargo_type === 'Solid' ? 'required' : '' }}>
+                   {{ $selectedStatus === 'Offloaded' ? 'disabled' : '' }}>
             @error("deliveryNotes.$ttoId.loaded_weight")
                 <span class="text-danger small">{{ $message }}</span>
             @enderror
@@ -90,12 +86,11 @@
         </div>
         <div class="col-md-4">
             <div class="form-group">
-                <label>Litreage @ 20°C <span class="text-danger">*</span></label>
+                <label>Litreage @ 20°C</label>
                 <input type="number" step="any" class="form-control"
                        wire:model.debounce.300ms="deliveryNotes.{{ $ttoId }}.loaded_litreage_at_20"
                        placeholder="Litreage @ 20°C"
-                       {{ $selectedStatus === 'Offloaded' ? 'disabled' : '' }}
-                       required>
+                       {{ $selectedStatus === 'Offloaded' ? 'disabled' : '' }}>
                 @error("deliveryNotes.$ttoId.loaded_litreage_at_20")
                     <span class="text-danger small">{{ $message }}</span>
                 @enderror
@@ -120,10 +115,8 @@
 <div class="row">
     <div class="col-md-4">
         <div class="form-group">
-            <label>Currency <span class="text-danger">*</span></label>
-            <select class="form-control"
-                    wire:model.debounce.300ms="currency_id"
-                    disabled>
+            <label>Currency</label>
+            <select class="form-control" wire:model.debounce.300ms="currency_id" disabled>
                 <option value="">Select Currency</option>
                 @foreach ($currencies ?? [] as $currency)
                     <option value="{{ $currency->id }}">
@@ -131,19 +124,15 @@
                     </option>
                 @endforeach
             </select>
-            @error('currency_id')
-                <span class="text-danger small">{{ $message }}</span>
-            @enderror
         </div>
     </div>
     <div class="col-md-4">
         <div class="form-group">
-            <label>Customer Rate <span class="text-danger">*</span></label>
+            <label>Customer Rate</label>
             <input type="number" step="any" class="form-control"
                    wire:model.debounce.300ms="deliveryNotes.{{ $ttoId }}.loaded_rate"
                    placeholder="Customer rate"
-                   {{ ($selectedStatus === 'Offloaded' || ! $canEditRates) ? 'disabled' : '' }}
-                   required>
+                   {{ ($selectedStatus === 'Offloaded' || ! $canEditRates) ? 'disabled' : '' }}>
             @error("deliveryNotes.$ttoId.loaded_rate")
                 <span class="text-danger small">{{ $message }}</span>
             @enderror
@@ -151,12 +140,11 @@
     </div>
     <div class="col-md-4">
         <div class="form-group">
-            <label>Customer Freight <span class="text-danger">*</span></label>
+            <label>Customer Freight</label>
             <input type="number" step="any" class="form-control"
                    wire:model.debounce.300ms="deliveryNotes.{{ $ttoId }}.loaded_freight"
                    placeholder="Customer freight"
-                   {{ ($selectedStatus === 'Offloaded' || ! $canEditRates) ? 'disabled' : '' }}
-                   required>
+                   {{ ($selectedStatus === 'Offloaded' || ! $canEditRates) ? 'disabled' : '' }}>
             @error("deliveryNotes.$ttoId.loaded_freight")
                 <span class="text-danger small">{{ $message }}</span>
             @enderror
@@ -168,7 +156,7 @@
     <div class="row">
         <div class="col-md-6">
             <div class="form-group">
-                <label>Transporter Rate <span class="text-danger">*</span></label>
+                <label>Transporter Rate</label>
                 <input type="number" step="any" class="form-control"
                        wire:model.debounce.300ms="deliveryNotes.{{ $ttoId }}.transporter_loaded_rate"
                        placeholder="Transporter rate"
@@ -180,7 +168,7 @@
         </div>
         <div class="col-md-6">
             <div class="form-group">
-                <label>Transporter Freight <span class="text-danger">*</span></label>
+                <label>Transporter Freight</label>
                 <input type="number" step="any" class="form-control"
                        wire:model.debounce.300ms="deliveryNotes.{{ $ttoId }}.transporter_loaded_freight"
                        placeholder="Transporter freight"

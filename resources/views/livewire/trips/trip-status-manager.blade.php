@@ -1,11 +1,9 @@
 <div>
     <div wire:ignore.self
-         data-backdrop="static"
-         data-keyboard="false"
-         class="modal"
-         id="statusModal"
-         tabindex="-1"
-         role="dialog">
+     class="modal"
+     id="statusModal"
+     tabindex="-1"
+     role="dialog">
 
         <div class="modal-dialog mw-100 w-50" role="document">
             <div class="modal-content">
@@ -22,13 +20,12 @@
 
                 <form wire:submit.prevent="update">
                     <div class="modal-body">
-                       
+
                         {{-- ===== STATUS / DATE / NOTES ===== --}}
                         <div class="row">
-                          
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label>Trip Statuses <span class="text-danger">*</span></label>
+                                    <label>Trip Status <span class="text-danger">*</span></label>
                                     <select class="form-control"
                                             wire:model="selectedStatus"
                                             required>
@@ -95,8 +92,7 @@
                                     @else
                                         <input type="number" step="any" class="form-control"
                                                wire:model.debounce.300ms="ending_mileage"
-                                               placeholder="Ending mileage" disabled>
-                                        <small class="text-danger">Set starting mileage first</small>
+                                               placeholder="Ending mileage">
                                     @endif
                                     @error('ending_mileage')
                                         <span class="text-danger small">{{ $message }}</span>
@@ -123,8 +119,7 @@
                                     @else
                                         <input type="number" step="any" class="form-control"
                                                wire:model.debounce.300ms="ending_hours"
-                                               placeholder="Ending hours" disabled>
-                                        <small class="text-danger">Set starting hours first</small>
+                                               placeholder="Ending hours">
                                     @endif
                                     @error('ending_hours')
                                         <span class="text-danger small">{{ $message }}</span>
@@ -217,7 +212,6 @@
 
                                         @include('livewire.trips.partials.freight-calc-radios')
 
-                                        {{-- Loading Details --}}
                                         <h6 class="font-weight-bold mt-3 mb-2 border-bottom pb-1">Loading Details</h6>
 
                                         <div class="row">
@@ -248,11 +242,7 @@
                                                     <input type="number" step="any" class="form-control"
                                                            wire:model.debounce.300ms="loaded_weight"
                                                            placeholder="Loading weight"
-                                                           {{ $selectedStatus === 'Offloaded' ? 'disabled' : '' }}
-                                                           {{ $trip_cargo_type === 'Solid' ? 'required' : '' }}>
-                                                    @error('loaded_weight')
-                                                        <span class="text-danger small">{{ $message }}</span>
-                                                    @enderror
+                                                           {{ $selectedStatus === 'Offloaded' ? 'disabled' : '' }}>
                                                 </div>
                                             </div>
                                         </div>
@@ -294,12 +284,11 @@
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="form-group">
-                                                        <label>Litreage @ 20°C <span class="text-danger">*</span></label>
+                                                        <label>Litreage @ 20°C</label>
                                                         <input type="number" step="any" class="form-control"
                                                                wire:model.debounce.300ms="loaded_litreage_at_20"
                                                                placeholder="Litreage @ 20°C"
-                                                               {{ $selectedStatus === 'Offloaded' ? 'disabled' : '' }}
-                                                               required>
+                                                               {{ $selectedStatus === 'Offloaded' ? 'disabled' : '' }}>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-4">
@@ -320,7 +309,7 @@
                                         <div class="row">
                                             <div class="col-md-4">
                                                 <div class="form-group">
-                                                    <label>Currency <span class="text-danger">*</span></label>
+                                                    <label>Currency</label>
                                                     <select class="form-control"
                                                             wire:model.debounce.300ms="currency_id"
                                                             disabled>
@@ -335,12 +324,11 @@
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="form-group">
-                                                    <label>Customer Rate <span class="text-danger">*</span></label>
+                                                    <label>Customer Rate</label>
                                                     <input type="number" step="any" class="form-control"
                                                            wire:model.debounce.300ms="loaded_rate"
                                                            placeholder="Customer rate"
-                                                           {{ ($selectedStatus === 'Offloaded' || ! $canEditRates) ? 'disabled' : '' }}
-                                                           required>
+                                                           {{ ($selectedStatus === 'Offloaded' || ! $canEditRates) ? 'disabled' : '' }}>
                                                     @error('loaded_rate')
                                                         <span class="text-danger small">{{ $message }}</span>
                                                     @enderror
@@ -348,12 +336,11 @@
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="form-group">
-                                                    <label>Customer Freight <span class="text-danger">*</span></label>
+                                                    <label>Customer Freight</label>
                                                     <input type="number" step="any" class="form-control"
                                                            wire:model.debounce.300ms="loaded_freight"
                                                            placeholder="Customer freight"
-                                                           {{ ($selectedStatus === 'Offloaded' || ! $canEditRates) ? 'disabled' : '' }}
-                                                           required>
+                                                           {{ ($selectedStatus === 'Offloaded' || ! $canEditRates) ? 'disabled' : '' }}>
                                                     @error('loaded_freight')
                                                         <span class="text-danger small">{{ $message }}</span>
                                                     @enderror
@@ -403,25 +390,18 @@
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="form-group">
-                                                        <label>
-                                                            Distance
-                                                            @if (in_array($freight_calculation, ['rate_weight_distance', 'rate_distance']))
-                                                                <span class="text-danger">*</span>
-                                                            @endif
-                                                        </label>
+                                                        <label>Distance</label>
                                                         <input type="number" step="any" class="form-control"
                                                                wire:model.debounce.300ms="offloaded_distance"
-                                                               placeholder="Trip distance"
-                                                               {{ in_array($freight_calculation, ['rate_weight_distance', 'rate_distance']) ? 'required' : '' }}>
+                                                               placeholder="Trip distance">
                                                     </div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="form-group">
-                                                        <label>Weight @if ($trip_cargo_type === 'Solid') <span class="text-danger">*</span> @endif</label>
+                                                        <label>Weight</label>
                                                         <input type="number" step="any" class="form-control"
                                                                wire:model.debounce.300ms="offloaded_weight"
-                                                               placeholder="Offloaded weight"
-                                                               {{ $trip_cargo_type === 'Solid' ? 'required' : '' }}>
+                                                               placeholder="Offloaded weight">
                                                     </div>
                                                 </div>
                                             </div>
@@ -462,11 +442,10 @@
                                                     </div>
                                                     <div class="col-md-4">
                                                         <div class="form-group">
-                                                            <label>Litreage @ 20°C <span class="text-danger">*</span></label>
+                                                            <label>Litreage @ 20°C</label>
                                                             <input type="number" step="any" class="form-control"
                                                                    wire:model.debounce.300ms="offloaded_litreage_at_20"
-                                                                   placeholder="Litreage @ 20°C"
-                                                                   required>
+                                                                   placeholder="Litreage @ 20°C">
                                                         </div>
                                                     </div>
                                                     <div class="col-md-4">
@@ -488,7 +467,7 @@
                                             <div class="row">
                                                 <div class="col-md-4">
                                                     <div class="form-group">
-                                                        <label>Currency <span class="text-danger">*</span></label>
+                                                        <label>Currency</label>
                                                         <select class="form-control"
                                                                 wire:model.debounce.300ms="currency_id"
                                                                 disabled>
@@ -503,12 +482,11 @@
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="form-group">
-                                                        <label>Customer Rate <span class="text-danger">*</span></label>
+                                                        <label>Customer Rate</label>
                                                         <input type="number" step="any" class="form-control"
                                                                wire:model.debounce.300ms="offloaded_rate"
                                                                placeholder="Offloading rate"
-                                                               {{ ! $canEditRates ? 'disabled' : '' }}
-                                                               required>
+                                                               {{ ! $canEditRates ? 'disabled' : '' }}>
                                                         @error('offloaded_rate')
                                                             <span class="text-danger small">{{ $message }}</span>
                                                         @enderror
@@ -516,12 +494,11 @@
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="form-group">
-                                                        <label>Customer Freight <span class="text-danger">*</span></label>
+                                                        <label>Customer Freight</label>
                                                         <input type="number" step="any" class="form-control"
                                                                wire:model.debounce.300ms="offloaded_freight"
                                                                placeholder="Offloading freight"
-                                                               {{ ! $canEditRates ? 'disabled' : '' }}
-                                                               required>
+                                                               {{ ! $canEditRates ? 'disabled' : '' }}>
                                                         @error('offloaded_freight')
                                                             <span class="text-danger small">{{ $message }}</span>
                                                         @enderror
@@ -567,7 +544,7 @@
 
                             @endif {{-- /path A vs B --}}
 
-                        @endif {{-- /in_array Loaded|Offloaded --}}
+                        @endif {{-- /Loaded|Offloaded --}}
 
                     </div>{{-- /modal-body --}}
 
@@ -584,9 +561,19 @@
                             </button>
                         </div>
                     </div>
-
                 </form>
+
             </div>
         </div>
     </div>
+
+    <script>
+        window.addEventListener('show-statusModal', () => {
+            $('#statusModal').modal({ backdrop: 'static', keyboard: false });
+            $('#statusModal').modal('show');
+        });
+        window.addEventListener('hide-statusModal', () => {
+            $('#statusModal').modal('hide');
+        });
+    </script>
 </div>
