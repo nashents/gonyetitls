@@ -144,7 +144,8 @@ class TripStatusManager extends Component
         $this->trip_transporter_agreement = (bool) $trip->transporter_agreement;
         $this->trip_cargo_type            = $trip->cargo?->type ?? '';
 
-        $this->useTtoPath = $trip->trip_transport_orders->count() > 0;
+        $this->useTtoPath = $trip->trip_transport_orders->count() > 0
+                 && is_null($trip->delivery_note);
         $this->tto_ids    = $trip->trip_transport_orders->pluck('id')->toArray();
 
         if ($this->useTtoPath) {
