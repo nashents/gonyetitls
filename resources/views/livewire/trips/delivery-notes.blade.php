@@ -80,20 +80,28 @@
                     // - useLegacyPath: no TTOs at all, or no TTOs have DNs → fall back to trip->delivery_note
                     $ttos = $trip->trip_transport_orders ?? collect();
 
-                    $ttoHasAnyDn = $ttos->count() > 0 && $ttos->contains(function ($tto) use ($trip) {
-                        return \App\Models\DeliveryNote::where('trip_id', $trip->id)
-                            ->where(function ($q) use ($tto) {
-                                $q->where('trip_transport_order_id', $tto->id)
-                                  ->orWhere(function ($q2) use ($tto) {
-                                      $q2->whereNull('trip_transport_order_id')
-                                         ->where('transport_order_id', $tto->transport_order_id);
-                                  });
-                            })
-                            ->exists();
-                    });
+                    $tripHasDirectDn = ! is_null($trip->delivery_note);
 
-                    $useTtoPath    = $ttos->count() > 0 && $ttoHasAnyDn;
-                    $useLegacyPath = ! $useTtoPath;
+                    // trip->delivery_note always wins — legacy path takes priority
+                    if ($tripHasDirectDn) {
+                        $useTtoPath    = false;
+                        $useLegacyPath = true;
+                    } else {
+                        $ttoHasAnyDn = $ttos->count() > 0 && $ttos->contains(function ($tto) use ($trip) {
+                            return \App\Models\DeliveryNote::where('trip_id', $trip->id)
+                                ->where(function ($q) use ($tto) {
+                                    $q->where('trip_transport_order_id', $tto->id)
+                                    ->orWhere(function ($q2) use ($tto) {
+                                        $q2->whereNull('trip_transport_order_id')
+                                            ->where('transport_order_id', $tto->transport_order_id);
+                                    });
+                                })
+                                ->exists();
+                        });
+
+                        $useTtoPath    = $ttos->count() > 0 && $ttoHasAnyDn;
+                        $useLegacyPath = ! $useTtoPath;
+                    }
 
                     // Legacy single delivery note
                     $legacy_dn        = $useLegacyPath ? $trip->delivery_note : null;

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\DeliveryNote;
 use App\Models\TripDocument;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -205,8 +206,10 @@ class Trip extends Model implements Auditable
     public function transport_order(){
         return $this->hasOne('App\Models\TransportOrder');
     }
-    public function delivery_note(){
-        return $this->hasOne('App\Models\DeliveryNote');
+    public function delivery_note()
+    {
+        return $this->hasOne(DeliveryNote::class)
+                    ->whereNull('trip_transport_order_id');
     }
     public function trip_expenses(){
         return $this->hasMany('App\Models\TripExpense');
