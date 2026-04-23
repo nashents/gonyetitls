@@ -1,9 +1,9 @@
 <div>
     <div wire:ignore.self
-     class="modal"
-     id="statusModal"
-     tabindex="-1"
-     role="dialog">
+         class="modal"
+         id="statusModal"
+         tabindex="-1"
+         role="dialog">
 
         <div class="modal-dialog mw-100 w-50" role="document">
             <div class="modal-content">
@@ -83,17 +83,9 @@
                             <div class="col-md-3">
                                 <div class="form-group">
                                     <label>Ending Mileage</label>
-                                    @if ($starting_mileage)
-                                        <input type="number" step="any"
-                                               min="{{ $starting_mileage }}"
-                                               class="form-control"
-                                               wire:model.debounce.300ms="ending_mileage"
-                                               placeholder="Ending mileage">
-                                    @else
-                                        <input type="number" step="any" class="form-control"
-                                               wire:model.debounce.300ms="ending_mileage"
-                                               placeholder="Ending mileage">
-                                    @endif
+                                    <input type="number" step="any" class="form-control"
+                                           wire:model.debounce.300ms="ending_mileage"
+                                           placeholder="Ending mileage">
                                     @error('ending_mileage')
                                         <span class="text-danger small">{{ $message }}</span>
                                     @enderror
@@ -110,17 +102,9 @@
                             <div class="col-md-3">
                                 <div class="form-group">
                                     <label>Ending Hours</label>
-                                    @if ($starting_hours)
-                                        <input type="number" step="any"
-                                               min="{{ $starting_hours }}"
-                                               class="form-control"
-                                               wire:model.debounce.300ms="ending_hours"
-                                               placeholder="Ending hours">
-                                    @else
-                                        <input type="number" step="any" class="form-control"
-                                               wire:model.debounce.300ms="ending_hours"
-                                               placeholder="Ending hours">
-                                    @endif
+                                    <input type="number" step="any" class="form-control"
+                                           wire:model.debounce.300ms="ending_hours"
+                                           placeholder="Ending hours">
                                     @error('ending_hours')
                                         <span class="text-danger small">{{ $message }}</span>
                                     @enderror
@@ -212,6 +196,7 @@
 
                                         @include('livewire.trips.partials.freight-calc-radios')
 
+                                        {{-- Loading Details --}}
                                         <h6 class="font-weight-bold mt-3 mb-2 border-bottom pb-1">Loading Details</h6>
 
                                         <div class="row">
@@ -238,7 +223,7 @@
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="form-group">
-                                                    <label>Weight @if ($trip_cargo_type === 'Solid') <span class="text-danger">*</span> @endif</label>
+                                                    <label>Weight</label>
                                                     <input type="number" step="any" class="form-control"
                                                            wire:model.debounce.300ms="loaded_weight"
                                                            placeholder="Loading weight"

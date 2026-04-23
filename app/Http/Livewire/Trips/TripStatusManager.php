@@ -28,10 +28,10 @@ class TripStatusManager extends Component
     public bool    $customer_updates        = false;
 
     // ── Mileage / hours ───────────────────────────────────────────────────────
-    public ?float $starting_mileage = null;
-    public ?float $ending_mileage   = null;
-    public ?float $starting_hours   = null;
-    public ?float $ending_hours     = null;
+    public $starting_mileage = null;
+    public $ending_mileage   = null;
+    public $starting_hours   = null;
+    public $ending_hours     = null;
 
     // ── Freight ───────────────────────────────────────────────────────────────
     public ?int   $currency_id             = null;
@@ -53,42 +53,42 @@ class TripStatusManager extends Component
     public ?string $cargo_type                    = null;
     public ?int    $units_of_measure_id           = null;
     public ?string $loaded_date                   = null;
-    public ?float  $distance                      = null;
-    public ?float  $loaded_quantity               = null;
-    public ?float  $loaded_litreage               = null;
-    public ?float  $loaded_litreage_at_20         = null;
-    public ?float  $loaded_weight                 = null;
-    public ?float  $loaded_rate                   = null;
-    public ?float  $loaded_freight                = null;
-    public ?float  $transporter_loaded_rate       = null;
-    public ?float  $transporter_loaded_freight    = null;
+    public   $distance                      = null;
+    public   $loaded_quantity               = null;
+    public   $loaded_litreage               = null;
+    public   $loaded_litreage_at_20         = null;
+    public   $loaded_weight                 = null;
+    public   $loaded_rate                   = null;
+    public   $loaded_freight                = null;
+    public   $transporter_loaded_rate       = null;
+    public   $transporter_loaded_freight    = null;
     public ?string $offloaded_date                = null;
-    public ?float  $offloaded_quantity            = null;
-    public ?float  $offloaded_litreage            = null;
-    public ?float  $offloaded_litreage_at_20      = null;
-    public ?float  $offloaded_weight              = null;
-    public ?float  $offloaded_distance            = null;
-    public ?float  $offloaded_rate                = null;
-    public ?float  $offloaded_freight             = null;
-    public ?float  $transporter_offloaded_rate    = null;
-    public ?float  $transporter_offloaded_freight = null;
+    public   $offloaded_quantity            = null;
+    public   $offloaded_litreage            = null;
+    public   $offloaded_litreage_at_20      = null;
+    public   $offloaded_weight              = null;
+    public   $offloaded_distance            = null;
+    public   $offloaded_rate                = null;
+    public   $offloaded_freight             = null;
+    public   $transporter_offloaded_rate    = null;
+    public   $transporter_offloaded_freight = null;
     public ?string $comments                      = null;
     public ?int    $legacy_delivery_note_id       = null;
 
     protected $listeners = ['openTripStatusModal' => 'status'];
 
     // ─────────────────────────────────────────────────────────────────────────
-    // HELPERS
+    // CAST HELPERS
     // ─────────────────────────────────────────────────────────────────────────
 
     private function toFloat($value): ?float
     {
-        return is_numeric($value) && $value !== '' ? (float) $value : null;
+        return (is_numeric($value) && $value !== '') ? (float) $value : null;
     }
 
     private function toInt($value): ?int
     {
-        return is_numeric($value) && $value !== '' ? (int) $value : null;
+        return (is_numeric($value) && $value !== '') ? (int) $value : null;
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -144,9 +144,11 @@ class TripStatusManager extends Component
         $this->trip_transporter_agreement = (bool) $trip->transporter_agreement;
         $this->trip_cargo_type            = $trip->cargo?->type ?? '';
 
+        // trip->delivery_note (legacy) takes priority over TTO path
         $this->useTtoPath = $trip->trip_transport_orders->count() > 0
-                 && is_null($trip->delivery_note);
-        $this->tto_ids    = $trip->trip_transport_orders->pluck('id')->toArray();
+                         && is_null($trip->delivery_note);
+
+        $this->tto_ids = $trip->trip_transport_orders->pluck('id')->toArray();
 
         if ($this->useTtoPath) {
             $this->loadTtoPath($trip);
@@ -217,13 +219,13 @@ class TripStatusManager extends Component
                 'transporter_loaded_rate'       => $this->toFloat($dn->transporter_loaded_rate),
                 'transporter_loaded_freight'    => $this->toFloat($dn->transporter_loaded_freight),
                 'offloaded_date'                => $dn->offloaded_date,
-                'offloaded_quantity'            => $this->toFloat($dn->offloaded_quantity)        ?? $this->toFloat($destinationTotals['quantity']),
-                'offloaded_litreage'            => $this->toFloat($dn->offloaded_litreage)        ?? $this->toFloat($destinationTotals['litreage']),
-                'offloaded_litreage_at_20'      => $this->toFloat($dn->offloaded_litreage_at_20)  ?? $this->toFloat($destinationTotals['litreage_at_20']),
-                'offloaded_weight'              => $this->toFloat($dn->offloaded_weight)          ?? $this->toFloat($destinationTotals['weight']),
+                'offloaded_quantity'            => $this->toFloat($dn->offloaded_quantity)       ?? $this->toFloat($destinationTotals['quantity']),
+                'offloaded_litreage'            => $this->toFloat($dn->offloaded_litreage)       ?? $this->toFloat($destinationTotals['litreage']),
+                'offloaded_litreage_at_20'      => $this->toFloat($dn->offloaded_litreage_at_20) ?? $this->toFloat($destinationTotals['litreage_at_20']),
+                'offloaded_weight'              => $this->toFloat($dn->offloaded_weight)         ?? $this->toFloat($destinationTotals['weight']),
                 'offloaded_distance'            => $this->toFloat($dn->offloaded_distance),
-                'offloaded_rate'                => $this->toFloat($dn->offloaded_rate)            ?? $this->toFloat($dn->loaded_rate),
-                'offloaded_freight'             => $this->toFloat($dn->offloaded_freight)         ?? $this->toFloat($dn->loaded_freight),
+                'offloaded_rate'                => $this->toFloat($dn->offloaded_rate)           ?? $this->toFloat($dn->loaded_rate),
+                'offloaded_freight'             => $this->toFloat($dn->offloaded_freight)        ?? $this->toFloat($dn->loaded_freight),
                 'transporter_offloaded_rate'    => $this->toFloat($dn->transporter_offloaded_rate)    ?? $this->toFloat($dn->transporter_loaded_rate),
                 'transporter_offloaded_freight' => $this->toFloat($dn->transporter_offloaded_freight) ?? $this->toFloat($dn->transporter_loaded_freight),
                 'comments'                      => $dn->comments,
@@ -261,25 +263,25 @@ class TripStatusManager extends Component
             }
         }
 
-        $this->legacy_delivery_note_id      = $dn->id;
-        $this->units_of_measure_id          = $this->toInt($dn->units_of_measure_id);
-        $this->distance                     = $this->toFloat($dn->distance);
-        $this->loaded_date                  = $dn->loaded_date;
-        $this->loaded_quantity              = $this->toFloat($dn->loaded_quantity);
-        $this->loaded_litreage              = $this->toFloat($dn->loaded_litreage);
-        $this->loaded_litreage_at_20        = $this->toFloat($dn->loaded_litreage_at_20);
-        $this->loaded_weight                = $this->toFloat($dn->loaded_weight);
-        $this->loaded_rate                  = $this->toFloat($dn->loaded_rate);
-        $this->loaded_freight               = $this->toFloat($dn->loaded_freight);
-        $this->transporter_loaded_rate      = $this->toFloat($dn->transporter_loaded_rate);
-        $this->transporter_loaded_freight   = $this->toFloat($dn->transporter_loaded_freight);
-        $this->offloaded_date               = $dn->offloaded_date;
-        $this->offloaded_quantity           = $this->toFloat($dn->offloaded_quantity);
-        $this->offloaded_litreage           = $this->toFloat($dn->offloaded_litreage);
-        $this->offloaded_litreage_at_20     = $this->toFloat($dn->offloaded_litreage_at_20);
-        $this->offloaded_weight             = $this->toFloat($dn->offloaded_weight);
-        $this->offloaded_distance           = $this->toFloat($dn->offloaded_distance);
-        $this->comments                     = $dn->comments;
+        $this->legacy_delivery_note_id    = $dn->id;
+        $this->units_of_measure_id        = $this->toInt($dn->units_of_measure_id);
+        $this->distance                   = $this->toFloat($dn->distance);
+        $this->loaded_date                = $dn->loaded_date;
+        $this->loaded_quantity            = $this->toFloat($dn->loaded_quantity);
+        $this->loaded_litreage            = $this->toFloat($dn->loaded_litreage);
+        $this->loaded_litreage_at_20      = $this->toFloat($dn->loaded_litreage_at_20);
+        $this->loaded_weight              = $this->toFloat($dn->loaded_weight);
+        $this->loaded_rate                = $this->toFloat($dn->loaded_rate);
+        $this->loaded_freight             = $this->toFloat($dn->loaded_freight);
+        $this->transporter_loaded_rate    = $this->toFloat($dn->transporter_loaded_rate);
+        $this->transporter_loaded_freight = $this->toFloat($dn->transporter_loaded_freight);
+        $this->offloaded_date             = $dn->offloaded_date;
+        $this->offloaded_quantity         = $this->toFloat($dn->offloaded_quantity);
+        $this->offloaded_litreage         = $this->toFloat($dn->offloaded_litreage);
+        $this->offloaded_litreage_at_20   = $this->toFloat($dn->offloaded_litreage_at_20);
+        $this->offloaded_weight           = $this->toFloat($dn->offloaded_weight);
+        $this->offloaded_distance         = $this->toFloat($dn->offloaded_distance);
+        $this->comments                   = $dn->comments;
 
         if (! $dn->status) {
             $this->offloaded_rate                = $this->toFloat($dn->loaded_rate);
@@ -299,6 +301,30 @@ class TripStatusManager extends Component
         if (is_null($this->offloaded_quantity))        $this->offloaded_quantity       = $this->toFloat($destinationTotals['quantity']);
         if (is_null($this->offloaded_litreage))        $this->offloaded_litreage       = $this->toFloat($destinationTotals['litreage']);
         if (is_null($this->offloaded_litreage_at_20))  $this->offloaded_litreage_at_20 = $this->toFloat($destinationTotals['litreage_at_20']);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // LIVEWIRE PROPERTY UPDATERS — coerce empty strings to null
+    // ─────────────────────────────────────────────────────────────────────────
+
+    public function updatedEndingMileage($value): void
+    {
+        $this->ending_mileage = ($value === '' || $value === null) ? null : (float) $value;
+    }
+
+    public function updatedStartingMileage($value): void
+    {
+        $this->starting_mileage = ($value === '' || $value === null) ? null : (float) $value;
+    }
+
+    public function updatedEndingHours($value): void
+    {
+        $this->ending_hours = ($value === '' || $value === null) ? null : (float) $value;
+    }
+
+    public function updatedStartingHours($value): void
+    {
+        $this->starting_hours = ($value === '' || $value === null) ? null : (float) $value;
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -470,24 +496,28 @@ class TripStatusManager extends Component
 
         $base['freight_calculation'] = 'nullable|in:flat_rate,rate_weight,rate_weight_distance,rate_distance';
 
+        if ($this->selectedStatus === 'Loaded') {
+            // Only loading date required when status is Loaded
+            if ($this->useTtoPath) {
+                return array_merge($base, [
+                    'deliveryNotes.*.loaded_date' => 'required|date',
+                ]);
+            }
+            return array_merge($base, [
+                'loaded_date' => 'required|date',
+            ]);
+        }
+
+        // Offloaded — loading fields are disabled/already saved
+        // Only offloaded_date required
         if ($this->useTtoPath) {
             return array_merge($base, [
-                'deliveryNotes.*.loaded_date'       => 'required|date',
-                'deliveryNotes.*.loaded_rate'       => 'nullable|numeric',
-                'deliveryNotes.*.loaded_freight'    => 'nullable|numeric',
-                'deliveryNotes.*.offloaded_date'    => $this->selectedStatus === 'Offloaded' ? 'required|date' : 'nullable|date',
-                'deliveryNotes.*.offloaded_rate'    => 'nullable|numeric',
-                'deliveryNotes.*.offloaded_freight' => 'nullable|numeric',
+                'deliveryNotes.*.offloaded_date' => 'required|date',
             ]);
         }
 
         return array_merge($base, [
-            'loaded_date'       => 'required|date',
-            'loaded_rate'       => 'nullable|numeric',
-            'loaded_freight'    => 'nullable|numeric',
-            'offloaded_date'    => $this->selectedStatus === 'Offloaded' ? 'required|date' : 'nullable|date',
-            'offloaded_rate'    => 'nullable|numeric',
-            'offloaded_freight' => 'nullable|numeric',
+            'offloaded_date' => 'required|date',
         ]);
     }
 
@@ -497,6 +527,21 @@ class TripStatusManager extends Component
 
     public function updated(string $propertyName): void
     {
+        // Coerce empty strings to null for all float properties
+        $floatProps = [
+            'distance', 'loaded_weight', 'loaded_quantity', 'loaded_litreage',
+            'loaded_litreage_at_20', 'loaded_rate', 'loaded_freight',
+            'transporter_loaded_rate', 'transporter_loaded_freight',
+            'offloaded_weight', 'offloaded_quantity', 'offloaded_litreage',
+            'offloaded_litreage_at_20', 'offloaded_distance', 'offloaded_rate',
+            'offloaded_freight', 'transporter_offloaded_rate', 'transporter_offloaded_freight',
+        ];
+
+        if (in_array($propertyName, $floatProps) && $this->$propertyName === '') {
+            $this->$propertyName = null;
+            return;
+        }
+
         if (in_array($propertyName, ['freight_calculation', 'calculation_measurement'])) {
             if ($this->useTtoPath) {
                 foreach ($this->tto_ids as $ttoId) {
@@ -513,6 +558,20 @@ class TripStatusManager extends Component
             if (count($parts) < 3) return;
             $ttoId = (int) $parts[1];
             $field = $parts[2];
+
+            // Coerce empty string to null for TTO numeric fields
+            $numericDnFields = [
+                'loaded_weight', 'loaded_quantity', 'loaded_litreage', 'loaded_litreage_at_20',
+                'loaded_rate', 'loaded_freight', 'transporter_loaded_rate', 'transporter_loaded_freight',
+                'offloaded_weight', 'offloaded_quantity', 'offloaded_litreage', 'offloaded_litreage_at_20',
+                'offloaded_rate', 'offloaded_freight', 'transporter_offloaded_rate', 'transporter_offloaded_freight',
+                'distance', 'offloaded_distance',
+            ];
+
+            if (in_array($field, $numericDnFields) && isset($this->deliveryNotes[$ttoId][$field]) && $this->deliveryNotes[$ttoId][$field] === '') {
+                $this->deliveryNotes[$ttoId][$field] = null;
+            }
+
             if (in_array($field, $this->freightTriggerFields())) {
                 $this->recalculateDeliveryNoteFreight($ttoId);
             }
