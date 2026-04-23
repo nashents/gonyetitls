@@ -1085,15 +1085,15 @@ class Edit extends Component
                 $invoice->subheading = $this->subheading;
                 $invoice->update();
 
-                if ($invoice->authorization === 'approved') {
-                    $this->dispatchBrowserEvent('alert', [
-                        'type'    => 'success',
-                        'message' => 'Invoice updated. Financial values are locked after approval.'
-                    ]);
+                // if ($invoice->authorization === 'approved') {
+                //     $this->dispatchBrowserEvent('alert', [
+                //         'type'    => 'success',
+                //         'message' => 'Invoice updated. Financial values are locked after approval.'
+                //     ]);
 
-                    return redirect()->route('invoices.index');
+                //     return redirect()->route('invoices.index');
                 
-                }
+                // }
                 $validAccounts = BankAccount::whereIn('id', (array) $this->bank_account_id)->pluck('id')->toArray();
 
                 if (!empty($validAccounts)) {

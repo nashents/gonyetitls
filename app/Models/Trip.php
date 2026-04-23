@@ -14,8 +14,22 @@ class Trip extends Model implements Auditable
     use \OwenIt\Auditing\Auditable;
 
     protected $casts = [
-    'freight' => 'float',
-    ];
+    'ending_mileage'   => 'float',
+    'starting_mileage' => 'float',
+    'ending_hours'     => 'float',
+    'starting_hours'   => 'float',
+    'distance'         => 'float',
+    'weight'           => 'float',
+    'quantity'         => 'float',
+    'rate'             => 'float',
+    'freight'          => 'float',
+    'transporter_rate' => 'float',
+    'transporter_freight' => 'float',
+    'litreage'         => 'float',
+    'litreage_at_20'   => 'float',
+    'transporter_agreement' => 'boolean',
+    'customer_updates'      => 'boolean',
+];
     
     public function invoices()
     {
