@@ -8,9 +8,9 @@
         'rate_distance'        => 'Rate × Distance',
     ] as $val => $label)
         <input type="radio"
-               wire:model.debounce.300ms="freight_calculation"
+               wire:model="freight_calculation"
                value="{{ $val }}"
-               class="line-style" />
+               class="line-style">
         <label class="radio-label">{{ $label }}</label>
     @endforeach
     @error('freight_calculation')

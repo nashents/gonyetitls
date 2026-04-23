@@ -862,8 +862,7 @@
         </div>
 
      
-<!-- Modal -->
-@include('includes.trip_status')
+
 
 <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="tripsImportModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
     <div class="modal-dialog" role="document">
