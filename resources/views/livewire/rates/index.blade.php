@@ -87,7 +87,7 @@
                                     </td>
                                       <td>{{$rate->freight_calculation}}</td>
                                     <td>{{$rate->currency ? $rate->currency->name : ""}}</td>
-                                    <td>{{$rate->currency ? $rate->currency->symbol : ""}}{{number_format($rate->rate ? $rate->rate : 0)}}</td>
+                                    <td>{{$rate->currency ? $rate->currency->symbol : ""}}{{number_format($rate->rate ? $rate->rate : 0,2)}}</td>
                                     <td class="w-10 line-height-35 table-dropdown">
                                         <div class="dropdown">
                                             <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

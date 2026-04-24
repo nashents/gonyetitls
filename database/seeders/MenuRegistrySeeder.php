@@ -358,7 +358,7 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
         $hrMasterSubs = [
             ['Allowances','allowances.index','fas fa-list'],
             ['Branches','branches.index','fas fa-list'],
-            ['Departments','departments.index','fas fa-list', $any([$all(['isSystemAdmin']), $all(['isSuperAdmin'])])],
+            ['Departments','departments.index','fas fa-list', $any([$all(['isSystemAdmin'])])],
             ['Deductions','deductions.index','fas fa-list'],
             ['Earnings','earnings.index','fas fa-list'],
             ['Grades','grades.index','fas fa-list'],

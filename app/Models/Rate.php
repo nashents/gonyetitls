@@ -36,4 +36,8 @@ class Rate extends Model implements Auditable
     public function offloading_point(){
         return $this->belongsTo('App\Models\OffloadingPoint');
     }
+
+    protected $casts = [
+        'rate' => 'float'
+    ];
 }
