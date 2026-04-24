@@ -338,8 +338,10 @@
                                 </div>
 
                                 @php
+                                    
                                     $showFreight = !$company->rates_managed_by_finance
                                         || in_array('Finance', $department_names)
+                                        || !$driver
                                         || in_array('Super Admin', $role_names);
 
                                     $dtPattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
