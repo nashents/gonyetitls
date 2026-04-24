@@ -497,7 +497,7 @@ class Show extends Component
 
                 $last_mileage = Mileage::whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
                 if(isset($last_mileage)){
-                    if($last_mileage < $trip->starting_mileage){
+                    if(is_numeric($last_mileage->mileage) && is_numeric($trip->starting_mileage) && ($last_mileage->mileage < $trip->starting_mileage)){
                         $mileage = new Mileage;
                         $mileage->user_id = Auth::user()->id;
                         $mileage->trip_id = $trip->id;
@@ -512,12 +512,12 @@ class Show extends Component
                     }
                 }    
                        
-              }
+            }
     
-              if(isset($trip->ending_mileage)){
+            if(isset($trip->ending_mileage)){
                 $last_mileage = Mileage::whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
                 if(isset($last_mileage)){
-                    if($last_mileage < $trip->ending_mileage){
+                     if(is_numeric($last_mileage->mileage) && is_numeric($trip->ending_mileage) && ($last_mileage->mileage < $trip->ending_mileage)){
                         $mileage = new Mileage;
                         $mileage->user_id = Auth::user()->id;
                         $mileage->trip_id = $trip->id;
@@ -531,13 +531,13 @@ class Show extends Component
                         $mileage->save();
                     }
                 }
-              }
+            }
           
-              if(isset($trip->starting_hours)){
+            if(isset($trip->starting_hours)){
 
                 $last_hours = Hour::whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
                 if(isset($last_hours)){
-                    if($last_hours < $trip->starting_hours){
+                    if(is_numeric($last_hours->hours) && is_numeric($trip->starting_hours) && ($last_hours->hours < $trip->starting_hours)){
                         $hours = new Hour;
                         $hours->user_id = Auth::user()->id;
                         $hours->trip_id = $trip->id;
@@ -551,12 +551,12 @@ class Show extends Component
                         $hours->save();
                     }
                 }    
-              }
+            }
     
-              if(isset($trip->ending_hours)){
+            if(isset($trip->ending_hours)){
                 $last_hours = Hour::whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
                 if(isset($last_hours)){
-                    if($last_hours < $trip->ending_hours){
+                    if(is_numeric($last_hours->hours) && is_numeric($trip->ending_hours) && ($last_hours->hours < $trip->ending_hours)){
                         $hours = new Hour;
                         $hours->user_id = Auth::user()->id;
                         $hours->trip_id = $trip->id;
@@ -570,7 +570,7 @@ class Show extends Component
                         $hours->save();
                     }
                 }
-              }
+            }
 
 
             $expenses = Trip::find($this->trip_id)->trip_expenses;

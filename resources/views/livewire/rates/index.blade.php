@@ -157,10 +157,10 @@
 </div>
 
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="rateModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog  mw-100 w-50" role="document">
+        <div class="modal-dialog  mw-100 w-60" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-plus"></i> Add Rate <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
+                    <h4 class="modal-title" id="modal4Label"><i class="fas fa-plus"></i> Add Trip Rate <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
                 </div>
                 <form wire:submit.prevent="store()">
                 <div class="modal-body">
@@ -187,6 +187,7 @@
                                         @endforeach
                                     </select>
                                     @error('customer_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    <small>  <a href="{{ route('customers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Customer</a></small> <a href="#" wire:click.prevent="refresh('customers')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 </div>
                             @elseif (isset($category) && $category == "Transporter")
                                 <div class="form-group">
@@ -198,6 +199,7 @@
                                         @endforeach
                                     </select>
                                     @error('transporter_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    <small>  <a href="{{ route('transporters.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Transporter</a></small> <a href="#" wire:click.prevent="refresh('transporters')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 </div>
                             @endif
                         </div>
@@ -212,7 +214,7 @@
                                     <option value="{{$destination->id}}">{{$destination->country ? $destination->country->name : ""}} {{$destination->city}}</option>
                                     @endforeach
                                 </select>
-                                <small>  <a href="{{ route('destinations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Destination</a></small> 
+                                <small>  <a href="{{ route('destinations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Destination</a></small><a href="#" wire:click.prevent="refresh('destinations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                                 @error('from') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -225,7 +227,7 @@
                                     <option value="{{$loading_point->id}}">{{$loading_point->name}}</option>
                                     @endforeach
                                 </select>
-                                <small>  <a href="{{ route('loading_points.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Loading Point</a></small> 
+                                <small>  <a href="{{ route('loading_points.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Loading Point</a></small><a href="#" wire:click.prevent="refresh('loading_points')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                                 @error('loading_point_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -242,7 +244,7 @@
                                     <option value="{{$destination->id}}">{{$destination->country ? $destination->country->name : ""}} {{$destination->city}}</option>
                                     @endforeach
                                 </select>
-                                <small>  <a href="{{ route('destinations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Destination</a></small> 
+                                <small>  <a href="{{ route('destinations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Destination</a></small><a href="#" wire:click.prevent="refresh('destinations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                                 @error('to') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -255,21 +257,21 @@
                                     <option value="{{$offloading_point->id}}">{{$offloading_point->name}}</option>
                                     @endforeach
                                 </select>
-                                <small>  <a href="{{ route('offloading_points.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Offloading Points</a></small> 
+                                <small>  <a href="{{ route('offloading_points.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Offloading Points</a></small><a href="#" wire:click.prevent="refresh('offloading_points')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                                 @error('offloading_point_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
                        
                     </div>
                     <div class="row">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label for="title">Distance</label>
                                 <input type="number" step="any" class="form-control" wire:model.debounce.300ms="distance" placeholder="Enter Distance" />
                                 @error('distance') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label for="country">Cargo</label>
                                 <select class="form-control" wire:model.debounce.300ms="selectedCargo">
@@ -278,31 +280,31 @@
                                     <option value="{{$cargo->id}}">{{$cargo->name}}</option>
                                     @endforeach
                                 </select>
-                                <small>  <a href="{{ route('cargos.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Cargo</a></small> 
+                                <small>  <a href="{{ route('cargos.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Cargo</a></small><a href="#" wire:click.prevent="refresh('cargos')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 @error('selectedCargo') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
                    
                         @if ($cargo_type == "Solid")
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="title">Weight(t)</label>
-                                    <input type="number" step="any" class="form-control" wire:model.debounce.300ms="weight" placeholder="In tons" />
+                                    <input type="number" step="any" class="form-control" wire:model.debounce.300ms="weight" placeholder="Enter cargo weight" />
                                     @error('weight') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                         @elseif($cargo_type == "Liquid")
-                            <div class="col-md-2">
+                            <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="title">Weight(t)</label>
-                                    <input type="number" step="any" class="form-control" wire:model.debounce.300ms="weight" placeholder="In tons" />
+                                    <input type="number" step="any" class="form-control" wire:model.debounce.300ms="weight" placeholder="Enter cargo weight" />
                                     @error('weight') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
-                            <div class="col-md-2">
+                            <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="title">Litreage(l)</label>
-                                    <input type="number" step="any" class="form-control" wire:model.debounce.300ms="litreage" placeholder="In litres" />
+                                    <input type="number" step="any" class="form-control" wire:model.debounce.300ms="litreage" placeholder="Enter cargo litreage" />
                                     @error('litreage') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                 </div>
                             </div>
@@ -328,7 +330,7 @@
                                      <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>                                      
                                     @endforeach
                                 </select>
-                                <small>  <a href="{{ route('currencies.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Currency</a></small> 
+                                <small>  <a href="{{ route('currencies.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Currency</a></small><a href="#" wire:click.prevent="refresh('currencies')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                                 @error('currency_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -353,7 +355,7 @@
         </div>
     </div>
     <div wire:ignore.self data-backdrop="static" data-keyboard="false" class="modal" id="rateEditModal" tabindex="-1" role="dialog" aria-labelledby="modal4Label" data-backdrop-color="blue">
-        <div class="modal-dialog mw-100 w-50" role="document">
+        <div class="modal-dialog mw-100 w-60" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="modal4Label"><i class="fas fa-edit"></i> Edit Rate <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></h4>
@@ -383,6 +385,7 @@
                                         @endforeach
                                     </select>
                                     @error('customer_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    <small>  <a href="{{ route('customers.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Customer</a></small> <a href="#" wire:click.prevent="refresh('customers')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 </div>
                             @elseif (isset($category) && $category == "Transporter")
                                 <div class="form-group">
@@ -394,6 +397,7 @@
                                         @endforeach
                                     </select>
                                     @error('transporter_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                    <small><a href="{{ route('transporters.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Transporter</a></small> <a href="#" wire:click.prevent="refresh('transporters')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                 </div>
                             @endif
                         </div>
@@ -408,7 +412,7 @@
                                     <option value="{{$destination->id}}">{{$destination->country ? $destination->country->name : ""}} {{$destination->city}}</option>
                                     @endforeach
                                 </select>
-                                <small>  <a href="{{ route('destinations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Destination</a></small> 
+                                <small>  <a href="{{ route('destinations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Destination</a></small><a href="#" wire:click.prevent="refresh('destinations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                                 @error('from') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -421,7 +425,7 @@
                                     <option value="{{$loading_point->id}}">{{$loading_point->name}}</option>
                                     @endforeach
                                 </select>
-                                <small>  <a href="{{ route('loading_points.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Loading Point</a></small> 
+                                <small>  <a href="{{ route('loading_points.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Loading Point</a></small><a href="#" wire:click.prevent="refresh('loading_points')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                                 @error('loading_point_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -438,7 +442,7 @@
                                     <option value="{{$destination->id}}">{{$destination->country ? $destination->country->name : ""}} {{$destination->city}}</option>
                                     @endforeach
                                 </select>
-                                <small>  <a href="{{ route('destinations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Destination</a></small> 
+                                <small>  <a href="{{ route('destinations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Destination</a></small><a href="#" wire:click.prevent="refresh('destinations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                                 @error('to') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -451,7 +455,7 @@
                                     <option value="{{$offloading_point->id}}">{{$offloading_point->name}}</option>
                                     @endforeach
                                 </select>
-                                <small>  <a href="{{ route('offloading_points.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Offloading Points</a></small> 
+                                <small>  <a href="{{ route('offloading_points.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Offloading Points</a></small><a href="#" wire:click.prevent="refresh('offloading_points')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                                 @error('offloading_point_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -474,7 +478,7 @@
                                     <option value="{{$cargo->id}}">{{$cargo->name}}</option>
                                     @endforeach
                                 </select>
-                                <small>  <a href="{{ route('cargos.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Cargo</a></small> 
+                                <small>  <a href="{{ route('cargos.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Cargo</a></small><a href="#" wire:click.prevent="refresh('cargos')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                                 @error('selectedCargo') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -524,7 +528,7 @@
                                      <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>                                      
                                     @endforeach
                                 </select>
-                                <small>  <a href="{{ route('currencies.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Currency</a></small> 
+                                <small>  <a href="{{ route('currencies.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Currency</a></small><a href="#" wire:click.prevent="refresh('currencies')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
                                 @error('currency_id') <span class="error" style="color:red">{{ $message }}</span> @enderror
                             </div>
                         </div>

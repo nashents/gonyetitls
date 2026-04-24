@@ -410,13 +410,13 @@ class Pending extends Component
 
                 $last_mileage = Mileage::whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
                 if(isset($last_mileage)){
-                    if($last_mileage < $trip->starting_mileage){
+                    if(is_numeric($last_mileage->mileage) && is_numeric($trip->starting_mileage) && ($last_mileage->mileage < $trip->starting_mileage)){
                         $mileage = new Mileage;
                         $mileage->user_id = Auth::user()->id;
-                        $mileage->trip_id = $trip->id  ?: Null;
-                        $mileage->horse_id = $trip->horse_id ?: Null;
-                        $mileage->trailer_id = $trip->trailer_id  ?: Null;
-                        $mileage->vehicle_id = $trip->vehicle_id  ?: Null;
+                        $mileage->trip_id = $trip->id;
+                        $mileage->horse_id = $trip->horse_id;
+                        $mileage->trailer_id = $trip->trailer_id;
+                        $mileage->vehicle_id = $trip->vehicle_id;
                         $mileage->mileage = $trip->starting_mileage;
                         $mileage->date = $trip->start_date;
                         $mileage->category = "Trip";
@@ -425,18 +425,19 @@ class Pending extends Component
                     }
                 }    
                        
-              }
-    
-              if(isset($trip->ending_mileage)){
+            }
+
+            
+            if(isset($trip->ending_mileage)){
                 $last_mileage = Mileage::whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
                 if(isset($last_mileage)){
-                    if($last_mileage < $trip->ending_mileage){
+                     if(is_numeric($last_mileage->mileage) && is_numeric($trip->ending_mileage) && ($last_mileage->mileage < $trip->ending_mileage)){
                         $mileage = new Mileage;
                         $mileage->user_id = Auth::user()->id;
-                        $mileage->trip_id = $trip->id  ?: Null;
-                        $mileage->horse_id = $trip->horse_id  ?: Null;
-                        $mileage->trailer_id = $trip->trailer_id  ?: Null;
-                        $mileage->vehicle_id = $trip->vehicle_id  ?: Null;
+                        $mileage->trip_id = $trip->id;
+                        $mileage->horse_id = $trip->horse_id;
+                        $mileage->trailer_id = $trip->trailer_id;
+                        $mileage->vehicle_id = $trip->vehicle_id;
                         $mileage->mileage = $trip->ending_mileage;
                         $mileage->date = $trip->end_date;
                         $mileage->category = "Trip";
@@ -444,19 +445,19 @@ class Pending extends Component
                         $mileage->save();
                     }
                 }
-              }
+            }
           
-              if(isset($trip->starting_hours)){
+            if(isset($trip->starting_hours)){
 
                 $last_hours = Hour::whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
                 if(isset($last_hours)){
-                    if($last_hours < $trip->starting_hours){
+                    if(is_numeric($last_hours->hours) && is_numeric($trip->starting_hours) && ($last_hours->hours < $trip->starting_hours)){
                         $hours = new Hour;
                         $hours->user_id = Auth::user()->id;
-                        $hours->trip_id = $trip->id  ?: Null;
-                        $hours->horse_id = $trip->horse_id  ?: Null;
-                        $hours->trailer_id = $trip->trailer_id  ?: Null;
-                        $hours->vehicle_id = $trip->vehicle_id  ?: Null;
+                        $hours->trip_id = $trip->id;
+                        $hours->horse_id = $trip->horse_id;
+                        $hours->trailer_id = $trip->trailer_id;
+                        $hours->vehicle_id = $trip->vehicle_id;
                         $hours->hours = $trip->starting_hours;
                         $hours->date = $trip->start_date;
                         $hours->category = "Trip";
@@ -464,18 +465,18 @@ class Pending extends Component
                         $hours->save();
                     }
                 }    
-              }
+            }
     
-              if(isset($trip->ending_hours)){
+            if(isset($trip->ending_hours)){
                 $last_hours = Hour::whereYear('created_at',date('Y'))->orderBy('created_at','desc')->first();
                 if(isset($last_hours)){
-                    if($last_hours < $trip->ending_hours){
+                    if(is_numeric($last_hours->hours) && is_numeric($trip->ending_hours) && ($last_hours->hours < $trip->ending_hours)){
                         $hours = new Hour;
                         $hours->user_id = Auth::user()->id;
                         $hours->trip_id = $trip->id;
-                        $hours->horse_id = $trip->horse_id  ?: Null;
-                        $hours->trailer_id = $trip->trailer_id  ?: Null; 
-                        $hours->vehicle_id = $trip->vehicle_id  ?: Null;
+                        $hours->horse_id = $trip->horse_id;
+                        $hours->trailer_id = $trip->trailer_id;
+                        $hours->vehicle_id = $trip->vehicle_id;
                         $hours->hours = $trip->ending_hours;
                         $hours->date = $trip->end_date;
                         $hours->category = "Trip";
@@ -483,7 +484,7 @@ class Pending extends Component
                         $hours->save();
                     }
                 }
-              }
+            }
 
 
             $expenses = Trip::find($this->trip_id)->trip_expenses;
