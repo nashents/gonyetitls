@@ -2,13 +2,18 @@
 
 namespace App\Http\Livewire\TrainingDepartments;
 
-use Livewire\Component;
 use App\Models\TrainingDepartment;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class Index extends Component
 {
-    public $training_departments;
+
+    use WithPagination;
+
+    protected $paginationTheme = 'bootstrap';
+    protected $training_departments;
     public $training_department_id;
     public $training_department;
     public $name;
@@ -17,7 +22,7 @@ class Index extends Component
   
 
     public function mount(){
-        $this->training_departments = TrainingDepartment::orderBy('name','asc')->get();
+        
     }
 
     public function updated($value){
@@ -101,7 +106,7 @@ class Index extends Component
 
     public function render()
     {
-        $this->training_departments = TrainingDepartment::orderBy('name','asc')->get();
+        $this->training_departments = TrainingDepartment::orderBy('name','asc')->paginate(10);
         return view('livewire.training-departments.index',[
             'training_departments' =>   $this->training_departments
         ]);
