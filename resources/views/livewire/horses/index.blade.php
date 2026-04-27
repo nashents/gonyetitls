@@ -139,7 +139,7 @@
                                         </td>
                                       
                                           <td><span class="badge bg-{{$horse->service == 0 ? "success" : "danger"}}">{{$horse->service == 0 ? "Fit for use" : "In Service"}}</span></td>
-                                        <td><span class="badge bg-{{$horse->status == 1 ? "success" : "danger"}}">{{$horse->status == 1 ? "Available" : "Unavailable"}}</span></td>
+                                        <td><span class="badge bg-{{$horse->status == 1 ? "success" : "danger"}}">{{$horse->status == 1 ? "Available" : "Intransit"}}</span></td>
                                       
                                       
                                         <td class="w-10 line-height-35 table-dropdown">

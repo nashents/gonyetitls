@@ -390,7 +390,12 @@
                                                 @if($showFreight)
                                                     <th>Freight</th>
                                                 @endif
-                                                <th>Invoice<hr style="margin-top:2px; margin-bottom:2px">POD</th>
+                                                <th>
+                                                    @if ($showFreight)
+                                                         Invoice<hr style="margin-top:2px; margin-bottom:2px">
+                                                    @endif
+                                                    POD
+                                                </th>
                                                 <th>Auth</th>
                                                 <th>Actions</th>
                                             </tr>
@@ -637,19 +642,21 @@
                                                 @endif
 
                                                 <td>
-                                                    @if($trip->invoices?->count())
-                                                        <span class="label label-success">issued</span>
-                                                        <small>
-                                                            <strong>Invoice#(s):</strong>
-                                                            @foreach($trip->invoices as $invoice)
-                                                                {{ $invoice->invoice_number }}@if(!$loop->last),@endif
-                                                            @endforeach
-                                                        </small>
-                                                    @else
-                                                        <span class="label label-warning">pending</span>
+                                                     @if ($showFreight)
+                                                        @if($trip->invoices?->count())
+                                                            <span class="label label-success">issued</span>
+                                                            <small>
+                                                                <strong>Invoice#(s):</strong>
+                                                                @foreach($trip->invoices as $invoice)
+                                                                    {{ $invoice->invoice_number }}@if(!$loop->last),@endif
+                                                                @endforeach
+                                                            </small>
+                                                        @else
+                                                            <span class="label label-warning">pending</span>
+                                                        @endif
+                                                        <hr class="my-1">
                                                     @endif
-
-                                                    <hr class="my-1">
+                                                
                                                     @if (isset($pod))
                                                         <span class="label label-{{ $pod ? 'success' : 'warning' }}">
                                                             {{ $pod ? "Submitted On: {$pod->date}" : "pending" }}

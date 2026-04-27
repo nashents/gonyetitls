@@ -17,6 +17,8 @@ class Index extends Component
     public $training_department_id;
     public $training_department;
     public $name;
+    public $user_id;
+
   
 
   

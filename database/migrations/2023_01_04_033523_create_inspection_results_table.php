@@ -19,6 +19,7 @@ class CreateInspectionResultsTable extends Migration
             $table->foreign('inspection_id')->references('id')->on('inspections')->onDelete('cascade');
             $table->bigInteger('inspection_type_id')->nullable()->unsigned();
             $table->foreign('inspection_type_id')->references('id')->on('inspection_types')->onDelete('cascade');
+             $table->bigInteger('service_type_id')->nullable()->unsigned();
             $table->string('status')->nullable();
             $table->string('hours')->nullable();
             $table->string('cost')->nullable();

@@ -118,10 +118,16 @@
           </div>
         <div role="tabpanel" class="tab-pane" id="notifications">
             @livewire('notifications.index')
-          </div>
-           <div role="tabpanel" class="tab-pane" id="modules">
+        </div>
+        <div role="tabpanel" class="tab-pane" id="modules">
             @livewire('modules.index', ['id' => $company->id])
-          </div>
+        </div>
+        <div role="tabpanel" class="tab-pane" id="settings">
+            @livewire('settings.index', ['id' => $company->id])
+        </div>
+        <div role="tabpanel" class="tab-pane" id="budgets">
+            @livewire('budgets.index', ['id' => $company->id])
+        </div>
       
       
        

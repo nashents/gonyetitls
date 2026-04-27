@@ -351,6 +351,18 @@ class Pending extends Component
         $trip->reason = $this->comments;
         $trip->update();
 
+        $ttos = $trip->trip_transport_orders;
+        if($ttos){
+            foreach($ttos as $tto){
+                $to = $tto->transport_order;
+                $to->authorized_by_id = Auth::user()->id;
+                $to->authorization = $this->authorize;
+                $to->authorization_date = now();
+                $to->comments = $this->comments;
+                $to->update();
+            }
+        }
+
         $company =  Auth::user()->employee->company;
         $user = $trip->user;
         $email = $user?->email ?? null;
@@ -988,6 +1000,18 @@ class Pending extends Component
                     $trip->authorization_date = now();
                     $trip->reason = $this->comments;
                     $trip->update();
+
+                    $ttos = $trip->trip_transport_orders;
+                    if($ttos){
+                        foreach($ttos as $tto){
+                            $to = $tto->transport_order;
+                            $to->authorized_by_id = Auth::user()->id;
+                            $to->authorization = $this->authorize;
+                            $to->authorization_date = now();
+                            $to->comments = $this->comments;
+                            $to->update();
+                        }
+                    }
 
                     $company =  Auth::user()->employee->company;
                     $user = $trip->user;

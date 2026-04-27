@@ -117,7 +117,7 @@
                                             {{$vehicle->next_service_hours ? $vehicle->next_service_hours."Hours" : ""}}
                                         </td>
                                         <td><span class="badge bg-{{$vehicle->service == 0 ? "success" : "danger"}}">{{$vehicle->service == 0 ? "Fit for use" : "In Service"}}</span></td>
-                                        <td><span class="badge bg-{{$vehicle->status == 1 ? "success" : "danger"}}">{{$vehicle->status == 1 ? "Available" : "Unavailable"}}</span></td>
+                                        <td><span class="badge bg-{{$vehicle->status == 1 ? "success" : "danger"}}">{{$vehicle->status == 1 ? "Available" : "Intransit"}}</span></td>
                                         <td class="w-10 line-height-35 table-dropdown">
                                             <div class="dropdown">
                                                 <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

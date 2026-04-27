@@ -158,8 +158,8 @@
                                                     @endforeach
                                                 @endif
                                         </td>
-                                        <td><span class="badge bg-{{$driver->status == 1 ? "success" : "danger"}}">{{$driver->status == 1 ? "Available" : "Unavailable"}}</span></td>
-                                         <td>
+                                        <td><span class="badge bg-{{$driver->status == 1 ? "success" : "danger"}}">{{$driver->status == 1 ? "Available" : "Intransit"}}</span></td>
+                                        <td>
                                                 @if ($driver->user)
                                                     @if ($driver->user->username)
                                                         <small><strong><i class="fas fa-user"></i> </strong> {{$driver->user->username}}</small>  <br>    

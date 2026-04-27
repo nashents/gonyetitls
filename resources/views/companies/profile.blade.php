@@ -73,6 +73,8 @@
                                         <li role="presentation"><a href="#bank_accounts" aria-controls="bank_accounts" role="tab" data-toggle="tab">Bank Accounts</a></li>
                                         <li role="presentation"><a href="#notifications" aria-controls="notifications" role="tab" data-toggle="tab">Notifications</a></li>
                                         <li role="presentation"><a href="#modules" aria-controls="modules" role="tab" data-toggle="tab">Modules</a></li>
+                                        <li role="presentation"><a href="#settings" aria-controls="modules" role="tab" data-toggle="tab">Settings</a></li>
+                                        <li role="presentation"><a href="#budgets" aria-controls="modules" role="tab" data-toggle="tab">Budgets</a></li>
                                         
                                     </ul>
                                     @livewire('companies.profile', ['company' => $company])
