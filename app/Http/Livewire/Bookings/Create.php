@@ -2,31 +2,32 @@
 
 namespace App\Http\Livewire\Bookings;
 
+use App\Mail\PendingNotificationEmails;
 use App\Models\Asset;
-use App\Models\Horse;
-use App\Models\Driver;
-use App\Models\Vendor;
+use App\Models\Assignment;
 use App\Models\Booking;
+use App\Models\Breakdown;
+use App\Models\Department;
+use App\Models\Driver;
+use App\Models\Employee;
+use App\Models\Horse;
 use App\Models\JobType;
 use App\Models\Mileage;
+use App\Models\Notification;
+use App\Models\ProblemCategory;
+use App\Models\ServiceType;
 use App\Models\Station;
 use App\Models\Trailer;
 use App\Models\Vehicle;
-use Livewire\Component;
-use App\Models\Employee;
-use App\Models\Breakdown;
-use App\Models\Assignment;
-use App\Models\Department;
-use App\Models\ServiceType;
-use App\Models\Notification;
-use Livewire\WithFileUploads;
-use Illuminate\Support\Facades\DB;
+use App\Models\Vendor;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
-use Intervention\Image\Facades\Image;
-use App\Mail\PendingNotificationEmails;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
+use Intervention\Image\Facades\Image;
+use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class Create extends Component
 {
@@ -52,10 +53,13 @@ class Create extends Component
     public $employee_id;
     public $existing_bookings;
     
+    public $problem_categories;
+    public $problem_category_id;
     public $breakdowns;
     public $breakdown_id;
     public $stations;
     public $station_id;
+    public $is_safety_incident = false;
 
 
     public $searchAsset;
@@ -65,8 +69,9 @@ class Create extends Component
     public $searchEmployee;
     public $searchMechanic;
     public $searchVendor;
+    public $searchProblem;
     
-    protected $queryString = ['searchVehicle','searchAsset','searchVendor','searchHorse','searchTrailer','searchEmployee','searchMechanic'];
+    protected $queryString = ['searchVehicle','searchAsset','searchVendor','searchHorse','searchTrailer','searchEmployee','searchMechanic','searchProblem'];
 
 
     public $in_date;
@@ -107,6 +112,7 @@ class Create extends Component
         $this->company = Auth::user()->employee->company;
         $this->service_types = ServiceType::where('status',1)->orderBy('name','asc')->get();
         $this->stations = Station::where('status',1)->orderBy('name','asc')->get();
+      
         $this->breakdowns = collect();
     
     }
@@ -164,7 +170,7 @@ class Create extends Component
     public function updatedEmployeeId($id){
         if(!is_null($id)){
             $employee = Employee::find($id);
-            $driver = $employee->driver;
+            $driver = $employee?->driver;
             if($driver){
                 if($this->type == "Horse" && $this->selectedHorse){
                     $this->breakdowns = Breakdown::where('driver_id',$driver->id)->where('horse_id', $this->selectedHorse)->whereYear('date',date('Y'))->where('status',True)->orderBy('created_at','desc')->get();
@@ -246,6 +252,7 @@ class Create extends Component
         $booking->user_id = Auth::user()->id;
         $booking->assigned_to = $this->assigned_to;
         $booking->breakdown_id = $this->breakdown_id;
+        $booking->problem_category_id = $this->problem_category_id;
         $booking->transaction_type = $this->transaction_type;
 
         $booking->vendor_id = $this->assigned_to === "Vendor" ? ($this->vendor_id ?: null) : null;
@@ -300,6 +307,7 @@ class Create extends Component
         $booking->estimated_out_date = $this->estimated_out_date;
         $booking->estimated_out_time = $this->estimated_out_time;
         $booking->station_id = $this->station_id;
+        $booking->is_safety_incident = $this->is_safety_incident;
         $booking->type = $this->type;
         
         $booking->description = $this->description;
@@ -383,6 +391,11 @@ class Create extends Component
             ->get();
         }else{
             $this->employees = Employee::where('archive',0)->orderBy('name')->orderBy('surname')->get();
+        }
+        if (filled($this->searchProblem)) {
+              $this->problem_categories = ProblemCategory::where('name', 'like', '%'.$this->searchProblem.'%')->get();
+        }else{
+              $this->problem_categories = ProblemCategory::orderBy('name','asc')->get();
         }
       
        if (filled($this->searchMechanic)) {

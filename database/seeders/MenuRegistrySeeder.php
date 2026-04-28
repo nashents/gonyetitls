@@ -5,7 +5,7 @@ namespace Database\Seeders;
 
 use App\Models\Module;
 use App\Models\ModuleGroup;
-use App\Models\PublicHoliday;
+use App\Models\ProblemCategory;
 use App\Models\SubModule;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
@@ -14,52 +14,64 @@ use Illuminate\Support\Str;
 class MenuRegistrySeeder extends Seeder
 {
 
-   private function getZimbabwePublicHolidays(int $year): array
-    {
-        $easterSunday = Carbon::createMidnightDate($year, 3, 21)->addDays(easter_days($year));
-
-        return [
-            ['name' => "New Year's Day", 'date' => Carbon::create($year, 1, 1)->toDateString()],
-            ['name' => 'Robert Gabriel Mugabe National Youth Day', 'date' => Carbon::create($year, 2, 21)->toDateString()],
-            ['name' => 'Good Friday', 'date' => $easterSunday->copy()->subDays(2)->toDateString()],
-            ['name' => 'Holy Saturday', 'date' => $easterSunday->copy()->subDay()->toDateString()],
-            ['name' => 'Easter Monday', 'date' => $easterSunday->copy()->addDay()->toDateString()],
-            ['name' => 'Independence Day', 'date' => Carbon::create($year, 4, 18)->toDateString()],
-            ['name' => "Workers' Day", 'date' => Carbon::create($year, 5, 1)->toDateString()],
-            ['name' => 'Africa Day', 'date' => Carbon::create($year, 5, 25)->toDateString()],
-            ['name' => "Heroes' Day", 'date' => $this->secondMondayOfAugust($year)->toDateString()],
-            ['name' => 'Defence Forces Day', 'date' => $this->secondMondayOfAugust($year)->copy()->addDay()->toDateString()],
-            ['name' => 'National Unity Day', 'date' => Carbon::create($year, 12, 22)->toDateString()],
-            ['name' => 'Christmas Day', 'date' => Carbon::create($year, 12, 25)->toDateString()],
-            ['name' => 'Boxing Day', 'date' => Carbon::create($year, 12, 26)->toDateString()],
-        ];
-    }
-
-    private function secondMondayOfAugust(int $year): Carbon
-    {
-        $date = Carbon::create($year, 8, 1);
-
-        while (! $date->isMonday()) {
-            $date->addDay();
-        }
-
-        return $date->addWeek();
-    }
+ 
 
     public function run(): void
     {
 
-      foreach ([now()->year, now()->year + 1] as $year) {
-            foreach ($this->getZimbabwePublicHolidays($year) as $holiday) {
-                PublicHoliday::updateOrCreate(
-                    ['date' => $holiday['date']],
-                    [
-                        'name' => $holiday['name'],
-                        'date' => $holiday['date'],
-                        'is_generated' => true,
-                    ]
-                );
-            }
+      $categories = [
+            // Suspension & Steering
+            ['name' => 'Suspension', 'description' => 'Suspension system failures including springs, shock absorbers and linkages'],
+            ['name' => 'Steering', 'description' => 'Steering system faults including rack, column and power steering'],
+
+            // Brakes
+            ['name' => 'Brakes', 'description' => 'Brake system issues including pads, discs, drums and hydraulics'],
+            ['name' => 'ABS System', 'description' => 'Anti-lock braking system faults'],
+
+            // Drivetrain
+            ['name' => 'Gearbox', 'description' => 'Transmission and gearbox faults'],
+            ['name' => 'Clutch', 'description' => 'Clutch plate, pressure plate and release bearing failures'],
+            ['name' => 'Differential', 'description' => 'Differential and axle faults'],
+            ['name' => 'Driveshaft', 'description' => 'Driveshaft, CV joints and propshaft failures'],
+
+            // Engine
+            ['name' => 'Engine', 'description' => 'General engine faults, overheating and internal failures'],
+            ['name' => 'Fuel System', 'description' => 'Fuel pump, injectors, filters and fuel line issues'],
+            ['name' => 'Turbo', 'description' => 'Turbocharger and intercooler faults'],
+            ['name' => 'Exhaust', 'description' => 'Exhaust system leaks, DPF and emissions faults'],
+
+            // Electrical
+            ['name' => 'Electrical', 'description' => 'General electrical faults, wiring and battery issues'],
+            ['name' => 'Alternator', 'description' => 'Alternator and charging system faults'],
+            ['name' => 'Starter Motor', 'description' => 'Starter motor and ignition system faults'],
+            ['name' => 'Lights', 'description' => 'Headlights, indicators, brake lights and interior lighting'],
+
+            // Cooling
+            ['name' => 'Cooling System', 'description' => 'Radiator, coolant leaks, thermostat and water pump faults'],
+
+            // Tyres & Wheels
+            ['name' => 'Tyres', 'description' => 'Tyre wear, punctures and wheel alignment'],
+            ['name' => 'Wheels & Rims', 'description' => 'Wheel bearing, hub and rim damage'],
+
+            // Body & Cab
+            ['name' => 'Body Damage', 'description' => 'Panel damage, cab repairs and structural bodywork'],
+            ['name' => 'Windscreen', 'description' => 'Windscreen chips, cracks and wiper faults'],
+            ['name' => 'Doors & Locks', 'description' => 'Door hinges, locks and seals'],
+
+            // Service & Scheduled
+            ['name' => 'Scheduled Service', 'description' => 'Routine oil, filter and service intervals'],
+            ['name' => 'Pre-trip Inspection', 'description' => 'Defects identified during pre-trip vehicle checks'],
+
+            // Other
+            ['name' => 'Accident Damage', 'description' => 'Repairs resulting from road traffic accidents'],
+            ['name' => 'Other', 'description' => 'Miscellaneous workshop jobs not covered by other categories'],
+        ];
+
+        foreach ($categories as $category) {
+            ProblemCategory::firstOrCreate(
+                ['name' => $category['name']],
+                ['description' => $category['description']]
+            );
         }
    
 
@@ -1246,6 +1258,7 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
             'sort_order' => 60,
         ]);
         $upsertSub($m, ['name'=>'Manage Inspections','slug'=>'manage-inspections','icon'=>'fas fa-tasks','route_name'=>'checklists.index','sort_order'=>10]);
+        $upsertSub($m, ['name'=>'Inspection Schedules','slug'=>'inspections-schedules','icon'=>'fas fa-tasks','route_name'=>'inspection_schedules.index','sort_order'=>20]);
 
         // ----------------------------
         // GROUP: Fuel Management (header existed always) -> group public
@@ -1651,6 +1664,7 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
         $upsertSub($m, ['name'=>'Job Types','slug'=>'job-types','icon'=>'fas fa-list','route_name'=>'service_types.index','sort_order'=>10]);
         $upsertSub($m, ['name'=>'Inspection Item Groups','slug'=>'inspection-item-groups','icon'=>'fas fa-list','route_name'=>'inspection_groups.index','sort_order'=>20]);
         $upsertSub($m, ['name'=>'Inspection Items','slug'=>'inspection-items','icon'=>'fas fa-list','route_name'=>'inspection_types.index','sort_order'=>30]);
+        $upsertSub($m, ['name'=>'Problem Categories','slug'=>'problem-categories','icon'=>'fas fa-list','route_name'=>'problem_categories.index','sort_order'=>35]);
         $upsertSub($m, ['name'=>'Workshop Stations','slug'=>'workshop-stations','icon'=>'fas fa-list','route_name'=>'stations.index','sort_order'=>40]);
 
         $m = $upsertModule($g, [
@@ -1662,6 +1676,7 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
         ]);
         $upsertSub($m, ['name'=>'Create Booking','slug'=>'create-booking','icon'=>'fas fa-plus','route_name'=>'bookings.create','sort_order'=>10]);
         $upsertSub($m, ['name'=>'Manage Bookings','slug'=>'manage-bookings','icon'=>'fas fa-list','route_name'=>'bookings.index','sort_order'=>20]);
+        $upsertSub($m, ['name'=>'Maintenance Schedules','slug'=>'maintenance-schedules','icon'=>'fas fa-tasks','route_name'=>'inspection_schedules.index','sort_order'=>30]);
 
         $bookingManageVis = $any([
             $all(['hasWorkshopDeptHead']),

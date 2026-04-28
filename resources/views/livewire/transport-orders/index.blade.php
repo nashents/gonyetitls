@@ -217,9 +217,11 @@
                                     </div>
                                 </div>
                             @php
-                                    $showFreight = !$company->rates_managed_by_finance
+                                      $showFreight = !$driver && (
+                                        !$company->rates_managed_by_finance
                                         || in_array('Finance', $department_names)
-                                        || in_array('Super Admin', $role_names);
+                                        || in_array('Super Admin', $role_names)
+                                    );
 
                                     $dtPattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
                                     $formatDate = function ($value) use ($dtPattern) {
@@ -285,7 +287,10 @@
                                                     </small>
                                                     <hr class="my-1">
                                                     {{ $transport_order->trip_type?->name }}
-                                                 
+                                                    @if ($transport_order->bill_of_entry)  
+                                                        <br>
+                                                        <small><strong>BillOfEntry#: {{$transport_order->bill_of_entry}}</strong></small>
+                                                    @endif
                                                 </td>
                                                 <td>
                                                     {{ $formatDate($transport_order->start_date) }}
@@ -331,23 +336,9 @@
 
                                                 @if($showFreight)
                                                     <td>
-                                                        {{ $transport_order->currency?->symbol }}
-                                                        {{ number_format(
-                                                            (float) (is_numeric($transport_order->rate)
-                                                                ? $transport_order->rate
-                                                                : preg_replace('/[^\d\.\-]/', '', (string) ($transport_order->rate ?? 0))
-                                                            ),
-                                                            2
-                                                        ) }}
+                                                        {{ $transport_order->currency?->symbol }}{{ number_format($transport_order->rate ?: 0,2) }}
                                                         <hr class="my-1">
-                                                        {{ $transport_order->currency?->symbol }}
-                                                        {{ number_format(
-                                                            (float) (is_numeric($transport_order->freight)
-                                                                ? $transport_order->freight
-                                                                : preg_replace('/[^\d\.\-]/', '', (string) ($transport_order->freight ?? 0))
-                                                            ),
-                                                            2
-                                                        ) }}
+                                                        {{ $transport_order->currency?->symbol }}{{ number_format($transport_order->freight ?: 0,2) }}
                                                     </td>
                                                 @endif
 

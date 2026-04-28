@@ -63,6 +63,7 @@ class Index extends Component
     public $volume;
     public $temparature;
     public $net_weight;
+    public $bill_of_entry;
     public $seal_number;
     public $use_filters = False;
 
@@ -350,6 +351,7 @@ class Index extends Component
         $this->loading_point_id = Null;
         $this->searchOffloadingPoint = Null;
         $this->offloading_point_id = Null;
+        $this->bill_of_entry = Null;
         $this->destinations_selectedTo = [];
         $this->destinations_offloading_point_id = [];
         $this->offloaded_weight = [];
@@ -473,6 +475,7 @@ public function getAuthorizer($id){
                 $transport_order = new TransportOrder;
                 $transport_order->transport_order_number = $this->transportOrderNumber();
                 $transport_order->custom_ref = $this->custom_ref;
+                $transport_order->bill_of_entry = $this->bill_of_entry;
                 $transport_order->user_id =  $this->user->id ?: null;
                 $transport_order->company_id = $this->company->id ?: null;
                 $transport_order->quotation_id = $this->selectedQuotation ?: null;
@@ -545,6 +548,7 @@ public function getAuthorizer($id){
         // Core
         $this->transport_order_id = $transport_order->id;
         $this->custom_ref = $transport_order->custom_ref;
+        $this->bill_of_entry = $transport_order->bill_of_entry;
         $this->company = Company::find($transport_order->company_id);
         $this->selectedQuotation = $transport_order->quotation_id;
         $this->with_customer_rates = $transport_order->with_customer_rates;
@@ -639,6 +643,7 @@ public function getAuthorizer($id){
 
                 $transport_order =  TransportOrder::find($this->transport_order_id);
                 $transport_order->custom_ref = $this->custom_ref;
+                $transport_order->bill_of_entry = $this->bill_of_entry;
                 $transport_order->company_id = $this->company->id ?: null;
                 $transport_order->quotation_id = $this->selectedQuotation ?: null;
                 $transport_order->with_customer_rates = $this->with_customer_rates;

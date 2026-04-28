@@ -234,6 +234,7 @@ class Edit extends Component
     }
 
      
+    public $boe = [];
     public $current_allocated_currency_id = [];
     public $current_allocated_exchange_rate = [];
     public $current_allocated_exchange_amount = [];
@@ -1068,6 +1069,7 @@ class Edit extends Component
                 $this->current_allocated_currency_id[$key] = $trip_transport_order->currency_id ?: $transport_order->currency_id;
                 $this->current_allocated_freight[$key] = $trip_transport_order->allocated_freight ?: $transport_order->freight;
                 $this->current_allocated_rate[$key] = $trip_transport_order->allocated_rate ?: $transport_order->rate ;
+                $this->boe[$key] = $trip_transport_order->bill_of_entry;
                 $this->current_allocated_exchange_rate[$key] = $trip_transport_order->exchange_rate ?: $transport_order->exchange_rate;
                 $this->current_allocated_exchange_amount[$key] = $trip_transport_order->exchange_amount ?: $transport_order->exchange_customer_freight;
             }
@@ -1863,6 +1865,7 @@ class Edit extends Component
 
         $transport_order->transport_order_number = $this->transportOrderNumber();
         $transport_order->custom_ref = $this->trip_ref;
+        $transport_order->bill_of_entry = $this->bill_of_entry;
         $transport_order->user_id = $this->user->id ?? null;
         $transport_order->company_id = $this->company->id ?? null;
         $transport_order->quotation_id = $this->selectedQuotation ?: null;
@@ -2075,6 +2078,7 @@ class Edit extends Component
                         $currency_id = $this->current_allocated_currency_id[$key] ?: Null;
                         $exchange_rate = $this->current_allocated_exchange_rate[$key] ?: Null;
                         $exchange_amount = $this->current_allocated_exchange_amount[$key] ?: Null;
+                          $boe = $this->boe[$key] ?: Null;
 
                      
                         
@@ -2097,6 +2101,7 @@ class Edit extends Component
                         $trip_transport_order->exchange_rate = $exchange_rate;
                         $trip_transport_order->exchange_amount = $exchange_amount;
                         $trip_transport_order->currency_id = $currency_id;
+                         $trip_transport_order->bill_of_entry = $boe;
 
                     }else{
                               
@@ -2113,6 +2118,7 @@ class Edit extends Component
                             $trip_transport_order->currency_id = $transport_order->currency_id;
                             $trip_transport_order->exchange_rate = $transport_order->exchange_rate;
                             $trip_transport_order->exchange_amount = $transport_order->exchange_customer_freight;
+                            $trip_transport_order->boe = $this->bill_of_entryw;
 
                         }
 

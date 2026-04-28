@@ -42,9 +42,11 @@
                                     </div>
                                 </div>
                             @php
-                                    $showFreight = !$company->rates_managed_by_finance
+                                     $showFreight = !$driver && (
+                                        !$company->rates_managed_by_finance
                                         || in_array('Finance', $department_names)
-                                        || in_array('Super Admin', $role_names);
+                                        || in_array('Super Admin', $role_names)
+                                    );
 
                                     $dtPattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
                                     $formatDate = function ($value) use ($dtPattern) {
@@ -83,6 +85,8 @@
                                                         Freight
                                                     </th>
                                                 @endif
+                                                <th>Invoice(s)</th>
+                                                <th>Bill Of Entry#</th>
                                                 <th>Actions</th>
                                             </tr>
                                         </thead>
@@ -173,6 +177,9 @@
                                                     @else
                                                         <span class="label label-warning">pending</span>
                                                     @endif
+                                                </td>
+                                                <td>
+                                                    {{ $tto->bill_of_entry }}
                                                 </td>
                                                  <td class="w-10 line-height-35 table-dropdown">
                                                    <div class="dropdown">

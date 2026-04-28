@@ -2,22 +2,23 @@
 
 namespace App\Http\Livewire\Bookings;
 
-use Carbon\Carbon;
+use App\Exports\BookingsExport;
 use App\Models\Asset;
-use App\Models\Horse;
 use App\Models\Booking;
+use App\Models\Employee;
+use App\Models\Horse;
+use App\Models\ProblemCategory;
+use App\Models\ServiceType;
 use App\Models\Station;
 use App\Models\Trailer;
 use App\Models\Vehicle;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Session;
 use Livewire\Component;
-use App\Models\Employee;
-use App\Models\ServiceType;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Excel;
-use App\Exports\BookingsExport;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Session;
 
 class Index extends Component
 {
@@ -54,6 +55,8 @@ class Index extends Component
     public $station_id;
     public $employees;
     public $employee_id;
+    public $problem_categories;
+    public $problem_category_id;
     public $status;
     public $comments;
     public $booking_status = "all";
@@ -74,6 +77,7 @@ class Index extends Component
         $this->vehicles = collect();
         $this->stations = Station::where('status',1)->orderBy('name','asc')->get();
         $this->service_types = ServiceType::where('status',1)->orderBy('name','asc')->get();
+        $this->problem_categories = ProblemCategory::orderBy('name','asc')->get();
         $this->employees = Employee::query()
         ->whereHas('departments', fn ($q) => 
             $q->where('departments.name', 'Workshop')
@@ -105,13 +109,13 @@ class Index extends Component
 
 
     public function exportBookingsCSV(Excel $excel){
-        return $excel->download(new BookingsExport($this->booking_status, $this->search, $this->from, $this->to, $this->filter, $this->search_id, $this->station_id, $this->service_type_id, $this->employee_id), 'bookings_'.time().'.csv', Excel::CSV);
+        return $excel->download(new BookingsExport($this->booking_status, $this->search, $this->from, $this->to, $this->filter, $this->search_id, $this->station_id, $this->service_type_id, $this->employee_id,$this->problem_category_id), 'bookings_'.time().'.csv', Excel::CSV);
     }
     public function exportBookingsPDF(Excel $excel){
-        return $excel->download(new BookingsExport($this->booking_status, $this->search, $this->from, $this->to, $this->filter, $this->search_id, $this->station_id, $this->service_type_id, $this->employee_id), 'bookings_'.time().'.pdf', Excel::DOMPDF);
+        return $excel->download(new BookingsExport($this->booking_status, $this->search, $this->from, $this->to, $this->filter, $this->search_id, $this->station_id, $this->service_type_id, $this->employee_id,$this->problem_category_id), 'bookings_'.time().'.pdf', Excel::DOMPDF);
     }
     public function exportBookingsExcel(Excel $excel){
-        return $excel->download(new BookingsExport($this->booking_status, $this->search, $this->from, $this->to, $this->filter, $this->search_id, $this->station_id, $this->service_type_id, $this->employee_id), 'bookings_'.time().'.xlsx');
+        return $excel->download(new BookingsExport($this->booking_status, $this->search, $this->from, $this->to, $this->filter, $this->search_id, $this->station_id, $this->service_type_id, $this->employee_id,$this->problem_category_id), 'bookings_'.time().'.xlsx');
     }
 
 
@@ -285,6 +289,9 @@ class Index extends Component
        
         if ($this->service_type_id) {
             $query->where('service_type_id', $this->service_type_id);
+        }
+        if ($this->problem_category_id) {
+            $query->where('problem_category_id', $this->problem_category_id);
         }
         if ($this->employee_id) {
             $query->whereHas('employees', function ($q) {

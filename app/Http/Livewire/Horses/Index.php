@@ -4,9 +4,14 @@ namespace App\Http\Livewire\Horses;
 
 use App\Exports\HorsesExport;
 use App\Models\Bill;
+use App\Models\Booking;
+use App\Models\Checklist;
 use App\Models\Currency;
 use App\Models\Horse;
+use App\Models\Incident;
+use App\Models\Inspection;
 use App\Models\Mileage;
+use App\Models\Trip;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
@@ -69,6 +74,52 @@ class Index extends Component
         $horse->update();
         Session::flash('success','Horse successfully deactivated');
         return redirect(route('horses.index'));
+    }
+
+    public function getKpisProperty(): array
+    {
+        $horses = Horse::all();
+        $totalKm = Trip::whereIn('horse_id', $horses->pluck('id'))
+        ->whereBetween('created_at', [$this->from, $this->to])
+        ->where('authorization', 'approved')
+        ->where('trip_status', '!=', 'Cancelled')
+        ->sum('distance') ?: 1;
+        $totalHorses = $horses->count() ?: 1;
+
+        $scheduledInspections = Checklist::whereBetween('next_inspection_at', [$this->from, $this->to])->count() ?: 1;
+        $completedInspections = Checklist::whereBetween('next_inspection_at', [$this->from, $this->to])->where('status', 'completed')->count();
+
+        $springFailures = Booking::where('type', 'suspension')
+            ->whereBetween('created_at', [$this->from, $this->to])
+            ->count();
+
+       
+
+        $totalDowntimeMinutes = Booking::whereHas('problem_category', fn($q) => $q->where('name', 'like', '%suspension%'))
+            ->whereBetween('created_at', [$this->from, $this->to])
+            ->where('status', 0)
+            ->whereNotNull('in_date')->whereNotNull('in_time')
+            ->whereNotNull('out_of_workshop_date')->whereNotNull('out_of_workshop_time')
+            ->whereRaw('TIMESTAMP(out_of_workshop_date, out_of_workshop_time) >= TIMESTAMP(in_date, in_time)')
+            ->selectRaw('SUM(TIMESTAMPDIFF(MINUTE, TIMESTAMP(in_date, in_time), TIMESTAMP(out_of_workshop_date, out_of_workshop_time))) AS total_minutes')
+            ->value('total_minutes') ?? 0;
+
+       
+
+        $maintenanceCost = Bill::whereNotNull('ticket_id')
+            ->whereHas('ticket.booking.problem_category', fn($q) => $q->where('name', 'like', '%suspension%'))
+            ->whereBetween('created_at', [$this->from, $this->to])
+            ->where('authorization', 'approved')
+            ->sum('total');
+
+        return [
+            'compliance_rate'   => round(($completedInspections / $scheduledInspections) * 100, 1),
+            'failure_rate'      => round(($springFailures / $totalKm) * 100000, 2),
+            'avg_downtime'      => round(($totalDowntimeMinutes / 60) / $totalHorses, 1),
+            'cost_per_km'       => round($maintenanceCost / $totalKm, 4),
+            'safety_incidents'  => Booking::where('is_safety_incident', true)->whereBetween('in_date', [$this->from, $this->to])->count(),
+            'in_service_count'  => $horses->where('service', 1)->count(),
+        ];
     }
 
     public function calculateCPK($id){
@@ -137,12 +188,14 @@ class Index extends Component
                 ->orWhereHas('transporter', function ($query) {
                     return $query->where('name', 'like', '%'.$this->search.'%');
                 })
-                ->orderBy('registration_number','asc')->paginate(10)
+                ->orderBy('registration_number','asc')->paginate(10),
+                'kpis' => $this->kpis,
             ]);
         }else{
             return view('livewire.horses.index',[
                 'horses' => Horse::with('transporter:id,name','horse_make:id,name','horse_model:id,name')
-                ->where('archive',0)->orderBy('registration_number','asc')->paginate(10)
+                ->where('archive',0)->orderBy('registration_number','asc')->paginate(10),
+                'kpis' => $this->kpis,
             ]);
         }
        

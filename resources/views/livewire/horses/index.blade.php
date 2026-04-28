@@ -42,6 +42,61 @@
                                  
                                 </div>
                             </div>
+                            {{-- KPI Strip --}}
+                                <div class="panel-body" style="border-bottom: 1px solid #eee; padding: 15px 20px;">
+                                    <div class="row">
+                                        <div class="col-xs-6 col-sm-4 col-md-2">
+                                            <div class="text-center">
+                                                <small class="text-muted">Inspection Compliance</small>
+                                                <h4 class="text-warning m-t-5">{{ $kpis['compliance_rate'] }}%</h4>
+                                                <span class="badge bg-{{ $kpis['compliance_rate'] >= 90 ? 'success' : ($kpis['compliance_rate'] >= 75 ? 'warning' : 'danger') }}">
+                                                    {{ $kpis['compliance_rate'] >= 90 ? 'On Track' : ($kpis['compliance_rate'] >= 75 ? 'Monitor' : 'Critical') }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="col-xs-6 col-sm-4 col-md-2">
+                                            <div class="text-center">
+                                                <small class="text-muted">Failure Rate / 100k km</small>
+                                                <h4 class="text-danger m-t-5">{{ $kpis['failure_rate'] }}</h4>
+                                                <span class="badge bg-{{ $kpis['failure_rate'] <= 3 ? 'success' : ($kpis['failure_rate'] <= 6 ? 'warning' : 'danger') }}">
+                                                    {{ $kpis['failure_rate'] <= 3 ? 'Low' : ($kpis['failure_rate'] <= 6 ? 'Moderate' : 'High') }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="col-xs-6 col-sm-4 col-md-2">
+                                            <div class="text-center">
+                                                <small class="text-muted">Avg Downtime / Vehicle</small>
+                                                <h4 class="text-primary m-t-5">{{ $kpis['avg_downtime'] }}h</h4>
+                                                <span class="badge bg-info">Annualized</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-xs-6 col-sm-4 col-md-2">
+                                            <div class="text-center">
+                                                <small class="text-muted">Cost per KM</small>
+                                                <h4 class="text-success m-t-5">${{ $kpis['cost_per_km'] }}</h4>
+                                                <span class="badge bg-{{ $kpis['cost_per_km'] <= 0.05 ? 'success' : 'warning' }}">
+                                                    {{ $kpis['cost_per_km'] <= 0.05 ? 'Efficient' : 'Review' }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="col-xs-6 col-sm-4 col-md-2">
+                                            <div class="text-center">
+                                                <small class="text-muted">Safety Incidents</small>
+                                                <h4 class="text-danger m-t-5">{{ $kpis['safety_incidents'] }}</h4>
+                                                <span class="badge bg-{{ $kpis['safety_incidents'] == 0 ? 'success' : 'danger' }}">
+                                                    {{ $kpis['safety_incidents'] == 0 ? 'Clear' : 'Action Required' }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="col-xs-6 col-sm-4 col-md-2">
+                                            <div class="text-center">
+                                                <small class="text-muted">In Service Now</small>
+                                                <h4 class="text-warning m-t-5">{{ $kpis['in_service_count'] }}</h4>
+                                                <span class="badge bg-warning">Horses</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             <div class="panel-body p-20" style="overflow-x:auto; width:100%; height:100%;">
                                 <div class="col-md-3" style="float: right; padding-right:0px">
                                     <div class="form-group">

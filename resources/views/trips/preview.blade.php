@@ -31,7 +31,7 @@
                                 <div class="col company-details">
                                     <h4 class="name" >
                                         <a target="_blank" href="javascript:;" style="color:  {{Auth::user()->employee->company ? Auth::user()->employee->company->color : Auth::user()->company->color }}">
-                                            {{$company->name}}
+                                            {{$company?->name}}
                                         </a>
                                     </h4>
                                     <div>{{$company->street_address}} {{$company->suburb}} <br>
@@ -65,17 +65,17 @@
                             <div class="row contacts">
                                 <div class="col invoice-to">
                                     <div class="text-gray-light">CUSTOMER:</div>
-                                    <h5 class="to">{{$customer->name}}</h5>
+                                    <h5 class="to">{{$customer?->name}}</h5>
                                     <div class="address"> 
-                                        @if ($customer->street_address)
-                                        {{$customer->street_address}} 
+                                        @if ($customer?->street_address)
+                                        {{$customer?->street_address}} 
                                         @endif
-                                        @if ($customer->suburb)
-                                        {{$customer->suburb}}
+                                        @if ($customer?->suburb)
+                                        {{$customer?->suburb}}
                                         @endif
-                                        {{$customer->city}} {{$customer->country}}
+                                        {{$customer?->city}} {{$customer?->country}}
                                     </div>
-                                    <div class="email"><a href="mailto:{{$customer->email}}">{{$customer->email}}</a> </div>
+                                    <div class="email"><a href="mailto:{{$customer?->email}}">{{$customer?->email}}</a> </div>
                                 </div>
                                 <div class="col invoice-details">
                                     <div class="date"> <strong>Trip Number:</strong> {{$trip->trip_number}}{{$trip->trip_ref ? "/".$trip->trip_ref : ""}}</div>
@@ -164,7 +164,7 @@
                                     @if ($trip->horse)
                                         <tr>
                                             <th class="text-center"> <strong>Horse</strong></th>
-                                            <td class="text-center">{{$trip->horse->horse_make ? $trip->horse->horse_make->name : ""}} {{$trip->horse->horse_model ? $trip->horse->horse_model->name : ""}} {{$trip->horse ? $trip->horse->registration_number : ""}}</td>
+                                            <td class="text-center">{{$trip->horse?->horse_make ? $trip->horse?->horse_make->name : ""}} {{$trip->horse?->horse_model ? $trip->horse?->horse_model->name : ""}} {{$trip->horse ? $trip->horse->registration_number : ""}}</td>
                                         </tr>
                                         <tr>
                                             <th class="text-center"> <strong>Fleet Number</strong></th>
@@ -173,7 +173,7 @@
                                     @elseif ($trip->vehicle)
                                         <tr>
                                             <th class="text-center"> <strong>Vehicle</strong></th>
-                                            <td class="text-center">{{$trip->horse->horse_make ? $trip->horse->horse_make->name : ""}} {{$trip->horse->horse_model ? $trip->horse->horse_model->name : ""}} {{$trip->horse ? $trip->horse->registration_number : ""}}</td>
+                                            <td class="text-center">{{$trip->vehicle->vehicle_make ? $trip->vehicle->vehicle_make->name : ""}} {{$trip->vehicle->vehicle_model ? $trip->vehicle->vehicle_model->name : ""}} {{$trip->vehicle ? $trip->vehicle->registration_number : ""}}</td>
                                         </tr>
                                     @endif
                                     @if ($trip->trailers->count()>0)

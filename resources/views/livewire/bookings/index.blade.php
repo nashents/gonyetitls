@@ -95,6 +95,18 @@
                                       
                                 </div>
                                 <div class="row">
+                                     <div class="col-md-3">
+                                            <div class="input-group">
+                                                <span class="input-group-addon">Problem Categories</span>
+                                                <select wire:model.debounce.300ms="problem_category_id" class="form-control" aria-label="..." >
+                                                    <option value="all">Select Problem </option>
+                                                    @foreach ($problem_categories as $problem_category)
+                                                        <option value="{{ $problem_category->id }}">{{ $problem_category->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <!-- /input-group -->
+                                        </div>
                                       <div class="col-md-3">
                                             <div class="input-group">
                                                 <span class="input-group-addon">Equipment</span>
@@ -293,7 +305,10 @@
                                                 <strong>Txn Type: </strong>{{ucfirst($booking->transaction_type)}} <br>
                                             @endif 
                                             <strong>Job Type: </strong>{{ucfirst($booking->service_type ? $booking->service_type->name : "")}} <br>
-                                            <strong>Reason: </strong>{{Str::limit($booking->description,100,'...')}}</td>
+                                            <strong>Problem Category: </strong>{{$booking->problem_category?->name}} <br>
+                                            <strong>Is Safety Incident?: </strong>{{$booking->is_safety_incident ? "Yes" : "No"}} <br>
+                                            <strong>Reason: </strong>{{Str::limit($booking->description,100,'...')}}
+                                        </td>
                                         <td>{{ optional(\App\Models\Station::find($booking->station_id))->name ?? $booking->station }}</td>
                                         <td><span class="badge bg-{{($booking->authorization == 'approved') ? 'success' : (($booking->authorization == 'rejected') ? 'danger' : 'warning') }}">{{($booking->authorization == 'approved') ? 'approved' : (($booking->authorization == 'rejected') ? 'rejected' : 'pending') }}</span></td>
                                         <td><span class="badge bg-{{$booking->status == 1 ? "warning" : "success"}}">{{$booking->status == 1 ? "Open" : "Closed"}}</span></td>

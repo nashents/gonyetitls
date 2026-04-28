@@ -8,20 +8,36 @@
 
   @page {
     size: A4 portrait;
-    margin: 10mm;
+    margin: 8mm;
   }
 
   @media print {
+    body, section, .card, .kv, .tbl, .manifest { font-size: 8px !important; }
+    h1 { font-size: 13px !important; }
+    h3 { font-size: 9px !important; margin: 1px 0 !important; }
+    .manifest__header { margin-bottom: 2px !important; }
+    .brand__logo { max-height: 36px !important; }
+    .brand__name { font-size: 11px !important; }
+    .brand__meta { font-size: 7px !important; }
+    .meta-grid { font-size: 8px !important; gap: 1px 6px !important; }
     section, header, footer { margin: 0 !important; padding: 0 !important; }
-    .grid-2, .signatures { gap: 0 !important; }
-    .card { margin: 0 !important; padding: 3px 4px !important; border-spacing: 0 !important; }
+    .grid-2 { gap: 3px !important; margin: 2px 0 !important; }
+    .card { margin: 0 !important; padding: 2px 4px !important; }
+    .kv { row-gap: 1px !important; }
+    .k, .v { font-size: 8px !important; padding: 0 !important; }
     h1, h3 { margin: 2px 0 !important; padding: 0 !important; }
-    .hr { margin: 2px 0 !important; }
-    .items { margin: 0 !important; padding: 0 !important; }
-    .totals { margin: 2px 0 0 !important; padding: 0 !important; gap: 4px !important; }
-    .signatures { margin-top: 2px !important; }
-    .sig { margin: 0 !important; padding: 2px 3px !important; }
-    .manifest__footer { margin-top: 2px !important; padding: 0 !important; }
+    .hr { margin: 1px 0 !important; }
+    .items { margin: 2px 0 !important; padding: 0 !important; }
+    .tbl th, .tbl td { font-size: 7.5px !important; padding: 1px 3px !important; }
+    .totals { margin: 2px 0 0 !important; padding: 0 !important; gap: 3px !important; }
+    .notes { font-size: 7px !important; }
+    .signatures { margin-top: 3px !important; display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px !important; }
+    .sig { margin: 0 !important; padding: 2px 3px !important; min-height: 28px !important; }
+    .sig .label { font-size: 7px !important; }
+    .sig .line { margin-top: 6px !important; }
+    .manifest__footer { margin-top: 2px !important; padding: 0 !important; font-size: 7px !important; }
+    .action-bar { display: none !important; }
+    [data-screen-only] { display: none !important; }
   }
 </style>
 @endsection
@@ -73,23 +89,17 @@
             <dd class="mono" data-field="trip.number">
               {{ $trip->trip_number }}{{ $trip->trip_ref ? ' / '.$trip->trip_ref : '' }}
             </dd>
-            <dt>Bill Of Entry #</dt>
-            <dd class="mono" data-field="trip.number">
-              {{ $trip->bill_of_entry }}
-            </dd>
             <dt>Date</dt>
             <dd data-field="manifest.date">{{ $trip->start_date }}</dd>
             <dt>Created By</dt>
-            <dd data-field="created_by">
-              {{ $trip->user?->name }} {{ $trip->user?->surname }}
-            </dd>
+            <dd data-field="created_by">{{ $trip->user?->name }} {{ $trip->user?->surname }}</dd>
           </dl>
         </aside>
       </header>
 
       <div class="hr"></div>
 
-      {{-- ===== Transporter & Route (trip-level, always single) ===== --}}
+      {{-- ===== Transporter & Route ===== --}}
       <section class="grid-2">
 
         <div class="card">
@@ -161,166 +171,196 @@
 
       </section>
 
-      {{-- ===== Per-Transport-Order blocks ===== --}}
       @php
-        $ttos         = $trip->trip_transport_orders ?? collect();
-        $multiOrder   = $ttos->count() > 1;
-
-        // Aggregate totals across all TTOs for the tfoot
-        $totalQty     = 0;
-        $totalWeight  = 0;
-        $totalVolume  = 0;
+        $ttos        = $trip->trip_transport_orders ?? collect();
+        $multiOrder  = $ttos->count() > 1;
+        $totalQty    = 0;
+        $totalWeight = 0;
+        $totalVolume = 0;
       @endphp
 
-      @forelse ($ttos as $tto)
+      @if ($ttos->isNotEmpty())
+
+        {{-- ===== Consignor / Consignee — collapsed across all TTOs ===== --}}
         @php
-          $to         = $tto->transport_order;
-          $cargo      = $to?->cargo;
-          $cargoType  = $cargo?->type;
-          $shipper    = $to?->customer     ?? $trip->customer;
-          $consignee  = $to?->consignee    ?? ($trip->consignee ?? null);
+          // Build unique shippers and consignees keyed by id to avoid duplicates
+          $shippers   = collect();
+          $consignees = collect();
 
-          // Per-TTO quantities — fall back to trip-level if TTO doesn't carry them
-          $ttoQty     = $to?->quantity      ?? $trip->quantity;
-          $ttoLit20   = $to?->litreage_at_20 ?? $trip->litreage_at_20;
-          $ttoWeight  = $to?->weight        ?? $trip->weight;
-          $ttoVolume  = $to?->volume        ?? $trip->volume;
-          $ttoMeasure = $to?->measurement   ?? $trip->measurement;
-          $ttoDetails = $to?->cargo_details ?? $trip->cargo_details;
+          foreach ($ttos as $tto) {
+            $to = $tto->transport_order;
+            $shipper   = $to?->customer  ?? $trip->customer;
+            $consignee = $to?->consignee ?? ($trip->consignee ?? null);
 
-          $displayQty = $cargoType === 'Liquid' ? $ttoLit20 : $ttoQty;
-
-          $totalQty    += (float) $displayQty;
-          $totalWeight += (float) $ttoWeight;
-          $totalVolume += (float) $ttoVolume;
+            if ($shipper   && !$shippers->has($shipper->id))   $shippers->put($shipper->id, $shipper);
+            if ($consignee && !$consignees->has($consignee->id)) $consignees->put($consignee->id, $consignee);
+          }
         @endphp
 
-        {{-- Shipper / Consignee per TTO --}}
-        <section class="grid-2" style="{{ $multiOrder ? 'margin-top:6px' : '' }}">
-
-          @if ($multiOrder)
-            <div class="card" style="grid-column:1/-1; background:var(--accent,#eee); padding:4px 8px;">
-              <strong>Transport Order: {{ $to?->reference ?? "Order #{$tto->id}" }}</strong>
-              @if ($cargoType)
-                &nbsp;<span class="mono" style="font-size:11px">({{ $cargoType }})</span>
-              @endif
-            </div>
-          @endif
+        <section class="grid-2">
 
           <div class="card">
-            <h3>Consignor (Shipper)</h3>
+            <h3>Consignor(s) (Shipper)</h3>
             <div class="kv">
-              <div class="k">Name</div>
-              <div class="v">{{ $shipper?->name }}</div>
-              <div class="k">Address</div>
-              <div class="v">
-                {{ $shipper?->street_address }}
-                {{ $shipper?->suburb ? $shipper->suburb.', ' : '' }}
-                {{ $shipper?->city }}
-                {{ $shipper?->country }}
-              </div>
-              <div class="k">Contact</div>
-              <div class="v">
-                {{ $shipper?->phonenumber }}
-                {{ $shipper?->email ? ' / '.$shipper->email : '' }}
-              </div>
+              @foreach ($shippers as $i => $shipper)
+                @if ($shippers->count() > 1)
+                  <div class="k" style="grid-column:1/-1; font-weight:600;">{{ $loop->iteration }}.</div>
+                @endif
+                <div class="k">Name</div>
+                <div class="v">{{ $shipper->name }}</div>
+                <div class="k" data-screen-only>Ref</div>
+                <div class="v" data-screen-only>{{ $shipper->custom_ref }}</div>
+                <div class="k">Address</div>
+                <div class="v">
+                  {{ $shipper->street_address }}
+                  {{ $shipper->suburb ? $shipper->suburb.', ' : '' }}
+                  {{ $shipper->city }}
+                  {{ $shipper->country }}
+                </div>
+                <div class="k">Contact</div>
+                <div class="v">
+                  {{ $shipper->phonenumber }}
+                  {{ $shipper->email ? ' / '.$shipper->email : '' }}
+                </div>
+              @endforeach
             </div>
           </div>
 
           <div class="card">
-            <h3>Consignee (Receiver)</h3>
+            <h3>Consignee(s) (Receiver)</h3>
             <div class="kv">
-              <div class="k">Name</div>
-              <div class="v">{{ $consignee?->name }}</div>
-              <div class="k">Address</div>
-              <div class="v">
-                {{ $consignee?->street_address }}
-                {{ $consignee?->suburb ? $consignee->suburb.', ' : '' }}
-                {{ $consignee?->city }}
-                {{ $consignee?->country }}
-              </div>
-              <div class="k">Contact</div>
-              <div class="v">
-                {{ $consignee?->phonenumber }}
-                {{ $consignee?->email ? ' / '.$consignee->email : '' }}
-              </div>
+              @foreach ($consignees as $consignee)
+                @if ($consignees->count() > 1)
+                  <div class="k" style="grid-column:1/-1; font-weight:600;">{{ $loop->iteration }}.</div>
+                @endif
+                <div class="k">Name</div>
+                <div class="v">{{ $consignee->name }}</div>
+                <div class="k">Address</div>
+                <div class="v">
+                  {{ $consignee->street_address }}
+                  {{ $consignee->suburb ? $consignee->suburb.', ' : '' }}
+                  {{ $consignee->city }}
+                  {{ $consignee->country }}
+                </div>
+                <div class="k">Contact</div>
+                <div class="v">
+                  {{ $consignee->phonenumber }}
+                  {{ $consignee->email ? ' / '.$consignee->email : '' }}
+                </div>
+              @endforeach
             </div>
           </div>
 
         </section>
 
-        {{-- Cargo items table per TTO --}}
-        <section class="items" style="{{ $multiOrder ? 'margin-top:4px' : '' }}">
-          <h3>
-            Cargo / Items
-            @if ($multiOrder)
-              — {{ $to?->reference ?? "Order #{$tto->id}" }}
-            @endif
-          </h3>
-          <table class="tbl" role="table" aria-label="Cargo Items">
-            <thead>
-              <tr>
-                <th style="width:40px" class="center">#</th>
-                <th>Description</th>
-                <th style="width:110px">Invoice #(s)</th>
-                <th style="width:80px" class="right">Qty</th>
-                <th style="width:70px">Unit</th>
-                <th style="width:100px" class="right">Weight (Tons)</th>
-                <th style="width:100px" class="right">SKU / Ref</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td class="center">{{ $loop->iteration }}</td>
-                <td>{{ $cargo?->name }} {{ $ttoDetails }}</td>
-                <td class="mono">
-                   @php
-                      $invoiceNumbers = ($tto?->invoice_items ?? $trip->invoice_items ?? collect())
-                          ->map(fn($item) => $item->invoice?->invoice_number)
-                          ->filter()
-                          ->unique()
-                          ->values();
-                    @endphp
-                    @foreach ($invoiceNumbers as $num)
-                      {{ $num }}@if (!$loop->last), @endif
-                    @endforeach
-                </td>
-                <td class="right">{{ $displayQty }}</td>
-                <td>{{ $ttoMeasure }}</td>
-                <td class="right">{{ $ttoWeight }}</td>
-                <td class="right">{{ $cargo?->sku }}</td>
-              </tr>
-            </tbody>
-            @if (! $multiOrder)
-              {{-- Single-order manifest: show subtotals inline --}}
-              <tfoot>
-                <tr>
-                  <td colspan="3" class="right">Totals</td>
-                  <td class="right">{{ $displayQty }}</td>
-                  <td></td>
-                  <td class="right">{{ $ttoWeight }}</td>
-                  <td class="right">{{ $ttoVolume }}</td>
-                  <td></td>
-                </tr>
-              </tfoot>
-            @endif
-          </table>
-        </section>
-
-      @empty
-        {{-- Fallback: no TTOs — render trip-level cargo as before --}}
+        {{-- ===== Single unified cargo table across all TTOs ===== --}}
         <section class="items">
           <h3>Cargo / Items</h3>
           <table class="tbl" role="table" aria-label="Cargo Items">
             <thead>
               <tr>
-                <th style="width:40px" class="center">#</th>
+                <th style="width:30px" class="center">#</th>
                 <th>Description</th>
                 <th style="width:110px">Invoice #(s)</th>
                 <th style="width:80px" class="right">Qty</th>
-                <th style="width:70px">Unit</th>
-                <th style="width:100px" class="right">Weight (Tons)</th>
-                <th style="width:100px" class="right">SKU / Ref</th>
+                <th style="width:60px">Unit</th>
+                <th style="width:90px" class="right">Weight (Tons)</th>
+                <th style="width:90px" class="right">SKU / Ref</th>
+                <th style="width:90px" class="right">BillOfEntry#</th>
+              </tr>
+            </thead>
+            <tbody>
+              @foreach ($ttos as $tto)
+                @php
+                  $to         = $tto->transport_order;
+                  $boe         = $tto->bill_of_entry;
+                  $cargo      = $to?->cargo;
+                  $cargoType  = $cargo?->type;
+                  $ttoQty     = $to?->quantity        ?? $trip->quantity;
+                  $ttoLit20   = $to?->litreage_at_20  ?? $trip->litreage_at_20;
+                  $ttoWeight  = $to?->weight          ?? $trip->weight;
+                  $ttoVolume  = $to?->volume          ?? $trip->volume;
+                  $ttoMeasure = $to?->units_of_measure     ?? $trip->units_of_measure;
+                  $ttoDetails = $to?->cargo_details   ?? $trip->cargo_details;
+                  $displayQty = $cargoType === 'Liquid' ? $ttoLit20 : $ttoQty;
+
+                  $totalQty    += (float) $displayQty;
+                  $totalWeight += (float) $ttoWeight;
+                  $totalVolume += (float) $ttoVolume;
+
+                  $invoiceNumbers = ($tto->invoice_items ?? $trip->invoice_items ?? collect())
+                      ->map(fn($item) => $item->invoice?->invoice_number)
+                      ->filter()
+                      ->unique()
+                      ->values();
+                @endphp
+                <tr>
+                  <td class="center">{{ $loop->iteration }}</td>
+                  <td>{{ $cargo?->name }} {{ $ttoDetails }}</td>
+                  <td class="mono">
+                    @foreach ($invoiceNumbers as $num)
+                      {{ $num }}@if (!$loop->last), @endif
+                    @endforeach
+                  </td>
+                  <td class="right">{{ $displayQty }}</td>
+                  <td>{{ $ttoMeasure?->name }}</td>
+                  <td class="right">{{ $ttoWeight }}</td>
+                  <td class="right">{{ $cargo?->sku }}</td>
+                  <td class="right">{{ $boe }}</td>
+                </tr>
+              @endforeach
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="3" class="right"><strong>Totals</strong></td>
+                <td class="right"><strong>{{ $totalQty }}</strong></td>
+                <td></td>
+                <td class="right"><strong>{{ $totalWeight }}</strong></td>
+               
+              </tr>
+            </tfoot>
+          </table>
+        </section>
+
+      @else
+
+        {{-- ===== Fallback: no TTOs ===== --}}
+        @php
+          $shipper   = $trip->customer  ?? null;
+          $consignee = $trip->consignee ?? null;
+        @endphp
+
+        <section class="grid-2">
+          <div class="card">
+            <h3>Consignor (Shipper)</h3>
+            <div class="kv">
+              <div class="k">Name</div>    <div class="v">{{ $shipper?->name }}</div>
+              <div class="k">Address</div> <div class="v">{{ $shipper?->street_address }} {{ $shipper?->suburb ? $shipper->suburb.', ' : '' }}{{ $shipper?->city }} {{ $shipper?->country }}</div>
+              <div class="k">Contact</div> <div class="v">{{ $shipper?->phonenumber }}{{ $shipper?->email ? ' / '.$shipper->email : '' }}</div>
+            </div>
+          </div>
+          <div class="card">
+            <h3>Consignee (Receiver)</h3>
+            <div class="kv">
+              <div class="k">Name</div>    <div class="v">{{ $consignee?->name }}</div>
+              <div class="k">Address</div> <div class="v">{{ $consignee?->street_address }} {{ $consignee?->suburb ? $consignee->suburb.', ' : '' }}{{ $consignee?->city }} {{ $consignee?->country }}</div>
+              <div class="k">Contact</div> <div class="v">{{ $consignee?->phonenumber }}{{ $consignee?->email ? ' / '.$consignee->email : '' }}</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="items">
+          <h3>Cargo / Items</h3>
+          <table class="tbl" role="table" aria-label="Cargo Items">
+            <thead>
+              <tr>
+                <th style="width:30px" class="center">#</th>
+                <th>Description</th>
+                <th style="width:110px">Invoice #(s)</th>
+                <th style="width:80px" class="right">Qty</th>
+                <th style="width:60px">Unit</th>
+                <th style="width:90px" class="right">Weight (Tons)</th>
+                <th style="width:90px" class="right">SKU / Ref</th>
               </tr>
             </thead>
             <tbody>
@@ -328,17 +368,15 @@
                 <td class="center">1</td>
                 <td>{{ $cargo->name }} {{ $trip->cargo_details }}</td>
                 <td class="mono">
-                    @php
-                      $invoiceNumbers = ($trip->invoice_items ?? collect())
-                          ->map(fn($item) => $item->invoice?->invoice_number)
-                          ->filter()
-                          ->unique()
-                          ->values();
-                    @endphp
-                    @foreach ($invoiceNumbers as $num)
-                      {{ $num }}@if (!$loop->last), @endif
-                    @endforeach
-                 </td>
+                  @php
+                    $invoiceNumbers = ($trip->invoice_items ?? collect())
+                        ->map(fn($item) => $item->invoice?->invoice_number)
+                        ->filter()->unique()->values();
+                  @endphp
+                  @foreach ($invoiceNumbers as $num)
+                    {{ $num }}@if (!$loop->last), @endif
+                  @endforeach
+                </td>
                 <td class="right">
                   @if ($cargo->type === 'Solid') {{ $trip->quantity }}
                   @elseif ($cargo->type === 'Liquid') {{ $trip->litreage_at_20 }}
@@ -346,14 +384,12 @@
                 </td>
                 <td>{{ $trip->measurement }}</td>
                 <td class="right">{{ $trip->weight }}</td>
-                <td class="right">
-                  {{ $cargo->sku }}
-                </td>
+                <td class="right">{{ $cargo->sku }}</td>
               </tr>
             </tbody>
             <tfoot>
               <tr>
-                <td colspan="3" class="right">Totals</td>
+                <td colspan="3" class="right"><strong>Totals</strong></td>
                 <td class="right">
                   @if ($cargo->type === 'Solid') {{ $trip->quantity }}
                   @elseif ($cargo->type === 'Liquid') {{ $trip->litreage_at_20 }}
@@ -362,29 +398,11 @@
                 <td></td>
                 <td class="right">{{ $trip->weight }}</td>
                 <td class="right">{{ $trip->volume }}</td>
-                <td></td>
               </tr>
             </tfoot>
           </table>
         </section>
-      @endforelse
 
-      {{-- ===== Grand totals row (multi-order only) ===== --}}
-      @if ($multiOrder)
-        <section class="items" style="margin-top:4px">
-          <table class="tbl">
-            <tfoot>
-              <tr>
-                <td colspan="3" class="right"><strong>Grand Totals</strong></td>
-                <td class="right"><strong>{{ $totalQty }}</strong></td>
-                <td></td>
-                <td class="right"><strong>{{ $totalWeight }}</strong></td>
-                <td class="right"><strong>{{ $totalVolume }}</strong></td>
-                <td></td>
-              </tr>
-            </tfoot>
-          </table>
-        </section>
       @endif
 
       {{-- ===== Summary / Seal ===== --}}
@@ -427,9 +445,7 @@
 
       {{-- ===== Footer ===== --}}
       <footer class="manifest__footer">
-        <div>
-          <strong>NB:</strong> ALL GOODS ARE CARRIED AT OWNER'S RISK
-        </div>
+        <div><strong>NB:</strong> ALL GOODS ARE CARRIED AT OWNER'S RISK</div>
       </footer>
 
     </section>

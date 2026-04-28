@@ -2,27 +2,28 @@
 
 namespace App\Http\Livewire\Bookings;
 
-use App\Models\Hour;
 use App\Models\Asset;
-use App\Models\Horse;
-use App\Models\Driver;
-use App\Models\Vendor;
+use App\Models\Assignment;
 use App\Models\Booking;
+use App\Models\Breakdown;
+use App\Models\Department;
+use App\Models\Driver;
+use App\Models\Employee;
+use App\Models\Horse;
+use App\Models\Hour;
 use App\Models\JobType;
 use App\Models\Mileage;
+use App\Models\ProblemCategory;
+use App\Models\ServiceType;
 use App\Models\Station;
 use App\Models\Trailer;
 use App\Models\Vehicle;
-use Livewire\Component;
-use App\Models\Employee;
-use App\Models\Breakdown;
-use App\Models\Assignment;
-use App\Models\Department;
-use App\Models\ServiceType;
-use Livewire\WithFileUploads;
-use Illuminate\Support\Facades\DB;
+use App\Models\Vendor;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
+use Livewire\Component;
+use Livewire\WithFileUploads;
 
 
 class Edit extends Component
@@ -55,6 +56,8 @@ class Edit extends Component
     public $searchVendor;
     public $searchAsset;
 
+    public $problem_categories;
+    public $problem_category_id;
     public $breakdowns;
     public $breakdown_id;
     
@@ -73,6 +76,7 @@ class Edit extends Component
     public $out_time;
     public $stations;
     public $station_id;
+    public $is_safety_incident;
     public $mileage;
     public $hours;
     public $service_types;
@@ -118,6 +122,7 @@ class Edit extends Component
     public function mount($id){
         $booking = Booking::find($id);
         $this->stations = Station::where('status',1)->orderBy('name','asc')->get();
+       
         $this->company = Auth::user()->employee->company;
         $this->booking_number = $booking->booking_number;
         $this->selectedHorse = $booking->horse_id;
@@ -129,8 +134,10 @@ class Edit extends Component
         $this->transaction_type = $booking->transaction_type;
         $this->service_type_id = $booking->service_type_id;
         $this->station_id = $booking->station_id;
+        $this->is_safety_incident = $booking->is_safety_incident;
         $this->mileage = $booking->odometer;
         $this->breakdown_id = $booking->breakdown_id;
+        $this->problem_category_id = $booking->problem_category_id;
         $this->hours = $booking->hours;
         $this->description = $booking->description;
 
@@ -153,7 +160,7 @@ class Edit extends Component
         $this->service_types = ServiceType::where('status',1)->orderBy('name','asc')->get();
        
          $employee = Employee::find($this->employee_id );
-            $driver = $employee->driver;
+            $driver = $employee?->driver;
              if($driver){
                 if($this->type == "Horse" && $this->selectedHorse){
                     $this->breakdowns = Breakdown::where('driver_id',$driver->id)->where('horse_id', $this->selectedHorse)->whereYear('date',date('Y'))->where('status',True)->orderBy('created_at','desc')->get();
@@ -222,7 +229,7 @@ class Edit extends Component
     public function updatedEmployeeId($id){
         if(!is_null($id)){
             $employee = Employee::find($id);
-            $driver = $employee->driver;
+            $driver = $employee?->driver;
              if($driver){
                 if($this->type == "Horse" && $this->selectedHorse){
                     $this->breakdowns = Breakdown::where('driver_id',$driver->id)->where('horse_id', $this->selectedHorse)->whereYear('date',date('Y'))->where('status',True)->orderBy('created_at','desc')->get();
@@ -253,6 +260,7 @@ class Edit extends Component
         
         $booking->vendor_id = $this->assigned_to === "Vendor" ? ($this->vendor_id ?: null) : null;
         $booking->breakdown_id = $this->breakdown_id;
+        $booking->problem_category_id = $this->problem_category_id;
         $booking->transaction_type = $this->transaction_type;
     // Reset all IDs
         $booking->horse_id = null;
@@ -300,6 +308,7 @@ class Edit extends Component
         $booking->in_date = $this->in_date;
         $booking->in_time = $this->in_time;
         $booking->station_id = $this->station_id;
+        $booking->is_safety_incident = $this->is_safety_incident;
         $booking->description = $this->description;
         $booking->estimated_out_date = $this->estimated_out_date;
         $booking->type = $this->type;
@@ -402,6 +411,12 @@ class Edit extends Component
             ->get();
         }else{
             $this->employees = Employee::where('archive',0)->orderBy('name')->orderBy('surname')->get();
+        }
+
+        if (filled($this->searchProblem)) {
+              $this->problem_categories = ProblemCategory::where('name', 'like', '%'.$this->searchProblem.'%')->get();
+        }else{
+              $this->problem_categories = ProblemCategory::orderBy('name','asc')->get();
         }
       
         if (filled($this->searchMechanic)) {

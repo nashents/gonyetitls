@@ -4735,6 +4735,27 @@ window.addEventListener('hide-imageModal', event => {
     })
 </script>
 
+<script type="text/javascript">
+    window.addEventListener('show-saveModal', event => {
+        $('#saveModal').modal('show');
+    })
+</script>
+<script type="text/javascript">
+    window.addEventListener('hide-saveModal', event => {
+        $('#saveModal').modal('hide');
+    })
+</script>
+<script type="text/javascript">
+    window.addEventListener('show-updateModal', event => {
+        $('#updateModal').modal('show');
+    })
+</script>
+<script type="text/javascript">
+    window.addEventListener('hide-updateModal', event => {
+        $('#updateModal').modal('hide');
+    })
+</script>
+
 <script>
     ClassicEditor
         .create( document.querySelector( '#editor' ) )

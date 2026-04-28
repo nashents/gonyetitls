@@ -41,6 +41,7 @@ class BookingsExport implements
     public $service_type_id;
     public $station_id;
     public $employee_id;
+    public $problem_category_id;
 
     // Summary
     protected int $totalCount = 0;
@@ -55,7 +56,7 @@ class BookingsExport implements
     // Layout
     protected int $tableStartRow = 10; // computed dynamically
 
-    public function __construct($booking_status = null, $search = null, $from = null, $to = null, $filter = null, $search_id = null, $station_id = null, $service_type_id = null, $employee_id = null)
+    public function __construct($booking_status = null, $search = null, $from = null, $to = null, $filter = null, $search_id = null, $station_id = null, $service_type_id = null, $employee_id = null, $problem_category_id = null)
     {
         $this->booking_status = $booking_status;
         $this->search         = $search;
@@ -66,6 +67,7 @@ class BookingsExport implements
         $this->station_id      = $station_id;
         $this->service_type_id      = $service_type_id;
         $this->employee_id      = $employee_id;
+        $this->problem_category_id      = $problem_category_id;
 
         // Pre-compute metrics on the base (status-agnostic) query
         $base = $this->commonQuery(); // date + filter + search, no status
@@ -150,6 +152,9 @@ class BookingsExport implements
 
         if (!empty($this->station_id)) {
            $query->where('station_id', $this->station_id);
+        }
+        if (!empty($this->problem_category_id)) {
+           $query->where('problem_category_id', $this->problem_category_id);
         }
        
         if (!empty($this->service_type_id)) {

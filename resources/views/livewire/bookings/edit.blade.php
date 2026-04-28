@@ -267,7 +267,7 @@
                                     </div>
                                 </div>
                                 <div class="row">
-                                    <div class="col-md-6">
+                                    <div class="col-md-2">
                                         <div class="form-group">
                                             <label for="number">Work Stations</label>
                                             <select class="form-control" wire:model.debounce.300ms="station_id">
@@ -281,7 +281,30 @@
                                             <small><a href="{{ route('stations.index') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Work Station</a></small> <a href="#" wire:click.prevent="refresh('stations')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a>
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-3">
+                                        <div class="mb-10">
+                                            <label for=""></label>
+                                            <input type="checkbox" wire:model.debounce.300ms="is_safety_incident" class="line-style" />
+                                            <label for="one" class="radio-label">Safety Incident?</label>
+                                            @error('is_safety_incident') <span class="text-danger error">{{ $message }}</span>@enderror
+                                            <br>
+                                            <small>Check if this vehicle had a mechanical failure <strong>on the road</strong> that caused or nearly caused an accident, injury, or danger to the driver or public.</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="exampleInputEmail13">Problem Categories<span class="required" style="color: red">*</span></label>
+                                            <input type="text" wire:model.debounce.300ms="searchProblem" placeholder="Search problem category..." class="form-control" >
+                                            <select wire:model.debounce.300ms="problem_category_id" class="form-control"  required size="4">
+                                                <option value="">Select Problem Category</option>
+                                                @foreach ($problem_categories as $category)
+                                                    <option value="{{$category->id}}">{{$category->name}}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('problem_category_id') <span class="text-danger error">{{ $message }}</span>@enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="description">Reason/Problem<span class="required"  style="color: red">*</span></label>
                                             <textarea wire:model.debounce.300ms="description" id="" cols="30" class="form-control" rows="5" placeholder="Enter reason for booking" required></textarea>

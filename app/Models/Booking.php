@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
+use App\Models\ProblemCategory;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Model;
-use OwenIt\Auditing\Contracts\Auditable;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use OwenIt\Auditing\Contracts\Auditable;
 
 class Booking extends Model implements Auditable
 {
@@ -15,6 +16,10 @@ class Booking extends Model implements Auditable
 
     public function inspection(){
         return $this->hasOne('App\Models\Inspection');
+    }
+    public function problem_category()
+    {
+        return $this->belongsTo(ProblemCategory::class);
     }
     public function mileage(){
         return $this->hasOne('App\Models\Mileage');

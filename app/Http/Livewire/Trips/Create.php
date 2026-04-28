@@ -92,6 +92,7 @@ class Create extends Component
     public $allocated_exchange_rate = [];
     public $allocated_exchange_amount = [];
     public $allocated_rate = [];
+    public $boe = [];
     public $allocated_freight = [];
     public $allocated_weight = [];
     public $allocated_quantity = [];
@@ -119,6 +120,7 @@ class Create extends Component
         unset($this->allocated_weight[$to]);
         unset($this->allocated_freight[$to]);
         unset($this->allocated_rate[$to]);
+        unset($this->boe[$to]);
         unset($this->allocated_exchange_rate[$to]);
         unset($this->allocated_exchange_amount[$to]);
         unset($this->allocated_currency_id[$to]);
@@ -324,6 +326,7 @@ class Create extends Component
     public $cargos;
     public $cargo;
     public $cargo_type;
+    public $trip_type;
     public $cargo_details;
     public $weight;
     public $quantity;
@@ -764,6 +767,7 @@ class Create extends Component
             if($value == True){
                 $this->transport_orders = TransportOrder::where('authorization','approved')->latest()->get();
                 $this->cargo_type = [];
+                $this->trip_type = [];
             }
         }
     }
@@ -777,6 +781,7 @@ class Create extends Component
         $transport_order = TransportOrder::find($id);
         $cargo = Cargo::find($transport_order->cargo_id);
         $this->cargo_type[$key] = $cargo->type;
+        $this->trip_type[$key] = $transport_order->trip_type?->name;
         $this->allocated_freight[$key] = $transport_order->freight;
         $this->allocated_rate[$key] = $transport_order->rate;
         $this->allocated_exchange_rate[$key] = $transport_order->exchange_rate;
@@ -1547,6 +1552,7 @@ class Create extends Component
                 $transport_order = new TransportOrder;
                 $transport_order->transport_order_number = $this->transportOrderNumber();
                 $transport_order->custom_ref = $this->trip_ref;
+                $transport_order->bill_of_entry = $this->bill_of_entry;
                 $transport_order->user_id =  $this->user->id ?: null;
                 $transport_order->company_id = $this->company->id ?: null;
                 $transport_order->quotation_id = $this->selectedQuotation ?: null;
@@ -1749,6 +1755,7 @@ class Create extends Component
                             $currency_id = $this->allocated_currency_id[$key] ?: Null;
                             $exchange_rate = $this->allocated_exchange_rate[$key] ?: Null;
                             $exchange_amount = $this->allocated_exchange_amount[$key] ?: Null;
+                            $boe = $this->boe[$key] ?: Null;
                          
                             if(is_numeric($freight) && is_numeric($weight) && is_numeric($transport_order->weight)){
                                 $freight = $freight * $weight / $transport_order->weight;
@@ -1768,6 +1775,7 @@ class Create extends Component
                             $trip_transport_order->units_of_measure_id = $units_of_measure_id;
                             $trip_transport_order->exchange_rate = $exchange_rate;
                             $trip_transport_order->exchange_amount = $exchange_amount;
+                            $trip_transport_order->bill_of_entry = $boe;
                             $trip_transport_order->currency_id = $currency_id;
 
                         }else{
@@ -1784,6 +1792,7 @@ class Create extends Component
                                 $trip_transport_order->currency_id = $transport_order->currency_id;
                                 $trip_transport_order->exchange_rate = $transport_order->exchange_rate;
                                 $trip_transport_order->exchange_amount = $transport_order->exchange_customer_freight;
+                                $trip_transport_order->bill_of_entry = $this->bill_of_entry;
 
                             }
 
