@@ -62,6 +62,7 @@ class NavbarComposer
             
             'requisitions'     => Requisition::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
             'payrolls'         => Payroll::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
+            'fuels'         => Fuel::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
             'loans'            => Loan::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
             'leaves'           => Leave::where('management_decision', 'pending')->whereYear('created_at',date('Y'))->count(),
             'attendances'      => Attendance::where('authorization', 'pending')->whereYear('created_at',date('Y'))->count(),
@@ -284,6 +285,7 @@ class NavbarComposer
                 'waste_disposals'   => $pendingCounts['waste_disposals'] ?? 0,
                 'requisitions'      => $pendingCounts['requisitions'] ?? 0,
                 'payrolls'          => $pendingCounts['payrolls'] ?? 0,
+                'fuels'          => $pendingCounts['fuels'] ?? 0,
                 'loans'             => $pendingCounts['loans'] ?? 0,
                 'leaves'            => $pendingCounts['leaves'] ?? 0,
                 'attendances'       => $pendingCounts['attendances'] ?? 0,

@@ -2118,7 +2118,7 @@ class Edit extends Component
                             $trip_transport_order->currency_id = $transport_order->currency_id;
                             $trip_transport_order->exchange_rate = $transport_order->exchange_rate;
                             $trip_transport_order->exchange_amount = $transport_order->exchange_customer_freight;
-                            $trip_transport_order->boe = $this->bill_of_entryw;
+                            $trip_transport_order->boe = $this->bill_of_entry;
 
                         }
 

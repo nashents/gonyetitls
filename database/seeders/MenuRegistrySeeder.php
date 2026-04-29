@@ -1666,7 +1666,6 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
         $upsertSub($m, ['name'=>'Inspection Items','slug'=>'inspection-items','icon'=>'fas fa-list','route_name'=>'inspection_types.index','sort_order'=>30]);
         $upsertSub($m, ['name'=>'Problem Categories','slug'=>'problem-categories','icon'=>'fas fa-list','route_name'=>'problem_categories.index','sort_order'=>35]);
         $upsertSub($m, ['name'=>'Workshop Stations','slug'=>'workshop-stations','icon'=>'fas fa-list','route_name'=>'stations.index','sort_order'=>40]);
-
         $m = $upsertModule($g, [
             'name' => 'Bookings',
             'slug' => 'bookings',
@@ -1676,8 +1675,7 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
         ]);
         $upsertSub($m, ['name'=>'Create Booking','slug'=>'create-booking','icon'=>'fas fa-plus','route_name'=>'bookings.create','sort_order'=>10]);
         $upsertSub($m, ['name'=>'Manage Bookings','slug'=>'manage-bookings','icon'=>'fas fa-list','route_name'=>'bookings.index','sort_order'=>20]);
-        $upsertSub($m, ['name'=>'Maintenance Schedules','slug'=>'maintenance-schedules','icon'=>'fas fa-tasks','route_name'=>'inspection_schedules.index','sort_order'=>30]);
-
+        $upsertSub($m, ['name'=>'Maintenance Schedules','slug'=>'maintenance-schedules','icon'=>'fas fa-tasks','route_name'=>'maintenance_schedules.index','sort_order'=>25]);
         $bookingManageVis = $any([
             $all(['hasWorkshopDeptHead']),
             $all(['isAdmin','inWorkshop']),

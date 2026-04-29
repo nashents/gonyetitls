@@ -484,6 +484,7 @@ Route::get('transportation/order/{trip}//export-to-pdf','TransportOrderControlle
 
 Route::get('horses/{horse}/edit','HorseController@edit')->name('horses.edit')->withTrashed();
 Route::resource('inspection_schedules','InspectionScheduleController');
+Route::resource('maintenance_schedules','MaintenanceScheduleController');
 Route::resource('ticket_requests','TicketRequestController');
 Route::resource('payment_methods','PaymentMethodController');
 Route::resource('grades','GradeController');

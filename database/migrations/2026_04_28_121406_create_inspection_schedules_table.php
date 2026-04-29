@@ -9,11 +9,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('inspection_schedules', function (Blueprint $table) {
+
             $table->id();
-            $table->foreignId('horse_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('vehicle_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('trailer_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('asset_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('horse_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignId('vehicle_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignId('trailer_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignId('asset_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->bigInteger('service_type_id')->unsigned()->nullable();
+            $table->bigInteger('problem_category_id')->unsigned()->nullable();
+            $table->string('inspection_schedule_number')->nullable();
+            $table->string('type')->nullable();
             $table->string('component')->default('springs'); // springs, suspension, etc.
             $table->enum('trigger_type', ['mileage', 'date', 'both'])->default('both');
             $table->unsignedInteger('interval_km')->nullable();  // e.g. 10000
@@ -27,6 +32,7 @@ return new class extends Migration
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
             $table->softDeletes();
+            
         });
     }
 

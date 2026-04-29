@@ -1287,6 +1287,7 @@ class Pending extends Component
                
 
                         if ( isset($this->loading_point_email) && $this->loading_point_email != "") {
+                             $uom = UnitsOfMeasure::find($this->trip?->units_of_measure_id);
                             $data = array(
                                 'email'=> $this->loading_point_email,
                                 'date'=> $this->start_date,
@@ -1302,7 +1303,7 @@ class Pending extends Component
                                 'cargo'=> $this->cargo,
                                 'litreage'=> $this->litreage,
                                 'quantity'=> $this->quantity,
-                                'measurement'=> $this->measurement,
+                                 'uom'=> $uom?->name,
                                 'weight'=> $this->weight,
                             );
                 
