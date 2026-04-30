@@ -10,7 +10,9 @@
                 <i class="fas fa-eye color-default"></i> View
             </a>
         </li>
-
+        @if ($notDriver)
+            
+      
         @if ($user->is_admin())
             <li>
                 <a href="{{ route('audits.index', ['id' => $trip->id, 'category' => 'trip']) }}">
@@ -49,6 +51,7 @@
                     <i class="fa fa-trash color-danger"></i> Delete
                 </a>
             </li>
+              @endif
         @endif
     </ul>
 </div>

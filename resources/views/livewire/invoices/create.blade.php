@@ -613,7 +613,7 @@
                                                         <select wire:model.debounce.300ms="selectedMultiTTO"  class="form-control" required multiple="multiple">
                                                             <option value="">Select TTO</option>
                                                             
-                                                                @foreach ($trips_transport_orders as $tto)
+                                                                @foreach ($trip_transport_orders as $tto)
                                                                         @php
                                                                             $trip = App\Models\Trip::find($tto->trip_id);
                                                                             $transport_order = App\Models\TransportOrder::find($tto->transport_order_id);

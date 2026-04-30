@@ -1596,8 +1596,8 @@ class Create extends Component
         
                 $delivery_note = new DeliveryNote;
                 $delivery_note->user_id =  $trip_transport_order->created_by;
-                $delivery_note->trip_id = $trip_transport_order->trip_id;
                 $delivery_note->transport_order_id = $trip_transport_order->transport_order_id;
+                $delivery_note->trip_transport_order_id = $trip_transport_order->id;
                 $delivery_note->units_of_measure_id = $trip_transport_order->units_of_measure_id ?: Null;
                 $delivery_note->distance = $trip_transport_order->distance;
                

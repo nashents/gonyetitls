@@ -4,6 +4,38 @@
         <div class="container-fluid">
             <div class="row">
                 <div class="col-md-12">
+                       @php
+                                        $notDriver = !$driver;
+                                      $showFreight = !$driver && (
+                                        !$company->rates_managed_by_finance
+                                        || in_array('Finance', $department_names)
+                                        || in_array('Super Admin', $role_names)
+                                    );
+
+                                    $dtPattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
+                                    $formatDate = function ($value) use ($dtPattern) {
+                                        if (!$value) return null;
+
+                                        // datetime-local like 2026-01-09T06:30
+                                        if (is_string($value) && preg_match($dtPattern, $value)) {
+                                            return \Carbon\Carbon::createFromFormat('Y-m-d\TH:i', $value)->format('d M Y g:i A');
+                                        }
+
+                                        // already a Carbon/date string
+                                        try {
+                                            return \Carbon\Carbon::parse($value)->format('d M Y g:i A');
+                                        } catch (\Throwable $e) {
+                                            return $value; // fallback
+                                        }
+                                    };
+
+                                    $statusMap = [
+                                        'Completed'        => ['row' => '#5cb85c', 'cell' => 'table-success', 'badge' => 'success'],
+                                        'Scheduled'        => ['row' => '#f0ad4e', 'cell' => 'table-warning', 'badge' => 'warning'],
+                                        'Started'    => ['row' => '#adb5bd', 'cell' => 'table-secondary', 'badge' => 'info'],
+                                        'Cancelled'           => ['row' => '#5bc0de', 'cell' => 'table-info', 'badge' => 'danger'],
+                                    ];
+                                @endphp
                     <div class="panel">
                         <div class="panel-heading">
                             <div>
@@ -47,6 +79,9 @@
                                         </div>
                                         <!-- /input-group -->
                                     </div>
+                                @if ($notDriver)
+                                    
+                              
                                     <div class="mb-15 mt-15">
                                         <input type="checkbox" wire:model.debounce.300ms="use_filters"   class="line-style" />
                                         <label for="one" class="radio-label">Use Additional Filters</label>
@@ -209,6 +244,7 @@
                                             <a href="#" wire:click.prevent="exporttransport_ordersPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
                                         </div> 
                                     </div>
+                                      @endif
                                 </div>
                                 <br>
                                 <div class="col-md-5" style="float: right; padding-right:0px">
@@ -216,37 +252,7 @@
                                         <input type="text" wire:model.debounce.300ms="search" class="form-control" placeholder="Search transport orders...">
                                     </div>
                                 </div>
-                            @php
-                                      $showFreight = !$driver && (
-                                        !$company->rates_managed_by_finance
-                                        || in_array('Finance', $department_names)
-                                        || in_array('Super Admin', $role_names)
-                                    );
-
-                                    $dtPattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
-                                    $formatDate = function ($value) use ($dtPattern) {
-                                        if (!$value) return null;
-
-                                        // datetime-local like 2026-01-09T06:30
-                                        if (is_string($value) && preg_match($dtPattern, $value)) {
-                                            return \Carbon\Carbon::createFromFormat('Y-m-d\TH:i', $value)->format('d M Y g:i A');
-                                        }
-
-                                        // already a Carbon/date string
-                                        try {
-                                            return \Carbon\Carbon::parse($value)->format('d M Y g:i A');
-                                        } catch (\Throwable $e) {
-                                            return $value; // fallback
-                                        }
-                                    };
-
-                                    $statusMap = [
-                                        'Completed'        => ['row' => '#5cb85c', 'cell' => 'table-success', 'badge' => 'success'],
-                                        'Scheduled'        => ['row' => '#f0ad4e', 'cell' => 'table-warning', 'badge' => 'warning'],
-                                        'Started'    => ['row' => '#adb5bd', 'cell' => 'table-secondary', 'badge' => 'info'],
-                                        'Cancelled'           => ['row' => '#5bc0de', 'cell' => 'table-info', 'badge' => 'danger'],
-                                    ];
-                                @endphp
+                         
                               
                                 {{-- <div class="table-responsive"> --}}
                                     <table class="table  table-striped table-bordered table-sm table-responsive sortable" cellspacing="0" width="100%" style=" width:100%; height:100%;  font-size: 13px;">
@@ -385,6 +391,7 @@
                                                                     <i class="fas fa-eye color-default"></i> View
                                                                 </a>
                                                             </li>
+                                                           @if ($notDriver)
                                                             @if ($employee)
                                                                 <li>
                                                                     <a href="{{ route('transport_orders.preview', $transport_order->id) }}">
@@ -401,6 +408,7 @@
                                                                         <i class="fa fa-trash color-danger"></i> Delete
                                                                     </a>
                                                                 </li>
+                                                            @endif
                                                             @endif
                                                         </ul>
                                                     </div> 

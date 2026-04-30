@@ -226,7 +226,7 @@
                                       @endif
                                       @empty
                                     <tr>
-                                        <td colspan="11">
+                                        <td colspan="13">
                                             <div style="text-align:center; text-color:grey; padding-top:5px; padding-bottom:5px; font-size:17px">
                                                 No Drivers Found ....
                                             </div>

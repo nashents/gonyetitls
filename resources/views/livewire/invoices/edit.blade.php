@@ -170,6 +170,8 @@
                                             <input type="radio" wire:model.debounce.300ms="source" value="Rental"  class="line-style"  />
                                             <label for="one" class="radio-label">Rentals</label>
                                         @endif
+                                        <input type="radio" wire:model.debounce.300ms="source" value="TTO"  class="line-style"  />
+                                        <label for="one" class="radio-label">TTO</label>
                                         <input type="radio" wire:model.debounce.300ms="source" value="Trip"  class="line-style"  />
                                         <label for="one" class="radio-label">Trips</label>
                                       
@@ -730,6 +732,312 @@
                                                 <div class="col-md-12">
                                                     <div class="form-group">
                                                         <button class="btn btn-success btn-rounded" style="float: right" wire:click.prevent="add({{$i}})"> <i class="fa fa-plus"></i>Rental</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endif
+                                    @elseif($source == "TTO")
+                                            <div class="row">
+                                            <div class="col-md-3">
+                                                <div class="input-group">
+                                                    <span class="input-group-addon">
+                                                        Filter By
+                                                    </span>
+                                                    <select wire:model.debounce.300ms="trip_filter" class="form-control" aria-label="..." >
+                                                        <option value="created_at">TTO Created At</option>
+                                                        <option value="start_date">TTO Started At</option>
+                                                    </select>
+                                                </div>
+                                                <!-- /input-group -->
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-2" >
+                                                <div class="input-group">
+                                                    <span class="input-group-addon">
+                                                        From
+                                                    </span>
+                                                    <input type="date" wire:model.debounce.300ms="from"  class="form-control" aria-label="...">
+                                                </div>
+                                                <!-- /input-group -->
+                                            </div>
+                                            <div class="col-md-2" style="margin-left:20px;" >
+                                                <div class="input-group">
+                                                    <span class="input-group-addon">
+                                                        To
+                                                    </span>
+                                                    <input type="date" wire:model.debounce.300ms="to"  class="form-control" aria-label="...">
+                                                </div>
+                                                <!-- /input-group -->
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-5">
+                                                <div class="form-group">
+                                                    <label for="">Search TTOs</label>
+                                                    <input type="text" wire:model.debounce.300ms="searchTTO" class="form-control" placeholder="Search TTOs using: trip#, trip ref, waybill#, customer, HRN...">
+                                                </div>
+                                            </div>
+                                            @if ($this->invoice_to == "Customer")
+                                                <div class="col-md-7">
+                                                    <div class="form-group">
+                                                        <label for="name">Select values to use for invoicing?</label>
+                                                        <label class="radio-inline">
+                                                            <input type="radio" wire:model.debounce.300ms="values" value="scheduled" name="optradio" >Scheduled
+                                                        </label>
+                                                        <label class="radio-inline">
+                                                            <input type="radio" wire:model.debounce.300ms="values" value="loading" name="optradio" >Loading
+                                                        </label>
+                                                        <label class="radio-inline">
+                                                            <input type="radio" wire:model.debounce.300ms="values" value="offloading" name="optradio">Offloading
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            @endif
+                                        </div>
+                                        @php
+                                            $invoice_items = App\Models\InvoiceItem::all();
+                                            foreach($invoice_items as $invoice_item){
+                                                    $trip_transport_order_ids[] = $invoice_item->trip_transport_order_id;
+                                            }   
+                                        @endphp
+                                        @foreach ($invoice_items as $key => $value)
+                                            <div class="row">
+                                                <div class="col-md-5">
+                                                    <div class="form-group">
+                                                            <label for="subheading">TTOs<span class="required" style="color: red">*</span></label>
+                                                            <select wire:model.debounce.300ms="selectedCurrentTTO.{{$key}}"  class="form-control" required size="4">
+                                                                <option value="">Select TTO</option>
+                                                                @foreach ($trip_transport_orders as $tto)
+                                                                    @php
+                                                                        $trip = App\Models\Trip::find($tto->trip_id);
+                                                                        $transport_order = App\Models\TransportOrder::find($tto->transport_order_id);
+                                                                    @endphp
+                                                                    @if (isset($trip_transport_order_ids))
+                                                                        @if (in_array($tto->id,$trip_transport_order_ids))
+                                                                            <option value="{{$tto->id}}" style="color: orange"
+                                                                                @if(in_array($tto->id, $selectedTTO ?? []) && ($selectedTTO[0] ?? null) != $tto->id) 
+                                                                                    disabled 
+                                                                                @endif
+                                                                                >
+                                                                                {{$trip->trip_number ? $trip->trip_number: ""}} {{ $trip->trip_ref ? " / ".$trip->trip_ref: "" }} {{ isset($pod) ? "POD#: ".$pod->document_number : "" }} {{$trip->start_date}} {{$tto->currency ? $tto->currency->name : ""}} {{$tto->currency ? $tto->currency->symbol : ""}}{{$tto->allocated_freight ? number_format($tto->allocated_freight,2) : ""}} 
+                                                                                @if ($trip->horse)
+                                                                                    {{$trip->horse ? $trip->horse->registration_number : ""}} {{$trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : ""}}
+                                                                                @elseif($trip->vehicle)
+                                                                                    {{$trip->vehicle ? $trip->vehicle->registration_number : ""}} {{$trip->vehicle->fleet_number ? "(".$trip->vehicle->fleet_number.")" : ""}}
+                                                                                @endif
+                                                                                {{$transport_order->customer ? $transport_order->customer->name : ""}}
+                                                                            </option> 
+                                                                        @else
+                                                                            <option value="{{$tto->id}}"
+                                                                                @if(in_array($tto->id, $selectedTTO ?? []) && ($selectedTTO[0] ?? null) != $tto->id) 
+                                                                                    disabled 
+                                                                                @endif
+                                                                                >
+                                                                                {{$trip->trip_number ? $trip->trip_number: ""}} {{ $trip->trip_ref ? " / ".$trip->trip_ref: "" }} {{ isset($pod) ? "POD#: ".$pod->document_number : "" }} {{$trip->start_date}} {{$tto->currency ? $tto->currency->name : ""}} {{$tto->currency ? $tto->currency->symbol : ""}}{{$tto->allocated_freight ? number_format($tto->allocated_freight,2) : ""}} 
+                                                                                @if ($trip->horse)
+                                                                                    {{$trip->horse ? $trip->horse->registration_number : ""}} {{$trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : ""}}
+                                                                                @elseif($trip->vehicle)
+                                                                                    {{$trip->vehicle ? $trip->vehicle->registration_number : ""}} {{$trip->vehicle->fleet_number ? "(".$trip->vehicle->fleet_number.")" : ""}}
+                                                                                @endif
+                                                                            {{$transport_order->customer ? $transport_order->customer->name : ""}}
+                                                                            </option>
+                                                                        @endif
+                                                                    @else
+                                                                        <option value="{{$tto->id}}"
+                                                                            @if(in_array($tto->id, $selectedTTO ?? []) && ($selectedTTO[0] ?? null) != $tto->id) 
+                                                                                disabled 
+                                                                            @endif
+                                                                            >
+                                                                            {{$trip->trip_number ? $trip->trip_number: ""}} {{ $trip->trip_ref ? " / ".$trip->trip_ref: "" }} {{ isset($pod) ? "POD#: ".$pod->document_number : "" }} {{$trip->start_date}} {{$tto->currency ? $tto->currency->name : ""}} {{$tto->currency ? $tto->currency->symbol : ""}}{{$tto->allocated_freight ? number_format($tto->allocated_freight,2) : ""}} 
+                                                                            @if ($trip->horse)
+                                                                                {{$trip->horse ? $trip->horse->registration_number : ""}} {{$trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : ""}}
+                                                                            @elseif($trip->vehicle)
+                                                                                {{$trip->vehicle ? $trip->vehicle->registration_number : ""}} {{$trip->vehicle->fleet_number ? "(".$trip->vehicle->fleet_number.")" : ""}}
+                                                                            @endif
+                                                                        {{$transport_order->customer ? $transport_order->customer->name : ""}}
+                                                                        </option>
+                                                                    @endif
+                                                                @endforeach  
+                                                            </select>
+                                                            <small style="color: green">NB: All invoiced ttos will appear in orange</small>
+                                                            @error('selectedCurrentTTO.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <div class="form-group">
+                                                        <label for="name">Description</label>
+                                                        <textarea wire:model.debounce.300ms="current_description.{{$key}}" class="form-control" cols="30" rows="4" placeholder="Enter Item Description"></textarea>
+                                                        @error('current_description.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-1">
+                                                    <div class="form-group">
+                                                        <label for="date">Qty<span class="required" style="color: red">*</span></label>
+                                                        <input type="number"  class="form-control" wire:model.debounce.300ms="current_qty.{{$key}}" {{$recorded_payments > 0  ? "disabled" : ""}}   required>
+                                                        @error('current_qty.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <div class="form-group">
+                                                        <label for="subheading">Amount<span class="required" style="color: red">*</span></label>
+                                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="current_amount.{{$key}}" {{$recorded_payments > 0 ? "disabled" : ""}}   required/>
+                                                        @error('current_amount.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-1">
+                                                    <div class="form-group">
+                                                        <label for="subheading">Taxes</label>
+                                                        <select wire:model.debounce.300ms="selectedCurrentTax.{{$key}}"  class="form-control" {{$recorded_payments > 0 ? "disabled" : ""}}>
+                                                            <option value=""></option>
+                                                            @foreach ($tax_accounts as $tax)
+                                                                <option value="{{$tax->id}}">{{$tax->abbreviation}} {{$tax->rate ? $tax->rate."%" : ""}}</option> 
+                                                            @endforeach
+                                                        </select>
+                                                        <small><a href="{{ route('accounts.tax') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small><a href="#" wire:click.prevent="refresh('taxes')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
+                                                        @error('selectedCurrentTax.'.$key) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-1">
+                                                    <div class="form-group" style="margin-top: 29px; ">
+                                                        @if ($invoice->payments->isEmpty())
+                                                            <a href="#" wire:click.prevent="removeShow({{ $value->id }})" ><i class="fa fa-trash color-danger"></i></a>
+                                                        @endif
+                                                    </div>
+                                                </div>  
+                                            </div>
+                                        @endforeach
+                                        @foreach ($inputs as $key => $value)
+                                            <div class="row" >
+                                                <div class="col-md-12" >
+                                                    <input type="checkbox" wire:model.debounce.300ms="is_custom_item.{{ $value }}"   class="line-style" />
+                                                    <label for="one" class="radio-label">Add custom item</label>
+                                                    @error('is_custom_item.'.$value) <span class="text-danger error">{{ $message }}</span>@enderror
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="form-group">
+                                                        @if(!($is_custom_item[$value] ?? false))
+                                                            <label for="subheading">Trips<span class="required" style="color: red">*</span></label>
+                                                            <select wire:model.debounce.300ms="selectedTTO.{{$value}}"  class="form-control" required size="4">
+                                                                <option value="">Select Trip</option>
+                                                                @foreach ($trips->where('currency_id', $selectedCurrency) as $trip)
+                                                                       @php
+                                                                        $trip = App\Models\Trip::find($tto->trip_id);
+                                                                        $transport_order = App\Models\TransportOrder::find($tto->transport_order_id);
+                                                                    @endphp
+                                                                    @if (isset($trip_transport_order_ids))
+                                                                        @if (in_array($tto->id,$trip_transport_order_ids))
+                                                                            <option value="{{$tto->id}}" style="color: orange"
+                                                                                @if(in_array($tto->id, $selectedTTO ?? []) && ($selectedTTO[0] ?? null) != $tto->id) 
+                                                                                    disabled 
+                                                                                @endif
+                                                                                >
+                                                                                {{$trip->trip_number ? $trip->trip_number: ""}} {{ $trip->trip_ref ? " / ".$trip->trip_ref: "" }} {{ isset($pod) ? "POD#: ".$pod->document_number : "" }} {{$trip->start_date}} {{$tto->currency ? $tto->currency->name : ""}} {{$tto->currency ? $tto->currency->symbol : ""}}{{$tto->allocated_freight ? number_format($tto->allocated_freight,2) : ""}} 
+                                                                                @if ($trip->horse)
+                                                                                    {{$trip->horse ? $trip->horse->registration_number : ""}} {{$trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : ""}}
+                                                                                @elseif($trip->vehicle)
+                                                                                    {{$trip->vehicle ? $trip->vehicle->registration_number : ""}} {{$trip->vehicle->fleet_number ? "(".$trip->vehicle->fleet_number.")" : ""}}
+                                                                                @endif
+                                                                                {{$transport_order->customer ? $transport_order->customer->name : ""}}
+                                                                            </option> 
+                                                                        @else
+                                                                            <option value="{{$tto->id}}"
+                                                                                @if(in_array($tto->id, $selectedTTO ?? []) && ($selectedTTO[0] ?? null) != $tto->id) 
+                                                                                    disabled 
+                                                                                @endif
+                                                                                >
+                                                                                {{$trip->trip_number ? $trip->trip_number: ""}} {{ $trip->trip_ref ? " / ".$trip->trip_ref: "" }} {{ isset($pod) ? "POD#: ".$pod->document_number : "" }} {{$trip->start_date}} {{$tto->currency ? $tto->currency->name : ""}} {{$tto->currency ? $tto->currency->symbol : ""}}{{$tto->allocated_freight ? number_format($tto->allocated_freight,2) : ""}} 
+                                                                                @if ($trip->horse)
+                                                                                    {{$trip->horse ? $trip->horse->registration_number : ""}} {{$trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : ""}}
+                                                                                @elseif($trip->vehicle)
+                                                                                    {{$trip->vehicle ? $trip->vehicle->registration_number : ""}} {{$trip->vehicle->fleet_number ? "(".$trip->vehicle->fleet_number.")" : ""}}
+                                                                                @endif
+                                                                            {{$transport_order->customer ? $transport_order->customer->name : ""}}
+                                                                            </option>
+                                                                        @endif
+                                                                    @else
+                                                                        <option value="{{$tto->id}}"
+                                                                            @if(in_array($tto->id, $selectedTTO ?? []) && ($selectedTTO[0] ?? null) != $tto->id) 
+                                                                                disabled 
+                                                                            @endif
+                                                                            >
+                                                                            {{$trip->trip_number ? $trip->trip_number: ""}} {{ $trip->trip_ref ? " / ".$trip->trip_ref: "" }} {{ isset($pod) ? "POD#: ".$pod->document_number : "" }} {{$trip->start_date}} {{$tto->currency ? $tto->currency->name : ""}} {{$tto->currency ? $tto->currency->symbol : ""}}{{$tto->allocated_freight ? number_format($tto->allocated_freight,2) : ""}} 
+                                                                            @if ($trip->horse)
+                                                                                {{$trip->horse ? $trip->horse->registration_number : ""}} {{$trip->horse->fleet_number ? "(".$trip->horse->fleet_number.")" : ""}}
+                                                                            @elseif($trip->vehicle)
+                                                                                {{$trip->vehicle ? $trip->vehicle->registration_number : ""}} {{$trip->vehicle->fleet_number ? "(".$trip->vehicle->fleet_number.")" : ""}}
+                                                                            @endif
+                                                                        {{$transport_order->customer ? $transport_order->customer->name : ""}}
+                                                                        </option>
+                                                                    @endif
+                                                                @endforeach  
+                                                            </select>
+                                                            <small style="color: green">NB: All invoiced ttos will appear in orange</small>
+                                                            @error('selectedTTO.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                        @else
+                                                            <label for="country">Items<span class="required" style="color: red">*</span></label>
+                                                            <select wire:model.debounce.300ms="selectedProduct.{{ $value }}" class="form-control" required>
+                                                                <option value="">Select Item</option>
+                                                                @foreach ($products as $product)
+                                                                <option value="{{$product->id}}"
+                                                                        @if(in_array($product->id, $selectedProduct ?? []) && ($selectedProduct[$value] ?? null) != $product->id) 
+                                                                        disabled 
+                                                                    @endif
+                                                                    >{{$product->brand ? $product->brand->name : ""}} {{$product->name}} {{$product->identification_number ? "ID#:".$product->identification_number : ""}}</option> 
+                                                                @endforeach
+                                                            </select>
+                                                            <small>  <a href="#" wire:click="showItem({{$value}})"><i class="fa fa-plus-square-o"></i> New Product / Service</a></small><a href="#" wire:click.prevent="refresh('products')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
+                                                            @error('selectedProduct.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="form-group">
+                                                        <label for="name">Description</label>
+                                                        <textarea wire:model.debounce.300ms="description.{{$value}}" class="form-control" cols="30" rows="4" placeholder="Enter Item Description"></textarea>
+                                                        @error('description.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-1">
+                                                    <div class="form-group">
+                                                        <label for="date">Qty<span class="required" style="color: red">*</span></label>
+                                                        <input type="number"  class="form-control" wire:model.debounce.300ms="qty.{{$value}}"   required>
+                                                        @error('qty.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <div class="form-group">
+                                                        <label for="subheading">Amount<span class="required" style="color: red">*</span></label>
+                                                        <input type="number" step="any" class="form-control" wire:model.debounce.300ms="amount.{{$value}}"   required/>
+                                                        @error('amount.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-1">
+                                                    <div class="form-group">
+                                                        <label for="subheading">Taxes</label>
+                                                        <select wire:model.debounce.300ms="selectedTax.{{$value}}"  class="form-control">
+                                                            <option value=""></option>
+                                                                @foreach ($tax_accounts as $tax)
+                                                                <option value="{{$tax->id}}">{{$tax->abbreviation}} </option> 
+                                                                @endforeach
+                                                        </select>
+                                                        <small><a href="{{ route('accounts.tax') }}" target="_blank"><i class="fa fa-plus-square-o"></i> New Tax</a></small><a href="#" wire:click.prevent="refresh('taxes')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> 
+                                                        @error('selectedTax.'.$value) <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-1">
+                                                    <div class="form-group">
+                                                        <label for=""></label>
+                                                        <button class="btn btn-danger btn-rounded xs" style="margin-top:23px"  wire:click.prevent="remove({{$key}},{{$value}})"> <i class="fa fa-times"></i></button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                        @if ($invoice->payments->isEmpty())
+                                            <div class="row">
+                                                <div class="col-md-12">
+                                                    <div class="form-group">
+                                                        <button class="btn btn-success btn-rounded" style="float: right" wire:click.prevent="add({{$i}})"> <i class="fa fa-plus"></i>Trip</button>
                                                     </div>
                                                 </div>
                                             </div>

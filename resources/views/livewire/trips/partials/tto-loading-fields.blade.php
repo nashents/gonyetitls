@@ -111,47 +111,46 @@
         </div>
     </div>
 @endif
-
-<div class="row">
-    <div class="col-md-4">
-        <div class="form-group">
-            <label>Currency</label>
-            <select class="form-control" wire:model.debounce.300ms="currency_id" disabled>
-                <option value="">Select Currency</option>
-                @foreach ($currencies ?? [] as $currency)
-                    <option value="{{ $currency->id }}">
-                        {{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}
-                    </option>
-                @endforeach
-            </select>
+@if ($showFreight)
+    <div class="row">
+        <div class="col-md-4">
+            <div class="form-group">
+                <label>Currency</label>
+                <select class="form-control" wire:model.debounce.300ms="currency_id" disabled>
+                    <option value="">Select Currency</option>
+                    @foreach ($currencies ?? [] as $currency)
+                        <option value="{{ $currency->id }}">
+                            {{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group">
+                <label>Customer Rate</label>
+                <input type="number" step="any" class="form-control"
+                    wire:model.debounce.300ms="deliveryNotes.{{ $ttoId }}.loaded_rate"
+                    placeholder="Customer rate"
+                    {{ ($selectedStatus === 'Offloaded' || ! $canEditRates) ? 'disabled' : '' }}>
+                @error("deliveryNotes.$ttoId.loaded_rate")
+                    <span class="text-danger small">{{ $message }}</span>
+                @enderror
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group">
+                <label>Customer Freight</label>
+                <input type="number" step="any" class="form-control"
+                    wire:model.debounce.300ms="deliveryNotes.{{ $ttoId }}.loaded_freight"
+                    placeholder="Customer freight"
+                    {{ ($selectedStatus === 'Offloaded' || ! $canEditRates) ? 'disabled' : '' }}>
+                @error("deliveryNotes.$ttoId.loaded_freight")
+                    <span class="text-danger small">{{ $message }}</span>
+                @enderror
+            </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="form-group">
-            <label>Customer Rate</label>
-            <input type="number" step="any" class="form-control"
-                   wire:model.debounce.300ms="deliveryNotes.{{ $ttoId }}.loaded_rate"
-                   placeholder="Customer rate"
-                   {{ ($selectedStatus === 'Offloaded' || ! $canEditRates) ? 'disabled' : '' }}>
-            @error("deliveryNotes.$ttoId.loaded_rate")
-                <span class="text-danger small">{{ $message }}</span>
-            @enderror
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="form-group">
-            <label>Customer Freight</label>
-            <input type="number" step="any" class="form-control"
-                   wire:model.debounce.300ms="deliveryNotes.{{ $ttoId }}.loaded_freight"
-                   placeholder="Customer freight"
-                   {{ ($selectedStatus === 'Offloaded' || ! $canEditRates) ? 'disabled' : '' }}>
-            @error("deliveryNotes.$ttoId.loaded_freight")
-                <span class="text-danger small">{{ $message }}</span>
-            @enderror
-        </div>
-    </div>
-</div>
-
 @if ($hasTransporter)
     <div class="row">
         <div class="col-md-6">
@@ -179,4 +178,6 @@
             </div>
         </div>
     </div>
+@endif
+
 @endif

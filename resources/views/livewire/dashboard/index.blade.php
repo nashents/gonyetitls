@@ -20,7 +20,7 @@
         @if ($driver)
                <div class="row">
                     <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
-                        <a class="dashboard-stat bg-primary" href="{{route('driver.trips',$driver->id)}}">
+                        <a class="dashboard-stat bg-primary" href="{{route('trips.index')}}">
                             <span class="number counter">{{$driver_trips}}</span>
                             <span class="name">Trips</span>
                             <span class="bg-icon"><i class="fa fa-road"></i></span>

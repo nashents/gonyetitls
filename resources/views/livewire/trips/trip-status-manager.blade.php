@@ -118,11 +118,20 @@
                         @if (in_array($selectedStatus, ['Loaded', 'Offloaded']))
 
                             @php
-                                $units_of_measures = App\Models\UnitsOfMeasure::orderBy('name', 'asc')->get();
                                 $user              = Auth::user();
                                 $employee          = $user->employee;
+                                $company = $employee->company;
+                                $driver = $employee?->driver;
+                                $notDriver = !$driver;
+                               
+                                $units_of_measures = App\Models\UnitsOfMeasure::orderBy('name', 'asc')->get();
                                 $department_names  = $employee?->departments?->pluck('name')->toArray() ?? [];
                                 $role_names        = $user?->roles?->pluck('name')->toArray() ?? [];
+                                $showFreight = !$driver && (
+                                    !$company->rates_managed_by_finance
+                                    || in_array('Finance', $department_names)
+                                    || in_array('Super Admin', $role_names)
+                                );
                                 $canEditRates      = !(
                                     $employee->company->rates_managed_by_finance == 1 &&
                                     ! (in_array('Finance', $department_names) || in_array('Super Admin', $role_names))
@@ -290,7 +299,7 @@
                                                 </div>
                                             </div>
                                         @endif
-
+                                        @if ($showFreight)
                                         <div class="row">
                                             <div class="col-md-4">
                                                 <div class="form-group">
@@ -354,6 +363,7 @@
                                                     </div>
                                                 </div>
                                             </div>
+                                        @endif
                                         @endif
 
                                         {{-- Offloading Details --}}
@@ -448,7 +458,8 @@
                                                     </div>
                                                 </div>
                                             @endif
-
+                                            @if ($showFreight)
+                                        
                                             <div class="row">
                                                 <div class="col-md-4">
                                                     <div class="form-group">
@@ -512,6 +523,7 @@
                                                         </div>
                                                     </div>
                                                 </div>
+                                            @endif
                                             @endif
 
                                             <div class="form-group mt-2">

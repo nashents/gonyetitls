@@ -105,7 +105,7 @@
         </div>
     </div>
 @endif
-
+@if ($showFreight)
 <div class="row">
     <div class="col-md-4">
         <div class="form-group">
@@ -173,6 +173,8 @@
             </div>
         </div>
     </div>
+@endif
+
 @endif
 
 <div class="form-group mt-2">

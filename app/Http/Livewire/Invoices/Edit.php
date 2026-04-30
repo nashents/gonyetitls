@@ -7,6 +7,7 @@ use App\Models\BankAccount;
 use App\Models\Booking;
 use App\Models\Currency;
 use App\Models\Customer;
+use App\Models\DeliveryNote;
 use App\Models\Destination;
 use App\Models\Discount;
 use App\Models\ExchangeRate;
@@ -24,7 +25,6 @@ use App\Models\TripTransportOrder;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-
 use Livewire\Component;
 
 class Edit extends Component
@@ -33,8 +33,9 @@ class Edit extends Component
 
     public $searchBooking;
     public $searchTrip;
+    public $searchTTO;
     public $searchRental;
-    protected $queryString = ['searchTrip','searchBooking','searchRental'];
+    protected $queryString = ['searchTrip','searchBooking','searchRental','searchTTO'];
     public $from;
     public $to;
 
@@ -83,6 +84,7 @@ class Edit extends Component
     
     public $selectedCurrentTax;
     public $selectedCurrentProduct;
+    public $selectedCurrentTTO;
     public $selectedCurrentTrip;
     public $selectedCurrentBooking;
     public $selectedCurrentRental;
@@ -105,6 +107,7 @@ class Edit extends Component
     public $from_inventory;
     public $from_bookings;
     public $from_trips;
+    public $from_ttos;
     public $record_payment;
     public $exchange_amount;
     public $selectedCustomer;
@@ -501,6 +504,64 @@ class Edit extends Component
         }
    
     }
+
+       public function updatedSelectedTTO($id, $key){
+      
+        if (!is_null($id)) {
+            
+            $tto = TripTransportOrder::find($id);
+            $trip = $tto?->trip;
+            $transport_order = $tto?->transport_order;
+            $delivery_note = DeliveryNote::where('trip_id',$trip?->id)->where('transport_order_id',$transport_order?->id)->first();
+
+            if (isset($tto)) {
+
+                foreach($trip->trip_expenses as $expense){
+
+                    if (isset($expense->category)  && isset($expense->currency_id)) {
+    
+                        if ($expense->currency_id == $tto->currency_id) {
+                            if ($expense->category == "Customer") {
+                               if(is_numeric($expense->amount)){
+                                $this->total_customer_expenses = $this->total_customer_expenses + $expense->amount;
+                               }
+                            }
+                           
+                        }
+                    }
+                }
+                
+
+              if($this->invoice_to == "Customer"){
+                    if (isset($this->total_customer_expenses) && $this->total_customer_expenses > 0) {
+                        if($this->values == "scheduled"){
+                            $this->current_amount[$key] = $tto->allocated_freight + $this->total_customer_expenses; 
+                        }elseif($this->values == "loading"){
+                            $this->current_amount[$key] = $delivery_note?->loaded_freight + $this->total_customer_expenses; 
+                        }elseif($this->values == "offloading"){
+                            $this->current_amount[$key] =  $delivery_note?->offloaded_freight + $this->total_customer_expenses; 
+                        }
+                    }else{
+                        if($this->values == "scheduled"){
+                            $this->current_amount[$key] = $tto->allocated_freight ; 
+                        }elseif($this->values == "loading"){
+                            $this->current_amount[$key] = $delivery_note?->loaded_freight ; 
+                        }elseif($this->values == "offloading"){
+                            $this->current_amount[$key] = $delivery_note?->offloaded_freight ; 
+                        }
+                    
+                    }
+                    $this->current_description[$key] = $this->setTTODescription($id); 
+                }
+                
+                $this->current_qty[$key] = 1; 
+                $this->selectedCurrentAccount[$key] =  $this->income_account_id;
+            }
+           
+            
+        }
+   
+    }
     public function updatedSelectedCurrentTrip($id, $key){
       
         if (!is_null($id)) {
@@ -877,6 +938,7 @@ class Edit extends Component
         $this->pat_number = $invoice->pat_number;
         $this->from_inventory = $invoice->from_inventory;
         $this->from_trips = $invoice->from_trips;
+        $this->from_ttos = $invoice->from_ttos;
         $this->source = $invoice->source;
         $this->memo = $invoice->memo;
         $this->date = $invoice->date;
@@ -898,6 +960,7 @@ class Edit extends Component
            foreach($this->invoice_items as $item){
             $this->selectedCurrentProduct[] = $item->product_id;
             $this->selectedCurrentTrip[] = $item->trip_id;
+            $this->selectedCurrentTTO[] = $item->trip_transport_id;
             $this->selectedCurrentRental[] = $item->rental_id;
             $this->selectedCurrentBooking[] = $item->booking_id;
             $this->old_inventory_id[] = $item->inventory_id;
@@ -1245,6 +1308,141 @@ class Edit extends Component
                     }
             
                 }
+                elseif ($this->source == "TTO") {
+              
+            
+                       foreach($this->invoice_items as $key => $item){
+
+                            $invoice_item = InvoiceItem::find($item->id);
+                            $invoice_item->invoice_id = $invoice->id;
+                            if (isset($this->selectedCurrentAccount[$key])) {
+                                $invoice_item->account_id = $this->selectedCurrentAccount[$key];
+                            }
+                            if (isset($this->selectedCurrentTTO[$key])) {
+                                $invoice_item->trip_transport_order_id = $this->selectedCurrentTTO[$key];
+                            }
+                            if (isset($this->selectedCurrentProduct[$key])) {
+                                $invoice_item->product_id = $this->selectedCurrentProduct[$key];
+                            }
+                            if (isset($this->is_custom_item[$key])) {
+                                $invoice_item->is_custom_item = $this->is_custom_item[$key];
+                            }
+                            if (isset($this->current_qty[$key])) {
+                                $invoice_item->qty = $this->current_qty[$key];
+                            }
+                            if (isset($this->current_amount[$key])) {
+                                $invoice_item->amount = $this->current_amount[$key];
+                            }
+                            if (isset($this->current_description[$key])) {
+                               
+                                $invoice_item->description = $this->current_description[$key];
+                            }
+                            if (isset($this->current_tax_rate[$key])) {
+                                $invoice_item->tax_rate = $this->current_tax_rate[$key];
+                            }
+                            if (isset($this->current_hs_code[$key])) {
+                                $invoice_item->hs_code = $this->current_hs_code[$key];
+                            }
+                            if (isset($this->selectedCurrentTax[$key])) {
+                                $invoice_item->tax_id = $this->selectedCurrentTax[$key];
+                            }
+                            if ((isset($this->current_amount[$key]) && is_numeric($this->current_amount[$key])) && ( isset($this->current_qty[$key]) && is_numeric($this->current_qty[$key]) ) ) {
+
+                                $current_item_subtotal = $this->current_amount[$key]*$this->current_qty[$key];
+                                $invoice_item->subtotal = $current_item_subtotal;
+                                $this->subtotal = $this->subtotal + $current_item_subtotal;
+
+                            }
+                            if ((isset($this->tax_rate[$key]) && is_numeric($this->tax_rate[$key])) && isset($this->selectedTax[$key])) {
+
+                                $current_item_tax_amount = ($current_item_subtotal * ($this->tax_rate[$key] / 100 ));
+                                $invoice_item->tax_amount =  $current_item_tax_amount;
+                                $this->tax_amount = $this->tax_amount + $current_item_tax_amount;
+                                $current_item_subtotal_incl = $current_item_tax_amount + $current_item_subtotal;
+                                $invoice_item->subtotal_incl =  $current_item_subtotal_incl;
+                                $this->total =  $this->total + $current_item_subtotal_incl;
+
+                            }else{
+                                $current_item_subtotal_incl = $current_item_subtotal;
+                                $invoice_item->subtotal_incl = $current_item_subtotal_incl;
+                                $this->total =  $this->total + $current_item_subtotal_incl;
+                            }
+                            
+                            if ((isset($this->exchange_rate) && is_numeric($this->exchange_rate))) {
+                                $invoice_item->exchange_rate = $this->exchange_rate;
+                                $invoice_item->exchange_amount = $this->exchange_rate * $current_item_subtotal_incl ;
+                            }
+                            $invoice_item->save();
+                        
+                    }
+
+                    foreach($this->selectedTTO as $key => $value){
+
+                            $invoice_item = new InvoiceItem;
+                            $invoice_item->invoice_id = $invoice->id;
+                            if (isset($this->selectedAccount[$key])) {
+                                $invoice_item->account_id = $this->selectedAccount[$key];
+                            }
+                            if (isset($this->selectedTTO[$key])) {
+                                $invoice_item->trip_transport_order_id = $this->selectedTTO[$key];
+                            }
+                            if (isset($this->selectedProduct[$key])) {
+                                $invoice_item->product_id = $this->selectedProduct[$key];
+                            }
+                            if (isset($this->is_custom_item[$key])) {
+                                $invoice_item->is_custom_item = $this->is_custom_item[$key];
+                            }
+                            if (isset($this->qty[$key])) {
+                                $invoice_item->qty = $this->qty[$key];
+                            }
+                            if (isset($this->amount[$key])) {
+                                $invoice_item->amount = $this->amount[$key];
+                            }
+                            if (isset($this->description[$key])) {
+                               
+                                $invoice_item->description = $this->description[$key];
+                            }
+                            if (isset($this->tax_rate[$key])) {
+                                $invoice_item->tax_rate = $this->tax_rate[$key];
+                            }
+                            if (isset($this->hs_code[$key])) {
+                                $invoice_item->hs_code = $this->hs_code[$key];
+                            }
+                            if (isset($this->selectedTax[$key])) {
+                                $invoice_item->tax_id = $this->selectedTax[$key];
+                            }
+                            if ((isset($this->amount[$key]) && is_numeric($this->amount[$key])) && ( isset($this->qty[$key]) && is_numeric($this->qty[$key]) ) ) {
+
+                                $item_subtotal = $this->amount[$key]*$this->qty[$key];
+                                $invoice_item->subtotal = $item_subtotal;
+                                $this->subtotal = $this->subtotal + $item_subtotal;
+
+                            }
+                            if ((isset($this->tax_rate[$key]) && is_numeric($this->tax_rate[$key])) && isset($this->selectedTax[$key])) {
+
+                                $item_tax_amount = ($item_subtotal * ($this->tax_rate[$key] / 100 ));
+                                $invoice_item->tax_amount =  $item_tax_amount;
+                                $this->tax_amount = $this->tax_amount + $item_tax_amount;
+                                $item_subtotal_incl = $item_tax_amount + $item_subtotal;
+                                $invoice_item->subtotal_incl =  $item_subtotal_incl;
+                                $this->total =  $this->total + $item_subtotal_incl;
+
+                            }else{
+                                $item_subtotal_incl = $item_subtotal;
+                                $invoice_item->subtotal_incl = $item_subtotal_incl;
+                                $this->total =  $this->total + $item_subtotal_incl;
+                            }
+                            
+                            if ((isset($this->exchange_rate) && is_numeric($this->exchange_rate))) {
+                                $invoice_item->exchange_rate = $this->exchange_rate;
+                                $invoice_item->exchange_amount = $this->exchange_rate * $item_subtotal_incl ;
+                            }
+                            $invoice_item->save();
+                    
+                    }
+                
+                    
+            }
                 elseif($this->source == "Rental"){
 
                     foreach($this->invoice_items as $key => $item){
@@ -1879,7 +2077,7 @@ class Edit extends Component
 
     }
 
-     public function getTripTransportOrdersProperty()
+    public function getTripTransportOrdersProperty()
     {
         $query = TripTransportOrder::query()
             ->with([
@@ -2065,8 +2263,12 @@ class Edit extends Component
             }
             if($value == "Trip"){
                 $this->from_trips = True;
-            }elseif($value == "Inventory"){
+            }
+            elseif($value == "Inventory"){
                  $this->from_inventory = True;
+            }
+            elseif($value == "TTO"){
+                 $this->from_ttos = True;
             }
     }
 
@@ -2138,6 +2340,7 @@ class Edit extends Component
         
         return view('livewire.invoices.edit',[
             'trips' => $this->trips,
+            'trip_transport_orders' => $this->trip_transport_orders ,
             'bookings' => $this->bookings,
               'rentals' => $this->rentals,
             'invoice_items' => $this->invoice_items,

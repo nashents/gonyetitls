@@ -1858,7 +1858,9 @@ class Edit extends Component
     {
        // its safe because only trips with one TO gets to this stage
         $trip_transport_order = TripTransportOrder::where('trip_id', $this->trip_id)->first();
+
         $this->to_exists = $trip_transport_order ? True : False;
+
         $transport_order = $trip_transport_order
             ? TransportOrder::findOrNew($trip_transport_order->transport_order_id)
             : new TransportOrder();
@@ -1910,28 +1912,33 @@ class Edit extends Component
     }
 
     public function createDeliveryNotes($trip_transport_order){
-        
-                $delivery_note = new DeliveryNote;
-                $delivery_note->user_id =  $trip_transport_order->created_by;
-                $delivery_note->trip_id = $trip_transport_order->trip_id;
+    
+              
+                $delivery_note = DeliveryNote::firstOrNew([
+                    'trip_id' => $trip_transport_order->trip_id,
+                    'transport_order_id' => $trip_transport_order->transport_order_id,
+                ]);
+
+                $delivery_note->user_id = $trip_transport_order->created_by;
                 $delivery_note->transport_order_id = $trip_transport_order->transport_order_id;
-                $delivery_note->units_of_measure_id = $trip_transport_order->units_of_measure_id ?: Null;
+                $delivery_note->units_of_measure_id = $trip_transport_order->units_of_measure_id ?: null;
                 $delivery_note->distance = $trip_transport_order->distance;
-               
+
                 if (isset($trip->cargo)) {
                     if ($trip->cargo->type == "Liquid") {
                         $delivery_note->loaded_litreage = $trip->litreage;
                         $delivery_note->loaded_litreage_at_20 = $trip->litreage_at_20;
-                    }elseif($trip->cargo->type == "Solid") {
+                    } elseif ($trip->cargo->type == "Solid") {
                         $delivery_note->loaded_quantity = $trip->quantity;
                     }
                 }
-   
+
                 $delivery_note->loaded_weight = $trip_transport_order->allocated_weight;
                 $delivery_note->loaded_rate = $trip_transport_order->rate;
                 $delivery_note->loaded_freight = $trip_transport_order->freight;
                 $delivery_note->transporter_loaded_rate = $trip_transport_order->transporter_rate;
                 $delivery_note->transporter_loaded_freight = $trip_transport_order->transporter_freight;
+
                 $delivery_note->save();
 
     }
@@ -2145,8 +2152,6 @@ class Edit extends Component
                     $totalLitreage += (float) ($trip_transport_order->allocated_litreage ?? 0);
                     
 
-                  
-                
                     $this->createDeliveryNotes($trip_transport_order);
                     $this->addDestinations($trip_transport_order);
                 }

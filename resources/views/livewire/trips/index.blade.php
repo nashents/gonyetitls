@@ -10,58 +10,75 @@
                 <div class="row">
                     <div class="col-md-12">
                         <div class="panel">
+                            @php
+                                $notDriver = !$driver;
+                                $showFreight = !$driver && (
+                                    !$company->rates_managed_by_finance
+                                    || in_array('Finance', $department_names)
+                                    || in_array('Super Admin', $role_names)
+                                );
+                                $dtPattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
+                                $formatDate = function ($value) use ($dtPattern) {
+                                    if (!$value) return null;
+
+                                    // datetime-local like 2026-01-09T06:30
+                                    if (is_string($value) && preg_match($dtPattern, $value)) {
+                                        return \Carbon\Carbon::createFromFormat('Y-m-d\TH:i', $value)->format('d M Y g:i A');
+                                    }
+
+                                    // already a Carbon/date string
+                                    try {
+                                        return \Carbon\Carbon::parse($value)->format('d M Y g:i A');
+                                    } catch (\Throwable $e) {
+                                        return $value; // fallback
+                                    }
+                                };
+
+                                $statusMap = [
+                                    'Offloaded'        => ['row' => '#5cb85c', 'cell' => 'table-success', 'badge' => 'success'],
+                                    'Scheduled'        => ['row' => '#f0ad4e', 'cell' => 'table-warning', 'badge' => 'warning'],
+                                    'Loading Point'    => ['row' => '#adb5bd', 'cell' => 'table-secondary', 'badge' => 'secondary'],
+                                    'Loaded'           => ['row' => '#5bc0de', 'cell' => 'table-info', 'badge' => 'info'],
+                                    'Started'          => ['row' => '#1976D2', 'cell' => 'table-primary', 'badge' => 'primary'],
+                                    'InTransit'        => ['row' => '#1976D2', 'cell' => 'table-primary', 'badge' => 'primary'],
+                                    'Offloading Point' => ['row' => '#82B1FF', 'cell' => 'table-info', 'badge' => 'info'],
+                                    'OnHold'           => ['row' => '#d9534f', 'cell' => 'table-danger', 'badge' => 'danger'],
+                                    'Cancelled'        => ['row' => '#C4A484', 'cell' => 'table-light', 'badge' => 'light'],
+                                ];
+                            @endphp
                             @if (isset($trips))
-                            <br>
-                            <div class="row">
-                                <div class="col-md-4 col-md-offset-4">
+                                <div class="row mt-30">
+                                    <div class="col-md-4 col-md-offset-4">
+                                        <div class="alert-info" role="alert" style="border-radius: 5px;">
+                                            <center><strong>Total Trips: </strong> {{ $trips->total() }}</center>
+                                            @if ($showFreight)
+                                                    @foreach ($trips_currencies as $currency)
+                                                        @php
+                                                            $total_revenue = $totalsByCurrency[$currency->id] ?? 0;
+                                                        @endphp
 
-                                    <div class="alert-info" role="alert" style="border-radius: 5px;">
-                                   
-                                        <center><strong>Total Trips: </strong> {{ $trips->total() }}</center>
-                                        @if ($company->rates_managed_by_finance == 1)
-                                            @if (in_array('Finance', $department_names) ||  in_array('Super Admin', $role_names))
-                                                @foreach ($trips_currencies as $currency)
-                                                    @php
-                                                        $total_revenue = $totalsByCurrency[$currency->id] ?? 0;
-                                                    @endphp
-
-                                                    <center>
-                                                        <strong>Total Revenue {{ $currency->name }}: </strong>
-                                                        {{ $currency->symbol }}{{ number_format($total_revenue, 2) }}
-                                                    </center>
-                                                @endforeach
+                                                        <center>
+                                                            <strong>Total Revenue {{ $currency->name }}: </strong>
+                                                            {{ $currency->symbol }}{{ number_format($total_revenue, 2) }}
+                                                        </center>
+                                                    @endforeach
                                             @endif
-                                        @else
-                                           @foreach ($trips_currencies as $currency)
+                                            @foreach ($expense_currencies as $currency)
                                                 @php
-                                                    $total_revenue = $totalsByCurrency[$currency->id] ?? 0;
+                                                    $total_expenses = $expenseTotalsByCurrency[$currency->id] ?? 0;
                                                 @endphp
 
                                                 <center>
-                                                    <strong>Total Revenue {{ $currency->name }}: </strong>
-                                                    {{ $currency->symbol }}{{ number_format($total_revenue, 2) }}
+                                                    <strong>Total Expenses {{ $currency->name }}: </strong>
+                                                    {{ $currency->symbol }}{{ number_format($total_expenses, 2) }}
                                                 </center>
-                                            @endforeach
-                                        @endif
-                                        @foreach ($expense_currencies as $currency)
-                                            @php
-                                                $total_expenses = $expenseTotalsByCurrency[$currency->id] ?? 0;
-                                            @endphp
-
-                                            <center>
-                                                <strong>Total Expenses {{ $currency->name }}: </strong>
-                                                {{ $currency->symbol }}{{ number_format($total_expenses, 2) }}
-                                            </center>
-                                        @endforeach
-                                        
+                                            @endforeach 
+                                        </div>
+                                        <!-- /.alert alert-info -->
                                     </div>
-                                    <!-- /.alert alert-info -->
-                                </div>
                                 <!-- /.col-md-12 -->
-                            </div>
+                                </div>
                             @endif
-                           
-
                             <div class="panel-heading">
                                 <div>
                                     @include('includes.messages')
@@ -69,7 +86,6 @@
                             </div>
                             <div class="panel-body p-20"style="overflow-x:auto; width:100%; height:100%;">
                                 <div class="panel-title">
-                                    
                                     <div class="row">
                                         <div class="col-lg-3">
                                             <div class="input-group">
@@ -110,226 +126,227 @@
                                         </div>
                                         <!-- /input-group -->
                                     </div>
-                                    <div class="mb-15 mt-15">
-                                        <input type="checkbox" wire:model.debounce.300ms="use_filters"   class="line-style" />
-                                        <label for="one" class="radio-label">Use Additional Filters</label>
-                                        @error('use_filters') <span class="text-danger error">{{ $message }}</span>@enderror
-                                    </div>
-                                    @if ($use_filters == True)
-                                    <h5>Filter reports by</h5>
-                                    <div class="row">
-                                        <div class="col-md-3">
-                                            <div class="input-group">
-                                                <span class="input-group-addon">
-                                                    Transporters
-                                                </span>
-                                                <select wire:model.debounce.300ms="filter_transporter_id" class="form-control" aria-label="..." >
-                                                        <option value="">Select Transporter</option>
-                                                        @foreach ($transporters as $transporter)
-                                                            <option value="{{ $transporter->id }}"  >{{ ucfirst($transporter->name) }}</option>
-                                                        @endforeach
-                                                </select>
-                                            </div>
-                                            <!-- /input-group -->
+                                    @if ($notDriver)
+                                        <div class="mb-15 mt-15">
+                                            <input type="checkbox" wire:model.debounce.300ms="use_filters"   class="line-style" />
+                                            <label for="one" class="radio-label">Use Additional Filters</label>
+                                            @error('use_filters') <span class="text-danger error">{{ $message }}</span>@enderror
                                         </div>
-                                        <div class="col-md-3">
-                                            <div class="input-group">
-                                                <span class="input-group-addon">
-                                                    Horses
-                                                </span>
-                                                <select wire:model.debounce.300ms="filter_horse_id" class="form-control" aria-label="..." >
-                                                        <option value="">Select Horse</option>
-                                                        @foreach ($horses as $horse)
-                                                            <option value="{{ $horse->id }}"  > {{ $horse->registration_number }} {{ $horse->fleet_number ? "(".$horse->fleet_number.")" : "" }} </option>
-                                                        @endforeach
-                                                </select>
+                                        @if ($use_filters == True)
+                                            <h5>Filter reports by</h5>
+                                            <div class="row">
+                                                <div class="col-md-3">
+                                                    <div class="input-group">
+                                                        <span class="input-group-addon">
+                                                            Transporters
+                                                        </span>
+                                                        <select wire:model.debounce.300ms="filter_transporter_id" class="form-control" aria-label="..." >
+                                                                <option value="">Select Transporter</option>
+                                                                @foreach ($transporters as $transporter)
+                                                                    <option value="{{ $transporter->id }}"  >{{ ucfirst($transporter->name) }}</option>
+                                                                @endforeach
+                                                        </select>
+                                                    </div>
+                                                    <!-- /input-group -->
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="input-group">
+                                                        <span class="input-group-addon">
+                                                            Horses
+                                                        </span>
+                                                        <select wire:model.debounce.300ms="filter_horse_id" class="form-control" aria-label="..." >
+                                                                <option value="">Select Horse</option>
+                                                                @foreach ($horses as $horse)
+                                                                    <option value="{{ $horse->id }}"  > {{ $horse->registration_number }} {{ $horse->fleet_number ? "(".$horse->fleet_number.")" : "" }} </option>
+                                                                @endforeach
+                                                        </select>
+                                                    </div>
+                                                    <!-- /input-group -->
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="input-group">
+                                                        <span class="input-group-addon">
+                                                            Drivers
+                                                        </span>
+                                                        <select wire:model.debounce.300ms="filter_driver_id" class="form-control" aria-label="..." >
+                                                                <option value="">Select Driver</option>
+                                                                @foreach ($drivers as $driver)
+                                                                    <option value="{{ $driver->id }}"  >{{ ucfirst($driver->employee ? $driver->employee->name : " employee") }} {{ ucfirst($driver->employee ? $driver->employee->surname : "") }}</option>
+                                                                @endforeach
+                                                        </select>
+                                                    </div>
+                                                    <!-- /input-group -->
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="input-group ">
+                                                        <span class="input-group-addon">
+                                                            Currency
+                                                        </span>
+                                                        <select wire:model.debounce.300ms="filter_currency_id" class="form-control  " aria-label="..." >
+                                                                <option value="">Select Currency</option>
+                                                                @foreach ($currencies as $currency)
+                                                                    <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
+                                                                @endforeach
+                                                        </select>
+                                                    </div>
+                                                    <!-- /input-group -->
+                                                </div>
+                                                
                                             </div>
-                                            <!-- /input-group -->
-                                        </div>
-                                        <div class="col-md-3">
-                                            <div class="input-group">
-                                                <span class="input-group-addon">
-                                                    Drivers
-                                                </span>
-                                                <select wire:model.debounce.300ms="filter_driver_id" class="form-control" aria-label="..." >
-                                                        <option value="">Select Driver</option>
-                                                        @foreach ($drivers as $driver)
-                                                            <option value="{{ $driver->id }}"  >{{ ucfirst($driver->employee ? $driver->employee->name : " employee") }} {{ ucfirst($driver->employee ? $driver->employee->surname : "") }}</option>
-                                                        @endforeach
-                                                </select>
+                                            <div class="row">
+                                                <div class="col-md-3">
+                                                    <div class="input-group ">
+                                                        <span class="input-group-addon">
+                                                            Cargos
+                                                        </span>
+                                                        <select wire:model.debounce.300ms="filter_cargo_id" class="form-control  " aria-label="..." >
+                                                                <option value="">Select Cargo</option>
+                                                                @foreach ($cargos as $cargo)
+                                                                <option value="{{ $cargo->id }}"  >{{ ucfirst($cargo->name) }}</option>
+                                                                @endforeach
+                                                        </select>	
+                                                    </div>
+                                                    <!-- /input-group -->
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="input-group ">
+                                                        <span class="input-group-addon">
+                                                            Origins
+                                                        </span>
+                                                        <select wire:model.debounce.300ms="filter_from" class="form-control  " aria-label="..." >
+                                                                <option value="">Select Origin</option>
+                                                                @foreach ($destinations as $destination)
+                                                                    <option value="{{ $destination->id }}"  >{{ ucfirst($destination->country ? $destination->country->name : "") }} {{ ucfirst($destination->city) }}</option>
+                                                                @endforeach
+                                                        </select>
+                                                    </div>
+                                                    <!-- /input-group -->
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="input-group ">
+                                                        <span class="input-group-addon">
+                                                            Destinations
+                                                        </span>
+                                                        <select wire:model.debounce.300ms="filter_to" class="form-control  " aria-label="..." >
+                                                                <option value="">Select Destination</option>
+                                                                @foreach ($destinations as $destination)
+                                                                    <option value="{{ $destination->id }}"  >{{ ucfirst($destination->country ? $destination->country->name : "") }} {{ ucfirst($destination->city) }}</option>
+                                                                @endforeach
+                                                        </select>
+                                                    </div>
+                                                    <!-- /input-group -->
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="input-group ">
+                                                        <span class="input-group-addon">
+                                                            Routes
+                                                        </span>
+                                                        <select wire:model.debounce.300ms="filter_route_id" class="form-control  " aria-label="..." >
+                                                            <option value="">Select Route</option>
+                                                            @foreach ($customers as $customer)
+                                                                <option value="{{ $customer->id }}" >{{ ucfirst($customer->name) }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                    <!-- /input-group -->
+                                                </div>
                                             </div>
-                                            <!-- /input-group -->
-                                        </div>
-                                         <div class="col-md-3">
-                                            <div class="input-group ">
-                                                <span class="input-group-addon">
-                                                    Currency
-                                                </span>
-                                                <select wire:model.debounce.300ms="filter_currency_id" class="form-control  " aria-label="..." >
-                                                        <option value="">Select Currency</option>
-                                                        @foreach ($currencies as $currency)
-                                                            <option value="{{ $currency->id }}">{{ $currency->name }} ({{ $currency->symbol }}) {{ $currency->fullname }}</option>
-                                                        @endforeach
-                                                </select>
+                                            <div class="row">
+                                                <div class="col-md-3">
+                                                    <div class="input-group ">
+                                                        <span class="input-group-addon">
+                                                            Trip Statuses
+                                                        </span>
+                                                        <select wire:model.debounce.300ms="filter_trip_status" class="form-control  " aria-label="..." >
+                                                                <option value="">Select Status</option>
+                                                                <option value="Scheduled">Scheduled</option>
+                                                                <option value="Loading Point">Loading Point</option>
+                                                                <option value="Loaded">Loaded</option>
+                                                                <option value="Instransit">Instransit</option>
+                                                                <option value="Offloading Point">Offloading Point</option>
+                                                                <option value="Offloaded">Offloaded</option>
+                                                                <option value="Onhold">Onhold</option>
+                                                        </select>	
+                                                    </div>
+                                                    <!-- /input-group -->
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="input-group ">
+                                                        <span class="input-group-addon">
+                                                            Trip Type
+                                                        </span>
+                                                        <select wire:model.debounce.300ms="filter_trip_type_id" class="form-control  " aria-label="..." >
+                                                                <option value="">Select Trip Type</option>
+                                                                @foreach ($trip_types as $trip_type)
+                                                                    <option value="{{ $trip_type->id }}">{{ $trip_type->name }}</option> 
+                                                                @endforeach
+                                                        </select>
+                                                    </div>
+                                                    <!-- /input-group -->
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="input-group">
+                                                        <span class="input-group-addon">
+                                                            Customers
+                                                        </span>
+                                                        <select wire:model.debounce.300ms="filter_customer_id" class="form-control" aria-label="..." >
+                                                                <option value="">Select Customer</option>
+                                                                @foreach ($customers as $customer)
+                                                                    <option value="{{ $customer->id }}" >{{ ucfirst($customer->name) }}</option>
+                                                                @endforeach
+                                                        </select>	
+                                                    </div>
+                                                    <!-- /input-group -->
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="input-group ">
+                                                        <span class="input-group-addon">
+                                                            Consignees
+                                                        </span>
+                                                        <select wire:model.debounce.300ms="filter_consignee_id" class="form-control  " aria-label="..." >
+                                                                <option value="">Select Consignee</option>
+                                                                @foreach ($consignees as $consignee)
+                                                                    <option value="{{ $consignee->id }}"  >{{ $consignee->name }} </option>
+                                                                @endforeach
+                                                        </select>
+                                                    </div>
+                                                    <!-- /input-group -->
+                                                </div>
                                             </div>
-                                            <!-- /input-group -->
-                                        </div>
-                                        
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-3">
-                                            <div class="input-group ">
-                                                <span class="input-group-addon">
-                                                    Cargos
-                                                </span>
-                                                <select wire:model.debounce.300ms="filter_cargo_id" class="form-control  " aria-label="..." >
-                                                        <option value="">Select Cargo</option>
-                                                        @foreach ($cargos as $cargo)
-                                                        <option value="{{ $cargo->id }}"  >{{ ucfirst($cargo->name) }}</option>
-                                                        @endforeach
-                                                </select>	
+                                        @endif
+                                        <div class="row mt-15">
+                                            <div class="col-md-5">
+                                                <a href="{{ route('trips.create') }}"  class="btn btn-default btn-wide" aria-haspopup="true" aria-expanded="true"><i class="fa fa-plus-square-o"></i>Trip</a>
+                                                <a href="" data-toggle="modal" data-target="#tripsImportModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import</a>
+                                                <a href="#" wire:click.prevent="exportTripsExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
+                                                <a href="#" wire:click.prevent="exportTripsCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
+                                                <a href="#" wire:click.prevent="exportTripsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
                                             </div>
-                                            <!-- /input-group -->
-                                        </div>
-                                        <div class="col-md-3">
-                                            <div class="input-group ">
-                                                <span class="input-group-addon">
-                                                    Origins
-                                                </span>
-                                                <select wire:model.debounce.300ms="filter_from" class="form-control  " aria-label="..." >
-                                                        <option value="">Select Origin</option>
-                                                        @foreach ($destinations as $destination)
-                                                            <option value="{{ $destination->id }}"  >{{ ucfirst($destination->country ? $destination->country->name : "") }} {{ ucfirst($destination->city) }}</option>
-                                                        @endforeach
-                                                </select>
+                                            <div class="col-md-6">
+                                            <div class="dropdown">
+                                                    <button class="btn btn-default border-primary btn-rounded btn-wide dropdown-toggle" type="button" id="menu12" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                                                        <i class="fa fa-bars"></i> More Actions
+                                                        <span class="caret"></span>
+                                                    </button>
+                                                    <ul class="dropdown-menu bg-gray" aria-labelledby="menu12" style="float: right;" >
+                                                        <li><a href="#"  wire:click="editLocations()"><i class="fa fa-refresh"></i>Bulk Status Update</a></li>
+                                                        <li><a href="{{ route('trip_groups.index') }}"><i class="fa fa-map-marker"></i>Trip Tracking</a></li>
+                                                        @if (isset($from) && isset($to))
+                                                            <li><a href="{{ route('trips.summary.range',['from' => $from, 'to' => $to,'trip_filter'=>$trip_filter]) }}" ><i class="fa fa-download"></i>Trips Summary</a></li>
+                                                        @elseif (isset($from) && isset($to) && isset($search))
+                                                            <li><a href="{{ route('trips.summary.all',['from' => $from, 'to' => $to, 'search' => $search,'trip_filter'=> $trip_filter]) }}" ><i class="fa fa-download"></i>Trips Summary</a></li>
+                                                        @elseif (isset($search))
+                                                        <li><a href="{{ route('trips.summary.search',['search' => $search,'trip_filter'=>$trip_filter]) }}" ><i class="fa fa-download"></i>Trips Summary</a></li>
+                                                        @else
+                                                        <li><a href="{{ route('trips.summary',['trip_filter'=>$trip_filter]) }}" ><i class="fa fa-download"></i>Trips Summary</a></li>
+                                                        @endif
+                                                        <li><a href="#" wire:click="exportPodTrackerExcel()"><i class="fa fa-download"></i>POD Tracker</a></li>
+                                                    </ul>
+                                                </div>
                                             </div>
-                                            <!-- /input-group -->
                                         </div>
-                                        <div class="col-md-3">
-                                            <div class="input-group ">
-                                                <span class="input-group-addon">
-                                                    Destinations
-                                                </span>
-                                                <select wire:model.debounce.300ms="filter_to" class="form-control  " aria-label="..." >
-                                                        <option value="">Select Destination</option>
-                                                        @foreach ($destinations as $destination)
-                                                            <option value="{{ $destination->id }}"  >{{ ucfirst($destination->country ? $destination->country->name : "") }} {{ ucfirst($destination->city) }}</option>
-                                                        @endforeach
-                                                </select>
-                                            </div>
-                                            <!-- /input-group -->
-                                        </div>
-                                        <div class="col-md-3">
-                                            <div class="input-group ">
-                                                <span class="input-group-addon">
-                                                    Routes
-                                                </span>
-                                                <select wire:model.debounce.300ms="filter_route_id" class="form-control  " aria-label="..." >
-                                                    <option value="">Select Route</option>
-                                                    @foreach ($customers as $customer)
-                                                        <option value="{{ $customer->id }}" >{{ ucfirst($customer->name) }}</option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
-                                            <!-- /input-group -->
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-3">
-                                            <div class="input-group ">
-                                                <span class="input-group-addon">
-                                                    Trip Statuses
-                                                </span>
-                                                <select wire:model.debounce.300ms="filter_trip_status" class="form-control  " aria-label="..." >
-                                                        <option value="">Select Status</option>
-                                                        <option value="Scheduled">Scheduled</option>
-                                                        <option value="Loading Point">Loading Point</option>
-                                                        <option value="Loaded">Loaded</option>
-                                                        <option value="Instransit">Instransit</option>
-                                                        <option value="Offloading Point">Offloading Point</option>
-                                                        <option value="Offloaded">Offloaded</option>
-                                                        <option value="Onhold">Onhold</option>
-                                                </select>	
-                                            </div>
-                                            <!-- /input-group -->
-                                        </div>
-                                        <div class="col-md-3">
-                                            <div class="input-group ">
-                                                <span class="input-group-addon">
-                                                    Trip Type
-                                                </span>
-                                                <select wire:model.debounce.300ms="filter_trip_type_id" class="form-control  " aria-label="..." >
-                                                        <option value="">Select Trip Type</option>
-                                                        @foreach ($trip_types as $trip_type)
-                                                            <option value="{{ $trip_type->id }}">{{ $trip_type->name }}</option> 
-                                                        @endforeach
-                                                </select>
-                                            </div>
-                                            <!-- /input-group -->
-                                        </div>
-                                        <div class="col-md-3">
-                                            <div class="input-group">
-                                                <span class="input-group-addon">
-                                                    Customers
-                                                </span>
-                                                <select wire:model.debounce.300ms="filter_customer_id" class="form-control" aria-label="..." >
-                                                        <option value="">Select Customer</option>
-                                                        @foreach ($customers as $customer)
-                                                            <option value="{{ $customer->id }}" >{{ ucfirst($customer->name) }}</option>
-                                                        @endforeach
-                                                </select>	
-                                            </div>
-                                            <!-- /input-group -->
-                                        </div>
-                                       <div class="col-md-3">
-                                            <div class="input-group ">
-                                                <span class="input-group-addon">
-                                                    Consignees
-                                                </span>
-                                                <select wire:model.debounce.300ms="filter_consignee_id" class="form-control  " aria-label="..." >
-                                                        <option value="">Select Consignee</option>
-                                                        @foreach ($consignees as $consignee)
-                                                            <option value="{{ $consignee->id }}"  >{{ $consignee->name }} </option>
-                                                        @endforeach
-                                                </select>
-                                            </div>
-                                            <!-- /input-group -->
-                                        </div>
-                                       
-                                    </div>
                                     @endif
-                                    <div class="row mt-15">
-                                        <div class="col-md-5">
-                                            <a href="{{ route('trips.create') }}"  class="btn btn-default btn-wide" aria-haspopup="true" aria-expanded="true"><i class="fa fa-plus-square-o"></i>Trip</a>
-                                            <a href="" data-toggle="modal" data-target="#tripsImportModal" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-upload"></i>Import</a>
-                                            <a href="#" wire:click.prevent="exportTripsExcel()"  class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>Excel</a>
-                                            <a href="#" wire:click.prevent="exportTripsCSV()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>CSV</a>
-                                            <a href="#" wire:click.prevent="exportTripsPDF()" class="btn btn-default border-primary btn-rounded btn-wide"><i class="fa fa-download"></i>PDF</a>
-                                        </div>
-                                         <div class="col-md-6">
-                                           <div class="dropdown">
-                                                <button class="btn btn-default border-primary btn-rounded btn-wide dropdown-toggle" type="button" id="menu12" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-                                                    <i class="fa fa-bars"></i> More Actions
-                                                    <span class="caret"></span>
-                                                </button>
-                                                <ul class="dropdown-menu bg-gray" aria-labelledby="menu12" style="float: right;" >
-                                                    <li><a href="#"  wire:click="editLocations()"><i class="fa fa-refresh"></i>Bulk Status Update</a></li>
-                                                    <li><a href="{{ route('trip_groups.index') }}"><i class="fa fa-map-marker"></i>Trip Tracking</a></li>
-                                                    @if (isset($from) && isset($to))
-                                                        <li><a href="{{ route('trips.summary.range',['from' => $from, 'to' => $to,'trip_filter'=>$trip_filter]) }}" ><i class="fa fa-download"></i>Trips Summary</a></li>
-                                                    @elseif (isset($from) && isset($to) && isset($search))
-                                                        <li><a href="{{ route('trips.summary.all',['from' => $from, 'to' => $to, 'search' => $search,'trip_filter'=> $trip_filter]) }}" ><i class="fa fa-download"></i>Trips Summary</a></li>
-                                                    @elseif (isset($search))
-                                                    <li><a href="{{ route('trips.summary.search',['search' => $search,'trip_filter'=>$trip_filter]) }}" ><i class="fa fa-download"></i>Trips Summary</a></li>
-                                                    @else
-                                                    <li><a href="{{ route('trips.summary',['trip_filter'=>$trip_filter]) }}" ><i class="fa fa-download"></i>Trips Summary</a></li>
-                                                    @endif
-                                                    <li><a href="#" wire:click="exportPodTrackerExcel()"><i class="fa fa-download"></i>POD Tracker</a></li>
-                                                </ul>
-                                            </div>
-                                        </div>
                                     </div>
-                                </div>
                                 <br>
                                 <div class="col-md-5" style="float: right; padding-right:0px">
                                     <div class="form-group">
@@ -337,43 +354,7 @@
                                     </div>
                                 </div>
 
-                                @php
-
-                                    $showFreight = !$driver && (
-                                        !$company->rates_managed_by_finance
-                                        || in_array('Finance', $department_names)
-                                        || in_array('Super Admin', $role_names)
-                                    );
-
-                                    $dtPattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/';
-                                    $formatDate = function ($value) use ($dtPattern) {
-                                        if (!$value) return null;
-
-                                        // datetime-local like 2026-01-09T06:30
-                                        if (is_string($value) && preg_match($dtPattern, $value)) {
-                                            return \Carbon\Carbon::createFromFormat('Y-m-d\TH:i', $value)->format('d M Y g:i A');
-                                        }
-
-                                        // already a Carbon/date string
-                                        try {
-                                            return \Carbon\Carbon::parse($value)->format('d M Y g:i A');
-                                        } catch (\Throwable $e) {
-                                            return $value; // fallback
-                                        }
-                                    };
-
-                                    $statusMap = [
-                                        'Offloaded'        => ['row' => '#5cb85c', 'cell' => 'table-success', 'badge' => 'success'],
-                                        'Scheduled'        => ['row' => '#f0ad4e', 'cell' => 'table-warning', 'badge' => 'warning'],
-                                        'Loading Point'    => ['row' => '#adb5bd', 'cell' => 'table-secondary', 'badge' => 'secondary'],
-                                        'Loaded'           => ['row' => '#5bc0de', 'cell' => 'table-info', 'badge' => 'info'],
-                                        'Started'          => ['row' => '#1976D2', 'cell' => 'table-primary', 'badge' => 'primary'],
-                                        'InTransit'        => ['row' => '#1976D2', 'cell' => 'table-primary', 'badge' => 'primary'],
-                                        'Offloading Point' => ['row' => '#82B1FF', 'cell' => 'table-info', 'badge' => 'info'],
-                                        'OnHold'           => ['row' => '#d9534f', 'cell' => 'table-danger', 'badge' => 'danger'],
-                                        'Cancelled'        => ['row' => '#C4A484', 'cell' => 'table-light', 'badge' => 'light'],
-                                    ];
-                                @endphp
+                               
                               
                                 {{-- <div class="table-responsive"> --}}
                                     <table class="table  table-striped table-bordered table-sm table-responsive sortable" cellspacing="0" width="100%" style=" width:100%; height:100%;  font-size: 13px;">
@@ -391,7 +372,7 @@
                                                     <th>Freight</th>
                                                 @endif
                                                 <th>
-                                                    @if ($showFreight)
+                                                    @if ($notDriver)
                                                          Invoice<hr style="margin-top:2px; margin-bottom:2px">
                                                     @endif
                                                     POD
@@ -642,7 +623,7 @@
                                                 @endif
 
                                                 <td>
-                                                     @if ($showFreight)
+                                                     @if ($notDriver)
                                                         @if($trip->invoices?->count())
                                                             <span class="label label-success">issued</span>
                                                             <small>
