@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class AddTypeToRequisitionsTable extends Migration
+class AddRequisitionTypeToRequisitionsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -14,7 +14,7 @@ class AddTypeToRequisitionsTable extends Migration
     public function up()
     {
         Schema::table('requisitions', function (Blueprint $table) {
-              $table->string('type')->nullable();
+            $table->string('type')->nullable();
         });
     }
 
@@ -26,7 +26,7 @@ class AddTypeToRequisitionsTable extends Migration
     public function down()
     {
         Schema::table('requisitions', function (Blueprint $table) {
-             $table->dropColumn('type');
+            $table->dropColumn('type');
         });
     }
 }
