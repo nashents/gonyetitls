@@ -51,6 +51,7 @@ class Index extends Component
     public $account;
     public $selectedAccount;
     public $requisition_for;
+    public $requisition_type;
    
     
     public $trips;
@@ -159,6 +160,7 @@ class Index extends Component
     private function resetInputFields(){
 
         $this->requisition = Null;
+        $this->requisition_type = Null;
         $this->selectedTrip = '';
         $this->employee_id = '';
         $this->department_id = '';
@@ -594,6 +596,7 @@ class Index extends Component
         $requisition->requisition_number = $this->requisitionNumber();
         $requisition->user_id = Auth::user()->id;
         $requisition->department_id = $this->department_id;
+        $requisition->type = $this->requisition_type;
         $requisition->trip_id = $this->selectedTrip ? $this->selectedTrip : Null;
         $requisition->booking_id = $this->selectedBooking ? $this->selectedBooking : Null;
         $requisition->purchase_id = $this->selectedPurchase ? $this->selectedPurchase : Null;
@@ -609,7 +612,7 @@ class Index extends Component
         $type = null;
         $requisition_total = 0;
        
-        if (isset($this->requisition_for)) {
+        if (in_array($this->requisition_for,['Trip','Purchase','Booking'])) {
         
            foreach ($this->activeRowKeys() as $value) {
               
@@ -660,56 +663,57 @@ class Index extends Component
             }
       
         }else{
+
             if ($this->qty) {
 
-            foreach ($this->qty as $key => $value) {
-              
-               
-                $requisition_item = new RequisitionItem;
-                $requisition_item->requisition_id = $requisition->id;
-
-                // Assign either expense_id or product_id
-    
-                // Handle quantity and amount
-             
-               
-                $product_id = $this->selectedProduct[$key] ?? Null;
-                $expense_id = $this->expense_id[$key] ?? Null;
-                $allowance_id = $this->allowance_id[$key] ?? Null;
-                $payment_method_id = $this->payment_method_id[$key] ?? Null;
-                $qty = $value ?? 0;
-                $amount = $this->amount[$key] ?? 0;
-                $currency_id = $this->selectedCurrency[$key] ?? 0;
-                $exchange_rate = $this->exchange_rate[$key] ?? 0;
-                $exchange_amount = $this->exchange_amount[$key] ?? 0;
-
-                $requisition_item->allowance_id = $allowance_id;
-                $requisition_item->product_id = $product_id;
-                $requisition_item->expense_id = $expense_id;
-                $requisition_item->payment_method_id = $payment_method_id;
-                $requisition_item->qty = $qty;
-                $requisition_item->amount = $amount;
-                $requisition_item->currency_id = $currency_id;
-                $requisition_item->exchange_rate = $exchange_rate;
-                $requisition_item->exchange_amount = $exchange_amount;
-
-                // Calculate subtotal based on currency
-                if (is_numeric($amount) && is_numeric($qty)) {
-                    $subtotal = ($currency_id != $this->company->currency_id) 
-                    ? $exchange_amount * $qty 
-                    : $amount * $qty;
-                }
+                foreach ($this->qty as $key => $value) {
                 
+                
+                    $requisition_item = new RequisitionItem;
+                    $requisition_item->requisition_id = $requisition->id;
 
-                // Assign and save the subtotal
-                $requisition_item->subtotal = $subtotal;
-                $requisition_item->save();
+                    // Assign either expense_id or product_id
+        
+                    // Handle quantity and amount
+                
+                
+                    $product_id = $this->selectedProduct[$key] ?? Null;
+                    $expense_id = $this->expense_id[$key] ?? Null;
+                    $allowance_id = $this->allowance_id[$key] ?? Null;
+                    $payment_method_id = $this->payment_method_id[$key] ?? Null;
+                    $qty = $value ?? 0;
+                    $amount = $this->amount[$key] ?? 0;
+                    $currency_id = $this->selectedCurrency[$key] ?? 0;
+                    $exchange_rate = $this->exchange_rate[$key] ?? 0;
+                    $exchange_amount = $this->exchange_amount[$key] ?? 0;
 
-                // Add to the cumulative total
-                $requisition_total += $subtotal;
+                    $requisition_item->allowance_id = $allowance_id;
+                    $requisition_item->product_id = $product_id;
+                    $requisition_item->expense_id = $expense_id;
+                    $requisition_item->payment_method_id = $payment_method_id;
+                    $requisition_item->qty = $qty;
+                    $requisition_item->amount = $amount;
+                    $requisition_item->currency_id = $currency_id;
+                    $requisition_item->exchange_rate = $exchange_rate;
+                    $requisition_item->exchange_amount = $exchange_amount;
 
+                    // Calculate subtotal based on currency
+                    if (is_numeric($amount) && is_numeric($qty)) {
+                        $subtotal = ($currency_id != $this->company->currency_id) 
+                        ? $exchange_amount * $qty 
+                        : $amount * $qty;
+                    }
+                    
+
+                    // Assign and save the subtotal
+                    $requisition_item->subtotal = $subtotal;
+                    $requisition_item->save();
+
+                    // Add to the cumulative total
+                    $requisition_total += $subtotal;
+
+                }
             }
-        }
         }
 
         
@@ -717,14 +721,6 @@ class Index extends Component
         $requisition = Requisition::find($requisition->id);
 
         $requisition->total = $requisition_total;
-
-        // if ($this->selectedPurchase && $purchase_order = Purchase::find($this->selectedPurchase)) {
-        //     $requisition->total = $purchase_order->total;
-        //     $requisition->exchange_rate = $purchase_order->exchange_rate;
-        //     $requisition->exchange_amount = $purchase_order->exchange_amount;
-        // } else {
-        //     $requisition->total = $requisition_total;
-        // }
 
         $requisition->save();
 
@@ -760,6 +756,12 @@ class Index extends Component
 
     });
 
+    }
+
+    public function updatedRequisitionType($value){
+        if ($value == "po_requisition") {
+           $this->requisition_for = "Other";
+        }
     }
     
     public function showPayment($id){
@@ -819,6 +821,7 @@ class Index extends Component
         }
         $this->employee_id = $requisition->employee_id;
         $this->department_id = $requisition->department_id;
+        $this->requisition_type = $requisition->type ?: "payment_requisition";
         $this->selectedAccount = $requisition->account_id;
         $this->date = $requisition->date;
         $this->description = $requisition->description;
@@ -847,6 +850,8 @@ class Index extends Component
     }
 
 
+
+
         public function update(){
         // try{
 
@@ -855,6 +860,7 @@ class Index extends Component
         $requisition =  Requisition::find($this->requisition_id);
         $requisition->user_id = Auth::user()->id;
         $requisition->department_id = $this->department_id;
+        $requisition->type = $this->requisition_type;
         $requisition->trip_id = $this->selectedTrip ? $this->selectedTrip : Null;
         $requisition->booking_id = $this->selectedBooking ? $this->selectedBooking : Null;
         $requisition->purchase_id = $this->selectedPurchase ? $this->selectedPurchase : Null;
@@ -998,9 +1004,9 @@ class Index extends Component
 
     }
 
-    public function updatedRequisitionFor(){
+    public function updatedRequisitionFor($value){
 
-          if($this->requisition_for == 'Trip'){
+          if($value == 'Trip'){
 
            $tripQuery = Trip::query()
                         ->select('id', 'trip_number', 'trip_ref', 'start_date', 'customer_id',
@@ -1043,7 +1049,7 @@ class Index extends Component
                         ->orderBy($this->filter, 'desc')
                         ->get();
 
-        }elseif($this->requisition_for == 'Booking'){
+        }elseif($value == 'Booking'){
            
             $bookingQuery = Booking::query()
             ->with([
@@ -1069,38 +1075,38 @@ class Index extends Component
                 $bookingQuery->whereYear($this->filter, date('Y'))->whereYear($this->filter, date('m'));
             }
 
-        if (filled($this->searchBooking)) {
+            if (filled($this->searchBooking)) {
 
-            $term = '%'.$this->searchBooking.'%';
+                $term = '%'.$this->searchBooking.'%';
 
-            $bookingQuery->where(function ($q) use ($term) {
-                $q->where('booking_number', 'like', $term)
-                ->orWhereHas('ticket', function ($qq) use ($term) {
-                    $qq->where('ticket_number', 'like', $term);
-                })
-                ->orWhereHas('service_type', function ($qq) use ($term) {
-                    $qq->where('name', 'like', $term);
-                })
-                ->orWhereHas('horse', function ($qq) use ($term) {
-                    $qq->where('registration_number', 'like', $term);
-                })
-                ->orWhereHas('trailer', function ($qq) use ($term) {
-                    $qq->where('registration_number', 'like', $term);
-                })
-                ->orWhereHas('vehicle', function ($qq) use ($term) {
-                    $qq->where('registration_number', 'like', $term);
-                })
-                ->orWhereHas('employee', function ($qq) use ($term) {
-                    $qq->where(DB::raw("concat(name, ' ', surname)"), 'like', $term);
+                $bookingQuery->where(function ($q) use ($term) {
+                    $q->where('booking_number', 'like', $term)
+                    ->orWhereHas('ticket', function ($qq) use ($term) {
+                        $qq->where('ticket_number', 'like', $term);
+                    })
+                    ->orWhereHas('service_type', function ($qq) use ($term) {
+                        $qq->where('name', 'like', $term);
+                    })
+                    ->orWhereHas('horse', function ($qq) use ($term) {
+                        $qq->where('registration_number', 'like', $term);
+                    })
+                    ->orWhereHas('trailer', function ($qq) use ($term) {
+                        $qq->where('registration_number', 'like', $term);
+                    })
+                    ->orWhereHas('vehicle', function ($qq) use ($term) {
+                        $qq->where('registration_number', 'like', $term);
+                    })
+                    ->orWhereHas('employee', function ($qq) use ($term) {
+                        $qq->where(DB::raw("concat(name, ' ', surname)"), 'like', $term);
+                    });
                 });
-            });
-        }
+            }
 
-        $this->bookings = $bookingQuery
-            ->orderBy($this->filter, 'desc')
-            ->get(); 
+            $this->bookings = $bookingQuery
+                ->orderBy($this->filter, 'desc')
+                ->get(); 
 
-        }elseif($this->requisition_for == 'Purchase'){
+        }elseif($value == 'Purchase'){
            
                $purchaseQuery = Purchase::query()
                     ->with(['vendor', 'currency'])

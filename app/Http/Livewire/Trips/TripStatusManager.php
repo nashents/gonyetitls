@@ -748,9 +748,9 @@ class TripStatusManager extends Component
             if (! $asset) continue;
             $asset->status = 1;
             if ($isOffloaded && $noBreakdown) {
-                if ($asset->mileage > 0 && $trip->distance > 0)
+                if ((is_numeric($asset->mileage) && $asset->mileage > 0) && (is_numeric($trip->distance) && $trip->distance > 0))
                     $asset->mileage += $trip->distance;
-                if ($asset->fuel_balance > 0 && $trip->trip_fuel > 0)
+                if ((is_numeric($asset->fuel_balance) && $asset->fuel_balance > 0) && (is_numeric($trip->trip_fuel) && $trip->trip_fuel > 0))
                     $asset->fuel_balance -= $trip->trip_fuel;
             }
             $asset->save();

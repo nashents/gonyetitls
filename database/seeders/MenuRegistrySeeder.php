@@ -477,7 +477,7 @@ $upsertSub = function (Module $module, array $s, ?int $indexSort = null) use (
         $upsertSub($m, ['name'=>'My Team','slug'=>'my-team','icon'=>'fas fa-users','route_name'=>'leaves.myteam','sort_order'=>20, 'visibility'=>[]]);
 
         $leaveManageVis = $any([
-            // $all(['isHOD']),
+            $all(['isHOD']),
             $all(['isAdmin','inHR']),
             $all(['isManagement','inHR']),
             $all(['isSuperAdmin']),

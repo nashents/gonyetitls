@@ -103,6 +103,7 @@
                                                     @endforeach
                                                 </select>
                                                 @error('selectedChecklistCategory') <span class="error" style="color:red">{{ $message }}</span> @enderror
+                                                <small><a href="{{ route('checklist_categories.show',$selectedChecklistCategory) }}" target="_blank"><i class="fa fa-plus-square-o"></i> Add items to checklist </a></small><a href="#" wire:click.prevent="refresh('checklist_categories')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> <br> 
                                             </div>
                                         </div>
                                         <div class="col-md-6">
@@ -118,7 +119,7 @@
                                 
                             
                                 @if (!is_null($selectedChecklistCategory))
-                                <small>  <a href="{{ route('checklist_categories.show',$selectedChecklistCategory) }}" target="_blank"><i class="fa fa-plus-square-o"></i> Add items to checklist </a></small><a href="#" wire:click.prevent="refresh('checklist_categories')" style="float: right"><i class="fa fa-refresh" aria-hidden="true"></i></a> <br> 
+                               
                                 <div  style="height: 500px; overflow: auto">
                                 @if ($checklist_category->name != "Tyre Inspection")
 

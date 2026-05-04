@@ -14,7 +14,7 @@ class AddTypeToRequisitionsTable extends Migration
     public function up()
     {
         Schema::table('requisitions', function (Blueprint $table) {
-            //
+              $table->string('type')->nullable();
         });
     }
 
@@ -26,7 +26,7 @@ class AddTypeToRequisitionsTable extends Migration
     public function down()
     {
         Schema::table('requisitions', function (Blueprint $table) {
-            //
+             $table->dropColumn('type');
         });
     }
 }

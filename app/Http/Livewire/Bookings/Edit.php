@@ -55,13 +55,14 @@ class Edit extends Component
     public $searchMechanic;
     public $searchVendor;
     public $searchAsset;
+    public $searchProblem;
 
     public $problem_categories;
     public $problem_category_id;
     public $breakdowns;
     public $breakdown_id;
     
-    protected $queryString = ['searchVendor','searchAsset','searchVehicle','searchHorse','searchTrailer','searchEmployee','searchMechanic'];
+    protected $queryString = ['searchProblem','searchVendor','searchAsset','searchVehicle','searchHorse','searchTrailer','searchEmployee','searchMechanic'];
 
     public $existing_bookings;
     public $company;

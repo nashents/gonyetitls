@@ -112,6 +112,19 @@ class Create extends Component
         $this->comments = '';
     }
 
+    public function refresh($category){
+
+        if($category == "checklist_categories"){
+            $this->checklists = Checklist::orderBy('name','asc')->get();
+            $this->dispatchBrowserEvent('alert',[
+                'type'=>'success',
+                'message'=>"Trip Tracking Groups Refreshed Successfully!!."
+            ]);
+        }
+       
+        
+    }
+
     
     public function checklistNumber(){
        
