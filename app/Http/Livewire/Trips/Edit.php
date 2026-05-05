@@ -1768,6 +1768,53 @@ class Edit extends Component
 
     }
 
+    
+    public function updatedSelectedStatus($status){
+        
+        $query = Horse::query()
+            ->with('horse_make:id,name', 'horse_model:id,name')
+            ->where('archive', 0);
+
+            // Optional transporter filter
+            if (!empty($this->selectedTransporter)) {
+                $query->where('transporter_id', $this->selectedTransporter);
+            }
+
+        // Only enforce active/service filters when not in the special statuses
+        $specialStatuses = ['Scheduled', 'Offloaded', 'Cancelled'];
+        if (!in_array($status, $specialStatuses, true)) {
+            $query->where('status', 1)
+                ->where('service', 0);
+        }
+
+        // Order by registration number
+        $this->horses = $query
+            ->orderBy('registration_number', 'asc')
+            ->get();
+        
+        $query = Vehicle::query()
+            ->with('vehicle_make:id,name', 'vehicle_model:id,name')
+            ->where('archive', 0);
+
+            // Optional transporter filter
+            if (!empty($this->selectedTransporter)) {
+                $query->where('transporter_id', $this->selectedTransporter);
+            }
+
+        // Only enforce active/service filters when not in the special statuses
+        $specialStatuses = ['Scheduled', 'Offloaded', 'Cancelled'];
+        if (!in_array($status, $specialStatuses, true)) {
+            $query->where('status', 1)
+                ->where('service', 0);
+        }
+
+        // Order by registration number
+        $this->vehicles = $query
+            ->orderBy('registration_number', 'asc')
+            ->get();
+
+    }
+
       public function updatedSearchFrom(){
             $this->from_destinations = Destination::query()->with('country')
             ->where('city', 'like', '%'.$this->searchFrom.'%')

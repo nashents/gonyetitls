@@ -29,6 +29,15 @@ WithCustomStartCell
     /**
     * @return \Illuminate\Support\Collection
     */
+
+    public $department;
+
+
+    public function __construct($department)
+    {
+       $this->department = $department;
+    }
+
     public function query()
     {
         return Product::query()->where('department',$this->department)->where('buy',true)->orderBy('name','asc');

@@ -1030,7 +1030,7 @@ class Index extends Component
                         $tripQuery->whereDate($this->filter, '<=', $this->search_to);
                     } else {
                         // Fallback: current year if both are cleared
-                        $tripQuery->whereYear($this->filter, date('Y'))->whereYear($this->filter, date('m'));
+                        $tripQuery->whereYear($this->filter, date('Y'))->whereMonth($this->filter, date('m'));
                     }
 
                     if (filled($this->searchTrip)) {
@@ -1072,7 +1072,7 @@ class Index extends Component
                 $bookingQuery->whereDate($this->filter, '<=', $this->search_to);
             } else {
                 // Fallback: current year if both are cleared
-                $bookingQuery->whereYear($this->filter, date('Y'))->whereYear($this->filter, date('m'));
+                $bookingQuery->whereYear($this->filter, date('Y'))->whereMonth($this->filter, date('m'));
             }
 
             if (filled($this->searchBooking)) {
@@ -1110,21 +1110,20 @@ class Index extends Component
            
                $purchaseQuery = Purchase::query()
                     ->with(['vendor', 'currency'])
-                   
                     ->where('authorization', 'approved')
                     ->where('status', true);
 
                      // Date range filter (replaces whereYear)
-                if (filled($this->search_from) && filled($this->search_to)) {
-                    $purchaseQuery->whereBetween($this->filter, [$this->search_from, $this->search_to]);
-                } elseif (filled($this->search_from)) {
-                    $purchaseQuery->whereDate($this->filter, '>=', $this->search_from);
-                } elseif (filled($this->search_to)) {
-                    $purchaseQuery->whereDate($this->filter, '<=', $this->search_to);
-                } else {
-                    // Fallback: current year if both are cleared
-                    $purchaseQuery->whereYear($this->filter, date('Y'))->whereYear($this->filter, date('m'));
-                }
+                    if (filled($this->search_from) && filled($this->search_to)) {
+                        $purchaseQuery->whereBetween($this->filter, [$this->search_from, $this->search_to]);
+                    } elseif (filled($this->search_from)) {
+                        $purchaseQuery->whereDate($this->filter, '>=', $this->search_from);
+                    } elseif (filled($this->search_to)) {
+                        $purchaseQuery->whereDate($this->filter, '<=', $this->search_to);
+                    } else {
+                        // Fallback: current year if both are cleared
+                        $purchaseQuery->whereYear($this->filter, date('Y'))->whereMonth($this->filter, date('m'));
+                    }
 
 
                 if (filled($this->searchPurchase)) {
@@ -1146,6 +1145,7 @@ class Index extends Component
                 $this->purchases = $purchaseQuery
                     ->orderBy($this->filter, 'desc')
                     ->get();
+                    
             
         }
     }

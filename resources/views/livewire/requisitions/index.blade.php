@@ -437,20 +437,21 @@
                                 <div class="form-group" >
                                     <label for="name">Select type of payment requisition to create.</label>
                                     <label class="radio-inline">
-                                        <input type="radio" wire:model.debounce.300ms="requisition_for" value="Booking" name="optradio1">Booking
+                                        <input type="radio" wire:model.debounce.300ms="requisition_for" value="Booking" name="optradio3">Booking
                                     </label>
                                     <label class="radio-inline">
-                                        <input type="radio" wire:model.debounce.300ms="requisition_for" value="Purchase" name="optradio2">Purchase Order
+                                        <input type="radio" wire:model.debounce.300ms="requisition_for" value="Purchase" name="optradio4">Purchase Order
                                     </label>
                                     <label class="radio-inline">
-                                        <input type="radio" wire:model.debounce.300ms="requisition_for" value="Trip" name="optradio3" >Trip
+                                        <input type="radio" wire:model.debounce.300ms="requisition_for" value="Trip" name="optradio5" >Trip
                                     </label>
                                     <label class="radio-inline">
-                                        <input type="radio" wire:model.debounce.300ms="requisition_for" value="Other" name="optradio4" >Other
+                                        <input type="radio" wire:model.debounce.300ms="requisition_for" value="Other" name="optradio6" >Other
                                     </label>
                                 </div>
 
                                 @if (isset($requisition_for))
+
                                 @if (in_array($requisition_for,['Trip','Booking','Purchase']))
                                     <div class="row">
                                         <div class="col-lg-3">
@@ -494,6 +495,7 @@
                                     </div>
                                     @endif
                                     @if ($requisition_for == "Trip")
+
                                         <div class="form-group">
                                             <label for="country">Trips</label>
                                             <input type="text" wire:model.debounce.300ms="searchTrip" placeholder="Search with trip#, trip ref, horse reg#..." class="form-control">
@@ -516,9 +518,10 @@
                                             </select>
                                             @error('selectedTrip') <span class="error" style="color:red">{{ $message }}</span> @enderror
                                         </div>
+
                                     @elseif($requisition_for == "Booking")
                                         <div class="form-group">
-                                            <label for="country">Garage Bookings</label>
+                                            <label for="country">Bookings</label>
                                             <input type="text" wire:model.debounce.300ms="searchBooking" placeholder="Search with booking#, service tye, horse, vehicle, trailer reg#..." class="form-control">
                                             <select wire:model.debounce.300ms="selectedBooking" class="form-control" size="8">
                                                 <option value="">Select Booking</option>
@@ -1008,16 +1011,16 @@
                             <div class="form-group" >
                                 <label for="name">Select type of payment requisition to create.</label>
                                 <label class="radio-inline">
-                                    <input type="radio" wire:model.debounce.300ms="requisition_for" value="Booking" name="optradio1">Booking
+                                    <input type="radio" wire:model.debounce.300ms="requisition_for" value="Booking" name="optradio3">Booking
                                 </label>
                                 <label class="radio-inline">
-                                    <input type="radio" wire:model.debounce.300ms="requisition_for" value="Purchase" name="optradio2">Purchase Order
+                                    <input type="radio" wire:model.debounce.300ms="requisition_for" value="Purchase" name="optradio4">Purchase Order
                                 </label>
                                 <label class="radio-inline">
-                                    <input type="radio" wire:model.debounce.300ms="requisition_for" value="Trip" name="optradio3" >Trip
+                                    <input type="radio" wire:model.debounce.300ms="requisition_for" value="Trip" name="optradio5" >Trip
                                 </label>
                                 <label class="radio-inline">
-                                    <input type="radio" wire:model.debounce.300ms="requisition_for" value="Other" name="optradio4" >Other
+                                    <input type="radio" wire:model.debounce.300ms="requisition_for" value="Other" name="optradio6" >Other
                                 </label>
                             </div>
                             

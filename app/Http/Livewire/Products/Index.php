@@ -63,13 +63,13 @@ class Index extends Component
 
     
     public function exportProductsCSV(Excel $excel){
-        return $excel->download(new ProductsExport, 'products_' .time().'.csv', Excel::CSV);
+        return $excel->download(new ProductsExport($this->department), 'products_' .time().'.csv', Excel::CSV);
     }
     public function exportProductsPDF(Excel $excel){
-        return $excel->download(new ProductsExport, 'products_' .time().'.pdf', Excel::DOMPDF);
+        return $excel->download(new ProductsExport($this->department), 'products_' .time().'.pdf', Excel::DOMPDF);
     }
     public function exportProductsExcel(Excel $excel){
-        return $excel->download(new ProductsExport, 'products_' .time().'.xlsx');
+        return $excel->download(new ProductsExport($this->department), 'products_' .time().'.xlsx');
     }
     public function exportStockValuationExcel(Excel $excel){
         return $excel->download(new StockValuationExport($this->department), 'stock_valuation_' .time().'.xlsx');

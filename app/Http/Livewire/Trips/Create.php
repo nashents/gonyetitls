@@ -1766,17 +1766,17 @@ class Create extends Component
                                 $exchange_amount = $exchange_amount *   $weight / $transport_order->weight;
                             } 
                             
-                            $trip_transport_order->tto_number  = $this->ttoNumber();
-                            $trip_transport_order->allocated_quantity  = $quantity;
-                            $trip_transport_order->allocated_weight    = $weight;
-                            $trip_transport_order->allocated_litreage  = $litreage;
-                            $trip_transport_order->allocated_freight  = $freight;
-                            $trip_transport_order->allocated_rate  = $rate;
-                            $trip_transport_order->units_of_measure_id = $units_of_measure_id;
-                            $trip_transport_order->exchange_rate = $exchange_rate;
-                            $trip_transport_order->exchange_amount = $exchange_amount;
-                            $trip_transport_order->bill_of_entry = $boe;
-                            $trip_transport_order->currency_id = $currency_id;
+                                $trip_transport_order->tto_number  = $this->ttoNumber();
+                                $trip_transport_order->allocated_quantity  = $quantity;
+                                $trip_transport_order->allocated_weight    = $weight;
+                                $trip_transport_order->allocated_litreage  = $litreage;
+                                $trip_transport_order->allocated_freight  = $freight;
+                                $trip_transport_order->allocated_rate  = $rate;
+                                $trip_transport_order->units_of_measure_id = $units_of_measure_id;
+                                $trip_transport_order->exchange_rate = $exchange_rate;
+                                $trip_transport_order->exchange_amount = $exchange_amount;
+                                $trip_transport_order->bill_of_entry = $boe;
+                                $trip_transport_order->currency_id = $currency_id;
 
                         }else{
                         
@@ -2427,7 +2427,51 @@ class Create extends Component
     }
     
    
-    
+    public function updatedSelectedStatus($status){
+        
+        $query = Horse::query()
+            ->with('horse_make:id,name', 'horse_model:id,name')
+            ->where('archive', 0);
+
+            // Optional transporter filter
+            if (!empty($this->selectedTransporter)) {
+                $query->where('transporter_id', $this->selectedTransporter);
+            }
+
+        // Only enforce active/service filters when not in the special statuses
+        $specialStatuses = ['Scheduled', 'Offloaded', 'Cancelled'];
+        if (!in_array($status, $specialStatuses, true)) {
+            $query->where('status', 1)
+                ->where('service', 0);
+        }
+
+        // Order by registration number
+        $this->horses = $query
+            ->orderBy('registration_number', 'asc')
+            ->get();
+        
+        $query = Vehicle::query()
+            ->with('vehicle_make:id,name', 'vehicle_model:id,name')
+            ->where('archive', 0);
+
+            // Optional transporter filter
+            if (!empty($this->selectedTransporter)) {
+                $query->where('transporter_id', $this->selectedTransporter);
+            }
+
+        // Only enforce active/service filters when not in the special statuses
+        $specialStatuses = ['Scheduled', 'Offloaded', 'Cancelled'];
+        if (!in_array($status, $specialStatuses, true)) {
+            $query->where('status', 1)
+                ->where('service', 0);
+        }
+
+        // Order by registration number
+        $this->vehicles = $query
+            ->orderBy('registration_number', 'asc')
+            ->get();
+
+    }
 
     public function updatedSearchHorse()
     {
